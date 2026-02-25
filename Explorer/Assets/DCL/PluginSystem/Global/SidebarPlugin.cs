@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.ChatStates;
 using DCL.Chat.History;
+using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -30,6 +31,7 @@ using DCL.WebRequests;
 using ECS;
 using MVC;
 using Runtime.Wearables;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -55,7 +57,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly bool includeMarketplaceCredits;
-        private readonly bool includeDiscover;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly IEventBus eventBus;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly HttpEventsApiService eventsApiService;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -85,7 +87,6 @@ namespace DCL.PluginSystem.Global
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            bool includeDiscover,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
@@ -96,7 +97,8 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             IEventBus eventBus,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            HttpEventsApiService eventsApiService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -114,7 +116,6 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
-            this.includeDiscover = includeDiscover;
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -126,6 +127,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.eventsApiService = eventsApiService;
         }
 
         public void Dispose() { }
@@ -159,16 +161,17 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                includeDiscover,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus
+                eventBus,
+                eventsApiService
             ));
         }
 
+        [Serializable]
         public class SidebarSettings : IDCLPluginSettings
         {
             [field: SerializeField]

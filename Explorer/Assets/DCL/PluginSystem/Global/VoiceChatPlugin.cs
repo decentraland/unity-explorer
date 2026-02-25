@@ -20,6 +20,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
+using RustAudio;
 
 namespace DCL.PluginSystem.Global
 {
@@ -84,6 +85,8 @@ namespace DCL.PluginSystem.Global
 
             if (voiceChatPluginSettingsAsset.Value != null)
                 voiceChatPluginSettingsAsset.Dispose();
+
+            RustAudioClient.DeInit();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

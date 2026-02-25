@@ -22,7 +22,7 @@ namespace DCL.UI
         internal float imageLoadingFadeDuration { get; private set; } = 0.3f;
 
         public Sprite ImageSprite => Image.sprite;
-        
+
         public Color ImageColor
         {
             get => Image.color;
@@ -46,9 +46,10 @@ namespace DCL.UI
 
         public bool IsLoading
         {
-            get => LoadingObject.activeSelf;
+            get => LoadingObject != null && LoadingObject.activeSelf;
             set
             {
+                if (LoadingObject == null) return;
                 LoadingObject.SetActive(value);
 
                 if (value)

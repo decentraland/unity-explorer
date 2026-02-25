@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -31,20 +32,28 @@ namespace DCL.Landscape
         public readonly int ChunkSizeInParcels; //  in [parcels]
         public readonly int SizeInChunks; // Number of chunks along one side of the square terrain
 
-        public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels)
+        public TerrainModel(int parcelSize, NativeHashSet<int2> ownedParcels, int paddingInParcels, bool addExtraPadding = false)
         {
             this.parcelSize = parcelSize;
 
             ChunkSizeInUnits = 0;
             ChunkSizeInParcels = 0;
+            (int2 minParcel, int2 maxParcel) = CalculateMinMaxParcels(ownedParcels);
+            int2 sizeInParcels = new int2(maxParcel.x - minParcel.x + 1, maxParcel.y - minParcel.y + 1);
 
             PaddingInParcels = paddingInParcels;
-            int2 sizeInParcels = world.SizeInParcels + (2 * paddingInParcels);
-            int2 centerInParcels = world.CenterInParcels;
-            MinParcel = centerInParcels - (sizeInParcels / 2);
-            MaxParcel = MinParcel + (sizeInParcels - 1); // last parcel is inclusive
 
-            SizeInUnits = sizeInParcels * parcelSize;
+            //Used to add extra padding when needed in worlds
+            //Example: big worlds might want to have some extra padding for aestheitc reasing
+            if (addExtraPadding)
+                PaddingInParcels += Mathf.RoundToInt(0.1f * (sizeInParcels.x + sizeInParcels.y) / 2f);
+
+            int2 sizeInParcelsWithPadding = sizeInParcels + (2 * PaddingInParcels);
+            int2 centerInParcels = minParcel + (sizeInParcels / 2);
+            MinParcel = centerInParcels - (sizeInParcelsWithPadding / 2);
+            MaxParcel = MinParcel + (sizeInParcelsWithPadding - 1); // last parcel is inclusive
+
+            SizeInUnits = sizeInParcelsWithPadding * parcelSize;
             MinInUnits = MinParcel * parcelSize;
             MaxInUnits = MinInUnits + SizeInUnits;
 
@@ -67,7 +76,7 @@ namespace DCL.Landscape
                     ChunkModels[x + (y * SizeInChunks)] = model;
                 }
 
-                foreach (int2 parcel in world.OwnedParcels)
+                foreach (int2 parcel in ownedParcels)
                 foreach (ChunkModel chunk in ChunkModels)
                     if (ChunkContains(chunk, parcel))
                     {
@@ -123,6 +132,23 @@ namespace DCL.Landscape
             overlap = new int2(horizontalOverlap, verticalOverlap);
 
             return overlap.x != 0 || overlap.y != 0;
+        }
+
+        private static (int2 min,int2 max) CalculateMinMaxParcels(NativeHashSet<int2> ownedParcels)
+        {
+            var minParcel = new int2(int.MaxValue, int.MaxValue);
+            var maxParcel = new int2(int.MinValue, int.MinValue);
+
+            foreach (int2 parcel in ownedParcels)
+            {
+                if (parcel.x < minParcel.x) minParcel.x = parcel.x;
+                if (parcel.x > maxParcel.x) maxParcel.x = parcel.x;
+
+                if (parcel.y < minParcel.y) minParcel.y = parcel.y;
+                if (parcel.y > maxParcel.y) maxParcel.y = parcel.y;
+            }
+
+            return (minParcel, maxParcel);
         }
     }
 }

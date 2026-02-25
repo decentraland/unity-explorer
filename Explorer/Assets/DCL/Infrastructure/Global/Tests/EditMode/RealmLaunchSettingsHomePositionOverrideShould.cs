@@ -16,10 +16,10 @@ namespace Global.Tests.EditMode
 	{
 		private RealmLaunchSettings launchSettings;
 		private IAppArgs appArgs;
-        
+
         private static IDCLPrefs originalPrefs;
         private static bool prefsInitialized;
-		
+
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
@@ -33,7 +33,7 @@ namespace Global.Tests.EditMode
             // Restore original implementation if it existed
             RestoreOriginalPrefs();
         }
-        
+
 		[SetUp]
         public void Setup()
         {
@@ -45,16 +45,17 @@ namespace Global.Tests.EditMode
         public void TearDown()
         {
             DCLPlayerPrefs.DeleteVector2Key(DCLPrefKeys.MAP_HOME_MARKER_DATA);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.MAP_HOME_WORLD_NAME);
         }
-        
+
         private static void InitializeTestPrefs()
         {
             var dclPrefsField = typeof(DCLPlayerPrefs).GetField("dclPrefs", BindingFlags.NonPublic | BindingFlags.Static);
-            
+
             if (dclPrefsField != null)
             {
                 var currentPrefs = dclPrefsField.GetValue(null) as IDCLPrefs;
-                
+
                 if (currentPrefs == null)
                 {
                     var testPrefs = new InMemoryDCLPlayerPrefs();
@@ -71,7 +72,7 @@ namespace Global.Tests.EditMode
                 }
             }
         }
-		
+
         private static void RestoreOriginalPrefs()
         {
             if (!prefsInitialized && originalPrefs != null)
@@ -109,7 +110,7 @@ namespace Global.Tests.EditMode
             launchSettings.targetScene = new Vector2Int(50, 50);
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
-            
+
             // Act
             launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
 
@@ -142,7 +143,7 @@ namespace Global.Tests.EditMode
             HomeMarkerController.Serialize(homePosition);
             launchSettings.targetScene = new Vector2Int(0, 0);
             launchSettings.EditorSceneStartPosition = false;
-            
+
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
 
@@ -159,7 +160,7 @@ namespace Global.Tests.EditMode
             // Arrange
             var initialPosition = new Vector2Int(10, 10);
             launchSettings.targetScene = initialPosition;
-            
+
             string featureFlagPosition = "0,0";
             var featureFlags = GetFeatureFlagsConfiguration(false, featureFlagPosition);
 
@@ -168,6 +169,34 @@ namespace Global.Tests.EditMode
 
             // Assert
             Assert.AreEqual(initialPosition, launchSettings.targetScene);
+        }
+
+        [Test]
+        public void UseWorldHomeWhenFeatureFlagIsDefaultButWorldHomeExists()
+        {
+            HomeMarkerController.SerializeWorldName("testworld.dcl.eth");
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+
+            var featureFlags = GetFeatureFlagsConfiguration(true, "0,0");
+
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
+        }
+
+        [Test]
+        public void PreferWorldHomeOverCoordinateHome()
+        {
+            HomeMarkerController.Serialize(new Vector2Int(100, 200));
+            HomeMarkerController.SerializeWorldName("testworld.dcl.eth");
+            launchSettings.targetScene = new Vector2Int(0, 0);
+            launchSettings.EditorSceneStartPosition = false;
+
+            string featureFlagPosition = "0,0";
+            var featureFlags = GetFeatureFlagsConfiguration(true, featureFlagPosition);
+
+            launchSettings.CheckStartParcelOverride(appArgs, featureFlags);
+            Assert.AreEqual(InitialRealm.World, launchSettings.initialRealm);
         }
 
         private FeatureFlagsConfiguration GetFeatureFlagsConfiguration(bool returns, string position)

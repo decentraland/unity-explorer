@@ -279,7 +279,7 @@ namespace DCL.Friends
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            foreach (Decentraland.SocialService.V2.FriendProfile? profile in response.Friends)
+            foreach (FriendProfile? profile in response.Friends)
                 friendsCache.Add(profile.Address);
 
             IEnumerable<Profile.CompactInfo> profiles = ToClientFriendProfiles(response.Friends);
@@ -580,11 +580,11 @@ namespace DCL.Friends
         }
 
         private IReadOnlyList<Profile.CompactInfo> ToClientFriendProfiles(
-            RepeatedField<Decentraland.SocialService.V2.FriendProfile> friends)
+            RepeatedField<FriendProfile> friends)
         {
             friendProfileBuffer.Clear();
 
-            foreach (Decentraland.SocialService.V2.FriendProfile profile in friends)
+            foreach (FriendProfile profile in friends)
                 friendProfileBuffer.Add(ToClientFriendProfile(profile));
 
             return friendProfileBuffer;
@@ -602,7 +602,7 @@ namespace DCL.Friends
         }
 
         [Obsolete(IProfileRepository.PROFILE_FRAGMENTATION_OBSOLESCENCE)]
-        private Profile.CompactInfo ToClientFriendProfile(Decentraland.SocialService.V2.FriendProfile profile) =>
+        private Profile.CompactInfo ToClientFriendProfile(FriendProfile profile) =>
             new (profile.Address, profile.Name, profile.HasClaimedName, profile.ProfilePictureUrl);
 
         private BlockedProfile ToClientBlockedProfile(BlockedUserProfile profile)

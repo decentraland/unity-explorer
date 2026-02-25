@@ -21,23 +21,30 @@ namespace DCL.PlacesAPIService
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
         private static readonly URLParameter WITH_REALMS_DETAIL = new ("with_realms_detail", "true");
         private static readonly URLParameter ONLY_FAVORITES = new ("only_favorites", "true");
+        private static readonly URLParameter WITH_CONNECTED_USERS = new ("with_connected_users", "true");
+        private static readonly URLParameter ONLY_PLACES = new ("only_places", "true");
+        private static readonly URLParameter ONLY_WORLDS = new ("only_worlds", "true");
+        private static readonly URLParameter ONLY_HIGHLIGHTED = new ("only_highlighted", "true");
+        private static readonly URLParameter ONLY_SDK7 = new ("only_sdk7", "true");
+        private static readonly URLParameter WITH_LIVE_EVENTS = new ("with_live_events", "true");
 
         private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private string basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
-        private string baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
+        private string basePlacesURL => urlsSource.Url(DecentralandUrl.ApiPlaces);
+        private string baseWorldsURL => urlsSource.Url(DecentralandUrl.ApiWorlds);
+        private string baseDestinationsURL => urlsSource.Url(DecentralandUrl.ApiDestinations);
         private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
-        private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
-        private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
-        private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
+        private URLAddress poiURL => URLAddress.FromString(urlsSource.Url(DecentralandUrl.POI));
+        private URLAddress mapApiUrl => URLAddress.FromString(urlsSource.Url(DecentralandUrl.Map));
+        private URLAddress contentModerationReportURL => URLAddress.FromString(urlsSource.Url(DecentralandUrl.ContentModerationReport));
 
-        public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
+        public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
             this.webRequestController = webRequestController;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.urlsSource = urlsSource;
         }
 
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesAsync(CancellationToken ct,
@@ -92,7 +99,7 @@ namespace DCL.PlacesAPIService
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct,
                 ReportCategory.UI,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
@@ -161,7 +168,7 @@ namespace DCL.PlacesAPIService
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct,
                 ReportCategory.UI,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
@@ -178,15 +185,88 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetDestinationsAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            bool? addRealmDetails = null,
+            IReadOnlyList<string>? positions = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            string? ownerAddress = null,
+            bool? withConnectedUsers = null,
+            IReadOnlyList<string>? names = null,
+            bool? onlyPlaces = null,
+            bool? onlyWorlds = null,
+            bool? onlyHighlighted = null,
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null)
         {
-            var url = $"{baseWorldsURL}?names={placeId}";
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseDestinationsURL));
+
+            if (!string.IsNullOrEmpty(searchString))
+                urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
+
+            if (pagination != null)
+            {
+                urlBuilder.AppendParameter(new URLParameter("offset", (pagination?.pageNumber * pagination?.pageSize).ToString()!));
+                urlBuilder.AppendParameter(new URLParameter("limit", pagination?.pageSize.ToString()!));
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+                urlBuilder.AppendParameter(new URLParameter("order_by", sortBy));
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
+
+            if (!string.IsNullOrEmpty(category))
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
+
+            if (onlyFavorites != null)
+                urlBuilder.AppendParameter(ONLY_FAVORITES);
+
+            if (addRealmDetails != null)
+                urlBuilder.AppendParameter(WITH_REALMS_DETAIL);
+
+            if (positions != null)
+                foreach (string xy in positions)
+                    urlBuilder.AppendParameter(new URLParameter("positions", xy));
+
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(WITH_CONNECTED_USERS);
+
+            if (names != null)
+                foreach (string name in names)
+                    urlBuilder.AppendParameter(new URLParameter("names", name));
+
+            if (onlyPlaces != null)
+                urlBuilder.AppendParameter(ONLY_PLACES);
+
+            if (onlyWorlds != null)
+                urlBuilder.AppendParameter(ONLY_WORLDS);
+
+            if (onlyHighlighted != null)
+                urlBuilder.AppendParameter(ONLY_HIGHLIGHTED);
+
+            if (onlySdk7 != null)
+                urlBuilder.AppendParameter(ONLY_SDK7);
+
+            if (withLiveEvents != null)
+                urlBuilder.AppendParameter(WITH_LIVE_EVENTS);
+
+            URLAddress url = urlBuilder.Build();
+
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct,
                 ReportCategory.UI,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
@@ -195,17 +275,49 @@ namespace DCL.PlacesAPIService
                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
+            if (response.data == null)
+                throw new PlacesAPIException($"No place info retrieved:\n{searchString}");
 
+            resultBuffer?.AddRange(response.data);
+
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+            urlBuilder.AppendParameter(new URLParameter("positions", coord));
+            urlBuilder.AppendParameter(new URLParameter("names", realmName));
+            URLAddress url = urlBuilder.Build();
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct,
+                ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
+
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
             if (!response.ok)
-                throw new NotAPlaceException(placeId);
+                throw new NotAPlaceException(coord);
 
-            // At this moment WR is already disposed
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved for coord: {coord}");
+
             return response;
         }
 
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+
             var placeIdsList = placeIds.ToList();
 
             if (placeIdsList.Count == 0)
@@ -225,10 +337,40 @@ namespace DCL.PlacesAPIService
             }
             jsonBody.Append("]");
 
-            if (placeIdsList.Count == 0)
-                jsonBody.Clear();
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
 
-            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseDestinationsURL));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(WITH_CONNECTED_USERS);
+
+            var placeIdsList = placeIds.ToList();
+
+            if (placeIdsList.Count == 0)
+                return new PlacesData.PlacesAPIResponse()
+                {
+                    ok = true,
+                    data = new List<PlacesData.PlaceInfo>(),
+                    total = 0
+                };
+
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
+            {
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
+            }
+            jsonBody.Append("]");
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
 
             return response;
@@ -248,7 +390,7 @@ namespace DCL.PlacesAPIService
                                            GenericPostArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
                                            ct,
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(fullUrl), unixTimestamp, "patch"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
@@ -275,7 +417,7 @@ namespace DCL.PlacesAPIService
                                            GenericPostArguments.CreateJson(payload),
                                            ct,
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(fullUrl), unixTimestamp, "patch"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place vote:"));
         }

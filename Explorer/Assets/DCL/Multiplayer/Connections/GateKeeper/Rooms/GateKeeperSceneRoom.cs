@@ -72,8 +72,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IGateKeeperSceneRoom AsActivatable() =>
             new Activatable(this);
 
-        private bool IsSceneConnected(string? sceneId) =>
-            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase);
+        private bool IsSceneConnected(string? sceneId)
+        {
+            if (options.IsCommsOffline)
+                return false;
+
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+                return false;
+
+            if (options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated
+                && !string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
 
         public override async UniTask StopAsync()
         {
@@ -102,6 +114,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
+            if (options.IsCommsOffline)
+            {
+                if (AttemptToConnectState is not AttemptToConnectState.NO_CONNECTION_REQUIRED)
+                    SetNoConnectionRequired();
+                return;
+            }
+
             MetaData meta = default;
 
             try
@@ -181,14 +200,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
+            string url = options.GetAdapterURL(meta.sceneId);
             string json = meta.ToJson();
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, json, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
-
-            string connectionString = response.adapter;
+            string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
@@ -197,6 +215,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private struct AdapterResponse
         {
             public string adapter;
+            public string fixedAdapter;
         }
     }
 }

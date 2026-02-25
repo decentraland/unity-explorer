@@ -243,7 +243,9 @@ namespace SceneRunner
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo, syncDeps.permissionsProvider, profileRepository)),
-                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations),
+                    new CommunicationsControllerAPIImplementation(
+                        syncDeps.sceneData, messagePipesHub, jsOperations,
+                        syncDeps.PoolsProvider),
                     syncDeps,
                     sceneRuntime) { }
 

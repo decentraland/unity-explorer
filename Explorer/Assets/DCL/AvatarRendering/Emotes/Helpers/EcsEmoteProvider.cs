@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
 using ECS;
 using ECS.Prioritization.Components;
@@ -20,14 +21,13 @@ namespace DCL.AvatarRendering.Emotes
     public class EcsEmoteProvider : IEmoteProvider
     {
         private readonly World world;
-        private readonly IRealmData realmData;
-        private readonly URLBuilder urlBuilder = new ();
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public EcsEmoteProvider(World world,
-            IRealmData realmData)
+            IDecentralandUrlsSource urlsSource)
         {
             this.world = world;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
         }
 
         public async UniTask<int> GetOwnedEmotesAsync(
@@ -42,9 +42,10 @@ namespace DCL.AvatarRendering.Emotes
             if (!loadingArguments.HasValue)
             {
                 results?.Clear();
-                urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.Lambdas, out URLBuilder urlBuilder);
+
+                urlBuilder
                     .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
                     .AppendParameter(new URLParameter("includeEntities", "true"));
 

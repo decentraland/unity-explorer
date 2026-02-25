@@ -72,6 +72,9 @@ namespace DCL.Communities.CommunitiesDataProvider
             GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                             .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
 
+            if (response?.data?.results == null)
+                return response;
+
             foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
             {
                 community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);

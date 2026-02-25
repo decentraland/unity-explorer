@@ -109,6 +109,7 @@ namespace DCL.Backpack.EmotesSection
             eventBus.FilterEvent += OnFilterEvent;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
+            RequestAndFillEmotes(1, true);
         }
 
         public void Deactivate()
@@ -142,7 +143,7 @@ namespace DCL.Backpack.EmotesSection
             if (!string.IsNullOrEmpty(command.BodyShape))
                 currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);
         }
-        
+
         private void RequestAndFillEmotes(int pageNumber)
         {
             RequestAndFillEmotes(pageNumber, false);
@@ -188,7 +189,7 @@ namespace DCL.Backpack.EmotesSection
                     IEnumerable<IEmote> filteredEmotes = baseEmotes;
 
                     if (!string.IsNullOrEmpty(currentSearch!))
-                        filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch));
+                        filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
 
                     if (!string.IsNullOrEmpty(currentCategory!))
                         filteredEmotes = baseEmotes.Where(emote => emote.GetCategory() == currentCategory);

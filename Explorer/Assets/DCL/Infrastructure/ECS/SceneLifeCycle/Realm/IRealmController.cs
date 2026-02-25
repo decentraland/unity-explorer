@@ -13,8 +13,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
 
-        UniTask RestartRealmAsync(CancellationToken ct);
-
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 
         UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct);
@@ -31,11 +29,6 @@ namespace ECS.SceneLifeCycle.Realm
             public IRealmData RealmData => new IRealmData.Fake();
 
             public UniTask SetRealmAsync(URLDomain realm, CancellationToken ct) =>
-
-                //ignore
-                UniTask.CompletedTask;
-
-            public UniTask RestartRealmAsync(CancellationToken ct) =>
 
                 //ignore
                 UniTask.CompletedTask;

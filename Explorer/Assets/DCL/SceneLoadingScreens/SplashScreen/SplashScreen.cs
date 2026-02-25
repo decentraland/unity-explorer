@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace DCL.SceneLoadingScreens.SplashScreen
 {
@@ -7,16 +8,32 @@ namespace DCL.SceneLoadingScreens.SplashScreen
     {
         [SerializeField] private Sprite[] logoSprites;
         [SerializeField] private Image logoImage;
-        [SerializeField] private Animator splashScreenAnimation;
+        [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] [Min(0f)] private float fadeOutDurationSeconds = 1f;
 
         private int frame;
         private float timer;
+        private Tween fadeTween;
 
-        public void Show() =>
+        public void Show()
+        {
+            fadeTween?.Kill(complete: false);
+            canvasGroup.alpha = 1;
             gameObject.SetActive(true);
+        }
 
         public void Hide() =>
             gameObject.SetActive(false);
+
+        public void FadeOutAndHide()
+        {
+            if (!isActiveAndEnabled) return;
+
+            fadeTween?.Kill(complete: false);
+            fadeTween = canvasGroup.DOFade(0f, fadeOutDurationSeconds)
+                                   .SetEase(Ease.Linear)
+                                   .OnComplete(Hide);
+        }
 
         private void Update()
         {

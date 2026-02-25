@@ -53,7 +53,6 @@ namespace DCL.Chat.ChatServices
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<IFriendsService> friendsService;
 
-        private readonly IParticipantsHub participantsHub;
         private readonly ChatSettingsAsset settingsAsset;
         private readonly RPCChatPrivacyService rpcChatPrivacyService;
         private readonly IFriendsEventBus friendsEventBus;
@@ -63,7 +62,6 @@ namespace DCL.Chat.ChatServices
         private readonly CurrentChannelService currentChannelService;
 
         private readonly HashSet<string> friendIds = new();
-        private bool isFriendCacheInitialized  ;
 
         /// <summary>
         ///     Contains the list of all participants in all private conversations as they share the same LiveKit room
@@ -81,7 +79,6 @@ namespace DCL.Chat.ChatServices
             this.eventBus = eventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.friendsService = friendsService;
-            participantsHub = chatRoom.Participants;
             this.settingsAsset = settingsAsset;
             this.rpcChatPrivacyService = rpcChatPrivacyService;
             this.friendsEventBus = friendsEventBus;
@@ -97,13 +94,11 @@ namespace DCL.Chat.ChatServices
 
         public void Activate() { }
 
-        public async UniTask<HashSet<string>> InitializeAsync(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             SubscribeToEvents();
 
             cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-            var conversationParticipants = new HashSet<string>();
 
             try
             {
@@ -122,8 +117,6 @@ namespace DCL.Chat.ChatServices
             }
             catch (TimeoutException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, "Friend service and user blocking cache are not available. Ignore this if you are in LSD"); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
-
-            return conversationParticipants;
         }
 
         private void SubscribeToEvents()
@@ -172,8 +165,6 @@ namespace DCL.Chat.ChatServices
                     friendIds.Add(friend.UserId);
                 }
             }
-
-            isFriendCacheInitialized = true;
         }
 
         private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
@@ -407,8 +398,6 @@ namespace DCL.Chat.ChatServices
             {
                 friendIds.Clear();
             }
-
-            isFriendCacheInitialized = false;
 
             lock (onlineParticipants)
             {

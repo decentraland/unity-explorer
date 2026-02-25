@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Audio;
 using Plugins.NativeAudioAnalysis;
@@ -10,6 +11,11 @@ namespace DCL.SDKComponents.AudioSources
     {
         public string AudioClipUrl;
         public Promise ClipPromise;
+
+        /// <summary>
+        ///     Tracks the last reported media state to avoid sending duplicate CRDT messages
+        /// </summary>
+        public MediaState LastPropagatedAudioState;
 
         /// <summary>
         ///     The final audio source ready for consumption
@@ -34,6 +40,7 @@ namespace DCL.SDKComponents.AudioSources
 
             AudioSource = null;
             AudioSourceAssigned = false;
+            LastPropagatedAudioState = MediaState.MsNone;
 
             lastAudioFrameReadFilter = new ();
         }

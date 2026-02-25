@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 123e00daa809b4e31934bfaddb9db160
+    m_Address: NoDiskSpaceScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 13e534245f7a87d498ae850d58b9115f
     m_Address: Assets/DCL/VoiceChat/VoiceChatPlaybackAudioSource.prefab
     m_ReadOnly: 0
@@ -97,6 +102,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
     m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -192,6 +202,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
     m_Address: SDKEntityTriggerArea
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce65114d99514edba1ead5ffdfb595a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/AuthScreenImg.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

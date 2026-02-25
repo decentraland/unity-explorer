@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
+using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using DCL.WebRequests;
 using Google.Protobuf.WellKnownTypes;
@@ -31,6 +32,7 @@ namespace DCL.VoiceChat.Services
 
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWebRequestController webRequestController;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly string activeCommunityVoiceChatsUrl;
         private CancellationTokenSource subscriptionCts = new ();
 
@@ -41,10 +43,12 @@ namespace DCL.VoiceChat.Services
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITY_VOICE_CHAT)
         {
             this.socialServiceEventBus = socialServiceEventBus;
             this.webRequestController = webRequestController;
+            this.identityCache = identityCache;
             activeCommunityVoiceChatsUrl = urlsSource.Url(DecentralandUrl.ActiveCommunityVoiceChats);
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
@@ -63,6 +67,8 @@ namespace DCL.VoiceChat.Services
 
         private void OnTransportConnected()
         {
+            if (identityCache.Identity == null) return;
+
             subscriptionCts = subscriptionCts.SafeRestart();
             SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
             FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();
@@ -75,6 +81,8 @@ namespace DCL.VoiceChat.Services
 
         private void OnTransportReconnected()
         {
+            if (identityCache.Identity == null) return;
+
             subscriptionCts = subscriptionCts.SafeRestart();
             SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
             FetchActiveCommunityVoiceChatsAsync(subscriptionCts.Token).Forget();

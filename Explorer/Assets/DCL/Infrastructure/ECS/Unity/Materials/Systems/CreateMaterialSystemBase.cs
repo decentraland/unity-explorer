@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -14,9 +15,24 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly IObjectPool<Material> materialsPool;
 
-        protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool) : base(world)
+        private readonly IPerformanceBudget memoryBudgetProvider;
+        private readonly IPerformanceBudget capFrameBudget;
+
+        protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world)
         {
             this.materialsPool = materialsPool;
+            this.capFrameBudget = capFrameBudget;
+            this.memoryBudgetProvider = memoryBudgetProvider;
+        }
+
+        protected bool CanConstructMaterial(MaterialComponent materialComponent)
+        {
+            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
+            {
+                if (capFrameBudget.TrySpendBudget() && memoryBudgetProvider.TrySpendBudget())
+                    return true;
+            }
+            return false;
         }
 
         protected Material CreateNewMaterialInstance() =>

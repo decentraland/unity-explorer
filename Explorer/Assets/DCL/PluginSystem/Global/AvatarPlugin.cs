@@ -23,8 +23,10 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
+using ECS.LifeCycle.Systems;
 using Runtime.Wearables;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -157,6 +159,7 @@ namespace DCL.PluginSystem.Global
             var skinningStrategy = new ComputeShaderSkinning();
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
 
             cacheCleaner.Register(avatarPoolRegistry);
             cacheCleaner.Register(computeShaderPool);
@@ -205,10 +208,10 @@ namespace DCL.PluginSystem.Global
                 },
                 actionOnRelease: nh =>
                 {
-                    nh.Nametag.SetDisplayed(false);
+                    nh.gameObject.SetActive(false);
                 },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
-                actionOnGet: nh => nh.Nametag.SetDisplayed(true));
+                actionOnGet: nh => nh.gameObject.SetActive(true));
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)

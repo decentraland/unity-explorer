@@ -51,9 +51,10 @@ namespace DCL.Donations.UI
                 donationDefaultView.loadingView.HideLoading();
         }
 
-        public void ShowLoading(DonationPanelViewModel viewModel, decimal donationAmount)
+        public void ShowLoading(DonationPanelViewModel viewModel, decimal donationAmount, bool isThirdWeb = false)
         {
             ShowSubView(SubViews.LOADING);
+            donationLoadingView.SetWaitingMessage(isThirdWeb);
             donationLoadingView.ConfigurePanel(viewModel, donationAmount);
         }
 

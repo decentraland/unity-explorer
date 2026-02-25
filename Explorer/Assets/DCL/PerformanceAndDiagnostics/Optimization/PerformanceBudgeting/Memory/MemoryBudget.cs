@@ -26,6 +26,9 @@ namespace DCL.Optimization.PerformanceBudgeting
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
         public bool SimulateLackOfAbundance;
 
+        private MemoryUsageStatus cachedStatus;
+        private int cachedFrame = -1;
+
         public MemoryBudget(ISystemMemoryCap systemMemoryCap, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = ABUNDANCE;
@@ -37,16 +40,22 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private MemoryUsageStatus GetMemoryUsageStatus()
         {
+            if(Time.frameCount == cachedFrame)
+                return cachedStatus;
+
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
             long totalSystemMemory = GetTotalSystemMemoryInMB();
 
-            return usedMemory switch
-                   {
-                       _ when usedMemory > totalSystemMemory * memoryThreshold[FULL] => FULL,
-                       _ when usedMemory > totalSystemMemory * memoryThreshold[WARNING] => WARNING,
-                       _ when usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE] => ABUNDANCE,
-                       _ => NORMAL,
-                   };
+            cachedStatus = usedMemory switch
+                           {
+                               _ when usedMemory > totalSystemMemory * memoryThreshold[FULL] => FULL,
+                               _ when usedMemory > totalSystemMemory * memoryThreshold[WARNING] => WARNING,
+                               _ when usedMemory < totalSystemMemory * memoryThreshold[ABUNDANCE] => ABUNDANCE,
+                               _ => NORMAL,
+                           };
+
+            cachedFrame = Time.frameCount;
+            return cachedStatus;
         }
 
         public (int warning, int full) GetMemoryRanges()

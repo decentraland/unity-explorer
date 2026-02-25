@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -20,13 +21,15 @@ namespace DCL.Multiplayer.Profiles.Poses
         private readonly IRoomHub roomHub;
         private readonly ConcurrentDictionary<string, IRemoteMetadata.ParticipantMetadata> metadata = new ();
         private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private string sceneRoomSId;
 
-        public RemoteMetadata(IRoomHub roomHub, IRealmData realmData)
+        public RemoteMetadata(IRoomHub roomHub, IRealmData realmData, IDecentralandUrlsSource urlsSource)
         {
             this.roomHub = roomHub;
             this.realmData = realmData;
+            this.urlsSource = urlsSource;
 
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnUpdatesFromParticipantInIsland;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += OnUpdatesFromParticipantInSceneRoom;
@@ -102,7 +105,7 @@ namespace DCL.Multiplayer.Profiles.Poses
                 return;
 
             // Broadcasting self position makes sense only for the island
-            SendAsync(new IslandMetadata(pose.x, pose.y, realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+            SendAsync(new IslandMetadata(pose.x, pose.y, urlsSource.Url(DecentralandUrl.Lambdas))).Forget();
         }
 
         public void BroadcastSelfMetadata()
@@ -114,7 +117,7 @@ namespace DCL.Multiplayer.Profiles.Poses
 
             if (sceneRoomSId != currentRoomSid)
             {
-                SendAsync(new SceneRoomMetadata(realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+                SendAsync(new SceneRoomMetadata(urlsSource.Url(DecentralandUrl.Lambdas))).Forget();
                 sceneRoomSId = currentRoomSid;
             }
         }

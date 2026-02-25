@@ -30,7 +30,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 ),
                 () => new FixedConnectiveRoom(
                     webRequestController,
-                    currentAdapterAddress
+                    currentAdapterAddress,
+                    identityCache
                 )).AsActivatable();
     }
 }

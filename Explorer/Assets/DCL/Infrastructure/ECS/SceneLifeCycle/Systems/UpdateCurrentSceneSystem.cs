@@ -5,7 +5,9 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -46,6 +48,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcel;
 
+        //Debug only
+        private readonly Dictionary<Material, Color> originalColors = new ();
+        private readonly Dictionary<Material, int> originalCullValues = new ();
+        private bool backfaceCulling;
+        private bool isPaintedBackface;
+
         internal UpdateCurrentSceneSystem(
             World world,
             IRealmData realmData,
@@ -74,9 +82,13 @@ namespace ECS.SceneLifeCycle.Systems
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
                          .AddCustomMarker("Global Pos:", globalPositionBinding)
                          .AddCustomMarker("Scene Pos:", sceneRelativePositionBinding)
-                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false);
+                         .AddToggleField("Show scene bounds:", state => { showDebugCube = state.newValue; }, false)
+                         .AddToggleField("Force backface culling", OnBackfaceCullingToggle, backfaceCulling)
+                         .AddSingleButton("Backface debugger", PaintBackFaceMaterials);
             this.debugBuilder = debugBuilder;
         }
+
+
 
         protected override void Update(float t)
         {
@@ -171,6 +183,110 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneHeightBinding.Value = NO_DATA_STRING;
                 sceneRelativePositionBinding.Value = NO_DATA_STRING;
                 sceneBoundsCube?.SetActive(false);
+            }
+        }
+
+        //Debug only
+        private void PaintBackFaceMaterials()
+        {
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (!sceneWorld.Has<TransformComponent>(sceneContainer))
+                return;
+
+            ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+            Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+            if (isPaintedBackface)
+            {
+                // Restore original colors
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        if (originalColors.TryGetValue(material, out Color originalColor))
+                            material.color = originalColor;
+                    }
+                }
+
+                originalColors.Clear();
+                isPaintedBackface = false;
+            }
+            else
+            {
+                // Paint based on backface culling setting
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null)
+                            continue;
+
+                        // Store original color
+                        if (!originalColors.ContainsKey(material))
+                            originalColors[material] = material.color;
+
+                        // Check if material has backface culling enabled (CullMode.Back = 2)
+                        bool hasBackfaceCulling = material.HasProperty(CULL) && material.GetInt(CULL) == (int)CullMode.Back;
+
+                        // Green if has backface culling, Red otherwise
+                        material.color = hasBackfaceCulling ? Color.green : Color.red;
+                    }
+                }
+
+                isPaintedBackface = true;
+            }
+        }
+
+        //Debug only
+        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        {
+            backfaceCulling = evt.newValue;
+
+            if (currentActiveScene == null)
+                return;
+
+            Entity sceneContainer = currentActiveScene.PersistentEntities.SceneContainer;
+            World sceneWorld = currentActiveScene.EcsExecutor.World;
+
+            if (sceneWorld.Has<TransformComponent>(sceneContainer))
+            {
+                ref TransformComponent transformComponent = ref sceneWorld.Get<TransformComponent>(sceneContainer);
+                Renderer[] renderers = transformComponent.Transform.GetComponentsInChildren<Renderer>(true);
+
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.materials)
+                    {
+                        if (material == null || !material.HasProperty(CULL))
+                            continue;
+
+                        if (backfaceCulling)
+                        {
+                            // Store original value and set to Front (cull front faces, show back faces)
+                            if (!originalCullValues.ContainsKey(material))
+                                originalCullValues[material] = material.GetInt(CULL);
+
+                            material.SetInt(CULL, (int)CullMode.Back);
+                        }
+                        else
+                        {
+                            // Restore original value
+                            if (originalCullValues.TryGetValue(material, out int originalValue))
+                                material.SetInt(CULL, originalValue);
+                        }
+                    }
+                }
+
+                if (!backfaceCulling)
+                    originalCullValues.Clear();
             }
         }
 

@@ -73,8 +73,7 @@ namespace DCL.UI
                 return textureRef;
             }
 
-            if (result.Exception != null && result.Exception is not OperationCanceledException)
-                ReportHub.LogException(result.Exception, ReportCategory.UI);
+            result.TryLogException(ReportCategory.UI);
 
             return null;
         }

@@ -8,7 +8,6 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -91,7 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             var totalBudget = 15;
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.TEST, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.TEST, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

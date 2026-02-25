@@ -235,7 +235,12 @@ namespace DCL.Minimap
 
         private void SetInitialHomeToggleValue()
         {
-            bool isHome = homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+            bool isHome;
+            if (realmData.ScenesAreFixed)
+                isHome = homePlaceEventBus.CurrentHomeWorldName == realmData.RealmName;
+            else
+                isHome = !homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
+
             homeToggleSettings.SetInitialValue(isHome);
         }
 
@@ -250,9 +255,16 @@ namespace DCL.Minimap
         private void SetAsHomeToggledAsync(bool value)
         {
             if (value)
-                homePlaceEventBus.SetAsHome(previousParcelPosition);
+            {
+                if (realmData.ScenesAreFixed)
+                    homePlaceEventBus.SetAsHome(realmData.RealmName);
+                else
+                    homePlaceEventBus.SetAsHome(previousParcelPosition);
+            }
             else
+            {
                 homePlaceEventBus.UnsetHome();
+            }
 
             // Opening context menu loses focus of minimap, so for pin to showup immediately we have to simulate
             // gaining focus again.
@@ -271,13 +283,16 @@ namespace DCL.Minimap
             {
                 try
                 {
-                    PlacesData.PlaceInfo? placeInfo = await GetPlaceInfoAsync(previousParcelPosition, favoriteCancellationToken.Token);
-                    if (placeInfo == null)
+                    PlacesData.PlaceInfo? info = realmData.ScenesAreFixed
+                        ? await GetWorldInfoAsync(previousParcelPosition, realmData.RealmName, ct)
+                        : await GetPlaceInfoAsync(previousParcelPosition, ct);
+
+                    if (info == null)
                     {
                         viewInstance!.favoriteButton.SetButtonState(false, false);
                         return;
                     }
-                    await placesAPIService.SetPlaceFavoriteAsync(placeInfo!.id, value, ct);
+                    await placesAPIService.SetPlaceFavoriteAsync(info.id, value, ct);
                     viewInstance!.favoriteButton.SetButtonState(value);
                 }
                 catch (OperationCanceledException _) { }
@@ -419,12 +434,18 @@ namespace DCL.Minimap
 
             if (realmData.ScenesAreFixed)
             {
-                viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-                viewInstance!.favoriteButton.SetButtonState(false, false);
-
-                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(realmData.RealmName, ct);
+                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(parcelPosition, realmData.RealmName, ct);
                 if (worldInfo != null)
+                {
+                    viewInstance!.placeNameText.text = worldInfo.title;
+                    viewInstance!.favoriteButton.SetButtonState(worldInfo.user_favorite);
                     placesAPIService.AddRecentlyVisitedPlace(worldInfo.id);
+                }
+                else
+                {
+                    viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                    viewInstance!.favoriteButton.SetButtonState(false, false);
+                }
             }
             else
             {
@@ -471,13 +492,13 @@ namespace DCL.Minimap
             return null;
         }
 
-        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(string worldName, CancellationToken ct)
+        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(Vector2Int parcelPosition, string worldName, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
             try
             {
-                return await placesAPIService.GetWorldAsync(worldName, ct);
+                return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
             }
             catch (OperationCanceledException _) { }
             catch (NotAPlaceException notAPlaceException)

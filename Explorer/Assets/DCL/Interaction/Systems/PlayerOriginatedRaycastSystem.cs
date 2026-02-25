@@ -39,7 +39,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private readonly InputAction pointInput;
 
         internal PlayerOriginatedRaycastSystem(World world, InputAction pointInput,
-            IEntityCollidersGlobalCache collidersGlobalCache, PlayerInteractionEntity playerInteractionEntity,
+            IEntityCollidersGlobalCache collidersGlobalCache,
+            PlayerInteractionEntity playerInteractionEntity,
             float maxRaycastDistance) : base(world)
         {
             this.pointInput = pointInput;
@@ -79,7 +80,15 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
 
                 if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
-                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance);
+                {
+                    Vector3? playerPosition = playerInteractionEntity.PlayerPosition;
+                    float? playerDistance = null;
+
+                    if (playerPosition != null)
+                        playerDistance = Vector3.Distance(hitInfo.point, (Vector3)playerPosition);
+
+                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance, playerDistance);
+                }
                 else
                     raycastResultForSceneEntities.Reset();
 

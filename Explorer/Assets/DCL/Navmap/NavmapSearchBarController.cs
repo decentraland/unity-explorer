@@ -110,6 +110,8 @@ namespace DCL.Navmap
             Interactable = true;
             navmapBus.ClearFilter();
             navmapBus.ClearPlacesFromMap();
+            if (view.inputField.isFocused)
+                RestoreInput();
         }
 
         public void EnableBack()
@@ -172,14 +174,16 @@ namespace DCL.Navmap
         private void OnSearchBarSelected(bool isSelected)
         {
             if (isSelected)
-            {
-                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            }
+                DisableShortcutsInput();
             else
-            {
-                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-            }
+                RestoreInput();
         }
+
+        private void DisableShortcutsInput() =>
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        private void RestoreInput() =>
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
         private void Search(NavmapSearchPlaceSorting sorting)
         {

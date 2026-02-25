@@ -17,6 +17,8 @@ namespace DCL.SocialService
     {
         public const int FOREGROUND_CONNECTION_RETRIES = 3;
 
+        public RpcClient? Client { get; }
+
         RpcClientModule Module();
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace DCL.SocialService
         /// </summary>
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
 
-        private readonly URLAddress apiUrl;
+        private readonly Uri apiUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -61,11 +63,10 @@ namespace DCL.SocialService
         private RpcClientModule? module;
         private RpcClientPort? port;
         private WebSocketRpcTransport? transport;
-        private RpcClient? client;
 
         private bool isConnectionReady => transport?.State == WebSocketState.Open
                                           && module != null
-                                          && client != null
+                                          && Client != null
                                           && port != null;
 
         public RPCSocialServices(
@@ -73,15 +74,17 @@ namespace DCL.SocialService
             IWeb3IdentityCache identityCache,
             ISocialServiceEventBus socialServiceEventBus)
         {
-            this.apiUrl = apiUrl;
+            this.apiUrl = new Uri(apiUrl);
             this.identityCache = identityCache;
             this.socialServiceEventBus = socialServiceEventBus;
         }
 
+        public RpcClient? Client { get; private set; }
+
         public void Dispose()
         {
             transport?.Dispose();
-            client?.Dispose();
+            Client?.Dispose();
             connectionEstablishingMutex.Dispose();
             authChainBuffer.Clear();
         }
@@ -107,8 +110,8 @@ namespace DCL.SocialService
                     transport = null;
                 }
 
-                client?.Dispose();
-                client = null;
+                Client?.Dispose();
+                Client = null;
             }
             finally { handshakeMutex.Release(); }
         }
@@ -194,8 +197,8 @@ namespace DCL.SocialService
                 module = null;
                 transport?.Dispose();
                 transport = null;
-                client?.Dispose();
-                client = null;
+                Client?.Dispose();
+                Client = null;
 
                 throw;
             }
@@ -208,12 +211,12 @@ namespace DCL.SocialService
 
         private async UniTask InitializeConnectionAsync(CancellationToken ct)
         {
-            client?.Dispose();
+            Client?.Dispose();
             transport?.Dispose();
 
-            transport = new WebSocketRpcTransport(new Uri(apiUrl));
+            transport = new WebSocketRpcTransport(apiUrl);
             transport.OnCloseEvent += OnTransportClosed;
-            client = new RpcClient(transport);
+            Client = new RpcClient(transport);
 
             await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
@@ -224,7 +227,7 @@ namespace DCL.SocialService
 
             transport.ListenForIncomingData();
 
-            port = await client.CreatePort(RPC_PORT_NAME);
+            port = await Client.CreatePort(RPC_PORT_NAME);
             module = await port!.LoadModule(RPC_SERVICE_NAME);
 
             socialServiceEventBus.SendWebSocketConnectionEstablishedNotification();

@@ -1,13 +1,16 @@
 ﻿using DCL.Browser;
-using DCL.Clipboard;
+using DCL.Communities;
+using DCL.EventsApi;
+using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
+using MVC;
 using System;
 using UnityEngine;
 
@@ -18,13 +21,15 @@ namespace DCL.Places
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
 
+        public PlacesResultsController PlacesResultsController { get; }
+        public PlacesCardSocialActionsController PlaceCardActionsController { get; }
+
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
         private readonly PlacesStateService placesStateService;
-        private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
         private readonly IInputBlock inputBlock;
 
@@ -36,20 +41,24 @@ namespace DCL.Places
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            IWebRequestController webRequestController,
-            IRealmNavigator realmNavigator,
-            ISystemClipboard clipboard,
-            IDecentralandUrlsSource dclUrlSource)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IMVCManager mvcManager,
+            ThumbnailLoader thumbnailLoader,
+            PlacesCardSocialActionsController placesCardSocialActionsController,
+            HomePlaceEventBus homePlaceEventBus,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.placesCategories = placesCategories;
             this.inputBlock = inputBlock;
+            PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                webRequestController, realmNavigator, clipboard, dclUrlSource);
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -63,7 +72,7 @@ namespace DCL.Places
             view.SearchBarDeselected -= RestoreShortcutsInput;
 
             placesStateService.Dispose();
-            placesResultsController.Dispose();
+            PlacesResultsController.Dispose();
         }
 
         public void Activate()
@@ -82,6 +91,10 @@ namespace DCL.Places
 
         public void Deactivate()
         {
+            // Must be before setting the view inactive, or the focus state will be false regardless
+            if (view.IsSearchBarFocused)
+                RestoreShortcutsInput();
+
             isSectionActivated = false;
             view.SetViewActive(false);
             view.ClearCategories();
@@ -97,10 +110,10 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
             view.SetFiltersVisible(section == PlacesSection.BROWSE);
-            view.OpenSection(section, force, invokeEvent, cleanSearch);
+            view.OpenSection(section, force, invokeEvent, cleanSearch, resetCategory);
         }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)

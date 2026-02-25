@@ -8,6 +8,7 @@ namespace DCL.UI
         CameraReel,
         Communities,
         Places,
+        Events,
     }
 
     public enum BackpackSections

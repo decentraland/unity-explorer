@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1162b863c0b747f59404c4a323168f3a, type: 3}
   m_Name: SkyboxSettings
   m_EditorClassIdentifier: 
-  fullDayCycleInMinutes: 120
+  fullDayCycleInSeconds: 7200
   transitionSpeed: 0.25
   refreshIntervalByQuality:
-  - 0
-  - 0
-  - 0
-  - 0
+  - 0.3
+  - 0.2
+  - 0.1
+  - 0.1
   SkyboxRenderControllerPrefab:
     m_AssetGUID: 1dbd1decb60282248bd089c32bec5d02
     m_SubObjectName: 

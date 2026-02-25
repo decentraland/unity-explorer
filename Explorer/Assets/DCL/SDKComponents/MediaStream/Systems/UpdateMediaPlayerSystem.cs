@@ -119,6 +119,7 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
+            if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             var address = MediaAddress.New(sdkComponent.Src!);
@@ -161,7 +162,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             if (ConsumePromise(ref component, false))
-                component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent).Forget();
 
             // Need to re-update state in case an update was needed from the sdk component or promise
             component.UpdateState();

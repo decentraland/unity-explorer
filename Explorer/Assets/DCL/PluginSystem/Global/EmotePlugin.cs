@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -11,8 +12,10 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.UI.SharedSpaceManager;
@@ -62,6 +65,10 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        private readonly EntitiesAnalytics entitiesAnalytics;
+        private TimeSpan batchHeartbeat;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -83,7 +90,9 @@ namespace DCL.PluginSystem.Global
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            EntitiesAnalytics entitiesAnalytics)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -105,6 +114,8 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.entitiesAnalytics = entitiesAnalytics;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -122,8 +133,10 @@ namespace DCL.PluginSystem.Global
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory);
+                new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
+                emoteStorage, decentralandUrlsSource, customStreamingSubdirectory, entitiesAnalytics);
+
+            BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
@@ -143,6 +156,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+
             IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
 
             // Initialize the embedded emote URN mapping for legacy emote conversion
@@ -182,6 +197,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

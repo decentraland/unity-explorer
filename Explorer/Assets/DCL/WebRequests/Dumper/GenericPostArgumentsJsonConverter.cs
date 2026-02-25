@@ -77,7 +77,6 @@ namespace DCL.WebRequests.Dumper
 
         public override GenericPostArguments ReadJson(JsonReader reader, Type objectType, GenericPostArguments existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            reader.Read(); // Start object
             reader.Read(); // Read property name "kind"
             var kind = (Kind)reader.ReadAsInt32()!.Value;
 

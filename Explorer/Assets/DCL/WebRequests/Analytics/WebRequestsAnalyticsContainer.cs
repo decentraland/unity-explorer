@@ -1,143 +1,90 @@
-﻿using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
-using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.GenericDelete;
+﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        internal static readonly IWebRequestsAnalyticsContainer.RequestType[] SUPPORTED_REQUESTS =
+        private readonly Dictionary<UnityWebRequest, DateTime> pendingRequests = new (10);
+        private readonly List<IWebRequestAnalyticsHandler> handlers;
+
+        public WebRequestsAnalyticsContainer(params IWebRequestAnalyticsHandler?[] handlers)
         {
-            new (typeof(GetAssetBundleWebRequest), "Asset Bundle"),
-            new (typeof(GenericGetRequest), "Get"),
-            new (typeof(PartialDownloadRequest), "Partial"),
-            new (typeof(GenericPostRequest), "Post"),
-            new (typeof(GenericPutRequest), "Put"),
-            new (typeof(GenericPatchRequest), "Patch"),
-            new (typeof(GenericHeadRequest), "Head"),
-            new (typeof(GenericDeleteRequest), "Delete"),
-            new (typeof(GetTextureWebRequest), "Texture"),
-            new (typeof(GetAudioClipWebRequest), "Audio"),
-        };
-
-        private readonly Dictionary<Type, List<RequestMetricBase>> requestTypesWithMetrics = new ();
-        private readonly Dictionary<Type, Func<RequestMetricBase>> requestMetricTypes = new ();
-
-        private readonly List<RequestMetricBase> flatMetrics = new ();
-
-        private readonly DebugWidgetBuilder? debugWidgetBuilder;
-
-        public WebRequestsAnalyticsContainer(DebugWidgetBuilder? debugWidgetBuilder)
-        {
-            this.debugWidgetBuilder = debugWidgetBuilder;
+            this.handlers = new List<IWebRequestAnalyticsHandler>(handlers.Where(h => h != null)!);
         }
 
-        public IWebRequestsAnalyticsContainer.RequestType[] DebugRequestTypes { get; private set; } = Array.Empty<IWebRequestsAnalyticsContainer.RequestType>();
-
-        public DebugWidgetVisibilityBinding? VisibilityBinding { get; private set; }
-
-        public WebRequestsAnalyticsContainer BuildUpDebugWidget(bool isLocalSceneDevelopment)
+        void IWebRequestsAnalyticsContainer.OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
-            DebugRequestTypes = isLocalSceneDevelopment
-                ? Array.Empty<IWebRequestsAnalyticsContainer.RequestType>()
-                : SUPPORTED_REQUESTS;
+            pendingRequests.Add(request.UnityWebRequest, DateTime.MinValue);
 
-            debugWidgetBuilder?.SetVisibilityBinding(VisibilityBinding = new DebugWidgetVisibilityBinding(true));
-
-            return this;
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnBeforeBudgeting(in envelope, request);
         }
 
-        /// <summary>
-        ///     Allows adding metrics dynamically without adding to the debug menu
-        /// </summary>
-        public WebRequestsAnalyticsContainer AddFlatMetric(RequestMetricBase metric)
+        void IWebRequestsAnalyticsContainer.OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
-            flatMetrics.Add(metric);
-            return this;
-        }
-
-        public IReadOnlyList<RequestMetricBase>? GetMetric(Type requestType) =>
-            requestTypesWithMetrics.GetValueOrDefault(requestType);
-
-        public IDictionary<Type, Func<RequestMetricBase>> GetTrackedMetrics() =>
-            requestMetricTypes;
-
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: RequestMetricBase, new()
-        {
-            requestMetricTypes.Add(typeof(T), () => new T());
-            return this;
-        }
-
-        public WebRequestsAnalyticsContainer Build()
-        {
-            foreach (IWebRequestsAnalyticsContainer.RequestType debugRequestType in DebugRequestTypes)
-            {
-                foreach ((Type? type, Func<RequestMetricBase>? ctor) in requestMetricTypes)
-                {
-                    RequestMetricBase? instance = ctor();
-
-                    if (!requestTypesWithMetrics.TryGetValue(debugRequestType.Type, out List<RequestMetricBase> metrics))
-                    {
-                        metrics = new List<RequestMetricBase>();
-                        requestTypesWithMetrics.Add(debugRequestType.Type, metrics);
-                    }
-
-                    instance.CreateDebugMenu(debugWidgetBuilder, debugRequestType);
-
-                    metrics.Add(instance);
-                }
-            }
-
-            return this;
-        }
-
-        public void RemoveFlatMetric(RequestMetricBase metric) =>
-            flatMetrics.Remove(metric);
-
-        private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
-
-        void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
-        {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<RequestMetricBase> metrics))
-                return;
-
             DateTime now = DateTime.Now;
 
-            pendingRequests.Add(request, now);
+            if (!pendingRequests.ContainsKey(request.UnityWebRequest)) return;
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestStarted(request, now);
-            }
+            pendingRequests[request.UnityWebRequest] = now;
 
-            foreach (RequestMetricBase flat in flatMetrics)
-                flat.OnRequestStarted(request, now);
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnRequestStarted(in envelope, request, now);
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<RequestMetricBase> metrics)) return;
-
-            if (!pendingRequests.Remove(request, out DateTime startTime))
+            if (!pendingRequests.TryGetValue(request.UnityWebRequest, out DateTime startTime))
                 return;
 
             DateTime now = DateTime.Now;
             TimeSpan duration = now - startTime;
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestEnded(request, duration);
-            }
-
-            foreach (RequestMetricBase flat in flatMetrics)
-                flat.OnRequestEnded(request, duration);
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnRequestFinished(request, duration);
         }
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
+        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest))
+                return;
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnProcessDataFinished(request);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+                return;
+
+            DateTime now = DateTime.Now;
+            TimeSpan duration = now - startTime;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnException(request, exception, duration);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+                return;
+
+            DateTime now = DateTime.Now;
+            TimeSpan duration = now - startTime;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnException(request, exception, duration);
+        }
+
+        void IWebRequestsAnalyticsContainer.Update(float dt)
+        {
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.Update(dt);
+        }
     }
 }
