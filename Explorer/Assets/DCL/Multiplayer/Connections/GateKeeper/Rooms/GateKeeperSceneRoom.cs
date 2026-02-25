@@ -116,7 +116,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         {
             if (options.IsCommsOffline)
             {
-                SetNoConnectionRequired();
+                if (AttemptToConnectState is not AttemptToConnectState.NO_CONNECTION_REQUIRED)
+                    SetNoConnectionRequired();
                 return;
             }
 
