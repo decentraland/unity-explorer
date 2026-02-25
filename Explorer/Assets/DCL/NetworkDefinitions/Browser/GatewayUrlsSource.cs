@@ -48,7 +48,6 @@ namespace DCL.Browser
 
             // Requires signed fetch
             DecentralandUrl.CameraReelImages,
-            DecentralandUrl.CameraReelLink,
             DecentralandUrl.CameraReelPlaces,
             DecentralandUrl.CameraReelUsers,
 
