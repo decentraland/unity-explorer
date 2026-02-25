@@ -90,8 +90,6 @@ namespace DCL.Interaction.HoverCanvas.UI
                 tooltipElement.style.opacity = 1;
                 tooltipElement.tabIndex = i;
             }
-
-            Debug.Log($"(Maurizio) count: {count}, isProximity: {isProximity}");
         }
 
         public void SetTooltip(string? hintText, string? actionKeyText, string? iconClass, int index)
