@@ -1,4 +1,5 @@
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
@@ -20,7 +21,6 @@ namespace DCL.Places
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
-        private const string FEATURED_CATEGORY = "featured";
 
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
@@ -29,13 +29,15 @@ namespace DCL.Places
 
         [Header("Place info")]
         [SerializeField] private ImageView placeThumbnailImage = null!;
+        [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
         [SerializeField] private TMP_Text placeDescriptionText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text placeCoordsText = null!;
         [SerializeField] private GameObject featuredTag = null!;
-        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
+        [SerializeField] private GameObject headerGradient = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -62,6 +64,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public HoverableTooltip tooltip;
             }
         }
 
@@ -124,7 +127,7 @@ namespace DCL.Places
             loadingThumbnailCts.SafeCancelAndDispose();
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
-            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false)
+            List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false, EventDTO? liveEvent = null)
         {
             currentPlaceInfo = placeInfo;
 
@@ -133,10 +136,12 @@ namespace DCL.Places
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = ownerName;
-            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            onlineMembersText.text = $"{onlineMembers}";
+            onlineMembersContainer.SetActive(onlineMembers > 0);
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
-            liveTag.SetActive(placeInfo.live);
+            featuredTag.SetActive(placeInfo.highlighted);
 
             bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
             friendsConnected.root.SetActive(showFriendsConnected);
@@ -153,18 +158,16 @@ namespace DCL.Places
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friends[i];
                     friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
                 }
             }
 
-            featuredTag.SetActive(false);
-            foreach (string category in placeInfo.categories)
-            {
-                if (category.Equals(FEATURED_CATEGORY, StringComparison.OrdinalIgnoreCase))
-                {
-                    featuredTag.SetActive(true);
-                    break;
-                }
-            }
+            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
+            if (liveEvent != null)
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
+
+            bool anyTagShowedInTheHeader = liveTagWithTooltip.gameObject.activeSelf || onlineMembersContainer.activeSelf || friendsConnected.root.activeSelf || featuredTag.activeSelf;
+            headerGradient.SetActive(anyTagShowedInTheHeader);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
