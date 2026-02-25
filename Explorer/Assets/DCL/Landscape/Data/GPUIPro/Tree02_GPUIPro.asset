@@ -26,7 +26,7 @@ MonoBehaviour:
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
-  <Collider>k__BackingField: {fileID: 536857151219079881, guid: 39bb3fc7f27d1844aadaca330495f86b, type: 3}
+  <Collider>k__BackingField: {fileID: 644640975603131071, guid: 39bb3fc7f27d1844aadaca330495f86b, type: 3}
   radius: 10
   secondaryRadius: 2
   TerrainDetailSettings:
