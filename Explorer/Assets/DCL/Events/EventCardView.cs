@@ -65,6 +65,7 @@ namespace DCL.Events
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public HoverableTooltip tooltip;
             }
         }
 
@@ -187,6 +188,7 @@ namespace DCL.Events
                         if (!friendExists) continue;
                         Profile.CompactInfo friendInfo = friends[i];
                         friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                        friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
                     }
                 }
             }

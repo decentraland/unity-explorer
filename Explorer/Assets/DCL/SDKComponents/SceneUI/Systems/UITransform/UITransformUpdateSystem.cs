@@ -63,8 +63,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 ref var parentComponent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
                 parentComponent.RelationData.layoutIsDirty = true;
             }
-
-            sdkModel.IsDirty = false;
         }
 
         [Query]
