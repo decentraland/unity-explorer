@@ -37,33 +37,33 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         }
 
         [Query]
-        [All(typeof(PBPhysicsImpulse))]
-        private void ApplyPhysicsImpulse(in PBPhysicsImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
+        [All(typeof(PBPhysicsTotalImpulse))]
+        private void ApplyPhysicsImpulse(in PBPhysicsTotalImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
             if (pbPhysicsImpulse.IsDirty == false) return;
 
-            if (pbPhysicsImpulse.Direction == null)
+            if (pbPhysicsImpulse.Vector == null)
             {
                 pbPhysicsImpulse.IsDirty = false;
                 return;
             }
 
             var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalImpulse += pbPhysicsImpulse.Direction.ToUnityVector();
+            rigidTransform.ExternalImpulse += pbPhysicsImpulse.Vector.ToUnityVector();
 
             pbPhysicsImpulse.IsDirty = false;
         }
 
         [Query]
-        [All(typeof(PBPhysicsForce))]
-        private void ApplyPhysicsForce(in PBPhysicsForce pbPhysicsForce, in CRDTEntity crdtEntity)
+        [All(typeof(PBPhysicsTotalForce))]
+        private void ApplyPhysicsForce(in PBPhysicsTotalForce pbPhysicsForce, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
-            if (pbPhysicsForce.Direction == null) return;
+            if (pbPhysicsForce.Vector == null) return;
 
             var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalForce += pbPhysicsForce.Direction.ToUnityVector();
+            rigidTransform.ExternalForce += pbPhysicsForce.Vector.ToUnityVector();
         }
     }
 }
