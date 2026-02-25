@@ -105,9 +105,9 @@ namespace DCL.Chat
             translationView.gameObject.SetActive(isVisible);
         }
 
-        public void UpdateName(string displaayText, ChatMessage originalMessage, string usernameOverride, string walletIdOverride)
+        public void UpdateName(string displayText, ChatMessage originalMessage, string usernameOverride, string walletIdOverride)
         {
-            backgroundSize.x = CalculatePreferredWidth(displaayText, originalMessage, usernameOverride, walletIdOverride);
+            backgroundSize.x = CalculatePreferredWidth(displayText, originalMessage, usernameOverride, walletIdOverride);
             backgroundRectTransform.sizeDelta = backgroundSize;
         }
 
