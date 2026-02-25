@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.AvatarRendering.Emotes;
 using DCL.ChatArea;
+using DCL.FeatureFlags;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -49,7 +50,6 @@ namespace DCL.UI.SharedSpaceManager
             World world,
             bool isFriendsEnabled,
             bool isCameraReelEnabled,
-            bool isDiscoverEnabled,
             IEventBus emotesEventBus)
         {
             this.mvcManager = mvcManager;
@@ -59,7 +59,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
-            isDiscoverFeatureEnabled = isDiscoverEnabled;
+            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             ecsWorld = world;
             this.emotesEventBus = emotesEventBus;
 
