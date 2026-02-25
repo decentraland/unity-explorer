@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat.History;
 using DCL.Input;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PrivateWorlds;
 using DCL.PrivateWorlds.UI;
 using DCL.Utilities.Extensions;
@@ -19,12 +20,13 @@ namespace DCL.PluginSystem.Global
     /// Plugin for Private Worlds feature. Registers popup controller.
     /// The handler (PrivateWorldAccessHandler) is created in DynamicWorldContainer.
     /// Chat minimization on popup show is handled by IBlocksChat on the popup controller.
-    /// When in a world, a permission guard periodically checks access and teleports to Genesis Plaza if denied.
+    /// When in a world, a permission guard checks access on comms disconnect signals and teleports to Genesis Plaza if denied.
     /// </summary>
     public class PrivateWorldsPlugin : IDCLGlobalPlugin<PrivateWorldsPlugin.PrivateWorldsSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IRoomHub roomHub;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
@@ -38,6 +40,7 @@ namespace DCL.PluginSystem.Global
         public PrivateWorldsPlugin(
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
+            IRoomHub roomHub,
             IWorldPermissionsService worldPermissionsService,
             IWorldAccessGate worldAccessGate,
             IInputBlock inputBlock,
@@ -48,6 +51,7 @@ namespace DCL.PluginSystem.Global
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
+            this.roomHub = roomHub;
             this.worldPermissionsService = worldPermissionsService;
             this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
@@ -64,7 +68,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            permissionGuard = new PrivateWorldPermissionGuard(realmData, worldPermissionsService, realmNavigator, worldCommsSecret, chatHistory);
+            permissionGuard = new PrivateWorldPermissionGuard(roomHub, realmData, worldPermissionsService, realmNavigator, worldCommsSecret, chatHistory);
 
             if (settings.PrivateWorldPopup != null)
             {

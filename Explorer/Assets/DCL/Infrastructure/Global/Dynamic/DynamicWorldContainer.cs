@@ -398,7 +398,7 @@ namespace Global.Dynamic
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions,
-                    worldCommsSecret) .AsActivatable();
+                    worldCommsSecret).AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -795,6 +795,7 @@ namespace Global.Dynamic
                 new PrivateWorldsPlugin(
                     mvcManager,
                     assetsProvisioner,
+                    roomHub,
                     worldPermissionsService,
                     worldAccessGate,
                     staticContainer.InputBlock,

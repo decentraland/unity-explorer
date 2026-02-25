@@ -2,23 +2,26 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
+using LiveKit.Proto;
+using LiveKit.Rooms;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.PrivateWorlds
 {
     /// <summary>
-    /// When the player is in a world, periodically checks permissions via <see cref="IWorldPermissionsService"/>.
-    /// If access is no longer allowed, teleports the player to Genesis Plaza.
+    /// When the player is in a world, checks permissions via <see cref="IWorldPermissionsService"/> on
+    /// relevant comms disconnect signals and teleports the player to Genesis Plaza if access is no longer allowed.
     /// </summary>
     public class PrivateWorldPermissionGuard
     {
-        private static readonly TimeSpan CHECK_INTERVAL = TimeSpan.FromSeconds(5);
-
+        private readonly IRoomHub roomHub;
         private readonly IRealmData realmData;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IRealmNavigator realmNavigator;
@@ -26,116 +29,129 @@ namespace DCL.PrivateWorlds
         private readonly IChatHistory chatHistory;
         private readonly CancellationTokenSource disposeCts = new();
 
-        private CancellationTokenSource? loopCts;
+        private bool isPermissionCheckRunning;
 
-        /// <param name="realmData">Current realm data; used to detect world entry/exit and to read the world name for permission checks.</param>
-        /// <param name="worldPermissionsService">Service used to check if the current user still has access to the world.</param>
-        /// <param name="realmNavigator">Used to teleport the player to Genesis Plaza when access is denied.</param>
-        /// <param name="worldCommsSecret">Contains validated world password. Used to distinguish "password required" from "already authenticated".</param>
-        /// <param name="chatHistory">Used to post a system message when access is revoked while already inside a world.</param>
         public PrivateWorldPermissionGuard(
+            IRoomHub roomHub,
             IRealmData realmData,
             IWorldPermissionsService worldPermissionsService,
             IRealmNavigator realmNavigator,
             IWorldCommsSecret worldCommsSecret,
             IChatHistory chatHistory)
         {
+            this.roomHub = roomHub;
             this.realmData = realmData;
             this.worldPermissionsService = worldPermissionsService;
             this.realmNavigator = realmNavigator;
             this.worldCommsSecret = worldCommsSecret;
             this.chatHistory = chatHistory;
 
-            realmData.RealmType.OnUpdate += OnRealmTypeChanged;
-            OnRealmTypeChanged(realmData.RealmType.Value);
+            roomHub.IslandRoom().ConnectionUpdated += OnIslandRoomConnectionUpdated;
         }
 
         public void Dispose()
         {
-            realmData.RealmType.OnUpdate -= OnRealmTypeChanged;
-            StopCheckLoop();
+            roomHub.IslandRoom().ConnectionUpdated -= OnIslandRoomConnectionUpdated;
             disposeCts.SafeCancelAndDispose();
         }
 
-        private void OnRealmTypeChanged(RealmKind realmKind)
+        private void OnIslandRoomConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
-            if (realmKind is RealmKind.World)
-                StartCheckLoop();
-            else
-                StopCheckLoop();
+            if (connectionUpdate != ConnectionUpdate.Disconnected)
+                return;
+
+            if (realmData.RealmType.Value is RealmKind.World && disconnectReason.HasValue)
+            {
+                ReportHub.Log(ReportCategory.REALM,
+                    $"[PrivateWorlds] Island room disconnected with reason {disconnectReason.Value}");
+            }
+
+            if (disconnectReason != DisconnectReason.ParticipantRemoved)
+                return;
+
+            RequestPermissionCheck();
         }
 
-        private void StartCheckLoop()
+        private void RequestPermissionCheck()
         {
-            StopCheckLoop();
-            loopCts = new CancellationTokenSource();
-            RunCheckLoopAsync(loopCts.Token).Forget();
+            if (realmData.RealmType.Value is not RealmKind.World)
+                return;
+
+            if (isPermissionCheckRunning)
+                return;
+
+            isPermissionCheckRunning = true;
+            RunPermissionCheckAsync(disposeCts.Token).Forget();
         }
 
-        private void StopCheckLoop()
-        {
-            loopCts.SafeCancelAndDispose();
-            loopCts = null;
-        }
-
-        private async UniTaskVoid RunCheckLoopAsync(CancellationToken ct)
+        private async UniTaskVoid RunPermissionCheckAsync(CancellationToken ct)
         {
             try
             {
-                while (!ct.IsCancellationRequested && realmData.RealmType.Value is RealmKind.World)
-                {
-                    await UniTask.Delay(CHECK_INTERVAL, cancellationToken: ct);
-                    if (ct.IsCancellationRequested)
-                        break;
-
-                    string worldName = realmData.RealmName;
-                    if (string.IsNullOrEmpty(worldName))
-                        continue;
-
-                    // NOTE: Add timeout here to be sure
-                    WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-                    if (ct.IsCancellationRequested)
-                        break;
-
-                    // Clear stale secret while in non-password worlds. This prevents a secret from a previous world
-                    // from making PasswordRequired checks look "authenticated" after permissions change.
-                    if (context.Result is WorldAccessCheckResult.Allowed &&
-                        context.AccessInfo?.AccessType is not WorldAccessType.SharedSecret &&
-                        !string.IsNullOrEmpty(worldCommsSecret.Secret))
-                    {
-                        worldCommsSecret.Secret = null;
-                    }
-
-                    bool accessRevoked = context.Result is WorldAccessCheckResult.AccessDenied
-                                         || (context.Result is WorldAccessCheckResult.PasswordRequired && string.IsNullOrEmpty(worldCommsSecret.Secret));
-
-                    if (accessRevoked)
-                    {
-                        ReportHub.Log(ReportCategory.REALM,
-                            $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}), teleporting to Genesis");
-
-                        var teleportResult = await realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false);
-
-                        if (!teleportResult.Success)
-                        {
-                            ReportHub.LogWarning(ReportCategory.REALM,
-                                $"[PrivateWorlds] Failed to teleport revoked user from '{worldName}' to Genesis. Permission guard will continue retrying.");
-                            continue;
-                        }
-
-                        chatHistory.AddMessage(
-                            ChatChannel.NEARBY_CHANNEL_ID,
-                            ChatChannel.ChatChannelType.NEARBY,
-                            ChatMessage.NewFromSystem("Permissions for this world changed. You were returned to Genesis Plaza."));
-                        return;
-                    }
-                }
+                await UniTask.SwitchToMainThread(ct);
+                await CheckCurrentWorldAccessAndTeleportIfRevokedAsync(ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.REALM);
             }
+            finally
+            {
+                isPermissionCheckRunning = false;
+            }
+        }
+
+        private async UniTask CheckCurrentWorldAccessAndTeleportIfRevokedAsync(CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested || realmData.RealmType.Value is not RealmKind.World)
+                return;
+
+            string worldName = realmData.RealmName;
+
+            if (string.IsNullOrEmpty(worldName))
+                return;
+
+            WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
+
+            if (ct.IsCancellationRequested || realmData.RealmType.Value is not RealmKind.World)
+                return;
+
+            // Realm could have changed while the async permission check was in flight.
+            if (!string.Equals(worldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // Clear stale secret while in non-password worlds. This prevents a secret from a previous world
+            // from making PasswordRequired checks look "authenticated" after permissions change.
+            if (context.Result is WorldAccessCheckResult.Allowed &&
+                context.AccessInfo?.AccessType is not WorldAccessType.SharedSecret &&
+                !string.IsNullOrEmpty(worldCommsSecret.Secret))
+            {
+                worldCommsSecret.Secret = null;
+            }
+
+            bool accessRevoked = context.Result is WorldAccessCheckResult.AccessDenied
+                                 || (context.Result is WorldAccessCheckResult.PasswordRequired && string.IsNullOrEmpty(worldCommsSecret.Secret));
+
+            if (!accessRevoked)
+                return;
+
+            ReportHub.Log(ReportCategory.REALM,
+                $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}) after ParticipantRemoved disconnect, teleporting to Genesis");
+
+            var teleportResult = await realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false);
+
+            if (!teleportResult.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[PrivateWorlds] Failed to teleport revoked user from '{worldName}' to Genesis after ParticipantRemoved disconnect. Waiting for the next permission check trigger.");
+                return;
+            }
+
+            chatHistory.AddMessage(
+                ChatChannel.NEARBY_CHANNEL_ID,
+                ChatChannel.ChatChannelType.NEARBY,
+                ChatMessage.NewFromSystem("Permissions for this world changed. You were returned to Genesis Plaza."));
         }
     }
 }
