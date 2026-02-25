@@ -48,6 +48,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(colorPickerController);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [Serializable]

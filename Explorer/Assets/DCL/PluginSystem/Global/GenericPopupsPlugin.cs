@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(chatEntryMenuPopupController);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [Serializable]

@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -42,6 +43,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(loadErrorGuardController);
         }
 
+        [Serializable]
         public class ErrorPopupSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject ErrorPopup { get; private set; } = null!;

@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
@@ -95,6 +96,7 @@ namespace DCL.PluginSystem.SmartWearables
                 web3IdentityCache);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             public AssetReferenceGameObject AuthorizationPopup;

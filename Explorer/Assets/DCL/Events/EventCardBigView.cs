@@ -3,7 +3,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System.Collections.Generic;
