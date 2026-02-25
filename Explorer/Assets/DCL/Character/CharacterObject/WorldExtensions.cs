@@ -11,6 +11,5 @@ namespace DCL.Character
         public static SingleInstanceEntity CachePlayer(this World world) =>
             new (in QUERY, world);
 
-        broken code, catch me if you can
     }
 }
