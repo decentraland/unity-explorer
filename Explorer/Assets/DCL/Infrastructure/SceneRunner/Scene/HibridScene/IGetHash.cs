@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -31,7 +30,7 @@ namespace SceneRunner.Scene
                     var getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(url), new CancellationToken(), reportCategory)
                         .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
-                    if (!getSceneDefinition.metadata.scene.DecodedParcels.Contains(coordinate)) continue;
+                    if (!getSceneDefinition.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
                     return (true, sceneHash);
                 }
@@ -68,7 +67,7 @@ namespace SceneRunner.Scene
                     var getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(sceneDefinitionURL), new CancellationToken(), reportCategory)
                         .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
-                    if (!getSceneDefinition.metadata.scene.DecodedParcels.Contains(coordinate)) continue;
+                    if (!getSceneDefinition.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
                     return (true, sceneHash);
                 }

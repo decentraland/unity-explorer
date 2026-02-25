@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        [Serializable]
         public class RewardPanelSettings : IDCLPluginSettings
         {
             [field: SerializeField]

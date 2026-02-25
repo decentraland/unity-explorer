@@ -14,17 +14,14 @@ namespace ECS
     public struct WorldManifest : IDisposable
     {
         public int total;
-
-        [JsonProperty("spawn_coordinate")]
-        public SpawnCoordinateData? spawn_coordinate;
-
-        [JsonIgnore]
+        public SpawnCoordinateData spawn_coordinate;
         private NativeHashSet<int2> occupiedParcels;
+        public bool IsEmpty { get; private set; }
 
-        [JsonIgnore]
-        private bool isEmpty;
-
-        public bool IsEmpty => isEmpty;
+        private int minX;
+        private int maxX;
+        private int minY;
+        private int maxY;
 
         //Avoid the dealloaction of occupiedParcels
         //Used by Genesis to avoid losing the data on realm change
@@ -38,27 +35,44 @@ namespace ECS
             if (IsNullOrEmpty(dto.roads) && IsNullOrEmpty(dto.occupied) && IsNullOrEmpty(dto.empty))
                 return Empty;
 
+            var occupied = ParseParcelStringsToSet(dto.occupied);
+            var (minX, maxX, minY, maxY) = CalculateBounds(occupied);
+
             return new WorldManifest
             {
                 total = dto.total,
                 spawn_coordinate = dto.spawn_coordinate,
-                occupiedParcels = ParseParcelStringsToSet(dto.occupied),
-                isEmpty = false,
+                occupiedParcels = occupied,
+                minX = minX,
+                maxX = maxX,
+                minY = minY,
+                maxY = maxY,
+                IsEmpty = false,
                 persist = persist
             };
         }
 
         public static WorldManifest Create(int2[] valueOccupiedParcels, bool persist = false)
         {
+            var occupied = ParcelArraysToSet(valueOccupiedParcels);
+            var (minX, maxX, minY, maxY) = CalculateBounds(occupied);
+
             return new WorldManifest
             {
                 total = valueOccupiedParcels.Length,
-                spawn_coordinate = null,
-                occupiedParcels = ParcelArraysToSet(valueOccupiedParcels),
-                isEmpty = false,
+                spawn_coordinate = new SpawnCoordinateData(0, 0),
+                occupiedParcels = occupied,
+                minX = minX,
+                maxX = maxX,
+                minY = minY,
+                maxY = maxY,
+                IsEmpty = false,
                 persist = persist
             };
         }
+
+        public bool IsParcelInsideBoundaries(int x, int y) =>
+            !IsEmpty && x >= minX && x <= maxX && y >= minY && y <= maxY;
 
         private static bool IsNullOrEmpty(string[]? a) => a == null || a.Length == 0;
 
@@ -90,9 +104,25 @@ namespace ECS
             return set;
         }
 
+        private static (int minX, int maxX, int minY, int maxY) CalculateBounds(NativeHashSet<int2> parcels)
+        {
+            int bMinX = int.MaxValue, bMaxX = int.MinValue;
+            int bMinY = int.MaxValue, bMaxY = int.MinValue;
+
+            foreach (int2 p in parcels)
+            {
+                if (p.x < bMinX) bMinX = p.x;
+                if (p.x > bMaxX) bMaxX = p.x;
+                if (p.y < bMinY) bMinY = p.y;
+                if (p.y > bMaxY) bMaxY = p.y;
+            }
+
+            return (bMinX, bMaxX, bMinY, bMaxY);
+        }
+
         public void Dispose()
         {
-            if (isEmpty) return;
+            if (IsEmpty) return;
             if (persist) return;
             if (occupiedParcels.IsCreated) occupiedParcels.Dispose();
         }
@@ -102,14 +132,21 @@ namespace ECS
         public static WorldManifest Empty => new ()
         {
             occupiedParcels = EMPTY_SET,
-            isEmpty = true
+            IsEmpty = true,
+            spawn_coordinate = new SpawnCoordinateData(0,0)
         };
+    }
 
-        [Serializable]
-        public class SpawnCoordinateData
+    [Serializable]
+    public class SpawnCoordinateData
+    {
+        public int x;
+        public int y;
+
+        public SpawnCoordinateData(int x, int y)
         {
-            public int x;
-            public int y;
+            this.x = x;
+            this.y = y;
         }
     }
 
@@ -124,7 +161,6 @@ namespace ECS
         public string[] empty;
         public int total;
 
-        [JsonProperty("spawn_coordinate")]
-        public WorldManifest.SpawnCoordinateData spawn_coordinate;
+        public SpawnCoordinateData spawn_coordinate;
     }
 }

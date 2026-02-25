@@ -17,11 +17,11 @@ namespace DCL.WebRequests.Analytics.Metrics
         public override ulong GetMetric() =>
             (ulong)(sum / count) * 1_000_000UL;
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
         }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public override void OnRequestEnded<T>(T request, TimeSpan duration)
         {
             if (request.UnityWebRequest.downloadedBytes < SMALL_FILE_SIZE_FLOOR) return;
 

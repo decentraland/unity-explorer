@@ -147,7 +147,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuBlockUserButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
         private NameColorPickerController? colorPickerController;
-        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -542,6 +541,31 @@ namespace DCL.Passport
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
+
+            if(isOwnProfile)
+                TrySaveAsync(CancellationToken.None).Forget();
+            return;
+
+            async UniTaskVoid TrySaveAsync(CancellationToken ct)
+            {
+                if (colorPickerController == null)
+                    return;
+
+                Profile? profile = await selfProfile.ProfileAsync(ct);
+                if (profile != null)
+                {
+                    profile.ClaimedNameColor = colorPickerController.CurrentColor;
+                    try
+                    {
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushUpdate(updatedProfile);
+                    }
+                    catch (IdenticalProfileUpdateException) { }
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+                }
+            }
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -623,7 +647,6 @@ namespace DCL.Passport
 
         private void SetNewUserNameColor(Color color)
         {
-            userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
         }

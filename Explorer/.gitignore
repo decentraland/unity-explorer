@@ -85,5 +85,5 @@ Assets/AddressableAssetsData/link.xml.meta
 Assets/Resources/PerformanceTestRunInfo.*
 Assets/Resources/PerformanceTestRunSettings.*
 
-# Disk caching
+# Disk caching 
 DiskCache/

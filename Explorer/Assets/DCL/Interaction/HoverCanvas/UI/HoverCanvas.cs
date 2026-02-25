@@ -5,7 +5,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.Interaction.HoverCanvas.UI
 {
-    public class HoverCanvas : VisualElement
+    [UxmlElement]
+    public partial class HoverCanvas : VisualElement
     {
         private static readonly int[] LAYOUT_1_PROXIMITY = { 5 };
         private static readonly int[] LAYOUT_1_CURSOR = { 6 };
@@ -100,8 +101,6 @@ namespace DCL.Interaction.HoverCanvas.UI
             int tooltipsIndex = selectedLayoutIndices[index];
             tooltips[tooltipsIndex].SetData(hintText, actionKeyText, iconClass);
         }
-
-        public new class UxmlFactory : UxmlFactory<HoverCanvas> { }
 
         private void ResetAllTooltips()
         {

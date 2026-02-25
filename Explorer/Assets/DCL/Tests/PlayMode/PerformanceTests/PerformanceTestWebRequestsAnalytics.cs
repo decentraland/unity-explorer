@@ -54,8 +54,6 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 Measure.Custom(downloadedDataSize, request.UnityWebRequest.downloadedBytes / 1_000_000D);
             }
             else { Measure.Custom(sendRequestFailed, 1); }
-
-            requests.Remove(request.UnityWebRequest);
         }
 
         void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)

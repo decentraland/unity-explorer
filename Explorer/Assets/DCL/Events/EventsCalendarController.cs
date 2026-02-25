@@ -20,6 +20,9 @@ namespace DCL.Events
 {
     public class EventsCalendarController : IDisposable
     {
+        public event Action<EventDTO>? EventCardClicked;
+
+        private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error loading live events. Please try again.";
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
 
         private readonly EventsCalendarView view;
@@ -118,9 +121,12 @@ namespace DCL.Events
         private void OnEventCardClicked(EventDTO eventInfo, PlacesData.PlaceInfo? placeInfo, EventCardView eventCardView)
         {
             if (string.IsNullOrEmpty(eventInfo.id))
-                eventsController.GoToCreateEventPage();
+                eventsController.GoToCreateEventPage(false);
             else
+            {
                 mvcManager.ShowAsync(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventInfo, placeInfo, eventCardView))).Forget();
+                EventCardClicked?.Invoke(eventInfo);
+            }
         }
 
         private void OnEventInterestedButtonClicked(EventDTO eventInfo, EventCardView eventCardView)
@@ -183,7 +189,7 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)
@@ -199,7 +205,19 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            var fromDateUtc = fromDate.ToUniversalTime();
+            Result<IReadOnlyList<EventDTO>> liveEventsResults = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                      .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            if (!liveEventsResults.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
+                return;
+            }
+
+            var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
                                                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -213,22 +231,48 @@ namespace DCL.Events
                 return;
             }
 
+            List<EventDTO> eventsList = new ();
+            if (fromDate.Date == DateTime.Today)
+            {
+                // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
+                foreach (EventDTO liveEventInfo in liveEventsResults.Value)
+                {
+                    DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
+                    if (eventLocalDate.Date < fromDate)
+                        eventsList.Add(liveEventInfo);
+                }
+            }
+            foreach (EventDTO eventInfo in eventsResult.Value)
+            {
+                DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
+                if (eventLocalDate.Date >= fromDate)
+                    eventsList.Add(eventInfo);
+            }
 
             using PoolExtensions.Scope<List<List<EventDTO>>> eventsGroupedByDay = EVENTS_GROUPED_BY_DAY_POOL.AutoScope();
             for (var i = 0; i < numberOfDays; i++)
                 eventsGroupedByDay.Value.Add(new List<EventDTO>());
 
-            if (eventsResult.Value.Count > 0)
+            if (eventsList.Count > 0)
             {
-                eventsStateService.AddEvents(eventsResult.Value);
+                eventsStateService.AddEvents(eventsList);
 
                 List<string> placesIds = new ();
-                foreach (EventDTO eventInfo in eventsResult.Value)
+                List<EventDTO> liveEventsPriorToToday = new ();
+                foreach (EventDTO eventInfo in eventsList)
                 {
                     DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
 
                     for (var i = 0; i < numberOfDays; i++)
                     {
+                        // Live events prior to today have to be also shown on the calendar
+                        bool isTodayColumn = i == 0;
+                        if (eventInfo.live && fromDate.Date == DateTime.Today && isTodayColumn && eventLocalDate.Date < fromDate)
+                        {
+                            liveEventsPriorToToday.Add(eventInfo);
+                            break;
+                        }
+
                         if (eventLocalDate.Date == fromDate.AddDays(i))
                         {
                             eventsGroupedByDay.Value[i].Add(eventInfo);
@@ -240,7 +284,21 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(placesIds, ct)
+                // Live events prior to today have to be placed after the today's live events
+                if (liveEventsPriorToToday.Count > 0)
+                {
+                    var todayLiveEventsCount = 0;
+                    foreach (EventDTO eventInfo in eventsGroupedByDay.Value[0])
+                    {
+                        if (eventInfo.live)
+                            todayLiveEventsCount++;
+                    }
+
+                    foreach (EventDTO liveEventInfo in liveEventsPriorToToday)
+                        eventsGroupedByDay.Value[0].Insert(todayLiveEventsCount++, liveEventInfo);
+                }
+
+                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (placesResponse.Success)

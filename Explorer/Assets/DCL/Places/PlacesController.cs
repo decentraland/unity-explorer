@@ -1,5 +1,6 @@
 ﻿using DCL.Browser;
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
@@ -20,13 +21,15 @@ namespace DCL.Places
         public event Action<PlacesFilters>? FiltersChanged;
         public event Action? PlacesClosed;
 
+        public PlacesResultsController PlacesResultsController { get; }
+        public PlacesCardSocialActionsController PlaceCardActionsController { get; }
+
         private readonly PlacesView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
 
         private bool isSectionActivated;
         private readonly PlacesStateService placesStateService;
-        private readonly PlacesResultsController placesResultsController;
         private readonly PlaceCategoriesSO placesCategories;
         private readonly IInputBlock inputBlock;
 
@@ -43,17 +46,19 @@ namespace DCL.Places
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
-            HomePlaceEventBus homePlaceEventBus)
+            HomePlaceEventBus homePlaceEventBus,
+            HttpEventsApiService eventsApiService)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.placesCategories = placesCategories;
             this.inputBlock = inputBlock;
+            PlaceCardActionsController = placesCardSocialActionsController;
 
             placesStateService = new PlacesStateService();
-            placesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, placesCategories, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+            PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;
@@ -67,7 +72,7 @@ namespace DCL.Places
             view.SearchBarDeselected -= RestoreShortcutsInput;
 
             placesStateService.Dispose();
-            placesResultsController.Dispose();
+            PlacesResultsController.Dispose();
         }
 
         public void Activate()
@@ -86,7 +91,7 @@ namespace DCL.Places
 
         public void Deactivate()
         {
-            // Must be before setting the view inactive or the focus state will be false regardless
+            // Must be before setting the view inactive, or the focus state will be false regardless
             if (view.IsSearchBarFocused)
                 RestoreShortcutsInput();
 
@@ -105,10 +110,10 @@ namespace DCL.Places
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
             view.SetFiltersVisible(section == PlacesSection.BROWSE);
-            view.OpenSection(section, force, invokeEvent, cleanSearch);
+            view.OpenSection(section, force, invokeEvent, cleanSearch, resetCategory);
         }
 
         private void OnAnyFilterChanged(PlacesFilters newFilters)

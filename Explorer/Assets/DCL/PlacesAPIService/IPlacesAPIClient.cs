@@ -50,8 +50,9 @@ namespace DCL.PlacesAPIService
             bool? onlySdk7 = null,
             bool? withLiveEvents = null);
 
-        UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct);
-        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null);
+        UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
 

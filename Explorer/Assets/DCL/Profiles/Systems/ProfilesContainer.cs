@@ -26,12 +26,12 @@ namespace DCL.Profiles
 
         public IProfileRepository Repository { get; }
 
-        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, PublishIpfsEntityCommand publishIpfsEntityCommand, IAnalyticsController analyticsController, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, PublishIpfsEntityCommand publishIpfsEntityCommand, AnalyticsContainer analyticsContainer)
         {
             this.webRequestController = webRequestController;
             Cache = new DefaultProfileCache();
 
-            profilesDebug = new ProfilesAnalytics(ProfilesDebug.Create(debugContainerBuilder), analyticsController);
+            profilesDebug = new ProfilesAnalytics(ProfilesDebug.Create(analyticsContainer.EntitiesAnalytics.AnalyticsDebug.Widget, analyticsContainer.EntitiesAnalytics.AnalyticsDebug), analyticsContainer.Controller);
 
             Repository = new LogProfileRepository(
                 repository = new RealmProfileRepository(webRequestController, publishIpfsEntityCommand, urlsSource, Cache, profilesDebug, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
