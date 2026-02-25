@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using Drakkar.GameUtils;
 using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -51,6 +52,13 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> cpuRenderThreadFrameTime;
 
         private ElementBinding<string> bottleneck;
+
+        private DebugWidgetVisibilityBinding cullingVisibilityBinding;
+        private ElementBinding<string> cullOccludersActive;
+        private ElementBinding<string> cullOccludeesRegistered;
+        private ElementBinding<string> cullOccludeesVisible;
+        private ElementBinding<string> cullOccludeesOccluded;
+        private ElementBinding<string> cullOccludeesFrustumCulled;
 
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
@@ -151,6 +159,16 @@ namespace DCL.Profiling.ECS
                 }
 
 
+                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CULLING)
+                            ?.SetVisibilityBinding(cullingVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddToggleField("Enable Culling", evt => VisibilityManager.SetEnable(evt.newValue), true)
+                            .AddToggleField("Debug Overlay", evt => { if (VisibilityManager.instance != null) VisibilityManager.instance.debug = evt.newValue; }, false)
+                            .AddCustomMarker("Occluders active:", cullOccludersActive = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Occludees registered:", cullOccludeesRegistered = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Visible:", cullOccludeesVisible = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Occluded:", cullOccludeesOccluded = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Frustum culled:", cullOccludeesFrustumCulled = new ElementBinding<string>(string.Empty));
+
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CRASH)?
                             .AddSingleButton("FatalError", () => { Utils.ForceCrash(ForcedCrashCategory.FatalError); })
                             .AddSingleButton("Abort", () => { Utils.ForceCrash(ForcedCrashCategory.Abort); })
@@ -226,6 +244,21 @@ namespace DCL.Profiling.ECS
                     UpdateFrameTimings();
 
                 framesSinceMetricsUpdate++;
+            }
+
+            if (cullingVisibilityBinding != null && cullingVisibilityBinding.IsExpanded)
+            {
+                VisibilityManager vm = VisibilityManager.instance;
+
+                if (vm != null)
+                {
+                    VisibilityManager.CullingStats s = vm.cullingStats;
+                    cullOccludersActive.Value = s.OccludersActive.ToString();
+                    cullOccludeesRegistered.Value = s.OccludeesRegistered.ToString();
+                    cullOccludeesVisible.Value = s.OccludeesVisible.ToString();
+                    cullOccludeesOccluded.Value = s.OccludeesOccluded.ToString();
+                    cullOccludeesFrustumCulled.Value = s.OccludeesFrustumCulled.ToString();
+                }
             }
         }
 
