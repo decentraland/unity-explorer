@@ -72,8 +72,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IGateKeeperSceneRoom AsActivatable() =>
             new Activatable(this);
 
-        private bool IsSceneConnected(string? sceneId) =>
-            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase);
+        private bool IsSceneConnected(string? sceneId)
+        {
+            if (options.IsCommsOffline)
+                return false;
+
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+                return false;
+
+            if (options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated
+                && !string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
 
         public override async UniTask StopAsync()
         {
@@ -102,6 +114,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
+            if (options.IsCommsOffline)
+            {
+                if (AttemptToConnectState is not AttemptToConnectState.NO_CONNECTION_REQUIRED)
+                    SetNoConnectionRequired();
+                return;
+            }
+
             MetaData meta = default;
 
             try

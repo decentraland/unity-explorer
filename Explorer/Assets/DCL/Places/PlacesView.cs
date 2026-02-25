@@ -17,7 +17,7 @@ namespace DCL.Places
         private const int CATEGORY_BUTTONS_POOL_DEFAULT_CAPACITY = 15;
         private const string ALL_CATEGORY_ID = "all";
         private const float PLACES_RESULTS_TOP_Y_OFFSET_MAX = -20f;
-        private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -80f;
+        private const float PLACES_RESULTS_BOTTOM_Y_OFFSET_MAX = -40f;
 
         public event Action<PlacesFilters>? AnyFilterChanged;
         public event Action? SearchBarSelected;
@@ -123,7 +123,7 @@ namespace DCL.Places
             headerAnimator.Update(0);
         }
 
-        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true)
+        public void OpenSection(PlacesSection section, bool force = false, bool invokeEvent = true, bool cleanSearch = true, bool resetCategory = false)
         {
             if (currentFilters.Section == section && !force)
                 return;
@@ -138,6 +138,9 @@ namespace DCL.Places
                 CleanSearchBar(raiseOnChangeEvent: false);
                 currentFilters.SearchText = string.Empty;
             }
+
+            if (resetCategory)
+                SelectCategory(ALL_CATEGORY_ID, invokeEvent: false);
 
             switch (section)
             {

@@ -89,7 +89,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             try
             {
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                isConnectedSceneRoom = sceneRoom.CurrentState() == IConnectiveRoom.State.Running && sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
+                isConnectedSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
                 room = roomHub.IslandRoom().Info.Sid ?? string.Empty;
             }
             catch (Exception)
