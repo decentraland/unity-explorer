@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion.Animation
             ICharacterControllerSettings settings)
         {
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
-            float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
+            float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y + rigidTransform.ExternalVelocity.y;
 
             animationComponent.States.IsGrounded = isGrounded;
             animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
