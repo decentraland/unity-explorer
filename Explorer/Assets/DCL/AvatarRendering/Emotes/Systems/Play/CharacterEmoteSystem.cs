@@ -75,7 +75,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
-            CancelEmotesByGlidingQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
             CancelEmotesByDeletionQuery(World);
@@ -108,15 +107,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-
-        /// <summary>
-        /// Stops emote playback then the character is gliding.
-        /// </summary>
-        [Query]
-        private void CancelEmotesByGliding(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in GlideState glideState)
-        {
-            if (glideState.Value != GlideStateValue.PROP_CLOSED) StopEmote(ref emoteComponent, avatarView);
-        }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
@@ -221,7 +211,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                     avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
