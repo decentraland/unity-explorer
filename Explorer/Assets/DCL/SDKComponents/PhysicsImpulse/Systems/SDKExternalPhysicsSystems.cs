@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.PhysicsImpulse.Systems
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))] // SyncedSimulationSystemGroup updates before we apply CharacterMotion in GlobalWorld
     [LogCategory(ReportCategory.MOTION)]
     public partial class SDKExternalPhysicsSystems : BaseUnityLoopSystem
     {
@@ -41,10 +41,12 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         private void ApplyPhysicsForce(in PBPhysicsTotalForce pbPhysicsForce, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
-            if (pbPhysicsForce.Vector == null) return;
 
-            var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalForce += pbPhysicsForce.Vector.ToUnityVector();
+            if (pbPhysicsForce.Vector != null)
+            {
+                var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
+                rigidTransform.ExternalForce += pbPhysicsForce.Vector.ToUnityVector();
+            }
         }
 
         [Query]
@@ -52,18 +54,14 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         private void ApplyPhysicsImpulse(in PBPhysicsTotalImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
-            if (pbPhysicsImpulse.IsDirty == false) return;
 
-            if (pbPhysicsImpulse.Vector == null)
+            if (pbPhysicsImpulse is { IsDirty: true, Vector: not null })
             {
+                var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
+                rigidTransform.ExternalImpulse += pbPhysicsImpulse.Vector.ToUnityVector();
+
                 pbPhysicsImpulse.IsDirty = false;
-                return;
             }
-
-            var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalImpulse += pbPhysicsImpulse.Vector.ToUnityVector();
-
-            pbPhysicsImpulse.IsDirty = false;
         }
     }
 }
