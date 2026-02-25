@@ -43,6 +43,7 @@ namespace ECS
         /// <summary>
         ///     Realm-level fixed skybox hour in seconds (from server about configurations.skybox.fixedHour).
         ///     Null when not set, meaning the realm does not enforce a fixed time of day.
+        ///     Measured in seconds of a day
         /// </summary>
         float? SkyboxFixedHour { get; }
 

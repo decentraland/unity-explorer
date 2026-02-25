@@ -6,6 +6,7 @@ namespace DCL.Ipfs
     [Serializable]
     public class ServerSkyboxConfig
     {
+        // Measured in seconds of a day
         public float fixedHour = -1;
     }
 
