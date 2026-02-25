@@ -71,6 +71,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
+        private TimeSpan batchHeartbeat;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -135,8 +136,10 @@ namespace DCL.PluginSystem.Global
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
+                new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
                 emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics);
+
+            BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
 
             LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
@@ -157,6 +160,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+
             IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
 
             // Initialize the embedded emote URN mapping for legacy emote conversion
@@ -196,6 +201,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

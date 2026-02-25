@@ -6,7 +6,8 @@ namespace DCL.DebugUtilities.Views
     /// <summary>
     ///     Container with the scroll view for all possible debug utilities
     /// </summary>
-    public class DebugContainer : VisualElement
+    [UxmlElement]
+    public partial class DebugContainer : VisualElement
     {
         internal VisualElement containerRoot => this.Q<VisualElement>("Parent");
         private VisualElement mainPanel;
@@ -33,7 +34,5 @@ namespace DCL.DebugUtilities.Views
 
         public void HideToggleButton() =>
             toolButton.style.display = DisplayStyle.None;
-
-        public new class UxmlFactory : UxmlFactory<DebugContainer> { }
     }
 }
