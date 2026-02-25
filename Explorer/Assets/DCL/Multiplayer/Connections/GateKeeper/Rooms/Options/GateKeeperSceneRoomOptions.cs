@@ -12,6 +12,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; }
         public IRealmData RealmData { get; }
 
+        public bool IsCommsOffline => realmData.CommsAdapter.Contains("offline:offline");
+
         private readonly string? overrideAdapterURL;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
