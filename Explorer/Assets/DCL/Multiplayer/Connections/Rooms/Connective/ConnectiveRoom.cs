@@ -189,8 +189,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    // When we receive a 403 Forbidden Access error, we have to set the attempt to connect state to FORBIDDEN_ACCESS
-                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                    // World content server scene comms can return 401 for denied access, while older flows returned 403.
+                    // Both should trigger the forbidden-access recovery path (used by scene-ban handling).
+                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS or WebRequestUtils.UNAUTHORIZED_ACCESS })
                         OnForbiddenAccess();
 
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
