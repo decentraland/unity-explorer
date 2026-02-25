@@ -46,6 +46,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.NAME_COLOR_CHANGE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.NAME_COLOR_CHANGE, featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || Application.isEditor),
                 [FeatureId.EMAIL_OTP_AUTH] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 [FeatureId.CHECK_DISK_SPACE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
+                [FeatureId.DISCOVER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || Application.isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -155,6 +156,7 @@ namespace DCL.FeatureFlags
         FORCE_BACKFACE_CULLING,
         NAME_COLOR_CHANGE,
         EMAIL_OTP_AUTH,
-        CHECK_DISK_SPACE
+        CHECK_DISK_SPACE,
+        DISCOVER,
     }
 }
