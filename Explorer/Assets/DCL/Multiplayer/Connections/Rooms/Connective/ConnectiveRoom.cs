@@ -224,7 +224,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected void SetNoConnectionRequired()
         {
-            roomState.Set(IConnectiveRoom.State.Stopped);
             attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
         }
 
