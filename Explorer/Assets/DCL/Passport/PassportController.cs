@@ -147,7 +147,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuBlockUserButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
         private NameColorPickerController? colorPickerController;
-        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -630,7 +629,7 @@ namespace DCL.Passport
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
                     // Load avatar preview
-                    characterPreviewController!.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_3);
+                    characterPreviewController!.Initialize(profile.Avatar, CharacterPreviewUtils.PASSPORT_PREVIEW_POSITION);
                     characterPreviewController.OnShow();
                 }
 
@@ -648,7 +647,6 @@ namespace DCL.Passport
 
         private void SetNewUserNameColor(Color color)
         {
-            userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
         }

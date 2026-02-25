@@ -29,6 +29,12 @@ namespace DCL.WebRequests.Dumper
             writer.WritePropertyName("args");
             serializer.Serialize(writer, value.Args);
 
+            if (value.EffectiveUrl != null)
+            {
+                writer.WritePropertyName("effectiveUrl");
+                serializer.Serialize(writer, value.EffectiveUrl);
+            }
+
             writer.WritePropertyName("status");
             writer.WriteValue(value.Status);
 
@@ -56,6 +62,7 @@ namespace DCL.WebRequests.Dumper
             Type? requestType = null;
             Type? argsType = null;
             object? args = null;
+            string? effectiveUrl = null;
             WebRequestHeadersInfo? headersInfo = null;
             DateTime startTime = DateTime.MinValue;
             DateTime endTime = DateTime.MinValue;
@@ -125,6 +132,11 @@ namespace DCL.WebRequests.Dumper
                         statusKind = serializer.Deserialize<WebRequestDump.Envelope.StatusKind>(reader);
                         break;
 
+                    case "effectiveUrl":
+                        reader.Read();
+                        effectiveUrl = reader.Value?.ToString();
+                        break;
+
                     default:
                         reader.Skip();
                         break;
@@ -134,7 +146,7 @@ namespace DCL.WebRequests.Dumper
             if (!commonArguments.HasValue || argsType == null)
                 throw new JsonSerializationException("Required properties 'commonArguments' or 'argsType' are missing");
 
-            var envelope = new WebRequestDump.Envelope(requestType, commonArguments.Value, argsType, args, headersInfo, startTime);
+            var envelope = new WebRequestDump.Envelope(requestType, commonArguments.Value, argsType, args, headersInfo, startTime, effectiveUrl);
             envelope.Conclude(statusKind, endTime);
 
             return envelope;

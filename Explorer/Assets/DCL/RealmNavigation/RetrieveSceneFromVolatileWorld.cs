@@ -38,8 +38,6 @@ namespace DCL.RealmNavigation
             if (!realmData.Configured) return null;
             if (World == null) return null;
 
-            IIpfsRealm realmIpfs = realmData.Ipfs;
-
             // Just make a request, cache to be implemented on the side of LoadSceneDefinition Systems
             using PoolExtensions.Scope<List<int2>> pointersList = POINTERS_POOL.AutoScope();
             using PoolExtensions.Scope<List<SceneEntityDefinition>> targetCollection = TARGET_COLLECTION_POOL.AutoScope();

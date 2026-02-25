@@ -22,13 +22,13 @@ namespace DCL.WebRequests.Dumper
         private static bool IsSigned(ITypedWebRequest request) =>
             !string.IsNullOrEmpty(request.UnityWebRequest.GetRequestHeader("x-identity-auth-chain-0"));
 
-        public override void OnRequestStarted(ITypedWebRequest request, DateTime startTime)
+        public override void OnRequestStarted<T>(T request, DateTime startTime)
         {
             if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
             metric.OnRequestStarted(request, startTime);
         }
 
-        public override void OnRequestEnded(ITypedWebRequest request, TimeSpan duration)
+        public override void OnRequestEnded<T>(T request, TimeSpan duration)
         {
             if (!WebRequestsDumper.Instance.IsMatch(IsSigned(request), request.UnityWebRequest.url)) return;
             metric.OnRequestEnded(request, duration);

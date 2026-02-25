@@ -56,6 +56,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             view.JumpIntoWorldButton.interactable = true;
             view.DiffAccountButton.interactable = true;
@@ -74,7 +76,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewView.transform.SetAsFirstSibling();
             characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
 
-            characterPreviewController.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);
+            characterPreviewController.Initialize(profile.Avatar, CharacterPreviewUtils.AUTH_SCREEN_PREVIEW_POSITION);
             characterPreviewController.OnBeforeShow();
             characterPreviewController.OnShow();
 
@@ -95,6 +97,7 @@ namespace DCL.AuthenticationScreenFlow
             view.DiffAccountButton.onClick.RemoveAllListeners();
 
             loginCt = CancellationToken.None;
+            base.Exit();
         }
 
         private void OnDiffAccountButtonClicked()

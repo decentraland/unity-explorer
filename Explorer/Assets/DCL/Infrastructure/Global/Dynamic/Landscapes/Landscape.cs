@@ -6,9 +6,8 @@ using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -124,18 +123,18 @@ namespace Global.Dynamic.Landscapes
                 return;
             }
 
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            List<SceneEntityDefinition> sceneEntityDefinitions = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var parcelsAmount = 0;
 
-            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
+            foreach (SceneEntityDefinition sceneEntity in sceneEntityDefinitions)
+                parcelsAmount += sceneEntity.metadata.scene.DecodedParcels.Count;
 
             using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
-                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                foreach (SceneEntityDefinition sceneEntity in sceneEntityDefinitions)
                 {
-                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                    foreach (Vector2Int parcel in sceneEntity.metadata.scene.DecodedParcels)
                         parcels.Add(parcel.ToInt2());
                 }
 

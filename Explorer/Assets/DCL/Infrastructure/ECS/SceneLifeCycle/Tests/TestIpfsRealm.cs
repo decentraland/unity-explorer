@@ -31,9 +31,6 @@ namespace ECS.SceneLifeCycle.Tests
             LambdasBaseUrl = URLDomain.EMPTY;
         }
 
-        public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, JsonSerializerSettings? serializerSettings = null, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
-            throw new NotSupportedException();
-
         public string GetFileHash(byte[] file) =>
             file.IpfsHashV1();
     }

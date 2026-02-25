@@ -174,7 +174,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -369,6 +369,7 @@ namespace Global.Dynamic
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
 
             var specsProperties = new JObject
             {

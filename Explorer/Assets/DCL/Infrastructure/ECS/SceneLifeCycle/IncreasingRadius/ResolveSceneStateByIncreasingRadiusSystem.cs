@@ -38,7 +38,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Entity playerEntity;
         private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         //Array sorting helpers
         private readonly List<OrderedDataManaged> orderedDataManaged;
@@ -55,13 +54,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity,
-            VisualSceneStateResolver visualSceneStateResolver, IDecentralandUrlsSource urlsSource,
+            VisualSceneStateResolver visualSceneStateResolver,
             SceneLoadingLimit sceneLoadingLimit) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.visualSceneStateResolver = visualSceneStateResolver;
-            this.urlsSource = urlsSource;
             this.realmPartitionSettings = realmPartitionSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
 
@@ -116,7 +114,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 //Portable experiences shouldnt be analyzed. Create straight away
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)), sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
+                    new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
             }
             else
             {
@@ -341,7 +339,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
                     if (!World.Has<ISceneFacade>(entity))
                         World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)), sceneDefinitionComponent), partitionComponent));
+                            new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent));
                     break;
             }
         }

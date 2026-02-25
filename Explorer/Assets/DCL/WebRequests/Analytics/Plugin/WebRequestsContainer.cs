@@ -117,7 +117,7 @@ namespace DCL.WebRequests.Analytics
 
                 var debugHandler = new DebugMetricsAnalyticsHandler(widget);
                 container.debugMetricsAnalyticsHandler = debugHandler;
-                var dumpHandler = new WebRequestDumpAnalyticsHandler();
+                var dumpHandler = new WebRequestDumpAnalyticsHandler(debugHandler);
 
                 WebRequestsDumper.Instance.AnalyticsHandler = dumpHandler;
 
@@ -133,12 +133,10 @@ namespace DCL.WebRequests.Analytics
                 var requestHub = new RequestHub(urlsSource);
 
                 IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget))
-                                                                .WithDump(debugHandler, dumpHandler)
                                                                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                 .WithArtificialDelay(options);
 
                 IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
-                                                                 .WithDump(debugHandler, dumpHandler)
                                                                  .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                  .WithArtificialDelay(options);
 
