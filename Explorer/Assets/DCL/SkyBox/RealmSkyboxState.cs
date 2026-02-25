@@ -37,6 +37,7 @@ namespace DCL.SkyBox
                 SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
 
             settings.IsDayCycleEnabled = false;
+            settings.TransitionMode = TransitionMode.FORWARD;
             ApplyFixedHour();
             transition.Enter();
         }
