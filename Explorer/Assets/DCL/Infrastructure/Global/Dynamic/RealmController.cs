@@ -30,6 +30,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
+using DCL.PrivateWorlds;
 using Utility;
 
 namespace Global.Dynamic
@@ -190,7 +191,7 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
         {
-            const string SIGN_METADATA = "{\"intent\": \"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
+            string signMetadata = CommsHandshakeMetadata.BuildJson(null);
             ServerAbout about;
             try
             {
@@ -217,7 +218,7 @@ namespace Global.Dynamic
             {
                 statusCode = await webRequestController.SignedFetchPostAsync(
                                                             commsAdapterUrl,
-                                                            SIGN_METADATA,
+                                                            signMetadata,
                                                             ct)
                                                        .StatusCodeAsync();
             }

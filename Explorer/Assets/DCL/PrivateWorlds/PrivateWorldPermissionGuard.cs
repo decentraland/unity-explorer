@@ -121,6 +121,7 @@ namespace DCL.PrivateWorlds
             if (!string.Equals(worldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase))
                 return;
 
+            // NOTE:
             // Clear stale secret while in non-password worlds. This prevents a secret from a previous world
             // from making PasswordRequired checks look "authenticated" after permissions change.
             if (context.Result is WorldAccessCheckResult.Allowed &&

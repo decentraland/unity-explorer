@@ -26,7 +26,7 @@ namespace DCL.PrivateWorlds
                 intent = INTENT,
                 signer = SIGNER,
                 isGuest = false,
-                secret = string.IsNullOrEmpty(secret) ? MISSING_SECRET_FALLBACK : secret!,
+                secret = string.IsNullOrEmpty(secret) ? MISSING_SECRET_FALLBACK : secret,
             };
 
             return JsonUtility.ToJson(metadata);
