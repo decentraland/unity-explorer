@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Castle.Core.Internal;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
@@ -12,8 +11,6 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Utility;
 using RaycastHit = UnityEngine.RaycastHit;
@@ -46,12 +43,12 @@ namespace DCL.Interaction.Systems
         /// <summary>
         ///     Threshold used to calculate whether an entity falls inside the FOV sphere slice.
         /// </summary>
-        private static readonly float fovAngleCosThres = Mathf.Cos(PROXIMITY_FOV_ANGLE_DEGREES * 0.5f * Mathf.Deg2Rad);
+        private static readonly float FOV_ANGLE_COS_THRES = Mathf.Cos(PROXIMITY_FOV_ANGLE_DEGREES * 0.5f * Mathf.Deg2Rad);
 
         /// <summary>
         ///     Precomputed squared threshold
         /// </summary>
-        private readonly float sqrFovAngleCosThres = fovAngleCosThres * fovAngleCosThres;
+        private readonly float sqrFovAngleCosThres = FOV_ANGLE_COS_THRES * FOV_ANGLE_COS_THRES;
 
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly IScenesCache scenesCache;
