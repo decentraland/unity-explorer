@@ -157,10 +157,8 @@ namespace DCL.RealmNavigation
             {
                 return await gate.CheckAccessAsync(worldName, null, ct);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                if (ct.IsCancellationRequested)
-                    return WorldAccessResult.PasswordCancelled;
                 return WorldAccessResult.CheckFailed;
             }
         }

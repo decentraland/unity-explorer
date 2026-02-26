@@ -21,7 +21,7 @@ namespace DCL.Places
             try
             {
                 WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName.Trim(), ct);
-                await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread(ct);
                 cardView.SetWorldAccessState(context.Result, context.AccessInfo?.AccessType);
             }
             catch (OperationCanceledException) { }

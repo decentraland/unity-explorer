@@ -17,8 +17,7 @@ namespace DCL.PrivateWorlds.UI
     public enum PrivateWorldPopupResult
     {
         PasswordSubmitted,
-        Cancelled,
-        PasswordIncorrect
+        Cancelled
     }
 
     /// <summary>
@@ -28,7 +27,6 @@ namespace DCL.PrivateWorlds.UI
     {
         public PrivateWorldPopupMode Mode { get; }
         public string WorldName { get;}
-        public string OwnerName { get; }
         public string OwnerAddress { get; }
         public string? ErrorMessage { get; set; }
         public PrivateWorldPopupResult Result { get; set; } = PrivateWorldPopupResult.Cancelled;
