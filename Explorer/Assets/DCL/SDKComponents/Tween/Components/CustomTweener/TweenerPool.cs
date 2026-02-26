@@ -1,5 +1,6 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
+using DCL.SDKComponents.Tween;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -34,21 +35,23 @@ namespace DCL.SDKComponents.Tween.Components
                 case PBTween.ModeOneofCase.TextureMoveContinuous:
                     return GetContinuousVector2Tweener(textureStart ?? Vector2.zero, pbTween.TextureMoveContinuous.Direction.ToUnityVector(), pbTween.TextureMoveContinuous.Speed);
                 case PBTween.ModeOneofCase.MoveRotateScale:
+                    TweenSDKComponentHelper.ResolveMoveRotateScale(pbTween.MoveRotateScale, transform!, out ResolvedMoveRotateScale resolvedMoveRotateScale);
                     return GetTransformTweener(
                         transform!,
-                        pbTween.MoveRotateScale.PositionStart,
-                        pbTween.MoveRotateScale.PositionEnd,
-                        pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion(),
-                        pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion(),
-                        pbTween.MoveRotateScale.ScaleStart,
-                        pbTween.MoveRotateScale.ScaleEnd,
+                        resolvedMoveRotateScale.PositionStart,
+                        resolvedMoveRotateScale.PositionEnd,
+                        resolvedMoveRotateScale.RotationStart,
+                        resolvedMoveRotateScale.RotationEnd,
+                        resolvedMoveRotateScale.ScaleStart,
+                        resolvedMoveRotateScale.ScaleEnd,
                         durationInSeconds);
                 case PBTween.ModeOneofCase.MoveRotateScaleContinuous:
+                    TweenSDKComponentHelper.ResolveMoveRotateScaleContinuous(pbTween.MoveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolvedMoveRotateScaleContinuous);
                     return GetContinuousTransformTweener(
                         transform!,
-                        pbTween.MoveRotateScaleContinuous.PositionDirection.ToUnityVector(),
-                        pbTween.MoveRotateScaleContinuous.RotationDirection.ToUnityQuaternion(),
-                        pbTween.MoveRotateScaleContinuous.ScaleDirection.ToUnityVector(),
+                        resolvedMoveRotateScaleContinuous.PositionDirection,
+                        resolvedMoveRotateScaleContinuous.RotationDirection,
+                        resolvedMoveRotateScaleContinuous.ScaleDirection,
                         pbTween.MoveRotateScaleContinuous.Speed);
                 case PBTween.ModeOneofCase.None:
                 default:

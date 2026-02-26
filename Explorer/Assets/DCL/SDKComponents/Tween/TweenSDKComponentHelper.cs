@@ -1,4 +1,5 @@
 using CRDT;
+using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -54,6 +55,32 @@ namespace DCL.SDKComponents.Tween
 
         public static Ease GetEase(EasingFunction easingFunction) =>
             EASING_FUNCTIONS_MAP.GetValueOrDefault(easingFunction, Linear);
+
+        /// <summary>
+        /// Resolves undefined position/rotation/scale from the entity's current Transform.
+        /// Used so that sequence steps use up-to-date transform when the step starts.
+        /// </summary>
+        public static void ResolveMoveRotateScale(MoveRotateScale moveRotateScale, Transform transform, out ResolvedMoveRotateScale resolved)
+        {
+            resolved = new ResolvedMoveRotateScale(
+                moveRotateScale.PositionStart?.ToUnityVector() ?? transform.localPosition,
+                moveRotateScale.PositionEnd?.ToUnityVector() ?? transform.localPosition,
+                moveRotateScale.RotationStart?.ToUnityQuaternion() ?? transform.localRotation,
+                moveRotateScale.RotationEnd?.ToUnityQuaternion() ?? transform.localRotation,
+                moveRotateScale.ScaleStart?.ToUnityVector() ?? transform.localScale,
+                moveRotateScale.ScaleEnd?.ToUnityVector() ?? transform.localScale);
+        }
+
+        /// <summary>
+        /// Resolves undefined direction fields for continuous MoveRotateScale. Undefined = no change (zero / identity).
+        /// </summary>
+        public static void ResolveMoveRotateScaleContinuous(MoveRotateScaleContinuous moveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolved)
+        {
+            resolved = new ResolvedMoveRotateScaleContinuous(
+                moveRotateScaleContinuous.PositionDirection?.ToUnityVector() ?? Vector3.zero,
+                moveRotateScaleContinuous.RotationDirection?.ToUnityQuaternion() ?? Quaternion.identity,
+                moveRotateScaleContinuous.ScaleDirection?.ToUnityVector() ?? Vector3.zero);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TweenStateStatus GetTweenerState(ITweener tweener)
@@ -279,5 +306,45 @@ namespace DCL.SDKComponents.Tween
             && sdkTweenComponent.CustomTweener != null
             && !sdkTweenComponent.CustomTweener.IsFinished()
             && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
+    }
+
+    /// <summary>
+    /// Resolved MoveRotateScale values with undefined fields filled from current Transform.
+    /// </summary>
+    public readonly struct ResolvedMoveRotateScale
+    {
+        public readonly Vector3 PositionStart;
+        public readonly Vector3 PositionEnd;
+        public readonly Quaternion RotationStart;
+        public readonly Quaternion RotationEnd;
+        public readonly Vector3 ScaleStart;
+        public readonly Vector3 ScaleEnd;
+
+        public ResolvedMoveRotateScale(Vector3 positionStart, Vector3 positionEnd, Quaternion rotationStart, Quaternion rotationEnd, Vector3 scaleStart, Vector3 scaleEnd)
+        {
+            PositionStart = positionStart;
+            PositionEnd = positionEnd;
+            RotationStart = rotationStart;
+            RotationEnd = rotationEnd;
+            ScaleStart = scaleStart;
+            ScaleEnd = scaleEnd;
+        }
+    }
+
+    /// <summary>
+    /// Resolved MoveRotateScaleContinuous directions; undefined = zero/identity (no change).
+    /// </summary>
+    public readonly struct ResolvedMoveRotateScaleContinuous
+    {
+        public readonly Vector3 PositionDirection;
+        public readonly Quaternion RotationDirection;
+        public readonly Vector3 ScaleDirection;
+
+        public ResolvedMoveRotateScaleContinuous(Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection)
+        {
+            PositionDirection = positionDirection;
+            RotationDirection = rotationDirection;
+            ScaleDirection = scaleDirection;
+        }
     }
 }

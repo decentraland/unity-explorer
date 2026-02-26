@@ -521,6 +521,40 @@ namespace DCL.SDKComponents.Tween.Tests
             Assert.IsTrue(comp.CustomTweener.IsFinished());
         }
 
+        [Test]
+        public async Task TweenSequenceWithMoveRotateScaleWithOmittedScale_ResolvesScaleFromCurrentTransform()
+        {
+            // Step 1: Scale 1 -> 2. Step 2: MoveRotateScale with only position+rotation (scale omitted).
+            // When step 2 runs, Explorer resolves omitted scale from current transform (2,2,2 from step 1).
+            Vector3 scaleStart = CreateVector3(1, 1, 1);
+            Vector3 scaleEnd = CreateVector3(2, 2, 2);
+            Vector3 posStart = CreateVector3(0, 0, 0);
+            Vector3 posEnd = CreateVector3(5, 0, 0);
+            Quaternion rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            Quaternion rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateScaleTween(scaleStart, scaleEnd, 500),
+                CreateMoveRotateScaleTweenPositionRotationOnly(posStart, posEnd, rotStart, rotEnd, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            SDKTweenSequenceComponent comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+
+            await RunSystemForSeconds(1100, testEntity);
+
+            comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
+
+            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.AreEqual(scaleEnd.X, sdkTransform.Scale.x, 0.5f,
+                "Scale should remain 2 after step 2 (omitted scale resolved from current transform at step start)");
+        }
+
         private Entity CreateTweenSequence(PBTween[] tweens, TweenLoop loopType)
         {
             var crdtEntity = new CRDTEntity(1);
@@ -654,6 +688,31 @@ namespace DCL.SDKComponents.Tween.Tests
                     RotationEnd = rotEnd,
                     ScaleStart = scaleStart,
                     ScaleEnd = scaleEnd
+                }
+            };
+        }
+
+        /// <summary>
+        /// Creates a MoveRotateScale tween with only position and rotation (scale omitted).
+        /// Explorer resolves omitted scale from current transform when the step starts.
+        /// </summary>
+        private PBTween CreateMoveRotateScaleTweenPositionRotationOnly(Vector3 posStart, Vector3 posEnd,
+            Quaternion rotStart, Quaternion rotEnd, int duration)
+        {
+            return new PBTween
+            {
+                CurrentTime = 0,
+                Duration = duration,
+                EasingFunction = EasingFunction.EfLinear,
+                IsDirty = true,
+                Playing = true,
+                MoveRotateScale = new MoveRotateScale
+                {
+                    PositionStart = posStart,
+                    PositionEnd = posEnd,
+                    RotationStart = rotStart,
+                    RotationEnd = rotEnd
+                    // ScaleStart, ScaleEnd omitted - resolved from current transform at step start
                 }
             };
         }

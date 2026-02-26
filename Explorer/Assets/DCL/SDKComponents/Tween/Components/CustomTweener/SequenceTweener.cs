@@ -4,6 +4,7 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using DCL.ECSComponents;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.SDKComponents.Tween;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +15,23 @@ namespace DCL.SDKComponents.Tween.Components
         private readonly TweenCallback onCompleteCallback;
         private bool finished;
         private Sequence sequence;
+
+        /// <summary>
+        /// Resolved MoveRotateScale values filled by callback when a MoveRotateScale step starts.
+        /// </summary>
+        private ResolvedMoveRotateScale resolvedMoveRotateScale;
+
+        /// <summary>
+        /// Resolved MoveRotateScaleContinuous directions filled by callback when a MoveRotateScaleContinuous step starts.
+        /// </summary>
+        private ResolvedMoveRotateScaleContinuous resolvedMoveRotateScaleContinuous;
+
+        /// <summary>
+        /// Start transform when a MoveRotateScaleContinuous step begins (for finite-duration continuous).
+        /// </summary>
+        private Vector3 moveRotateScaleContinuousStartPosition;
+        private Quaternion moveRotateScaleContinuousStartRotation;
+        private Vector3 moveRotateScaleContinuousStartScale;
 
         public SequenceTweener()
         {
@@ -27,28 +45,11 @@ namespace DCL.SDKComponents.Tween.Components
             sequence = DOTween.Sequence();
             sequence.Pause();
 
-            // Add the first tween from PBTween component
-            var firstDOTween = CreateTweenForPBTween(firstTween, firstTween.Duration / 1000f, transform, material);
-            if (firstDOTween != null)
-            {
-                Ease firstEase = TweenSDKComponentHelper.GetEase(firstTween.EasingFunction);
-                firstDOTween.SetEase(firstEase);
-                sequence.Append(firstDOTween);
-            }
+            AppendTweenStep(firstTween, firstTween.Duration / 1000f, transform, material);
 
-            // Add additional tweens from PBTweenSequence.sequence
             foreach (PBTween pbTween in additionalTweens)
-            {
-                var tween = CreateTweenForPBTween(pbTween, pbTween.Duration / 1000f, transform, material);
-                if (tween != null)
-                {
-                    Ease ease = TweenSDKComponentHelper.GetEase(pbTween.EasingFunction);
-                    tween.SetEase(ease);
-                    sequence.Append(tween);
-                }
-            }
+                AppendTweenStep(pbTween, pbTween.Duration / 1000f, transform, material);
 
-            // Configure loop type only if specified - otherwise sequence plays once
             if (loopType.HasValue)
             {
                 if (loopType.Value == TweenLoop.TlYoyo)
@@ -60,6 +61,81 @@ namespace DCL.SDKComponents.Tween.Components
             sequence.SetAutoKill(false);
             sequence.OnComplete(onCompleteCallback);
             sequence.Pause();
+        }
+
+        private void AppendTweenStep(PBTween pbTween, float durationInSeconds, Transform transform, Material? material)
+        {
+            Ease ease = TweenSDKComponentHelper.GetEase(pbTween.EasingFunction);
+
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScale)
+            {
+                MoveRotateScale moveRotateScale = pbTween.MoveRotateScale;
+                sequence.AppendCallback(() => TweenSDKComponentHelper.ResolveMoveRotateScale(moveRotateScale, transform, out resolvedMoveRotateScale));
+                DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
+                {
+                    ResolvedMoveRotateScale r = resolvedMoveRotateScale;
+                    transform.localPosition = Vector3.Lerp(r.PositionStart, r.PositionEnd, t);
+                    transform.localRotation = Quaternion.Slerp(r.RotationStart, r.RotationEnd, t);
+                    transform.localScale = Vector3.Lerp(r.ScaleStart, r.ScaleEnd, t);
+                }).SetAutoKill(false).Pause();
+                tween.SetEase(ease);
+                sequence.Append(tween);
+                return;
+            }
+
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScaleContinuous)
+            {
+                MoveRotateScaleContinuous moveRotateScaleContinuous = pbTween.MoveRotateScaleContinuous;
+                float speed = moveRotateScaleContinuous.Speed;
+                sequence.AppendCallback(() =>
+                {
+                    TweenSDKComponentHelper.ResolveMoveRotateScaleContinuous(moveRotateScaleContinuous, out resolvedMoveRotateScaleContinuous);
+                    moveRotateScaleContinuousStartPosition = transform.localPosition;
+                    moveRotateScaleContinuousStartRotation = transform.localRotation;
+                    moveRotateScaleContinuousStartScale = transform.localScale;
+                });
+                if (durationInSeconds > 0f)
+                {
+                    float totalTime = durationInSeconds;
+                    DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, totalTime, v =>
+                    {
+                        ResolvedMoveRotateScaleContinuous r = resolvedMoveRotateScaleContinuous;
+                        float t = speed * totalTime * v;
+                        transform.localPosition = moveRotateScaleContinuousStartPosition + r.PositionDirection * t;
+                        r.RotationDirection.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
+                        if (rotAxis.sqrMagnitude < 1e-6f) rotAxis = Vector3.up;
+                        rotAxis = rotAxis.normalized;
+                        transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * moveRotateScaleContinuousStartRotation;
+                        transform.localScale = moveRotateScaleContinuousStartScale + r.ScaleDirection * t;
+                    }).SetEase(Ease.Linear).SetAutoKill(false).Pause();
+                    sequence.Append(tween);
+                }
+                else
+                {
+                    float absSpeed = Mathf.Abs(speed);
+                    float sign = speed >= 0 ? 1f : -1f;
+                    DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, 1f, v =>
+                    {
+                        float t = sign * absSpeed * v;
+                        ResolvedMoveRotateScaleContinuous r = resolvedMoveRotateScaleContinuous;
+                        transform.localPosition = moveRotateScaleContinuousStartPosition + r.PositionDirection * t;
+                        r.RotationDirection.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
+                        if (rotAxis.sqrMagnitude < 1e-6f) rotAxis = Vector3.up;
+                        rotAxis = rotAxis.normalized;
+                        transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * moveRotateScaleContinuousStartRotation;
+                        transform.localScale = moveRotateScaleContinuousStartScale + r.ScaleDirection * t;
+                    }).SetEase(Ease.Linear).SetLoops(-1, LoopType.Incremental).SetAutoKill(false).Pause();
+                    sequence.Append(tween);
+                }
+                return;
+            }
+
+            DG.Tweening.Tween? stepTween = CreateTweenForPBTween(pbTween, durationInSeconds, transform, material);
+            if (stepTween != null)
+            {
+                stepTween.SetEase(ease);
+                sequence.Append(stepTween);
+            }
         }
 
         private DG.Tweening.Tween? CreateTweenForPBTween(PBTween pbTween, float durationInSeconds, Transform transform, Material? material)
@@ -85,29 +161,6 @@ namespace DCL.SDKComponents.Tween.Components
                                            .From(pbTween.Scale.Start, false)
                                            .SetAutoKill(false).Pause();
                     break;
-
-                case PBTween.ModeOneofCase.MoveRotateScale:
-                {
-                    // Avoid nested Sequences: DOTween doesn't reliably re-evaluate
-                    // From() values on tweens inside a nested Sequence when the parent
-                    // Sequence advances to that step. A single DOVirtual.Float drives
-                    // all three properties through its callback instead.
-                    Vector3 posStart = pbTween.MoveRotateScale.PositionStart;
-                    Vector3 posEnd = pbTween.MoveRotateScale.PositionEnd;
-                    var rotStart = pbTween.MoveRotateScale.RotationStart.ToUnityQuaternion();
-                    var rotEnd = pbTween.MoveRotateScale.RotationEnd.ToUnityQuaternion();
-                    Vector3 scaleStart = pbTween.MoveRotateScale.ScaleStart;
-                    Vector3 scaleEnd = pbTween.MoveRotateScale.ScaleEnd;
-
-                    returnTween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
-                    {
-                        transform.localPosition = Vector3.Lerp(posStart, posEnd, t);
-                        transform.localRotation = Quaternion.Slerp(rotStart, rotEnd, t);
-                        transform.localScale = Vector3.Lerp(scaleStart, scaleEnd, t);
-                    })
-                    .SetAutoKill(false).Pause();
-                    break;
-                }
 
                 case PBTween.ModeOneofCase.TextureMove:
                     if (material != null)
