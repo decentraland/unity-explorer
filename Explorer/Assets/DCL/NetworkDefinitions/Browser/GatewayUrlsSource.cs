@@ -190,6 +190,10 @@ namespace DCL.Browser
             if (firstDot < 0)
                 return url;
 
+            // Already a gateway URL — don't double-transform
+            if (url.AsSpan(HTTPS_PREFIX_LENGTH, firstDot - HTTPS_PREFIX_LENGTH).Equals(GATEWAY_SUBDOMAIN.AsSpan(), StringComparison.OrdinalIgnoreCase))
+                return url;
+
             int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;
             int pathStart = url.IndexOf('/', firstDot);
             int domainEnd = pathStart >= 0 ? pathStart : url.Length;
