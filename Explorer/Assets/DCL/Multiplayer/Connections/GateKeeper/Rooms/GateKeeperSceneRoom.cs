@@ -15,13 +15,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
     public class GateKeeperSceneRoom : ConnectiveRoom
     {
-        /// <summary>
-        /// We need to send something in the secret field for the world comms handshake, otherwise the handshake fails. This is a fallback value that allows the handshake to proceed even if the secret is missing.
-        /// The handshake will still succeed if the secret is present, but this ensures that it doesn't fail outright if it's not.
-        /// This is the case when we change world permissions to password protected, but the world comms secret is not set so that we get 403 (which is expected) instead of 502
-        /// </summary>
-        private const string MISSING_SECRET_FALLBACK = "__missing_secret__";
-
         private class Activatable : ActivatableConnectiveRoom, IGateKeeperSceneRoom
         {
             private readonly GateKeeperSceneRoom origin;
@@ -214,33 +207,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.GetAdapterURL(meta.sceneId);
-            bool usesWorldScenesEndpoint = options.RealmData.IsWorld() && !options.RealmData.SingleScene;
-            string json = usesWorldScenesEndpoint ? BuildWorldMetadata() : meta.ToJson();
-
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, json, token)
+                                            .SignedFetchPostAsync(url, meta.ToJson(), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 
-        private string BuildWorldMetadata()
-        {
-            string secret = string.IsNullOrEmpty(worldCommsSecret?.Secret)
-                                ? MISSING_SECRET_FALLBACK
-                                : worldCommsSecret!.Secret!;
 
-            var metadata = new FixedMetadataWithSecret
-            {
-                intent = "dcl:explorer:comms-handshake",
-                signer = "dcl:explorer",
-                isGuest = false,
-                secret = secret,
-            };
-
-            return JsonUtility.ToJson(metadata);
-        }
 
         [Serializable]
         private struct AdapterResponse
@@ -249,31 +224,5 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public string fixedAdapter;
         }
 
-        [Serializable]
-        private struct FixedMetadata
-        {
-            public static FixedMetadata Default = new ()
-            {
-                intent = "dcl:explorer:comms-handshake",
-                signer = "dcl:explorer",
-                isGuest = false,
-            };
-
-            public string intent;
-            public string signer;
-            public bool isGuest;
-
-            public string ToJson() =>
-                JsonUtility.ToJson(this)!;
-        }
-
-        [Serializable]
-        private struct FixedMetadataWithSecret
-        {
-            public string intent;
-            public string signer;
-            public bool isGuest;
-            public string secret;
-        }
     }
 }
