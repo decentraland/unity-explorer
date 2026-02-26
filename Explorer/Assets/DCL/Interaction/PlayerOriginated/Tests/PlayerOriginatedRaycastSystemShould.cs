@@ -238,6 +238,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity), Is.True);
+            UnityObjectUtils.SafeDestroyGameObject(collider);
         }
 
         [Test]
@@ -279,6 +280,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity1), Is.False, "Hover should be removed from entity 1");
             Assert.That(world.Has<HoveredComponent>(globalEntity2), Is.True, "Hover should be added to entity 2");
+            UnityObjectUtils.SafeDestroyGameObject(collider1);
+            UnityObjectUtils.SafeDestroyGameObject(collider2);
 
         }
 
@@ -311,6 +314,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             // Assert
             Assert.That(world.Has<HoveredComponent>(globalEntity), Is.False, "Hover should be removed when raycast misses");
+            UnityObjectUtils.SafeDestroyGameObject(collider);
         }
 
         private BoxCollider CreateObjectWithCollider(string name, Vector3 pos)
