@@ -483,7 +483,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "3a9d15869c6e4bc5243c0bacdc441d323000e15f"
+      "hash": "8810123d8a6c6c00f0d8e9e37ed4d644aecb37b2"
     },
     "decentraland.grassshader": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
