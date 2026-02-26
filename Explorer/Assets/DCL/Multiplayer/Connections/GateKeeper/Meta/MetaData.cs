@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             realmName = input.RealmName;
             realm = new Realm { serverName = input.RealmName };
-            parcel = $"{baseParcel.x},{baseParcel.y}";
+            parcel = $"{input.Parcel.x},{input.Parcel.y}";
             this.sceneId = sceneId;
             BaseParcel = baseParcel;
             intent = "dcl:explorer:comms-handshake";
