@@ -328,11 +328,13 @@ namespace DCL.WebRequests
 
         public override unsafe string ToString()
         {
-            if (preservedBufferPtr != null)
-                return Encoding.UTF8.GetString(preservedBufferPtr, preservedBufferLength);
-
             if (buffer.IsCreated)
+            {
+                if (preservedBufferPtr != null)
+                    return Encoding.UTF8.GetString(preservedBufferPtr, preservedBufferLength);
+
                 return Encoding.UTF8.GetString(buffer.GetUnsafePtr(), buffer.Length);
+            }
 
             throw new ObjectDisposedException(nameof(buffer));
         }

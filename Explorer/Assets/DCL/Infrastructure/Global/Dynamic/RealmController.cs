@@ -142,6 +142,10 @@ namespace Global.Dynamic
 
                 string hostname = ResolveHostname(realm, result);
 
+                float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
+                    ? result.configurations.skybox.fixedHour
+                    : null;
+
                 realmData.Reconfigure(
                     new IpfsRealm(realm, result),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
@@ -150,7 +154,8 @@ namespace Global.Dynamic
                     result.comms?.protocol ?? "v3",
                     hostname,
                     isLocalSceneDevelopment,
-                    worldManifest
+                    worldManifest,
+                    skyboxFixedHour
                 );
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
