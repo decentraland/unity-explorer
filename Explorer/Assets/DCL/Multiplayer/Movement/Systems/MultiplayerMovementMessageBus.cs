@@ -136,6 +136,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongJump = proto.IsLongJump,
                     IsLongFall = proto.IsLongFall,
                     IsFalling = proto.IsFalling,
+                    IsStunned = proto.IsStunned,
                     GlideState = (GlideStateValue)proto.GlideState,
                 },
                 isStunned = proto.IsStunned,

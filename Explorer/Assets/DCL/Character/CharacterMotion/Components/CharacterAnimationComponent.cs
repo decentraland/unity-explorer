@@ -37,7 +37,7 @@ namespace DCL.CharacterMotion.Components
             IsLongJump == other.IsLongJump &&
             IsFalling == other.IsFalling &&
             IsLongFall == other.IsLongFall &&
-            IsLongFall == other.IsStunned &&
+            IsStunned == other.IsStunned &&
             GlideState == other.GlideState &&
             Math.Abs(GlideBlendValue - other.GlideBlendValue) < EPSILON;
 
