@@ -193,7 +193,8 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                await pendingWallet.LoginWithOtp(otp).AsUniTask().AttachExternalCancellation(ct);
+                await pendingWallet.LoginWithOtp(otp);
+                                   // .AsUniTask().AttachExternalCancellation(ct); <- this breaks the flow for InvalidOperationEx
                 loginCompletionSource?.TrySetResult(true);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }

@@ -87,7 +87,7 @@ namespace DCL.InWorldCamera
             PlacesData.PlaceInfo? placeInfo;
 
             if (realmData.ScenesAreFixed)
-                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+                placeInfo = await placesAPIService.GetWorldAsync(at, realmData.RealmName, ct);
             else
                 placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 

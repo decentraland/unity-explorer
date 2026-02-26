@@ -68,7 +68,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                bootstrapContainer.Analytics.EnsureNotNull(),
+                bootstrapContainer.Analytics.Controller,
                 "start-up");
 
             startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Initialization Flow");
@@ -77,7 +77,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                bootstrapContainer.Analytics.EnsureNotNull(),
+                bootstrapContainer.Analytics.Controller,
                 "re-login");
 
             reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");

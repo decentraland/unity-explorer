@@ -49,9 +49,12 @@ namespace DCL.Events
             public HoverableUiElement hoverableUiElement;
             public CanvasGroup scrollBarCanvasGroup;
             public SkeletonLoadingView skeletonLoadingView;
+            public GameObject moreEventsArrow;
+            public ScrollRect scrollRect;
         }
 
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
+        private readonly Dictionary<int, float> currentOccupancies = new (5);
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
         private EventsStateService eventsStateService = null!;
@@ -65,6 +68,13 @@ namespace DCL.Events
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked += OnDaySelectorButtonClicked;
+
+            for (var i = 0; i < eventsLists.Count; i++)
+            {
+                int eventsListIndex = i;
+                EventListConfiguration eventListConfiguration = eventsLists[eventsListIndex];
+                eventListConfiguration.scrollRect.onValueChanged.AddListener(_ => OnEventsScrollValueChanged(eventsListIndex));
+            }
         }
 
         private void OnDestroy()
@@ -74,6 +84,9 @@ namespace DCL.Events
 
             foreach (EventsDaySelectorButton daySelectorButton in daySelectorButtons)
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
+
+            foreach (EventListConfiguration eventListConfiguration in eventsLists)
+                eventListConfiguration.scrollRect.onValueChanged.RemoveAllListeners();
         }
 
         public void SetDependencies(
@@ -243,6 +256,8 @@ namespace DCL.Events
                 }
             }
 
+            currentOccupancies[eventsListIndex] = columnOccupancyValue;
+
             int numberOfEmptyCards = columnOccupancyValue switch
                                      {
                                          <= 0.5f => 3,
@@ -252,6 +267,12 @@ namespace DCL.Events
 
             for (var i = 0; i < numberOfEmptyCards; i++)
                 currentEventsIds[eventsListIndex].Add(string.Empty);
+        }
+
+        private void OnEventsScrollValueChanged(int eventsListIndex)
+        {
+            bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f;
+            eventsLists[eventsListIndex].moreEventsArrow.SetActive(scrollIsNotAtTheBottom);
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>

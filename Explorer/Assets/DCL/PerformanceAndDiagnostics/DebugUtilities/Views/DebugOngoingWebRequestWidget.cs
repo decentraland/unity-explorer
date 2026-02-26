@@ -3,7 +3,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugOngoingWebRequestWidget : DebugElementBase<DebugOngoingWebRequestWidget, DebugOngoingWebRequestDef>, INotifyValueChanged<DebugOngoingWebRequestDef.DataSource>
+    [UxmlElement]
+    public partial class DebugOngoingWebRequestWidget : DebugElementBase<DebugOngoingWebRequestWidget, DebugOngoingWebRequestDef>, INotifyValueChanged<DebugOngoingWebRequestDef.DataSource>
     {
         // 5 seconds
         private const ulong WARNING_LEVEL_NS = 5 * 1_000_000_000UL;
@@ -98,7 +99,5 @@ namespace DCL.DebugUtilities.Views
 
         void INotifyValueChanged<DebugOngoingWebRequestDef.DataSource>.SetValueWithoutNotify(DebugOngoingWebRequestDef.DataSource newValue) =>
             value = newValue;
-
-        public new class UxmlFactory : UxmlFactory<DebugOngoingWebRequestWidget, UxmlTraits> { }
     }
 }

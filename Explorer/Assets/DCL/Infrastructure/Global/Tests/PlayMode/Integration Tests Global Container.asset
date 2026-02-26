@@ -22,6 +22,7 @@ MonoBehaviour:
   - rid: 5734404089553354752
   - rid: 9078877983710380130
   - rid: 732305993255354463
+  - rid: 1709771761983946848
   references:
     version: 2
     RefIds:
@@ -30,6 +31,7 @@ MonoBehaviour:
       data:
         <CoreWebRequestsBudget>k__BackingField: 15
         <SceneWebRequestsBudget>k__BackingField: 5
+        <UrlsToSample>k__BackingField: []
     - rid: 1268264197252972544
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -86,6 +88,10 @@ MonoBehaviour:
           - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
             IconClass: sprite-interaction__icon-mouse-right
+    - rid: 1709771761983946848
+      type: {class: AnalyticsContainer/Settings, ns: DCL.PerformanceAndDiagnostics.Analytics, asm: DCL.Plugins}
+      data:
+        <AnalyticsConfig>k__BackingField: {fileID: 11400000, guid: 714fe567011dc416f87e859821297e3a, type: 2}
     - rid: 1841402216112979968
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

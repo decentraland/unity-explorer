@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,7 +23,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
-        UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct);
+        UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);
 
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,
@@ -37,7 +37,8 @@ namespace DCL.PlacesAPIService
             bool? withLiveEvents = null);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
-        UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
+        UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
@@ -51,6 +52,8 @@ namespace DCL.PlacesAPIService
         UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
+
+        void ClearWorldsCache();
 
         void AddRecentlyVisitedPlace(string placeId);
         List<string> GetRecentlyVisitedPlaces();
