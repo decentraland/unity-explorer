@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using static DCL.Interaction.PlayerOriginated.Components.ProximityResultForSceneEntities;
-using WorldExtensions = DCL.CharacterCamera.WorldExtensions;
 
 namespace DCL.Interaction.Systems
 {
@@ -154,7 +152,7 @@ namespace DCL.Interaction.Systems
             if (
                 IsPointingOnEntity(in raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo pointedEntityInfo)
                 && pointedEntityInfo.TryGetPointerEvents(out PBPointerEvents? foundPointerEvents)
-                && HasCursorEvent(in foundPointerEvents!))
+                && HasCursorEvent(foundPointerEvents!))
             {
                 entityInfo = pointedEntityInfo;
                 pbPointerEvents = foundPointerEvents;
@@ -166,22 +164,24 @@ namespace DCL.Interaction.Systems
             pbPointerEvents = null;
             cursorCollider = null;
             return false;
+        }
 
-            bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo entityInfo)
-            {
-                bool canHover = eventSystem.IsPointerOverGameObject() == false;
-                entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
-                return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
-            }
+        private bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo entityInfo)
+        {
+            bool canHover = eventSystem.IsPointerOverGameObject() == false;
+            entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
+            return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
+        }
 
-            bool HasCursorEvent(in PBPointerEvents pointerEvents)
-            {
-                for (int i = 0; i < pointerEvents.PointerEvents.Count; i++)
-                    if (pointerEvents.PointerEvents[i].InteractionType == InteractionType.Cursor)
-                        return true;
+        private static bool HasCursorEvent(PBPointerEvents pointerEvents)
+        {
+            int count = pointerEvents.PointerEvents.Count;
 
-                return false;
-            }
+            for (int i = 0; i < count; i++)
+                if (pointerEvents.PointerEvents[i].InteractionType == InteractionType.Cursor)
+                    return true;
+
+            return false;
         }
 
         private bool TryGetInteractableEntityFromProximity(in ProximityResultForSceneEntities proximityResultForSceneEntities,
@@ -238,6 +238,10 @@ namespace DCL.Interaction.Systems
             candidateForHoverLeaveIsValid == false
             || previousEntityInfo.IsSameEntity(entityInfo) == false;
 
+        [Pure]
+        private static PointerEventType GetEnterEventType(InteractionType interactionType) =>
+            interactionType == InteractionType.Cursor ? PointerEventType.PetHoverEnter : PointerEventType.PetProximityEnter;
+
         [Query]
         private void SetupHighlightComponent([Data] bool isAtDistance, [Data] Entity nextEntityRef, ref HighlightComponent highlightComponent)
         {
@@ -273,6 +277,7 @@ namespace DCL.Interaction.Systems
                 PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
                 InteractionType interactionType = pointerEvent.InteractionType;
                 PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
+                bool isCursor = interactionType == InteractionType.Cursor;
 
                 if (info is { HasShowFeedback: true, ShowFeedback: false }
                     or { HasShowHighlight: true, ShowHighlight: false })
@@ -280,24 +285,16 @@ namespace DCL.Interaction.Systems
 
                 info.PrepareDefaultValues();
 
-                isAtDistance = interactionType == InteractionType.Cursor
+                isAtDistance = isCursor
                     ? InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)
                     : InteractionInputUtils.IsQualifiedByDistance(proximityResultForSceneEntities, info);
 
                 if (!isAtDistance) continue;
 
-                // Try Append Hover Input
                 if (newEntityIsSelected)
-                {
-                    PointerEventType eventType = interactionType == InteractionType.Cursor
-                        ? PointerEventType.PetHoverEnter
-                        : PointerEventType.PetProximityEnter;
+                    pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(GetEnterEventType(interactionType), pointerEvent, i);
 
-                    pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(eventType, pointerEvent, i);
-                }
-
-                // Try Append Hover Feedback
-                if (interactionType == InteractionType.Proximity)
+                if (!isCursor)
                     screenPositionOverride = GetColliderCenterScreenPosition(proximityResultForSceneEntities.Collider!);
 
                 if (info.HasHoverText && !string.IsNullOrEmpty(info.HoverText))
