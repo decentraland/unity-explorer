@@ -48,7 +48,6 @@ namespace DCL.Browser
 
             // Requires signed fetch
             DecentralandUrl.CameraReelImages,
-            DecentralandUrl.CameraReelLink,
             DecentralandUrl.CameraReelPlaces,
             DecentralandUrl.CameraReelUsers,
 
@@ -189,6 +188,10 @@ namespace DCL.Browser
             int firstDot = url.IndexOf('.', HTTPS_PREFIX_LENGTH);
 
             if (firstDot < 0)
+                return url;
+
+            // Already a gateway URL — don't double-transform
+            if (url.AsSpan(HTTPS_PREFIX_LENGTH, firstDot - HTTPS_PREFIX_LENGTH).Equals(GATEWAY_SUBDOMAIN.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 return url;
 
             int subdomainLength = firstDot - HTTPS_PREFIX_LENGTH;

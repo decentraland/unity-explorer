@@ -19,8 +19,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
-        void Initialize(IWeb3Identity? web3Identity);
-
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
         void Track(string eventName, JObject? properties = null, bool isInstant = false);

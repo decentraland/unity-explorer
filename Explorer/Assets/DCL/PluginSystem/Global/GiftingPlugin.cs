@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -224,6 +225,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        [Serializable]
         public class GiftingSettings : IDCLPluginSettings
         {
             [field: Header(nameof(GiftingPlugin) + "." + nameof(GiftingSettings))]

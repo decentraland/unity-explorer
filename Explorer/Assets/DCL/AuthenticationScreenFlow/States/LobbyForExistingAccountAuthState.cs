@@ -56,6 +56,8 @@ namespace DCL.AuthenticationScreenFlow
 
         public void Enter((Profile profile, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             view.JumpIntoWorldButton.interactable = true;
             view.DiffAccountButton.interactable = true;
@@ -95,6 +97,7 @@ namespace DCL.AuthenticationScreenFlow
             view.DiffAccountButton.onClick.RemoveAllListeners();
 
             loginCt = CancellationToken.None;
+            base.Exit();
         }
 
         private void OnDiffAccountButtonClicked()

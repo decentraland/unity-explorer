@@ -62,6 +62,8 @@ MonoBehaviour:
   - rid: 5190442831932031144
   - rid: 1221415613651484787
   - rid: 732305993255354462
+  - rid: 1709771649487732831
+  - rid: 1709771761983946845
   - rid: 7426570530121056350
   references:
     version: 2
@@ -415,6 +417,14 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 1709771649487732831
+      type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
+      data:
+        <BatchHeartbeatMs>k__BackingField: 100
+    - rid: 1709771761983946845
+      type: {class: AnalyticsContainer/Settings, ns: DCL.PerformanceAndDiagnostics.Analytics, asm: DCL.Plugins}
+      data:
+        <AnalyticsConfig>k__BackingField: {fileID: 11400000, guid: 134b7bf082a11ae499e9e62958051ca7, type: 2}
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -493,7 +503,6 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
-        AnalyticsConfig: {fileID: 11400000, guid: 134b7bf082a11ae499e9e62958051ca7, type: 2}
         <ReportHandlingSettingsDevelopment>k__BackingField: {fileID: 11400000, guid: 0dd75559898ca8d4db9fc8ab99ac2269, type: 2}
         <ReportHandlingSettingsProduction>k__BackingField: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
@@ -1008,6 +1017,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <BatchHeartbeatMs>k__BackingField: 100
         <BaseEmotes>k__BackingField:
         - urn:decentraland:off-chain:base-emotes:clap
         - urn:decentraland:off-chain:base-emotes:cry

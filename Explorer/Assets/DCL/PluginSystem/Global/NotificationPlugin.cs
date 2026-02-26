@@ -89,6 +89,7 @@ namespace DCL.PluginSystem.Global
                                           .Forget();
         }
 
+        [Serializable]
         public class NotificationSettings : IDCLPluginSettings
         {
             [field: SerializeField]
