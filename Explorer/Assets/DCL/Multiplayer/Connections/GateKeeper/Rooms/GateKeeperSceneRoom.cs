@@ -206,19 +206,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.GetAdapterURL(meta.sceneId);
-            bool usesWorldScenesEndpoint = options.RealmData.IsWorld() && !options.RealmData.SingleScene;
-            string json = usesWorldScenesEndpoint ? BuildWorldMetadata() : meta.ToJson();
-
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, json, token)
+                                            .SignedFetchPostAsync(url, meta.ToJson(), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 
-        private string BuildWorldMetadata() =>
-            CommsHandshakeMetadata.BuildJson(worldCommsSecret?.Secret);
+
 
         [Serializable]
         private struct AdapterResponse
@@ -226,5 +222,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public string adapter;
             public string fixedAdapter;
         }
+
     }
 }

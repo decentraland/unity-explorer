@@ -58,6 +58,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         /// </summary>
         public readonly Vector2Int BaseParcel;
 
+        private readonly string intent;
+        private readonly string signer;
+        private readonly bool isGuest;
+
         public MetaData(string? sceneId, Vector2Int baseParcel, Input input)
         {
             realmName = input.RealmName;
@@ -65,6 +69,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             Parcel = input.Parcel;
             this.sceneId = sceneId;
             BaseParcel = baseParcel;
+            intent = "dcl:explorer:comms-handshake";
+            signer = "dcl:explorer";
+            isGuest = false;
         }
 
         public string ToJson() =>
