@@ -546,8 +546,6 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                realmNavigator,
-                decentralandUrlsSource,
                 eventsThumbnailLoader,
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);

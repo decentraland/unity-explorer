@@ -1,13 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -29,9 +27,6 @@ namespace DCL.Communities.EventInfo
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ThumbnailLoader thumbnailLoader;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -44,8 +39,6 @@ namespace DCL.Communities.EventInfo
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            IRealmNavigator realmNavigator,
-            IDecentralandUrlsSource decentralandUrlsSource,
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController)
             : base(viewFactory)
@@ -55,9 +48,6 @@ namespace DCL.Communities.EventInfo
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.realmNavigator = realmNavigator;
-            this.decentralandUrlsSource = decentralandUrlsSource;
-            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
         }
 
         public override void Dispose()
