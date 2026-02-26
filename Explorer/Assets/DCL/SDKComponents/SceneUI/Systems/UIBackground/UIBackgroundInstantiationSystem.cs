@@ -89,8 +89,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             else if (uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
                 // Ensure texture has latest data from model
                 uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
-
-            sdkModel.IsDirty = false;
         }
 
         [Query]

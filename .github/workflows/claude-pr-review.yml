@@ -1,50 +1,124 @@
-name: Claude Review (On Label)
-
+name: Claude Review
 on:
-  pull_request:
-    types: [labeled]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 jobs:
-  review-on-label:
-    if: github.event.label.name == 'ai-review'
+  review:
+    if: |
+      github.event.issue.pull_request != null &&
+      (
+        contains(github.event.comment.body, '@claude review') ||
+        contains(github.event.comment.body, '@claude re-review') ||
+        contains(github.event.comment.body, '@claude approve')
+      ) &&
+      !contains(github.event.issue.labels.*.name, 'no review') &&
+      !contains(github.event.issue.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
       id-token: write
-
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
     steps:
+      - name: Get PR head SHA
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('sha', pr.data.head.sha);
+            core.setOutput('is_draft', pr.data.draft);
+
+      - name: Set status to pending
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ steps.pr.outputs.sha }}',
+              state: 'pending',
+              context: 'Claude Review',
+              description: 'Claude review in progress...'
+            });
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 1
 
-      - name: Claude Review (Label Triggered)
-        uses: anthropics/claude-code-action@beta
+      - name: Claude Review
+        id: claude
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          timeout_minutes: "60"
-          direct_prompt: |
-            This PR is labeled ai_review and requires automated analysis focused on actionable improvements only.
-            Review Focus
-            Identify and report ONLY issues that require fixes:
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number }}
+            TRIGGER: ${{ github.event.comment.body }}
+
+            ${{ contains(github.event.comment.body, '@claude re-review') &&
+                'A re-review has been requested. Focus on whether previously raised issues have been addressed. Check prior review comments on this PR before assessing the diff.' ||
+                'A review has been requested. Review the full PR diff.' }}
+
+            Review Focus — report ONLY issues that require fixes:
             1. Code quality violations per CLAUDE.md standards
             2. Bugs or potential runtime errors
             3. Security vulnerabilities
             4. Performance issues
-            Bad practices or anti-patterns
-            1. Missing error handling
-            2. Unclear or problematic logic
-            3. Response Format
+            5. Missing error handling
+            6. Unclear or problematic logic
+
             For each issue found:
-            1. Location: File and line number
-            2. Problem: What is wrong (be specific)
-            3. Fix: Exact change needed
-            4. Why: Brief explanation of the impact
-            What NOT to Include
-            1. Praise for correct code
-            2. General observations about what works well
-            3. Style preferences that don't violate standards
-            4. Suggestions that are "nice-to-have" rather than necessary
-            Focus entirely on what needs to be changed to make this PR production-ready.
-          allowed_tools: "mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__get_pull_request_diff"
+            - Location: File and line number
+            - Problem: What is wrong (be specific)
+            - Fix: Exact change needed
+            - Why: Brief explanation of the impact
+
+            Use mcp__github_inline_comment__create_inline_comment for specific line issues.
+            Use Bash(gh pr comment) for a top-level summary comment.
+            Do NOT include praise, style preferences, or nice-to-have suggestions.
+
+            IMPORTANT: At the very end, output a single line in this exact format:
+            REVIEW_RESULT: PASS ✅
+            or
+            REVIEW_RESULT: FAIL ❌
+            PASS means no blocking issues found. FAIL means there are issues that must be fixed before merging.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
+            --max-turns 20
+
+      - name: Set final commit status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `${{ steps.claude.outputs.output }}`;
+            const failed = output.includes('REVIEW_RESULT: FAIL ❌');
+            const errored = '${{ steps.claude.outcome }}' === 'failure';
+
+            const state = (failed || errored) ? 'failure' : 'success';
+            const description = errored
+              ? 'Claude review encountered an error'
+              : failed
+                ? 'Claude found issues that must be resolved'
+                : 'No blocking issues found';
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state,
+              context: 'Claude Review',
+              description
+            });
