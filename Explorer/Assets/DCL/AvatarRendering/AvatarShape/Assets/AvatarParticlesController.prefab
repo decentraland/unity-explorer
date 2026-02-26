@@ -46,8 +46,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   visualEffects:
   - Type: 0
-    ParticleSystem: {fileID: 7027690908109731583, guid: 396503dac4a7c1248920458fadbf608f, type: 3}
-    VisualEffect: {fileID: 0}
+    ParticleSystem: {fileID: 0}
+    VisualEffect: {fileID: 3589397491589073865, guid: 396503dac4a7c1248920458fadbf608f, type: 3}
   - Type: 1
     ParticleSystem: {fileID: 1427751686657548687, guid: de8c8172444fcc740a5b4a4ade001ecd, type: 3}
     VisualEffect: {fileID: 0}
