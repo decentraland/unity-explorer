@@ -7,7 +7,6 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PrivateWorlds
 {
@@ -92,8 +91,6 @@ namespace DCL.PrivateWorlds
     public class WorldPermissionsService : IWorldPermissionsService
     {
         private const int VALIDATE_PASSWORD_TIMEOUT_SECONDS = 30;
-        private const string COMMS_HANDSHAKE_INTENT = "dcl:explorer:comms-handshake";
-        private const string EXPLORER_SIGNER = "dcl:explorer";
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -275,27 +272,8 @@ namespace DCL.PrivateWorlds
             public string? Error { get; set; }
         }
 
-        [Serializable]
-        private struct ValidatePasswordMetadata
-        {
-            public string intent;
-            public string signer;
-            public bool isGuest;
-            public string secret;
-        }
-
-        private static string BuildValidatePasswordMetadataJson(string password)
-        {
-            var metadata = new ValidatePasswordMetadata
-            {
-                intent = COMMS_HANDSHAKE_INTENT,
-                signer = EXPLORER_SIGNER,
-                isGuest = false,
-                secret = password,
-            };
-
-            return JsonUtility.ToJson(metadata);
-        }
+        private static string BuildValidatePasswordMetadataJson(string password) =>
+            CommsHandshakeMetadata.BuildJson(password);
 
         private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
         {

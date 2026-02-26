@@ -7,19 +7,11 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 {
     public class FixedConnectiveRoom : ConnectiveRoom
     {
-        /// <summary>
-        /// We need to send something in the secret field for the world comms handshake, otherwise the handshake fails. This is a fallback value that allows the handshake to proceed even if the secret is missing.
-        /// The handshake will still succeed if the secret is present, but this ensures that it doesn't fail outright if it's not.
-        /// This is the case when we change world permissions to password protected, but the world comms secret is not set so that we get 403 (which is expected) instead of 502
-        /// </summary>
-        private const string MISSING_SECRET_FALLBACK = "__missing_secret__";
-
         private readonly IWebRequestController webRequests;
         private readonly ICurrentAdapterAddress currentAdapterAddress;
         private readonly IWeb3IdentityCache identityCache;
@@ -61,49 +53,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             return connectionString;
         }
 
-        private string BuildMetadata()
-        {
-            string secret = string.IsNullOrEmpty(worldCommsSecret?.Secret)
-                                ? MISSING_SECRET_FALLBACK
-                                : worldCommsSecret!.Secret!;
-
-            var metadata = new FixedMetadataWithSecret
-            {
-                intent = "dcl:explorer:comms-handshake",
-                signer = "dcl:explorer",
-                isGuest = false,
-                secret = secret,
-            };
-
-            return JsonUtility.ToJson(metadata);
-        }
-
-        [Serializable]
-        private struct FixedMetadata
-        {
-            public static FixedMetadata Default = new ()
-            {
-                intent = "dcl:explorer:comms-handshake",
-                signer = "dcl:explorer",
-                isGuest = false,
-            };
-
-            public string intent;
-            public string signer;
-            public bool isGuest;
-
-            public string ToJson() =>
-                JsonUtility.ToJson(this)!;
-        }
-
-        [Serializable]
-        private struct FixedMetadataWithSecret
-        {
-            public string intent;
-            public string signer;
-            public bool isGuest;
-            public string secret;
-        }
+        private string BuildMetadata() =>
+            CommsHandshakeMetadata.BuildJson(worldCommsSecret?.Secret);
 
         [Serializable]
         private struct AdapterResponse
