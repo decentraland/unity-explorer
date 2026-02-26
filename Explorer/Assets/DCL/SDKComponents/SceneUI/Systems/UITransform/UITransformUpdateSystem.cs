@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -54,6 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             }
 
             UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
 
             // If zIndex changed, mark the parent layout as dirty.
             // This is needed to trigger UITransformSortingSystem.ApplySorting

@@ -169,6 +169,60 @@ namespace DCL.SDKComponents.SceneUI.Utils
             visualElementToSetup.style.opacity = model.HasOpacity ? model.Opacity : 1;
         }
 
+        /// <summary>
+        /// Ensures the transform has an inner ScrollView when overflow is Scroll, or removes it otherwise.
+        /// When enabling scroll, moves all current Transform children into the ScrollView's contentContainer.
+        /// When disabling, moves them back and disposes the ScrollView.
+        /// </summary>
+        public static void EnsureScrollMode(UITransformComponent component, in PBUiTransform model)
+        {
+            bool wantScroll = model.Overflow == YGOverflow.YgoScroll;
+            VisualElement transform = component.Transform;
+
+            if (wantScroll)
+            {
+                if (component.InnerScrollView == null)
+                {
+                    var scrollView = new ScrollView
+                    {
+                        horizontalScrollerVisibility = ScrollerVisibility.AlwaysVisible,
+                        verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible
+                    };
+                    scrollView.style.flexGrow = 1;
+                    scrollView.style.width = new Length(100, LengthUnit.Percent);
+                    scrollView.style.height = new Length(100, LengthUnit.Percent);
+
+                    scrollView.contentContainer.style.flexDirection = GetFlexDirection(model.FlexDirection);
+
+                    while (transform.childCount > 0)
+                    {
+                        var child = transform[0];
+                        child.RemoveFromHierarchy();
+                        scrollView.contentContainer.Add(child);
+                    }
+
+                    transform.Add(scrollView);
+                    component.InnerScrollView = scrollView;
+                }
+            }
+            else
+            {
+                if (component.InnerScrollView != null)
+                {
+                    var scrollView = component.InnerScrollView;
+                    var content = scrollView.contentContainer;
+                    while (content.childCount > 0)
+                    {
+                        var child = content[0];
+                        child.RemoveFromHierarchy();
+                        transform.Add(child);
+                    }
+                    scrollView.RemoveFromHierarchy();
+                    component.InnerScrollView = null;
+                }
+            }
+        }
+
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent, in StyleFontDefinition[] styleFontDefinitions)
         {
             labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
@@ -312,6 +366,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
             switch (overflow)
             {
                 case YGOverflow.YgoHidden:
+                    return Overflow.Hidden;
+                case YGOverflow.YgoScroll:
                     return Overflow.Hidden;
                 default:
                     return Overflow.Visible;

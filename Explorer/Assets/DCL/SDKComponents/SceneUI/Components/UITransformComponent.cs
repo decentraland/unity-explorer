@@ -19,6 +19,14 @@ namespace DCL.SDKComponents.SceneUI.Components
             internal set { if (IsRoot) rootTransform = value; else reusableTransform = value;}
         }
 
+        /// <summary>
+        /// Where child entities and widgets (text, input, dropdown) are added.
+        /// When overflow is Scroll, this is the inner ScrollView's contentContainer; otherwise it is Transform.
+        /// </summary>
+        public VisualElement ContentContainer => InnerScrollView != null ? InnerScrollView.contentContainer : Transform;
+
+        internal ScrollView InnerScrollView { get; set; }
+
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
@@ -81,7 +89,7 @@ namespace DCL.SDKComponents.SceneUI.Components
                 i++;
             }
 
-            Transform.Sort(CACHED_COMPARISON);
+            ContentContainer.Sort(CACHED_COMPARISON);
 
             RelationData.layoutIsDirty = false;
         }
@@ -95,6 +103,20 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             // If it's not a root, its transform can be reused
             if (IsRoot) return;
+
+            if (InnerScrollView != null)
+            {
+                var scrollView = InnerScrollView;
+                var content = scrollView.contentContainer;
+                while (content.childCount > 0)
+                {
+                    var child = content[0];
+                    child.RemoveFromHierarchy();
+                    reusableTransform.Add(child);
+                }
+                scrollView.RemoveFromHierarchy();
+                InnerScrollView = null;
+            }
 
             this.UnregisterPointerCallbacks();
             reusableTransform.UnregisterHoverStyleCallbacks();
