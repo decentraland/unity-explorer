@@ -88,7 +88,6 @@ namespace DCL.Places
         private string lastPlaceTitle = string.Empty;
         private WorldAccessCheckResult lastAccessState = WorldAccessCheckResult.Allowed;
         private WorldAccessType? lastAccessType;
-        private bool isHovered;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -298,8 +297,6 @@ namespace DCL.Places
 
         private void PlayHoverAnimation()
         {
-            isHovered = true;
-
             headerTween?.Kill();
             footerTween?.Kill();
             descriptionTween?.Kill();
@@ -328,8 +325,6 @@ namespace DCL.Places
 
         private void PlayHoverExitAnimation(bool instant = false)
         {
-            isHovered = false;
-
             headerTween?.Kill();
             footerTween?.Kill();
             descriptionTween?.Kill();
