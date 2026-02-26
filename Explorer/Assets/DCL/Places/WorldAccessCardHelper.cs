@@ -12,7 +12,7 @@ namespace DCL.Places
     /// </summary>
     public static class WorldAccessCardHelper
     {
-        public static async UniTaskVoid CheckAndUpdateCardAsync(
+        public static async UniTask CheckAndUpdateCardAsync(
             IWorldPermissionsService worldPermissionsService,
             string worldName,
             PlaceCardView cardView,
