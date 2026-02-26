@@ -33,6 +33,13 @@ namespace DCL.SDKComponents.Tween.Components
         private Quaternion moveRotateScaleContinuousStartRotation;
         private Vector3 moveRotateScaleContinuousStartScale;
 
+        /// <summary>
+        /// Precomputed rotation axis and angle for MoveRotateScaleContinuous (set in callback once per step).
+        /// Avoids ToAngleAxis + normalized per frame.
+        /// </summary>
+        private float moveRotateScaleContinuousRotAngle;
+        private Vector3 moveRotateScaleContinuousRotAxis;
+
         public SequenceTweener()
         {
             onCompleteCallback = OnSequenceComplete;
@@ -69,6 +76,11 @@ namespace DCL.SDKComponents.Tween.Components
 
             if (pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScale)
             {
+                // Avoid nested Sequences: DOTween doesn't reliably re-evaluate From() values on tweens
+                // inside a nested Sequence when the parent Sequence advances to that step. A single
+                // DOVirtual.Float drives all three properties through its callback instead. Values are
+                // resolved (including from current Transform for omitted axes) in the preceding callback
+                // when this step starts.
                 MoveRotateScale moveRotateScale = pbTween.MoveRotateScale;
                 sequence.AppendCallback(() => TweenSDKComponentHelper.ResolveMoveRotateScale(moveRotateScale, transform, out resolvedMoveRotateScale));
                 DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
@@ -93,20 +105,21 @@ namespace DCL.SDKComponents.Tween.Components
                     moveRotateScaleContinuousStartPosition = transform.localPosition;
                     moveRotateScaleContinuousStartRotation = transform.localRotation;
                     moveRotateScaleContinuousStartScale = transform.localScale;
+                    // Precompute rotation axis/angle once (fixed for this step); used inside DOVirtual to avoid per-frame ToAngleAxis + normalized.
+                    resolvedMoveRotateScaleContinuous.RotationDirection.ToAngleAxis(out moveRotateScaleContinuousRotAngle, out moveRotateScaleContinuousRotAxis);
+                    if (moveRotateScaleContinuousRotAxis.sqrMagnitude < 1e-6f)
+                        moveRotateScaleContinuousRotAxis = Vector3.up;
+                    moveRotateScaleContinuousRotAxis = moveRotateScaleContinuousRotAxis.normalized;
                 });
                 if (durationInSeconds > 0f)
                 {
                     float totalTime = durationInSeconds;
                     DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, totalTime, v =>
                     {
-                        ResolvedMoveRotateScaleContinuous r = resolvedMoveRotateScaleContinuous;
                         float t = speed * totalTime * v;
-                        transform.localPosition = moveRotateScaleContinuousStartPosition + r.PositionDirection * t;
-                        r.RotationDirection.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
-                        if (rotAxis.sqrMagnitude < 1e-6f) rotAxis = Vector3.up;
-                        rotAxis = rotAxis.normalized;
-                        transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * moveRotateScaleContinuousStartRotation;
-                        transform.localScale = moveRotateScaleContinuousStartScale + r.ScaleDirection * t;
+                        transform.localPosition = moveRotateScaleContinuousStartPosition + resolvedMoveRotateScaleContinuous.PositionDirection * t;
+                        transform.localRotation = Quaternion.AngleAxis(moveRotateScaleContinuousRotAngle * t, moveRotateScaleContinuousRotAxis) * moveRotateScaleContinuousStartRotation;
+                        transform.localScale = moveRotateScaleContinuousStartScale + resolvedMoveRotateScaleContinuous.ScaleDirection * t;
                     }).SetEase(Ease.Linear).SetAutoKill(false).Pause();
                     sequence.Append(tween);
                 }
@@ -117,13 +130,9 @@ namespace DCL.SDKComponents.Tween.Components
                     DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, 1f, v =>
                     {
                         float t = sign * absSpeed * v;
-                        ResolvedMoveRotateScaleContinuous r = resolvedMoveRotateScaleContinuous;
-                        transform.localPosition = moveRotateScaleContinuousStartPosition + r.PositionDirection * t;
-                        r.RotationDirection.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
-                        if (rotAxis.sqrMagnitude < 1e-6f) rotAxis = Vector3.up;
-                        rotAxis = rotAxis.normalized;
-                        transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * moveRotateScaleContinuousStartRotation;
-                        transform.localScale = moveRotateScaleContinuousStartScale + r.ScaleDirection * t;
+                        transform.localPosition = moveRotateScaleContinuousStartPosition + resolvedMoveRotateScaleContinuous.PositionDirection * t;
+                        transform.localRotation = Quaternion.AngleAxis(moveRotateScaleContinuousRotAngle * t, moveRotateScaleContinuousRotAxis) * moveRotateScaleContinuousStartRotation;
+                        transform.localScale = moveRotateScaleContinuousStartScale + resolvedMoveRotateScaleContinuous.ScaleDirection * t;
                     }).SetEase(Ease.Linear).SetLoops(-1, LoopType.Incremental).SetAutoKill(false).Pause();
                     sequence.Append(tween);
                 }
