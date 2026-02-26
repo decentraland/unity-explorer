@@ -11,14 +11,14 @@ using UnityEngine;
 
 namespace DCL.Translation.Service
 {
-    public class DclTranslationProvider : ITranslationProvider, IBatchTranslationProvider
+    public class DclTranslationProvider : IBatchTranslationProvider
     {
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly ITranslationSettings settings;
 
         private string translateUrl => urlsSource.Url(DecentralandUrl.ChatTranslate);
-        
+
         public DclTranslationProvider(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,

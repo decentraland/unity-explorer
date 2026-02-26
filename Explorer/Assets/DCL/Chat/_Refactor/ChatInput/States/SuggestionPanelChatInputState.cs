@@ -1,4 +1,5 @@
-﻿using DCL.Audio;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
@@ -10,6 +11,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
 using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatInput
@@ -62,7 +64,7 @@ namespace DCL.Chat.ChatInput
             clickDetectionHandler.Dispose();
         }
 
-        internal bool TryFindMatch(string inputText)
+        internal async UniTask<bool> TryFindMatchAsync(string inputText, CancellationToken ct)
         {
             //With this we are detecting only the last word (where the current caret position is) and checking for matches there.
             //This regex already pre-matches the starting patterns for both Emoji ":" and Profile "@" patterns, and only sends the match further to validate other specific conditions
@@ -73,14 +75,14 @@ namespace DCL.Chat.ChatInput
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
 
                 //If we don't find any emoji pattern only then we look for username patterns
 
                 UpdateProfileNameMap();
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
             }

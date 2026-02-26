@@ -18,6 +18,6 @@ namespace DCL.Backpack.Breadcrumb
         public NftSubCategoryFilterComponentView SearchButton { get; private set; }
 
         [field: SerializeField]
-        public ColorPickerView ColorPickerView { get; private set; }
+        public WearablesColorPickerView WearablesColorPickerView { get; private set; }
     }
 }

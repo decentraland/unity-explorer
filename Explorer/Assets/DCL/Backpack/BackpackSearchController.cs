@@ -36,14 +36,16 @@ namespace DCL.Backpack
             view.clearSearchButton.gameObject.SetActive(false);
         }
 
-        private void RestoreInput(string text)
-        {
+        private void RestoreInput(string text) =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
-        }
 
-        private void DisableShortcutsInput(string text)
-        {
+        private void DisableShortcutsInput(string text) =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+
+        public void Clear()
+        {
+            if (view.inputField.isFocused)
+                RestoreInput(string.Empty);
         }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)

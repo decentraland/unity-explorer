@@ -74,7 +74,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                             hex,
                             web3IdentityCache.Identity!.Address.ToString(),
                         },
-                    }, ct);
+                    }, Web3RequestSource.SDKScene, ct);
 
                     return new SignMessageResponse(hex, message, (string)response.result);
                 }
@@ -103,7 +103,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                         id = (long)id,
                         method = method,
                         @params = @params,
-                    }, ct);
+                    }, Web3RequestSource.SDKScene, ct);
 
                     return new SendEthereumMessageResponse
                     {

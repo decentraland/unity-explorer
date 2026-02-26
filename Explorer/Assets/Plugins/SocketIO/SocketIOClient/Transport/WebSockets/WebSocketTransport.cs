@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -152,9 +152,12 @@ namespace SocketIOClient.Transport.WebSockets
 
         public override async Task SendAsync(Payload payload, CancellationToken cancellationToken)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                lockAcquired = true;
 
                 if (!string.IsNullOrEmpty(payload.Text))
                 {
@@ -176,27 +179,45 @@ namespace SocketIOClient.Transport.WebSockets
                     }
                 }
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public async Task ChangeSendChunkSizeAsync(int size)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync().ConfigureAwait(false);
+                lockAcquired = true;
                 _sendChunkSize = size;
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public async Task ChangeReceiveChunkSizeAsync(int size)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync().ConfigureAwait(false);
+                lockAcquired = true;
                 _sendChunkSize = size;
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public override void AddHeader(string key, string val)

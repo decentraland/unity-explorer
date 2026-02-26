@@ -1,12 +1,11 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
-using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.Dumper;
 using System.Buffers;
@@ -228,8 +227,5 @@ namespace DCL.WebRequests
             ElementBinding<ulong> requestCannotConnectDebugMetric, ElementBinding<ulong> requestCompleteDebugMetric) =>
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
-
-        public static IWebRequestController WithDump(this IWebRequestController origin, WebRequestsAnalyticsContainer analyticsContainer) =>
-            new WebRequestDumpRecorder(origin, analyticsContainer);
     }
 }

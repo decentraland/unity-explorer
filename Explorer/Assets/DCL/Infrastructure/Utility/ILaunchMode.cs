@@ -1,4 +1,4 @@
-namespace Global.Dynamic.LaunchModes
+namespace DCL.Utility
 {
     public interface ILaunchMode
     {

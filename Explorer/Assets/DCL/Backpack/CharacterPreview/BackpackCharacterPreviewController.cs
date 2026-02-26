@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -102,9 +102,12 @@ namespace DCL.Backpack.CharacterPreview
             previewAvatarModel.Wearables ??= new List<URN>();
             previewAvatarModel.Wearables.Clear();
             previewAvatarModel.BodyShape = command.BodyShape;
-            
-            foreach(var w in command.Wearables)
-                previewAvatarModel.Wearables.Add(new URN(w));
+
+            foreach (var wearable in wearables)
+            {
+                if (wearable.Type != WearableType.BodyShape)
+                    previewAvatarModel.Wearables.Add(wearable.GetUrn());
+            }
 
             previewAvatarModel.EyesColor = command.EyesColor;
             previewAvatarModel.HairColor = command.HairColor;
@@ -116,7 +119,7 @@ namespace DCL.Backpack.CharacterPreview
 
             OnModelUpdated();
         }
-        
+
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
             if (categoryEnum is AvatarWearableCategoryEnum c)
@@ -201,7 +204,7 @@ namespace DCL.Backpack.CharacterPreview
             if (emote == null) return;
             PlayEmote(emote.GetUrn().Shorten());
         }
-        
+
         private void OnEmoteSelected(IEmote emote)
         {
             async UniTaskVoid EnsureEmoteAndPlayItAsync(CancellationToken ct)

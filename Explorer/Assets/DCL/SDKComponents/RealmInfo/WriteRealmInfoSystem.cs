@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.RealmInfo
                 IRoomHub roomHub = roomHubProxy.StrictObject;
 
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                bool isConnectedToSceneRoom = sceneRoom.CurrentState() == IConnectiveRoom.State.Running && sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
+                bool isConnectedToSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
 
                 string room = roomHub.IslandRoom().Info.Sid ?? string.Empty;
 

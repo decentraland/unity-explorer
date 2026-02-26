@@ -133,7 +133,13 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
-  cancel-in-progress: true
+  cancel-in-progress: >-
+    ${{
+      github.event_name != 'pull_request' ||
+      github.event.action != 'labeled' ||
+      github.event.label.name == 'force-build' ||
+      github.event.label.name == 'clean-build'
+    }}
 
 jobs:
   prebuild:
@@ -354,7 +360,7 @@ jobs:
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
           # solves https://github.com/decentraland/unity-explorer/issues/6789
           # use pre-defined sentry dsn, but in case it is not defined, use the development sentry project
-          PARAM_SENTRY_DSN: ${{ inputs.is_release_build == 'true' && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
+          PARAM_SENTRY_DSN: ${{ inputs.is_release_build && secrets.SENTRY_DSN || secrets.SENTRY_DSN_DEV }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
@@ -412,8 +418,8 @@ jobs:
         id: size_check
         env:
           # Per-target absolute caps (MB)
-          MAX_MACOS_MB: 370
-          MAX_WINDOWS64_MB: 280
+          MAX_MACOS_MB: 410
+          MAX_WINDOWS64_MB: 320
 
           # Per-platform delta thresholds (MB); 0 = disabled
           DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
@@ -522,9 +528,35 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # Export key values so the PR comment workflow can include them
+          echo "size_mb=$MB_DEC" >> "$GITHUB_OUTPUT"
+          echo "size_mib=$MIB_BIN" >> "$GITHUB_OUTPUT"
+          echo "cap_mb=${MAX:-0}" >> "$GITHUB_OUTPUT"
+          echo "delta_mb=$DELTA_MB" >> "$GITHUB_OUTPUT"
+          echo "delta_pct=$DELTA_PCT" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG:-}" >> "$GITHUB_OUTPUT"
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+
           # Enforce (fail the job) only if toggles are true
           if [ "$CAP_EXCEEDED" = true ] && [ "${ENFORCE_CAP}" = "true" ]; then exit 1; fi
           if [ "$DELTA_EXCEEDED" = true ] && [ "${ENFORCE_DELTA}" = "true" ]; then exit 1; fi
+
+      - name: Save size report
+        if: always() && steps.size_check.outputs.result != ''
+        run: |
+          mkdir -p size_report
+          {
+            echo "release_tag=${{ steps.size_check.outputs.release_tag }}"
+            echo "| ${{ matrix.target }} | ${{ steps.size_check.outputs.size_mb }} / ${{ steps.size_check.outputs.size_mib }} | ${{ steps.size_check.outputs.cap_mb }} | ${{ steps.size_check.outputs.delta_mb }} | ${{ steps.size_check.outputs.delta_pct }} | ${{ steps.size_check.outputs.result }} |"
+          } > size_report/size_report_${{ matrix.target }}.md
+
+      - name: Upload size report
+        if: always() && steps.size_check.outputs.result != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: size_report_${{ matrix.target }}
+          path: size_report/
+          if-no-files-found: warn
 
       - name: Set SHA, branch, and build prefix
         run: |
@@ -573,7 +605,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ inputs.is_release_build == 'true' && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
+          SENTRY_PROJECT: ${{ inputs.is_release_build && vars.SENTRY_PROJECT || vars.SENTRY_PROJECT_DEV }}
         run: |
           npx --yes @sentry/cli debug-files upload \
             --org "$SENTRY_ORG" \

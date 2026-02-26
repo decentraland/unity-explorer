@@ -37,7 +37,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
-        [field: SerializeField] private PlacePlaceCardContextMenuConfiguration placeCardContextMenuConfiguration { get; set; } = null!;
+        [field: SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
@@ -129,8 +129,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             int realIndex = canModify ? index - 1 : index;
             PlaceData placeInfo = membersData.Items[realIndex];
 
-            VectorUtilities.TryParseVector2Int(placeInfo.PlaceInfo.base_position, out var coordinates);
-            bool isHome = homePlaceEventBus?.CurrentHomeCoordinates == coordinates;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfo.PlaceInfo) ?? false;
 
             elementView.Configure(
                 placeInfo: placeInfo.PlaceInfo,

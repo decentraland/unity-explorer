@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -86,7 +86,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 viewInstance.ItemBackground.sprite = inputData.style.rarityBackground;
 
                 SetViewState(State.Waiting);
-                SetPhase(GiftTransferPhase.WaitingForWallet, GiftingTextIds.WaitingForWalletMessage);
+                SetPhase(GiftTransferPhase.WaitingForWallet, giftTransferRequestCommand.GetWaitingMessage());
             }
 
             subProgress = eventBus.Subscribe<GiftTransferProgress>(OnProgress);

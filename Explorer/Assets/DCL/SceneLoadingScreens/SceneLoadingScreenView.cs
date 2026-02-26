@@ -106,12 +106,14 @@ namespace DCL.SceneLoadingScreens
 
         public void ShowTip(int index)
         {
-            tips[index].gameObject.SetActive(true);
-
             foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
                 breadcrumb.Unselect();
 
-            tipsBreadcrumbs[index].Select();
+            if (index < tips.Count)
+            {
+                tips[index].gameObject.SetActive(true);
+                tipsBreadcrumbs[index].Select();
+            }
         }
 
         public void HideAllTips()

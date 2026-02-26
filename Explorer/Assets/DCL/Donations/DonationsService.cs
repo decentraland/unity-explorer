@@ -12,6 +12,7 @@ using ECS.SceneLifeCycle;
 using MVC;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Scene;
+using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -113,7 +114,10 @@ namespace DCL.Donations
                     string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
 
                     if (addressFromScene != addressFromApis)
-                        ReportHub.LogWarning(ReportCategory.DONATIONS, $"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name}.");
+                    {
+                        SentrySdk.AddBreadcrumb($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}.");
+                        ReportHub.LogException(new Exception( "Possible phishing attempt detected in Donations: using address from Places API."), ReportCategory.DONATIONS);
+                    }
 
                     donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
                 }
@@ -140,7 +144,7 @@ namespace DCL.Donations
             PlacesData.PlaceInfo? placeInfo;
 
             if (realmData.ScenesAreFixed)
-                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+                placeInfo = await placesAPIService.GetWorldAsync(currentScene.Info.BaseParcel, realmData.RealmName, ct);
             else
                 placeInfo = await GetPlaceInfoAsync(currentScene.Info.BaseParcel, ct);
 
@@ -189,7 +193,7 @@ namespace DCL.Donations
                 }
             };
 
-            EthApiResponse response = await ethereumApi.SendAsync(request, ct);
+            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
             string weiString = response.result.ToString()[2..];
 
@@ -218,7 +222,7 @@ namespace DCL.Donations
                 }
             };
 
-            EthApiResponse response = await ethereumApi.SendAsync(request, ct);
+            EthApiResponse response = await ethereumApi.SendAsync(request, Web3RequestSource.Internal, ct);
 
             if (response.result != null)
                 ReportHub.Log(ReportCategory.DONATIONS, $"Donation was successful. Tx hash: {response.result}");

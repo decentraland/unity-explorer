@@ -73,8 +73,8 @@ namespace DCL.Landscape
         {
             if (!IsInitialized) return;
 
-            var worldModel = new WorldModel(ownedParcels);
-            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
+            TerrainModel = new TerrainModel(ParcelSize, ownedParcels, terrainGenData.borderPadding, true);
+
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);

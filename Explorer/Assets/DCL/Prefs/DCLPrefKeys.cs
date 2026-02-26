@@ -13,6 +13,7 @@ namespace DCL.Prefs
 
         public const string WEB3_IDENTITY = "Web3Authentication.Identity";
         public const string WEB3_IDENTITY_ZONE = "Web3Authentication.Identity.zone";
+        public const string LOGGEDIN_EMAIL = "LoggedInEmail";
 
         public const string DONT_SHOW_MIN_SPECS_SCREEN = "dontShowMinSpecsScreen";
 
@@ -69,11 +70,14 @@ namespace DCL.Prefs
         public const string MARKETPLACE_CREDITS_LAST_SEASON_SHOWN_WEEK_START = "MarketPlaceCredits_LastSeasonShownWeekStart";
 
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
+        public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
 
         public const string GIFTING_PENDING_GIFTS = "PendingGifts";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
+
+        public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
     }
 }

@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 123e00daa809b4e31934bfaddb9db160
+    m_Address: NoDiskSpaceScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 13e534245f7a87d498ae850d58b9115f
     m_Address: Assets/DCL/VoiceChat/VoiceChatPlaybackAudioSource.prefab
     m_ReadOnly: 0
@@ -97,6 +102,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
     m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -195,6 +205,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce65114d99514edba1ead5ffdfb595a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/AuthScreenImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
     m_Address: AvatarBase
     m_ReadOnly: 0
@@ -242,11 +257,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bda7566751d4243fb842e1a272cb9f83
     m_Address: MapCategoryIconMapping
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: be91903945b0c44fdb1908049ce868b1
-    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/ArtWeek.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

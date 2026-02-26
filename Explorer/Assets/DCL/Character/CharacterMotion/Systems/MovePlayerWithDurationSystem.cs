@@ -34,13 +34,16 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent, ref PlayerMoveToWithDurationIntent moveIntent)
+        private void InterruptMovementOnInput(Entity entity, in MovementInputComponent movementInputComponent, in JumpInputComponent jumpInputComponent, ref PlayerMoveToWithDurationIntent moveIntent, CharacterPlatformComponent platformComponent)
         {
             bool hasMovementInput = movementInputComponent.Kind != MovementKind.IDLE && movementInputComponent.Axes != Vector2.zero;
             bool hasJumpInput = jumpInputComponent.IsPressed;
 
             if (!hasMovementInput && !hasJumpInput)
                 return;
+
+            // Reset the platform so InterpolateCharacterSystem doesn't snap back to the stale relative position
+            ClearPlatform(platformComponent);
 
             moveIntent.CompletionSource.TrySetResult(false);
             World.Remove<PlayerMoveToWithDurationIntent>(entity);
@@ -54,6 +57,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterTransform characterTransform,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterAnimationComponent animationComponent,
+            CharacterPlatformComponent platformComponent,
             in IAvatarView avatarView)
         {
             // Always enforce the movement direction rotation every frame
@@ -82,6 +86,9 @@ namespace DCL.CharacterMotion.Systems
 
                 ApplyFinalRotation(ref characterTransform, ref rigidTransform, in moveIntent);
                 ResetAnimationToIdle(avatarView, ref animationComponent);
+
+                // Reset the platform so InterpolateCharacterSystem doesn't snap back to the stale relative position
+                ClearPlatform(platformComponent);
 
                 moveIntent.CompletionSource.TrySetResult(true);
                 World.Remove<PlayerMoveToWithDurationIntent>(entity);
@@ -183,6 +190,18 @@ namespace DCL.CharacterMotion.Systems
             animationComponent.States.IsGrounded = true;
 
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView, isGrounded: true, movementBlendId: 0);
+        }
+
+        /// <summary>
+        /// Clears the platform reference so InterpolateCharacterSystem doesn't snap
+        /// the player back to the stale LastAvatarRelativePosition.
+        /// CharacterPlatformSystem is skipped during the movement (None filter) so
+        /// the cached relative position is from before the movement started.
+        /// </summary>
+        private static void ClearPlatform(CharacterPlatformComponent platformComponent)
+        {
+            platformComponent.CurrentPlatform = null;
+            platformComponent.PlatformCollider = null;
         }
 
         // TODO: Do we want this easing??

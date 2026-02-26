@@ -15,7 +15,10 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
     public static class SimpleFetchAdHoc
     {
         private const string PROFILES_SUFFIX = "lambdas/profiles";
-        private static readonly JsonSerializerSettings PROFILE_SERIALIZER_SETTINGS = new (RealmProfileRepository.SERIALIZER_SETTINGS);
+        private static readonly JsonSerializerSettings PROFILE_SERIALIZER_SETTINGS = new (new JsonSerializerSettings
+        {
+            Converters = new JsonConverter[] { new ProfileConverter(includeSnapshots: true), new ProfileCompactInfoConverter() },
+        });
 
         private static readonly Dictionary<string, string> DEFAULT_PROFILES_HEADERS = new ()
         {

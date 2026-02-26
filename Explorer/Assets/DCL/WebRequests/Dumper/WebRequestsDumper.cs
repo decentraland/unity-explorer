@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.WebRequests.GenericDelete;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System;
@@ -88,7 +87,7 @@ namespace DCL.WebRequests.Dumper
         public bool IsMatch(bool signed, string url) =>
             Enabled && !signed && (string.IsNullOrEmpty(Filter) || (IsRegEx ? Regex.IsMatch(url, Filter) : url.Contains(Filter, StringComparison.OrdinalIgnoreCase)));
 
-        public WebRequestsAnalyticsContainer? AnalyticsContainer { get; set; }
+        public WebRequestDumpAnalyticsHandler? AnalyticsHandler { get; set; }
 
         public int Count => dump.entries.Count;
 
@@ -155,6 +154,11 @@ namespace DCL.WebRequests.Dumper
 
             public readonly Type RequestType;
             public readonly DateTime StartTime;
+
+            /// <summary>
+            ///     Url the request was actually executed with after all transformations
+            /// </summary>
+            public string? EffectiveUrl;
             public StatusKind Status;
             public DateTime EndTime;
 
@@ -165,7 +169,7 @@ namespace DCL.WebRequests.Dumper
 
             [JsonConstructor]
             internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo,
-                DateTime startTime)
+                DateTime startTime, /*is nullable for compatibility with previously serialized dumps*/ string? effectiveUrl = null)
             {
                 CommonArguments = commonArguments;
                 ArgsType = argsType;
@@ -174,6 +178,7 @@ namespace DCL.WebRequests.Dumper
                 RequestType = requestType;
                 Status = StatusKind.NOT_CONCLUDED;
                 StartTime = startTime;
+                EffectiveUrl = effectiveUrl;
             }
 
             internal void Conclude(StatusKind status, DateTime time)
@@ -219,6 +224,9 @@ namespace DCL.WebRequests.Dumper
                         return webRequestController.DeleteAsync(envelope.CommonArguments, deleteArguments, token, ReportCategory.GENERIC_WEB_REQUEST, envelope.HeadersInfo)
                                                    .WithNoOpAsync();
 
+                    if (typeof(TWebRequest) == typeof(GenericHeadRequest) && envelope.Args is GenericHeadArguments)
+                        return webRequestController.HeadAsync(envelope.CommonArguments, token, ReportCategory.GENERIC_WEB_REQUEST, headersInfo: envelope.HeadersInfo).WithNoOpAsync();
+
                     if (typeof(TWebRequest) == typeof(GetTextureWebRequest) && envelope.Args is GetTextureArguments textureArguments)
                         return webRequestController.GetTextureAsync(envelope.CommonArguments, textureArguments,
                             GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear), token, ReportCategory.GENERIC_WEB_REQUEST);
@@ -226,6 +234,9 @@ namespace DCL.WebRequests.Dumper
                     if (typeof(TWebRequest) == typeof(GetAssetBundleWebRequest) && envelope.Args is GetAssetBundleArguments abArguments)
                         return webRequestController.GetAssetBundleAsync(envelope.CommonArguments, new GetAssetBundleArguments(assetBundleLoadingMutex, abArguments.CacheHash, abArguments.AutoLoadAssetBundle),
                             token, headersInfo: envelope.HeadersInfo);
+
+                    if (typeof(TWebRequest) == typeof(GetAudioClipWebRequest) && envelope.Args is GetAudioClipArguments audioClipArguments)
+                        return webRequestController.GetAudioClipAsync(envelope.CommonArguments, audioClipArguments, new GetAudioClipWebRequest.CreateAudioClipOp(), token, ReportCategory.GENERIC_WEB_REQUEST, headersInfo: envelope.HeadersInfo);
 
                     throw new NotSupportedException($"\"{typeof(TWebRequest).FullName} & {envelope.Args.GetType()}\" is not supported");
                 }

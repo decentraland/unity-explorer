@@ -2,59 +2,53 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
 using DCL.Utility;
 using DCL.WebRequests;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.EMOTE)]
-    public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesByPointersFromRealmIntention, EmoteDTO>
+    public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention, EmoteDTO>
     {
         private readonly IEmoteStorage emoteStorage;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
         public LoadEmotesByPointersSystem(
             World world,
             IWebRequestController webRequestController,
-            IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
+            IStreamableCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention> cache,
             IEmoteStorage emoteStorage,
-            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory,
             EntitiesAnalytics entitiesAnalytics
         )
             : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -81,10 +75,10 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static _ => "Pointer request cancelled"))
                 return;
 
-            using var _ = ListPool<URN>.Get(out var pointersToRequest)!;
+            using PooledObject<List<URN>> _ = WearableComponentsUtils.POINTERS_POOL.Get(out List<URN>? pointersToRequest)!;
             var resolvedEmotesTmp = RepoolableList<IEmote>.NewList();
 
-            ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp);
+            ExtractMissingPointersAndResolvedEmotes(in intention, pointersToRequest!, resolvedEmotesTmp.List);
 
             if (intention.IsTimeout(dt))
             {
@@ -102,6 +96,8 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (success)
                 World!.Add(entity, NewEmotesResult(resolvedEmotesTmp, intention.Pointers.Count));
+            else
+                resolvedEmotesTmp.Dispose();
         }
 
         private void ResolveIntentionWithSuccessfulEmotes(Entity entity,
@@ -169,15 +165,15 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
             if (missingPointers.Count <= 0) return false;
 
-            List<URN> convertedPointers = new (missingPointers.Count);
+            List<URN> convertedPointers = WearableComponentsUtils.POINTERS_POOL.Get()!;
 
             foreach (URN pointer in missingPointers)
                 convertedPointers.Add(EmoteComponentsUtils.ConvertLegacyEmoteUrnToOnChain(pointer));
 
             var promise = EmotesFromRealmPromise.Create(
                 World!,
-                new GetEmotesByPointersFromRealmIntention(convertedPointers,
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistryEntitiesActive)
+                new GetEmotesDTOByPointersFromRealmIntention(convertedPointers,
+                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))
                 ),
                 partitionComponent
             );
@@ -190,7 +186,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         private void ExtractMissingPointersAndResolvedEmotes(
             in GetEmotesByPointersIntention intention,
             ICollection<URN> missingPointers,
-            RepoolableList<IEmote> resolvedEmotes
+            IList<IEmote> resolvedEmotes
         )
         {
             foreach (URN loadingIntentionPointer in intention.Pointers)
@@ -214,7 +210,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 }
 
                 if (emote.Model.IsInitialized)
-                    resolvedEmotes.List.Add(emote);
+                    resolvedEmotes.Add(emote);
                 else if (!emote.IsLoading)
                 {
                     emote.UpdateLoadingStatus(true);
@@ -257,7 +253,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private void TryCreateAudioClipPromises(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
-            ContentDefinition[]? content = component.Model.Asset!.content;
+            ContentDefinition[] content = component.Model.Asset!.content;
 
             foreach (ContentDefinition item in content)
             {
@@ -267,7 +263,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     continue;
 
                 urlBuilder.Clear();
-                urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
+                urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem

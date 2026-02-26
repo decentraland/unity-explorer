@@ -18,7 +18,7 @@ namespace DCL.Diagnostics.Sentry
 
         private readonly PerReportScope.Pool scopesPool;
 
-        public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
+        public SentryReportHandler(ICategorySeverityMatrix matrix, SentrySampler sentrySampler, bool debounceEnabled)
             : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
@@ -41,6 +41,7 @@ namespace DCL.Diagnostics.Sentry
             }
 
             options.Enabled = true;
+            options.TracesSampler = sentrySampler.Execute;
 
             if (!IsValidConfiguration(options))
             {

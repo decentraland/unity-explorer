@@ -5,9 +5,11 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
+using UnityEngine.Pool;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -15,18 +17,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
     {
         private readonly IWebRequestController webRequestController;
         private readonly ISelfProfile selfProfile;
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly OutfitsLogger outfitsLogger;
-        private readonly URLBuilder urlBuilder = new ();
 
         public LoadOutfitsCommand(IWebRequestController webRequestController,
             ISelfProfile selfProfile,
-            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
             OutfitsLogger outfitsLogger)
         {
             this.webRequestController = webRequestController;
             this.selfProfile = selfProfile;
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.outfitsLogger = outfitsLogger;
         }
 
@@ -40,9 +41,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 return empty;
             }
 
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                .AppendPath(URLPath.FromString($"outfits/{profile?.UserId}"));
+            using PooledObject<URLBuilder> _ = urlsSource.BuildFromDomain(DecentralandUrl.Lambdas, out URLBuilder urlBuilder);
+            urlBuilder.AppendPath(URLPath.FromString($"outfits/{profile.UserId}"));
 
             try
             {
@@ -55,7 +55,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                     outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile?.UserId} (404). This is a normal case for new users.");
                     return empty;
                 }
-                
+
                 if (response.Metadata == null)
                 {
                     outfitsLogger.LogInfo($"[OUTFIT_LOAD] Loaded old outfits data (version {response.Timestamp}). Ignoring.");

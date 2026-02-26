@@ -5,18 +5,19 @@ using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
 using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables
 {
     public class ECSThumbnailProvider : IThumbnailProvider
     {
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly World world;
 
-        public ECSThumbnailProvider(IRealmData realmData, World world)
+        public ECSThumbnailProvider(IDecentralandUrlsSource urlsSource, World world)
         {
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.world = world;
         }
 
@@ -25,13 +26,12 @@ namespace DCL.AvatarRendering.Wearables
             if (avatarAttachment.ThumbnailAssetResult is { IsInitialized: true })
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            LoadThumbnailsUtils.CreateThumbnailABPromiseAsync(
-                    realmData,
-                    avatarAttachment,
-                    world,
-                    PartitionComponent.TOP_PRIORITY,
-                    CancellationTokenSource.CreateLinkedTokenSource(ct))
-                .Forget();
+            LoadThumbnailsUtils.CreateThumbnailABPromise(
+                urlsSource,
+                avatarAttachment,
+                world,
+                PartitionComponent.TOP_PRIORITY,
+                CancellationTokenSource.CreateLinkedTokenSource(ct));
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment

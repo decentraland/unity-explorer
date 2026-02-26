@@ -21,6 +21,7 @@ namespace DCL.PlacesAPIService
 
         private readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
+        private readonly Dictionary<Vector2Int, PlacesData.PlaceInfo?> worldsByCoords = new ();
         private readonly IPlacesAPIClient client;
         private readonly CancellationTokenSource disposeCts = new ();
         private readonly string[] singlePositionBuffer = new string[1];
@@ -66,7 +67,8 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             string? category = null,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null)
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -81,7 +83,8 @@ namespace DCL.PlacesAPIService
                 searchString: searchText, pagination: (pageNumber, pageSize),
                 sortByStr, sortDirectionStr, category, addRealmDetails: true,
                 withConnectedUsers: withConnectedUsers,
-                onlySdk7: onlySdk7);
+                onlySdk7: onlySdk7,
+                withLiveEvents: withLiveEvents);
         }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
@@ -110,21 +113,29 @@ namespace DCL.PlacesAPIService
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string realmName, CancellationToken ct)
         {
-            if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
-                return placeInfo;
+            if (!AreCoordinatesWithinBounds(coords))
+                return null;
 
-            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync(placeId, ct);
+            if (worldsByCoords.TryGetValue(coords, out PlacesData.PlaceInfo? cachedPlace))
+                return cachedPlace;
+
+            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync($"{coords.x},{coords.y}", realmName, ct);
 
             if (!response.ok)
                 return null;
 
             if (response.data.Count == 0)
+            {
+                worldsByCoords[coords] = null;
                 return null;
+            }
 
             PlacesData.PlaceInfo place = response.data[0];
-            TryCachePlace(place);
+            worldsByCoords[coords] = place;
+
+            response.Dispose();
 
             return place;
         }
@@ -171,14 +182,17 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
-            await client.GetPlacesByIdsAsync(placeIds, ct, withConnectedUsers);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
+            await client.GetPlacesByIdsAsync(placeIds, ct);
+
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null) =>
+            await client.GetDestinationsByIdsAsync(placeIds, ct, withConnectedUsers);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null) =>
-            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, onlySdk7: onlySdk7);
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null) =>
+            await client.GetDestinationsAsync(ct, ownerAddress: ownerAddress, withConnectedUsers: withConnectedUsers, onlySdk7: onlySdk7, withLiveEvents: withLiveEvents);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
             await client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
@@ -211,7 +225,8 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortBy sortBy = IPlacesAPIService.SortBy.MOST_ACTIVE,
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             bool? withConnectedUsers = null,
-            bool? onlySdk7 = null)
+            bool? onlySdk7 = null,
+            bool? withLiveEvents = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -227,7 +242,8 @@ namespace DCL.PlacesAPIService
                 sortBy: sortByStr, sortDirection: sortDirectionStr, addRealmDetails: true,
                 onlyFavorites: true,
                 withConnectedUsers: withConnectedUsers,
-                onlySdk7: onlySdk7);
+                onlySdk7: onlySdk7,
+                withLiveEvents: withLiveEvents);
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
@@ -280,6 +296,11 @@ namespace DCL.PlacesAPIService
 
         public List<string> GetRecentlyVisitedPlaces() =>
             recentlyVisitedPlacesController.GetRecentlyVisitedPlaces();
+
+        public void ClearWorldsCache()
+        {
+            worldsByCoords.Clear();
+        }
 
         public void Dispose()
         {

@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
-using ECS;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
@@ -38,7 +37,6 @@ namespace DCL.Backpack
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly World world;
-        private readonly IRealmData realmData;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
 
@@ -55,8 +53,7 @@ namespace DCL.Backpack
             Entity playerEntity,
             IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
-            ProfileChangesBus profileChangesBus,
-            IRealmData realmData)
+            ProfileChangesBus profileChangesBus)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -66,7 +63,6 @@ namespace DCL.Backpack
             this.profileCache = profileCache;
             this.emoteStorage = emoteStorage;
             this.wearableStorage = wearableStorage;
-            this.realmData = realmData;
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
@@ -120,7 +116,7 @@ namespace DCL.Backpack
             equippedWearables.SetBodyshapeColor(command.SkinColor);
             equippedWearables.SetForceRender(command.ForceRender);
         }
-        
+
         private void UnEquipAll()
         {
             equippedEmotes.UnEquipAll();
@@ -209,7 +205,7 @@ namespace DCL.Backpack
                     }
 
                     var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
-                    
+
                     Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes,
                         equippedWearables,
                         forceRenderList,
@@ -226,7 +222,7 @@ namespace DCL.Backpack
                     profileCache.Set(newProfile.UserId, newProfile);
                     UpdateAvatarInWorld(newProfile);
                     profileChangesBus.PushUpdate(newProfile);
-                    
+
                     return;
                 }
 

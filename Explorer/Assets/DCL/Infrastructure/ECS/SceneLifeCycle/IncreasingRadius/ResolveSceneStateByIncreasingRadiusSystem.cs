@@ -1,10 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.Character.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -36,7 +38,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly Entity playerEntity;
         private readonly Transform playerTransform;
         private readonly IRealmPartitionSettings realmPartitionSettings;
-        private readonly IRealmData realmData;
 
         //Array sorting helpers
         private readonly List<OrderedDataManaged> orderedDataManaged;
@@ -53,13 +54,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, Entity playerEntity,
-            VisualSceneStateResolver visualSceneStateResolver, IRealmData realmData,
+            VisualSceneStateResolver visualSceneStateResolver,
             SceneLoadingLimit sceneLoadingLimit) : base(world)
         {
             playerTransform = World.Get<CharacterTransform>(playerEntity).Transform;
             this.playerEntity = playerEntity;
             this.visualSceneStateResolver = visualSceneStateResolver;
-            this.realmData = realmData;
             this.realmPartitionSettings = realmPartitionSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
 
@@ -114,7 +114,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 //Portable experiences shouldnt be analyzed. Create straight away
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
+                    new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
             }
             else
             {
@@ -339,7 +339,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
                     if (!World.Has<ISceneFacade>(entity))
                         World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(ipfsRealm, sceneDefinitionComponent), partitionComponent));
+                            new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent));
                     break;
             }
         }

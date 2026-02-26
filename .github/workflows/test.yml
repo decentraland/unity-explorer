@@ -58,6 +58,18 @@ jobs:
           docker info | sed -n '1,40p'
           df -h /mnt /mnt/docker
 
+      - name: Free disk space (runner)
+        run: |
+          set -euxo pipefail
+          df -h
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/hostedtoolcache || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          df -h
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -96,7 +108,7 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
-      
+
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version

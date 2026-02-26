@@ -207,8 +207,7 @@ namespace DCL.Navmap
 
             if (view.HomeButton != null)
             {
-                VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-                bool isHome = homePlaceEventBus.CurrentHomeCoordinates == coordinates;
+                bool isHome = homePlaceEventBus.IsHome(place);
                 homeButton.SetButtonState(isHome);
             }
 
@@ -228,7 +227,7 @@ namespace DCL.Navmap
             view.CoordinatesLabel.text = $"{originParcel.Value.x},{originParcel.Value.y}";
 
             if(!homeButton.IsButtonOn)
-                homeButton.SetButtonState(homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
+                homeButton.SetButtonState(!homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == originParcel.Value);
         }
 
         public void SetLiveEvent(EventDTO @event)
@@ -303,17 +302,28 @@ namespace DCL.Navmap
             if (place == null)
                 return;
 
-            Vector2Int positionReference;
-            if(TeleportUtils.IsRoad(place.title) && originParcel.HasValue)
-                positionReference = originParcel.Value;
-            else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
-                positionReference = coordinates;
-            else return;
+            if (isHome)
+            {
+                if (!string.IsNullOrEmpty(place.world_name))
+                {
+                    homePlaceEventBus.SetAsHome(place.world_name);
+                }
+                else
+                {
+                    Vector2Int positionReference;
+                    if (TeleportUtils.IsRoad(place.title) && originParcel.HasValue)
+                        positionReference = originParcel.Value;
+                    else if (VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates))
+                        positionReference = coordinates;
+                    else return;
 
-            if(isHome)
-                homePlaceEventBus.SetAsHome(positionReference);
+                    homePlaceEventBus.SetAsHome(positionReference);
+                }
+            }
             else
+            {
                 homePlaceEventBus.UnsetHome();
+            }
         }
 
         private void StartNavigation()

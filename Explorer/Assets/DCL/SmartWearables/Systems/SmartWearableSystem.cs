@@ -184,7 +184,7 @@ namespace DCL.SmartWearables
 
             if (!result.Succeeded)
             {
-                if (result.Exception != null) ReportHub.LogError(GetReportCategory(), result.Exception);
+                result.TryLogException(GetReportData());
                 return;
             }
 

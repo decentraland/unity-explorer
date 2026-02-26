@@ -16,27 +16,27 @@ MonoBehaviour:
   - id: all
     name: All
     icon: {fileID: 21300000, guid: 5de7f7dfc0d3342fa8c123973e9c3925, type: 3}
-  - id: art
-    name: Art
-    icon: {fileID: 21300000, guid: 1fa6ee61db4734593a57f034d470aa07, type: 3}
   - id: social
     name: Social
     icon: {fileID: 21300000, guid: eab679ad39a8248519287117b76da3d4, type: 3}
-  - id: game
-    name: Game
-    icon: {fileID: 21300000, guid: 4d1caee50d2884f2bb9ec0decee21f36, type: 3}
-  - id: shop
-    name: Shop
-    icon: {fileID: 21300000, guid: 8cfd1ed6e5f9040b8b0978e9b9bd80ca, type: 3}
-  - id: education
-    name: Education
-    icon: {fileID: 21300000, guid: 77e43a448cd4845b6842b4a494ae3a9d, type: 3}
   - id: music
     name: Music
     icon: {fileID: 21300000, guid: 0e704045ff4344821b8b1df81c2c168b, type: 3}
+  - id: art
+    name: Art
+    icon: {fileID: 21300000, guid: 1fa6ee61db4734593a57f034d470aa07, type: 3}
+  - id: game
+    name: Game
+    icon: {fileID: 21300000, guid: 4d1caee50d2884f2bb9ec0decee21f36, type: 3}
   - id: fashion
     name: Fashion
     icon: {fileID: 21300000, guid: cacfd27c3541c4dffa43b796507107d2, type: 3}
+  - id: education
+    name: Education
+    icon: {fileID: 21300000, guid: 77e43a448cd4845b6842b4a494ae3a9d, type: 3}
+  - id: shop
+    name: Shop
+    icon: {fileID: 21300000, guid: 8cfd1ed6e5f9040b8b0978e9b9bd80ca, type: 3}
   - id: sports
     name: Sports
     icon: {fileID: 21300000, guid: 933b0f94d768043e7bfd893efcd70f8e, type: 3}

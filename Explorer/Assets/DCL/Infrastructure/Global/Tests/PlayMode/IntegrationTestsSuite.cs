@@ -28,12 +28,13 @@ using System.Threading;
 using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
+using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
+using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -55,7 +56,7 @@ namespace Global.Tests.PlayMode
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+            IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
@@ -79,12 +80,18 @@ namespace Global.Tests.PlayMode
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
 
+            IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
+
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, new BuildData(), globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                analyticsContainer,
                 dclUrls,
+                new RealmData(),
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
-                Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), 1000, 1000),
+                debugBuilder,
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -96,7 +103,6 @@ namespace Global.Tests.PlayMode
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,
-                Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 DecentralandEnvironment.Org,
