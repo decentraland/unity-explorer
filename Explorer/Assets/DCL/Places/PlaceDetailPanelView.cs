@@ -73,8 +73,8 @@ namespace DCL.Places
 
         private static readonly Color WORLD_ACCESS_STATUS_RESTRICTED = new (0.761f, 0.722f, 0.792f, 1f);
         private static readonly Color WORLD_ACCESS_STATUS_GREEN = new (0.2f, 0.8f, 0.2f);
-        private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
-        private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
+        private const string PADLOCK_CLOSED_SPRITE = "<sprite name=\"PadlockClosed\">";
+        private const string PADLOCK_OPENED_SPRITE = "<sprite name=\"PadlockOpened\">";
 
         [Header("Configuration")]
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
@@ -348,17 +348,17 @@ namespace DCL.Places
                     {
                         if (accessState == WorldAccessCheckResult.AccessDenied)
                         {
-                            worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " INVITE ONLY";
+                            worldAccessStatusText.text = PADLOCK_CLOSED_SPRITE + " INVITE ONLY";
                             worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
                         }
                         else if (accessState == WorldAccessCheckResult.PasswordRequired)
                         {
-                            worldAccessStatusText.text = PADDLOCK_CLOSED_SPRITE + " PASSWORD REQUIRED";
+                            worldAccessStatusText.text = PADLOCK_CLOSED_SPRITE + " PASSWORD REQUIRED";
                             worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
                         }
                         else
                         {
-                            worldAccessStatusText.text = PADDLOCK_OPENED_SPRITE + " YOU ARE INVITED";
+                            worldAccessStatusText.text = PADLOCK_OPENED_SPRITE + " YOU ARE INVITED";
                             worldAccessStatusText.color = WORLD_ACCESS_STATUS_GREEN;
                         }
                     }

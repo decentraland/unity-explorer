@@ -57,8 +57,8 @@ namespace DCL.Places
         [Header("World Access")]
         [SerializeField] private Button enterPasswordButton = null!;
 
-        private const string PADDLOCK_CLOSED_SPRITE = "<sprite name=\"PaddlockClosed\">";
-        private const string PADDLOCK_OPENED_SPRITE = "<sprite name=\"PaddlockOpened\">";
+        private const string PADLOCK_CLOSED_SPRITE = "<sprite name=\"PadlockClosed\">";
+        private const string PADLOCK_OPENED_SPRITE = "<sprite name=\"PadlockOpened\">";
 
         [Serializable]
         private struct FriendsConnectedConfig
@@ -228,7 +228,7 @@ namespace DCL.Places
             bool isRestricted = lastAccessState == WorldAccessCheckResult.AccessDenied || lastAccessState == WorldAccessCheckResult.PasswordRequired;
             bool isInvited = lastAccessState == WorldAccessCheckResult.Allowed && lastAccessType == WorldAccessType.AllowList;
 
-            string prefix = isRestricted ? PADDLOCK_CLOSED_SPRITE : isInvited ? PADDLOCK_OPENED_SPRITE : string.Empty;
+            string prefix = isRestricted ? PADLOCK_CLOSED_SPRITE : isInvited ? PADLOCK_OPENED_SPRITE : string.Empty;
             placeNameText.text = prefix + lastPlaceTitle;
         }
 
