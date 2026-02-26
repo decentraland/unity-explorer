@@ -68,7 +68,6 @@ namespace DCL.Chat.Commands
                        ChangeRealmError.PasswordRequired => $"🔴 Error: The world {realm} requires a password to access",
                        ChangeRealmError.PasswordCancelled => "🟡 Password entry was cancelled",
                        ChangeRealmError.WhitelistAccessDenied => $"🔴 Error: You are not on the access list for {realm}",
-                       ChangeRealmError.CommunityAccessDenied => $"🔴 Error: You are not a member of any community allowed to access {realm}",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }

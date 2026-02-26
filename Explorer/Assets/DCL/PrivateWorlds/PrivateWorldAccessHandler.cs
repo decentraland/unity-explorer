@@ -43,7 +43,7 @@ namespace DCL.PrivateWorlds
                     WorldAccessCheckResult.CheckFailed => WorldAccessResult.CheckFailed,
                     WorldAccessCheckResult.AccessDenied => await ShowAccessDeniedAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
                     WorldAccessCheckResult.PasswordRequired => await HandlePasswordRequiredAsync(worldName, context.AccessInfo?.OwnerAddress ?? ownerAddress, ct),
-                    _ => WorldAccessResult.Allowed,
+                    _ => WorldAccessResult.CheckFailed,
                 };
             }
             catch (OperationCanceledException)

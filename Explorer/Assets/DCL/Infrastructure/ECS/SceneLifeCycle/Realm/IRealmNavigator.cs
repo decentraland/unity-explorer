@@ -29,12 +29,7 @@ namespace ECS.SceneLifeCycle.Realm
         /// <summary>
         /// User is not on the allow-list for this world.
         /// </summary>
-        WhitelistAccessDenied,
-
-        /// <summary>
-        /// User is not a member of any allowed community for this world.
-        /// </summary>
-        CommunityAccessDenied
+        WhitelistAccessDenied
     }
 
     public static class ChangeRealmErrors
@@ -50,7 +45,6 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.PasswordRequired => TaskError.MessageError,
                 ChangeRealmError.PasswordCancelled => TaskError.Cancelled,
                 ChangeRealmError.WhitelistAccessDenied => TaskError.MessageError,
-                ChangeRealmError.CommunityAccessDenied => TaskError.MessageError,
                 ChangeRealmError.UnauthorizedWorldAccess => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
