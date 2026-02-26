@@ -9,7 +9,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         private static readonly IReadOnlyDictionary<string, Participant> EMPTY_DICTIONARY = new Dictionary<string, Participant>();
 
         public static readonly NullParticipantsHub INSTANCE = new ();
-        private static readonly Participant NULL_PARTICIPANT = new ();
+        public static readonly Participant NULL_PARTICIPANT = new ();
+        public static readonly WeakReference<Participant> WEAK_NULL_PARTICIPANT = new (NULL_PARTICIPANT);
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 
