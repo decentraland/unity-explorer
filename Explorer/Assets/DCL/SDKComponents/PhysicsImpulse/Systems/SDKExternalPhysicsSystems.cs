@@ -37,8 +37,8 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         }
 
         [Query]
-        [All(typeof(PBPhysicsTotalForce))]
-        private void ApplyPhysicsForce(in PBPhysicsTotalForce pbPhysicsForce, in CRDTEntity crdtEntity)
+        [All(typeof(PBPhysicsCombinedForce))]
+        private void ApplyPhysicsForce(in PBPhysicsCombinedForce pbPhysicsForce, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
 
@@ -50,8 +50,8 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         }
 
         [Query]
-        [All(typeof(PBPhysicsTotalImpulse))]
-        private void ApplyPhysicsImpulse(in PBPhysicsTotalImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
+        [All(typeof(PBPhysicsCombinedImpulse))]
+        private void ApplyPhysicsImpulse(in PBPhysicsCombinedImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
 

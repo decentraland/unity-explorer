@@ -227,12 +227,12 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
-    public partial class PBPhysicsTotalImpulse : IDirtyMarker
+    public partial class PBPhysicsCombinedImpulse : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }
 
-    public partial class PBPhysicsTotalForce : IDirtyMarker
+    public partial class PBPhysicsCombinedForce : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }
