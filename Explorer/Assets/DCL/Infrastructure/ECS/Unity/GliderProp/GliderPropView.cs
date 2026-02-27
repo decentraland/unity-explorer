@@ -38,6 +38,8 @@ namespace ECS.Unity.GliderProp
         [field: Header("VFX (Moving Only)")] [field: SerializeField] private List<ParticleSystem> ParticleSystems { get; set; }
         [field: SerializeField] private List<TrailRenderer> Trails { get; set; }
 
+        public bool PlayOpenAndCloseSounds { get; set; } = true;
+
         // Flags driven by animation events
         public bool OpenAnimationCompleted { get; private set; }
         public bool CloseAnimationCompleted { get; private set; }
@@ -122,7 +124,7 @@ namespace ECS.Unity.GliderProp
 
         private void OnOpenAnimationStarted()
         {
-            if (!Settings.AudioEnabled) return;
+            if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
             AudioSource.PlayClipAtPoint(OpenGliderClip, transform.position);        }
 
@@ -131,7 +133,7 @@ namespace ECS.Unity.GliderProp
 
         private void OnCloseAnimationStarted()
         {
-            if (!Settings.AudioEnabled) return;
+            if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
             AudioSource.PlayClipAtPoint(CloseGliderClip, transform.position);
         }

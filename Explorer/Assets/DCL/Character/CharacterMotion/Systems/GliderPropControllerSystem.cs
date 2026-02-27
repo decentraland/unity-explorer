@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
@@ -55,16 +56,20 @@ namespace DCL.CharacterMotion.Systems
             int tick = tickEntity.GetPhysicsTickComponent(World).Tick;
 
             // One time init
-            CreatePropQuery(World);
+            LocalCreatePropQuery(World);
+            RemoteCreatePropQuery(World);
 
             // Lifecycle
-            EnablePropQuery(World);
+            LocalEnablePropQuery(World);
+            RemoteEnablePropQuery(World);
             HandleStateTransitionQuery(World, tick);
-            DisablePropQuery(World);
+            LocalDisablePropQuery(World);
+            RemoteDisablePropQuery(World);
             CleanUpDestroyedAvatarsPropQuery(World);
 
             // Visualization
-            UpdatePropAnimatorQuery(World);
+            LocalUpdatePropAnimatorQuery(World);
+            RemoteUpdatePropAnimatorQuery(World);
             LocalUpdateTrailQuery(World);
             RemoteUpdateTrailQuery(World);
             LocalUpdateEngineStateQuery(World, t);
@@ -72,13 +77,23 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [Any(typeof(CharacterController), typeof(InterpolationComponent))]
+        [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
-        private void CreateProp(Entity entity, IAvatarView avatarView)
+        private void LocalCreateProp(Entity entity, IAvatarView avatarView) =>
+            CreateProp(entity, avatarView, true);
+
+        [Query]
+        [All(typeof(InterpolationComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(GliderProp))]
+        private void RemoteCreateProp(Entity entity, IAvatarView avatarView) =>
+            CreateProp(entity, avatarView, false);
+
+        private void CreateProp(Entity entity, IAvatarView avatarView, bool isLocalPlayer)
         {
             var prop = glidingSettings.EnablePropPooling
                 ? propPool!.Get()
                 : Object.Instantiate(gliderPrefab);
+            prop.PlayOpenAndCloseSounds = isLocalPlayer;
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;
@@ -89,20 +104,37 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(GliderPropEnabled))]
-        private void EnableProp(Entity entity, in GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
+        private void LocalEnableProp(Entity entity, in GliderProp gliderProp, in GlideState glideState) =>
+            EnableProp(entity, gliderProp, glideState.Value);
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(GliderPropEnabled))]
+        private void RemoteEnableProp(Entity entity, in GliderProp gliderProp, in InterpolationComponent interpolationComponent) =>
+            EnableProp(entity, gliderProp, interpolationComponent.End.animState.GlideState);
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(GliderPropEnabled))]
+        private void LocalDisableProp(Entity entity, in GliderProp gliderProp, in GlideState glideState) =>
+            DisableProp(entity, gliderProp, glideState.Value);
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(GliderPropEnabled))]
+        private void RemoteDisableProp(Entity entity, in GliderProp gliderProp, in InterpolationComponent interpolationComponent) =>
+            DisableProp(entity, gliderProp, interpolationComponent.End.animState.GlideState);
+
+        private void EnableProp(Entity entity, in GliderProp gliderProp, GlideStateValue glideState)
         {
-            if (animationComponent.States.GlideState == GlideStateValue.PROP_CLOSED) return;
+            if (glideState == GlideStateValue.PROP_CLOSED) return;
 
             gliderProp.View.gameObject.SetActive(true);
             World.Add<GliderPropEnabled>(entity);
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        [All(typeof(GliderPropEnabled))]
-        private void DisableProp(Entity entity, in GliderProp gliderProp, in CharacterAnimationComponent animationComponent)
+        private void DisableProp(Entity entity, in GliderProp gliderProp, GlideStateValue glideState)
         {
-            if (animationComponent.States.GlideState != GlideStateValue.PROP_CLOSED) return;
+            if (glideState != GlideStateValue.PROP_CLOSED) return;
 
             World.Remove<GliderPropEnabled>(entity);
             gliderProp.View.PrepareForNextActivation();
@@ -146,8 +178,14 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(GliderPropEnabled))]
-        private void UpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent) =>
-              GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent);
+        private void LocalUpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent, in GlideState glideState) =>
+              GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent, glideState.Value);
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(GliderPropEnabled))]
+        private void RemoteUpdatePropAnimator(in GliderProp gliderProp, in CharacterAnimationComponent animationComponent, in InterpolationComponent interpolationComponent) =>
+            GliderPropAnimationLogic.Execute(gliderProp.View.Animator, animationComponent, interpolationComponent.End.animState.GlideState);
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
