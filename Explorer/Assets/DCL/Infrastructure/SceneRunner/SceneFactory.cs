@@ -194,7 +194,7 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Starting scene creation for: {sceneData.SceneShortInfo.Name}");
+            WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={UnityEngine.Time.realtimeSinceStartup:F1}", "LOAD");
 
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
 
