@@ -43,7 +43,6 @@ namespace DCL.AvatarRendering.Emotes
             foreach (EmbeddedEmote embeddedEmote in emotes)
             {
                 var model = new EmoteDTO();
-                var emote = new Emote(new StreamableLoadingResult<EmoteDTO>(), false);
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
@@ -67,8 +66,10 @@ namespace DCL.AvatarRendering.Emotes
                 model.metadata.thumbnail = "thumbnail";
                 model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
-                emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
-                emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
+                var emote = new Emote(new StreamableLoadingResult<EmoteDTO>(model), false)
+                    {
+                        ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData(),
+                    };
 
                 if (embeddedEmote.male != null)
                 {

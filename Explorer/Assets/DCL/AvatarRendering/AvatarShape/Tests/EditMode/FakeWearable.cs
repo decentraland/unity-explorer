@@ -25,11 +25,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
-        public TrimmedAvatarAttachmentDTO TrimmedDTO { get; }
+        public TrimmedWearableDTO TrimmedDTO { get; }
         public AvatarAttachmentDTO DTO { get; }
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
 
         public int Amount { get; set; }
+
+        TrimmedAvatarAttachmentDTO ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
         public void SetAmount(int amount)
         {
@@ -51,7 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
             DTO = dto;
             Model = model;
             WearableAssetResults = wearableAssetResults ?? Array.Empty<WearableAssets>();
-            TrimmedDTO = dto.Convert(this.GetThumbnail().Value);
+            TrimmedDTO = dto.Convert(((IAvatarAttachment)this).GetThumbnail().Value);
             this.mainHash = mainHash;
             this.expectedUpperWearableHide = expectedUpperWearableHide ?? new HashSet<string>();
         }
