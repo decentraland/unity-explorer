@@ -11,7 +11,6 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
-using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System;
@@ -19,7 +18,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Pool;
 using RichTypes;
-using System.Runtime.CompilerServices;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -30,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorDataPipe dataPipe = new ();
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
-        private readonly ITracksFactory tracksFactory = new TracksFactory();
+        private readonly InteriorLocalTracks localTracks = new ();
 
         private const int RESET_ROOM_TIMEOUT_SECONDS = 5;
 
@@ -40,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => assigned.Info;
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
-        public ILocalTracks LocalTracks { get; private set; }
+        public ILocalTracks LocalTracks => localTracks;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -158,7 +156,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             dataPipe.Assign(room.DataPipe);
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
-            LocalTracks = new LocalTracks(tracksFactory, room);
+            localTracks.Assign(room.LocalTracks);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
