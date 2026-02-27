@@ -6,7 +6,6 @@ using DCL.FeatureFlags;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;

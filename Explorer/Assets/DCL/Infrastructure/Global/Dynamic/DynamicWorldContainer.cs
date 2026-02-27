@@ -351,7 +351,6 @@ namespace Global.Dynamic
 
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
-            bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
@@ -718,11 +717,38 @@ namespace Global.Dynamic
                 new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, multiplayerEmotesMessageBus, emoteWheelShortcutHandler, mvcManager),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
-                new WearablePlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource, staticContainer.CacheCleaner, wearableCatalog, trimmedWearableCatalog, bootstrapContainer.Analytics.EntitiesAnalytics, builderContentURL.Value, builderCollectionsPreview),
-                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, entityParticipantTable, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity,
-                    builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs, thumbnailProvider, staticContainer.ScenesCache,
-                    bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.Analytics.EntitiesAnalytics, trimmedEmoteCatalog),
+                new WearablePlugin(
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    staticContainer.RealmData,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    staticContainer.CacheCleaner,
+                    wearableCatalog,
+                    trimmedWearableCatalog,
+                    bootstrapContainer.Analytics.EntitiesAnalytics,
+                    builderContentURL.Value),
+                new EmotePlugin(
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    emotesCache,
+                    staticContainer.RealmData,
+                    multiplayerEmotesMessageBus,
+                    debugBuilder,
+                    assetsProvisioner,
+                    selfProfile,
+                    mvcManager,
+                    staticContainer.CacheCleaner,
+                    entityParticipantTable,
+                    dclCursor,
+                    staticContainer.InputBlock,
+                    globalWorld,
+                    playerEntity,
+                    builderContentURL.Value,
+                    appArgs,
+                    thumbnailProvider,
+                    staticContainer.ScenesCache,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    bootstrapContainer.Analytics.EntitiesAnalytics,
+                    emotesEventBus,
+                    trimmedEmoteCatalog),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -771,8 +797,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     passportBridge,
                     chatEventBus,
-                    staticContainer.SmartWearableCache,
-                    eventsApiService),
+                    eventsApiService,
+                    staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),
@@ -1057,7 +1083,8 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (localSceneDevelopment || builderCollectionsPreview)
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -1079,7 +1106,6 @@ namespace Global.Dynamic
                     realmNavigator,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics.Controller,
-                    chatEventBus,
                     socialServiceEventBus,
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
@@ -1212,13 +1238,11 @@ namespace Global.Dynamic
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
-                localSceneDevelopment,
                 profilesRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
-                builderCollectionsPreview,
                 bootstrapContainer.Analytics.EntitiesAnalytics
             );
 

@@ -95,7 +95,8 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            SmartWearableCache smartWearableCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;

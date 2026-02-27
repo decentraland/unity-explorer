@@ -568,8 +568,8 @@ namespace DCL.PluginSystem.Global
                     placesController,
                     eventsController,
                     inputBlock,
-                    mvcManager,
-                    eventsApiService);
+                    eventsApiService,
+                    mvcManager);
 
             mvcManager.RegisterController(explorePanelController);
 
@@ -692,22 +692,12 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
-
-            [field: Header("Place Reel")]
-            [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
-
+            [field: Header("Place Reel")] [field: SerializeField] public int PlaceGridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int PlaceThumbnailHeight { get; private set; }
-
             [field: SerializeField] public int PlaceThumbnailWidth { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
-
-            [field: Header("Place Detail Panel")]
-            [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
-
-            [field: Header("Event Detail Panel")]
-            [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
+            [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
+            [field: Header("Place Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject PlaceDetailPanelPrefab { get; private set; }
+            [field: Header("Event Detail Panel")] [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
         }
     }
 }

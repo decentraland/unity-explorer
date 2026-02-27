@@ -31,7 +31,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.CharacterCamera;
-using DCL.FeatureFlags;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
 using ECS.Abstract;

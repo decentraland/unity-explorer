@@ -10,6 +10,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
@@ -92,8 +93,6 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             string builderContentURL,
-            bool localSceneDevelopment,
-            bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
@@ -116,8 +115,8 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
-            this.localSceneDevelopment = localSceneDevelopment;
-            this.builderCollectionsPreview = builderCollectionsPreview;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
+            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;

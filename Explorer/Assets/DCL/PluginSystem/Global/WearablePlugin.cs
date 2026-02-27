@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.AvatarRendering.Wearables.Systems.Load;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
@@ -47,8 +48,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
-            string builderContentURL,
-            bool builderCollectionsPreview)
+            string builderContentURL)
         {
             this.wearableStorage = wearableStorage;
             this.trimmedWearableStorage = trimmedWearableStorage;
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.urlsSource = urlsSource;
             this.builderContentURL = builderContentURL;
-            this.builderCollectionsPreview = builderCollectionsPreview;
+            this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
 
             cacheCleaner.Register(this.wearableStorage);
