@@ -16,11 +16,11 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly HybridSceneContentServer hybridSceneContentServer;
         private readonly URLDomain hybridSceneContentServerDomain;
         private readonly string world;
-        private readonly string? worldContentServerBaseUrl;
+        private readonly URLDomain worldContentServerBaseUrl;
         private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams, URLDomain worldContentServerContentsUrl, string worldContentServerBaseUrl) : base(webRequestController, assetBundleURL)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams, URLDomain worldContentServerContentsUrl, URLDomain worldContentServerBaseUrl) : base(webRequestController, assetBundleURL)
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
@@ -48,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
             hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
 
             if (await hybridSceneHashedContent.TryGetRemoteSceneIDAsync(hybridSceneContentServerDomain,
-                    hybridSceneContentServer, definition.metadata.scene.DecodedBase, world, reportCategory, worldContentServerBaseUrl))
+                    hybridSceneContentServer, definition.metadata.scene.DecodedBase, world, reportCategory, worldContentServerBaseUrl.Value))
             {
                 await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain,
                     reportCategory);

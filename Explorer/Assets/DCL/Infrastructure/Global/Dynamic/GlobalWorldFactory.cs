@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             if (hybridSceneParams.EnableHybridScene)
             {
-                string worldContentServerBaseUrl = urlsSource.Url(DecentralandUrl.WorldServer);
+                URLDomain worldContentServerBaseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldServer));
                 URLDomain worldContentServerContentsUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer));
                 loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams, worldContentServerContentsUrl, worldContentServerBaseUrl);
             }
