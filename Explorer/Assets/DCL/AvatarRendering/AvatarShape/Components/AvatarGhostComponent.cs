@@ -22,8 +22,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// </summary>
     public struct AvatarGhostComponent
     {
-        public const float REVEAL_DURATION_SEC = 1f;
-        public const float HIDE_DURATION_SEC = 1f;
+        public const float REVEAL_DURATION_SEC = 2f;
+        public const float HIDE_DURATION_SEC = 2f;
         public const float REVEAL_TARGET = 2f;
         public const float HIDE_TARGET = 0f;
 
