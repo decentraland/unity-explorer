@@ -19,8 +19,7 @@ namespace DCL.CommunicationData.URLHelpers
         /// </summary>
         public static string ConvertEnsToWorldUrl(this ENS ens, string worldContentServerBaseUrl)
         {
-            string baseUrl = worldContentServerBaseUrl.TrimEnd('/');
-            return $"{baseUrl}/{ens.ToString().ToLower()}";
+            return $"{worldContentServerBaseUrl}/{ens.ToString().ToLowerInvariant()}";
         }
     }
 }
