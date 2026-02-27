@@ -6,15 +6,11 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.Web3;
-using Global.AppArgs;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -24,7 +20,6 @@ using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 using Object = UnityEngine.Object;
 
 namespace DCL.Backpack.EmotesSection
@@ -37,7 +32,6 @@ namespace DCL.Backpack.EmotesSection
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly IBackpackEventBus eventBus;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -51,7 +45,6 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly bool builderEmotesPreview;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -64,7 +57,6 @@ namespace DCL.Backpack.EmotesSection
             BackpackGridView view,
             BackpackCommandBus commandBus,
             IBackpackEventBus eventBus,
-            IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -75,13 +67,11 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IAppArgs appArgs,
             IEmoteStorage emoteStorage)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
-            this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -93,7 +83,6 @@ namespace DCL.Backpack.EmotesSection
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
-            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
             eventBus.EquipEmoteEvent += OnEquip;
@@ -149,22 +138,22 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(pageNumber, false);
         }
 
-        public void RequestAndFillEmotes(int pageNumber, bool reconfigurePageSelector)
+        private void RequestAndFillEmotes(int pageNumber, bool reconfigurePageSelector)
         {
             loadElementsCancellationToken = loadElementsCancellationToken.SafeRestart();
 
             SetGridAsLoading();
+            RequestPageAsync(loadElementsCancellationToken.Token).Forget();
+            return;
 
             async UniTaskVoid RequestPageAsync(CancellationToken ct)
             {
-                IReadOnlyList<IEmote> emotes;
+                IReadOnlyList<ITrimmedEmote> emotes;
 
-                using var _ = ListPool<IEmote>.Get(out var customOwnedEmotes);
+                using var _ = ListPool<ITrimmedEmote>.Get(out var customOwnedEmotes);
                 customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
 
-                int totalAmount = await emoteProvider.GetOwnedEmotesAsync(
-                    web3IdentityCache.Identity!.Address,
-                    ct,
+                var result = await emoteProvider.GetTrimmedByParamsAsync(
                     new IEmoteProvider.OwnedEmotesRequestOptions(
                         pageNum: pageNumber,
                         pageSize: CURRENT_PAGE_SIZE,
@@ -172,8 +161,11 @@ namespace DCL.Backpack.EmotesSection
                         orderOperation: currentOrder,
                         name: currentSearch
                     ),
+                    ct,
                     customOwnedEmotes
                 );
+
+                int totalAmount = result.totalAmount;
 
                 // TODO: request base emotes collection instead of pointers:
                 // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
@@ -184,7 +176,7 @@ namespace DCL.Backpack.EmotesSection
                     using var scope = ListPool<IEmote>.Get(out var baseEmotes);
                     baseEmotes = baseEmotes.EnsureNotNull();
 
-                    await emoteProvider.GetEmotesAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
+                    await emoteProvider.GetByPointersAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
 
                     IEnumerable<IEmote> filteredEmotes = baseEmotes;
 
@@ -196,7 +188,7 @@ namespace DCL.Backpack.EmotesSection
 
                     filteredEmotes = currentOrder.By switch
                                      {
-                                         "name" => currentOrder.IsAscendent
+                                         "name" => currentOrder.IsAscending
                                              ? filteredEmotes.OrderBy(emote => emote.GetName())
                                              : filteredEmotes.OrderByDescending(emote => emote.GetName()),
                                          _ => filteredEmotes,
@@ -204,7 +196,7 @@ namespace DCL.Backpack.EmotesSection
 
                     baseEmotes = filteredEmotes.ToList();
 
-                    int customOwnedEmotesAmount = totalAmount;
+                    int customOwnedEmotesAmount = result.totalAmount;
                     totalAmount += baseEmotes.Count;
 
                     var baseEmotesToSkip = 0;
@@ -244,8 +236,6 @@ namespace DCL.Backpack.EmotesSection
                 if (reconfigurePageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
             }
-
-            RequestPageAsync(loadElementsCancellationToken!.Token).Forget();
         }
 
         private void SetGridAsLoading()
@@ -262,7 +252,7 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        private void SetGridElements(IReadOnlyList<IEmote> emotes)
+        private void SetGridElements(IReadOnlyList<ITrimmedEmote> emotes)
         {
             //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = emotes.Count; j < CURRENT_PAGE_SIZE; j++)
@@ -296,6 +286,7 @@ namespace DCL.Backpack.EmotesSection
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.OnEquip += EquipItem;
                 backpackItemView.OnUnequip += UnEquipItem;
+                backpackItemView.Slot = i;
                 backpackItemView.ItemId = emotes[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(emotes[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(emotes[i].GetRarity());
@@ -317,8 +308,20 @@ namespace DCL.Backpack.EmotesSection
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
-        private void EquipItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
+        private void EquipItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true, () => SetLoadingSlot(slot, false)));
+        }
+
+        private void SetLoadingSlot(int slot, bool isLoading)
+        {
+            loadingResults[slot]!.IsLoading = isLoading;
+
+            for (int i = 0; i < loadingResults.Length; i++)
+                if (i != slot && loadingResults[i] != null)
+                    loadingResults[i]!.CanHover = !isLoading;
+        }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
         {
@@ -340,7 +343,7 @@ namespace DCL.Backpack.EmotesSection
             RequestAndFillEmotes(1, true);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IAvatarAttachment emote, BackpackItemView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -370,8 +373,11 @@ namespace DCL.Backpack.EmotesSection
             usedPoolItems.Clear();
         }
 
-        private void SelectItem(int slot, string itemId) =>
-            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId));
+        private void SelectItem(int slot, string itemId)
+        {
+            SetLoadingSlot(slot, true);
+            commandBus.SendCommand(new BackpackSelectEmoteCommand(itemId, () => SetLoadingSlot(slot, false)));
+        }
 
         private void OnUnequip(int slot, IEmote? emote)
         {
