@@ -53,6 +53,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.FRIENDS_CONNECTIVITY_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
                 [FeatureId.COMMUNITIES_ANNOUNCEMENTS]  = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
                 [FeatureId.COMMUNITIES_MEMBERS_COUNTER]= FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
+                [FeatureId.EMAIL_OTP_AUTH] = true, //TODO FRAN -> Check this one out
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -164,5 +165,6 @@ namespace DCL.FeatureFlags
         DONATIONS = 42,
         FORCE_BACKFACE_CULLING = 43,
         NAME_COLOR_CHANGE = 44,
+        EMAIL_OTP_AUTH = 45,
     }
 }
