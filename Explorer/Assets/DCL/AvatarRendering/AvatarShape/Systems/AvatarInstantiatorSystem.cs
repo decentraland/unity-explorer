@@ -94,6 +94,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void InstantiateNewAvatarFromGhost(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent,
             ref AvatarBase avatarBase, ref AvatarGhostComponent avatarGhostComponent)
         {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Hidden) return;
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
 
@@ -117,6 +118,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void InstantiateMainPlayerAvatarFromGhost(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent,
             ref AvatarBase avatarBase, ref AvatarGhostComponent avatarGhostComponent)
         {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Hidden) return;
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
 

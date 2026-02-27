@@ -15,8 +15,8 @@ using Utility;
 namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
-    ///     Shows the ghost renderer on AvatarBase while the avatar is loading. When wearables are resolved,
-    ///     <see cref="AvatarInstantiatorSystem" /> reuses this AvatarBase and turns the ghost off.
+    ///     Shows the ghost renderer on AvatarBase while the avatar is loading. Animates RevealPosition 0→2 (reveal over 2s),
+    ///     then when wearables are ready animates 2→0 (hide). <see cref="AvatarInstantiatorSystem" /> enables wearables only after Phase is Hidden.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarLoaderSystem))]
@@ -24,6 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape
     public partial class AvatarGhostSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private float deltaTime;
 
         internal AvatarGhostSystem(World world, IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
         {
@@ -32,7 +33,11 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            deltaTime = t;
             EnsureGhostAvatarQuery(World);
+            UpdateGhostRevealAnimationQuery(World);
+            CheckWearablesReadyStartHidingQuery(World);
+            UpdateGhostHideAnimationQuery(World);
         }
 
         [Query]
@@ -62,11 +67,68 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarTransform.ResetLocalTRS();
 
             if (avatarBase.GhostRenderer != null)
+            {
                 avatarBase.GhostRenderer.SetActive(true);
+                Renderer r = avatarBase.GhostRenderer.GetComponent<Renderer>();
+
+                if (r != null && r.material != null)
+                    r.material.SetVector(AvatarGhostComponent.REVEAL_POSITION_SHADER_ID, new Vector4(0, AvatarGhostComponent.HIDE_TARGET, 0, 0));
+            }
 
             avatarBase.gameObject.SetActive(true);
 
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, new AvatarGhostComponent(avatarBase.gameObject));
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase, new AvatarGhostComponent(avatarBase.GhostRenderer!));
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateGhostRevealAnimation(ref AvatarGhostComponent avatarGhostComponent)
+        {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Revealing) return;
+
+            avatarGhostComponent.PhaseElapsed += deltaTime;
+            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / AvatarGhostComponent.REVEAL_DURATION_SEC);
+            avatarGhostComponent.RevealPosition = Mathf.Lerp(AvatarGhostComponent.HIDE_TARGET, AvatarGhostComponent.REVEAL_TARGET, progress);
+            avatarGhostComponent.ApplyRevealPositionToMaterial();
+
+            if (progress >= 1f)
+            {
+                avatarGhostComponent.RevealPosition = AvatarGhostComponent.REVEAL_TARGET;
+                avatarGhostComponent.Phase = AvatarGhostPhase.Visible;
+                avatarGhostComponent.PhaseElapsed = 0f;
+            }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void CheckWearablesReadyStartHiding(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
+        {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
+            if (avatarShapeComponent.WearablePromise.IsConsumed) return;
+
+            if (!avatarShapeComponent.WearablePromise.TryGetResult(World, out _)) return;
+
+            avatarGhostComponent.Phase = AvatarGhostPhase.Hiding;
+            avatarGhostComponent.PhaseElapsed = 0f;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateGhostHideAnimation(ref AvatarGhostComponent avatarGhostComponent)
+        {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Hiding) return;
+
+            avatarGhostComponent.PhaseElapsed += deltaTime;
+            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / AvatarGhostComponent.HIDE_DURATION_SEC);
+            avatarGhostComponent.RevealPosition = Mathf.Lerp(AvatarGhostComponent.REVEAL_TARGET, AvatarGhostComponent.HIDE_TARGET, progress);
+            avatarGhostComponent.ApplyRevealPositionToMaterial();
+
+            if (progress >= 1f)
+            {
+                avatarGhostComponent.RevealPosition = AvatarGhostComponent.HIDE_TARGET;
+                avatarGhostComponent.Phase = AvatarGhostPhase.Hidden;
+                avatarGhostComponent.PhaseElapsed = 0f;
+            }
         }
     }
 }
