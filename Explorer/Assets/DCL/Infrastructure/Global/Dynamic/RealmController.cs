@@ -56,6 +56,7 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
+        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
@@ -103,12 +104,14 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider)
+            WorldManifestProvider worldManifestProvider,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
+            this.worldPermissionsService = worldPermissionsService;
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
@@ -191,53 +194,46 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
         {
-            string signMetadata = CommsHandshakeMetadata.BuildJson(null);
-            ServerAbout about;
+            if (!TryExtractWorldName(realm, out string worldName))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to extract world name from realm '{realm}'.");
+                return false;
+            }
+
+            WorldAccessCheckContext context;
             try
             {
-                about = await webRequestController
-                             .GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM)
-                             .CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to resolve world '/about' for '{realm}': {e.Message}");
+                    $"[RealmController] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
                 return false;
             }
 
-            string commsAdapterUrl = ExtractCommsAdapterUrl(about.comms?.adapter ?? string.Empty);
-
-            if (string.IsNullOrEmpty(commsAdapterUrl))
-                return true;
-
-            long statusCode;
-
-            try
-            {
-                statusCode = await webRequestController.SignedFetchPostAsync(
-                                                            commsAdapterUrl,
-                                                            signMetadata,
-                                                            ct)
-                                                       .StatusCodeAsync();
-            }
-            catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to verify world access for '{realm}' via comms adapter: {e.Message}");
-                return false;
-            }
-
-            return statusCode >= 200 && statusCode < 300;
+            return context.Result == WorldAccessCheckResult.Allowed;
         }
 
-        private static string ExtractCommsAdapterUrl(string input)
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
         {
-            const string MARKER = "https";
-            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
-            return index >= 0 ? input.Substring(index) : string.Empty;
+            worldName = string.Empty;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
         }
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)

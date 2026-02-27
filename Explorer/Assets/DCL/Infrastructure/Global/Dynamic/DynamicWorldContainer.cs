@@ -380,7 +380,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment);
+                bootstrapContainer.Environment,
+                worldPermissionsService);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
