@@ -1,6 +1,7 @@
 :root {
     --message-transition-duration: 0.3s;
     --message-transition-easing: ease-out-back;
+    align-items: center;
 }
 
 .nametag {

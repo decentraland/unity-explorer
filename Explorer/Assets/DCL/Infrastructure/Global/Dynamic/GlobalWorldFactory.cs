@@ -5,6 +5,7 @@ using CrdtEcsBridge.RestrictedActions;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
+using DCL.Interaction.Raycast;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -199,7 +200,7 @@ namespace Global.Dynamic
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);
             ResetCameraSamplingDataDirty.InjectToWorld(ref builder, realmData, cameraSamplingData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
-
+            ResetRaycastResultSystem.InjectToWorld(ref builder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             UpdatePhysicsTickSystem.InjectToWorld(ref builder);
