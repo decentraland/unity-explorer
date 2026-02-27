@@ -3,23 +3,31 @@ using UnityEngine;
 
 namespace DCL.PrivateWorlds
 {
-    /// <summary>
-    /// Shared helper for building the JSON metadata used in the comms handshake.
-    /// Centralises the magic strings and struct so that FixedConnectiveRoom,
-    /// GateKeeperSceneRoom, and WorldPermissionsService stay in sync.
-    /// </summary>
     public static class CommsHandshakeMetadata
     {
         public const string INTENT = "dcl:explorer:comms-handshake";
         public const string SIGNER = "dcl:explorer";
-        /// <summary>
-        /// Builds the JSON metadata for a comms handshake that requires a secret.
-        /// Sends the provided secret as-is (empty string means "no password").
-        /// </summary>
-        public static string BuildJson(string secret)
+
+        public static string BuildWorldJson(string secret)
         {
             var metadata = new MetadataWithSecret
             {
+                intent = INTENT,
+                signer = SIGNER,
+                isGuest = false,
+                secret = secret,
+            };
+
+            return JsonUtility.ToJson(metadata);
+        }
+        
+        public static string BuildSceneJson(string realmName, string realmServerName, string? sceneId, string secret)
+        {
+            var metadata = new SceneMetadataWithSecret
+            {
+                realmName = realmName,
+                realm = new SceneRealm { serverName = realmServerName },
+                sceneId = sceneId,
                 intent = INTENT,
                 signer = SIGNER,
                 isGuest = false,
@@ -36,6 +44,24 @@ namespace DCL.PrivateWorlds
             public string signer;
             public bool isGuest;
             public string secret;
+        }
+
+        [Serializable]
+        private struct SceneMetadataWithSecret
+        {
+            public string realmName;
+            public SceneRealm realm;
+            public string? sceneId;
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+        }
+
+        [Serializable]
+        private struct SceneRealm
+        {
+            public string serverName;
         }
     }
 }

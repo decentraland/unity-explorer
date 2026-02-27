@@ -273,7 +273,7 @@ namespace DCL.PrivateWorlds
         }
 
         private static string BuildValidatePasswordMetadataJson(string password) =>
-            CommsHandshakeMetadata.BuildJson(password);
+            CommsHandshakeMetadata.BuildWorldJson(password);
 
         private async UniTask<bool> CheckAllowListAccessAsync(WorldAccessInfo accessInfo, CancellationToken ct)
         {

@@ -46,6 +46,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
+            
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
                 $"[FixedConnectiveRoom] Requesting adapter from '{adapterUrl}' (secretLength={realmData.WorldCommsSecret.Length})");
 
@@ -57,12 +58,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
+            
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
+            
             return connectionString;
         }
 
         private string BuildMetadata() =>
-            CommsHandshakeMetadata.BuildJson(realmData.WorldCommsSecret);
+            CommsHandshakeMetadata.BuildWorldJson(realmData.WorldCommsSecret);
 
         [Serializable]
         private struct AdapterResponse
