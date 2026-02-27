@@ -7,7 +7,9 @@ using DCL.InWorldCamera;
 using DCL.UI;
 using ECS.Abstract;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using Utility;
@@ -29,7 +31,22 @@ namespace DCL.Input.Systems
 
         private bool currentUIVisibilityState = true;
 
-        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
+        private IEnumerable<InputAction> actionsThatEnableUI
+        {
+            get
+            {
+                yield return dclInput.Shortcuts.Communities;
+                yield return dclInput.Shortcuts.Map;
+                yield return dclInput.Shortcuts.Backpack;
+                yield return dclInput.Shortcuts.CameraReel;
+                yield return dclInput.Shortcuts.Settings;
+                yield return dclInput.Shortcuts.Controls;
+                yield return dclInput.Shortcuts.MainMenu;
+                yield return dclInput.UI.Submit;
+            }
+        }
+
+    private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
         {
             dclInput = DCLInput.Instance;
             this.mvcManager = mvcManager;
@@ -45,9 +62,11 @@ namespace DCL.Input.Systems
         {
             // TODO: Should this really be in a system? It's not really updating anything, just checking for input triggers
 
-            if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
+            bool? fromInputs = CheckInputs();
+
+            if (fromInputs.HasValue)
             {
-                currentUIVisibilityState = !currentUIVisibilityState;
+                currentUIVisibilityState = fromInputs.Value;
 
                 // Common UIs
                 mvcManager.SetAllViewsCanvasActive(currentUIVisibilityState);
@@ -66,8 +85,26 @@ namespace DCL.Input.Systems
                 ShowOrHideToast();
             }
 
-            foreach (UIDocument doc in UIDocumentTracker.ActiveDocuments)
-                doc.rootVisualElement.SetVisible(currentUIVisibilityState);
+            foreach (UIDocumentTracker tracker in UIDocumentTracker.ActiveDocuments)
+            {
+                if(!tracker.CanBeHidden)
+                    continue;
+                tracker.Document.rootVisualElement.SetVisible(currentUIVisibilityState);
+            }
+        }
+
+        private bool? CheckInputs()
+        {
+            if (dclInput.Shortcuts.ShowHideUI.WasPressedThisFrame())
+                return !currentUIVisibilityState;
+
+            foreach (InputAction inputAction in actionsThatEnableUI)
+            {
+                if (inputAction.WasPressedThisFrame())
+                    return true;
+            }
+
+            return null;
         }
 
         private void ShowOrHideToast()
