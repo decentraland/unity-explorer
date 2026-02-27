@@ -4,19 +4,21 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     /// <summary>
     ///     Phase of the ghost reveal/hide animation. Reveal (0→2) runs when ghost appears;
-    ///     Hide (2→0) runs when wearables are ready, before enabling the full avatar.
+    ///     RevealTransition (2→0): coordinated line-down reveal with wearables (ghost hidden below line, wearables above);
+    ///     Hidden: transition complete, ghost disabled, wearables fully visible.
     /// </summary>
     public enum AvatarGhostPhase
     {
         Revealing,
         Visible,
-        Hiding,
+        RevealTransition,
         Hidden,
     }
 
     /// <summary>
     ///     Controls the ghost renderer visibility on <see cref="UnityInterface.AvatarBase" />.
-    ///     Animates the material's RevealPosition: 0→2 (reveal) then 2→0 (hide) before wearables are shown.
+    ///     Animates the material's RevealPosition: 0→2 (reveal), then RevealTransition runs a coordinated
+    ///     line-down animation (2→0) where ghost is visible below the line and wearables above; when done, ghost is disabled.
     /// </summary>
     public struct AvatarGhostComponent
     {
@@ -51,7 +53,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
 
         /// <summary>
-        ///     Sets the material's _RevealPosition (float3). Only the y component is animated for the reveal effect.
+        ///     Y value below which the wearable shader considers the reveal inactive (no clip). Set on wearable materials when transition ends.
+        /// </summary>
+        public const float REVEAL_INACTIVE_Y = -1e6f;
+
+        /// <summary>
+        ///     Sets the material's _RevealPosition (float4). Only the y component is animated for the line-down reveal effect.
         /// </summary>
         public void ApplyRevealPositionToMaterial()
         {

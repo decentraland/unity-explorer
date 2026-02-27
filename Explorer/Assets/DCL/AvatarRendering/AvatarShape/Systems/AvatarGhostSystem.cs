@@ -15,8 +15,8 @@ using Utility;
 namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
-    ///     Shows the ghost renderer on AvatarBase while the avatar is loading. Animates RevealPosition 0→2 (reveal over 2s),
-    ///     then when wearables are ready animates 2→0 (hide). <see cref="AvatarInstantiatorSystem" /> enables wearables only after Phase is Hidden.
+    ///     Shows the ghost renderer on AvatarBase while the avatar is loading. Animates RevealPosition 0→2 (reveal),
+    ///     then when wearables are ready starts RevealTransition: coordinated line-down (2→0) with wearables; when done, Phase is Hidden and ghost is disabled.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarLoaderSystem))]
@@ -36,8 +36,8 @@ namespace DCL.AvatarRendering.AvatarShape
             deltaTime = t;
             EnsureGhostAvatarQuery(World);
             UpdateGhostRevealAnimationQuery(World);
-            CheckWearablesReadyStartHidingQuery(World);
-            UpdateGhostHideAnimationQuery(World);
+            CheckWearablesReadyStartRevealTransitionQuery(World);
+            UpdateRevealTransitionAnimationQuery(World);
         }
 
         [Query]
@@ -101,22 +101,23 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CheckWearablesReadyStartHiding(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
+        private void CheckWearablesReadyStartRevealTransition(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
             if (avatarShapeComponent.WearablePromise.IsConsumed) return;
 
             if (!avatarShapeComponent.WearablePromise.TryGetResult(World, out _)) return;
 
-            avatarGhostComponent.Phase = AvatarGhostPhase.Hiding;
+            avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;
             avatarGhostComponent.PhaseElapsed = 0f;
+            avatarGhostComponent.RevealPosition = AvatarGhostComponent.REVEAL_TARGET;
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateGhostHideAnimation(ref AvatarGhostComponent avatarGhostComponent)
+        private void UpdateRevealTransitionAnimation(ref AvatarGhostComponent avatarGhostComponent)
         {
-            if (avatarGhostComponent.Phase != AvatarGhostPhase.Hiding) return;
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.RevealTransition) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / AvatarGhostComponent.HIDE_DURATION_SEC);
@@ -128,6 +129,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarGhostComponent.RevealPosition = AvatarGhostComponent.HIDE_TARGET;
                 avatarGhostComponent.Phase = AvatarGhostPhase.Hidden;
                 avatarGhostComponent.PhaseElapsed = 0f;
+                avatarGhostComponent.Disable();
             }
         }
     }
