@@ -25,7 +25,6 @@ namespace DCL.PrivateWorlds
         private readonly IRealmData realmData;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IWorldCommsSecret worldCommsSecret;
         private readonly IChatHistory chatHistory;
         private readonly CancellationTokenSource disposeCts = new();
 
@@ -36,14 +35,12 @@ namespace DCL.PrivateWorlds
             IRealmData realmData,
             IWorldPermissionsService worldPermissionsService,
             IRealmNavigator realmNavigator,
-            IWorldCommsSecret worldCommsSecret,
             IChatHistory chatHistory)
         {
             this.roomHub = roomHub;
             this.realmData = realmData;
             this.worldPermissionsService = worldPermissionsService;
             this.realmNavigator = realmNavigator;
-            this.worldCommsSecret = worldCommsSecret;
             this.chatHistory = chatHistory;
 
             roomHub.IslandRoom().ConnectionUpdated += OnIslandRoomConnectionUpdated;
@@ -104,7 +101,8 @@ namespace DCL.PrivateWorlds
 
         private async UniTask CheckCurrentWorldAccessAndTeleportIfRevokedAsync(CancellationToken ct)
         {
-            if (ct.IsCancellationRequested || realmData.RealmType.Value is not RealmKind.World)
+            if (ct.IsCancellationRequested || 
+                realmData.RealmType.Value is not RealmKind.World)
                 return;
 
             string worldName = realmData.RealmName;
@@ -114,31 +112,18 @@ namespace DCL.PrivateWorlds
 
             WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
 
-            if (ct.IsCancellationRequested || realmData.RealmType.Value is not RealmKind.World)
+            if (ct.IsCancellationRequested || 
+                realmData.RealmType.Value is not RealmKind.World)
                 return;
 
-            // Realm could have changed while the async permission check was in flight.
             if (!string.Equals(worldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase))
                 return;
 
-            // NOTE:
-            // Clear stale secret while in non-password worlds. This prevents a secret from a previous world
-            // from making PasswordRequired checks look "authenticated" after permissions change.
-            if (context.Result is WorldAccessCheckResult.Allowed &&
-                context.AccessInfo?.AccessType is not WorldAccessType.SharedSecret &&
-                !string.IsNullOrEmpty(worldCommsSecret.Secret))
-            {
-                worldCommsSecret.Secret = null;
-            }
-
-            bool accessRevoked = context.Result is WorldAccessCheckResult.AccessDenied
-                                 || (context.Result is WorldAccessCheckResult.PasswordRequired && string.IsNullOrEmpty(worldCommsSecret.Secret));
-
-            if (!accessRevoked)
+            if (context.Result != WorldAccessCheckResult.AccessDenied &&
+                context.Result != WorldAccessCheckResult.PasswordRequired)
                 return;
 
-            ReportHub.Log(ReportCategory.REALM,
-                $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}) after ParticipantRemoved disconnect, teleporting to Genesis");
+            ReportHub.Log(ReportCategory.REALM, $"[PrivateWorlds] Access revoked for '{worldName}' ({context.Result}) after ParticipantRemoved disconnect, teleporting to Genesis");
 
             var teleportResult = await realmNavigator.TeleportToParcelAsync(Vector2Int.zero, disposeCts.Token, false);
 

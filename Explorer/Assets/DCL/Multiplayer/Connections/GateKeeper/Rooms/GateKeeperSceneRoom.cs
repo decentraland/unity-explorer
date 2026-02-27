@@ -5,10 +5,10 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PrivateWorlds;
 using DCL.WebRequests;
-using ECS;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
@@ -54,7 +54,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private readonly IWebRequestController webRequests;
         private readonly GateKeeperSceneRoomOptions options;
-        private readonly IWorldCommsSecret? worldCommsSecret;
 
         private event Action? CurrentSceneRoomConnected;
         private event Action? CurrentSceneRoomDisconnected;
@@ -65,13 +64,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            GateKeeperSceneRoomOptions options,
-            IWorldCommsSecret? worldCommsSecret = null
+            GateKeeperSceneRoomOptions options
         )
         {
             this.webRequests = webRequests;
             this.options = options;
-            this.worldCommsSecret = worldCommsSecret;
         }
 
         public IGateKeeperSceneRoom AsActivatable() =>
@@ -206,14 +203,51 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.GetAdapterURL(meta.sceneId);
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
+
+            if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
+
+            string signedMetadata = BuildSignedMetadata(meta);
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, meta.ToJson(), token)
+                                            .SignedFetchPostAsync(url, signedMetadata, token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             return connectionString;
         }
 
+        private string BuildSignedMetadata(MetaData meta)
+        {
+            // Private worlds scene comms expects the same handshake fields used by the fixed/island comms flow.
+            // Send the stored secret as-is (owner path uses an explicit empty string).
+            var metadata = new SceneCommsHandshakeMetadata
+            {
+                realmName = meta.realmName,
+                realm = meta.realm,
+                sceneId = meta.sceneId,
+                intent = CommsHandshakeMetadata.INTENT,
+                signer = CommsHandshakeMetadata.SIGNER,
+                isGuest = false,
+                secret = options.RealmData.WorldCommsSecret,
+            };
+
+            return JsonUtility.ToJson(metadata);
+        }
+
+        [Serializable]
+        private struct SceneCommsHandshakeMetadata
+        {
+            public string realmName;
+            public MetaData.Realm realm;
+            public string? sceneId;
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+        }
 
 
         [Serializable]

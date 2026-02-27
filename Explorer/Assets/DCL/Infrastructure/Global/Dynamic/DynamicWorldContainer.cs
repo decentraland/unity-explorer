@@ -394,11 +394,8 @@ namespace Global.Dynamic
                 appArgs,
                 staticContainer.RealmData);
             
-            var worldCommsSecret = new WorldCommsSecret();
-
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
-                    gateKeeperSceneRoomOptions,
-                    worldCommsSecret).AsActivatable();
+                    gateKeeperSceneRoomOptions).AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
@@ -409,7 +406,7 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                worldCommsSecret
+                staticContainer.RealmData
             );
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
@@ -507,7 +504,7 @@ namespace Global.Dynamic
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
             
-            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, worldCommsSecret);
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
             realmNavigatorContainer.WorldAccessGateProxy.SetObject(worldAccessGate);
 
             MapRendererContainer? mapRendererContainer =
@@ -800,7 +797,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
-                    worldCommsSecret,
                     chatHistory),
                 new MinimapPlugin(
                     mainUIView.MinimapView.EnsureNotNull(),

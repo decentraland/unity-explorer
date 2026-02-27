@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PrivateWorlds;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using System;
 using System.Threading;
 
@@ -15,15 +16,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private readonly IWebRequestController webRequests;
         private readonly ICurrentAdapterAddress currentAdapterAddress;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IWorldCommsSecret? worldCommsSecret;
+        private readonly IRealmData realmData;
 
         public FixedConnectiveRoom(IWebRequestController webRequests, ICurrentAdapterAddress currentAdapterAddress, IWeb3IdentityCache identityCache,
-            IWorldCommsSecret? worldCommsSecret = null)
+            IRealmData realmData)
         {
             this.webRequests = webRequests;
             this.currentAdapterAddress = currentAdapterAddress;
             this.identityCache = identityCache;
-            this.worldCommsSecret = worldCommsSecret;
+            this.realmData = realmData;
         }
 
         protected override UniTask PrewarmAsync(CancellationToken token) =>
@@ -45,6 +46,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
+                $"[FixedConnectiveRoom] Requesting adapter from '{adapterUrl}' (secretLength={realmData.WorldCommsSecret.Length})");
+
+            if (!string.IsNullOrEmpty(realmData.WorldCommsSecret))
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    "[FixedConnectiveRoom] Non-empty WorldCommsSecret is being sent in handshake metadata.");
+
             string metadata = BuildMetadata();
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
@@ -54,7 +62,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         }
 
         private string BuildMetadata() =>
-            CommsHandshakeMetadata.BuildJson(worldCommsSecret?.Secret);
+            CommsHandshakeMetadata.BuildJson(realmData.WorldCommsSecret);
 
         [Serializable]
         private struct AdapterResponse

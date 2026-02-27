@@ -32,7 +32,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IRealmData realmData;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IWorldCommsSecret worldCommsSecret;
         private readonly IChatHistory chatHistory;
 
         private PrivateWorldPermissionGuard? permissionGuard;
@@ -46,7 +45,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             IRealmData realmData,
             IRealmNavigator realmNavigator,
-            IWorldCommsSecret worldCommsSecret,
             IChatHistory chatHistory)
         {
             this.mvcManager = mvcManager;
@@ -57,7 +55,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
-            this.worldCommsSecret = worldCommsSecret;
             this.chatHistory = chatHistory;
         }
 
@@ -68,7 +65,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PrivateWorldsSettings settings, CancellationToken ct)
         {
-            permissionGuard = new PrivateWorldPermissionGuard(roomHub, realmData, worldPermissionsService, realmNavigator, worldCommsSecret, chatHistory);
+            permissionGuard = new PrivateWorldPermissionGuard(roomHub, realmData, worldPermissionsService, realmNavigator, chatHistory);
 
             if (settings.PrivateWorldPopup != null)
             {
