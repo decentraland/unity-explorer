@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 RealmName == other.RealmName && Parcel.Equals(other.Parcel);
 
             public bool Equals(MetaData other) =>
-                RealmName == other.realmName && Parcel.Equals(other.Parcel);
+                RealmName == other.realmName && Parcel.Equals(other.parcel);
 
             public override bool Equals(object? obj) =>
                 obj is Input other && Equals(other);
@@ -50,12 +50,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         /// <summary>
         ///     Parcel metadata was requested for, not necessarily the base parcel of the scene
         /// </summary>
-        [NonSerialized]
-        public readonly Vector2Int Parcel;
+        public string parcel;
 
         /// <summary>
         ///     Base Parcel of the scene
+        ///     Not required from BE
         /// </summary>
+        [NonSerialized]
         public readonly Vector2Int BaseParcel;
 
         private readonly string intent;
@@ -66,7 +67,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             realmName = input.RealmName;
             realm = new Realm { serverName = input.RealmName };
-            Parcel = input.Parcel;
+            parcel = $"{input.Parcel.x},{input.Parcel.y}";
             this.sceneId = sceneId;
             BaseParcel = baseParcel;
             intent = "dcl:explorer:comms-handshake";
@@ -78,7 +79,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             JsonUtility.ToJson(this)!;
 
         public override string ToString() =>
-            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {Parcel}";
+            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {parcel}";
 
         public bool Equals(MetaData other) =>
             realmName == other.realmName && sceneId == other.sceneId;
