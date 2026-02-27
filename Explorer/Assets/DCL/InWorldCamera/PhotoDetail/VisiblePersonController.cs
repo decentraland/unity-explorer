@@ -183,8 +183,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private async UniTask<IReadOnlyList<IWearable>> GetMissingWearablesByUrnsAsync(List<URN> missingUrns, CancellationToken ct)
         {
-            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) = await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.MALE, ct),
-                wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.FEMALE, ct));
+            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) = await UniTask.WhenAll(wearablesProvider.GetByPointersAsync(missingUrns, BodyShape.MALE, ct),
+                wearablesProvider.GetByPointersAsync(missingUrns, BodyShape.FEMALE, ct));
             List<IWearable> result = new List<IWearable>();
             if (maleWearables != null)
                 result.AddRange(maleWearables);
