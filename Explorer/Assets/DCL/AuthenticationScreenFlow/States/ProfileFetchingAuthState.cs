@@ -17,13 +17,14 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<(IWeb3Identity identity, bool isCached, CancellationToken ct)>
+    public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ISelfProfile selfProfile;
         private readonly ProfileFetchingAuthView view;
+        private Exception? profileFetchException;
 
         public ProfileFetchingAuthState(
             MVCStateMachine<AuthStateBase> machine,
@@ -36,98 +37,129 @@ namespace DCL.AuthenticationScreenFlow
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
-
             this.selfProfile = selfProfile;
         }
 
-        public void Enter((IWeb3Identity identity, bool isCached, CancellationToken ct) payload)
+        public void Enter(ProfileFetchingPayload payload)
         {
+            base.Enter();
+            profileFetchException = null;
+
             view.Show();
             view.CancelButton.onClick.AddListener(controller.CancelLoginProcess);
 
-            FetchProfileFlowAsync(payload.identity, payload.isCached, payload.ct).Forget();
+            FetchProfileFlowAsync(payload.Email, payload.Identity, payload.IsCached, payload.Ct).Forget();
         }
 
         public override void Exit()
         {
+            if (profileFetchException == null)
+                view.Hide(OUT);
+            else
+            {
+                view.Hide(SLIDE);
+
+                spanErrorInfo = profileFetchException switch
+                                {
+                                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                                    ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
+                                    NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
+                                    Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
+                                };
+
+                if (profileFetchException is not OperationCanceledException and not ProfileNotFoundException and not NotAllowedUserException)
+                    ReportHub.LogException(profileFetchException, new ReportData(ReportCategory.AUTHENTICATION));
+            }
+
             view.CancelButton.onClick.RemoveAllListeners();
+            base.Exit();
         }
 
-        private async UniTaskVoid FetchProfileFlowAsync(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        private async UniTaskVoid FetchProfileFlowAsync(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
         {
-            var identityValidationSpan = new SpanData
+            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
             {
-                SpanName = "IdentityValidation",
-                SpanOperation = "auth.identity_validation",
-                Depth = 1,
-            };
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, identityValidationSpan);
+                SpanName = "IdentityAuthorization",
+                SpanOperation = "auth.identity_authorization",
+                Depth = STATE_SPAN_DEPTH + 1,
+            });
 
             if (!IsUserAllowedToAccessToBeta(identity))
             {
-                SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"User not allowed to access beta - restricted user in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
-                view.Hide(SLIDE);
+                profileFetchException = new NotAllowedUserException($"User not allowed to access beta - restricted user {email} in {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)");
                 machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.RESTRICTED_USER);
             }
             else
             {
-                currentState.Value = isCached ? AuthStatus.FetchingProfileCached : AuthStatus.FetchingProfile;
-
-                // Close IdentityValidation span before starting profile fetch
                 SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
+                currentState.Value = isCached ? AuthStatus.ProfileFetchingCached : AuthStatus.ProfileFetching;
 
                 try
                 {
-                    var profileFetchSpan = new SpanData
+                    SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
                     {
-                        SpanName = "FetchProfileCached",
-                        SpanOperation = "auth.profile_fetch",
-                        Depth = 1,
-                    };
+                        SpanName = isCached ? "ProfileFetchingCached" : "ProfileFetching",
+                        SpanOperation = "auth.profile_fetching",
+                        Depth =  STATE_SPAN_DEPTH + 1,
+                    });
 
-                    SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, profileFetchSpan);
+                    Profile? profile = await selfProfile.ProfileAsync(ct);
 
-                    Profile? profile = await FetchProfileAsync(ct);
-                    SentryTransactionNameMapping.Instance.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-
-                    view.Hide(OUT);
-                    machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                    if (profile != null)
+                    {
+                        // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+                        profile.IsDirty = true;
+                        // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
+                        profile.HasConnectedWeb3 = true;
+                        machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                    }
+                    else if (!string.IsNullOrEmpty(email)) // in case of OTP flow we create new Profile and proceed
+                    {
+                        profile = CreateRandomProfile(identity.Address.ToString());
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
+                    }
+                    else
+                        throw new ProfileNotFoundException();
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, "Login process was cancelled by user");
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (ProfileNotFoundException e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Profile not found during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                 }
                 catch (Exception e)
                 {
-                    SentryTransactionNameMapping.Instance.EndCurrentSpanWithError(LOADING_TRANSACTION_NAME, $"Unexpected error during {nameof(ProfileFetchingAuthState)} ({(isCached ? "cached" : "main")} flow)", e);
-                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
-                    view.Hide(SLIDE);
+                    profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
                 }
             }
         }
 
-        private async UniTask<Profile> FetchProfileAsync(CancellationToken ct)
+        private Profile CreateRandomProfile(string identityAddress)
         {
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            var profile = Profile.NewRandomProfile(identityAddress);
+            profile.HasClaimedName = false;
+            profile.Description = string.Empty;
+            profile.Country = string.Empty;
+            profile.EmploymentStatus = string.Empty;
+            profile.Gender = string.Empty;
+            profile.Pronouns = string.Empty;
+            profile.RelationshipStatus = string.Empty;
+            profile.SexualOrientation = string.Empty;
+            profile.Language = string.Empty;
+            profile.Profession = string.Empty;
+            profile.RealName = string.Empty;
+            profile.Hobbies = string.Empty;
+            profile.TutorialStep = 0;
+            profile.Version = 0;
 
-            if (profile == null)
-                throw new ProfileNotFoundException();
-
-            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+            profile.HasConnectedWeb3 = true;
             profile.IsDirty = true;
 
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
             return profile;
         }
 
@@ -147,6 +179,30 @@ namespace DCL.AuthenticationScreenFlow
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
+        }
+    }
+
+    public struct ProfileFetchingPayload
+    {
+        public readonly string Email;
+        public readonly IWeb3Identity Identity;
+        public readonly bool IsCached;
+        public CancellationToken Ct;
+
+        public ProfileFetchingPayload(string email, IWeb3Identity identity, bool isCached, CancellationToken ct)
+        {
+            this.Email = email;
+            this.Identity = identity;
+            this.IsCached = isCached;
+            this.Ct = ct;
+        }
+
+        public ProfileFetchingPayload(IWeb3Identity identity, bool isCached, CancellationToken ct)
+        {
+            this.Email = string.Empty;
+            this.Identity = identity;
+            this.IsCached = isCached;
+            this.Ct = ct;
         }
     }
 }

@@ -113,6 +113,8 @@ namespace DCL.UI
                 InitialColor = initialColor,
                 ColorPresets = presets,
                 Position = anchorPosition,
+                EnableSaturationSlider = true,
+                EnableValueSlider = true,
                 OnColorChanged = (color) =>
                 {
                     UpdateColorPreviewImage(color);

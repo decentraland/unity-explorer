@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -524,12 +525,12 @@ namespace DCL.PluginSystem.Global
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
             placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
-                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus);
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, mvcManager);
             mvcManager.RegisterController(placeDetailPanelController);
 
             EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);
@@ -567,7 +568,8 @@ namespace DCL.PluginSystem.Global
                     placesController,
                     eventsController,
                     inputBlock,
-                    mvcManager);
+                    mvcManager,
+                    eventsApiService);
 
             mvcManager.RegisterController(explorePanelController);
 
@@ -666,6 +668,7 @@ namespace DCL.PluginSystem.Global
             new ShowEventInfoCommand(@event, eventInfoPanelController!, placesAndEventsPanelController!,
                 searchBarController!, placesAPIService, place);
 
+        [Serializable]
         public class ExplorePanelSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject ExplorePanelPrefab { get; private set; } = null!;

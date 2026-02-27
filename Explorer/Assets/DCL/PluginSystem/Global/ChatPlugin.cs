@@ -424,6 +424,7 @@ namespace DCL.PluginSystem.Global
         }
     }
 
+    [Serializable]
     public class ChatPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;

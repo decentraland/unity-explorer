@@ -5,6 +5,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,6 +38,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button settingsButton { get; private set; } = null!;
         [field: SerializeField] internal Button marketplaceButton { get; private set; } = null!;
         [field: SerializeField] internal Button eventsButton { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
 
 
         [field: Header("Friends")]
@@ -88,6 +90,12 @@ namespace DCL.UI.Sidebar
         public void UnblockSidebar()
         {
             BlockStatusChanged?.Invoke(false);
+        }
+
+        public void SetLiveEventsCounter(int count)
+        {
+            liveEventsCounterText.text = count.ToString();
+            liveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
         }
     }
 }

@@ -148,7 +148,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
         private NameColorPickerController? colorPickerController;
-        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -318,8 +317,7 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController,
-                imageControllerProvider));
+                passportErrorsController));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
@@ -628,7 +626,6 @@ namespace DCL.Passport
 
         private void SetNewUserNameColor(Color color)
         {
-            userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
         }

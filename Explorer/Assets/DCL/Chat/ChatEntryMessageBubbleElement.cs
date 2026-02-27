@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Translation;
 using System;
@@ -104,10 +105,23 @@ namespace DCL.Chat
             translationView.gameObject.SetActive(isVisible);
         }
 
-        private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage)
+        public void UpdateName(string displayText, ChatMessage originalMessage, string usernameOverride, string walletIdOverride)
         {
-            int nameLength = originalMessage.SenderValidatedName.Length;
-            string walletId = originalMessage.SenderWalletId;
+            backgroundSize.x = CalculatePreferredWidth(displayText, originalMessage, usernameOverride, walletIdOverride);
+            backgroundRectTransform.sizeDelta = backgroundSize;
+        }
+
+        private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage, string usernameOverride = null, string walletIdOverride = null)
+        {
+            string username = string.IsNullOrEmpty(usernameOverride) ? originalMessage.SenderValidatedName : usernameOverride;
+            int nameLength = 0;
+
+            if (string.IsNullOrEmpty(username))
+                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
+            else
+                nameLength = username.Length;
+
+            string walletId = string.IsNullOrEmpty(walletIdOverride) ? originalMessage.SenderWalletId : walletIdOverride;
             int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
             int nameTotalLength = nameLength + walletIdLength;
             TMP_Text messageContentText = messageContentElement.messageContentText;

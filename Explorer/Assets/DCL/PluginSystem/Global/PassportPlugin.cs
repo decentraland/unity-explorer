@@ -30,6 +30,7 @@ using System.Threading;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.UI;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -206,6 +207,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
         }
 
+        [Serializable]
         public class PassportSettings : IDCLPluginSettings
         {
             [field: Space]

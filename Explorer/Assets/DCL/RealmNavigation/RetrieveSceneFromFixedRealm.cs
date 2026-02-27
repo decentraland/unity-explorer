@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -22,25 +23,34 @@ namespace DCL.RealmNavigation
             // Wait for all pointers resolution, they should be resolved at start-up
 
             var resolved = false;
-            SceneEntityDefinition? startupScene = null;
+            List<SceneEntityDefinition> result = null!;
 
             while (!resolved)
             {
-                ReadFixedRealmQuery(World, ref resolved, ref startupScene);
+                ReadFixedRealmQuery(World, ref resolved, ref result);
                 await UniTask.Yield(ct);
             }
 
-            return startupScene;
+            // Check if result contains the requested parcel
+            foreach (var sceneEntityDefinition in result)
+            {
+                if (sceneEntityDefinition.Contains(parcel))
+                    return sceneEntityDefinition;
+            }
+
+            // No real scene found
+            return null;
         }
 
         [Query]
-        private void ReadFixedRealm([Data] ref bool resolved,
-            [Data] ref SceneEntityDefinition startupScene, in FixedScenePointers fixedScenePointers)
+        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref List<SceneEntityDefinition> results,
+            in FixedScenePointers fixedScenePointers)
         {
             resolved = fixedScenePointers.AllPromisesResolved;
 
             if (resolved)
-                startupScene = fixedScenePointers.StartupScene;
+                results = fixedScenePointers.SceneResults;
         }
     }
 }
+

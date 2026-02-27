@@ -83,14 +83,10 @@ namespace DCL.AuthenticationScreenFlow
             view.OnViewHidden += ReparentCharacterPreview;
         }
 
-        private void ReparentCharacterPreview()
-        {
-            characterPreviewView.transform.SetParent(viewInstance.transform);
-            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
-        }
-
         public void Enter((Profile profile, string email, bool isCached, CancellationToken ct) payload)
         {
+            base.Enter();
+
             loginCt = payload.ct;
             userEmail = payload.email;
 
@@ -155,6 +151,13 @@ namespace DCL.AuthenticationScreenFlow
             view.TermsOfUse.SetIsOnWithoutNotify(false);
 
             view.TermsOfUseAndPrivacyLink.OnLinkClicked -= OpenClickableURL;
+            base.Exit();
+        }
+
+        private void ReparentCharacterPreview()
+        {
+            characterPreviewView.transform.SetParent(viewInstance.transform);
+            characterPreviewView.transform.localPosition = characterPreviewOrigPosition;
         }
 
         private void OpenClickableURL(string url) =>
@@ -182,11 +185,12 @@ namespace DCL.AuthenticationScreenFlow
             try
             {
                 // Load base wearables catalog from backend (pageSize 300 to get all)
-                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetAsync(
-                    pageSize: 300,
-                    pageNumber: 1,
-                    ct,
-                    collectionType: IWearablesProvider.CollectionType.Base);
+                (IReadOnlyList<ITrimmedWearable> wearables, _) = await wearablesProvider.GetTrimmedByParamsAsync(
+                    new IWearablesProvider.Params(300, 1)
+                    {
+                        CollectionType = IWearablesProvider.CollectionType.Base
+                    },
+                    ct);
 
                 ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalog loaded: {wearables.Count} items");
                 return wearables;
@@ -397,6 +401,7 @@ namespace DCL.AuthenticationScreenFlow
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
 
                     view.Hide(UIAnimationHashes.SLIDE);
                     fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
@@ -421,7 +426,10 @@ namespace DCL.AuthenticationScreenFlow
             catch (OperationCanceledException)
             { /* Ignore cancellation */
             }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+            }
         }
     }
 }

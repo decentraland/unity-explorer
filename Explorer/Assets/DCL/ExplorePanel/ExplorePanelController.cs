@@ -3,7 +3,10 @@ using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.FeatureFlags;
+using DCL.Diagnostics;
 using DCL.Events;
+using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -15,6 +18,8 @@ using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -36,7 +41,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private readonly IMVCManager mvcManager;
         private readonly bool includeDiscover;
-
+        private readonly HttpEventsApiService eventsApiService;
         private bool includeCommunities;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
@@ -45,6 +50,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
+        private CancellationTokenSource checkForLiveEventsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -61,8 +67,8 @@ namespace DCL.ExplorePanel
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
-        public event Action? PlacesOpened;
-        public event Action? EventsOpened;
+        public event Action? PlacesOpenedFromStartMenu;
+        public event Action? EventsOpenedFromStartMenu;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -75,6 +81,7 @@ namespace DCL.ExplorePanel
             PlacesController placesController,
             EventsController eventsController,
             IInputBlock inputBlock,
+            HttpEventsApiService eventsApiService,
             IMVCManager mvcManager)
             : base(viewFactory)
         {
@@ -90,6 +97,7 @@ namespace DCL.ExplorePanel
             this.mvcManager = mvcManager;
             this.communitiesBrowserController = communitiesBrowserController;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
+            this.eventsApiService = eventsApiService;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
 
@@ -105,6 +113,7 @@ namespace DCL.ExplorePanel
 
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
@@ -119,6 +128,7 @@ namespace DCL.ExplorePanel
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            viewInstance!.SetLiveEventsCounter(0);
         }
 
         private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
@@ -136,7 +146,7 @@ namespace DCL.ExplorePanel
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            lastShownSection = includeDiscover ? ExploreSections.Places : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+            lastShownSection = includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -167,10 +177,10 @@ namespace DCL.ExplorePanel
                         switch (section)
                         {
                             case ExploreSections.Places:
-                                PlacesOpened?.Invoke();
+                                PlacesOpenedFromStartMenu?.Invoke();
                                 break;
                             case ExploreSections.Events:
-                                EventsOpened?.Invoke();
+                                EventsOpenedFromStartMenu?.Invoke();
                                 break;
                         }
 
@@ -210,16 +220,21 @@ namespace DCL.ExplorePanel
             BlockUnwantedInputs();
             RegisterHotkeys();
 
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+
             if (inputData.IsSectionProvided)
                 return;
 
+            // Only triggers OpenedFromStartMenu events if IsSectionProvided is false.
+            // This means that the section has not opened by shortcut nor sidebar.
             switch (sectionToShow)
             {
                 case ExploreSections.Places:
-                    PlacesOpened?.Invoke();
+                    PlacesOpenedFromStartMenu?.Invoke();
                     break;
                 case ExploreSections.Events:
-                    EventsOpened?.Invoke();
+                    EventsOpenedFromStartMenu?.Invoke();
                     break;
             }
         }
@@ -362,6 +377,7 @@ namespace DCL.ExplorePanel
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
             profileMenuCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
 
             UnblockUnwantedInputs();
             UnRegisterHotkeys();
@@ -412,6 +428,16 @@ namespace DCL.ExplorePanel
                     // Cancellations ignored
                 }
             }
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true).SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
         }
     }
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script is used to compile the Rust code on macOS for both x86_64 and aarch64
+export RUST_BACKTRACE=full
 cargo build --release --target x86_64-apple-darwin
 cargo build --release --target aarch64-apple-darwin
 

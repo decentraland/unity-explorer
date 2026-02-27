@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Utilities;
 
@@ -38,6 +38,15 @@ namespace ECS
         ///     World manifest that describes the world state
         /// </summary>
         WorldManifest WorldManifest { get; }
+        bool SingleScene { get; }
+
+        /// <summary>
+        ///     Realm-level fixed skybox hour in seconds (from server about configurations.skybox.fixedHour).
+        ///     Null when not set, meaning the realm does not enforce a fixed time of day.
+        ///     Measured in seconds of a day
+        /// </summary>
+        float? SkyboxFixedHour { get; }
+
 
         class Fake : IRealmData
         {
@@ -53,6 +62,8 @@ namespace ECS
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
             public WorldManifest WorldManifest { get; }
+            public bool SingleScene { get; }
+            public float? SkyboxFixedHour { get; }
 
             public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3",
                 string hostname = "realm-provider.decentraland.org") : this(
