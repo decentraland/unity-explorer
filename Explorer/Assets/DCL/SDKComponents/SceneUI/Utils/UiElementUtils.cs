@@ -215,7 +215,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     component.InnerScrollView = scrollView;
                 }
 
-                component.InnerScrollView.contentContainer.style.flexDirection = GetFlexDirection(model.FlexDirection);
+                // PBUiTransform properties that have to be propagated into the ContentContainer
+                var contentStyle = component.InnerScrollView.contentContainer.style;
+                contentStyle.flexDirection = GetFlexDirection(model.FlexDirection);
+                contentStyle.justifyContent = GetJustify(model.JustifyContent);
+                contentStyle.alignItems = GetAlign(model.GetAlignItems());
+                contentStyle.alignContent = GetAlign(model.GetAlignContent());
+                contentStyle.flexWrap = GetWrap(model.GetFlexWrap());
             }
             else if (component.InnerScrollView != null)
             {

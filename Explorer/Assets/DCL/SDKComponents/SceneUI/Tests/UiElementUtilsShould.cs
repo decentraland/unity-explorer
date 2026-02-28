@@ -273,27 +273,44 @@ namespace DCL.SDKComponents.SceneUI.Tests
         }
 
         [Test]
-        public void EnsureScrollMode_UpdatesContentContainerFlexDirection_WhenModelChanges()
+        public void EnsureScrollMode_UpdatesContentContainerLayoutProperties_WhenModelChanges()
         {
-            // Arrange — create scroll mode with Column direction
+            // Arrange — create scroll mode with initial layout properties
             var component = new UITransformComponent();
             component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
             var pbUiTransform = new PBUiTransform
             {
                 Overflow = YGOverflow.YgoScroll,
-                FlexDirection = YGFlexDirection.YgfdColumn
+                FlexDirection = YGFlexDirection.YgfdColumn,
+                JustifyContent = YGJustify.YgjFlexStart,
+                AlignItems = YGAlign.YgaStretch,
+                AlignContent = YGAlign.YgaFlexStart,
+                FlexWrap = YGWrap.YgwNoWrap
             };
             UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
-            Assert.AreEqual(FlexDirection.Column, component.InnerScrollView.contentContainer.style.flexDirection.value);
+            var content = component.InnerScrollView.contentContainer;
+            Assert.AreEqual(FlexDirection.Column, content.style.flexDirection.value);
+            Assert.AreEqual(Justify.FlexStart, content.style.justifyContent.value);
+            Assert.AreEqual(Align.Stretch, content.style.alignItems.value);
+            Assert.AreEqual(Align.FlexStart, content.style.alignContent.value);
+            Assert.AreEqual(Wrap.NoWrap, content.style.flexWrap.value);
 
-            // Act — change flex direction to Row and re-apply
+            // Act — change all layout properties and re-apply
             pbUiTransform.FlexDirection = YGFlexDirection.YgfdRow;
+            pbUiTransform.JustifyContent = YGJustify.YgjCenter;
+            pbUiTransform.AlignItems = YGAlign.YgaCenter;
+            pbUiTransform.AlignContent = YGAlign.YgaStretch;
+            pbUiTransform.FlexWrap = YGWrap.YgwWrap;
             UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
-            // Assert — contentContainer should reflect the updated direction
-            Assert.AreEqual(FlexDirection.Row, component.InnerScrollView.contentContainer.style.flexDirection.value);
+            // Assert — contentContainer should reflect all updated properties
+            Assert.AreEqual(FlexDirection.Row, content.style.flexDirection.value);
+            Assert.AreEqual(Justify.Center, content.style.justifyContent.value);
+            Assert.AreEqual(Align.Center, content.style.alignItems.value);
+            Assert.AreEqual(Align.Stretch, content.style.alignContent.value);
+            Assert.AreEqual(Wrap.Wrap, content.style.flexWrap.value);
         }
 
         [Test]
