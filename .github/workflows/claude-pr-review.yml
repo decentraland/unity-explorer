@@ -106,18 +106,17 @@ jobs:
             const output = `${{ steps.claude.outputs.output }}`;
             const failed = output.includes('REVIEW_RESULT: FAIL ❌');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
-
             const state = (failed || errored) ? 'failure' : 'success';
             const description = errored
               ? 'Claude review encountered an error'
               : failed
-                ? 'Claude found issues that must be resolved'
-                : 'No blocking issues found';
-
+              ? 'Claude found issues that must be resolved'
+              : 'No blocking issues found';
+      
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              sha: context.payload.pull_request.head.sha,
+              sha: '${{ steps.pr.outputs.sha }}',  // ✅ from the first step
               state,
               context: 'Claude Review',
               description
