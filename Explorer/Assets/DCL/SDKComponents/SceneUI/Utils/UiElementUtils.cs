@@ -12,6 +12,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {
+        // Ratio (~0.22) matches ScrollRectExtensions (0.45/2 = 0.225) to keep scroll feel
+        // consistent across UGUI and UI Toolkit. Absolute values differ because
+        // ScrollRect.scrollSensitivity is a delta multiplier while ScrollView.mouseWheelScrollSize is pixels per tick.
+        private const float MACOS_MOUSE_WHEEL_SCROLL_SIZE = 4f;
+        private const float DEFAULT_MOUSE_WHEEL_SCROLL_SIZE = 18f;
+
+        private static readonly float scrollViewMouseWheelScrollSize =
+            Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer
+                ? MACOS_MOUSE_WHEEL_SCROLL_SIZE
+                : DEFAULT_MOUSE_WHEEL_SCROLL_SIZE;
+
         public static void SetupVisualElement(VisualElement visualElementToSetup, ref PBUiTransform model)
         {
             visualElementToSetup.style.display = GetDisplay(model.Display);
@@ -186,7 +197,8 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     var scrollView = new ScrollView
                     {
                         horizontalScrollerVisibility = ScrollerVisibility.AlwaysVisible,
-                        verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible
+                        verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible,
+                        mouseWheelScrollSize = scrollViewMouseWheelScrollSize
                     };
                     scrollView.style.flexGrow = 1;
                     scrollView.style.width = new Length(100, LengthUnit.Percent);
