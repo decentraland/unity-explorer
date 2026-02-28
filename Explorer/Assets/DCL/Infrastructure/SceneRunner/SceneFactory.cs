@@ -37,6 +37,9 @@ using System.Threading;
 using DCL.Clipboard;
 using DCL.Infrastructure.Global;
 using Temp.Helper.WebClient;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -78,6 +81,10 @@ namespace SceneRunner
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        private readonly IWebGLSceneUpdateQueue webglSceneUpdateQueue;
+#endif
+
         private IGlobalWorldActions globalWorldActions = null!;
 
         public SceneFactory(
@@ -109,7 +116,12 @@ namespace SceneRunner
 #endif
 
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard
+#if UNITY_WEBGL && !UNITY_EDITOR
+            ,
+            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+#endif
+        )
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -133,6 +145,9 @@ namespace SceneRunner
             this.realmData = realmData;
             this.portableExperiencesController = portableExperiencesController;
             this.skyboxSettings = skyboxSettings;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            this.webglSceneUpdateQueue = webglSceneUpdateQueue;
+#endif
             this.messagePipesHub = messagePipesHub;
 
 #if !NO_LIVEKIT_MODE
@@ -196,7 +211,12 @@ namespace SceneRunner
         {
             WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={UnityEngine.Time.realtimeSinceStartup:F1}", "LOAD");
 
-            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
+            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory
+#if UNITY_WEBGL && !UNITY_EDITOR
+                ,
+                webglSceneUpdateQueue
+#endif
+            );
 
             // Try to create scene runtime
             ISceneRuntime sceneRuntime;

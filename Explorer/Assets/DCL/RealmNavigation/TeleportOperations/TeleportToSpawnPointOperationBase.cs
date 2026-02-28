@@ -11,7 +11,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using SceneRuntime;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Linq;
 using System.Threading;

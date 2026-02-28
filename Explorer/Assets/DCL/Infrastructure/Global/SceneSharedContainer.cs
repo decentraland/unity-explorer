@@ -25,6 +25,7 @@ using SceneRuntime.Factory.WebSceneSource;
 using Temp.Helper.WebClient;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
+using ECS.SceneLifeCycle.WebGL;
 using SceneRuntime.WebClient;
 #else
 using SceneRuntime.V8;
@@ -64,7 +65,12 @@ namespace Global
 
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard
+#if UNITY_WEBGL && !UNITY_EDITOR
+            ,
+            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+#endif
+        )
         {
             WebGLDebugLog.Log("SceneSharedContainer.Create: start");
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
@@ -121,7 +127,12 @@ namespace Global
 #endif
 
                     dclEnvironment,
-                    systemClipboard);
+                    systemClipboard
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    ,
+                    webglSceneUpdateQueue
+#endif
+                    );
             WebGLDebugLog.Log("SceneSharedContainer.Create: after SceneFactory ctor");
             return new SceneSharedContainer { SceneFactory = sceneFactory };
         }

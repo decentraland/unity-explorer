@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CRDT.Deserializer;
@@ -23,6 +23,9 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -67,6 +70,10 @@ namespace SceneRunner
 
 #if !UNITY_WEBGL
         private readonly MultiThreadSync ecsMultiThreadSync;
+#endif
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        public readonly IWebGLSceneUpdateQueue WebGLSceneUpdateQueue;
 #endif
 
         private readonly ICRDTDeserializer crdtDeserializer;
@@ -130,9 +137,17 @@ namespace SceneRunner
             IJsApiPermissionsProvider permissionsProvider,
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
-            ISceneEntityFactory entityFactory)
+            ISceneEntityFactory entityFactory
+#if UNITY_WEBGL && !UNITY_EDITOR
+            ,
+            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+#endif
+        )
         {
             this.sceneData = sceneData;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            WebGLSceneUpdateQueue = webglSceneUpdateQueue;
+#endif
             this.permissionsProvider = permissionsProvider;
 #if !UNITY_WEBGL
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);

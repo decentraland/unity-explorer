@@ -4,6 +4,9 @@ using DCL.PluginSystem.World;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+#if UNITY_WEBGL && !UNITY_EDITOR
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -142,6 +145,10 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    deps.SyncDeps.WebGLSceneUpdateQueue.Enqueue(this, deltaTime, sceneExceptionsHandler);
+                    sceneCodeIsRunning.Reset();
+#else
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -151,6 +158,7 @@ namespace SceneRunner
                     finally { sceneCodeIsRunning.Reset(); }
 
                     SceneStateProvider.TickNumber++;
+#endif
 
                     MultithreadingUtility.AssertMainThread(nameof(ISceneRuntime.UpdateScene));
 

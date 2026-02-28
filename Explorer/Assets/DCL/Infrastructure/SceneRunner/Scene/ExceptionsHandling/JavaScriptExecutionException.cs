@@ -1,6 +1,6 @@
 using System;
 
-namespace SceneRuntime
+namespace SceneRunner.Scene.ExceptionsHandling
 {
     public class JavaScriptExecutionException : Exception
     {
