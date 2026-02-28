@@ -15,6 +15,7 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.Character.CharacterMotion.Systems
 {
@@ -29,28 +30,47 @@ namespace DCL.Character.CharacterMotion.Systems
         private SingleInstanceEntity fixedTick;
         private SingleInstanceEntity entitySettings;
 
-        private readonly ElementBinding<float> cameraRunFov = new (0);
-        private readonly ElementBinding<float> cameraFovSpeed = new (0);
-        private readonly ElementBinding<float> walkSpeed = new (0);
-        private readonly ElementBinding<float> jogSpeed = new (0);
-        private readonly ElementBinding<float> runSpeed = new (0);
-        private readonly ElementBinding<float> jogJumpHeight = new (0);
-        private readonly ElementBinding<float> runJumpHeight = new (0);
-        private readonly ElementBinding<float> jumpHold = new (0);
-        private readonly ElementBinding<float> jumpHoldGravity = new (0);
-        private readonly ElementBinding<float> gravity = new (0);
-        private readonly ElementBinding<float> airAcc = new (0);
-        private readonly ElementBinding<float> maxAirAcc = new (0);
-        private readonly ElementBinding<float> airDrag = new (0);
-        private readonly ElementBinding<float> stopTime = new (0);
+        private readonly ElementBinding<float> cameraRunFov;
+        private readonly ElementBinding<float> cameraFovSpeed;
+        private readonly ElementBinding<float> walkSpeed;
+        private readonly ElementBinding<float> jogSpeed;
+        private readonly ElementBinding<float> runSpeed;
+        private readonly ElementBinding<float> jogJumpHeight;
+        private readonly ElementBinding<float> runJumpHeight;
+        private readonly ElementBinding<float> jumpHold;
+        private readonly ElementBinding<float> jumpHoldGravity;
+        private readonly ElementBinding<float> gravity;
+        private readonly ElementBinding<float> airAcc;
+        private readonly ElementBinding<float> maxAirAcc;
+        private readonly ElementBinding<float> airDrag;
+        private readonly ElementBinding<float> stopTime;
 
-        private readonly ElementBinding<float> characterMass = new (0);
-        private readonly ElementBinding<float> externalEnvDrag = new (0);
-        private readonly ElementBinding<float> externalGroundFriction = new (0);
-        private readonly ElementBinding<float> maxExternalVelocity = new (0);
+        private readonly ElementBinding<float> characterMass;
+        private readonly ElementBinding<float> externalEnvDrag;
+        private readonly ElementBinding<float> externalGroundFriction;
+        private readonly ElementBinding<float> maxExternalVelocity;
 
         public CalculateCharacterVelocitySystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
+            cameraRunFov = new ElementBinding<float>(0, OnDebugValueChanged);
+            cameraFovSpeed = new ElementBinding<float>(0, OnDebugValueChanged);
+            walkSpeed = new ElementBinding<float>(0, OnDebugValueChanged);
+            jogSpeed = new ElementBinding<float>(0, OnDebugValueChanged);
+            runSpeed = new ElementBinding<float>(0, OnDebugValueChanged);
+            jogJumpHeight = new ElementBinding<float>(0, OnDebugValueChanged);
+            runJumpHeight = new ElementBinding<float>(0, OnDebugValueChanged);
+            jumpHold = new ElementBinding<float>(0, OnDebugValueChanged);
+            jumpHoldGravity = new ElementBinding<float>(0, OnDebugValueChanged);
+            gravity = new ElementBinding<float>(0, OnDebugValueChanged);
+            airAcc = new ElementBinding<float>(0, OnDebugValueChanged);
+            maxAirAcc = new ElementBinding<float>(0, OnDebugValueChanged);
+            airDrag = new ElementBinding<float>(0, OnDebugValueChanged);
+            stopTime = new ElementBinding<float>(0, OnDebugValueChanged);
+            characterMass = new ElementBinding<float>(0, OnDebugValueChanged);
+            externalEnvDrag = new ElementBinding<float>(0, OnDebugValueChanged);
+            externalGroundFriction = new ElementBinding<float>(0, OnDebugValueChanged);
+            maxExternalVelocity = new ElementBinding<float>(0, OnDebugValueChanged);
+
             debugBuilder.TryAddWidget("Locomotion: Base")
                        ?.AddFloatField("Camera Run FOV", cameraRunFov)
                         .AddFloatField("Walk Speed", walkSpeed)
@@ -79,6 +99,29 @@ namespace DCL.Character.CharacterMotion.Systems
             entitySettings = World.CacheCharacterSettings();
 
             ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
+            SyncBindingsFromSettings(settings);
+        }
+
+        protected override void Update(float t)
+        {
+            ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
+            SyncBindingsFromSettings(settings);
+
+            ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
+            ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
+        }
+
+        private void OnDebugValueChanged(ChangeEvent<float> _)
+        {
+            if (((Entity)entitySettings).IsNull())
+                return;
+
+            ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
+            ApplyDebugBindingsToSettings(settings);
+        }
+
+        private void SyncBindingsFromSettings(ICharacterControllerSettings settings)
+        {
             cameraRunFov.Value = settings.CameraFOVWhileRunning;
             walkSpeed.Value = settings.WalkSpeed;
             jogSpeed.Value = settings.JogSpeed;
@@ -98,10 +141,8 @@ namespace DCL.Character.CharacterMotion.Systems
             maxExternalVelocity.Value = settings.MaxExternalVelocity;
         }
 
-        protected override void Update(float t)
+        private void ApplyDebugBindingsToSettings(ICharacterControllerSettings settings)
         {
-            ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
-
             settings.CameraFOVWhileRunning = cameraRunFov.Value;
             settings.WalkSpeed = walkSpeed.Value;
             settings.JogSpeed = jogSpeed.Value;
@@ -119,9 +160,6 @@ namespace DCL.Character.CharacterMotion.Systems
             settings.ExternalEnvDrag = externalEnvDrag.Value;
             settings.ExternalGroundFriction = externalGroundFriction.Value;
             settings.MaxExternalVelocity = maxExternalVelocity.Value;
-
-            ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
-            ResolveRandomAvatarVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
         }
 
         [Query]
