@@ -23,7 +23,7 @@ namespace DCL.Character.CharacterMotion
             if (characterPhysics.ExternalImpulse.y > 0f)
             {
                 characterPhysics.IsGrounded = false;
-                characterPhysics.GravityVelocity.y = 0f;
+                characterPhysics.GravityVelocity.y = Mathf.Max(0f, characterPhysics.GravityVelocity.y);
             }
 
             // Clamp to max external velocity
