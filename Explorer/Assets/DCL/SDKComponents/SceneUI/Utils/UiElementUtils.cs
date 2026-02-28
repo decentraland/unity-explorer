@@ -23,58 +23,58 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 ? MACOS_MOUSE_WHEEL_SCROLL_SIZE
                 : DEFAULT_MOUSE_WHEEL_SCROLL_SIZE;
 
-        public static void SetupVisualElement(VisualElement visualElementToSetup, ref PBUiTransform model)
+        public static void SetupTransformVisualElement(VisualElement transformVisualElement, ref PBUiTransform model)
         {
-            visualElementToSetup.style.display = GetDisplay(model.Display);
-            visualElementToSetup.style.overflow = GetOverflow(model.Overflow);
+            transformVisualElement.style.display = GetDisplay(model.Display);
+            transformVisualElement.style.overflow = GetOverflow(model.Overflow);
 
             // Pointer blocking
-            visualElementToSetup.pickingMode = model.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
+            transformVisualElement.pickingMode = model.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
 
             // Flex
-            visualElementToSetup.style.flexDirection = GetFlexDirection(model.FlexDirection);
+            transformVisualElement.style.flexDirection = GetFlexDirection(model.FlexDirection);
             if (model.FlexBasisUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.flexBasis = model.FlexBasisUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.FlexBasis, GetUnit(model.FlexBasisUnit));
+                transformVisualElement.style.flexBasis = model.FlexBasisUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.FlexBasis, GetUnit(model.FlexBasisUnit));
 
-            visualElementToSetup.style.flexGrow = model.FlexGrow;
-            visualElementToSetup.style.flexShrink = model.GetFlexShrink();
-            visualElementToSetup.style.flexWrap = GetWrap(model.GetFlexWrap());
+            transformVisualElement.style.flexGrow = model.FlexGrow;
+            transformVisualElement.style.flexShrink = model.GetFlexShrink();
+            transformVisualElement.style.flexWrap = GetWrap(model.GetFlexWrap());
 
             // Align
-            visualElementToSetup.style.alignContent = GetAlign(model.GetAlignContent());
-            visualElementToSetup.style.alignItems = GetAlign(model.GetAlignItems());
-            visualElementToSetup.style.alignSelf = GetAlign(model.AlignSelf);
-            visualElementToSetup.style.justifyContent = GetJustify(model.JustifyContent);
+            transformVisualElement.style.alignContent = GetAlign(model.GetAlignContent());
+            transformVisualElement.style.alignItems = GetAlign(model.GetAlignItems());
+            transformVisualElement.style.alignSelf = GetAlign(model.AlignSelf);
+            transformVisualElement.style.justifyContent = GetJustify(model.JustifyContent);
 
             // Border
             var defaultStyleFloat = new StyleFloat(StyleKeyword.Undefined);
-            visualElementToSetup.style.borderBottomColor = model.GetBorderBottomColor();
-            visualElementToSetup.style.borderTopColor = model.GetBorderTopColor();
-            visualElementToSetup.style.borderLeftColor = model.GetBorderLeftColor();
-            visualElementToSetup.style.borderRightColor = model.GetBorderRightColor();
-            visualElementToSetup.style.borderBottomWidth = model.HasBorderBottomWidth ? model.BorderBottomWidth : defaultStyleFloat;
-            visualElementToSetup.style.borderTopWidth = model.HasBorderTopWidth ? model.BorderTopWidth : defaultStyleFloat;
-            visualElementToSetup.style.borderLeftWidth = model.HasBorderLeftWidth ? model.BorderLeftWidth : defaultStyleFloat;
-            visualElementToSetup.style.borderRightWidth = model.HasBorderRightWidth ? model.BorderRightWidth : defaultStyleFloat;
-            visualElementToSetup.style.borderBottomLeftRadius = GetBorderRadius(
+            transformVisualElement.style.borderBottomColor = model.GetBorderBottomColor();
+            transformVisualElement.style.borderTopColor = model.GetBorderTopColor();
+            transformVisualElement.style.borderLeftColor = model.GetBorderLeftColor();
+            transformVisualElement.style.borderRightColor = model.GetBorderRightColor();
+            transformVisualElement.style.borderBottomWidth = model.HasBorderBottomWidth ? model.BorderBottomWidth : defaultStyleFloat;
+            transformVisualElement.style.borderTopWidth = model.HasBorderTopWidth ? model.BorderTopWidth : defaultStyleFloat;
+            transformVisualElement.style.borderLeftWidth = model.HasBorderLeftWidth ? model.BorderLeftWidth : defaultStyleFloat;
+            transformVisualElement.style.borderRightWidth = model.HasBorderRightWidth ? model.BorderRightWidth : defaultStyleFloat;
+            transformVisualElement.style.borderBottomLeftRadius = GetBorderRadius(
                 model.HasBorderBottomLeftRadius,
                 model.HasBorderBottomLeftRadiusUnit,
                 model.BorderBottomLeftRadius,
                 model.BorderBottomLeftRadiusUnit
             );
-            visualElementToSetup.style.borderBottomRightRadius = GetBorderRadius(
+            transformVisualElement.style.borderBottomRightRadius = GetBorderRadius(
                 model.HasBorderBottomRightRadius,
                 model.HasBorderBottomRightRadiusUnit,
                 model.BorderBottomRightRadius,
                 model.BorderBottomRightRadiusUnit
             );
-            visualElementToSetup.style.borderTopLeftRadius = GetBorderRadius(
+            transformVisualElement.style.borderTopLeftRadius = GetBorderRadius(
                 model.HasBorderTopLeftRadius,
                 model.HasBorderTopLeftRadiusUnit,
                 model.BorderTopLeftRadius,
                 model.BorderTopLeftRadiusUnit
             );
-            visualElementToSetup.style.borderTopRightRadius = GetBorderRadius(
+            transformVisualElement.style.borderTopRightRadius = GetBorderRadius(
                 model.HasBorderTopRightRadius,
                 model.HasBorderTopRightRadiusUnit,
                 model.BorderTopRightRadius,
@@ -83,101 +83,101 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
             // Layout size
             if (model.HeightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.height = model.HeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Height, GetUnit(model.HeightUnit));
+                transformVisualElement.style.height = model.HeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Height, GetUnit(model.HeightUnit));
             else
-                visualElementToSetup.style.height = StyleKeyword.Null;
+                transformVisualElement.style.height = StyleKeyword.Null;
 
             if (model.WidthUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.width = model.WidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Width, GetUnit(model.WidthUnit));
+                transformVisualElement.style.width = model.WidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Width, GetUnit(model.WidthUnit));
             else
-                visualElementToSetup.style.width = StyleKeyword.Null;
+                transformVisualElement.style.width = StyleKeyword.Null;
 
             if (model.MaxWidthUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.maxWidth = model.MaxWidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxWidth, GetUnit(model.MaxWidthUnit));
+                transformVisualElement.style.maxWidth = model.MaxWidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxWidth, GetUnit(model.MaxWidthUnit));
             else
-                visualElementToSetup.style.maxWidth = StyleKeyword.Null;
+                transformVisualElement.style.maxWidth = StyleKeyword.Null;
 
             if (model.MaxHeightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.maxHeight = model.MaxHeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxHeight, GetUnit(model.MaxHeightUnit));
+                transformVisualElement.style.maxHeight = model.MaxHeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxHeight, GetUnit(model.MaxHeightUnit));
             else
-                visualElementToSetup.style.maxHeight = StyleKeyword.Null;
+                transformVisualElement.style.maxHeight = StyleKeyword.Null;
 
             if (model.MinHeightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.minHeight = new Length(model.MinHeight, GetUnit(model.MinHeightUnit));
+                transformVisualElement.style.minHeight = new Length(model.MinHeight, GetUnit(model.MinHeightUnit));
             else
-                visualElementToSetup.style.minHeight = StyleKeyword.Null;
+                transformVisualElement.style.minHeight = StyleKeyword.Null;
 
             if (model.MinWidthUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.minWidth = new Length(model.MinWidth, GetUnit(model.MinWidthUnit));
+                transformVisualElement.style.minWidth = new Length(model.MinWidth, GetUnit(model.MinWidthUnit));
             else
-                visualElementToSetup.style.minWidth = StyleKeyword.Null;
+                transformVisualElement.style.minWidth = StyleKeyword.Null;
 
             // Paddings
             if (model.PaddingBottomUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.paddingBottom = new Length(model.PaddingBottom, GetUnit(model.PaddingBottomUnit));
+                transformVisualElement.style.paddingBottom = new Length(model.PaddingBottom, GetUnit(model.PaddingBottomUnit));
             else
-                visualElementToSetup.style.paddingBottom = StyleKeyword.Null;
+                transformVisualElement.style.paddingBottom = StyleKeyword.Null;
 
             if (model.PaddingLeftUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.paddingLeft = new Length(model.PaddingLeft, GetUnit(model.PaddingLeftUnit));
+                transformVisualElement.style.paddingLeft = new Length(model.PaddingLeft, GetUnit(model.PaddingLeftUnit));
             else
-                visualElementToSetup.style.paddingLeft = StyleKeyword.Null;
+                transformVisualElement.style.paddingLeft = StyleKeyword.Null;
 
             if (model.PaddingRightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.paddingRight = new Length(model.PaddingRight, GetUnit(model.PaddingRightUnit));
+                transformVisualElement.style.paddingRight = new Length(model.PaddingRight, GetUnit(model.PaddingRightUnit));
             else
-                visualElementToSetup.style.paddingRight = StyleKeyword.Null;
+                transformVisualElement.style.paddingRight = StyleKeyword.Null;
 
             if (model.PaddingTopUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.paddingTop = new Length(model.PaddingTop, GetUnit(model.PaddingTopUnit));
+                transformVisualElement.style.paddingTop = new Length(model.PaddingTop, GetUnit(model.PaddingTopUnit));
             else
-                visualElementToSetup.style.paddingTop = StyleKeyword.Null;
+                transformVisualElement.style.paddingTop = StyleKeyword.Null;
 
             // Margins
             if (model.MarginLeftUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.marginLeft = new Length(model.MarginLeft, GetUnit(model.MarginLeftUnit));
+                transformVisualElement.style.marginLeft = new Length(model.MarginLeft, GetUnit(model.MarginLeftUnit));
             else
-                visualElementToSetup.style.marginLeft = StyleKeyword.Null;
+                transformVisualElement.style.marginLeft = StyleKeyword.Null;
 
             if (model.MarginRightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.marginRight = new Length(model.MarginRight, GetUnit(model.MarginRightUnit));
+                transformVisualElement.style.marginRight = new Length(model.MarginRight, GetUnit(model.MarginRightUnit));
             else
-                visualElementToSetup.style.marginRight = StyleKeyword.Null;
+                transformVisualElement.style.marginRight = StyleKeyword.Null;
 
             if (model.MarginBottomUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.marginBottom = new Length(model.MarginBottom, GetUnit(model.MarginBottomUnit));
+                transformVisualElement.style.marginBottom = new Length(model.MarginBottom, GetUnit(model.MarginBottomUnit));
             else
-                visualElementToSetup.style.marginBottom = StyleKeyword.Null;
+                transformVisualElement.style.marginBottom = StyleKeyword.Null;
 
             if (model.MarginTopUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.marginTop = new Length(model.MarginTop, GetUnit(model.MarginTopUnit));
+                transformVisualElement.style.marginTop = new Length(model.MarginTop, GetUnit(model.MarginTopUnit));
             else
-                visualElementToSetup.style.marginTop = StyleKeyword.Null;
+                transformVisualElement.style.marginTop = StyleKeyword.Null;
 
             // Position
-            visualElementToSetup.style.position = GetPosition(model.PositionType);
+            transformVisualElement.style.position = GetPosition(model.PositionType);
 
             if (model.PositionTopUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.top = new Length(model.PositionTop, GetUnit(model.PositionTopUnit));
+                transformVisualElement.style.top = new Length(model.PositionTop, GetUnit(model.PositionTopUnit));
             else
-                visualElementToSetup.style.top = StyleKeyword.Null;
+                transformVisualElement.style.top = StyleKeyword.Null;
 
             if (model.PositionBottomUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.bottom = new Length(model.PositionBottom, GetUnit(model.PositionBottomUnit));
+                transformVisualElement.style.bottom = new Length(model.PositionBottom, GetUnit(model.PositionBottomUnit));
             else
-                visualElementToSetup.style.bottom = StyleKeyword.Null;
+                transformVisualElement.style.bottom = StyleKeyword.Null;
 
             if (model.PositionRightUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.right = new Length(model.PositionRight, GetUnit(model.PositionRightUnit));
+                transformVisualElement.style.right = new Length(model.PositionRight, GetUnit(model.PositionRightUnit));
             else
-                visualElementToSetup.style.right = StyleKeyword.Null;
+                transformVisualElement.style.right = StyleKeyword.Null;
 
             if (model.PositionLeftUnit != YGUnit.YguUndefined)
-                visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
+                transformVisualElement.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
-                visualElementToSetup.style.left = StyleKeyword.Null;
+                transformVisualElement.style.left = StyleKeyword.Null;
 
-            visualElementToSetup.style.opacity = model.HasOpacity ? model.Opacity : 1;
+            transformVisualElement.style.opacity = model.HasOpacity ? model.Opacity : 1;
         }
 
         /// <summary>
@@ -204,8 +204,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     scrollView.style.width = new Length(100, LengthUnit.Percent);
                     scrollView.style.height = new Length(100, LengthUnit.Percent);
 
-                    scrollView.contentContainer.style.flexDirection = GetFlexDirection(model.FlexDirection);
-
                     while (transform.childCount > 0)
                     {
                         var child = transform[0];
@@ -216,22 +214,21 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     transform.Add(scrollView);
                     component.InnerScrollView = scrollView;
                 }
+
+                component.InnerScrollView.contentContainer.style.flexDirection = GetFlexDirection(model.FlexDirection);
             }
-            else
+            else if (component.InnerScrollView != null)
             {
-                if (component.InnerScrollView != null)
+                var scrollView = component.InnerScrollView;
+                var content = scrollView.contentContainer;
+                while (content.childCount > 0)
                 {
-                    var scrollView = component.InnerScrollView;
-                    var content = scrollView.contentContainer;
-                    while (content.childCount > 0)
-                    {
-                        var child = content[0];
-                        child.RemoveFromHierarchy();
-                        transform.Add(child);
-                    }
-                    scrollView.RemoveFromHierarchy();
-                    component.InnerScrollView = null;
+                    var child = content[0];
+                    child.RemoveFromHierarchy();
+                    transform.Add(child);
                 }
+                scrollView.RemoveFromHierarchy();
+                component.InnerScrollView = null;
             }
         }
 

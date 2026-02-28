@@ -166,7 +166,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
 
             // Act
-            UiElementUtils.SetupVisualElement(visualElement, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(visualElement, ref pbUiTransform);
 
             // Assert
             Assert.AreEqual(Overflow.Hidden, visualElement.style.overflow.value);
@@ -181,7 +181,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
 
             // Act
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
             // Assert
@@ -198,14 +198,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var component = new UITransformComponent();
             component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
             var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
             Assert.IsNotNull(component.InnerScrollView);
 
             pbUiTransform.Overflow = YGOverflow.YgoVisible;
 
             // Act
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
             // Assert
@@ -229,7 +229,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
 
             // Act
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
             // Assert — ScrollView is the only direct child of Transform; original children are in contentContainer
@@ -250,7 +250,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             var component = new UITransformComponent();
             component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
             var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
             var child1 = new VisualElement();
@@ -262,7 +262,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             pbUiTransform.Overflow = YGOverflow.YgoVisible;
 
             // Act
-            UiElementUtils.SetupVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
             UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
 
             // Assert — ScrollView removed; children are back on Transform in order
@@ -270,6 +270,30 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(2, component.Transform.childCount);
             Assert.AreSame(child1, component.Transform[0]);
             Assert.AreSame(child2, component.Transform[1]);
+        }
+
+        [Test]
+        public void EnsureScrollMode_UpdatesContentContainerFlexDirection_WhenModelChanges()
+        {
+            // Arrange — create scroll mode with Column direction
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var pbUiTransform = new PBUiTransform
+            {
+                Overflow = YGOverflow.YgoScroll,
+                FlexDirection = YGFlexDirection.YgfdColumn
+            };
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+            Assert.AreEqual(FlexDirection.Column, component.InnerScrollView.contentContainer.style.flexDirection.value);
+
+            // Act — change flex direction to Row and re-apply
+            pbUiTransform.FlexDirection = YGFlexDirection.YgfdRow;
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert — contentContainer should reflect the updated direction
+            Assert.AreEqual(FlexDirection.Row, component.InnerScrollView.contentContainer.style.flexDirection.value);
         }
 
         [Test]

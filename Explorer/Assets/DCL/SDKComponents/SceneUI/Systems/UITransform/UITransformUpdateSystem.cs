@@ -53,7 +53,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 uiTransformComponent.ZIndex = sdkModel.ZIndex;
             }
 
-            UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.SetupTransformVisualElement(uiTransformComponent.Transform, ref sdkModel);
             UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
 
             // If zIndex changed, mark the parent layout as dirty.

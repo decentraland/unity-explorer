@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// </summary>
         public VisualElement ContentContainer => InnerScrollView != null ? InnerScrollView.contentContainer : Transform;
 
-        internal ScrollView InnerScrollView { get; set; }
+        public ScrollView? InnerScrollView { get; set; }
 
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
