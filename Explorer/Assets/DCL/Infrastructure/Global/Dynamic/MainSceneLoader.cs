@@ -229,7 +229,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    GameReports.PrintIsDead(applicationParametersParser);
+                    GameReports.GameIsDead(applicationParametersParser);
                     return;
                 }
 
@@ -255,7 +255,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    GameReports.PrintIsDead(applicationParametersParser);
+                    GameReports.GameIsDead(applicationParametersParser);
                     return;
                 }
 
@@ -284,7 +284,7 @@ namespace Global.Dynamic
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
-                    GameReports.PrintIsDead(applicationParametersParser);
+                    GameReports.GameIsDead(applicationParametersParser);
                     return;
                 }
 
@@ -306,7 +306,7 @@ namespace Global.Dynamic
             catch (Exception)
             {
                 // unhandled exception
-                GameReports.PrintIsDead(applicationParametersParser);
+                GameReports.GameIsDead(applicationParametersParser);
                 throw;
             }
 

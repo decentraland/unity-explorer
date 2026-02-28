@@ -8,7 +8,7 @@ namespace Global
     public static class GameReports
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PrintIsDead(IAppArgs appArgs)
+        public static void GameIsDead(IAppArgs appArgs)
         {
             ReportHub.LogError(ReportCategory.ENGINE,
                 "Initialization Failed! Game is irrecoverably dead!");
