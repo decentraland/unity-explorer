@@ -27,12 +27,7 @@ namespace DCL.RealmNavigation
         ///     Realm Navigator with core teleport functionality
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
-
-        /// <summary>
-        ///     Proxy for IWorldAccessGate. Set by DynamicWorldContainer after handler creation.
-        /// </summary>
-        public ObjectProxy<IWorldAccessGate> WorldAccessGateProxy { get; private init; } = null!;
-
+            
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
         public RealmNavigationDebugPlugin CreatePlugin() =>
@@ -49,45 +44,31 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IWorldAccessGate worldAccessGate)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
             IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
-            {
-                new RestartLoadingStatus(),
-                new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
-                new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
-                new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                new ClearWorldsCacheTeleportOperation(placesAPIService),
-                new ChangeRealmTeleportOperation(realmContainer.RealmController),
-                new AnalyticsFlushTeleportOperation(analytics),
-                new LoadLandscapeTeleportOperation(landscape),
-                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
-                new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
-                new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
-            },
-            ReportCategory.SCENE_LOADING,
-            analytics,
-            ANALYTICS_OP_NAME);
+                {
+                    new RestartLoadingStatus(), new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld), new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT), new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy), new ClearWorldsCacheTeleportOperation(placesAPIService), new ChangeRealmTeleportOperation(realmContainer.RealmController), new AnalyticsFlushTeleportOperation(analytics), new LoadLandscapeTeleportOperation(landscape), new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool), new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget), new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData), new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
+                },
+                ReportCategory.SCENE_LOADING,
+                analytics,
+                ANALYTICS_OP_NAME);
 
             var teleportInSameRealmOperation = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus,
                 new ITeleportOperation[]
                 {
-                    new RestartLoadingStatus(),
-                    new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                    new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
+                    new RestartLoadingStatus(), new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget), new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
                 }, ReportCategory.SCENE_LOADING,
                 analytics,
                 ANALYTICS_OP_NAME);
 
             realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
             teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");
-
-            var worldAccessGateProxy = new ObjectProxy<IWorldAccessGate>();
 
             return new RealmNavigationContainer
             {
@@ -103,9 +84,8 @@ namespace DCL.RealmNavigation
                     analytics,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
-                    worldAccessGateProxy),
-                widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
-                WorldAccessGateProxy = worldAccessGateProxy,
+                    worldAccessGate),
+                widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder
             };
         }
     }

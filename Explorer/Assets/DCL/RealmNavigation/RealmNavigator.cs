@@ -46,7 +46,7 @@ namespace DCL.RealmNavigation
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analyticsController;
         private readonly ILandscape landscape;
-        private readonly ObjectProxy<IWorldAccessGate> worldAccessGateProxy;
+        private readonly IWorldAccessGate worldAccessGate;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -60,7 +60,7 @@ namespace DCL.RealmNavigation
             IAnalyticsController analyticsController,
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
             SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
-            ObjectProxy<IWorldAccessGate> worldAccessGateProxy)
+            IWorldAccessGate worldAccessGate)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -73,7 +73,7 @@ namespace DCL.RealmNavigation
             this.realmChangeOperations = realmChangeOperations;
             this.teleportInSameRealmOperation = teleportInSameRealmOperation;
             this.landscape = landscape;
-            this.worldAccessGateProxy = worldAccessGateProxy;
+            this.worldAccessGate = worldAccessGate;
         }
 
         public bool IsAlreadyOnRealm(URLDomain realm)
@@ -148,14 +148,9 @@ namespace DCL.RealmNavigation
 
         private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, CancellationToken ct)
         {
-            IWorldAccessGate? gate = worldAccessGateProxy.Object;
-
-            if (gate == null)
-                return WorldAccessResult.CheckFailed;
-
             try
             {
-                return await gate.CheckAccessAsync(worldName, null, ct);
+                return await worldAccessGate.CheckAccessAsync(worldName, null, ct);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
