@@ -157,15 +157,11 @@ jobs:
           token: ${{ secrets.PERFORMANCE_TESTING_PAT }}
           client-payload: |-
             {
-              "macos": {
-                "change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
-                "base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip"
-              },
-              windows: {
-                "change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
-                "base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
-              }
-              "pr_number": "${{ needs.pre-validation.outputs.pr-number }}"
+              "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
+              "win_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
+              "win_base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip",
+              "mac_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
+              "mac_base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip"
             }
 
   comment-failed:
