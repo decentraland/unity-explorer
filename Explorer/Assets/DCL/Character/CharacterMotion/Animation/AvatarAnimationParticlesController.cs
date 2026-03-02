@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -59,7 +60,7 @@ namespace DCL.CharacterMotion.Animation
             IVfx vfx = pool.Get();
             vfx.SetPosition(position.position);
 
-            ScheduleReturnVfxToPoolAsync(vfx, pool, destroyCancellationToken).Forget();
+            ScheduleReturnVfxToPoolAsync(vfx, pool, destroyCancellationToken).SuppressToResultAsync(ReportCategory.AVATAR).Forget();
         }
 
         private async UniTask ScheduleReturnVfxToPoolAsync(IVfx vfx, IObjectPool<IVfx> pool, CancellationToken ct)
