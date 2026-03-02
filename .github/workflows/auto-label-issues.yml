@@ -49,6 +49,7 @@ jobs:
 
             Rules:
             - ALWAYS include the "new" label.
+            - ALWAYS include a priority label (low, medium, high, critical).
             - Only select from labels that already exist in the repository.
             - Be specific but comprehensive — apply all labels that clearly match.
             - If no labels beyond "new" are clearly applicable, only apply "new".
