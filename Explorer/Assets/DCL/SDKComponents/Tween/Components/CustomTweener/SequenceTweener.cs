@@ -76,11 +76,6 @@ namespace DCL.SDKComponents.Tween.Components
 
             if (pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScale)
             {
-                // Avoid nested Sequences: DOTween doesn't reliably re-evaluate From() values on tweens
-                // inside a nested Sequence when the parent Sequence advances to that step. A single
-                // DOVirtual.Float drives all three properties through its callback instead. Values are
-                // resolved (including from current Transform for omitted axes) in the preceding callback
-                // when this step starts.
                 MoveRotateScale moveRotateScale = pbTween.MoveRotateScale;
                 sequence.AppendCallback(() => TweenSDKComponentHelper.ResolveMoveRotateScale(moveRotateScale, transform, out resolvedMoveRotateScale));
                 DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, durationInSeconds, t =>
@@ -127,13 +122,21 @@ namespace DCL.SDKComponents.Tween.Components
                 {
                     float absSpeed = Mathf.Abs(speed);
                     float sign = speed >= 0 ? 1f : -1f;
+
+                    // A single standalone tween drives all three properties.
+                    // Standalone tweens fully support infinite loops; DOTween Sequences do not
+                    // (they silently cap nested infinite loops to 1).
                     DG.Tweening.Tween tween = DOVirtual.Float(0f, 1f, 1f, v =>
                     {
                         float t = sign * absSpeed * v;
                         transform.localPosition = moveRotateScaleContinuousStartPosition + resolvedMoveRotateScaleContinuous.PositionDirection * t;
                         transform.localRotation = Quaternion.AngleAxis(moveRotateScaleContinuousRotAngle * t, moveRotateScaleContinuousRotAxis) * moveRotateScaleContinuousStartRotation;
                         transform.localScale = moveRotateScaleContinuousStartScale + resolvedMoveRotateScaleContinuous.ScaleDirection * t;
-                    }).SetEase(Ease.Linear).SetLoops(-1, LoopType.Incremental).SetAutoKill(false).Pause();
+                    })
+                   .SetEase(Ease.Linear)
+                   .SetLoops(-1, LoopType.Incremental)
+                   .SetAutoKill(false)
+                   .Pause();
                     sequence.Append(tween);
                 }
                 return;
