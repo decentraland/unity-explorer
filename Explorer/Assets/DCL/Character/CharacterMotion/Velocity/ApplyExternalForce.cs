@@ -17,12 +17,11 @@ namespace DCL.Character.CharacterMotion
                 return;
             }
 
-            // Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y
             characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass; // a = F / m
-            characterPhysics.ExternalVelocity += characterPhysics.ExternalAcceleration * dt; // v += a * dt
 
-            // Vertical component is handled by the gravity channel — keep ExternalVelocity horizontal-only
-            characterPhysics.ExternalVelocity.y = 0f;
+            // v += a * dt (Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y)
+            characterPhysics.ExternalVelocity.x += characterPhysics.ExternalAcceleration.x * dt;
+            characterPhysics.ExternalVelocity.z += characterPhysics.ExternalAcceleration.z * dt; // v += a * dt
 
             characterPhysics.ExternalForce = Vector3.zero;
         }
