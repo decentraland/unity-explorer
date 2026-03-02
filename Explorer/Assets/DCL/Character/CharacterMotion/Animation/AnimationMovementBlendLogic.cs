@@ -21,7 +21,8 @@ namespace DCL.CharacterMotion.Animation
         public static void SetAnimatorParameters(ref CharacterAnimationComponent animationComponent, IAvatarView view, bool isGrounded, int movementBlendId)
         {
             // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
-            if (!isGrounded)
+            // allow switching to IDLE so walk/jog/run does not stay latched in vertical force zones.
+            if (!isGrounded && movementBlendId != (int)MovementKind.IDLE)
                 return;
 
             view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, movementBlendId);
