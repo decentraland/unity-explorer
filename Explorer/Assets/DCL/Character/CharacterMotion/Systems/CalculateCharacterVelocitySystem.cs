@@ -25,7 +25,7 @@ namespace DCL.Character.CharacterMotion.Systems
     {
         private SingleInstanceEntity camera;
         private SingleInstanceEntity fixedTick;
-        
+
         public CalculateCharacterVelocitySystem(World world) : base(world) { }
 
         public override void Initialize()
@@ -104,7 +104,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             // Drag
             ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, dt);
-            ApplyExternalVelocityDrag.Execute(settings, ref rigidTransform, dt);
+            ApplyExternalVelocityDragAndClamp.Execute(settings, ref rigidTransform, dt);
 
             // Rotation
             if (cameraComponent.Mode == CameraMode.FirstPerson)
