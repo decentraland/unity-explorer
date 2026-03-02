@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Systems;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -72,7 +73,8 @@ namespace DCL.PluginSystem.Global
                 new StunComponent(),
                 new FeetIKComponent(),
                 new HandsIKComponent(),
-                new HeadIKComponent());
+                new HeadIKComponent(),
+                new HandPointAtComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
@@ -90,6 +92,7 @@ namespace DCL.PluginSystem.Global
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            HandPointAtSystem.InjectToWorld(ref builder);
         }
     }
 }

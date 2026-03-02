@@ -316,6 +316,12 @@ namespace DCL.CharacterMotion.Settings
             set => impl.StepOffset = value;
         }
 
+        public float PointAtMaxDistance
+        {
+            get => impl.PointAtMaxDistance;
+            set => impl.PointAtMaxDistance = value;
+        }
+
         public float HeadIKWeightChangeSpeed
         {
             get => impl.HeadIKWeightChangeSpeed;

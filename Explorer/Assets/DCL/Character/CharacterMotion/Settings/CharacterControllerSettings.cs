@@ -53,7 +53,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        
+        [field: SerializeField] public float PointAtMaxDistance { get; set; } = 100f;
+
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
         [field: SerializeField] public float MoveAnimBlendMaxJogSpeed { get; private set; } = 3f;
