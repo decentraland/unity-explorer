@@ -29,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
                 if (!InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)) continue;
 
-                pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(type, pointerEvent, i);
+                pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(type, pointerEvent, i);
             }
         }
 

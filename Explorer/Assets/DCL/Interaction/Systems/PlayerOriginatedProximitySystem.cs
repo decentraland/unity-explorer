@@ -79,11 +79,11 @@ namespace DCL.Interaction.Systems
             // Use CharacterController center as origin
             Vector3 playerControllerCenterPosition = characterController.transform.TransformPoint(characterController.center);
 
-            // Flatten forward direction for horizontal FOV
-            Vector3 playerFlatForward = Vector3.ProjectOnPlane(characterController.transform.forward, Vector3.up).normalized;
-
             if (!IsPlayerInValidScene())
                 return;
+
+            // Flatten forward direction for horizontal FOV
+            Vector3 playerFlatForward = Vector3.ProjectOnPlane(characterController.transform.forward, Vector3.up).normalized;
 
             ref ProximityResultForSceneEntities proximityResultForSceneEntities = ref playerInteractionEntity.ProximityResultForSceneEntities;
             proximityResultForSceneEntities.Reset();
@@ -177,7 +177,7 @@ namespace DCL.Interaction.Systems
 
             bool IsPlayerInValidScene() =>
                 scenesCache.TryGetByParcel(playerControllerCenterPosition.ToParcel(), out ISceneFacade currentScene)
-                && !currentScene.IsEmpty;
+                && currentScene is { IsEmpty: false, SceneData: { SceneLoadingConcluded: true } };
         }
 
         private bool HasProximityEvent(in PBPointerEvents pointerEvents)

@@ -292,7 +292,7 @@ namespace DCL.Interaction.Systems
                 if (!isAtDistance) continue;
 
                 if (newEntityIsSelected)
-                    pbPointerEvents.AppendPointerEventResultsIntent.TryAppendEnterOrLeaveInput(GetEnterEventType(interactionType), pointerEvent, i);
+                    pbPointerEvents.AppendPointerEventResultsIntent.AppendPointerInputIfQualified(GetEnterEventType(interactionType), pointerEvent, i);
 
                 if (!isCursor)
                     screenPositionOverride = GetColliderCenterScreenPosition(proximityResultForSceneEntities.Collider!);
