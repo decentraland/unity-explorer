@@ -17,7 +17,8 @@ namespace DCL.Character.CharacterMotion
                 return;
             }
 
-            characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass; // a = F / m
+            // a = F / m
+            characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass;
 
             // v += a * dt (Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y)
             characterPhysics.ExternalVelocity.x += characterPhysics.ExternalAcceleration.x * dt;
