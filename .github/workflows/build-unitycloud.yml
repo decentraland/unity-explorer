@@ -14,6 +14,7 @@ on:
   push:
     branches:
       - dev
+      - shape/*
   workflow_dispatch:
     inputs:
       profile:
