@@ -294,7 +294,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ['windows64', 'macos']
+        target: ['windows64', 'macos', 'web']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -387,12 +387,24 @@ jobs:
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
+      - name: Upload artifact for Web
+        id: upload-web-artifact
+        if: matrix.target == 'web'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+
       - name: Compress the build folder to upload it to S3
         run: |
           mkdir upload_to_s3/ && \
           if [ "${{ matrix.target }}" == "macos" ]; then
             zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
-          elif [ "${{ matrix.target }}" == "windows64" ]; then
+          elif [ "${{ matrix.target }}" == "windows64" || "${{ matrix.target }}" == "web" ]; then
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
