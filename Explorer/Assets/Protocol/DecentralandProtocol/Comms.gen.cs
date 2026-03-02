@@ -1623,6 +1623,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     /// <summary>Field number for the "is_jumping" field.</summary>
     public const int IsJumpingFieldNumber = 11;
     private bool isJumping_;
+    /// <summary>
+    /// deprecated
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool IsJumping {
