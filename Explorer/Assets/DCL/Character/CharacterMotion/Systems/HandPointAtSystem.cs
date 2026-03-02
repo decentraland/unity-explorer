@@ -40,7 +40,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World));
+            UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
             ApplyPointAtIKQuery(World, t);
         }
 
@@ -49,6 +49,7 @@ namespace DCL.Character.CharacterMotion.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHandPointAt(
             [Data] in CameraComponent cameraComponent,
+            [Data] float dt,
             ref HandPointAtComponent handPointAtComponent,
             in AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
@@ -57,15 +58,22 @@ namespace DCL.Character.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent,
             in ICharacterControllerSettings settings)
         {
+            bool isMoving = rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f;
             bool canPointAt = rigidTransform.IsGrounded
-                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
+                              && !isMoving
                               && !stunComponent.IsStunned
                               && !emoteComponent.IsPlayingEmote
                               && !platformComponent.PositionChanged;
 
-            handPointAtComponent.IsPointing = false;
+            handPointAtComponent.TickDuration(dt);
+
+            if (isMoving)
+                handPointAtComponent.RefreshDuration(0f);
 
             if (!canPointAt || !dclInput.Player.PointAt.IsPressed()) return;
+
+            // TODO: settings
+            handPointAtComponent.RefreshDuration(10f);
 
             Ray ray = cameraComponent.Camera.ScreenPointToRay(dclInput.UI.Point.ReadValue<Vector2>());
             Vector3 hitPoint = Vector3.zero;
