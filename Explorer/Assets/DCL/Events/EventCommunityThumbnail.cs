@@ -5,6 +5,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utility;
 
 namespace DCL.Events
 {
@@ -14,12 +15,15 @@ namespace DCL.Events
         [SerializeField] private GameObject communityTooltip = null!;
         [SerializeField] private TMP_Text communityText = null!;
 
+        private CancellationTokenSource? loadingCommunityThumbnailCts;
+
         private void OnEnable() =>
             communityTooltip.SetActive(false);
 
-        public void Configure(GetUserCommunitiesData.CommunityData communityInfo, ThumbnailLoader thumbnailLoader, CancellationToken ct)
+        public void Configure(GetUserCommunitiesData.CommunityData communityInfo, ThumbnailLoader thumbnailLoader)
         {
-            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, ct, true).Forget();
+            loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
+            thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(communityInfo.thumbnailUrl, communityThumbnail, null, loadingCommunityThumbnailCts.Token, true).Forget();
             communityText.text = communityInfo.name;
         }
 
