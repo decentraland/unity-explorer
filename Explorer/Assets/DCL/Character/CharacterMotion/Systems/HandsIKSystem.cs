@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -65,7 +66,8 @@ namespace DCL.CharacterMotion.Systems
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings,
-            in CharacterEmoteComponent emoteComponent
+            in CharacterEmoteComponent emoteComponent,
+            in HandPointAtComponent handPointAtComponent
         )
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
@@ -81,12 +83,15 @@ namespace DCL.CharacterMotion.Systems
             if (handsIKComponent.IsDisabled) return;
 
             ApplyHandIK(avatarBase.LeftHandRaycast, avatarBase.LeftHandSubTarget, avatarBase.LeftHandIK, settings, dt);
-            ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
+            if (!handPointAtComponent.IsPointing)
+                ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
 
             Transform leftHint = avatarBase.LeftHandIK.data.hint;
             Vector3 leftPosition = settings.HandsIKElbowOffset;
             leftPosition.x = -leftPosition.x;
             leftHint.localPosition = leftPosition;
+
+            if (handPointAtComponent.IsPointing) return;
 
             Transform rightHint = avatarBase.RightHandIK.data.hint;
             Vector3 rightPosition = settings.HandsIKElbowOffset;
