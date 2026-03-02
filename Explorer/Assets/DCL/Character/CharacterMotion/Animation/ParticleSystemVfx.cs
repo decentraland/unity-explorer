@@ -20,11 +20,7 @@ namespace DCL.CharacterMotion.Animation
 
         public override async UniTask WaitForCompletionAsync(CancellationToken ct)
         {
-            while (target.IsAlive())
-            {
-                await UniTask.NextFrame(ct);
-                if (ct.IsCancellationRequested) return;
-            }
+            while (target.IsAlive()) await UniTask.NextFrame(ct);
         }
     }
 }

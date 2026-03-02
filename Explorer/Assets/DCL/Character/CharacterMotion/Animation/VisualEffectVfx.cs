@@ -17,11 +17,7 @@ namespace DCL.CharacterMotion.Animation
             // Arbitrary 1-second delay, we assume by this time we emitted all particle bursts
             await UniTask.Delay(VFX_BURST_WAIT_MS, cancellationToken: ct);
 
-            while (target.aliveParticleCount > 0)
-            {
-                await UniTask.NextFrame(ct);
-                if (ct.IsCancellationRequested) return;
-            }
+            while (target.aliveParticleCount > 0) await UniTask.NextFrame(ct);
         }
     }
 }
