@@ -5,22 +5,22 @@ namespace DCL.CharacterMotion.Vfx
 {
     public class VFXStateTrigger : StateMachineBehaviour
     {
-        override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+        private static readonly int GLIDER_START_EVENT = Shader.PropertyToID("OnGliderStart");
+        private static readonly int GLIDER_END_EVENT = Shader.PropertyToID("OnGliderEnd");
+
+        private VisualEffect? vfx;
+
+        public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash) =>
+            vfx = animator.GetComponentInChildren<VisualEffect>();
+
+        public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
-            VisualEffect vfx = animator.GetComponentInChildren<VisualEffect>();
-            if (vfx != null)
-            {
-                vfx.SendEvent("OnGliderStart");
-            }
+            if (vfx != null) vfx.SendEvent(GLIDER_START_EVENT);
         }
 
-        override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+        public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
-            VisualEffect vfx = animator.GetComponentInChildren<VisualEffect>();
-            if (vfx != null)
-            {
-                vfx.SendEvent("OnGliderEnd");
-            }
+            if (vfx != null) vfx.SendEvent(GLIDER_END_EVENT);
         }
     }
 }
