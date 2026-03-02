@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         public UniTask ListenForIncomingDataAsync(CancellationToken ct)
         {
             ReportHub.Verbose(ReportCategory.MULTIPLAYER,
-                $"ENet host listening on 0.0.0.0:{options.Port} (maxPeers={options.MaxPeers}).");
+                $"ENet listening on {options.Port}).");
 
             // ENet must be driven on a single dedicated thread
             return UniTask.RunOnThreadPool(() =>

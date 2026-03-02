@@ -113,6 +113,8 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -688,6 +690,8 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            var pulseMessagePipe = new MessagePipe();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -1015,6 +1019,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
+                new PulsePlugin(new ENetTransport(new ENetTransportOptions(), pulseMessagePipe), new PulseMultiplayerService(pulseMessagePipe)),
             };
 
             if (donationsService.DonationFeatureEnabled)

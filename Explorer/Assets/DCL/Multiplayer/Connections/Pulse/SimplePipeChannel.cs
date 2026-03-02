@@ -79,13 +79,11 @@ namespace DCL.Multiplayer.Connections.Pulse
                     Current = await channel.ReadAsync(ct);
                     return true;
                 }
-                catch (System.OperationCanceledException)
-                {
-                    return false;
-                }
+                catch (System.OperationCanceledException) { return false; }
             }
 
-            public UniTask DisposeAsync() => UniTask.CompletedTask;
+            public UniTask DisposeAsync() =>
+                UniTask.CompletedTask;
         }
     }
 }

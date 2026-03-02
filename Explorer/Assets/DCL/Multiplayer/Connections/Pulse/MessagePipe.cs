@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Decentraland.Pulse;
-using Google.Protobuf;
 using System;
 using System.Threading;
 
@@ -37,9 +36,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void OnDataReceived<TTransportPacket>(MessagePacket<TTransportPacket> packet)
             where TTransportPacket: IDisposable
         {
-            IMessage? message = null;
+            ServerMessage? message = null;
 
-            try { message = ClientMessage.Parser.ParseFrom(packet.Data); }
+            try { message = ServerMessage.Parser.ParseFrom(packet.Data); }
             catch (Exception e) { ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse failed to parse packet: {e}"); }
             finally { packet.Dispose(); }
 
@@ -52,9 +51,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         public readonly struct IncomingMessage
         {
             public PeerId From { get; }
-            public IMessage Message { get; }
+            public ServerMessage Message { get; }
 
-            public IncomingMessage(PeerId from, IMessage message)
+            public IncomingMessage(PeerId from, ServerMessage message)
             {
                 From = from;
                 Message = message;
@@ -64,10 +63,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         // TODO Introduce ServerMessage type
         public readonly struct OutgoingMessage
         {
-            public IMessage Message { get; }
+            public ClientMessage Message { get; }
             public ITransport.PacketMode PacketMode { get; }
 
-            public OutgoingMessage(IMessage message, ITransport.PacketMode packetMode)
+            public OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode)
             {
                 Message = message;
                 PacketMode = packetMode;
