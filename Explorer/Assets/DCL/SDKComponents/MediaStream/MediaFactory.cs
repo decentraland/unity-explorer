@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
@@ -193,7 +193,8 @@ namespace DCL.SDKComponents.MediaStream
             float targetVolume = (hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);
 
-            if (component.State != VideoState.VsError)
+            //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
+            if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
