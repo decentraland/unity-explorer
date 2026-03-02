@@ -911,6 +911,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        OutlineSettingsRef:
+          m_AssetGUID: fa8bec03ac49f9d44abac12af9e4aa39
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         DefaultMaleMouthTexture:
           m_AssetGUID: 1d6ca002a7e7b4f9c881a203eb97996f
           m_SubObjectName: 
