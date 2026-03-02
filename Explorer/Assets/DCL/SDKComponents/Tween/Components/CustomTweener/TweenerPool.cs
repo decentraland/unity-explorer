@@ -35,9 +35,9 @@ namespace DCL.SDKComponents.Tween.Components
                 case PBTween.ModeOneofCase.TextureMoveContinuous:
                     return GetContinuousVector2Tweener(textureStart ?? Vector2.zero, pbTween.TextureMoveContinuous.Direction.ToUnityVector(), pbTween.TextureMoveContinuous.Speed);
                 case PBTween.ModeOneofCase.MoveRotateScale:
-                    TweenSDKComponentHelper.ResolveMoveRotateScale(pbTween.MoveRotateScale, transform!, out ResolvedMoveRotateScale resolvedMoveRotateScale);
+                    TweenSDKComponentHelper.ResolveMoveRotateScale(pbTween.MoveRotateScale, transform, out ResolvedMoveRotateScale resolvedMoveRotateScale);
                     return GetTransformTweener(
-                        transform!,
+                        transform,
                         resolvedMoveRotateScale.PositionStart,
                         resolvedMoveRotateScale.PositionEnd,
                         resolvedMoveRotateScale.RotationStart,
@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.Tween.Components
                 case PBTween.ModeOneofCase.MoveRotateScaleContinuous:
                     TweenSDKComponentHelper.ResolveMoveRotateScaleContinuous(pbTween.MoveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolvedMoveRotateScaleContinuous);
                     return GetContinuousTransformTweener(
-                        transform!,
+                        transform,
                         resolvedMoveRotateScaleContinuous.PositionDirection,
                         resolvedMoveRotateScaleContinuous.RotationDirection,
                         resolvedMoveRotateScaleContinuous.ScaleDirection,
@@ -101,7 +101,7 @@ namespace DCL.SDKComponents.Tween.Components
             return tweener;
         }
 
-        private TransformTweener GetTransformTweener(Transform transform,
+        private TransformTweener GetTransformTweener(Transform? transform,
             Vector3 positionStart, Vector3 positionEnd,
             Quaternion rotationStart, Quaternion rotationEnd,
             Vector3 scaleStart, Vector3 scaleEnd,
@@ -112,7 +112,7 @@ namespace DCL.SDKComponents.Tween.Components
             return tweener;
         }
 
-        private TransformTweener GetContinuousTransformTweener(Transform transform,
+        private TransformTweener GetContinuousTransformTweener(Transform? transform,
             Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection,
             float speed)
         {

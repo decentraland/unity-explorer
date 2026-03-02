@@ -60,15 +60,15 @@ namespace DCL.SDKComponents.Tween
         /// Resolves undefined position/rotation/scale from the entity's current Transform.
         /// Used so that sequence steps use up-to-date transform when the step starts.
         /// </summary>
-        public static void ResolveMoveRotateScale(MoveRotateScale moveRotateScale, Transform transform, out ResolvedMoveRotateScale resolved)
+        public static void ResolveMoveRotateScale(MoveRotateScale moveRotateScale, Transform? transform, out ResolvedMoveRotateScale resolved)
         {
             resolved = new ResolvedMoveRotateScale(
-                moveRotateScale.PositionStart?.ToUnityVector() ?? transform.localPosition,
-                moveRotateScale.PositionEnd?.ToUnityVector() ?? transform.localPosition,
-                moveRotateScale.RotationStart?.ToUnityQuaternion() ?? transform.localRotation,
-                moveRotateScale.RotationEnd?.ToUnityQuaternion() ?? transform.localRotation,
-                moveRotateScale.ScaleStart?.ToUnityVector() ?? transform.localScale,
-                moveRotateScale.ScaleEnd?.ToUnityVector() ?? transform.localScale);
+                moveRotateScale.PositionStart?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.PositionEnd?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.RotationStart?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.RotationEnd?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.ScaleStart?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one),
+                moveRotateScale.ScaleEnd?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one));
         }
 
         /// <summary>

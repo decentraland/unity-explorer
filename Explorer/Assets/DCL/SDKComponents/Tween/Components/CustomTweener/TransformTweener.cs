@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.Tween.Components
             onCompleteCallback = OnComplete;
         }
 
-        public void Initialize(Transform transform,
+        public void Initialize(Transform? transform,
             Vector3 positionStart, Vector3 positionEnd,
             Quaternion rotationStart, Quaternion rotationEnd,
             Vector3 scaleStart, Vector3 scaleEnd,
@@ -34,26 +34,29 @@ namespace DCL.SDKComponents.Tween.Components
             var seq = DOTween.Sequence();
             seq.Pause();
 
-            seq.Join(
-                transform.DOLocalMove(positionEnd, durationInSeconds)
-                    .From(positionStart, false)
-                    .SetAutoKill(false)
-                    .Pause()
-            );
+            if (transform)
+            {
+                seq.Join(
+                    transform.DOLocalMove(positionEnd, durationInSeconds)
+                        .From(positionStart, false)
+                        .SetAutoKill(false)
+                        .Pause()
+                );
 
-            seq.Join(
-                transform.DOLocalRotateQuaternion(rotationEnd, durationInSeconds)
-                    .From(rotationStart, false)
-                    .SetAutoKill(false)
-                    .Pause()
-            );
+                seq.Join(
+                    transform.DOLocalRotateQuaternion(rotationEnd, durationInSeconds)
+                        .From(rotationStart, false)
+                        .SetAutoKill(false)
+                        .Pause()
+                );
 
-            seq.Join(
-                transform.DOScale(scaleEnd, durationInSeconds)
-                    .From(scaleStart, false)
-                    .SetAutoKill(false)
-                    .Pause()
-            );
+                seq.Join(
+                    transform.DOScale(scaleEnd, durationInSeconds)
+                        .From(scaleStart, false)
+                        .SetAutoKill(false)
+                        .Pause()
+                );
+            }
 
             seq.SetAutoKill(false);
             seq.OnComplete(onCompleteCallback);
@@ -62,7 +65,7 @@ namespace DCL.SDKComponents.Tween.Components
             activeTween = seq;
         }
 
-        public void InitializeContinuous(Transform transform,
+        public void InitializeContinuous(Transform? transform,
             Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection,
             float speed)
         {
@@ -72,9 +75,9 @@ namespace DCL.SDKComponents.Tween.Components
             float absSpeed = Mathf.Abs(speed);
             float sign = speed >= 0 ? 1f : -1f;
 
-            Vector3 startPos = transform.localPosition;
-            Quaternion startRot = transform.localRotation;
-            Vector3 startScale = transform.localScale;
+            Vector3 startPos = transform ? transform.localPosition : Vector3.zero;
+            Quaternion startRot = transform ? transform.localRotation : Quaternion.identity;
+            Vector3 startScale = transform ? transform.localScale : Vector3.one;
 
             // Extract axis and angle from the quaternion so the angle component
             // scales rotation rate relative to speed, just as direction magnitude
@@ -92,6 +95,7 @@ namespace DCL.SDKComponents.Tween.Components
             // shared speed value.
             activeTween = DOVirtual.Float(0f, 1f, 1f, v =>
             {
+                if (!transform) return;
                 float t = sign * absSpeed * v;
                 transform.localPosition = startPos + positionDirection * t;
                 transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * startRot;
