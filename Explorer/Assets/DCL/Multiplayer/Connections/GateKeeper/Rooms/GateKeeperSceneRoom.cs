@@ -210,27 +210,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
                     $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
 
-            string signedMetadata = BuildSignedMetadata(meta);
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, signedMetadata, token)
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
             
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
             
             return connectionString;
         }
-
-        private string BuildSignedMetadata(MetaData meta)
-        {
-            return CommsHandshakeMetadata.BuildSceneJson(
-                meta.realmName,
-                meta.realm.serverName,
-                meta.sceneId,
-                options.RealmData.WorldCommsSecret
-            );
-        }
-
 
         [Serializable]
         private struct AdapterResponse

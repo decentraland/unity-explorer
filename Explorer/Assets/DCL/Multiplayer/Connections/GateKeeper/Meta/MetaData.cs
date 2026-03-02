@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using DCL.PrivateWorlds;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
@@ -78,6 +79,23 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public string ToJson() =>
             JsonUtility.ToJson(this)!;
 
+        public string BuildWithSecret(string secret)
+        {
+            var metadata = new SceneCommsHandshakeMetadata
+            {
+                realmName = realmName,
+                realm = realm,
+                sceneId = sceneId,
+                parcel = parcel,
+                intent = CommsHandshakeMetadata.INTENT,
+                signer = CommsHandshakeMetadata.SIGNER,
+                isGuest = false,
+                secret = secret,
+            };
+
+            return JsonUtility.ToJson(metadata);
+        }
+
         public override string ToString() =>
             $"Realm: {realmName}, Scene: {sceneId}, Parcel: {parcel}";
 
@@ -89,5 +107,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public override int GetHashCode() =>
             HashCode.Combine(realmName, sceneId);
+
+        [Serializable]
+        private struct SceneCommsHandshakeMetadata
+        {
+            public string realmName;
+            public Realm realm;
+            public string? sceneId;
+            public string parcel;
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+        }
     }
 }
