@@ -1,18 +1,59 @@
-name: Label issues
+name: AI Label Issues
 on:
   issues:
-    types:
-      - reopened
-      - opened
+    types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to label'
+        required: true
 jobs:
   label_issues:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
+      contents: read
       issues: write
+      id-token: write
     steps:
-      - run: gh issue edit "$NUMBER" --add-label "$LABELS"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          NUMBER: ${{ github.event.issue.number }}
-          LABELS: new
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: AI label analysis
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            You are an issue triage assistant. Your ONLY action is to apply labels — do NOT post any comments.
+
+            Repository: ${{ github.repository }}
+            Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
+
+            Steps:
+            1. Fetch all available labels:
+               gh label list --repo ${{ github.repository }} --json name,description --limit 100
+
+            2. Fetch the issue details:
+               gh issue view ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --json title,body,labels
+
+            3. Analyze the issue and select appropriate labels by considering:
+               - The type of issue (bug, feature request, question, improvement, etc.)
+               - Technical areas or components mentioned
+               - Severity or priority indicators
+               - Platform mentions (e.g. desktop, web, mobile)
+               - User impact described
+
+            4. Apply labels using:
+               gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --add-label "label1" --add-label "label2"
+
+            Rules:
+            - ALWAYS include the "new" label.
+            - Only select from labels that already exist in the repository.
+            - Be specific but comprehensive — apply all labels that clearly match.
+            - If no labels beyond "new" are clearly applicable, only apply "new".
+            - Do NOT create new labels.
+            - Do NOT post any comments on the issue.
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue edit:*)"
