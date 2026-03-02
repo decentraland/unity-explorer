@@ -205,18 +205,6 @@ namespace DCL.Events
             view.ClearAllEvents();
             view.SetAsLoading(true);
 
-            Result<IReadOnlyList<EventDTO>> liveEventsResults = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
-                                                                                      .SuppressToResultAsync(ReportCategory.EVENTS);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            if (!liveEventsResults.Success)
-            {
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
-                return;
-            }
-
             var fromDateUtc = fromDate.AddDays(-1).ToUniversalTime();
             var toDateUtc = fromDate.AddDays(numberOfDays).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
@@ -234,14 +222,25 @@ namespace DCL.Events
             List<EventDTO> eventsList = new ();
             if (fromDate.Date == DateTime.Today)
             {
-                // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
-                foreach (EventDTO liveEventInfo in liveEventsResults.Value)
-                {
-                    DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
-                    if (eventLocalDate.Date < fromDate)
-                        eventsList.Add(liveEventInfo);
-                }
+                Result<IReadOnlyList<EventDTO>> liveEventsResults = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                          .SuppressToResultAsync(ReportCategory.EVENTS);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (liveEventsResults.Success)
+                    // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
+                    foreach (EventDTO liveEventInfo in liveEventsResults.Value)
+                    {
+                        DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
+                        if (eventLocalDate.Date < fromDate)
+                            eventsList.Add(liveEventInfo);
+                    }
+
+                else
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
             }
+
             foreach (EventDTO eventInfo in eventsResult.Value)
             {
                 DateTime eventLocalDate = DateTimeOffset.Parse(eventInfo.next_start_at).ToLocalTime().DateTime;
