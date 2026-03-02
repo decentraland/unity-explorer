@@ -21,7 +21,7 @@ namespace DCL.Character.CharacterMotion
 
             // v += a * dt (Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y)
             characterPhysics.ExternalVelocity.x += characterPhysics.ExternalAcceleration.x * dt;
-            characterPhysics.ExternalVelocity.z += characterPhysics.ExternalAcceleration.z * dt; // v += a * dt
+            characterPhysics.ExternalVelocity.z += characterPhysics.ExternalAcceleration.z * dt;
 
             characterPhysics.ExternalForce = Vector3.zero;
         }
