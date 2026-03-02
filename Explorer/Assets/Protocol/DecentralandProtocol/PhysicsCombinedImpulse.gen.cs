@@ -42,11 +42,12 @@ namespace DCL.ECSComponents {
   #region Messages
   /// <summary>
   ///*
+  /// This component applies a one-shot physics summary impulse.
+  ///
   /// @remarks Low-level component. Use Physics.applyImpulseToPlayer() instead.
   /// Direct manipulation will conflict with the force accumulation registry.
-  ///
-  /// This component applies a one-shot physics summary impulse.
   /// Summary component: stores the accumulated result of all impulses registered by the scene in the current frame.
+  ///
   /// Event-like component: each new impulse must increment the eventID to ensure delivery via CRDT, even if the direction is identical to the previous one.
   /// Renderer processes impulse with the unique ID only once. Increase eventID of the component to apply another impulse.
   /// </summary>

@@ -41,11 +41,12 @@ namespace DCL.ECSComponents {
   #region Messages
   /// <summary>
   ///*
+  /// This component applies a continuous physics force.
+  ///
   /// @remarks Low-level component. Use Physics.applyForceToPlayer()/.removeForceToPlayer() instead.
   /// Direct manipulation will conflict with the force accumulation registry.
-  ///
-  /// This component applies a continuous physics force.
   /// Summary component: stores the accumulated result of all active forces registered by the scene in the current frame.
+  ///
   /// State-like component: the force is applied every physics tick while the component is present on the entity.
   /// </summary>
   public sealed partial class PBPhysicsCombinedForce : pb::IMessage<PBPhysicsCombinedForce>
