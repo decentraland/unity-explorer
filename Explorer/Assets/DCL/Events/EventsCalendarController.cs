@@ -228,19 +228,17 @@ namespace DCL.Events
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (!liveEventsResults.Success)
-                {
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
-                    return;
-                }
+                if (liveEventsResults.Success)
+                    // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
+                    foreach (EventDTO liveEventInfo in liveEventsResults.Value)
+                    {
+                        DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
+                        if (eventLocalDate.Date < fromDate)
+                            eventsList.Add(liveEventInfo);
+                    }
 
-                // In case we have live events prior to today, they have to be also shown on the calendar, so we add them into the current results
-                foreach (EventDTO liveEventInfo in liveEventsResults.Value)
-                {
-                    DateTime eventLocalDate = DateTimeOffset.Parse(liveEventInfo.next_start_at).ToLocalTime().DateTime;
-                    if (eventLocalDate.Date < fromDate)
-                        eventsList.Add(liveEventInfo);
-                }
+                else
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_LIVE_EVENTS_ERROR_MESSAGE));
             }
 
             foreach (EventDTO eventInfo in eventsResult.Value)
