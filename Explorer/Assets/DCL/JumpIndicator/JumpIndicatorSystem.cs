@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -33,7 +34,7 @@ namespace DCL.JumpIndicator
 
         [Query]
         [All(typeof(CharacterController))]
-        [None(typeof(JumpIndicator))]
+        [None(typeof(DeleteEntityIntention), typeof(JumpIndicator))]
         private void InitializeJumpIndicator(in IAvatarView avatarView)
         {
             var decalProjector = Object.Instantiate(jumpIndicatorPrefab, avatarView.GetTransform());
@@ -45,6 +46,7 @@ namespace DCL.JumpIndicator
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateJumpIndicator(in JumpIndicator jumpIndicator, in CharacterRigidTransform transform)
         {
             DecalProjector decalProjector = jumpIndicator.DecalProjector;
