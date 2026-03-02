@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public void Assign(IRoom room, out IRoom? previous)
         {
-            if (RequiresDisconnect(assigned))
+            if (assigned is { Info: { ConnectionState: ConnectionState.ConnConnected or ConnectionState.ConnReconnecting } })
                 ReportHub.LogError(ReportCategory.LIVEKIT, "Assigning a new room without disconnecting the previous one");
 
             previous = assigned;
@@ -86,17 +86,13 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            if (RequiresDisconnect(assigned))
+            var disconnectTask = assigned.DisconnectAsync(ct).AsUniTask();
+            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
+            var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
+            if (winIndex != 0)
             {
-                var disconnectTask = assigned.DisconnectAsync(ct).AsUniTask();
-                var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
-                var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
-                if (winIndex != 0)
-                {
-                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
-                }
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
             }
-
             Unsubscribe(assigned);
             assigned = NullRoom.INSTANCE;
         }
@@ -107,11 +103,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             {
                 case RoomSelection.NEW:
                     // Disconnect the previous room, but make its callbacks pass through
-                    try
-                    {
-                        if (RequiresDisconnect(previous))
-                            await previous.DisconnectAsync(ct);
-                    }
+                    try { await previous.DisconnectAsync(ct); }
                     finally
                     {
                         Unsubscribe(previous);
@@ -138,10 +130,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                 default: throw new ArgumentOutOfRangeException(nameof(roomSelection));
             }
         }
-
-        private static bool RequiresDisconnect(IRoom room) =>
-            room is not NullRoom &&
-            (room.Info.ConnectionState is ConnectionState.ConnConnected or ConnectionState.ConnReconnecting);
 
         public void SimulateConnectionStateChanged()
         {
