@@ -60,11 +60,11 @@ namespace DCL.CharacterMotion.Systems
             RemoteCreatePropQuery(World);
 
             // Lifecycle
+            LocalDisablePropQuery(World);
+            RemoteDisablePropQuery(World);
             LocalEnablePropQuery(World);
             RemoteEnablePropQuery(World);
             HandleStateTransitionQuery(World, tick);
-            LocalDisablePropQuery(World);
-            RemoteDisablePropQuery(World);
             CleanUpDestroyedAvatarsPropQuery(World);
 
             // Visualization
@@ -136,10 +136,10 @@ namespace DCL.CharacterMotion.Systems
         {
             if (glideState != GlideStateValue.PROP_CLOSED) return;
 
-            World.Remove<GliderPropEnabled>(entity);
             gliderProp.View.PrepareForNextActivation();
-
             gliderProp.View.gameObject.SetActive(false);
+            
+            World.Remove<GliderPropEnabled>(entity);
         }
 
         [Query]
