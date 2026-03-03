@@ -3,28 +3,17 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI.Buttons
 {
-    public class HoverableAndSelectableButtonWithAnimator : HoverableButton, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+    public class HoverableAndSelectableButtonWithAnimator : HoverableButton, IPointerEnterHandler, IPointerExitHandler, ISelectableButton
     {
         [field: Header("Animator")]
         [field: SerializeField]
-        public Animator Animator { get; private set; }
+        public Animator Animator { get; private set; } = null!;
 
         private bool selected;
-
-        public void OnDeselect(BaseEventData eventData)
-        {
-            selected = false;
-        }
-
-        public void OnSelect(BaseEventData eventData)
-        {
-            selected = true;
-        }
 
         public new void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-
             if (!selected)
             {
                 Animator.ResetTrigger(UIAnimationHashes.UNHOVER);
@@ -42,11 +31,24 @@ namespace DCL.UI.Buttons
             }
         }
 
+        public void Select()
+        {
+            if (!selected)
+            {
+                selected = true;
+                Animator.ResetTrigger(UIAnimationHashes.UNHOVER);
+                Animator.SetTrigger(UIAnimationHashes.HOVER);
+            }
+        }
+
         public void Deselect()
         {
-            selected = false;
-            Animator.ResetTrigger(UIAnimationHashes.HOVER);
-            Animator.SetTrigger(UIAnimationHashes.UNHOVER);
+            if (selected)
+            {
+                selected = false;
+                Animator.ResetTrigger(UIAnimationHashes.HOVER);
+                Animator.SetTrigger(UIAnimationHashes.UNHOVER);
+            }
         }
     }
 }

@@ -7,13 +7,11 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Playground;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 using CancellationTokenSource = System.Threading.CancellationTokenSource;
 
@@ -22,49 +20,43 @@ namespace DCL.InWorldCamera.UI
     /// <summary>
     ///     Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
     /// </summary>
-    public class InWorldCameraController : ControllerBase<InWorldCameraView>, IBlocksChat
+    public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
         private const string SOURCE_BUTTON = "Button";
 
-        private readonly Button sidebarButton;
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-
-        private SingleInstanceEntity? cameraInternal;
 
         private bool shortcutPanelIsOpen;
 
         private CancellationTokenSource ctx;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
+        private SingleInstanceEntity? cameraInternal;
 
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
 
         private UniTaskCompletionSource? closeViewTask;
 
-        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
             this.storageService = storageService;
-            this.sidebarButton = sidebarButton;
-            this.sharedSpaceManager = sharedSpaceManager;
 
             ctx = new CancellationTokenSource();
             closeViewTask = new UniTaskCompletionSource();
 
             storageService.ScreenshotUploaded += OnScreenshotUploaded;
-            sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
 
         protected override void OnViewInstantiated()
         {
             viewInstance!.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
-            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGalleryAsync);
+            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
         }
 
@@ -74,12 +66,11 @@ namespace DCL.InWorldCamera.UI
             {
                 viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
                 viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
-                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGalleryAsync);
+                viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
                 viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
             }
 
             storageService.ScreenshotUploaded -= OnScreenshotUploaded;
-            sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
         }
@@ -96,9 +87,11 @@ namespace DCL.InWorldCamera.UI
 
         public void Show()
         {
-            sidebarButton.OnSelect(null);
             mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
+        }
 
+        protected override void OnViewShow()
+        {
             AdjustToStorageSpace(storageService.StorageStatus.HasFreeSpace);
         }
 
@@ -112,8 +105,7 @@ namespace DCL.InWorldCamera.UI
         {
             ToggleShortcutsInfoAsync(toOpen: false);
 
-            sidebarButton.OnDeselect(null);
-            viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
+            viewInstance?.HideAsync(CancellationToken.None, isInstant).Forget();
         }
 
         public void Close()
@@ -132,17 +124,14 @@ namespace DCL.InWorldCamera.UI
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.SFXScreenshotCapture);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.SFXScreenshotCapture);
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        private async void OpenCameraReelGalleryAsync()
+        private void OpenCameraReelGallery()
         {
             RequestDisableInWorldCamera();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden);
-
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
+            mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
         }
 
         private void RequestTakeScreenshot()

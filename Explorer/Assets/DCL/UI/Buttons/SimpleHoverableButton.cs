@@ -1,11 +1,10 @@
-using System;
 using UnityEngine;
 
 namespace DCL.UI.Buttons
 {
     public class SimpleHoverableButton: HoverableButton
     {
-        [SerializeField] private GameObject _hoveredObject;
+        [SerializeField] private GameObject _hoveredObject = null!;
         [SerializeField] private GameObject _unhoveredObject;
         [SerializeField] private GameObject _selectedObject;
 

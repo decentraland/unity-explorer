@@ -8,7 +8,7 @@ namespace DCL.ChangeRealmPrompt
 {
     public partial class ChangeRealmPromptController : ControllerBase<ChangeRealmPromptView, ChangeRealmPromptController.Params>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly ICursor cursor;
         private readonly Action<string> changeRealmCallback;

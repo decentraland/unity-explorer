@@ -160,7 +160,7 @@ namespace DCL.UI.ProfileElements
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = profileRepositoryWrapper.GetProfileThumbnail(faceSnapshotUrl);
+                Sprite? sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(faceSnapshotUrl, cts.Token);
 
                 if (sprite != null)
                 {
@@ -178,7 +178,7 @@ namespace DCL.UI.ProfileElements
                 if (sprite == null)
                     currentUrl = null;
 
-                await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
+                await SetThumbnailImageWithAnimationAsync(sprite ? sprite : defaultEmptyThumbnail, cts.Token);
             }
             catch (OperationCanceledException) { currentUrl = null; }
             catch (Exception e)

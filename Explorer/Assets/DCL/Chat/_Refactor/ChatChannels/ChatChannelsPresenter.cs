@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DG.Tweening;
 using System;
@@ -18,7 +17,7 @@ namespace DCL.Chat
     public class ChatChannelsPresenter : IDisposable
     {
         private readonly ChatChannelsView view;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
         private readonly CommunityDataService communityDataService;
@@ -35,7 +34,7 @@ namespace DCL.Chat
 
         public ChatChannelsPresenter(ChatChannelsView view,
             IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
             CommunityDataService communityDataService,
@@ -63,8 +62,8 @@ namespace DCL.Chat
             this.chatHistory.ChannelRemoved += OnChannelRemoved;
             this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
             this.chatHistory.MessageAdded += OnMessageAdded;
-            this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
-            this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
+            scope.Add(chatEventBus.Subscribe<ChatEvents.OpenPrivateConversationRequestedEvent>(evt => OnOpenUserConversation(evt.UserId)));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.OpenCommunityConversationRequestedEvent>(evt => OnOpenCommunityConversation(evt.CommunityId)));
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
 
@@ -89,9 +88,6 @@ namespace DCL.Chat
             chatHistory.ChannelRemoved -= OnChannelRemoved;
             chatHistory.MessageAdded -= OnMessageAdded;
             chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
-
-            chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
-            chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
 
             scope.Dispose();
         }

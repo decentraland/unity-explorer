@@ -74,7 +74,7 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
@@ -126,6 +126,7 @@ namespace DCL.AuthenticationScreenFlow
             this.decentralandUrlsSource = decentralandUrlsSource;
 
             possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
+            fsm = new MVCStateMachine<AuthStateBase>();
         }
 
         public override void Dispose()

@@ -22,7 +22,7 @@ namespace DCL.Backpack.Gifting.Presenters
     {
         private static readonly TimeSpan LONG_RUNNING_HINT_DELAY = TimeSpan.FromSeconds(10);
         
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private enum State { Waiting, Success, Failed }
 

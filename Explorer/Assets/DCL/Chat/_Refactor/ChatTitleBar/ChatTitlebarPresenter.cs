@@ -11,7 +11,6 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
-using DCL.Chat.EventBus;
 using DCL.Communities;
 using DCL.Settings.Settings;
 using DCL.Translation;
@@ -30,7 +29,7 @@ namespace DCL.Chat
     {
         private readonly ChatTitlebarView view;
         private readonly ChatConfig.ChatConfig chatConfig;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly CommunityDataService communityDataService;
         private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
         private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
@@ -60,7 +59,7 @@ namespace DCL.Chat
         public ChatTitlebarPresenter(
             ChatTitlebarView view,
             ChatConfig.ChatConfig chatConfig,
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             CommunityDataService communityDataService,
             CurrentChannelService currentChannelService,
             ChatMemberListService chatMemberListService,
@@ -70,7 +69,7 @@ namespace DCL.Chat
             GetCommunityThumbnailCommand getCommunityThumbnailCommand,
             DeleteChatHistoryCommand deleteChatHistoryCommand,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GetUserCallStatusCommand getUserCallStatusCommand,
             ToggleAutoTranslateCommand toggleAutoTranslateCommand)
         {
@@ -272,7 +271,7 @@ namespace DCL.Chat
 
         private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
         {
-            request.WalletAddress = new Web3Address(currentViewModel.Id);
+            request.WalletAddress = new Web3Address(currentViewModel?.Id);
 
             chatContextMenuService
                 .ShowUserProfileMenuAsync(request)
@@ -320,12 +319,12 @@ namespace DCL.Chat
 
         private void OnCloseRequested()
         {
-            eventBus.Publish(new ChatEvents.CloseChatEvent());
+            eventBus.RaiseCloseChatEvent();
         }
 
         private void OnMembersToggleRequested()
         {
-            eventBus.Publish(new ChatEvents.ToggleMembersEvent());
+            eventBus.RaiseToggleMembersEvent();
         }
 
 

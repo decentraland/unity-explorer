@@ -13,7 +13,7 @@ namespace DCL.Backpack.Gifting.Presenters
     public sealed class GiftTransferSuccessController
         : ControllerBase<GiftTransferSuccessView, GiftTransferSuccessParams>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
         
         private CancellationTokenSource? lifeCts;
 

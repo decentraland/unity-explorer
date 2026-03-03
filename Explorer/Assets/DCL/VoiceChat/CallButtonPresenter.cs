@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
 using DCL.Utilities;
@@ -35,10 +35,11 @@ namespace DCL.VoiceChat
         private readonly IDisposable? orchestratorTypeSubscription;
         private readonly IDisposable? privateVoiceChatAvailableSubscription;
         private readonly IDisposable? currentChannelSubscription;
+        private readonly IDisposable? startCallSubscription;
 
         private readonly CallButtonView view;
         private readonly IPrivateCallOrchestrator privateCallOrchestrator;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
 
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
@@ -50,7 +51,7 @@ namespace DCL.VoiceChat
         public CallButtonPresenter(
             CallButtonView view,
             IPrivateCallOrchestrator privateCallOrchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IReadonlyReactiveProperty<ChatChannel> currentChannel)
         {
             this.view = view;
@@ -63,7 +64,7 @@ namespace DCL.VoiceChat
             {
                 statusSubscription = privateCallOrchestrator.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
                 currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
-                chatEventBus.StartCall += OnChatEventBusStartCall;
+                startCallSubscription = chatEventBus.Subscribe<ChatEvents.StartCallEvent>(_ => OnChatEventBusStartCall());
             }
 
             view.gameObject.SetActive(false);
@@ -202,7 +203,7 @@ namespace DCL.VoiceChat
             orchestratorTypeSubscription?.Dispose();
             privateVoiceChatAvailableSubscription?.Dispose();
             currentChannelSubscription?.Dispose();
-            chatEventBus.StartCall -= OnChatEventBusStartCall;
+            startCallSubscription?.Dispose();
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }
     }

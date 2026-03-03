@@ -36,7 +36,7 @@ namespace DCL.UI
 
         private const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly ControlsPoolManager controlsPoolManager;
         private NativeArray<float3> worldRectCorners;

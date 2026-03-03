@@ -27,32 +27,42 @@ namespace DCL.FeatureFlags
             bool localSceneDevelopment)
         {
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+            bool isEditor = Application.isEditor;
 
             SetFeatureStates(new Dictionary<FeatureId, bool>
             {
-                [FeatureId.CAMERA_REEL] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CAMERA_REEL, featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || Application.isEditor),
-                [FeatureId.FRIENDS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || Application.isEditor) && !localSceneDevelopment,
+                [FeatureId.CAMERA_REEL] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CAMERA_REEL, featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || isEditor),
+                [FeatureId.FRIENDS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || isEditor) && !localSceneDevelopment,
                 [FeatureId.FRIENDS_USER_BLOCKING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_USER_BLOCKING, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING)),
-                [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FRIENDS_ONLINE_STATUS, featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS), requireDebug: false),
+                [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
                 [FeatureId.PROFILE_NAME_EDITOR] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PROFILE_NAME_EDITOR, featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || Application.isEditor),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
                 [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_RATE_LIMIT, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT)),
                 [FeatureId.CHAT_MESSAGE_BUFFER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_BUFFER, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG)),
-                [FeatureId.HEAD_SYNC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HEAD_SYNC, featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || Application.isEditor),
+                [FeatureId.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
+                [FeatureId.HEAD_SYNC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HEAD_SYNC, featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || isEditor),
                 [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.STOP_ON_DUPLICATE_IDENTITY, featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY)),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PRIVATE_CHAT_REQUIRES_TOPIC, featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC)),
                 [FeatureId.DONATIONS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DONATIONS_UI, featureFlags.IsEnabled(FeatureFlagsStrings.DONATIONS)),
                 [FeatureId.FORCE_BACKFACE_CULLING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.FORCE_BACKFACE_CULLING, featureFlags.IsEnabled(FeatureFlagsStrings.FORCE_BACKFACE_CULLING), requireDebug: false),
-                [FeatureId.NAME_COLOR_CHANGE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.NAME_COLOR_CHANGE, featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || Application.isEditor),
+                [FeatureId.NAME_COLOR_CHANGE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.NAME_COLOR_CHANGE, featureFlags.IsEnabled(FeatureFlagsStrings.NAME_COLOR_CHANGE) || isEditor),
+                [FeatureId.CHAT_TRANSLATIONS] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED),
+                [FeatureId.GIFTING_ENABLED] = featureFlags.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED),
+                [FeatureId.BANNED_USERS_FROM_SCENE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BANNED_USERS_FROM_SCENE, featureFlags.IsEnabled(FeatureFlagsStrings.BANNED_USERS_FROM_SCENE) || isEditor),
+                [FeatureId.BACKPACK_OUTFITS] = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED),
+                [FeatureId.DISCOVER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || isEditor),
+                [FeatureId.FRIENDS_CONNECTIVITY_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
+                [FeatureId.COMMUNITIES_ANNOUNCEMENTS]  = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
+                [FeatureId.COMMUNITIES_MEMBERS_COUNTER]= FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EMAIL_OTP_AUTH] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
                 [FeatureId.CHECK_DISK_SPACE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
-                [FeatureId.DISCOVER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || Application.isEditor),
-                [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || Application.isEditor, requireDebug: false),
+                [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
+                [FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS] = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
-            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || Application.isEditor));
+            SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
         }
 
@@ -67,8 +77,9 @@ namespace DCL.FeatureFlags
         ///     Use this for features that depend on user identity or allowlists or anything else that cannot be handled by FF or appArgs.
         ///     Examples of user-specific features: COMMUNITIES
         ///     For global features, this returns the same result as IsEnabled().
+        ///     NOTE: Changed the name because of intellisense suggesting to use async method instead of normal IsEnabled one.
         /// </summary>
-        public async UniTask<bool> IsEnabledAsync(FeatureId featureId, CancellationToken ct)
+        public async UniTask<bool> CheckIsEnabledAsync(FeatureId featureId, CancellationToken ct)
         {
             // Check if there's a registered provider for this feature
             if (featureProviders.TryGetValue(featureId, out IFeatureProvider? provider))
@@ -111,6 +122,8 @@ namespace DCL.FeatureFlags
 
     public enum FeatureId
     {
+        // Numbered because we use these to selectively enable settings,
+        // this way we avoid breaking that if we ever change the order here.
         NONE = 0,
         VOICE_CHAT = 1,
         COMMUNITY_VOICE_CHAT = 2,
@@ -120,45 +133,46 @@ namespace DCL.FeatureFlags
         PROFILE_NAME_EDITOR = 6,
         LOCAL_SCENE_DEVELOPMENT = 7,
         CAMERA_REEL = 8,
-        MULTIPLAYER_COMPRESSION_WIN,
-        MULTIPLAYER_COMPRESSION_MAC,
-        PORTABLE_EXPERIENCE,
-        GLOBAL_PORTABLE_EXPERIENCE,
-        PORTABLE_EXPERIENCE_CHAT_COMMANDS,
-        MAP_PINS,
-        CUSTOM_MAP_PINS_ICONS,
-        USER_ALLOW_LIST,
-        CSV_VARIANT,
-        STRING_VARIANT,
-        WALLETS_VARIANT,
-        ONBOARDING,
-        GREETING_ONBOARDING,
-        ONBOARDING_ENABLED_VARIANT,
-        ONBOARDING_GREETINGS_VARIANT,
-        GENESIS_STARTING_PARCEL,
-        VIDEO_PRIORITIZATION,
-        ASSET_BUNDLE_FALLBACK,
-        CHAT_HISTORY_LOCAL_STORAGE,
-        SCENE_MEMORY_LIMIT,
-        KTX2_CONVERSION,
-        MARKETPLACE_CREDITS,
-        MARKETPLACE_CREDITS_WALLETS_VARIANT,
-        COMMUNITIES,
-        COMMUNITIES_MEMBERS_COUNTER,
-        AUTH_CODE_VALIDATION,
-        GPUI_ENABLED,
-        GIFTING_ENABLED,
-        CHAT_MESSAGE_RATE_LIMIT,
-        CHAT_MESSAGE_BUFFER,
-        HEAD_SYNC,
-        STOP_ON_DUPLICATE_IDENTITY,
-        PRIVATE_CHAT_REQUIRES_TOPIC,
-        DONATIONS,
-        FORCE_BACKFACE_CULLING,
-        NAME_COLOR_CHANGE,
-        EMAIL_OTP_AUTH,
-        CHECK_DISK_SPACE,
-        DISCOVER,
-        AVATAR_HIGHLIGHT
+        MARKETPLACE_CREDITS = 9,
+        GIFTING_ENABLED = 10,
+        CHAT_TRANSLATIONS = 11,
+        BANNED_USERS_FROM_SCENE = 12,
+        BACKPACK_OUTFITS = 13,
+        HEAD_SYNC = 14,
+        MULTIPLAYER_COMPRESSION_WIN = 15,
+        MULTIPLAYER_COMPRESSION_MAC = 16,
+        PORTABLE_EXPERIENCE = 17,
+        GLOBAL_PORTABLE_EXPERIENCE = 18,
+        PORTABLE_EXPERIENCE_CHAT_COMMANDS = 19,
+        MAP_PINS = 20,
+        CUSTOM_MAP_PINS_ICONS = 21,
+        USER_ALLOW_LIST = 22,
+        ONBOARDING = 23,
+        GREETING_ONBOARDING = 24,
+        GENESIS_STARTING_PARCEL = 25,
+        VIDEO_PRIORITIZATION = 26,
+        ASSET_BUNDLE_FALLBACK = 27,
+        CHAT_HISTORY_LOCAL_STORAGE = 28,
+        SCENE_MEMORY_LIMIT = 29,
+        KTX2_CONVERSION = 30,
+        COMMUNITIES = 31,
+        COMMUNITIES_MEMBERS_COUNTER = 32,
+        AUTH_CODE_VALIDATION = 33,
+        GPUI_ENABLED = 34,
+        DISCOVER_PLACES = 35,
+        FRIENDS_CONNECTIVITY_STATUS = 36,
+        COMMUNITIES_ANNOUNCEMENTS = 37,
+        CHAT_MESSAGE_RATE_LIMIT = 38,
+        CHAT_MESSAGE_BUFFER = 39,
+        PRIVATE_CHAT_REQUIRES_TOPIC = 40,
+        STOP_ON_DUPLICATE_IDENTITY = 41,
+        DONATIONS = 42,
+        FORCE_BACKFACE_CULLING = 43,
+        NAME_COLOR_CHANGE = 44,
+        EMAIL_OTP_AUTH = 45,
+        CHECK_DISK_SPACE = 46,
+        DISCOVER = 47,
+        AVATAR_HIGHLIGHT = 48,
+        SELF_PREVIEW_BUILDER_COLLECTIONS = 49,
     }
 }

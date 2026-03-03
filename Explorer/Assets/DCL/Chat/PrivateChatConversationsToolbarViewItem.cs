@@ -1,5 +1,4 @@
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using UnityEngine;
 

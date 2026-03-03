@@ -6,18 +6,18 @@ namespace MVC
     {
         public enum SortingLayer
         {
-            Fullscreen,
-            Popup,
-            Persistent, //TODO: persistend needs blur handling on fullscreen and Overlay
-            Overlay
+            FULLSCREEN,
+            POPUP,
+            PERSISTENT, //TODO: persistent needs blur handling on fullscreen and Overlay
+            OVERLAY,
         }
 
         private static IReadOnlyDictionary<SortingLayer, int> sortingLayerOffsets => new Dictionary<SortingLayer, int>
         {
-            {SortingLayer.Persistent, 0},
-            {SortingLayer.Fullscreen, 200},
-            {SortingLayer.Popup, 400},
-            {SortingLayer.Overlay, 600},
+            {SortingLayer.PERSISTENT, 0},
+            {SortingLayer.FULLSCREEN, 200},
+            {SortingLayer.POPUP, 400},
+            {SortingLayer.OVERLAY, 600},
         };
 
         public readonly SortingLayer Layer;

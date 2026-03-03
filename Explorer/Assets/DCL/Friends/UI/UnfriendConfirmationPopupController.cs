@@ -20,7 +20,7 @@ namespace DCL.Friends.UI
         private CancellationTokenSource? unfriendCancellationToken;
         private CancellationTokenSource? fetchProfileCancellationToken;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public UnfriendConfirmationPopupController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,

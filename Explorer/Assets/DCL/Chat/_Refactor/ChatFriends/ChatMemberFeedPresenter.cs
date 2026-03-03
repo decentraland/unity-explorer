@@ -8,7 +8,6 @@ using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Chat.EventBus;
 using Utility;
 
 namespace DCL.Chat.ChatFriends
@@ -17,7 +16,7 @@ namespace DCL.Chat.ChatFriends
     {
         private readonly ChannelMemberFeedView view;
         private readonly IEventBus eventBus;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly GetChannelMembersCommand getChannelMembersCommand;
         private readonly ChatMemberListService memberListService;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -30,7 +29,7 @@ namespace DCL.Chat.ChatFriends
         public ChatMemberFeedPresenter(
             ChannelMemberFeedView view,
             IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             ChatMemberListService memberListService,
             ChatContextMenuService chatContextMenuService,
             GetChannelMembersCommand getChannelMembersCommand)
@@ -95,7 +94,7 @@ namespace DCL.Chat.ChatFriends
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            chatEventBus.OpenPrivateConversationUsingUserId(userId);
+            chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
         }
 
         private void OnChatResetEvent(ChatEvents.ChatResetEvent evt)
