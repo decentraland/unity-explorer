@@ -24,6 +24,8 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HandPointAtSystem : BaseUnityLoopSystem
     {
+        private const float DRAG_THRESHOLD_SQR = 25f;
+
         private readonly DCLInput dclInput;
 
         private SingleInstanceEntity camera;
@@ -42,6 +44,40 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
             ApplyPointAtIKQuery(World, t);
+        }
+
+        private (bool isPressed, Vector2 pointerPos) HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
+        {
+            bool isPressed = dclInput.Player.PointAt.IsPressed();
+            Vector2 pointerPos = dclInput.UI.Point.ReadValue<Vector2>();
+
+            if (isPressed && !handPointAtComponent.WasPressed)
+            {
+                handPointAtComponent.PressOrigin = pointerPos;
+                handPointAtComponent.IsDragging = false;
+            }
+
+            switch (isPressed)
+            {
+                case true when !handPointAtComponent.IsDragging:
+                {
+                    if ((pointerPos - handPointAtComponent.PressOrigin).sqrMagnitude > DRAG_THRESHOLD_SQR)
+                        handPointAtComponent.IsDragging = true;
+
+                    break;
+                }
+                case false when handPointAtComponent.WasPressed:
+                {
+                    if (handPointAtComponent.IsDragging)
+                        handPointAtComponent.RefreshDuration(0f);
+
+                    break;
+                }
+            }
+
+            handPointAtComponent.WasPressed = isPressed;
+
+            return (isPressed, pointerPos);
         }
 
         [Query]
@@ -69,12 +105,14 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!canPointAt)
                 handPointAtComponent.RefreshDuration(0f);
 
-            if (!canPointAt || !dclInput.Player.PointAt.IsPressed())
+            var cursorInfo = HandleCursorLogic(ref handPointAtComponent);
+
+            if (!canPointAt || !cursorInfo.isPressed)
                 return;
 
             handPointAtComponent.RefreshDuration(settings.PointAtDuration);
 
-            Ray ray = cameraComponent.Camera.ScreenPointToRay(dclInput.UI.Point.ReadValue<Vector2>());
+            Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
             Vector3 hitPoint = Vector3.zero;
 
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, PhysicsLayers.CHARACTER_ONLY_MASK))

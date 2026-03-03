@@ -8,6 +8,10 @@ namespace DCL.Character.CharacterMotion.Components
         public Vector3 Point;
         public float AnimationWeight;
 
+        public bool WasPressed;
+        public bool IsDragging;
+        public Vector2 PressOrigin;
+
         private float duration;
 
         public void RefreshDuration(float newDuration)
