@@ -47,7 +47,7 @@
 ### 5. **Safe Component Mutation**
 
 * Use `ref var` to modify components, **never ****`var`**** alone**.
-* Apply structural changes **after all ****`ref`**** mutations**.
+* **NEVER perform structural changes (Add/Remove that trigger archetype moves) after obtaining a `ref`, `in`, or `out` reference to a component.** Structural changes relocate entity data in memory, invalidating all outstanding `ref`, `in`, and `out` pointers. Components may also hold references to managed objects whose state depends on the current memory layout. Always complete all `ref`/`in`/`out` reads/writes first, then apply structural changes.
 * Prefer passing `Entity` by value, not `in Entity`, if modifying.
 * Clarify `ref` vs `in` intent; use `ref readonly` for immutable refs.
 
