@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private int rightPointAtLayerIndex;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -118,6 +120,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             RandomID = Random.Range(0, 1000);
 
+            rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -137,6 +140,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             if (LegacyAnimation != null) return LegacyAnimation;
             LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
             return LegacyAnimation;
+        }
+
+        public void SetPointAtLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
         }
 
         public void SetAnimatorFloat(int hash, float value)

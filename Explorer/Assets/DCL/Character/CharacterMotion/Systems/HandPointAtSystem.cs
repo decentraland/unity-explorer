@@ -110,6 +110,12 @@ namespace DCL.Character.CharacterMotion.Systems
             ref AvatarBase avatarBase,
             in ICharacterControllerSettings settings)
         {
+            float targetAnimWeight = pointAt.IsPointing ? 1f : 0f;
+            pointAt.AnimationWeight = Mathf.MoveTowards(
+                pointAt.AnimationWeight, targetAnimWeight, settings.HandsIKWeightSpeed * dt);
+
+            avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
+
             if (!pointAt.IsPointing) return;
 
             // Drive the existing right hand constraint directly
@@ -121,7 +127,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 target.position, pointAt.Point, settings.IKPositionSpeed * dt);
 
             Vector3 pointDirection = (pointAt.Point - avatarBase.RightShoulderAnchorPoint.position).normalized;
-            target.forward = pointDirection;
+            target.up = pointDirection;
         }
     }
 }
