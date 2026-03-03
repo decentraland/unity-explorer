@@ -103,8 +103,23 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const output = `${{ steps.claude.outputs.output }}`;
-            const failed = output.includes('REVIEW_RESULT: FAIL ❌');
+            // Find Claude's comment on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              per_page: 100
+            });
+      
+            // Find the most recent comment from claude[bot]
+            const claudeComment = comments.data
+              .reverse()
+              .find(c => c.user?.login === 'claude[bot]');
+      
+            const output = claudeComment?.body ?? '';
+            console.log('Claude comment preview:', output.slice(0, 200));
+      
+            const failed = output.includes('REVIEW_RESULT: FAIL');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
             const state = (failed || errored) ? 'failure' : 'success';
             const description = errored
@@ -116,7 +131,7 @@ jobs:
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              sha: '${{ steps.pr.outputs.sha }}',  // ✅ from the first step
+              sha: '${{ steps.pr.outputs.sha }}',
               state,
               context: 'Claude Review',
               description
