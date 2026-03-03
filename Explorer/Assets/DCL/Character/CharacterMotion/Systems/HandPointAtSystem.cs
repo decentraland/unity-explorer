@@ -58,19 +58,19 @@ namespace DCL.Character.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent,
             in ICharacterControllerSettings settings)
         {
-            bool isMoving = rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f;
             bool canPointAt = rigidTransform.IsGrounded
-                              && !isMoving
+                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                               && !stunComponent.IsStunned
                               && !emoteComponent.IsPlayingEmote
                               && !platformComponent.PositionChanged;
 
             handPointAtComponent.TickDuration(dt);
 
-            if (isMoving)
+            if (!canPointAt)
                 handPointAtComponent.RefreshDuration(0f);
 
-            if (!canPointAt || !dclInput.Player.PointAt.IsPressed()) return;
+            if (!canPointAt || !dclInput.Player.PointAt.IsPressed())
+                return;
 
             // TODO: settings
             handPointAtComponent.RefreshDuration(10f);
