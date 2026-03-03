@@ -403,10 +403,12 @@ jobs:
 
       - name: Compress the build folder to upload it to S3
         run: |
+          set -euo pipefail
+
           mkdir upload_to_s3/ && \
           if [ "${{ matrix.target }}" == "macos" ]; then
             zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
-          elif [ "${{ matrix.target }}" == "windows64" || "${{ matrix.target }}" == "web" ]; then
+          elif [[ "${{ matrix.target }}" == "windows64" || "${{ matrix.target }}" == "web" ]]; then
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
           fi
