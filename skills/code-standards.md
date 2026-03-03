@@ -102,7 +102,7 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 - **String interpolation:** Use `$""` not `+` concatenation
 - **Expression-bodied properties:** Same line. Expression-bodied methods: new line.
 - **Unity callbacks:** Always use braces (even single-line)
-- Follow `.editorconfig` and enable "Format On Save"
+- Follow [`.editorconfig`](../Explorer/.editorconfig) and enable "Format On Save"
 
 ## Memory & GC Rules
 
