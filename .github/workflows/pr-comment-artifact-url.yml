@@ -186,7 +186,7 @@ jobs:
       - name: Find latest release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: gh release view --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
+        run: gh release view -R $GITHUB_REPOSITORY --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
 
       - name: Trigger performance test
         uses: peter-evans/repository-dispatch@v4
