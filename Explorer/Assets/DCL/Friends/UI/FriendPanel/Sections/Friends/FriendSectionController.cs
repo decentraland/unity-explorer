@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
@@ -20,6 +21,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IChatEventBus chatEventBus;
@@ -34,6 +36,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             IVoiceChatOrchestrator voiceChatOrchestrator) : base(view, requestManager)
@@ -41,6 +44,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -74,7 +78,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         private void JumpInClicked(Profile.CompactInfo profile) =>
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource);
 
         protected override void ElementClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
