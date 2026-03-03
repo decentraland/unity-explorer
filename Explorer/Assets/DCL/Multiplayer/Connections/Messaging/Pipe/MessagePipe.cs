@@ -157,7 +157,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             payload,
                             packet,
                             participant.Identity,
-                            sendingMultiPool,
+                            receivingMultiPool,
                             roomId,
                             topic
                         );
