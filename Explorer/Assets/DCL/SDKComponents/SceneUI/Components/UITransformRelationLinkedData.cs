@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CRDT;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
@@ -53,6 +53,8 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// </summary>
         internal bool layoutIsDirty;
 
+        internal int NodeCount => nodes?.Count ?? 0;
+
         internal bool ContainsNode(CRDTEntity entity) =>
             nodes != null && nodes.ContainsKey(entity);
 
@@ -106,26 +108,54 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private void ResolvePending(CRDTEntity newlyAddedEntityId, Node leftNode)
         {
-            if (pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+            if (!pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+                return;
+
+            if (rightNode == leftNode)
             {
-                if (leftNode.Next != null)
-                    leftNode.Next.Previous = rightNode;
-
-                leftNode.Next = rightNode;
-                rightNode.Previous = leftNode;
-
-                Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
-
-                if (rightNode == head)
-                {
-                    // if the current head is the right node then the left-most becomes the new head
-                    for (head = rightNode; head.Previous != null; head = head.Previous)
-                    {
-                    }
-                }
-
                 pendingRightOf.Remove(newlyAddedEntityId);
+                return;
             }
+
+            // rightNode may already be linked (e.g. it became head via head ??= newNode),
+            // so unlink it from its current position first to prevent cycles.
+            if (rightNode == head)
+            {
+                head = rightNode.Next;
+
+                if (head != null)
+                    head.Previous = null;
+            }
+            else
+            {
+                if (rightNode.Previous != null)
+                    rightNode.Previous.Next = rightNode.Next;
+
+                if (rightNode.Next != null)
+                    rightNode.Next.Previous = rightNode.Previous;
+            }
+
+            rightNode.Next = null;
+            rightNode.Previous = null;
+
+            // Splice rightNode after leftNode
+            rightNode.Next = leftNode.Next;
+
+            if (leftNode.Next != null)
+                leftNode.Next.Previous = rightNode;
+
+            leftNode.Next = rightNode;
+            rightNode.Previous = leftNode;
+
+            Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
+            // If head was cleared (rightNode was the sole head), re-establish it
+            if (head == null)
+            {
+                for (head = leftNode; head.Previous != null; head = head.Previous) { }
+            }
+
+            pendingRightOf.Remove(newlyAddedEntityId);
         }
 
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
@@ -169,15 +199,14 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void Dispose()
         {
-            // Release all nodes
-            while (head != null)
+            if (nodes != null)
             {
-                Node next = head.Next!;
-                Node.POOL.Release(head);
-                head = next;
+                foreach (Node node in nodes.Values)
+                    Node.POOL.Release(node);
+
+                nodes.Clear();
             }
 
-            nodes?.Clear();
             pendingRightOf?.Clear();
             head = null;
         }
