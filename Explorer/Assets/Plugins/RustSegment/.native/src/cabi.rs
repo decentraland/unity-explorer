@@ -18,6 +18,11 @@ pub unsafe extern "C" fn segment_server_initialize(
     callback_fn: FfiCallbackFn,
     error_fn: Option<FfiErrorCallbackFn>,
 ) -> bool {
+    std::panic::set_hook(Box::new(|info| {
+        eprintln!("PANIC: {info}");
+        eprintln!("{:?}", std::backtrace::Backtrace::force_capture());
+    }));
+
     std::panic::catch_unwind(|| {
         // SAFETY: caller must guarantee valid pointers
         let queue_file_path = as_str(queue_file_path).to_string();

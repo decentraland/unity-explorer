@@ -136,11 +136,17 @@ namespace Global.Dynamic
 
             try
             {
+                serverAbout.Clear();
+
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
+
+                float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
+                    ? result.configurations.skybox.fixedHour
+                    : null;
 
                 realmData.Reconfigure(
                     new IpfsRealm(realm, result),
@@ -150,7 +156,8 @@ namespace Global.Dynamic
                     result.comms?.protocol ?? "v3",
                     hostname,
                     isLocalSceneDevelopment,
-                    worldManifest
+                    worldManifest,
+                    skyboxFixedHour
                 );
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
