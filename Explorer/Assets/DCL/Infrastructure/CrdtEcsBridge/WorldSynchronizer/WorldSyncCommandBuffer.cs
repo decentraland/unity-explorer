@@ -123,8 +123,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         return CRDTReconciliationEffect.NoChanges;
                     }
 
-                    if (message.ComponentId == 1081)
-                        UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
+                    //TODO FRAN: Disabled for now
+                    //if (message.ComponentId == 1081)
+                        //UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
 
                     // Store the first and the last result
                     bool componentBatchExists;
@@ -236,7 +237,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     if (isNewEntity)
                     {
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
-                        UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
+                        //UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
                     }
 
                     foreach (BatchState batchState in componentsBatch.Values)

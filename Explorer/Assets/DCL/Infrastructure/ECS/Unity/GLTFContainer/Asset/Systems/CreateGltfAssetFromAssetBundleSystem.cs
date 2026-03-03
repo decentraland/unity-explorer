@@ -62,12 +62,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             // Create a new container root. It will be cached and pooled
             if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
             {
-                WebGLDebugLog.Log($"[AB-Loading] CreateGltfAssetFromAssetBundleSystem: TryCreateGltfObject OK for name={assetIntention.Name}, hash={assetIntention.Hash}, renderers={result.Renderers.Count}");
+                //TODO FRAN: DISABLED FOR NOW
+                //WebGLDebugLog.Log($"[AB-Loading] CreateGltfAssetFromAssetBundleSystem: TryCreateGltfObject OK for name={assetIntention.Name}, hash={assetIntention.Hash}, renderers={result.Renderers.Count}");
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
             }
             else
             {
-                WebGLDebugLog.LogWarning($"[AB-Loading] CreateGltfAssetFromAssetBundleSystem: TryCreateGltfObject FAILED for name={assetIntention.Name}, hash={assetIntention.Hash} (TryGetAsset name mismatch or Instantiate error)");
+                //TODO FRAN: DISABLED FOR NOW
+                //WebGLDebugLog.LogWarning($"[AB-Loading] CreateGltfAssetFromAssetBundleSystem: TryCreateGltfObject FAILED for name={assetIntention.Name}, hash={assetIntention.Hash} (TryGetAsset name mismatch or Instantiate error)");
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to load {assetIntention.Hash} from AB")));
             }
         }

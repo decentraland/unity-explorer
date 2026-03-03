@@ -11,8 +11,12 @@ namespace DCL.AssetsProvision
 {
     public class AddressablesProvisioner : IAssetsProvisioner
     {
-        private static void LogAssetRequest(string op, string assetKey, string typeName) =>
-            WebGLDebugLog.Log(op, assetKey, typeName);
+        private static void LogAssetRequest(string op, string assetKey, string typeName)
+        {
+            //TODO FRAN: DISABLED FOR NOW
+            //WebGLDebugLog.Log(op, assetKey, typeName);
+        }
+
 
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
         {
