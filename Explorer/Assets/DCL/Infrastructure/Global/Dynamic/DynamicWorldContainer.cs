@@ -691,6 +691,7 @@ namespace Global.Dynamic
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var pulseMessagePipe = new MessagePipe();
+            var ENetTransport = new ENetTransport(new ENetTransportOptions(), pulseMessagePipe);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -1019,7 +1020,7 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
-                new PulsePlugin(new ENetTransport(new ENetTransportOptions(), pulseMessagePipe), new PulseMultiplayerService(pulseMessagePipe)),
+                new PulsePlugin(new PulseMultiplayerService(ENetTransport, pulseMessagePipe, identityCache)),
             };
 
             if (donationsService.DonationFeatureEnabled)

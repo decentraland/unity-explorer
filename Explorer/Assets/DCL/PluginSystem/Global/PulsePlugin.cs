@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
-using Decentraland.Pulse;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,14 +10,11 @@ namespace DCL.PluginSystem.Global
 {
     public class PulsePlugin : IDCLGlobalPlugin<PulsePlugin.PulseSettings>
     {
-        private readonly ITransport transport;
         private readonly PulseMultiplayerService service;
         private readonly CancellationTokenSource lifeCycleCts = new ();
 
-        public PulsePlugin(ITransport transport,
-            PulseMultiplayerService service)
+        public PulsePlugin(PulseMultiplayerService service)
         {
-            this.transport = transport;
             this.service = service;
         }
 
@@ -31,21 +27,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(PulseSettings settings, CancellationToken ct)
         {
-            var uriBuilder = new UriBuilder
-            {
-                Port = settings.Port,
-                Host = settings.Address,
-            };
-
-            await transport.ConnectAsync(uriBuilder.Uri, ct);
-            transport.ListenForIncomingDataAsync(lifeCycleCts.Token).Forget();
-            service.RouteIncomingMessagesAsync(lifeCycleCts.Token).Forget();
-            HandleHandshakeAsync(lifeCycleCts.Token).Forget();
-        }
-
-        private async UniTaskVoid HandleHandshakeAsync(CancellationToken ct)
-        {
-            await foreach (HandshakeResponse handshakeResponse in service.SubscribeAsync<HandshakeResponse>(ServerMessage.MessageOneofCase.Handshake, lifeCycleCts.Token)) { }
+            await service.ConnectAsync(settings.Address, settings.Port, CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCts.Token, ct).Token);
         }
 
         public class PulseSettings : IDCLPluginSettings

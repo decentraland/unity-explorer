@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using System;
+using Google.Protobuf;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -9,11 +9,13 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// </summary>
     public interface ITransport
     {
-        UniTask ConnectAsync(Uri uri, CancellationToken ct);
+        UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
         UniTask DisconnectAsync(CancellationToken ct);
 
         UniTask ListenForIncomingDataAsync(CancellationToken ct);
+
+        void Send(IMessage message, PacketMode mode);
 
         public enum PacketMode
         {

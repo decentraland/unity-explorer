@@ -15,8 +15,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly SimplePipeChannel<IncomingMessage> incomingChannel = new ();
         private readonly SimplePipeChannel<OutgoingMessage> outgoingChannel = new ();
 
-        public MessagePipe() { }
-
         public IUniTaskAsyncEnumerable<IncomingMessage> ReadIncomingMessagesAsync(CancellationToken ct) =>
             incomingChannel.ReadAllAsync(ct);
 
@@ -60,7 +58,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        // TODO Introduce ServerMessage type
         public readonly struct OutgoingMessage
         {
             public ClientMessage Message { get; }

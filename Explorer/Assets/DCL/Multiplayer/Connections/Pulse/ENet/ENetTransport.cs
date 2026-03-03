@@ -10,9 +10,11 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
     {
         private readonly ENetTransportOptions options;
         private readonly MessagePipe messagePipe;
+        private readonly byte[] receiveBuffer;
+        private readonly byte[] sendBuffer;
 
         private Peer? serverPeer;
-        private Host client;
+        private Host? client;
 
         public ENetTransport(
             ENetTransportOptions options,
@@ -21,32 +23,30 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         {
             this.options = options;
             this.messagePipe = messagePipe;
+            receiveBuffer = new byte[options.BufferSize];
+            sendBuffer = new byte[options.BufferSize];
         }
 
-        public UniTask ConnectAsync(Uri uri, CancellationToken ct)
+        public UniTask ConnectAsync(string ip, int port, CancellationToken ct)
         {
             if (!Library.Initialize())
                 throw new InvalidOperationException("ENet library failed to initialize.");
 
-            ReportHub.Verbose(ReportCategory.MULTIPLAYER, $"ENet initialized (version {Library.version}).");
-
             client = new Host();
             Address address = new Address();
-            address.SetHost(uri.Host);
-            address.Port = (ushort) uri.Port;
-            client.Create();
+            address.SetHost(ip);
+            address.Port = (ushort) port;
 
-            Peer peer = client.Connect(address, channelLimit: ENetChannel.COUNT);
-
-            ReportHub.Verbose(ReportCategory.MULTIPLAYER, $"ENet connected (url {uri}).");
+            client.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
+            serverPeer = client.Connect(address, channelLimit: ENetChannel.COUNT);
 
             return UniTask.CompletedTask;
         }
 
         public UniTask DisconnectAsync(CancellationToken ct)
         {
-            serverPeer = default(Peer);
-            client.Dispose();
+            serverPeer = null;
+            client?.Dispose();
             Library.Deinitialize();
             ReportHub.Verbose(ReportCategory.MULTIPLAYER, "ENet disconnected.");
             return UniTask.CompletedTask;
@@ -54,11 +54,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
         public UniTask ListenForIncomingDataAsync(CancellationToken ct)
         {
-            ReportHub.Verbose(ReportCategory.MULTIPLAYER,
-                $"ENet listening on {options.Port}).");
-
             // ENet must be driven on a single dedicated thread
-            return UniTask.RunOnThreadPool(() =>
+            return UniTask.RunOnThreadPool(async () =>
             {
                 while (!ct.IsCancellationRequested)
                 {
@@ -66,6 +63,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                     while (!polled)
                     {
+                        if (client == null) continue;
+
                         if (client.CheckEvents(out Event netEvent) <= 0)
                         {
                             if (client.Service(options.ServiceTimeoutMs, out netEvent) <= 0)
@@ -78,12 +77,22 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                     }
 
                     SendOutgoingMessages();
+
+                    await UniTask.Yield(ct);
                 }
 
                 // Ensure any final outgoing packets are sent, such as disconnected notifications or any last moment data
-                client.Flush();
-                client.Dispose();
+                client?.Flush();
+                client?.Dispose();
             }, configureAwait: false, cancellationToken: ct);
+        }
+
+        public void Send(IMessage message, ITransport.PacketMode mode)
+        {
+            ENetChannel channel = ToENetChannel(mode);
+
+            if (serverPeer != null)
+                SendToPeer(serverPeer.Value, channel, message);
         }
 
         private void ReceiveIncomingMessage(ref Event netEvent)
@@ -94,44 +103,27 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             {
                 case EventType.Connect:
                     serverPeer = netEvent.Peer;
-
-                    ReportHub.Verbose(ReportCategory.MULTIPLAYER,
-                        $"Peer connected: {netEvent.Peer.IP}:{netEvent.Peer.Port} (id={netEvent.Peer.ID}).");
-
                     break;
 
                 case EventType.Disconnect:
-                    serverPeer = default(Peer);
-
-                    ReportHub.Verbose(ReportCategory.MULTIPLAYER,
-                        $"Peer disconnected: id={netEvent.Peer.ID} data={netEvent.Data}.");
-
+                    serverPeer = null;
                     break;
 
                 case EventType.Timeout:
-                    serverPeer = default(Peer);
-
-                    ReportHub.Verbose(ReportCategory.MULTIPLAYER,
-                        $"Peer timed out: id={netEvent.Peer.ID}.");
-
+                    serverPeer = null;
                     break;
 
                 case EventType.Receive:
                 {
                     using Packet _ = netEvent.Packet;
+                    netEvent.Packet.CopyTo(receiveBuffer);
 
-                    unsafe
-                    {
-                        // Parse packet
-                        // ENet is not thread-safe, so this callback is always invoked on the main thread
+                    messagePipe.OnDataReceived(new MessagePacket<Packet>(
+                        netEvent.Packet,
+                        new ReadOnlySpan<byte>(receiveBuffer, 0, netEvent.Packet.Length),
+                        peerId));
 
-                        messagePipe.OnDataReceived(new MessagePacket<Packet>(
-                            netEvent.Packet,
-                            new ReadOnlySpan<byte>((void*)netEvent.Packet.NativeData, netEvent.Packet.Length),
-                            peerId));
-
-                        break;
-                    }
+                    break;
                 }
             }
         }
@@ -143,28 +135,30 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         {
             while (messagePipe.TryReadOutgoingMessage(out MessagePipe.OutgoingMessage msg))
             {
-                ENetChannel channel = msg.PacketMode switch
-                                      {
-                                          ITransport.PacketMode.RELIABLE => ENetChannel.RELIABLE,
-                                          ITransport.PacketMode.UNRELIABLE_SEQUENCED => ENetChannel.UNRELIABLE_SEQUENCED,
-                                          _ => ENetChannel.UNRELIABLE_UNSEQUENCED,
-                                      };
+                ENetChannel channel = ToENetChannel(msg.PacketMode);
 
                 if (serverPeer != null)
                     SendToPeer(serverPeer.Value, channel, msg.Message);
             }
         }
 
-        private static void SendToPeer(Peer peer, ENetChannel channel, IMessage message)
+        private void SendToPeer(Peer peer, ENetChannel channel, IMessage message)
         {
-            // all messages are presumably very compact so allocate on stack
-            Span<byte> data = stackalloc byte[message.CalculateSize()];
-
-            message.WriteTo(data);
-
+            int size = message.CalculateSize();
+            message.WriteTo(new Span<byte>(sendBuffer, 0, size));
             var packet = default(Packet);
-            packet.Create(data, channel.PacketMode);
+            packet.Create(sendBuffer, 0, size, channel.PacketMode);
             peer.Send(channel.ChannelId, ref packet);
+        }
+
+        private static ENetChannel ToENetChannel(ITransport.PacketMode mode)
+        {
+            return mode switch
+                   {
+                       ITransport.PacketMode.RELIABLE => ENetChannel.RELIABLE,
+                       ITransport.PacketMode.UNRELIABLE_SEQUENCED => ENetChannel.UNRELIABLE_SEQUENCED,
+                       _ => ENetChannel.UNRELIABLE_UNSEQUENCED,
+                   };
         }
     }
 }
