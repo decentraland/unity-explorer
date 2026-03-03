@@ -322,6 +322,18 @@ namespace DCL.CharacterMotion.Settings
             set => impl.PointAtMaxDistance = value;
         }
 
+        public float PointAtDuration
+        {
+            get => impl.PointAtDuration;
+            set => impl.PointAtDuration = value;
+        }
+
+        public float PointAtArmReach
+        {
+            get => impl.PointAtArmReach;
+            set => impl.PointAtArmReach = value;
+        }
+
         public float HeadIKWeightChangeSpeed
         {
             get => impl.HeadIKWeightChangeSpeed;

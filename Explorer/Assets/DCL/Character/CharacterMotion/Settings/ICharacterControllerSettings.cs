@@ -82,5 +82,7 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
         float PointAtMaxDistance { get; set; }
+        float PointAtDuration { get; set; }
+        float PointAtArmReach { get; set; }
     }
 }

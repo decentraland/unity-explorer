@@ -72,8 +72,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!canPointAt || !dclInput.Player.PointAt.IsPressed())
                 return;
 
-            // TODO: settings
-            handPointAtComponent.RefreshDuration(10f);
+            handPointAtComponent.RefreshDuration(settings.PointAtDuration);
 
             Ray ray = cameraComponent.Camera.ScreenPointToRay(dclInput.UI.Point.ReadValue<Vector2>());
             Vector3 hitPoint = Vector3.zero;
@@ -96,10 +95,7 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
             Vector3 directionToTarget = (hitPoint - shoulderPos).normalized;
 
-            // TODO: settings
-            float armReach = 1.55f; // tune to your avatar
-
-            Vector3 ikTargetPos = shoulderPos + (directionToTarget * armReach);
+            Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
             handPointAtComponent.Point = ikTargetPos;
 
             handPointAtComponent.IsPointing = true;

@@ -53,7 +53,6 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        [field: SerializeField] public float PointAtMaxDistance { get; set; } = 100f;
 
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
@@ -92,6 +91,12 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKRotationSpeed { get; set; } = 45;
         [field: SerializeField] public float HeadIKWeightChangeSpeed { get; set; } = 2;
         [field: SerializeField] public float HeadIKRemotePlayersDistance { get; set; } = 10;
+
+        [field: Header("Point at IK")]
+        [field: SerializeField] public float PointAtMaxDistance { get; set; } = 100f;
+        [field: SerializeField] public float PointAtDuration { get; set; } = 10f;
+        [field: SerializeField] public float PointAtArmReach { get; set; } = 1.55f;
+
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
     }
