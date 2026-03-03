@@ -79,9 +79,6 @@ namespace DCL.PrivateWorlds
 
         private async UniTask<WorldAccessResult> HandlePasswordRequiredAsync(string worldName, string? ownerAddress, CancellationToken ct)
         {
-            // Start fresh before prompting for password so this flow always uses a newly entered value.
-            realmData.WorldCommsSecret = string.Empty;
-
             var popupParams = new PrivateWorldPopupParams(worldName, PrivateWorldPopupMode.PasswordRequired, ownerAddress);
 
             await mvcManager.ShowAsync(PrivateWorldPopupController.IssueCommand(popupParams), ct);
