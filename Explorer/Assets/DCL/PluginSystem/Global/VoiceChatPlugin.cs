@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private ProximityVoiceChatTest? proximityTest;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -135,6 +136,10 @@ namespace DCL.PluginSystem.Global
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
+
+            // TEMPORARY TEST: verify if Island Room allows audio track publishing
+            proximityTest = new ProximityVoiceChatTest(roomHub.IslandRoom(), voiceChatConfiguration);
+            pluginScope.Add(proximityTest);
         }
 
         [Serializable]
