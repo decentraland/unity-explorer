@@ -83,6 +83,13 @@ For the branch PR to be approved and functional you will also need to:
 
 After that is done, the GitHub Bot comment in the PR will expose a test package so that you install that in your test scene and be able to use the new component from the SDK in the scene (see [How to connect to a local scene](how-to-connect-to-a-local-scene.md) on setting up a local scene and running it).
 
+> **_NOTE:_** If development was done and merged to `experimental` follow these steps to port it to `main`:
+> 1. Cherry pick the squash-merged commit without committing by running `cherry-pick --no-commit <HASH>`
+> 2. Discard the conflicted test snapshots and `playground-assets.api.md` (the non-conflicted files will already be staged) with `git checkout .`
+> 3. Update the protocol package with the main-based PR in protocol for your changes with `npm install ....` (PR-generated command)
+> 4. Rebuild everything with `make install` then `make build` and then `make update-snapshots`
+> 5. Add the new filechanges and commit to your main-based branch
+
 ### Last-Write-Wins Component (LWW) and GrowOnly-Value-Set Component (GOVS)
 
 In general, any component will be defined by default to be a LWW, so that every update to it through CRDT will overwrite the whole state of it for whoever reads it later. If not specified or needed, always go for a LWW Component approach.
