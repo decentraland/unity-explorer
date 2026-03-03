@@ -566,7 +566,9 @@ jobs:
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
 
+      # web doesn't have debug symbols
       - name: Upload debug symbols
+        if: matrix.target != 'web'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifact_name }}_debug_symbols
