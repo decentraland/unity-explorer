@@ -31,24 +31,23 @@ namespace DCL.Input.Systems
 
         private bool currentUIVisibilityState = true;
 
-        private IEnumerable<InputAction> actionsThatEnableUI
-        {
-            get
-            {
-                yield return dclInput.Shortcuts.Communities;
-                yield return dclInput.Shortcuts.Map;
-                yield return dclInput.Shortcuts.Backpack;
-                yield return dclInput.Shortcuts.CameraReel;
-                yield return dclInput.Shortcuts.Settings;
-                yield return dclInput.Shortcuts.Controls;
-                yield return dclInput.Shortcuts.MainMenu;
-                yield return dclInput.UI.Submit;
-            }
-        }
+        private readonly IReadOnlyList<InputAction> actionsThatEnableUI;
 
-    private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
+        private UpdateShowHideUIInputSystem(World world, IMVCManager mvcManager, WarningNotificationView warningNotificationView) : base(world)
         {
             dclInput = DCLInput.Instance;
+            actionsThatEnableUI = new List<InputAction>
+            {
+                dclInput.Shortcuts.Communities,
+                dclInput.Shortcuts.Map,
+                dclInput.Shortcuts.Backpack,
+                dclInput.Shortcuts.CameraReel,
+                dclInput.Shortcuts.Settings,
+                dclInput.Shortcuts.Controls,
+                dclInput.Shortcuts.MainMenu,
+                dclInput.UI.Submit,
+            };
+
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
         }
