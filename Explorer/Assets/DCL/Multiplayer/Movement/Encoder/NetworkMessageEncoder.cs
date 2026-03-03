@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement
             if (isSliding) temporalData |= 1 << encodingSettings.SLIDING_BIT;
             if (isStunned) temporalData |= 1 << encodingSettings.STUNNED_BIT;
             if (animState.IsGrounded) temporalData |= 1 << encodingSettings.GROUNDED_BIT;
-            if (animState.IsJumping) temporalData |= 1 << encodingSettings.JUMPING_BIT;
+            temporalData |= (animState.JumpCount & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.JUMP_COUNT_BIT;
             if (animState.IsLongJump) temporalData |= 1 << encodingSettings.LONG_JUMP_BIT;
             if (animState.IsFalling) temporalData |= 1 << encodingSettings.FALLING_BIT;
             if (animState.IsLongFall) temporalData |= 1 << encodingSettings.LONG_FALL_BIT;
@@ -140,7 +140,7 @@ namespace DCL.Multiplayer.Movement
                     SlideBlendValue = 0f,
 
                     IsGrounded = (compressedTemporalData & (1 << encodingSettings.GROUNDED_BIT)) != 0,
-                    IsJumping = (compressedTemporalData & (1 << encodingSettings.JUMPING_BIT)) != 0,
+                    JumpCount = (compressedTemporalData >> encodingSettings.JUMP_COUNT_BIT) & MessageEncodingSettings.TWO_BITS_MASK,
                     IsLongJump = (compressedTemporalData & (1 << encodingSettings.LONG_JUMP_BIT)) != 0,
                     IsFalling = (compressedTemporalData & (1 << encodingSettings.FALLING_BIT)) != 0,
                     IsLongFall = (compressedTemporalData & (1 << encodingSettings.LONG_FALL_BIT)) != 0,

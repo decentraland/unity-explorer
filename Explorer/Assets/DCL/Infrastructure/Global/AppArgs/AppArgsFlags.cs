@@ -80,6 +80,10 @@ namespace Global.AppArgs
         public const string CHECK_DISK_SPACE = "check-disk-space";
         public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
 
+        public const string DOUBLE_JUMP = "double-jump";
+
+        public const string GLIDING = "gliding";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
