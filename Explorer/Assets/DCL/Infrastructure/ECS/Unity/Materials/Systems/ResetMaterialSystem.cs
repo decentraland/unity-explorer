@@ -39,9 +39,9 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(PBMaterial))]
         private void ResetPrimitiveMesh(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
-            World.Remove<MaterialComponent>(entity);
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<MaterialComponent>(entity);
         }
 
         [Query]
