@@ -1,6 +1,5 @@
 using DCL.SDKComponents.AvatarLocomotion.Components;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
-using UnityEditor;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Settings
