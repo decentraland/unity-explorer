@@ -39,6 +39,7 @@ namespace DCL.SDKComponents.Tween.Components
                 seq.Join(
                     transform.DOLocalMove(positionEnd, durationInSeconds)
                         .From(positionStart, false)
+                        .SetEase(Ease.Linear)
                         .SetAutoKill(false)
                         .Pause()
                 );
@@ -46,6 +47,7 @@ namespace DCL.SDKComponents.Tween.Components
                 seq.Join(
                     transform.DOLocalRotateQuaternion(rotationEnd, durationInSeconds)
                         .From(rotationStart, false)
+                        .SetEase(Ease.Linear)
                         .SetAutoKill(false)
                         .Pause()
                 );
@@ -53,13 +55,12 @@ namespace DCL.SDKComponents.Tween.Components
                 seq.Join(
                     transform.DOScale(scaleEnd, durationInSeconds)
                         .From(scaleStart, false)
+                        .SetEase(Ease.Linear)
                         .SetAutoKill(false)
                         .Pause()
                 );
             }
-
             seq.SetAutoKill(false);
-            seq.OnComplete(onCompleteCallback);
             seq.Pause();
 
             activeTween = seq;
@@ -103,8 +104,7 @@ namespace DCL.SDKComponents.Tween.Components
             })
             .SetEase(Ease.Linear)
             .SetLoops(-1, LoopType.Incremental)
-            .SetAutoKill(false)
-            .OnComplete(onCompleteCallback);
+            .SetAutoKill(false);
 
             activeTween.Pause();
         }
