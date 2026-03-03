@@ -8,6 +8,18 @@ namespace DCL.Interaction.HoverCanvas.UI
     [UxmlElement]
     public partial class HoverCanvas : VisualElement
     {
+        // Layout index mapping:
+        //
+        // Tooltips are placed in fixed positions.
+        // These arrays define which tooltip indices should be visible depending on
+        // how many tooltips we need to show (1–7).
+        //
+        // The integers represent indices inside the `tooltips` list.
+        //
+        // There are two variants for the 1-tooltip case:
+        // - PROXIMITY centers the tooltip
+        // - CURSOR offsets it slightly to avoid covering the pointer
+
         private static readonly int[] LAYOUT_1_PROXIMITY = { 5 };
         private static readonly int[] LAYOUT_1_CURSOR = { 6 };
         private static readonly int[] LAYOUT_2 = { 4, 6 };
@@ -17,6 +29,9 @@ namespace DCL.Interaction.HoverCanvas.UI
         private static readonly int[] LAYOUT_6 = { 1, 4, 6, 3, 6, 9 };
         private static readonly int[] LAYOUT_7 = { 0, 1, 4, 7, 3, 6, 9 };
 
+        /// <summary>
+        /// Layout set for cursor-type tooltips
+        /// </summary>
         private static readonly int[][] CURSOR_LAYOUTS =
         {
             LAYOUT_1_CURSOR,
@@ -28,6 +43,9 @@ namespace DCL.Interaction.HoverCanvas.UI
             LAYOUT_7,
         };
 
+        /// <summary>
+        /// Layout set for proximity-type tooltips
+        /// </summary>
         private static readonly int[][] PROXIMITY_LAYOUTS =
         {
             LAYOUT_1_PROXIMITY,
@@ -39,6 +57,9 @@ namespace DCL.Interaction.HoverCanvas.UI
             LAYOUT_7,
         };
 
+        /// <summary>
+        /// All fixed-position tooltips from the canvas
+        /// </summary>
         private List<HoverCanvasTooltipElement> tooltips;
 
         private bool initialized;
@@ -79,13 +100,17 @@ namespace DCL.Interaction.HoverCanvas.UI
             lastLayoutCount = count;
             lastLayoutIsProximity = isProximity;
 
+            // Select the layout set
             int[][] layouts = isProximity ? PROXIMITY_LAYOUTS : CURSOR_LAYOUTS;
+
+            // Select the specific layout based on tooltip count
             selectedLayoutIndices = layouts[count - 1];
 
             ResetAllTooltips();
 
             for (int i = 0; i < selectedLayoutIndices.Length; i++)
             {
+                // Get the tooltip element index from the selected layout
                 int tooltipIndex = selectedLayoutIndices[i];
                 var tooltipElement = tooltips[tooltipIndex];
                 tooltipElement.style.opacity = 1;
