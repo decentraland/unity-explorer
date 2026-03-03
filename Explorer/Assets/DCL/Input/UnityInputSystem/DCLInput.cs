@@ -2350,6 +2350,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CameraReel"",
+                    ""type"": ""Button"",
+                    ""id"": ""e85e2a3b-f3d0-4437-93ad-4d14f00a8972"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2559,6 +2568,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Events"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d846ba0c-659b-4c85-90c2-3b950846dc8d"",
+                    ""path"": ""<Keyboard>/k"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CameraReel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3326,15 +3346,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""CameraReel"",
-                    ""type"": ""Button"",
-                    ""id"": ""31bfeb99-05fb-4d03-8b5b-625b9a978aca"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""ShowHide"",
                     ""type"": ""Button"",
                     ""id"": ""cf1e68d1-cb76-496e-bcf9-7ebe352d5f9d"",
@@ -3660,17 +3671,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""e5a2c668-2319-4423-b37b-7f32451dba2c"",
-                    ""path"": ""<Keyboard>/k"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""CameraReel"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""fe90b567-e21b-4a3a-ab23-2b25eb4b3441"",
                     ""path"": ""<Keyboard>/u"",
                     ""interactions"": """",
@@ -3985,6 +3985,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_Communities = m_Shortcuts.FindAction("Communities", throwIfNotFound: true);
         m_Shortcuts_Places = m_Shortcuts.FindAction("Places", throwIfNotFound: true);
         m_Shortcuts_Events = m_Shortcuts.FindAction("Events", throwIfNotFound: true);
+        m_Shortcuts_CameraReel = m_Shortcuts.FindAction("CameraReel", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4022,7 +4023,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
         m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
         m_InWorldCamera_ToggleInWorldCamera = m_InWorldCamera.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
-        m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
         m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
@@ -5047,6 +5047,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_Communities;
     private readonly InputAction m_Shortcuts_Places;
     private readonly InputAction m_Shortcuts_Events;
+    private readonly InputAction m_Shortcuts_CameraReel;
     /// <summary>
     /// Provides access to input actions defined in input action map "Shortcuts".
     /// </summary>
@@ -5127,6 +5128,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Events => m_Wrapper.m_Shortcuts_Events;
         /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/CameraReel".
+        /// </summary>
+        public InputAction @CameraReel => m_Wrapper.m_Shortcuts_CameraReel;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
@@ -5203,6 +5208,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Events.started += instance.OnEvents;
             @Events.performed += instance.OnEvents;
             @Events.canceled += instance.OnEvents;
+            @CameraReel.started += instance.OnCameraReel;
+            @CameraReel.performed += instance.OnCameraReel;
+            @CameraReel.canceled += instance.OnCameraReel;
         }
 
         /// <summary>
@@ -5265,6 +5273,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Events.started -= instance.OnEvents;
             @Events.performed -= instance.OnEvents;
             @Events.canceled -= instance.OnEvents;
+            @CameraReel.started -= instance.OnCameraReel;
+            @CameraReel.performed -= instance.OnCameraReel;
+            @CameraReel.canceled -= instance.OnCameraReel;
         }
 
         /// <summary>
@@ -5723,7 +5734,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_Run;
     private readonly InputAction m_InWorldCamera_Screenshot;
     private readonly InputAction m_InWorldCamera_ToggleInWorldCamera;
-    private readonly InputAction m_InWorldCamera_CameraReel;
     private readonly InputAction m_InWorldCamera_ShowHide;
     private readonly InputAction m_InWorldCamera_Close;
     private readonly InputAction m_InWorldCamera_ToggleNametags;
@@ -5775,10 +5785,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "InWorldCamera/ToggleInWorldCamera".
         /// </summary>
         public InputAction @ToggleInWorldCamera => m_Wrapper.m_InWorldCamera_ToggleInWorldCamera;
-        /// <summary>
-        /// Provides access to the underlying input action "InWorldCamera/CameraReel".
-        /// </summary>
-        public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
         /// <summary>
         /// Provides access to the underlying input action "InWorldCamera/ShowHide".
         /// </summary>
@@ -5848,9 +5854,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleInWorldCamera.started += instance.OnToggleInWorldCamera;
             @ToggleInWorldCamera.performed += instance.OnToggleInWorldCamera;
             @ToggleInWorldCamera.canceled += instance.OnToggleInWorldCamera;
-            @CameraReel.started += instance.OnCameraReel;
-            @CameraReel.performed += instance.OnCameraReel;
-            @CameraReel.canceled += instance.OnCameraReel;
             @ShowHide.started += instance.OnShowHide;
             @ShowHide.performed += instance.OnShowHide;
             @ShowHide.canceled += instance.OnShowHide;
@@ -5901,9 +5904,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleInWorldCamera.started -= instance.OnToggleInWorldCamera;
             @ToggleInWorldCamera.performed -= instance.OnToggleInWorldCamera;
             @ToggleInWorldCamera.canceled -= instance.OnToggleInWorldCamera;
-            @CameraReel.started -= instance.OnCameraReel;
-            @CameraReel.performed -= instance.OnCameraReel;
-            @CameraReel.canceled -= instance.OnCameraReel;
             @ShowHide.started -= instance.OnShowHide;
             @ShowHide.performed -= instance.OnShowHide;
             @ShowHide.canceled -= instance.OnShowHide;
@@ -6580,6 +6580,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEvents(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CameraReel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCameraReel(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Emotes" which allows adding and removing callbacks.
@@ -6821,13 +6828,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleInWorldCamera(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "CameraReel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnCameraReel(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "ShowHide" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
