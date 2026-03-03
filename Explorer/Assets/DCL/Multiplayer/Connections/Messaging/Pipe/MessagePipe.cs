@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     public class MessagePipe : IMessagePipe
     {
         private readonly IDataPipe dataPipe;
-        private readonly IMultiPool sendingMultiPool;
+        private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
         private readonly uint supportedVersion;
@@ -32,23 +32,23 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private bool isDisposed;
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool, RoomSource roomId) : this(
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, RoomSource roomId) : this(
             dataPipe,
-            sendingMultiPool,
+            multiPool,
             memoryPool,
             new MessageParser<Packet>(() =>
             {
-                var packet = receivingMultiPool.Get<Packet>();
+                var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
             }),
             100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
             RoomSource roomId)
         {
             this.dataPipe = dataPipe;
-            this.sendingMultiPool = sendingMultiPool;
+            this.multiPool = multiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
             this.supportedVersion = supportedVersion;
@@ -113,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         public MessageWrap<T> NewMessage<T>(string topic) where T: class, IMessage, new() =>
-            new (dataPipe, sendingMultiPool, memoryPool, topic, supportedVersion);
+            new (dataPipe, multiPool, memoryPool, topic, supportedVersion);
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
@@ -157,7 +157,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             payload,
                             packet,
                             participant.Identity,
-                            receivingMultiPool,
+                            multiPool,
                             roomId,
                             topic
                         );
