@@ -973,7 +973,7 @@ MonoBehaviour:
     - rid: 6384370943662227555
       type: {class: PulsePlugin/PulseSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <Address>k__BackingField: localhost
+        <Address>k__BackingField: 127.0.0.1
         <Port>k__BackingField: 7777
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
