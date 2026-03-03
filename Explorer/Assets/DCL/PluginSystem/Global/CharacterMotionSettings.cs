@@ -11,5 +11,7 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(CharacterMotionSettings))] [field: Space]
         [field: SerializeField]
         internal CharacterControllerSettings controllerSettings { get; private set; }
+
+        [field: SerializeField] internal AssetReferenceGameObject PointAtMarkerPrefab { get; private set; }
     }
 }

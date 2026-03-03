@@ -6,6 +6,7 @@ namespace DCL.Character.CharacterMotion.Components
     {
         public bool IsPointing;
         public Vector3 Point;
+        public Vector3 WorldHitPoint;
         public float AnimationWeight;
 
         public bool WasPressed;

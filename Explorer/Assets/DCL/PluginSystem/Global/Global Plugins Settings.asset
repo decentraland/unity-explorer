@@ -1080,6 +1080,12 @@ MonoBehaviour:
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <PointAtMarkerPrefab>k__BackingField:
+          m_AssetGUID: 6a252383173104e17acac54eb364afc4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

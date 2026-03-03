@@ -135,6 +135,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
             handPointAtComponent.Point = ikTargetPos;
+            handPointAtComponent.WorldHitPoint = hitPoint;
 
             handPointAtComponent.IsPointing = true;
         }

@@ -1,5 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Components;
@@ -16,6 +18,8 @@ using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global
@@ -28,8 +32,10 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILandscape landscape;
         private readonly IScenesCache scenesCache;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private CharacterControllerSettings settings;
+        private IObjectPool<PointAtMarkerHolder> pointAtMarkerPool;
 
         public CharacterMotionPlugin(
             ICharacterObject characterObject,
@@ -37,7 +43,8 @@ namespace DCL.PluginSystem.Global
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILandscape landscape,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -45,16 +52,33 @@ namespace DCL.PluginSystem.Global
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.landscape = landscape;
             this.scenesCache = scenesCache;
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void Dispose()
         {
         }
 
-        public UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
         {
             this.settings = settings.controllerSettings;
-            return UniTask.CompletedTask;
+
+            PointAtMarkerHolder prefab = (await assetsProvisioner.ProvideMainAssetAsync(
+                settings.PointAtMarkerPrefab, ct: ct)).Value.GetComponent<PointAtMarkerHolder>();
+
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            var poolParent = new GameObject("POOL_CONTAINER_PointAtMarkers").transform;
+            poolParent.parent = poolRoot;
+
+            pointAtMarkerPool = new ObjectPool<PointAtMarkerHolder>(
+                createFunc: () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, poolParent),
+                actionOnRelease: m =>
+                {
+                    m.ResetState();
+                    m.gameObject.SetActive(false);
+                },
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                actionOnGet: m => m.gameObject.SetActive(true));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -93,6 +117,8 @@ namespace DCL.PluginSystem.Global
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
             HandPointAtSystem.InjectToWorld(ref builder);
+            PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool);
+            PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
         }
     }
 }
