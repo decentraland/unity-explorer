@@ -231,7 +231,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
                 ReportHub.LogError(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
 
                 foreach (URN pointer in wearable.Pointers)
-                    ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+                {
+                    //TODO FRAN: DISABLED FOR NOW
+                    //ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+                }
 
                 cachedHeadWearableOffset = nametagBoundedOffset;
             }

@@ -270,8 +270,12 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
+
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    {
+                        //TODO FRAN: DISABLED FOR NOW
+                        //ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    }
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
