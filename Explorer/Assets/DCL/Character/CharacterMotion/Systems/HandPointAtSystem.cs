@@ -142,6 +142,7 @@ namespace DCL.Character.CharacterMotion.Systems
             [Data] float dt,
             ref HandPointAtComponent pointAt,
             ref AvatarBase avatarBase,
+            ref CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings)
         {
             float targetAnimWeight = pointAt.IsPointing ? 1f : 0f;
@@ -154,6 +155,21 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
             Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            Vector3 cross = Vector3.Cross( avatarBase.transform.forward, directionToTarget);
+            float dot = Vector3.Dot(avatarBase.transform.forward, directionToTarget);
+
+            if (Mathf.Abs(cross.y) > settings.PointAtRotationHorizontalThreshold || dot < 0)
+                // cross.y > 0 rotate right, else rotate left
+                rigidTransform.LookDirection = Vector3.ProjectOnPlane(directionToTarget, Vector3.up);
+
+            if (Mathf.Abs(cross.x) > settings.PointAtRotationVerticalThreshold)
+            {
+                if (cross.x > 0)
+                    Debug.Log("Guarda giù", avatarBase);
+                else
+                    Debug.Log("Guarda su", avatarBase);
+            }
 
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 

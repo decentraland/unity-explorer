@@ -95,7 +95,9 @@ namespace DCL.CharacterMotion.Settings
         [field: Header("Point at IK")]
         [field: SerializeField] public float PointAtMaxDistance { get; set; } = 100f;
         [field: SerializeField] public float PointAtDuration { get; set; } = 10f;
-        [field: SerializeField] public float PointAtArmReach { get; set; } = 1.55f;
+        [field: SerializeField, Range(0.5f, 2f)] public float PointAtArmReach { get; set; } = 1.55f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationHorizontalThreshold { get; set; } = 0.5f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalThreshold { get; set; } = 0.5f;
 
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
