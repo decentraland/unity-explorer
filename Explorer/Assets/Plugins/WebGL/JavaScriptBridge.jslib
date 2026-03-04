@@ -678,7 +678,11 @@ mergeInto(LibraryManager.library, {
                 console.warn('[JSContext] No host object callback registered');
                 return;
             }
-            
+            // Guard: context was disposed while a JS microtask was still pending
+            if (!window.__dclJSContexts || !window.__dclJSContexts[contextIdStr]) {
+                return;
+            }
+
             // Allocate strings on the heap for the callback
             const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
             const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
@@ -741,7 +745,11 @@ mergeInto(LibraryManager.library, {
                 console.warn('[JSContext] No host object callback with return registered');
                 return null;
             }
-            
+            // Guard: context was disposed while a JS microtask was still pending
+            if (!window.__dclJSContexts || !window.__dclJSContexts[contextIdStr]) {
+                return null;
+            }
+
             const connectionRelated = /connection|quality|status|room|state/i;
             if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
                 console.log('[JSBridge] HostObject call objectId=' + objectIdStr + ' methodName=' + methodName);

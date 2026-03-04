@@ -40,6 +40,7 @@ namespace ECS.SceneLifeCycle.WebGL
                 try
                 {
                     scene.Tick(dt).GetAwaiter().GetResult();
+                    scene.OpenEcsGate(); // ensure gate is open for scene-world ECS this frame
                     scene.SceneStateProvider.TickNumber++;
                 }
                 catch (JavaScriptExecutionException e)

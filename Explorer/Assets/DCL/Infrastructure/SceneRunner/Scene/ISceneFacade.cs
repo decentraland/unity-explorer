@@ -41,6 +41,13 @@ namespace SceneRunner.Scene
 
         public UniTask Tick(float dt);
 
+        /// <summary>
+        ///     Opens the ECS gate so throttled groups (including <c>ComponentInstantiationGroup</c>)
+        ///     run this frame. Required on WebGL where <c>crdtSendToRenderer</c> may fire
+        ///     asynchronously after <see cref="Tick"/> returns, opening the gate one frame too late.
+        /// </summary>
+        void OpenEcsGate();
+
         bool Contains(Vector2Int parcel);
 
         bool IsSceneReady();

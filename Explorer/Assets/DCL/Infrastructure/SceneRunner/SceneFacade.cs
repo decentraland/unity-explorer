@@ -78,6 +78,11 @@ namespace SceneRunner
             intervalMS = (int)(1000f / fps);
         }
 
+        public void OpenEcsGate()
+        {
+            deps.SyncDeps.systemGroupThrottler.Open();
+        }
+
         UniTask ISceneFacade.StartScene() =>
             runtimeInstance.StartScene();
 
