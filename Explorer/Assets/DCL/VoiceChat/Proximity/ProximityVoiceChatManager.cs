@@ -124,7 +124,7 @@ namespace DCL.VoiceChat
             Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
                 reachable.Value,
                 (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
-                false
+                configuration.microphonePlaybackToSpeakers
             );
 
             if (!result.Success)
