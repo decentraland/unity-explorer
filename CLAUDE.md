@@ -4,6 +4,8 @@
 
 At the start of every conversation, read [`skills/README.md`](skills/README.md) and [`docs/SKILL.md`](docs/SKILL.md) to load the project knowledge map. These are lightweight index files (~170 lines total) that enable navigation to any detailed skill or documentation file as needed during the task.
 
+Before writing or modifying any code, read and follow [`skills/code-standards.md`](skills/code-standards.md) for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
+
 ---
 
 ## Project Code Standards for Claude Reviews
@@ -105,19 +107,9 @@ At the start of every conversation, read [`skills/README.md`](skills/README.md) 
 
 ---
 
-### Code Style, Naming, Tests
-
-For full code standards with naming conventions, member ordering, formatting rules, and test patterns, see [`skills/code-standards.md`](skills/code-standards.md). The `.editorconfig` handles automated formatting in the IDE.
-
 ### Specific Notes
 
 * `ObjectProxy` was introduced to **resolve circular dependencies**. While effective, **consider this an anti-pattern**. Favor clearer dependency injection.
 * Interfaces or abstract classes with only one implementation and no test coverage **should be avoided or merged**.
 * Use `ReportHub` instead of `Debug.Log` for all logging.
 * Minimize GC pressure: reuse objects, use object pooling, avoid boxing/unboxing, use `StringBuilder` for string concatenation.
-
----
-
-### Documentation Reference
-
-For focused implementation procedures with code examples, see [`skills/README.md`](skills/README.md) which indexes all skill files. For full reference documentation, see [`docs/SKILL.md`](docs/SKILL.md) which indexes all project documentation.
