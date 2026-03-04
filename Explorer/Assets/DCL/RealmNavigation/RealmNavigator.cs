@@ -1,9 +1,12 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -24,6 +27,8 @@ namespace DCL.RealmNavigation
         private const int MAX_REALM_CHANGE_RETRIES = 3;
         private const string TELEPORT_NOT_ALLOWED_LOCAL_SCENE =
             "Teleport is not allowed in local scene development mode";
+        private const string PERMISSION_CHECK_FAILED_MESSAGE =
+            "Could not verify world permissions. You may experience access issues.";
 
         public event Action<Vector2Int>? NavigationExecuted;
 
@@ -41,6 +46,7 @@ namespace DCL.RealmNavigation
         private readonly ILoadingStatus loadingStatus;
         private readonly IAnalyticsController analyticsController;
         private readonly ILandscape landscape;
+        private readonly IWorldAccessGate worldAccessGate;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -53,7 +59,8 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             IAnalyticsController analyticsController,
             SequentialLoadingOperation<TeleportParams> realmChangeOperations,
-            SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation)
+            SequentialLoadingOperation<TeleportParams> teleportInSameRealmOperation,
+            IWorldAccessGate worldAccessGate)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -66,6 +73,7 @@ namespace DCL.RealmNavigation
             this.realmChangeOperations = realmChangeOperations;
             this.teleportInSameRealmOperation = teleportInSameRealmOperation;
             this.landscape = landscape;
+            this.worldAccessGate = worldAccessGate;
         }
 
         public bool IsAlreadyOnRealm(URLDomain realm)
@@ -93,8 +101,31 @@ namespace DCL.RealmNavigation
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
-            if (isWorld && !await realmController.IsUserAuthorisedToAccessWorldAsync(realm, ct))
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+            // We use worldName != null to determine if the target is a world, instead of
+            // RealmData.IsWorld(), because RealmData reflects the *current* realm — not the target.
+            // This also avoids parsing the URL to extract a world name from the realm domain.
+            if (isWorld)
+            {
+                if (TryExtractWorldName(realm, out string worldName))
+                {
+                    var result = await CheckWorldAccessAsync(worldName, ct);
+
+                    if (result == WorldAccessResult.CheckFailed)
+                    {
+                        ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
+                        NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
+                        return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+                    }
+
+                    if (result != WorldAccessResult.Allowed)
+                        return MapToChangeRealmError(result);
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[RealmNavigator] Could not extract world name from realm URL '{realm}', skipping local permission pre-check");
+                }
+            }
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport, allowsWorldPositionOverride);
             var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
@@ -113,6 +144,48 @@ namespace DCL.RealmNavigation
             NavigationExecuted?.Invoke(parcelToTeleport);
 
             return EnumResult<ChangeRealmError>.SuccessResult();
+        }
+
+        private async UniTask<WorldAccessResult> CheckWorldAccessAsync(string worldName, CancellationToken ct)
+        {
+            try
+            {
+                return await worldAccessGate.CheckAccessAsync(worldName, null, ct);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                return WorldAccessResult.CheckFailed;
+            }
+        }
+
+        private static EnumResult<ChangeRealmError> MapToChangeRealmError(WorldAccessResult result) =>
+            result switch
+            {
+                WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WhitelistAccessDenied),
+                WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordCancelled),
+                _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
+            };
+
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
+        {
+            worldName = string.Empty;
+
+            if (string.IsNullOrEmpty(realm.Value))
+                return false;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
         }
 
         private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(

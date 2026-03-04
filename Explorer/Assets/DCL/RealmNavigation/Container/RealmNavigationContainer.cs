@@ -5,10 +5,12 @@ using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PrivateWorlds;
 using DCL.PlacesAPIService;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using Global;
@@ -25,7 +27,7 @@ namespace DCL.RealmNavigation
         ///     Realm Navigator with core teleport functionality
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
-
+            
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
         public RealmNavigationDebugPlugin CreatePlugin() =>
@@ -42,37 +44,25 @@ namespace DCL.RealmNavigation
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IWorldAccessGate worldAccessGate)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
-            IAnalyticsController analytics = bootstrapContainer.Analytics.EnsureNotNull();
+            IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
 
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
-            {
-                new RestartLoadingStatus(),
-                new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
-                new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
-                new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
-                new ClearWorldsCacheTeleportOperation(placesAPIService),
-                new ChangeRealmTeleportOperation(realmContainer.RealmController),
-                new AnalyticsFlushTeleportOperation(analytics),
-                new LoadLandscapeTeleportOperation(landscape),
-                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
-                new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
-                new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
-            },
-            ReportCategory.SCENE_LOADING,
-            analytics,
-            ANALYTICS_OP_NAME);
+                {
+                    new RestartLoadingStatus(), new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld), new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT), new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy), new ClearWorldsCacheTeleportOperation(placesAPIService), new ChangeRealmTeleportOperation(realmContainer.RealmController), new AnalyticsFlushTeleportOperation(analytics), new LoadLandscapeTeleportOperation(landscape), new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool), new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget), new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData), new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
+                },
+                ReportCategory.SCENE_LOADING,
+                analytics,
+                ANALYTICS_OP_NAME);
 
             var teleportInSameRealmOperation = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus,
                 new ITeleportOperation[]
                 {
-                    new RestartLoadingStatus(),
-                    new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
-                    new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
+                    new RestartLoadingStatus(), new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget), new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
                 }, ReportCategory.SCENE_LOADING,
                 analytics,
                 ANALYTICS_OP_NAME);
@@ -82,9 +72,20 @@ namespace DCL.RealmNavigation
 
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(loadingScreen, realmContainer.RealmController, bootstrapContainer.DecentralandUrlsSource, globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, exposedGlobalDataContainer.CameraSamplingData, staticContainer.LoadingStatus, landscape, bootstrapContainer.Analytics!,
-                    realmChangeOperations, teleportInSameRealmOperation),
-                widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder,
+                RealmNavigator = new RealmNavigator(
+                    loadingScreen,
+                    realmContainer.RealmController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    globalWorld,
+                    exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                    exposedGlobalDataContainer.CameraSamplingData,
+                    staticContainer.LoadingStatus,
+                    landscape,
+                    analytics,
+                    realmChangeOperations,
+                    teleportInSameRealmOperation,
+                    worldAccessGate),
+                widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder
             };
         }
     }

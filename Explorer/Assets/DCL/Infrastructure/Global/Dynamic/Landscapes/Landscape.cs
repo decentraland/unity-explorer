@@ -55,7 +55,7 @@ namespace Global.Dynamic.Landscapes
                         processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
-                    await genesisTerrain.ShowAsync(landscapeLoadReport);
+                    await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
             }
             else
             {

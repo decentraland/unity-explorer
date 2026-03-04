@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
 using System;
@@ -23,6 +24,7 @@ namespace DCL.SkyBox
         private readonly Light directionalLight;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
+        private readonly IRealmData realmData;
 
         private SkyboxSettings settingsJson;
 
@@ -32,19 +34,21 @@ namespace DCL.SkyBox
         public SkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IScenesCache scenesCache,
-            ISceneRestrictionBusController sceneRestrictionController)
+            ISceneRestrictionBusController sceneRestrictionController,
+            IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
+            this.realmData = realmData;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, arguments.SkyboxEntity);
+            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
@@ -117,6 +121,7 @@ namespace DCL.SkyBox
             }
         }
 
+        [Serializable]
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
             [field: SerializeField]

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace DCL.PerformanceAndDiagnostics.AutoPilot
 {
@@ -52,6 +53,20 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
 
+                if (appArgs.TryGetValue(AppArgsFlags.PROFILER_LOG_FILE,
+                        out string logFile))
+                {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Profiler.logFile = logFile;
+                    Profiler.enableBinaryLog = true;
+                    Profiler.enabled = true;
+#else
+                    DCL.Diagnostics.ReportHub.LogWarning(
+                        DCL.Diagnostics.ReportCategory.ALWAYS,
+                        $"You set the --{AppArgsFlags.PROFILER_LOG_FILE} argument, but the profiler is only available in development builds.");
+#endif
+                }
+
                 await StandAtSpawnAsync();
 
                 if (summaryFile != null)
@@ -86,7 +101,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         {
             float startTime = Time.realtimeSinceStartup;
 
-            while (Time.realtimeSinceStartup - startTime < 60f)
+            while (Time.realtimeSinceStartup - startTime < 90f)
             {
                 await WriteSampleAsync();
                 await UniTask.Yield();

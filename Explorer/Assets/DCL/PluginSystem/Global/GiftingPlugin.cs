@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -26,7 +27,6 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -165,7 +165,6 @@ namespace DCL.PluginSystem.Global
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 emoteProvider,
-                web3IdentityCache,
                 loadThumbnailCommand,
                 wearableCatalog,
                 pendingTransferService,
@@ -210,6 +209,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
+        [Serializable]
         public class GiftingSettings : IDCLPluginSettings
         {
             [field: Header(nameof(GiftingPlugin) + "." + nameof(GiftingSettings))]

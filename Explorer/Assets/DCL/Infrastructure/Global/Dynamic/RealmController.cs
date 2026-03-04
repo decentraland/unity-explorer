@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -30,6 +30,7 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
+using DCL.PrivateWorlds;
 using Utility;
 
 namespace Global.Dynamic
@@ -55,6 +56,7 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
+        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
@@ -102,12 +104,14 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider)
+            WorldManifestProvider worldManifestProvider,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
+            this.worldPermissionsService = worldPermissionsService;
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
@@ -136,11 +140,17 @@ namespace Global.Dynamic
 
             try
             {
+                serverAbout.Clear();
+
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
+
+                float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
+                    ? result.configurations.skybox.fixedHour
+                    : null;
 
                 realmData.Reconfigure(
                     new IpfsRealm(realm, result),
@@ -150,7 +160,8 @@ namespace Global.Dynamic
                     result.comms?.protocol ?? "v3",
                     hostname,
                     isLocalSceneDevelopment,
-                    worldManifest
+                    worldManifest,
+                    skyboxFixedHour
                 );
 
                 UnityDiagnosticsCenter.Instance.SetRealmInfo(
@@ -190,27 +201,46 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
         {
-            const string SIGN_METADATA = "{\"intent\": \"dcl:explorer:comms-handshake\",\"signer\":\"dcl:explorer\",\"isGuest\":false}";
-            ServerAbout about = await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM).CreateFromJson<ServerAbout>(WRJsonParser.Unity);
+            if (!TryExtractWorldName(realm, out string worldName))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to extract world name from realm '{realm}'.");
+                return false;
+            }
 
-            string commsAdapterUrl = ExtractCommsAdapterUrl(about.comms?.adapter ?? string.Empty);
-
-            if (string.IsNullOrEmpty(commsAdapterUrl))
-                return true;
-
-            long statusCode;
-
+            WorldAccessCheckContext context;
             try
             {
-                statusCode = await webRequestController.SignedFetchPostAsync(
-                                                            commsAdapterUrl,
-                                                            SIGN_METADATA,
-                                                            ct)
-                                                       .StatusCodeAsync();
+                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
             }
-            catch (UnityWebRequestException e) { statusCode = e.ResponseCode; }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
+                return false;
+            }
 
-            return statusCode != 401;
+            return context.Result == WorldAccessCheckResult.Allowed;
+        }
+
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
+        {
+            worldName = string.Empty;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
         }
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
@@ -365,7 +395,10 @@ namespace Global.Dynamic
             string hostname;
 
             if (about.configurations.realmName.IsEns())
-                hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
+            {
+                var uri = new Uri(realm.Value);
+                hostname = $"{uri.Host}{uri.AbsolutePath}";
+            }
             else
                 hostname = about.comms == null
 
@@ -384,13 +417,6 @@ namespace Global.Dynamic
 
             //"offline property like in previous implementation"
             return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
-        }
-
-        private static string ExtractCommsAdapterUrl(string input)
-        {
-            const string MARKER = "https";
-            int index = input.IndexOf(MARKER, StringComparison.InvariantCulture);
-            return index >= 0 ? input.Substring(index) : string.Empty;
         }
     }
 }

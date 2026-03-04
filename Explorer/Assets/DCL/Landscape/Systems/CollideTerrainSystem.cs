@@ -313,7 +313,7 @@ namespace DCL.Landscape.Systems
         private void InstantiateTrees(int2 parcel, ParcelData parcelData)
         {
             ITerrain terrain = landscape.CurrentTerrain;
-            var instances = terrain.Trees!.GetTreeInstances(parcel);
+            var instances = terrain.Trees!.GetTreeInstancesAsSpan(parcel);
 
             foreach (var instance in instances)
             {
