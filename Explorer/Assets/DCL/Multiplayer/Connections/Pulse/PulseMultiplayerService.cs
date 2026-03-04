@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             authChainBuffer.Clear();
 
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"connect:/game-server-id:{timestamp}:{{}}");
+            using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"connect:/:{timestamp}:{{}}");
             var authChainIndex = 0;
 
             foreach (AuthLink link in authChain)
