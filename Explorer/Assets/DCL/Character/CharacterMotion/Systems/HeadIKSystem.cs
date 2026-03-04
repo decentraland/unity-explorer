@@ -183,7 +183,7 @@ namespace DCL.CharacterMotion.Systems
 
             // TODO: Tie this to a proper look-at system to decide what to look at
             headIK.LookAt = handPointAtComponent.IsPointing
-                ? handPointAtComponent.Point - avatarBase.HeadAnchorPoint.position
+                ? handPointAtComponent.WorldHitPoint - avatarBase.HeadAnchorPoint.position
                 : cameraComponent.Camera.transform.forward;
 
             ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);

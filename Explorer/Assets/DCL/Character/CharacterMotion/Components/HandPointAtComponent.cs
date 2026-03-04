@@ -5,7 +5,6 @@ namespace DCL.Character.CharacterMotion.Components
     public struct HandPointAtComponent
     {
         public bool IsPointing;
-        public Vector3 Point;
         public Vector3 WorldHitPoint;
         public float AnimationWeight;
 

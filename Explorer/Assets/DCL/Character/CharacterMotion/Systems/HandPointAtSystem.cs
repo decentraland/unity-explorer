@@ -87,7 +87,6 @@ namespace DCL.Character.CharacterMotion.Systems
             [Data] in CameraComponent cameraComponent,
             [Data] float dt,
             ref HandPointAtComponent handPointAtComponent,
-            in AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
             in CharacterEmoteComponent emoteComponent,
@@ -130,11 +129,7 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             Debug.DrawLine(ray.origin, hitPoint, Color.red);
-            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
-            Vector3 directionToTarget = (hitPoint - shoulderPos).normalized;
 
-            Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
-            handPointAtComponent.Point = ikTargetPos;
             handPointAtComponent.WorldHitPoint = hitPoint;
 
             handPointAtComponent.IsPointing = true;
@@ -157,15 +152,20 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (!pointAt.IsPointing) return;
 
+            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
+            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
+
             // Drive the existing right hand constraint directly
             avatarBase.RightHandIK.weight = Mathf.MoveTowards(
                 avatarBase.RightHandIK.weight, 1f, settings.HandsIKWeightSpeed * dt);
 
             Transform target = avatarBase.RightHandSubTarget;
             target.position = Vector3.MoveTowards(
-                target.position, pointAt.Point, settings.IKPositionSpeed * dt);
+                target.position, ikTargetPos, settings.IKPositionSpeed * dt);
 
-            Vector3 pointDirection = (pointAt.Point - avatarBase.RightShoulderAnchorPoint.position).normalized;
+            Vector3 pointDirection = (ikTargetPos - avatarBase.RightShoulderAnchorPoint.position).normalized;
             target.up = pointDirection;
         }
     }
