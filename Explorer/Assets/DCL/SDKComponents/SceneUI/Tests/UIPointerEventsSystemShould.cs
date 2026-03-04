@@ -1,15 +1,18 @@
-﻿using CRDT;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.SDKComponents.SceneUI.Tests
 {
@@ -76,6 +79,27 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 Arg.Any<int>(),
                 Arg.Any<(RaycastHit sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>());
             Assert.IsNull(uiTransformComponent.PointerEventTriggered);
+        }
+
+        [Test]
+        public void ResetPickingModeOnPointerEventsRemoval()
+        {
+            // Arrange - add pointer events
+            var pbPointerEvents = new PBPointerEvents { IsDirty = true };
+            pbPointerEvents.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetDown,
+                EventInfo = new PBPointerEvents.Types.Info(),
+            });
+            world.Add(entity, pbPointerEvents);
+            system.Update(0);
+
+            // Act - remove pointer events; PBUiTransform default PointerFilter is not PfmBlock
+            world.Remove<PBPointerEvents>(entity);
+            system.Update(0);
+
+            // Assert - picking mode should revert to Ignore (default PointerFilter is not PfmBlock)
+            Assert.AreEqual(PickingMode.Ignore, uiTransformComponent.Transform.pickingMode);
         }
     }
 }

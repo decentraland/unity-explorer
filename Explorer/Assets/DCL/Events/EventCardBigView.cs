@@ -3,13 +3,10 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
-using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Events
 {
@@ -36,19 +33,11 @@ namespace DCL.Events
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
-        private CancellationTokenSource? loadingCommunityThumbnailCts;
-
         protected override void Awake()
         {
             base.Awake();
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
-            loadingCommunityThumbnailCts.SafeCancelAndDispose();
         }
 
         public override void Configure(EventDTO eventInfo, ThumbnailLoader thumbnailLoader, PlacesData.PlaceInfo? placeInfo = null,
@@ -59,10 +48,7 @@ namespace DCL.Events
             eventCommunityThumbnail.gameObject.SetActive(communityInfo != null);
 
             if (communityInfo != null)
-            {
-                loadingCommunityThumbnailCts = loadingCommunityThumbnailCts.SafeRestart();
-                eventCommunityThumbnail.Configure(communityInfo, thumbnailLoader, loadingCommunityThumbnailCts.Token);
-            }
+                eventCommunityThumbnail.Configure(communityInfo, thumbnailLoader);
         }
 
         protected override void PlayHoverAnimation()

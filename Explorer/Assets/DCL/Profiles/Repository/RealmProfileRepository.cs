@@ -4,17 +4,13 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using ECS;
 using ECS.Prioritization.Components;
 using Newtonsoft.Json;
-using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading;
 using Unity.Collections;
-using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
@@ -26,15 +22,13 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
-        private readonly int batchMaxSize;
-
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesAnalytics profilesAnalytics;
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IProfileCache profileCache;
-        private readonly Dictionary<string, byte[]> files = new ();
+        private readonly ProfileBuilder profileBuilder = new ();
 
         /// <summary>
         ///     It's a simple list, not a dictionary because the number of different lambdas is very limited
@@ -43,7 +37,8 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
-        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
+        private UniTaskCompletionSource? currentProfileResolutionTask;
+        private Profile? currentProfile;
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
@@ -80,18 +75,42 @@ namespace DCL.Profiles
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");
 
-            // ADR-290: snapshots are no longer sent during profile deployment
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile);
+            currentProfile = profile;
 
-            // Clear files just in case, though we don't add any
-            files.Clear();
+            if (currentProfileResolutionTask != null)
+            {
+                var cancelTask = UniTask.WaitUntilCanceled(ct);
+                await UniTask.WhenAny(currentProfileResolutionTask.Task, cancelTask);
+                return;
+            }
+
+            currentProfileResolutionTask = new UniTaskCompletionSource();
 
             try
             {
-                await publishIpfsEntityCommand.ExecuteAsync(entity, ct, SERIALIZER_SETTINGS, files);
-                profileCache.Set(profile.UserId, profile);
+                Profile localCurrent;
+                do
+                {
+                    localCurrent = profileBuilder.From(currentProfile).Build();
+
+                    // ADR-290: snapshots are no longer sent during profile deployment
+                    IpfsProfileEntity entity = NewPublishProfileEntity(localCurrent);
+
+                    await publishIpfsEntityCommand.ExecuteAsync(entity, CancellationToken.None, SERIALIZER_SETTINGS);
+                }
+                while (!currentProfile.IsSameProfile(localCurrent));
+
+                profileCache.Set(localCurrent.UserId, currentProfile);
+                currentProfileResolutionTask.TrySetResult();
             }
-            finally { files.Clear(); }
+            catch (Exception e)
+            {
+                currentProfileResolutionTask.TrySetException(e);
+            }
+            finally
+            {
+                currentProfileResolutionTask = null;
+            }
         }
 
         // ADR-290: content array is empty - no snapshot files are sent

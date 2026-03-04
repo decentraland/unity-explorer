@@ -15,12 +15,14 @@ namespace DCL.InWorldCamera.Systems
         private const string SOURCE_SHORTCUT = "Shortcut";
 
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly DCLInput.ShortcutsActions shortcutsInputSchema;
 
         private SingleInstanceEntity camera;
 
-        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, DCLInput.ShortcutsActions shortcutsInputSchema) : base(world)
         {
             this.inputSchema = inputSchema;
+            this.shortcutsInputSchema = shortcutsInputSchema;
         }
 
         public override void Initialize()
@@ -32,7 +34,7 @@ namespace DCL.InWorldCamera.Systems
         {
             if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
 
-            if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
+            if (shortcutsInputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
 
             ref InWorldCameraInput input = ref World.TryGetRef<InWorldCameraInput>(camera, out bool exists);

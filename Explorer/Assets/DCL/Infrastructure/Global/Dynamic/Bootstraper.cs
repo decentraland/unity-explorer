@@ -2,6 +2,8 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -112,6 +114,7 @@ namespace Global.Dynamic
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
+                bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
                 realmData,
                 bootstrapContainer.AssetsProvisioner,
@@ -129,7 +132,6 @@ namespace Global.Dynamic
                 memoryCap,
                 bootstrapContainer.VolumeBus,
                 EnableAnalytics,
-                bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
                 bootstrapContainer.Environment,
@@ -285,6 +287,27 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
+            if (realmLaunchSettings.initialRealm is InitialRealm.World)
+            {
+                bool isAuthorized = await dynamicWorldContainer.RealmController
+                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
+
+                if (!isAuthorized)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+
+                    dynamicWorldContainer.ChatHistory.AddMessage(
+                        ChatChannel.NEARBY_CHANNEL_ID,
+                        ChatChannel.ChatChannelType.NEARBY,
+                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
+
+                    await dynamicWorldContainer.RealmController
+                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
+                    return;
+                }
+            }
+
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
@@ -311,7 +334,7 @@ namespace Global.Dynamic
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
                 if (EnableAnalytics)
-                    bootstrapContainer.Analytics!.Identify(identity);
+                    bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }

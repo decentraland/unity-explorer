@@ -1,16 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
-using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
 using ECS;
-using ECS.SceneLifeCycle.Realm;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -18,7 +15,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
-using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
@@ -100,7 +96,7 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
+        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport, CancellationToken ct)
         {
             if (!isInitialized) return;
 
@@ -112,9 +108,13 @@ namespace DCL.Landscape
 
             if (landscapeData.RenderTrees)
             {
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/5873
                 // We need to re-upload the transforms because the
                 // buffer might have been overwritten by WorldTerrainGenerator
-                Trees!.Instantiate();
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/7150
+                // The trees regeneration might be a very expensive operation with over than 100k iterations
+                // We need to throttle this process to avoid long main-thread stalls
+                await Trees!.InstantiateAsync(ct);
                 Trees!.Show();
             }
 
