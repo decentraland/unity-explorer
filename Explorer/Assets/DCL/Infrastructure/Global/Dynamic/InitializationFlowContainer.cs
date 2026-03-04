@@ -2,6 +2,7 @@
 using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Profiles.Self;
@@ -37,13 +38,15 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             bool localSceneDevelopment,
-            CharacterContainer characterContainer)
+            CharacterContainer characterContainer,
+            PulseMultiplayerService pulseMultiplayerService)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
@@ -52,6 +55,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 blocklistCheckStartupOperation,
                 loadPlayerAvatarStartupOperation,
+                startPulseMultiplayerStartupOperation,
                 loadLandscapeStartupOperation,
                 teleportStartupOperation
             };

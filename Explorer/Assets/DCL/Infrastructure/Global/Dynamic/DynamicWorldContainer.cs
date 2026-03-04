@@ -464,6 +464,10 @@ namespace Global.Dynamic
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
+            var pulseMessagePipe = new MessagePipe();
+            var ENetTransport = new ENetTransport(new ENetTransportOptions(), pulseMessagePipe);
+            var pulseMultiplayerService = new PulseMultiplayerService(ENetTransport, pulseMessagePipe, identityCache);
+
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
@@ -479,7 +483,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                pulseMultiplayerService);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -689,9 +694,6 @@ namespace Global.Dynamic
             var thumbnailProvider = new ECSThumbnailProvider(bootstrapContainer.DecentralandUrlsSource, globalWorld);
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
-
-            var pulseMessagePipe = new MessagePipe();
-            var ENetTransport = new ENetTransport(new ENetTransportOptions(), pulseMessagePipe);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -1020,7 +1022,6 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
-                new PulsePlugin(new PulseMultiplayerService(ENetTransport, pulseMessagePipe, identityCache)),
             };
 
             if (donationsService.DonationFeatureEnabled)

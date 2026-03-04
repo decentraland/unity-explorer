@@ -38,7 +38,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             try { message = ServerMessage.Parser.ParseFrom(packet.Data); }
             catch (Exception e) { ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse failed to parse packet: {e}"); }
-            finally { packet.Dispose(); }
 
             if (message is null)
                 return;

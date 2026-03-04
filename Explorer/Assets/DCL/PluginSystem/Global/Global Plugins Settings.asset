@@ -65,7 +65,6 @@ MonoBehaviour:
   - rid: 1709771649487732831
   - rid: 1709771761983946845
   - rid: 7426570530121056350
-  - rid: 6384370943662227555
   references:
     version: 2
     RefIds:
@@ -970,11 +969,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 6384370943662227555
-      type: {class: PulsePlugin/PulseSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <Address>k__BackingField: 127.0.0.1
-        <Port>k__BackingField: 7777
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

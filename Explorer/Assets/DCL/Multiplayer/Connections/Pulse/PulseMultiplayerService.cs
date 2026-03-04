@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -7,6 +8,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
@@ -17,6 +19,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<ServerMessage.MessageOneofCase, ISubscriber> subscribers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
+        private CancellationTokenSource? connectionCts;
 
         public PulseMultiplayerService(
             ITransport transport,
@@ -28,11 +31,17 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.identityCache = identityCache;
         }
 
-        public async UniTask ConnectAsync(string address, int port, CancellationToken ct)
+        public async UniTask ConnectAsync(CancellationToken ct)
         {
-            await transport.ConnectAsync(address, port, ct);
-            transport.ListenForIncomingDataAsync(ct).Forget();
-            RouteIncomingMessagesAsync(ct).Forget();
+            if (transport.State is ITransport.TransportState.CONNECTED or ITransport.TransportState.CONNECTING)
+                return;
+
+            // TODO: get the address from IDecentralandUrlsSource (?)
+            await transport.ConnectAsync("127.0.0.1", 7777, ct);
+
+            connectionCts = connectionCts.SafeRestartLinked(ct);
+            transport.ListenForIncomingDataAsync(connectionCts.Token).SuppressToResultAsync().Forget();
+            RouteIncomingMessagesAsync(connectionCts.Token).Forget();
 
             pipe.Send(new MessagePipe.OutgoingMessage(new ClientMessage
             {
@@ -45,7 +54,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             await foreach (HandshakeResponse response in SubscribeAsync<HandshakeResponse>(ServerMessage.MessageOneofCase.Handshake, ct))
             {
                 if (!response.Success)
+                {
+                    connectionCts.SafeCancelAndDispose();
+                    await transport.DisconnectAsync(ct);
                     throw new PulseException(response.HasError ? response.Error : "Handshake failed");
+                }
+
                 // Wait for handshake once
                 break;
             }
@@ -63,10 +77,17 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTaskVoid RouteIncomingMessagesAsync(CancellationToken ct)
         {
-            await foreach (MessagePipe.IncomingMessage message in pipe.ReadIncomingMessagesAsync(ct))
+            try
             {
-                if (!subscribers.TryGetValue(message.Message.MessageCase, out ISubscriber? subscriber)) continue;
-                subscriber.TryNotify(message.Message);
+                await foreach (MessagePipe.IncomingMessage message in pipe.ReadIncomingMessagesAsync(ct))
+                {
+                    if (!subscribers.TryGetValue(message.Message.MessageCase, out ISubscriber? subscriber)) continue;
+                    subscriber.TryNotify(message.Message);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                int a = 0;
             }
         }
 

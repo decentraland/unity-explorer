@@ -19,12 +19,43 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         public ENetTransport(
             ENetTransportOptions options,
             MessagePipe messagePipe
-            )
+        )
         {
             this.options = options;
             this.messagePipe = messagePipe;
             receiveBuffer = new byte[options.BufferSize];
             sendBuffer = new byte[options.BufferSize];
+        }
+
+        public ITransport.TransportState State
+        {
+            get
+            {
+                if (serverPeer == null) return ITransport.TransportState.NONE;
+
+                switch (serverPeer.Value.State)
+                {
+                    case PeerState.AcknowledgingConnect:
+                    case PeerState.Connecting:
+                    case PeerState.ConnectionPending:
+                        return ITransport.TransportState.CONNECTING;
+
+                    case PeerState.ConnectionSucceeded:
+                    case PeerState.Connected:
+                        return ITransport.TransportState.CONNECTED;
+
+                    case PeerState.Disconnected:
+                        return ITransport.TransportState.DISCONNECTED;
+
+                    case PeerState.AcknowledgingDisconnect:
+                    case PeerState.DisconnectLater:
+                    case PeerState.Disconnecting:
+                        return ITransport.TransportState.DISCONNECTING;
+
+                    default:
+                        return ITransport.TransportState.NONE;
+                }
+            }
         }
 
         public UniTask ConnectAsync(string ip, int port, CancellationToken ct)
@@ -35,7 +66,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             client = new Host();
             Address address = new Address();
             address.SetHost(ip);
-            address.Port = (ushort) port;
+            address.Port = (ushort)port;
 
             client.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
             serverPeer = client.Connect(address, channelLimit: ENetChannel.COUNT);
@@ -47,6 +78,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         {
             serverPeer = null;
             client?.Dispose();
+            client = null;
             Library.Deinitialize();
             ReportHub.Verbose(ReportCategory.MULTIPLAYER, "ENet disconnected.");
             return UniTask.CompletedTask;
@@ -63,8 +95,6 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                     while (!polled)
                     {
-                        if (client == null) continue;
-
                         if (client.CheckEvents(out Event netEvent) <= 0)
                         {
                             if (client.Service(options.ServiceTimeoutMs, out netEvent) <= 0)
@@ -78,12 +108,14 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                     SendOutgoingMessages();
 
+                    // TODO: yield might be a problem but we need something otherwise we crash
                     await UniTask.Yield(ct);
                 }
 
                 // Ensure any final outgoing packets are sent, such as disconnected notifications or any last moment data
                 client?.Flush();
                 client?.Dispose();
+                client = null;
             }, configureAwait: false, cancellationToken: ct);
         }
 

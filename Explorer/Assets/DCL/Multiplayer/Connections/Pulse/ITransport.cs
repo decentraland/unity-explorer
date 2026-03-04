@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// </summary>
     public interface ITransport
     {
+        TransportState State { get; }
+
         UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
         UniTask DisconnectAsync(CancellationToken ct);
@@ -22,6 +24,15 @@ namespace DCL.Multiplayer.Connections.Pulse
             RELIABLE = 0,
             UNRELIABLE_SEQUENCED = 1,
             UNRELIABLE_UNSEQUENCED = 2,
+        }
+
+        public enum TransportState
+        {
+            NONE,
+            CONNECTING,
+            CONNECTED,
+            DISCONNECTING,
+            DISCONNECTED,
         }
     }
 }
