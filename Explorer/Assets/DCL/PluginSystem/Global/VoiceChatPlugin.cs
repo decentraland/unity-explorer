@@ -137,7 +137,7 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration);
+            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration, entityParticipantTable, world);
             pluginScope.Add(proximityVoiceChatManager);
         }
 

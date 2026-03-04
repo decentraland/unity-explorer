@@ -1,6 +1,9 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
@@ -14,35 +17,53 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Manages proximity voice chat by publishing and subscribing to audio tracks
-    /// in the Island Room. Auto-activates when Island Room connects.
+    /// Manages proximity voice chat with 3D spatial audio by publishing and subscribing
+    /// to audio tracks in the Island Room. Remote audio sources are parented under
+    /// participant avatars so positions update automatically with movement.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
     {
         private const string TAG = nameof(ProximityVoiceChatManager);
 
+        private const float SPATIAL_BLEND_3D = 1f;
+        private const float DOPPLER_LEVEL = 0f;
+        private const float MIN_DISTANCE = 2f;
+        private const float MAX_DISTANCE = 50f;
+
         private readonly IRoom islandRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly PlaybackSourcesHub playbackSourcesHub;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly World world;
+        private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
+        private readonly Transform fallbackParent;
 
         private MicrophoneRtcAudioSource? rtcAudioSource;
         private ITrack? localTrack;
+        private LivekitAudioSource? loopbackSource;
         private bool published;
         private bool disposed;
 
-        public ProximityVoiceChatManager(IRoom islandRoom, VoiceChatConfiguration configuration)
+        public ProximityVoiceChatManager(
+            IRoom islandRoom,
+            VoiceChatConfiguration configuration,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            World world)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
+            this.entityParticipantTable = entityParticipantTable;
+            this.world = world;
 
-            playbackSourcesHub = new PlaybackSourcesHub(configuration.ChatAudioMixerGroup.EnsureNotNull());
+            fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -68,15 +89,19 @@ namespace DCL.VoiceChat
             islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
+
+            if (fallbackParent != null)
+                fallbackParent.gameObject.SelfDestroy();
+
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
-            SwitchActivationAsync(update).Forget();
+            OnConnectionUpdatedInternalAsync(update).Forget();
             return;
 
-            async UniTaskVoid SwitchActivationAsync(ConnectionUpdate connectionUpdate)
+            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate)
             {
                 await UniTask.SwitchToMainThread();
 
@@ -104,9 +129,8 @@ namespace DCL.VoiceChat
             {
                 PublishLocalTrack(ct);
                 SubscribeToExistingRemoteTracks();
-                playbackSourcesHub.Play();
 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening with 3D spatial audio");
             }
             catch (Exception ex)
             {
@@ -167,10 +191,7 @@ namespace DCL.VoiceChat
                 Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
 
                 if (stream.Resource.Has)
-                {
-                    playbackSourcesHub.AddOrReplaceStream(key, stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {entry.Key}");
-                }
+                    AddRemoteSource(key, stream);
             }
         }
 
@@ -191,10 +212,7 @@ namespace DCL.VoiceChat
                     Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
 
                     if (stream.Resource.Has)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(key, stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track subscribed from {participant.Identity}");
-                    }
+                        AddRemoteSource(key, stream);
                 }
                 catch (Exception ex)
                 {
@@ -216,8 +234,7 @@ namespace DCL.VoiceChat
 
                 try
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
+                    RemoveRemoteSource(new StreamKey(participant.Identity, publication.Sid));
                 }
                 catch (Exception ex)
                 {
@@ -245,7 +262,9 @@ namespace DCL.VoiceChat
 
                     if (stream.Resource.Has)
                     {
-                        playbackSourcesHub.AddOrReplaceStream(key, stream);
+                        loopbackSource = CreateSource(key, stream, spatial: false);
+                        loopbackSource.transform.SetParent(fallbackParent);
+                        loopbackSource.Play();
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track loopback enabled (round-trip via server)");
                     }
                 }
@@ -270,7 +289,8 @@ namespace DCL.VoiceChat
 
                 try
                 {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
+                    DestroySource(loopbackSource);
+                    loopbackSource = null;
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track loopback removed");
                 }
                 catch (Exception ex)
@@ -280,12 +300,97 @@ namespace DCL.VoiceChat
             }
         }
 
+        private void AddRemoteSource(StreamKey key, Weak<AudioStream> stream)
+        {
+            if (remoteSources.TryRemove(key, out LivekitAudioSource? oldSource))
+                DestroySource(oldSource);
+
+            LivekitAudioSource source = CreateSource(key, stream, spatial: true);
+            ParentUnderAvatar(source, key.identity);
+            source.Play();
+
+            if (!remoteSources.TryAdd(key, source))
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot add proximity source, key already exists: {key}");
+                DestroySource(source);
+                return;
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}");
+        }
+
+        private void RemoveRemoteSource(StreamKey key)
+        {
+            if (!remoteSources.TryRemove(key, out LivekitAudioSource? source))
+                return;
+
+            RemoveRemoteSourceAsync(source).Forget();
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote source removed for {key.identity}");
+            return;
+
+            static async UniTaskVoid RemoveRemoteSourceAsync(LivekitAudioSource livekitAudioSource)
+            {
+                await UniTask.SwitchToMainThread();
+                DestroySource(livekitAudioSource);
+            }
+        }
+
+        private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
+        {
+            LivekitAudioSource source = LivekitAudioSource.New(true);
+            source.Construct(stream);
+
+            AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
+            audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
+
+            if (spatial)
+            {
+                audioSource.spatialBlend = SPATIAL_BLEND_3D;
+                audioSource.dopplerLevel = DOPPLER_LEVEL;
+                audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                audioSource.minDistance = MIN_DISTANCE;
+                audioSource.maxDistance = MAX_DISTANCE;
+                audioSource.spread = 0f;
+            }
+
+            source.name = $"ProximityAudio_{key.identity}";
+            return source;
+        }
+
+        private void ParentUnderAvatar(LivekitAudioSource source, string participantIdentity)
+        {
+            if (entityParticipantTable.TryGet(participantIdentity, out IReadOnlyEntityParticipantTable.Entry entry)
+                && world.TryGet(entry.Entity, out AvatarBase? avatarBase)
+                && avatarBase != null)
+            {
+                source.transform.SetParent(avatarBase.transform);
+                source.transform.localPosition = Vector3.zero;
+            }
+            else
+            {
+                source.transform.SetParent(fallbackParent);
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Avatar not found for {participantIdentity}, using fallback parent");
+            }
+        }
+
+        private static void DestroySource(LivekitAudioSource? source)
+        {
+            if (source == null) return;
+
+            source.Stop();
+            source.Free();
+            source.gameObject.SelfDestroy();
+        }
+
         private void Deactivate()
         {
             UnpublishLocalTrack();
 
-            playbackSourcesHub.Stop();
-            playbackSourcesHub.Reset();
+            DestroySource(loopbackSource);
+            loopbackSource = null;
+
+            foreach (StreamKey key in remoteSources.Keys)
+                RemoveRemoteSource(key);
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Deactivated");
         }
