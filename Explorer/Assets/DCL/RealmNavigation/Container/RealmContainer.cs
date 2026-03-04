@@ -15,6 +15,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PrivateWorlds;
 using DCL.Prefs;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -27,7 +28,6 @@ namespace DCL.RealmNavigation
     {
         public TeleportController TeleportController { get; private set; }
         public IGlobalRealmController RealmController { get; private set; }
-
         public RealmNavigatorDebugView DebugView { get; private set; }
 
         public static RealmContainer Create(
@@ -41,7 +41,8 @@ namespace DCL.RealmNavigation
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
             TeleportController teleportController,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            IWorldPermissionsService worldPermissionsService)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
@@ -65,7 +66,8 @@ namespace DCL.RealmNavigation
                 appArgs,
                 urlsSource,
                 dclEnvironment,
-                staticContainer.WorldManifestProvider
+                staticContainer.WorldManifestProvider,
+                worldPermissionsService
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
