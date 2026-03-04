@@ -71,17 +71,6 @@ namespace DCL.SDKComponents.Tween
                 moveRotateScale.ScaleEnd?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one));
         }
 
-        /// <summary>
-        /// Resolves undefined direction fields for continuous MoveRotateScale. Undefined = no change (zero / identity).
-        /// </summary>
-        public static void ResolveMoveRotateScaleContinuous(MoveRotateScaleContinuous moveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolved)
-        {
-            resolved = new ResolvedMoveRotateScaleContinuous(
-                moveRotateScaleContinuous.PositionDirection?.ToUnityVector() ?? Vector3.zero,
-                moveRotateScaleContinuous.RotationDirection?.ToUnityQuaternion() ?? Quaternion.identity,
-                moveRotateScaleContinuous.ScaleDirection?.ToUnityVector() ?? Vector3.zero);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TweenStateStatus GetTweenerState(ITweener tweener)
         {
@@ -269,7 +258,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            if (sdkTweenComponent.TweenMode is PBTween.ModeOneofCase.MoveRotateScale or PBTween.ModeOneofCase.MoveRotateScaleContinuous)
+            if (sdkTweenComponent.TweenMode is PBTween.ModeOneofCase.MoveRotateScale)
                 SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isInCurrentScene);
             else
                 UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
@@ -298,8 +287,7 @@ namespace DCL.SDKComponents.Tween
         private static bool IsTweenContinuous(in PBTween pbTween) =>
             pbTween.ModeCase == PBTween.ModeOneofCase.RotateContinuous ||
             pbTween.ModeCase == PBTween.ModeOneofCase.MoveContinuous ||
-            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous ||
-            pbTween.ModeCase == PBTween.ModeOneofCase.MoveRotateScaleContinuous;
+            pbTween.ModeCase == PBTween.ModeOneofCase.TextureMoveContinuous;
 
         private static bool TweenSurpassedDuration(in PBTween pbTween, in SDKTweenComponent sdkTweenComponent) =>
             pbTween.Duration > 0
@@ -331,20 +319,4 @@ namespace DCL.SDKComponents.Tween
         }
     }
 
-    /// <summary>
-    /// Resolved MoveRotateScaleContinuous directions; undefined = zero/identity (no change).
-    /// </summary>
-    public readonly struct ResolvedMoveRotateScaleContinuous
-    {
-        public readonly Vector3 PositionDirection;
-        public readonly Quaternion RotationDirection;
-        public readonly Vector3 ScaleDirection;
-
-        public ResolvedMoveRotateScaleContinuous(Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection)
-        {
-            PositionDirection = positionDirection;
-            RotationDirection = rotationDirection;
-            ScaleDirection = scaleDirection;
-        }
-    }
 }

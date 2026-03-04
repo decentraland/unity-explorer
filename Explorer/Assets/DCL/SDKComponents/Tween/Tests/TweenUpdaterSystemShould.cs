@@ -384,49 +384,6 @@ namespace DCL.SDKComponents.Tween.Tests
             Assert.IsTrue(comp.CustomTweener.IsFinished(), "Tweener should be marked as finished.");
         }
 
-        [Test]
-        public async Task MoveRotateScaleContinuousRunsIndefinitelyWhenDurationIsZero()
-        {
-            var posDir = CreateVector3(0, 1, 0);
-            var rotDir = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
-            var scaleDir = CreateVector3(0, 0, 0);
-            const float speed = 2f;
-            int duration = 0;
-            Entity testEntity = CreateMoveRotateScaleContinuousTween(duration, posDir, rotDir, scaleDir, speed);
-
-            SDKTweenComponent comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
-            Assert.IsNotNull(comp.CustomTweener);
-            Assert.IsInstanceOf<TransformTweener>(comp.CustomTweener);
-
-            await RunSystemForSeconds(2000, testEntity);
-
-            comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus, "Tween should still be active.");
-            Assert.IsFalse(comp.CustomTweener.IsFinished(), "Tweener should not be finished.");
-        }
-
-        [Test]
-        public async Task MoveRotateScaleContinuousCompletesAfterFiniteDuration()
-        {
-            var posDir = CreateVector3(1, 0, 0);
-            var rotDir = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 1, 0));
-            var scaleDir = CreateVector3(0, 0, 0);
-            const float speed = 5f;
-            int duration = 1000;
-            Entity testEntity = CreateMoveRotateScaleContinuousTween(duration, posDir, rotDir, scaleDir, speed);
-
-            SDKTweenComponent comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
-            Assert.IsInstanceOf<TransformTweener>(comp.CustomTweener);
-
-            await RunSystemForSeconds(duration, testEntity);
-
-            comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus, "Tween should be completed after duration.");
-            Assert.IsTrue(comp.CustomTweener.IsFinished(), "Tweener should be finished.");
-        }
-
         private Entity CreateMoveRotateScaleTween(
             float duration,
             Vector3 posStart, Vector3 posEnd,
@@ -455,45 +412,6 @@ namespace DCL.SDKComponents.Tween.Tests
             };
 
             Assert.AreEqual(PBTween.ModeOneofCase.MoveRotateScale, pbTween.ModeCase);
-
-            var entity = world.Create(PartitionComponent.TOP_PRIORITY);
-            AddTransformToEntity(entity);
-
-            world.Add(entity, crdtEntity, pbTween,
-                new MaterialComponent { Result = DefaultMaterial.New() },
-                new SDKTweenComponent { IsDirty = true }
-            );
-            system.Update(0);
-
-            Assert.IsTrue(world.Has<SDKTweenComponent>(entity));
-            return entity;
-        }
-
-        private Entity CreateMoveRotateScaleContinuousTween(
-            float duration,
-            Vector3 posDir, Quaternion rotDir, Vector3 scaleDir,
-            float speed)
-        {
-            var crdtEntity = new CRDTEntity(4);
-            var moveRotateScaleContinuous = new MoveRotateScaleContinuous
-            {
-                PositionDirection = posDir,
-                RotationDirection = rotDir,
-                ScaleDirection = scaleDir,
-                Speed = speed,
-            };
-
-            var pbTween = new PBTween
-            {
-                CurrentTime = 0,
-                Duration = duration,
-                EasingFunction = EasingFunction.EfLinear,
-                IsDirty = true,
-                Playing = true,
-                MoveRotateScaleContinuous = moveRotateScaleContinuous,
-            };
-
-            Assert.AreEqual(PBTween.ModeOneofCase.MoveRotateScaleContinuous, pbTween.ModeCase);
 
             var entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);

@@ -91,49 +91,6 @@ namespace DCL.SDKComponents.Tween.Tests
         }
 
         [Test]
-        public void ResolveMoveRotateScaleContinuous_WhenAllFieldsProvided_UsesProvidedValues()
-        {
-            var go = new GameObject();
-            var moveRotateScaleContinuous = new MoveRotateScaleContinuous
-            {
-                PositionDirection = new Decentraland.Common.Vector3 { X = 1, Y = 0, Z = 0 },
-                RotationDirection = new Decentraland.Common.Quaternion { X = 0, Y = 0, Z = 0.3827f, W = 0.9239f },
-                ScaleDirection = new Decentraland.Common.Vector3 { X = 0.1f, Y = 0.1f, Z = 0.1f },
-                Speed = 5f
-            };
-
-            TweenSDKComponentHelper.ResolveMoveRotateScaleContinuous(moveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolved);
-
-            Assert.AreEqual(new Vector3(1, 0, 0), resolved.PositionDirection);
-            Assert.AreEqual(new Vector3(0.1f, 0.1f, 0.1f), resolved.ScaleDirection);
-
-            Object.DestroyImmediate(go);
-        }
-
-        [Test]
-        public void ResolveMoveRotateScaleContinuous_WhenDirectionOmitted_FillsWithZeroOrIdentity()
-        {
-            var go = new GameObject();
-            go.transform.localPosition = new Vector3(1, 2, 3);
-            go.transform.localScale = new Vector3(2, 2, 2);
-
-            var moveRotateScaleContinuous = new MoveRotateScaleContinuous
-            {
-                PositionDirection = new Decentraland.Common.Vector3 { X = 1, Y = 0, Z = 0 },
-                Speed = 1f
-            };
-            // RotationDirection, ScaleDirection left null
-
-            TweenSDKComponentHelper.ResolveMoveRotateScaleContinuous(moveRotateScaleContinuous, out ResolvedMoveRotateScaleContinuous resolved);
-
-            Assert.AreEqual(new Vector3(1, 0, 0), resolved.PositionDirection);
-            Assert.AreEqual(Quaternion.identity, resolved.RotationDirection, "Omitted rotation direction should be identity (no change)");
-            Assert.AreEqual(Vector3.zero, resolved.ScaleDirection, "Omitted scale direction should be zero (no change)");
-
-            Object.DestroyImmediate(go);
-        }
-
-        [Test]
         public void GetEase_ReturnsLinear_ForEfLinear()
         {
             var ease = TweenSDKComponentHelper.GetEase(EasingFunction.EfLinear);

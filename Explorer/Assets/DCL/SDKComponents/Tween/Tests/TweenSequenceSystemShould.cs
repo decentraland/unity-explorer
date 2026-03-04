@@ -497,31 +497,6 @@ namespace DCL.SDKComponents.Tween.Tests
         }
 
         [Test]
-        public async Task MoveRotateScaleContinuousCompletesAfterDuration()
-        {
-            Vector3 posDir = CreateVector3(1, 0, 0);
-            Quaternion rotDir = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 0, 1));
-            Vector3 scaleDir = CreateVector3(0, 1, 0);
-
-            Entity testEntity = CreateSingleTween(
-                CreateMoveRotateScaleContinuousTween(posDir, rotDir, scaleDir, 2f, 1000)
-            );
-
-            loaderSystem.Update(0);
-            system.Update(0);
-
-            SDKTweenComponent comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
-            Assert.IsInstanceOf<TransformTweener>(comp.CustomTweener);
-
-            await RunSystemForSeconds(1000, testEntity);
-
-            comp = world.Get<SDKTweenComponent>(testEntity);
-            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
-            Assert.IsTrue(comp.CustomTweener.IsFinished());
-        }
-
-        [Test]
         public async Task TweenSequenceWithMoveRotateScaleWithOmittedScale_ResolvesScaleFromCurrentTransform()
         {
             // Step 1: Scale 1 -> 2. Step 2: MoveRotateScale with only position+rotation (scale omitted).
@@ -713,26 +688,6 @@ namespace DCL.SDKComponents.Tween.Tests
                     RotationStart = rotStart,
                     RotationEnd = rotEnd
                     // ScaleStart, ScaleEnd omitted - resolved from current transform at step start
-                }
-            };
-        }
-
-        private PBTween CreateMoveRotateScaleContinuousTween(Vector3 posDir, Quaternion rotDir,
-            Vector3 scaleDir, float speed, int duration)
-        {
-            return new PBTween
-            {
-                CurrentTime = 0,
-                Duration = duration,
-                EasingFunction = EasingFunction.EfLinear,
-                IsDirty = true,
-                Playing = true,
-                MoveRotateScaleContinuous = new MoveRotateScaleContinuous
-                {
-                    PositionDirection = posDir,
-                    RotationDirection = rotDir,
-                    ScaleDirection = scaleDir,
-                    Speed = speed
                 }
             };
         }

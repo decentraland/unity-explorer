@@ -1,14 +1,11 @@
-using CrdtEcsBridge.Components.Conversion;
 using DG.Tweening;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
     /// <summary>
-    /// Composite tweener that interpolates position, rotation, and scale simultaneously.
-    /// For finite tweens (MoveRotateScale): uses a DOTween Sequence with Transform shortcuts.
-    /// For continuous tweens (MoveRotateScaleContinuous): uses a single standalone DOVirtual.Float
-    /// with infinite loops, since DOTween silently caps infinite loops to 1 on nested Sequence tweens.
+    /// Composite tweener that interpolates position, rotation, and scale simultaneously (MoveRotateScale).
+    /// Uses a DOTween Sequence with Transform shortcuts.
     /// DOTween writes directly to the Unity Transform; the system reads back via SyncTransformToSDKTransform.
     /// </summary>
     public class TransformTweener : ITweener
@@ -64,49 +61,6 @@ namespace DCL.SDKComponents.Tween.Components
             seq.Pause();
 
             activeTween = seq;
-        }
-
-        public void InitializeContinuous(Transform? transform,
-            Vector3 positionDirection, Quaternion rotationDirection, Vector3 scaleDirection,
-            float speed)
-        {
-            activeTween?.Kill();
-            finished = false;
-
-            float absSpeed = Mathf.Abs(speed);
-            float sign = speed >= 0 ? 1f : -1f;
-
-            Vector3 startPos = transform ? transform.localPosition : Vector3.zero;
-            Quaternion startRot = transform ? transform.localRotation : Quaternion.identity;
-            Vector3 startScale = transform ? transform.localScale : Vector3.one;
-
-            // Extract axis and angle from the quaternion so the angle component
-            // scales rotation rate relative to speed, just as direction magnitude
-            // scales position/scale rate.
-            rotationDirection.ToAngleAxis(out float rotAngle, out Vector3 rotAxis);
-            if (rotAxis.sqrMagnitude < 1e-6f)
-                rotAxis = Vector3.up;
-            rotAxis = rotAxis.normalized;
-
-            // A single standalone tween drives all three properties.
-            // Standalone tweens fully support infinite loops; DOTween Sequences do not
-            // (they silently cap nested infinite loops to 1).
-            // Direction magnitudes are intentionally preserved (not normalized) so users
-            // can control relative speeds across position/rotation/scale via a single
-            // shared speed value.
-            activeTween = DOVirtual.Float(0f, 1f, 1f, v =>
-            {
-                if (!transform) return;
-                float t = sign * absSpeed * v;
-                transform.localPosition = startPos + positionDirection * t;
-                transform.localRotation = Quaternion.AngleAxis(rotAngle * t, rotAxis) * startRot;
-                transform.localScale = startScale + scaleDirection * t;
-            })
-            .SetEase(Ease.Linear)
-            .SetLoops(-1, LoopType.Incremental)
-            .SetAutoKill(false);
-
-            activeTween.Pause();
         }
 
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
