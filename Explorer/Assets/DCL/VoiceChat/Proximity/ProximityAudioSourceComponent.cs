@@ -9,10 +9,12 @@ namespace DCL.VoiceChat
     public struct ProximityAudioSourceComponent
     {
         public Transform AudioSourceTransform;
+        public AudioSource AudioSource;
 
-        public ProximityAudioSourceComponent(Transform source)
+        public ProximityAudioSourceComponent(AudioSource audioSource)
         {
-            AudioSourceTransform = source;
+            AudioSource = audioSource;
+            AudioSourceTransform = audioSource.transform;
         }
     }
 }

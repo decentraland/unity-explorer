@@ -31,14 +31,10 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(ProximityVoiceChatManager);
 
-        private const float SPATIAL_BLEND_3D = 1f;
-        private const float DOPPLER_LEVEL = 0f;
-        private const float MIN_DISTANCE = 2f;
-        private const float MAX_DISTANCE = 50f;
-
         private readonly IRoom islandRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly ConcurrentDictionary<string, Transform> activeAudioSources;
+        private readonly ProximityAudioSettings audioSettings;
+        private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
 
@@ -51,10 +47,12 @@ namespace DCL.VoiceChat
         public ProximityVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            ConcurrentDictionary<string, Transform> activeAudioSources)
+            ProximityAudioSettings audioSettings,
+            ConcurrentDictionary<string, AudioSource> activeAudioSources)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
+            this.audioSettings = audioSettings;
             this.activeAudioSources = activeAudioSources;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
@@ -310,7 +308,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            activeAudioSources[key.identity] = source.transform;
+            activeAudioSources[key.identity] = source.GetComponent<AudioSource>();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}");
         }
 
@@ -333,14 +331,7 @@ namespace DCL.VoiceChat
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
 
             if (spatial)
-            {
-                audioSource.spatialBlend = SPATIAL_BLEND_3D;
-                audioSource.dopplerLevel = DOPPLER_LEVEL;
-                audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-                audioSource.minDistance = MIN_DISTANCE;
-                audioSource.maxDistance = MAX_DISTANCE;
-                audioSource.spread = 0f;
-            }
+                audioSettings.ApplyTo(audioSource);
 
             source.name = $"ProximityAudio_{key.identity}";
             return source;

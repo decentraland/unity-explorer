@@ -44,5 +44,23 @@ namespace DCL.VoiceChat
 
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
+
+        [Header("Proximity Spatial Audio")]
+        [Range(0f, 1f)]
+        public float ProximitySpatialBlend = 1f;
+
+        [Range(0f, 5f)]
+        public float ProximityDopplerLevel;
+
+        [Range(0f, 100f)]
+        public float ProximityMinDistance = 2f;
+
+        [Range(1f, 500f)]
+        public float ProximityMaxDistance = 50f;
+
+        [Range(0f, 360f)]
+        public float ProximitySpread;
+
+        public AudioRolloffMode ProximityRolloffMode = AudioRolloffMode.Logarithmic;
     }
 }

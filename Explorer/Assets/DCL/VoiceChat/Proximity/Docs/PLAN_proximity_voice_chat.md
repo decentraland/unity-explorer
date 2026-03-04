@@ -6,7 +6,9 @@
 
 ---
 
-## Итерация 1: Базовый прототип (без 3D audio)
+## Итерация 1: Базовый прототип (без 3D audio) ✓
+
+**Статус:** Завершена
 
 ### Выбранный подход: Вариант A -- публикация аудио в Island Room
 
@@ -14,80 +16,78 @@ Island Room -- уже подключённая LiveKit-комната, в кот
 
 **Проверено:** LiveKit-сервер разрешает публикацию аудио-треков в Island Room (тест `ProximityVoiceChatTest` пройден успешно).
 
-### Что делаем
+### Что сделано
 
-Создаём `ProximityVoiceChatManager` и подключаем в `VoiceChatPlugin`:
+Создан `ProximityVoiceChatManager`, подключён в `VoiceChatPlugin`:
 
 1. Слушает `ConnectionUpdated` на Island Room
 2. При подключении -- создаёт `MicrophoneRtcAudioSource`, публикует аудио-трек в Island Room
 3. Подписывается на `TrackSubscribed`/`TrackUnsubscribed` на Island Room
-4. Проигрывает remote audio через `PlaybackSourcesHub` (свой отдельный экземпляр)
+4. Создаёт spatial `LivekitAudioSource` для каждого remote-участника
 5. При отключении Island -- cleanup
 
 Работает полностью параллельно существующему voice chat, не трогает Orchestrator.
 
-### Файлы
+---
 
-| Действие | Файл |
-|----------|------|
-| Создать | `Assets/DCL/VoiceChat/ProximityVoiceChatManager.cs` |
-| Изменить | `Assets/DCL/PluginSystem/Global/VoiceChatPlugin.cs` |
-| Изменить | `Assets/DCL/VoiceChat/VoiceChatConfiguration.cs` |
+## Итерация 2: 3D Spatial Audio ✓
+
+**Статус:** Завершена
+
+### Что сделано
+
+Реализовано 3D-позиционирование аудио через ECS-систему. Менеджер управляет жизненным циклом аудио (LiveKit), система управляет привязкой к entity и синхронизацией позиций.
 
 ### Архитектура
 
 ```mermaid
 flowchart TD
-    IslandRoom["Island Room (IRoom)"] -->|ConnectionUpdated: Connected| PVM["ProximityVoiceChatManager"]
-    PVM -->|"PublishTrack(micTrack)"| IslandRoom
-    IslandRoom -->|TrackSubscribed| PVM
-    PVM -->|"AddOrReplaceStream(key, stream)"| PSH["PlaybackSourcesHub (proximity)"]
-    PSH -->|"LivekitAudioSource + AudioSource"| Speakers["Unity AudioMixer → Speaker"]
+    IslandRoom["Island Room (IRoom)"] -->|TrackSubscribed| PVM["ProximityVoiceChatManager"]
+    PVM -->|"activeAudioSources[walletId] = transform"| Dict["ConcurrentDictionary&lt;string, Transform&gt;<br/>(shared, owned by VoiceChatPlugin)"]
+    Dict -->|читает каждый кадр| System["ProximityAudioPositionSystem"]
+    System -->|"entityParticipantTable.TryGet(walletId)"| EPT["EntityParticipantTable"]
+    EPT -->|Entity найден| System
+    System -->|"world.Add(entity, ProximityAudioSourceComponent)"| ECS["ECS World"]
+    System -->|"SyncPositions: AudioSource.position = CharacterTransform.Position"| ECS
     IslandRoom -->|TrackUnsubscribed| PVM
-    PVM -->|"RemoveStream(key)"| PSH
-    IslandRoom -->|ConnectionUpdated: Disconnected| PVM
-    PVM -->|Cleanup| Cleanup["UnpublishTrack + Reset sources"]
+    PVM -->|"activeAudioSources.TryRemove(walletId)"| Dict
+    System -->|"null Transform → world.Remove&lt;ProximityAudioSourceComponent&gt;"| ECS
 ```
 
-### Ключевой код
+### Файлы
 
-Публикация:
+| Действие | Файл |
+|----------|------|
+| Создать | `Assets/DCL/VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` |
+| Создать | `Assets/DCL/VoiceChat/Proximity/ProximityAudioSourceComponent.cs` |
+| Изменить | `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs` |
+| Изменить | `Assets/DCL/PluginSystem/Global/VoiceChatPlugin.cs` |
+
+### Ключевые решения
+
+**Shared Dictionary как мост между Manager и ECS:**
+- `VoiceChatPlugin` владеет `ConcurrentDictionary<string, Transform>`
+- Менеджер пишет (walletId → AudioSource Transform) при subscribe/unsubscribe
+- Система читает словарь каждый кадр и назначает/снимает компоненты
+
+**Почему не прямой `world.Add` в менеджере:**
+- Entity может ещё не существовать на момент `OnTrackSubscribed` (LiveKit-событие приходит раньше, чем `MultiplayerProfilesSystem` создаёт entity)
+- Система каждый кадр пробует `entityParticipantTable.TryGet()` — привяжет как только entity появится
+
+**Cleanup через null-detection:**
+- При `RemoveRemoteSource` менеджер убирает из словаря и вызывает `DestroySource`
+- Система в `SyncPositions` детектит null Transform → собирает в cleanup-список → `world.Remove` после query
+
+### Spatial Audio настройки
+
 ```csharp
-MicrophoneRtcAudioSource rtcAudioSource = MicrophoneRtcAudioSource.New(...);
-rtcAudioSource.Start();
-ITrack track = islandRoom.AudioTracks.CreateAudioTrack(name, rtcAudioSource);
-islandRoom.Participants.LocalParticipant().PublishTrack(track, options, ct);
+spatialBlend = 1.0f       // полный 3D
+dopplerLevel = 0f         // без doppler-эффекта
+rolloffMode = Logarithmic
+minDistance = 2f
+maxDistance = 50f
+spread = 0f
 ```
-
-Приём:
-```csharp
-Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(new StreamKey(identity, sid));
-playbackSourcesHub.AddOrReplaceStream(key, stream);
-```
-
-### Что НЕ делаем в итерации 1
-
-- Не трогаем `VoiceChatOrchestrator` / `VoiceChatType`
-- Не делаем 3D audio (spatialBlend)
-- Не делаем UI для proximity
-- Не делаем mute/unmute proximity при Private/Community звонке
-- Не делаем reconnection logic (Island Room сам reconnect-ится)
-- Не делаем BE координацию
-
-### Оценка
-
-- **1 новый файл** (~150-200 строк)
-- **2 файла** с минимальными правками
-- **Время**: 2-4 часа
-
----
-
-## Итерация 2: 3D Spatial Audio (планируется)
-
-- `AudioSource.spatialBlend = 1`
-- Настройка `minDistance`, `maxDistance`, `rolloffMode`
-- Обновление позиции каждого `LivekitAudioSource` по позиции аватара через `EntityParticipantTable` → Entity → Transform
-- Потребуется ECS-система или polling для обновления позиций каждый кадр
 
 ## Итерация 3: Интеграция с Orchestrator (планируется)
 

@@ -48,9 +48,9 @@
 
 ### 5. План итеративной реализации
 
-**Итерация 1** (текущая): `ProximityVoiceChatManager` -- автоматическая публикация/приём аудио через Island Room, без 3D, без Orchestrator
+**Итерация 1** (завершена): `ProximityVoiceChatManager` -- автоматическая публикация/приём аудио через Island Room, spatial `LivekitAudioSource` для каждого remote-участника
 
-**Итерация 2** (следующая): 3D Spatial Audio -- `spatialBlend = 1`, позиционирование AudioSource по аватару, ECS-система для обновления позиций
+**Итерация 2** (завершена): 3D Spatial Audio -- ECS-система `ProximityAudioPositionSystem` + `ProximityAudioSourceComponent`, shared dictionary как мост между менеджером и ECS, позиционирование AudioSource по `CharacterTransform` каждый кадр
 
 **Итерация 3** (будущее): Интеграция с Orchestrator, `VoiceChatType.SPATIAL`, координация с Private/Community, UI
 
@@ -86,24 +86,26 @@
 
 | Файл | Роль |
 |------|------|
-| `Assets/DCL/VoiceChat/ProximityVoiceChatManager.cs` | Менеджер proximity voice chat (publish + playback через Island Room) |
+| `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs` | Менеджер proximity voice chat (publish + spatial audio через Island Room, пишет в shared dictionary) |
+| `Assets/DCL/VoiceChat/Proximity/ProximityAudioSourceComponent.cs` | ECS-компонент, хранит Transform аудиосурса |
+| `Assets/DCL/VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` | ECS-система: назначает компонент на entity, синхронизирует позиции, cleanup |
 
 > `ProximityVoiceChatTest.cs` удалён — заменён на `ProximityVoiceChatManager`.
-> `VoiceChatPlugin.cs` создаёт `ProximityVoiceChatManager` в `InitializeAsync()` и добавляет в `pluginScope`.
+> `VoiceChatPlugin.cs` владеет `ConcurrentDictionary<string, Transform>` и передаёт его менеджеру (запись) и системе (чтение).
 
 ---
 
 ## Инсайт от коллеги
 
 > Room -- это просто `IRoom`, можно публиковать треки в любую комнату (пока BE разрешает permissions).
-> `LivekitAudioSource` создаётся автоматически при подписке на stream. Для 3D audio нужно будет reparent-ить AudioSource к аватарам.
+> `LivekitAudioSource` создаётся автоматически при подписке на stream. Для 3D audio позиция обновляется через ECS-систему (а не reparent под аватар — аватар может не существовать или пересоздаваться).
 > Для нового типа voice chat, если он exclusive -- нужно координировать через Orchestrator. Если параллельный -- можно работать независимо.
 
 ---
 
 ## Открытые вопросы
 
-1. **Interaction с Private/Community:** что делать со spatial когда активен другой звонок? (mute / disconnect / coexist)
+1. **Interaction с Private/Community:** что делать со spatial когда активен другой звонок? (mute / disconnect / coexist) → Итерация 3
 2. **Нагрузка на Island Room:** сколько одновременных аудио-треков выдержит Island Room без деградации?
 3. **Permissions:** могут ли серверные permissions на Island Room измениться?
-4. **3D audio настройки:** какие `minDistance`, `maxDistance`, `rolloffMode` оптимальны для Decentraland?
+4. ~~**3D audio настройки:** какие `minDistance`, `maxDistance`, `rolloffMode` оптимальны для Decentraland?~~ → Решено: `minDistance=2`, `maxDistance=50`, `Logarithmic` rolloff (может быть вынесено в `VoiceChatConfiguration`)

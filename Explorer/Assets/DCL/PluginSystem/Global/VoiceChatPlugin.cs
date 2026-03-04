@@ -40,7 +40,8 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
-        private readonly ConcurrentDictionary<string, Transform> proximityAudioSources = new ();
+        private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
+        private readonly ProximityAudioSettings proximityAudioSettings = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -94,7 +95,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
+            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityAudioSettings, debugContainer);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -142,7 +143,9 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration, proximityAudioSources);
+            proximityAudioSettings.SetConfig(voiceChatConfiguration);
+
+            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration, proximityAudioSettings, proximityAudioSources);
             pluginScope.Add(proximityVoiceChatManager);
         }
 
