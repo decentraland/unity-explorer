@@ -33,7 +33,6 @@ namespace DCL.VoiceChat
 
         private readonly IRoom islandRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly ProximityAudioSettings audioSettings;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
@@ -47,12 +46,10 @@ namespace DCL.VoiceChat
         public ProximityVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            ProximityAudioSettings audioSettings,
             ConcurrentDictionary<string, AudioSource> activeAudioSources)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
-            this.audioSettings = audioSettings;
             this.activeAudioSources = activeAudioSources;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
@@ -331,7 +328,7 @@ namespace DCL.VoiceChat
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
 
             if (spatial)
-                audioSettings.ApplyTo(audioSource);
+                configuration.ApplyProximitySettingsTo(audioSource);
 
             source.name = $"ProximityAudio_{key.identity}";
             return source;

@@ -62,5 +62,15 @@ namespace DCL.VoiceChat
         public float ProximitySpread;
 
         public AudioRolloffMode ProximityRolloffMode = AudioRolloffMode.Logarithmic;
+
+        public void ApplyProximitySettingsTo(AudioSource source)
+        {
+            source.spatialBlend = ProximitySpatialBlend;
+            source.dopplerLevel = ProximityDopplerLevel;
+            source.minDistance = ProximityMinDistance;
+            source.maxDistance = ProximityMaxDistance;
+            source.spread = ProximitySpread;
+            source.rolloffMode = ProximityRolloffMode;
+        }
     }
 }

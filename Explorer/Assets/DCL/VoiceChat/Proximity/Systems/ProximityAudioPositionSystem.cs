@@ -18,7 +18,10 @@ namespace DCL.VoiceChat
     /// <summary>
     /// Assigns <see cref="ProximityAudioSourceComponent"/> to remote entities whose audio
     /// sources are registered in the shared dictionary, syncs AudioSource positions with
-    /// <see cref="CharacterTransform"/> each frame, and applies spatial audio settings changes.
+    /// <see cref="CharacterTransform"/> each frame, and applies spatial audio settings.
+    /// <see cref="VoiceChatConfiguration"/> is the single source of truth.
+    /// A dedicated "Proximity Audio" debug widget provides runtime sliders that write
+    /// directly to the SO via <see cref="ElementBinding{T}.OnValueChanged"/> callbacks.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
@@ -26,31 +29,34 @@ namespace DCL.VoiceChat
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
-        private readonly ProximityAudioSettings audioSettings;
+        private readonly ProximityConfigHolder configHolder;
         private readonly List<Entity> entitiesToCleanUp = new ();
-
-        private readonly ElementBinding<float> spatialBlendBinding;
-        private readonly ElementBinding<float> dopplerBinding;
-        private readonly ElementBinding<float> minDistanceBinding;
-        private readonly ElementBinding<float> maxDistanceBinding;
-        private readonly ElementBinding<float> spreadBinding;
 
         internal ProximityAudioPositionSystem(
             World world,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             ConcurrentDictionary<string, AudioSource> activeAudioSources,
-            ProximityAudioSettings audioSettings,
+            ProximityConfigHolder configHolder,
             IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.activeAudioSources = activeAudioSources;
-            this.audioSettings = audioSettings;
+            this.configHolder = configHolder;
 
-            spatialBlendBinding = new ElementBinding<float>(audioSettings.SpatialBlend);
-            dopplerBinding = new ElementBinding<float>(audioSettings.DopplerLevel);
-            minDistanceBinding = new ElementBinding<float>(audioSettings.MinDistance);
-            maxDistanceBinding = new ElementBinding<float>(audioSettings.MaxDistance);
-            spreadBinding = new ElementBinding<float>(audioSettings.Spread);
+            var spatialBlendBinding = new ElementBinding<float>(1f,
+                evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpatialBlend = evt.newValue; });
+
+            var dopplerBinding = new ElementBinding<float>(0f,
+                evt => { if (configHolder.Config != null) configHolder.Config.ProximityDopplerLevel = evt.newValue; });
+
+            var minDistanceBinding = new ElementBinding<float>(2f,
+                evt => { if (configHolder.Config != null) configHolder.Config.ProximityMinDistance = evt.newValue; });
+
+            var maxDistanceBinding = new ElementBinding<float>(50f,
+                evt => { if (configHolder.Config != null) configHolder.Config.ProximityMaxDistance = evt.newValue; });
+
+            var spreadBinding = new ElementBinding<float>(0f,
+                evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpread = evt.newValue; });
 
             debugBuilder.TryAddWidget("Proximity Audio")
                        ?.AddFloatSliderField("Spatial Blend", spatialBlendBinding, 0f, 1f)
@@ -62,52 +68,12 @@ namespace DCL.VoiceChat
 
         protected override void Update(float t)
         {
-            if (audioSettings.SyncFromConfig())
-                PushSettingsToBindings();
+            if (configHolder.Config == null) return;
 
-            ReadDebugValues();
             AssignPendingSources();
             SyncPositionsQuery(World);
-
-            if (audioSettings.IsDirty)
-            {
-                ApplySettingsQuery(World);
-                audioSettings.IsDirty = false;
-            }
-
+            ApplySettingsQuery(World);
             ProcessCleanUp();
-        }
-
-        private void PushSettingsToBindings()
-        {
-            spatialBlendBinding.Value = audioSettings.SpatialBlend;
-            dopplerBinding.Value = audioSettings.DopplerLevel;
-            minDistanceBinding.Value = audioSettings.MinDistance;
-            maxDistanceBinding.Value = audioSettings.MaxDistance;
-            spreadBinding.Value = audioSettings.Spread;
-        }
-
-        private void ReadDebugValues()
-        {
-            bool changed = false;
-
-            if (!Mathf.Approximately(audioSettings.SpatialBlend, spatialBlendBinding.Value))
-            { audioSettings.SpatialBlend = spatialBlendBinding.Value; changed = true; }
-
-            if (!Mathf.Approximately(audioSettings.DopplerLevel, dopplerBinding.Value))
-            { audioSettings.DopplerLevel = dopplerBinding.Value; changed = true; }
-
-            if (!Mathf.Approximately(audioSettings.MinDistance, minDistanceBinding.Value))
-            { audioSettings.MinDistance = minDistanceBinding.Value; changed = true; }
-
-            if (!Mathf.Approximately(audioSettings.MaxDistance, maxDistanceBinding.Value))
-            { audioSettings.MaxDistance = maxDistanceBinding.Value; changed = true; }
-
-            if (!Mathf.Approximately(audioSettings.Spread, spreadBinding.Value))
-            { audioSettings.Spread = spreadBinding.Value; changed = true; }
-
-            if (changed)
-                audioSettings.IsDirty = true;
         }
 
         private void AssignPendingSources()
@@ -148,7 +114,7 @@ namespace DCL.VoiceChat
         private void ApplySettings(ref ProximityAudioSourceComponent proximityAudio)
         {
             if (proximityAudio.AudioSource != null)
-                audioSettings.ApplyTo(proximityAudio.AudioSource);
+                configHolder.Config!.ApplyProximitySettingsTo(proximityAudio.AudioSource);
         }
 
         private void ProcessCleanUp()
