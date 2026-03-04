@@ -132,3 +132,9 @@
 
 * `ObjectProxy` was introduced to **resolve circular dependencies**. While effective, **consider this an anti-pattern**. Favor clearer dependency injection.
 * Interfaces or abstract classes with only one implementation and no test coverage **should be avoided or merged**.
+
+---
+
+### Documentation Reference
+
+For focused implementation procedures with code examples, see [`skills/README.md`](skills/README.md) which indexes all skill files. For full reference documentation, see [`docs/SKILL.md`](docs/SKILL.md) which indexes all project documentation.
