@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
 
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
-            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 

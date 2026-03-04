@@ -86,7 +86,7 @@ namespace DCL.UI.SharedSpaceManager
 
             if (isCameraReelFeatureEnabled)
             {
-                dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
+                dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
                 dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
             }
 
@@ -116,7 +116,7 @@ namespace DCL.UI.SharedSpaceManager
                 dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformedAsync;
 
             if (isCameraReelFeatureEnabled)
-                dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
+                dclInput.Shortcuts.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
 
             if (isDiscoverFeatureEnabled)
             {
