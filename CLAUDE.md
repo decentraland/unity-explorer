@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## Startup
+
+At the start of every conversation, read [`skills/README.md`](skills/README.md) and [`docs/SKILL.md`](docs/SKILL.md) to load the project knowledge map. These are lightweight index files (~170 lines total) that enable navigation to any detailed skill or documentation file as needed during the task.
+
+---
+
 ## Project Code Standards for Claude Reviews
 
 ---
@@ -43,6 +49,7 @@
 * Keep logic minimal due to multiple world executions per frame.
 * Consolidate queries sharing filters.
 * Use centralized throttling (`ThrottlingEnabled`) where appropriate.
+* Do not use LINQ — it allocates too much memory.
 
 ### 5. **Safe Component Mutation**
 
@@ -86,52 +93,28 @@
 * Always catch exceptions:
 
   * Ignore `OperationCanceledException`
-  * Log/report all others
+  * Log/report all others via `ReportHub.LogException`
 * Use `SuppressToResultAsync()` to simplify exception handling.
+* Handle cancellation with `ct.IsCancellationRequested`, never `ThrowIfCancellationRequested()`.
 
 ### 10. **Testing Systems**
 
 * Use `UnitySystemTestBase<T>` for world lifecycle in tests.
 * Expose system constructors via `[InternalsVisibleTo]`.
+* Use NUnit + NSubstitute.
 
 ---
 
-### Code Style
+### Code Style, Naming, Tests
 
-* Follow `.editorconfig` and enable "Format On Save".
-* Follow Microsoft .NET naming conventions with Unity-specific extensions:
-
-  * `PascalCase` for public items, `camelCase` for internals.
-  * Async methods must end in `Async`.
-  * Constants: `ALL_UPPER_SNAKE_CASE`.
-
-### Method and Property Ordering
-
-* Group by visibility: public → internal → protected → private.
-* Methods ordered by:
-
-  * Constructor/setup
-  * Destruction/cleanup
-  * Public APIs
-  * Unity callbacks
-  * Helpers
-
-### Comments
-
-* XML comments on public APIs.
-* No commented-out code. Avoid block `/* */` comments.
-
-### Tests
-
-* Method names reflect Arrange/Act/Assert intent.
-* Use `// Arrange`, `// Act`, `// Assert` blocks.
-
----
+For full code standards with naming conventions, member ordering, formatting rules, and test patterns, see [`skills/code-standards.md`](skills/code-standards.md). The `.editorconfig` handles automated formatting in the IDE.
 
 ### Specific Notes
 
 * `ObjectProxy` was introduced to **resolve circular dependencies**. While effective, **consider this an anti-pattern**. Favor clearer dependency injection.
 * Interfaces or abstract classes with only one implementation and no test coverage **should be avoided or merged**.
+* Use `ReportHub` instead of `Debug.Log` for all logging.
+* Minimize GC pressure: reuse objects, use object pooling, avoid boxing/unboxing, use `StringBuilder` for string concatenation.
 
 ---
 
