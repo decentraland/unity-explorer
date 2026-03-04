@@ -73,10 +73,10 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
-            OnConnectionUpdatedInternalAsync(update).Forget();
+            SwitchActivationAsync(update).Forget();
             return;
 
-            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate)
+            async UniTaskVoid SwitchActivationAsync(ConnectionUpdate connectionUpdate)
             {
                 await UniTask.SwitchToMainThread();
 
@@ -159,19 +159,17 @@ namespace DCL.VoiceChat
         private void SubscribeToExistingRemoteTracks()
         {
             foreach (KeyValuePair<string, Participant> entry in islandRoom.Participants.RemoteParticipantIdentities())
+            foreach ((string sid, TrackPublication pub) in entry.Value.Tracks)
             {
-                foreach ((string sid, TrackPublication pub) in entry.Value.Tracks)
+                if (pub.Kind != TrackKind.KindAudio) continue;
+
+                var key = new StreamKey(entry.Key!, sid);
+                Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
+
+                if (stream.Resource.Has)
                 {
-                    if (pub.Kind != TrackKind.KindAudio) continue;
-
-                    var key = new StreamKey(entry.Key!, sid);
-                    Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
-
-                    if (stream.Resource.Has)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(key, stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {entry.Key}");
-                    }
+                    playbackSourcesHub.AddOrReplaceStream(key, stream);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {entry.Key}");
                 }
             }
         }
