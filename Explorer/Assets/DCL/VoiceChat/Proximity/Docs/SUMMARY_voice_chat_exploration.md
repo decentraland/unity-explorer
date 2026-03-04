@@ -86,12 +86,10 @@
 
 | Файл | Роль |
 |------|------|
-| `Assets/DCL/VoiceChat/ProximityVoiceChatTest.cs` | Тестовый класс (временный, удалить после) |
+| `Assets/DCL/VoiceChat/ProximityVoiceChatManager.cs` | Менеджер proximity voice chat (publish + playback через Island Room) |
 
-> **ВАЖНО:** `VoiceChatPlugin.cs` сейчас модифицирован -- добавлено поле `proximityTest` и его создание/подключение в `InitializeAsync()`. При начале реальной имплементации нужно:
-> 1. Удалить `ProximityVoiceChatTest.cs`
-> 2. Убрать из `VoiceChatPlugin.cs` поле `proximityTest` и строку `proximityTest = new ProximityVoiceChatTest(...)` / `pluginScope.Add(proximityTest)`
-> 3. Заменить на `ProximityVoiceChatManager`
+> `ProximityVoiceChatTest.cs` удалён — заменён на `ProximityVoiceChatManager`.
+> `VoiceChatPlugin.cs` создаёт `ProximityVoiceChatManager` в `InitializeAsync()` и добавляет в `pluginScope`.
 
 ---
 
