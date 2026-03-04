@@ -1,4 +1,4 @@
-#if UNITY_WEBGL// && !UNITY_EDITOR
+#if UNITY_WEBGL && !UNITY_EDITOR
 
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -17,29 +17,22 @@ namespace ECS.SceneLifeCycle.WebGL
 
     public class WebGLSceneUpdateQueue : IWebGLSceneUpdateQueue
     {
-        private readonly object lockObj = new ();
         private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> pending = new (32);
         private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> processing = new (32);
 
         public void Enqueue(ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler)
         {
-            lock (lockObj)
-            {
-                pending.Add((scene, dt, exceptionHandler));
-            }
+            pending.Add((scene, dt, exceptionHandler));
         }
 
         public void ProcessPendingUpdates()
         {
-            lock (lockObj)
-            {
-                if (pending.Count == 0)
-                    return;
+            if (pending.Count == 0)
+                return;
 
-                processing.Clear();
-                processing.AddRange(pending);
-                pending.Clear();
-            }
+            processing.Clear();
+            processing.AddRange(pending);
+            pending.Clear();
 
             for (var i = 0; i < processing.Count; i++)
             {

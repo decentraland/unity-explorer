@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Utility;
 
 namespace SceneRuntime.WebClient
@@ -63,11 +64,20 @@ namespace SceneRuntime.WebClient
             ulong actualLength = Math.Min(length, (ulong)destination.LongLength - destinationIndex);
             actualLength = Math.Min(actualLength, Length - index);
 
-            for (ulong i = 0; i < actualLength; i++)
+            unsafe
             {
-                object byteValue = ScriptObject.GetProperty((index + i).ToString());
+                fixed (byte* dstPtr = destination)
+                {
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ContextId);
+                    IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ObjectId);
 
-                if (byteValue != null) { destination[destinationIndex + i] = Convert.ToByte(byteValue); }
+                    try { JSContext_ReadObjectBytesIntoBuffer(contextIdPtr, objectIdPtr, (int)index, (int)actualLength, (IntPtr)(dstPtr + (int)destinationIndex)); }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(contextIdPtr);
+                        Marshal.FreeHGlobal(objectIdPtr);
+                    }
+                }
             }
 
             return actualLength;
@@ -87,11 +97,20 @@ namespace SceneRuntime.WebClient
             ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
             actualCount = Math.Min(actualCount, Length - offset);
 
-            for (ulong i = 0; i < actualCount; i++)
+            unsafe
             {
-                object byteValue = ScriptObject.GetProperty((offset + i).ToString());
+                fixed (byte* dstPtr = destination)
+                {
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ContextId);
+                    IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ObjectId);
 
-                if (byteValue != null) { destination[destinationIndex + i] = Convert.ToByte(byteValue); }
+                    try { JSContext_ReadObjectBytesIntoBuffer(contextIdPtr, objectIdPtr, (int)offset, (int)actualCount, (IntPtr)(dstPtr + (int)destinationIndex)); }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(contextIdPtr);
+                        Marshal.FreeHGlobal(objectIdPtr);
+                    }
+                }
             }
         }
 
@@ -103,8 +122,28 @@ namespace SceneRuntime.WebClient
             ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
             actualCount = Math.Min(actualCount, Length - offset);
 
-            for (ulong i = 0; i < actualCount; i++) { ScriptObject.SetProperty((offset + i).ToString(), source[sourceIndex + i]); }
+            unsafe
+            {
+                fixed (byte* srcPtr = source)
+                {
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ContextId);
+                    IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ObjectId);
+
+                    try { JSContext_WriteObjectBytesFromBuffer(contextIdPtr, objectIdPtr, (IntPtr)(srcPtr + (int)sourceIndex), (int)actualCount, (int)offset); }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(contextIdPtr);
+                        Marshal.FreeHGlobal(objectIdPtr);
+                    }
+                }
+            }
         }
+
+        [DllImport("__Internal")]
+        private static extern int JSContext_WriteObjectBytesFromBuffer(IntPtr contextId, IntPtr objectId, IntPtr srcPtr, int count, int dstOffset);
+
+        [DllImport("__Internal")]
+        private static extern void JSContext_ReadObjectBytesIntoBuffer(IntPtr contextId, IntPtr objectId, int srcOffset, int count, IntPtr dstPtr);
 
         object IDCLScriptObject.GetProperty(string name, params object[] args) =>
             ScriptObject.GetProperty(name, args);

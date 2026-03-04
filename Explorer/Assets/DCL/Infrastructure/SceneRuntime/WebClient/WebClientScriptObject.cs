@@ -36,6 +36,11 @@ namespace SceneRuntime.WebClient
         /// </summary>
         internal string ObjectId { get; }
 
+        /// <summary>
+        ///     The JavaScript context ID this object belongs to.
+        /// </summary>
+        internal string ContextId => engine.contextId;
+
         public WebClientScriptObject(WebClientJavaScriptEngine engine, string propertyPath)
         {
             this.engine = engine;
@@ -47,7 +52,7 @@ namespace SceneRuntime.WebClient
             if (!IsObjectId(ObjectId))
                 throw new InvalidOperationException($"Cannot invoke method on non-object path: {ObjectId}");
 
-            string argsJson = JsonConvert.SerializeObject(args);
+            string argsJson = SerializeArgsForJs(args);
             IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ObjectId);
             IntPtr methodNamePtr = Utf8Marshal.StringToHGlobalUTF8(name);
             IntPtr argsJsonPtr = Utf8Marshal.StringToHGlobalUTF8(argsJson);
@@ -92,7 +97,7 @@ namespace SceneRuntime.WebClient
 
         public object InvokeAsFunction(params object[] args)
         {
-            string argsJson = JsonConvert.SerializeObject(args);
+            string argsJson = SerializeArgsForJs(args);
 
             if (IsObjectId(ObjectId))
             {
@@ -191,7 +196,12 @@ namespace SceneRuntime.WebClient
                             if (result > 0)
                             {
                                 string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
-                                return JsonConvert.DeserializeObject(resultStr);
+                                object deserialized = JsonConvert.DeserializeObject(resultStr);
+
+                                if (deserialized is string str && IsObjectId(str))
+                                    return new WebClientScriptObject(engine, str);
+
+                                return deserialized;
                             }
 
                             return null;
@@ -215,7 +225,7 @@ namespace SceneRuntime.WebClient
         {
             if (IsObjectId(ObjectId))
             {
-                string valueJson = JsonConvert.SerializeObject(value);
+                string valueJson = SerializeValueForJs(value);
                 IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ObjectId);
                 IntPtr namePtr = Utf8Marshal.StringToHGlobalUTF8(name);
                 IntPtr valueJsonPtr = Utf8Marshal.StringToHGlobalUTF8(valueJson);
@@ -267,7 +277,58 @@ namespace SceneRuntime.WebClient
 
         public void SetProperty(int index, object value)
         {
-            throw new NotImplementedException();
+            SetProperty(index.ToString(), value);
+        }
+
+        /// <summary>
+        ///     Serializes an argument array to a JSON string suitable for passing to jslib functions.
+        ///     Each element is processed through <see cref="SerializeValueForJs" /> so WebClient wrapper
+        ///     types are encoded as object references or ByteArray markers rather than raw C# POCOs.
+        /// </summary>
+        private static string SerializeArgsForJs(object[] args)
+        {
+            if (args == null || args.Length == 0) return "[]";
+
+            var parts = new string[args.Length];
+
+            for (int i = 0; i < args.Length; i++)
+                parts[i] = SerializeValueForJs(args[i]);
+
+            return "[" + string.Join(",", parts) + "]";
+        }
+
+        /// <summary>
+        ///     Serializes a C# value to JSON suitable for passing to <see cref="JSContext_SetObjectProperty" />.
+        ///     WebClient wrapper types are encoded as object references or ByteArray markers so the jslib
+        ///     can reconstruct the original JavaScript value instead of receiving a plain C# POCO.
+        /// </summary>
+        private static string SerializeValueForJs(object value)
+        {
+            // JS object references — pass the stored objectInstances ID back to JS
+            if (value is WebClientScriptObject wso)
+                return $"{{\"__objectRef\":\"{wso.ObjectId}\"}}";
+
+            if (value is WebClientTypedArrayAdapter ta)
+                return $"{{\"__objectRef\":\"{ta.ScriptObject.ObjectId}\"}}";
+
+            if (value is WebClientArrayBufferAdapter ab)
+                return $"{{\"__objectRef\":\"{ab.ScriptObject.ObjectId}\"}}";
+
+            // Managed byte array — encode as base64 so JS can reconstruct a Uint8Array
+            if (value is WebClientByteArrayWrapper wrapper)
+            {
+                ulong len = wrapper.Length;
+
+                if (len == 0)
+                    return "{\"__type\":\"ByteArray\",\"data\":\"\",\"isEmpty\":true}";
+
+                var bytes = new byte[len];
+                wrapper.Read(0, len, bytes, 0);
+                string base64 = Convert.ToBase64String(bytes);
+                return $"{{\"__type\":\"ByteArray\",\"data\":\"{base64}\",\"length\":{len}}}";
+            }
+
+            return JsonConvert.SerializeObject(value);
         }
 
         private static bool IsObjectId(string path) =>
@@ -277,7 +338,7 @@ namespace SceneRuntime.WebClient
         {
             if (asConstructor)
             {
-                string argsJson = JsonConvert.SerializeObject(args);
+                string argsJson = SerializeArgsForJs(args);
                 var newExpr = $"new {ObjectId}(...{argsJson})";
 
                 IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(newExpr);

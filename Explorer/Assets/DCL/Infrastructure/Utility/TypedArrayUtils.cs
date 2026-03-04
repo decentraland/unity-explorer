@@ -12,7 +12,18 @@ namespace Utility
 
             if (index >= totalLength) { throw new ArgumentOutOfRangeException(nameof(index)); }
 
+#if UNITY_WEBGL
+            ulong bytesPerElement = array.Size / totalLength;
+            ulong byteOffset = index * bytesPerElement;
+            int maxBytes = (int)Math.Min(length, totalLength - index) * (int)bytesPerElement;
+            ReadOnlySpan<byte> srcSpan = source.AsReadOnlySpan();
+            int bytesToCopy = Math.Min(maxBytes, srcSpan.Length);
+            byte[] buffer = srcSpan.Slice(0, bytesToCopy).ToArray();
+            array.WriteBytes(buffer, 0, (ulong)bytesToCopy, byteOffset);
+            return bytesToCopy;
+#else
             return array.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.AsReadOnlySpan(), (int)Math.Min(length, totalLength - index), array.GetPtrWithIndex(pData, index)));
+#endif
         }
 
         public static int Write<T>(this IDCLTypedArray<T> array, ReadOnlyMemory<byte> source,
@@ -22,7 +33,18 @@ namespace Utility
 
             if (index >= totalLength) { throw new ArgumentOutOfRangeException(nameof(index)); }
 
+#if UNITY_WEBGL
+            ulong bytesPerElement = array.Size / totalLength;
+            ulong byteOffset = index * bytesPerElement;
+            int maxBytes = (int)Math.Min(length, totalLength - index) * (int)bytesPerElement;
+            ReadOnlySpan<byte> srcSpan = source.Span;
+            int bytesToCopy = Math.Min(maxBytes, srcSpan.Length);
+            byte[] buffer = srcSpan.Slice(0, bytesToCopy).ToArray();
+            array.WriteBytes(buffer, 0, (ulong)bytesToCopy, byteOffset);
+            return bytesToCopy;
+#else
             return array.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.Span, (int)Math.Min(length, totalLength - index), array.GetPtrWithIndex(pData, index)));
+#endif
         }
 
         private static IntPtr GetPtrWithIndex<T>(this IDCLTypedArray<T> array, IntPtr pData,

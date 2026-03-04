@@ -161,12 +161,12 @@ namespace SceneRuntime.WebClient
                     __resetableSource.Reject(e.stack)
                 }
             }
-            globalThis.__internalOnUpdate = async function (dt) {
+            globalThis.__internalOnUpdate = function (dt) {
                 try {
-                    await globalThis.__internalScene.onUpdate(dt)
+                    globalThis.__internalScene.onUpdate(dt)
                     __resetableSource.Completed()
                 } catch(e) {
-                    __resetableSource.Reject(e.stack)
+                    __resetableSource.Reject(e.stack || String(e))
                 }
             }
         ");

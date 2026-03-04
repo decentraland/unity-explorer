@@ -754,8 +754,8 @@ mergeInto(LibraryManager.library, {
             const argsJson = serializeArgs(args);
             const argsJsonLen = lengthBytesUTF8(argsJson) + 1;
             
-            // Allocate result buffer (start with 128KB to handle large CRDT state responses)
-            const resultBufferSize = 131072;
+            // Allocate result buffer (2MB to handle large CRDT state responses)
+            const resultBufferSize = 2097152;
             
             const contextIdPtr = _malloc(contextIdLen);
             const objectIdPtr = _malloc(objectIdLen);
@@ -1005,9 +1005,22 @@ mergeInto(LibraryManager.library, {
         try {
             const func = context.global[funcNameStr];
             if (typeof func !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = func.apply(context.global, args);
-            const resultStr = JSON.stringify(result);
+            // JSON.stringify(undefined) returns undefined (not a string), handle void functions
+            const serialized = JSON.stringify(result);
+            const resultStr = serialized !== undefined ? serialized : 'null';
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1104,12 +1117,20 @@ mergeInto(LibraryManager.library, {
         const nameStr = UTF8ToString(name);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             const value = obj[nameStr];
-            const valueStr = JSON.stringify(value);
+            let valueStr;
+            if (value !== null && value !== undefined && typeof value === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = value;
+                valueStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(value);
+                valueStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(valueStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1128,11 +1149,28 @@ mergeInto(LibraryManager.library, {
         const valueJsonStr = UTF8ToString(valueJson);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
-            const value = JSON.parse(valueJsonStr);
+            let value = JSON.parse(valueJsonStr);
+            // Resolve special value markers back to JS objects
+            if (value && typeof value === 'object') {
+                if (value.__objectRef) {
+                    value = context.objectInstances[value.__objectRef];
+                } else if (value.__type === 'ByteArray') {
+                    if (value.isEmpty) {
+                        value = new Uint8Array(0);
+                    } else {
+                        const binaryStr = atob(value.data);
+                        const bytes = new Uint8Array(binaryStr.length);
+                        for (let i = 0; i < binaryStr.length; i++) {
+                            bytes[i] = binaryStr.charCodeAt(i);
+                        }
+                        value = bytes;
+                    }
+                }
+            }
             obj[nameStr] = value;
             return 1;
         } catch (e) {
@@ -1148,15 +1186,34 @@ mergeInto(LibraryManager.library, {
         const argsJsonStr = UTF8ToString(argsJson);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             const method = obj[methodNameStr];
             if (typeof method !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = method.apply(obj, args);
-            const resultStr = JSON.stringify(result);
+            let resultStr;
+            if (result !== null && result !== undefined && typeof result === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = result;
+                resultStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(result);
+                resultStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1180,9 +1237,28 @@ mergeInto(LibraryManager.library, {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             if (typeof obj !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = obj.apply(null, args);
-            const resultStr = JSON.stringify(result);
+            let resultStr;
+            if (result !== null && result !== undefined && typeof result === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = result;
+                resultStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(result);
+                resultStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1195,6 +1271,40 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    // Bulk-copies 'count' bytes from wasm memory at srcPtr into a Uint8Array stored object,
+    // starting at dstOffset in the target array. Uses HEAPU8.subarray + TypedArray.set for O(1) JS work.
+    JSContext_WriteObjectBytesFromBuffer: function(contextId, objectId, srcPtr, count, dstOffset) {
+        const contextIdStr = UTF8ToString(contextId);
+        const objectIdStr = UTF8ToString(objectId);
+        const context = window.__dclJSContexts[contextIdStr];
+        if (!context) return 0;
+        const obj = context.objectInstances[objectIdStr];
+        if (!obj || !(obj instanceof Uint8Array)) return 0;
+        obj.set(HEAPU8.subarray(srcPtr, srcPtr + count), dstOffset);
+        return 1;
+    },
+
+    // Bulk-copies 'count' bytes from a stored JS Uint8Array or ArrayBuffer into wasm memory at dstPtr,
+    // starting at srcOffset in the source object. Uses HEAPU8.set + TypedArray.subarray for O(1) JS work.
+    JSContext_ReadObjectBytesIntoBuffer: function(contextId, objectId, srcOffset, count, dstPtr) {
+        const contextIdStr = UTF8ToString(contextId);
+        const objectIdStr = UTF8ToString(objectId);
+        const context = window.__dclJSContexts[contextIdStr];
+        if (!context) return 0;
+        const obj = context.objectInstances[objectIdStr];
+        if (!obj) return 0;
+        let srcBytes;
+        if (obj instanceof Uint8Array) {
+            srcBytes = obj.subarray(srcOffset, srcOffset + count);
+        } else if (obj instanceof ArrayBuffer) {
+            srcBytes = new Uint8Array(obj, srcOffset, count);
+        } else {
+            return 0;
+        }
+        HEAPU8.set(srcBytes, dstPtr);
+        return count;
+    },
+
     OpenUrlInNewTab: function(url) {
         if (typeof window !== 'undefined' && window.open) {
             var urlStr = url ? UTF8ToString(url) : '';
@@ -1204,6 +1314,31 @@ mergeInto(LibraryManager.library, {
 
     GetDevicePixelRatio: function() {
         return (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+    },
+
+    // Persists the DCLPlayerPrefs JSON blob to browser localStorage.
+    DCLPrefs_Save: function(jsonPtr) {
+        try {
+            localStorage.setItem('dcl_prefs', UTF8ToString(jsonPtr));
+        } catch(e) {
+            console.warn('[DCLPrefs] localStorage.setItem failed:', e);
+        }
+    },
+
+    // Loads the DCLPlayerPrefs JSON blob from browser localStorage into the result buffer.
+    // Returns the number of bytes written, or the negative required size if the buffer is too small.
+    // Returns 0 if no data is stored or an error occurs.
+    DCLPrefs_Load: function(resultPtr, resultSize) {
+        try {
+            const json = localStorage.getItem('dcl_prefs') || 'null';
+            const len = lengthBytesUTF8(json) + 1;
+            if (resultSize < len) return -len;
+            stringToUTF8(json, resultPtr, resultSize);
+            return len - 1;
+        } catch(e) {
+            console.warn('[DCLPrefs] localStorage.getItem failed:', e);
+            return 0;
+        }
     }
 
 });

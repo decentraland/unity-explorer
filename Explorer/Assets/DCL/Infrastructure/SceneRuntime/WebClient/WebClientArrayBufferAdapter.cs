@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using Utility;
 
 namespace SceneRuntime.WebClient
@@ -30,20 +31,24 @@ namespace SceneRuntime.WebClient
             if (count == 0)
                 return 0;
 
-            object subarrayResult = scriptObject.InvokeMethod("slice", (long)offset, (long)(offset + count));
-            if (subarrayResult is WebClientScriptObject subarray)
+            ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
+
+            unsafe
             {
-                for (ulong i = 0; i < count && i < (ulong)destination.LongLength - destinationIndex; i++)
+                fixed (byte* dstPtr = destination)
                 {
-                    object byteValue = subarray.GetProperty(i.ToString());
-                    if (byteValue != null)
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptObject.ContextId);
+                    IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptObject.ObjectId);
+
+                    try { JSContext_ReadObjectBytesIntoBuffer(contextIdPtr, objectIdPtr, (int)offset, (int)actualCount, (IntPtr)(dstPtr + (int)destinationIndex)); }
+                    finally
                     {
-                        destination[destinationIndex + i] = Convert.ToByte(byteValue);
+                        Marshal.FreeHGlobal(contextIdPtr);
+                        Marshal.FreeHGlobal(objectIdPtr);
                     }
                 }
-                return count;
             }
-            return 0;
+            return actualCount;
         }
 
         ulong IDCLArrayBuffer.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
@@ -51,18 +56,36 @@ namespace SceneRuntime.WebClient
             if (count == 0)
                 return 0;
 
-            for (ulong i = 0; i < count && i < (ulong)source.LongLength - sourceIndex; i++)
+            ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
+
+            unsafe
             {
-                scriptObject.SetProperty((offset + i).ToString(), source[sourceIndex + i]);
+                fixed (byte* srcPtr = source)
+                {
+                    IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptObject.ContextId);
+                    IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptObject.ObjectId);
+
+                    try { JSContext_WriteObjectBytesFromBuffer(contextIdPtr, objectIdPtr, (IntPtr)(srcPtr + (int)sourceIndex), (int)actualCount, (int)offset); }
+                    finally
+                    {
+                        Marshal.FreeHGlobal(contextIdPtr);
+                        Marshal.FreeHGlobal(objectIdPtr);
+                    }
+                }
             }
-            return count;
+            return actualCount;
         }
 
         void IDCLArrayBuffer.InvokeWithDirectAccess(Action<IntPtr> action) =>
             throw new NotSupportedException("WebGL does not support direct memory access");
 
-
         TResult IDCLArrayBuffer.InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func) =>
             throw new NotSupportedException("WebGL does not support direct memory access");
+
+        [DllImport("__Internal")]
+        private static extern void JSContext_ReadObjectBytesIntoBuffer(IntPtr contextId, IntPtr objectId, int srcOffset, int count, IntPtr dstPtr);
+
+        [DllImport("__Internal")]
+        private static extern int JSContext_WriteObjectBytesFromBuffer(IntPtr contextId, IntPtr objectId, IntPtr srcPtr, int count, int dstOffset);
     }
 }
