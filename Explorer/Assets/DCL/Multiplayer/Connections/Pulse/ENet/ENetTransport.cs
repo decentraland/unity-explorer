@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using Google.Protobuf;
 using System;
 using System.Threading;
@@ -80,7 +79,6 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             client?.Dispose();
             client = null;
             Library.Deinitialize();
-            ReportHub.Verbose(ReportCategory.MULTIPLAYER, "ENet disconnected.");
             return UniTask.CompletedTask;
         }
 
@@ -177,7 +175,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private void SendToPeer(Peer peer, ENetChannel channel, IMessage message)
         {
             int size = message.CalculateSize();
-            message.WriteTo(new Span<byte>(sendBuffer, 0, size));
+            message.WriteTo((CodedOutputStream) new Span<byte>(sendBuffer, 0, size));
             var packet = default(Packet);
             packet.Create(sendBuffer, 0, size, channel.PacketMode);
             peer.Send(channel.ChannelId, ref packet);
