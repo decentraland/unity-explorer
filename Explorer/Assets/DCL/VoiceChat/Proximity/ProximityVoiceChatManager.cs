@@ -1,9 +1,6 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
@@ -27,8 +24,8 @@ namespace DCL.VoiceChat
 {
     /// <summary>
     /// Manages proximity voice chat with 3D spatial audio by publishing and subscribing
-    /// to audio tracks in the Island Room. Remote audio sources are parented under
-    /// participant avatars so positions update automatically with movement.
+    /// to audio tracks in the Island Room. Registers active audio sources in a shared dictionary
+    /// so <see cref="ProximityAudioPositionSystem"/> can assign and sync positions via ECS.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
     {
@@ -41,8 +38,7 @@ namespace DCL.VoiceChat
 
         private readonly IRoom islandRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly World world;
+        private readonly ConcurrentDictionary<string, Transform> activeAudioSources;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
 
@@ -55,13 +51,11 @@ namespace DCL.VoiceChat
         public ProximityVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
-            World world)
+            ConcurrentDictionary<string, Transform> activeAudioSources)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
-            this.entityParticipantTable = entityParticipantTable;
-            this.world = world;
+            this.activeAudioSources = activeAudioSources;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
 
@@ -306,7 +300,7 @@ namespace DCL.VoiceChat
                 DestroySource(oldSource);
 
             LivekitAudioSource source = CreateSource(key, stream, spatial: true);
-            ParentUnderAvatar(source, key.identity);
+            source.transform.SetParent(fallbackParent);
             source.Play();
 
             if (!remoteSources.TryAdd(key, source))
@@ -316,6 +310,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            activeAudioSources[key.identity] = source.transform;
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}");
         }
 
@@ -324,15 +319,9 @@ namespace DCL.VoiceChat
             if (!remoteSources.TryRemove(key, out LivekitAudioSource? source))
                 return;
 
-            RemoveRemoteSourceAsync(source).Forget();
+            activeAudioSources.TryRemove(key.identity, out _);
+            DestroySource(source);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote source removed for {key.identity}");
-            return;
-
-            static async UniTaskVoid RemoveRemoteSourceAsync(LivekitAudioSource livekitAudioSource)
-            {
-                await UniTask.SwitchToMainThread();
-                DestroySource(livekitAudioSource);
-            }
         }
 
         private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
@@ -355,22 +344,6 @@ namespace DCL.VoiceChat
 
             source.name = $"ProximityAudio_{key.identity}";
             return source;
-        }
-
-        private void ParentUnderAvatar(LivekitAudioSource source, string participantIdentity)
-        {
-            if (entityParticipantTable.TryGet(participantIdentity, out IReadOnlyEntityParticipantTable.Entry entry)
-                && world.TryGet(entry.Entity, out AvatarBase? avatarBase)
-                && avatarBase != null)
-            {
-                source.transform.SetParent(avatarBase.transform);
-                source.transform.localPosition = Vector3.zero;
-            }
-            else
-            {
-                source.transform.SetParent(fallbackParent);
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Avatar not found for {participantIdentity}, using fallback parent");
-            }
         }
 
         private static void DestroySource(LivekitAudioSource? source)
