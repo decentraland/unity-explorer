@@ -47,6 +47,8 @@ namespace DCL.VoiceChat
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
+            islandRoom.LocalTrackPublished += OnLocalTrackPublished;
+            islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
@@ -62,6 +64,8 @@ namespace DCL.VoiceChat
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
             islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
+            islandRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
@@ -220,6 +224,60 @@ namespace DCL.VoiceChat
                 catch (Exception ex)
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}");
+                }
+            }
+        }
+
+        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+        {
+            OnLocalTrackPublishedInternalAsync().Forget();
+            return;
+
+            async UniTaskVoid OnLocalTrackPublishedInternalAsync()
+            {
+                await UniTask.SwitchToMainThread();
+
+                if (publication.Kind != TrackKind.KindAudio) return;
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                try
+                {
+                    var key = new StreamKey(participant.Identity, publication.Sid);
+                    Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
+
+                    if (stream.Resource.Has)
+                    {
+                        playbackSourcesHub.AddOrReplaceStream(key, stream);
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track loopback enabled (round-trip via server)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}");
+                }
+            }
+        }
+
+        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        {
+            OnLocalTrackUnpublishedInternalAsync().Forget();
+            return;
+
+            async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
+            {
+                await UniTask.SwitchToMainThread();
+
+                if (publication.Kind != TrackKind.KindAudio) return;
+                if (!configuration.EnableLocalTrackPlayback) return;
+
+                try
+                {
+                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track loopback removed");
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}");
                 }
             }
         }
