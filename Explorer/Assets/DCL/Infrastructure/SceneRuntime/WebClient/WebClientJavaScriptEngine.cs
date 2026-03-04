@@ -376,16 +376,17 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static unsafe int WriteResultToBuffer(string result, IntPtr buffer, int bufferSize)
         {
-            byte[] utf8Bytes = Encoding.UTF8.GetBytes(result);
-            int requiredSize = utf8Bytes.Length + 1; // +1 for null terminator
+            int byteCount = Encoding.UTF8.GetByteCount(result);
+            int requiredSize = byteCount + 1; // +1 for null terminator
 
             if (bufferSize < requiredSize)
                 return -requiredSize;
 
-            Marshal.Copy(utf8Bytes, 0, buffer, utf8Bytes.Length);
-            ((byte*)buffer.ToPointer())[utf8Bytes.Length] = 0; // Null terminator
+            Span<byte> dest = new Span<byte>(buffer.ToPointer(), bufferSize);
+            int written = Encoding.UTF8.GetBytes(result.AsSpan(), dest);
+            dest[written] = 0; // null terminator
 
-            return utf8Bytes.Length;
+            return written;
         }
 
         public void Execute(string code)

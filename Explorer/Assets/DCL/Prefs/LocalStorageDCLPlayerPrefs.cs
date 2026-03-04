@@ -18,9 +18,19 @@ namespace DCL.Prefs
     {
         private readonly UserData userData;
 
+        private byte[] encodeBuffer   = Array.Empty<byte>();
+        private IntPtr nativeBuffer   = IntPtr.Zero;
+        private int    nativeCapacity;
+
         public LocalStorageDCLPlayerPrefs()
         {
             userData = Load();
+        }
+
+        ~LocalStorageDCLPlayerPrefs()
+        {
+            if (nativeBuffer != IntPtr.Zero)
+                Marshal.FreeHGlobal(nativeBuffer);
         }
 
         public void SetString(string key, string value) { DeleteKey(key); userData.Strings[key] = value; Save(); }
@@ -57,18 +67,30 @@ namespace DCL.Prefs
         public void Save()
         {
             string json = JsonConvert.SerializeObject(userData);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            IntPtr ptr = Marshal.AllocHGlobal(bytes.Length + 1);
-            Marshal.Copy(bytes, 0, ptr, bytes.Length);
-            Marshal.WriteByte(ptr, bytes.Length, 0); // null terminator for jslib UTF8ToString
 
-            try { DCLPrefs_Save(ptr); }
-            finally { Marshal.FreeHGlobal(ptr); }
+            int maxBytes = Encoding.UTF8.GetMaxByteCount(json.Length);
+            if (encodeBuffer.Length < maxBytes)
+                encodeBuffer = new byte[maxBytes];
+
+            int byteCount = Encoding.UTF8.GetBytes(json, 0, json.Length, encodeBuffer, 0);
+
+            // Ensure unmanaged buffer has room for encoded bytes + null terminator.
+            int required = byteCount + 1;
+            if (nativeCapacity < required)
+            {
+                if (nativeBuffer != IntPtr.Zero) Marshal.FreeHGlobal(nativeBuffer);
+                nativeBuffer   = Marshal.AllocHGlobal(required);
+                nativeCapacity = required;
+            }
+
+            Marshal.Copy(encodeBuffer, 0, nativeBuffer, byteCount);
+            Marshal.WriteByte(nativeBuffer, byteCount, 0); // null terminator for jslib UTF8ToString
+            DCLPrefs_Save(nativeBuffer);
         }
 
         private static UserData Load()
         {
-            int bufferSize = 1024 * 64; // 64 KB — more than sufficient for prefs JSON
+            int bufferSize = 1024 * 64;
             IntPtr ptr = Marshal.AllocHGlobal(bufferSize);
 
             try
