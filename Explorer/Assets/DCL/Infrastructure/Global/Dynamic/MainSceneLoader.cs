@@ -676,6 +676,7 @@ namespace Global.Dynamic
             if (uri.Host == "realm-provider-ea.decentraland.org") return true;
             if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
             if (uri.Host == "worlds-content-server.decentraland.org") return true;
+            if (uri.Host == "worlds-content-server.decentraland.zone") return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 

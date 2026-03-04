@@ -1,4 +1,5 @@
 using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -11,5 +12,8 @@ namespace DCL.AvatarRendering.Loading.Components
         void AppendToResult(TResultElement resultElement);
 
         bool NeedsBuilderAPISigning { get; }
+
+        public IReadOnlyList<(string, string)> Params { get; }
+        public string UserID { get; }
     }
 }

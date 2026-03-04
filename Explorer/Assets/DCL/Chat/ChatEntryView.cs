@@ -147,6 +147,7 @@ namespace DCL.Chat
                 {
                     view.usernameElement.UserNameClicked += OnUsernameClicked;
                     view.usernameElement.SetUsername(profileInfo.UserName, profileInfo.UserWalletId, profileInfo.IsOfficial);
+                    view.messageBubbleElement.UpdateName(viewModel.DisplayText, chatMessage, profileInfo.UserName, profileInfo.UserWalletId);
                 }
                 else
                     view.usernameElement.UserNameClicked -= OnUsernameClicked;

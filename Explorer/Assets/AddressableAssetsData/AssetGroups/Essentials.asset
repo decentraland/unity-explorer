@@ -330,6 +330,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa8bec03ac49f9d44abac12af9e4aa39
+    m_Address: AvatarHighlight.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa9a67059d8a204408ce435cc8827612
     m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
     m_ReadOnly: 0
