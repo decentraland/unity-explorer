@@ -152,7 +152,23 @@ namespace DCL.Character.CharacterMotion.Systems
                                 || dot < 0;
 
             if (needToRotate)
-                rigidTransform.LookDirection = Vector3.ProjectOnPlane(directionToTarget, Vector3.up);
+            {
+                float targetCrossY = 0f;
+
+                if (cross.y > settings.PointAtRotationHorizontalRightThreshold)
+                    targetCrossY = settings.PointAtRotationHorizontalRightThreshold;
+                else if (cross.y < -settings.PointAtRotationHorizontalLeftThreshold)
+                    targetCrossY = -settings.PointAtRotationHorizontalLeftThreshold;
+
+                Vector3 dirH = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
+                Vector3 perpH = Vector3.Cross(directionToTarget, Vector3.up);
+                float m = perpH.magnitude;
+
+                float s = Mathf.Clamp(targetCrossY / m, -1f, 1f);
+                float c = Mathf.Sqrt(1f - (s * s));
+
+                rigidTransform.LookDirection = ((c * dirH) + (s * perpH)) / m;
+            }
 
             if (Mathf.Abs(cross.x) > settings.PointAtRotationVerticalThreshold)
             {
