@@ -145,18 +145,21 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             Vector3 cross = Vector3.Cross(avatarBase.transform.forward, directionToTarget);
             float dot = Vector3.Dot(avatarBase.transform.forward, directionToTarget);
-            bool needToRotate = Mathf.Abs(cross.y) > settings.PointAtRotationHorizontalRightThreshold || dot < 0;
+
+            // cross.y > 0 rotate right, else rotate left
+            bool needToRotate = cross.y > settings.PointAtRotationHorizontalRightThreshold
+                                || cross.y < -settings.PointAtRotationHorizontalLeftThreshold
+                                || dot < 0;
 
             if (needToRotate)
-                // cross.y > 0 rotate right, else rotate left
                 rigidTransform.LookDirection = Vector3.ProjectOnPlane(directionToTarget, Vector3.up);
 
             if (Mathf.Abs(cross.x) > settings.PointAtRotationVerticalThreshold)
             {
                 if (cross.x > 0)
-                    Debug.Log("Guarda giù", avatarBase);
+                    Debug.Log("Look down", avatarBase);
                 else
-                    Debug.Log("Guarda su", avatarBase);
+                    Debug.Log("Look up", avatarBase);
             }
 
             return (dot, needToRotate);
