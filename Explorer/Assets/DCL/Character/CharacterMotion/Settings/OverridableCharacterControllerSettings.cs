@@ -334,16 +334,28 @@ namespace DCL.CharacterMotion.Settings
             set => impl.PointAtArmReach = value;
         }
 
-        public float PointAtRotationHorizontalThreshold
+        public float PointAtRotationHorizontalRightThreshold
         {
-            get => impl.PointAtRotationHorizontalThreshold;
-            set => impl.PointAtRotationHorizontalThreshold = value;
+            get => impl.PointAtRotationHorizontalRightThreshold;
+            set => impl.PointAtRotationHorizontalRightThreshold = value;
+        }
+
+        public float PointAtRotationHorizontalLeftThreshold
+        {
+            get => impl.PointAtRotationHorizontalLeftThreshold;
+            set => impl.PointAtRotationHorizontalLeftThreshold = value;
         }
 
         public float PointAtRotationVerticalThreshold
         {
             get => impl.PointAtRotationVerticalThreshold;
             set => impl.PointAtRotationVerticalThreshold = value;
+        }
+
+        public float PointAtRotationSpeed
+        {
+            get => impl.PointAtRotationSpeed;
+            set => impl.PointAtRotationSpeed = value;
         }
 
         public float HeadIKWeightChangeSpeed

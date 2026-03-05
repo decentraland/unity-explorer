@@ -119,6 +119,7 @@ namespace DCL.Character.CharacterMotion.Systems
             else
             {
                 Camera cam = cameraComponent.Camera;
+
                 Plane farPlane = new Plane(
                     -cam.transform.forward,
                     cam.transform.position + (cam.transform.forward * cam.farClipPlane)
@@ -135,31 +136,18 @@ namespace DCL.Character.CharacterMotion.Systems
             handPointAtComponent.IsPointing = true;
         }
 
-        [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        private void ApplyPointAtIK(
-            [Data] float dt,
-            ref HandPointAtComponent pointAt,
-            ref AvatarBase avatarBase,
+        private (float dot, bool needToRotate) HandleAvatarRotation(
+            in AvatarBase avatarBase,
+            in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            in ICharacterControllerSettings settings)
+            Vector3 directionToTarget
+        )
         {
-            float targetAnimWeight = pointAt.IsPointing ? 1f : 0f;
-            pointAt.AnimationWeight = Mathf.MoveTowards(
-                pointAt.AnimationWeight, targetAnimWeight, settings.HandsIKWeightSpeed * dt);
-
-            avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
-
-            if (!pointAt.IsPointing) return;
-
-            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
-            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
-
-            Vector3 cross = Vector3.Cross( avatarBase.transform.forward, directionToTarget);
+            Vector3 cross = Vector3.Cross(avatarBase.transform.forward, directionToTarget);
             float dot = Vector3.Dot(avatarBase.transform.forward, directionToTarget);
+            bool needToRotate = Mathf.Abs(cross.y) > settings.PointAtRotationHorizontalRightThreshold || dot < 0;
 
-            if (Mathf.Abs(cross.y) > settings.PointAtRotationHorizontalThreshold || dot < 0)
+            if (needToRotate)
                 // cross.y > 0 rotate right, else rotate left
                 rigidTransform.LookDirection = Vector3.ProjectOnPlane(directionToTarget, Vector3.up);
 
@@ -171,13 +159,41 @@ namespace DCL.Character.CharacterMotion.Systems
                     Debug.Log("Guarda su", avatarBase);
             }
 
+            return (dot, needToRotate);
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyPointAtIK(
+            [Data] float dt,
+            ref HandPointAtComponent pointAt,
+            ref AvatarBase avatarBase,
+            ref CharacterRigidTransform rigidTransform,
+            in ICharacterControllerSettings settings)
+        {
+            float targetAnimWeight = pointAt is { IsPointing: true, RotationCompleted: true } ? 1f : 0f;
+
+            pointAt.AnimationWeight = Mathf.MoveTowards(
+                pointAt.AnimationWeight, targetAnimWeight, settings.HandsIKWeightSpeed * dt);
+
+            avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
+
+            if (!pointAt.IsPointing) return;
+
+            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
+            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
+
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
-            // Drive the existing right hand constraint directly
+            pointAt.RotationCompleted = rotationInfo.dot > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
             avatarBase.RightHandIK.weight = Mathf.MoveTowards(
-                avatarBase.RightHandIK.weight, 1f, settings.HandsIKWeightSpeed * dt);
+                avatarBase.RightHandIK.weight, pointAt.RotationCompleted ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
             Transform target = avatarBase.RightHandSubTarget;
+
             target.position = Vector3.MoveTowards(
                 target.position, ikTargetPos, settings.IKPositionSpeed * dt);
 

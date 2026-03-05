@@ -11,6 +11,7 @@ namespace DCL.Character.CharacterMotion.Components
         public bool WasPressed;
         public bool IsDragging;
         public Vector2 PressOrigin;
+        public bool RotationCompleted;
 
         private float duration;
 
