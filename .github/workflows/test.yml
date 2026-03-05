@@ -1,4 +1,4 @@
-name: Unity Test (By Namespace)
+name: Unity Test
 
 on:
   workflow_dispatch:
