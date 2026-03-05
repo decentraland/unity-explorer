@@ -66,14 +66,14 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                                 if (track.Kind == TrackKind.KindVideo)
                                 {
                                     GetActiveVideoStreamsResponse.WriteTo(writer,
-                                        remoteParticipantIdentity, track);
+                                        remoteParticipantIdentity, participant, track);
 
                                     if (asCurrent == null)
                                     {
                                         asCurrent = (remoteParticipantIdentity, track);
 
                                         GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer,
-                                            remoteParticipantIdentity, track);
+                                            remoteParticipantIdentity, participant, track);
                                     }
                                 }
                             }
