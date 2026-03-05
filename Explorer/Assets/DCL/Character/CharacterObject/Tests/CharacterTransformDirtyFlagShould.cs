@@ -7,7 +7,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.ECSComponents;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -17,7 +16,6 @@ using DCL.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
-using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -41,19 +39,12 @@ namespace DCL.Character.Tests
         private List<GameObject> testGameObjects;
 
         [OneTimeSetUp]
-        public void InitFF()
-        {
-            var appArgs = new ApplicationParametersParser();
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
-        }
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
 
         [OneTimeTearDown]
-        public void ResetFF()
-        {
-            FeatureFlagsConfiguration.Reset();
-            FeaturesRegistry.Reset();
-        }
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void Setup()
