@@ -16,6 +16,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] public Sprite BlockSprite { get; private set; } = null!;
         [field: SerializeField] public string BlockText { get; private set; } = "Block";
 
+        [field: SerializeField] public Sprite ReportSprite { get; private set; } = null!;
+        [field: SerializeField] public string ReportText { get; private set; } = "Report";
+
         [field: SerializeField] public Sprite ChatSprite { get; private set; } = null!;
         [field: SerializeField] public string ChatText { get; private set; } = "Chat";
 

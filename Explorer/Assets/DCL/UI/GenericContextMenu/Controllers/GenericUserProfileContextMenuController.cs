@@ -81,6 +81,7 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> giftButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> reportButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
@@ -133,6 +134,7 @@ namespace DCL.UI
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             giftButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.GiftInButtonConfig.Text, contextMenuSettings.GiftInButtonConfig.Sprite, new StringDelegate(OnGiftUserClicked));
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
+            reportButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.ReportButtonConfig.Text, contextMenuSettings.ReportButtonConfig.Sprite, new StringDelegate(OnReportUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
 
@@ -153,7 +155,8 @@ namespace DCL.UI
                 contextMenu.AddControl(contextGiftButton);
 
             contextMenu.AddControl(contextMenuJumpInButton)
-                       .AddControl(contextMenuBlockUserButton);
+                       .AddControl(contextMenuBlockUserButton)
+                       .AddControl(reportButtonControlSettings);
 
             if (includeCommunities)
             {
@@ -204,6 +207,7 @@ namespace DCL.UI
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
+            reportButtonControlSettings.SetData(profile.UserId);
 
             if (includeVoiceChat)
             {
@@ -362,6 +366,11 @@ namespace DCL.UI
         private void OnBlockUserClicked(string userId)
         {
             ShowBlockUserPromptAsync(targetProfile).Forget();
+        }
+
+        private void OnReportUserClicked(string userId)
+        {
+            // TODO (Santi): Implement this...
         }
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)

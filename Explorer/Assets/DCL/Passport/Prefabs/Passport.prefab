@@ -4563,6 +4563,8 @@ MonoBehaviour:
   <ContextMenuButton>k__BackingField: {fileID: 835179928905091827}
   <BlockSprite>k__BackingField: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
   <BlockText>k__BackingField: Block
+  <ReportSprite>k__BackingField: {fileID: 21300000, guid: 3bfacc159ebe34861ad08dd502c313fc, type: 3}
+  <ReportText>k__BackingField: Report
   <JumpInSprite>k__BackingField: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
   <JumpInText>k__BackingField: Jump to Location
   <GiftSprite>k__BackingField: {fileID: 21300000, guid: 5e94cf755de954ea889213667ad9d540, type: 3}

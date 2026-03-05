@@ -76,6 +76,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.OpenUserChatRequested += OnOpenUserChat;
             invitesAndRequestsView.CallUserRequested += OnCallUser;
             invitesAndRequestsView.BlockUserRequested += OnBlockUser;
+            invitesAndRequestsView.ReportUserRequested += OnReportUser;
             invitesAndRequestsView.ManageRequestReceivedRequested += OnManageRequestReceived;
         }
 
@@ -97,6 +98,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.OpenUserChatRequested -= OnOpenUserChat;
             invitesAndRequestsView.CallUserRequested -= OnCallUser;
             invitesAndRequestsView.BlockUserRequested -= OnBlockUser;
+            invitesAndRequestsView.ReportUserRequested -= OnReportUser;
             invitesAndRequestsView.ManageRequestReceivedRequested -= OnManageRequestReceived;
         }
 
@@ -170,6 +172,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnBlockUser(ICommunityMemberData profile) =>
             BlockUserRequested?.Invoke(profile);
+
+        private void OnReportUser(ICommunityMemberData profile)
+        {
+            // TODO (Santi): Implement this...
+        }
 
         private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
             ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);

@@ -425,6 +425,10 @@ namespace DCL.Passport
                     BlockUserClicked),
                 false));
 
+            contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
+                    viewInstance.ReportSprite,
+                    ReportUserClicked));
+
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider,
@@ -933,6 +937,11 @@ namespace DCL.Passport
 
                 ShowFriendshipInteraction();
             }
+        }
+
+        private void ReportUserClicked()
+        {
+            // TODO (Santi): Implement this...
         }
 
         private void ShowMutualFriends()

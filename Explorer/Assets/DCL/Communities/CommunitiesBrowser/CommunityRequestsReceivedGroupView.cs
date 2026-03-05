@@ -29,6 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
 
         public string? CommunityId { get; private set; }
 
@@ -68,7 +69,8 @@ namespace DCL.Communities.CommunitiesBrowser
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx)))
-                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))));
+                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx)));
         }
 
         public void Initialize()
