@@ -1,0 +1,213 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GliderProp_Mask
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Armature_Prop
+    m_Weight: 0
+  - m_Path: Armature_Prop/Glider_Final
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_handle
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.L
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.R
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 1
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 1
+  - m_Path: Particle System
+    m_Weight: 0
+  - m_Path: AudioSources
+    m_Weight: 0
+  - m_Path: AudioSources/OpenGlider
+    m_Weight: 0
+  - m_Path: AudioSources/Idle
+    m_Weight: 0
+  - m_Path: AudioSources/Moving
+    m_Weight: 0
+  - m_Path: Armature_Prop
+    m_Weight: 0
+  - m_Path: Armature_Prop/Glider_Final
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_handle
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.L
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.R
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Glider_Final
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_handle
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.L
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.R
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_handle
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.L
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.R
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_handle
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.L
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wing.L.002/DEF_glider_wingFabric.L.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.L.001/DEF_glider_wingFabric.L.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_propeller.R
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wing.R.002/DEF_glider_wingFabric.R.003
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.001
+    m_Weight: 0
+  - m_Path: Armature_Prop/Prop_Root/DEF_glider_main/DEF_glider_wing.R.001/DEF_glider_wingFabric.R.002
+    m_Weight: 0
+  - m_Path: Particle System
+    m_Weight: 0
+  - m_Path: AudioSources
+    m_Weight: 0
+  - m_Path: AudioSources/OpenGlider
+    m_Weight: 0
+  - m_Path: AudioSources/Idle
+    m_Weight: 0
+  - m_Path: AudioSources/Moving
+    m_Weight: 0
+  - m_Path: AudioSources/OpenGlider
+    m_Weight: 0
+  - m_Path: AudioSources/Idle
+    m_Weight: 0
+  - m_Path: AudioSources/Moving
+    m_Weight: 0
