@@ -207,7 +207,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
-            pointAt.RotationCompleted = rotationInfo.dot > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
+            pointAt.RotationCompleted = rotationInfo.dot > 0.8f || pointAt.IsDragging || !rotationInfo.needToRotate;
             avatarBase.RightHandIK.weight = Mathf.MoveTowards(
                 avatarBase.RightHandIK.weight, pointAt.RotationCompleted ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
@@ -218,7 +218,15 @@ namespace DCL.Character.CharacterMotion.Systems
                 target.position, ikTargetPos, ikSpeed * dt);
 
             Vector3 pointDirection = (ikTargetPos - avatarBase.RightShoulderAnchorPoint.position).normalized;
-            target.up = pointDirection;
+
+            Vector3 backOfHand = Vector3.up - Vector3.Dot(Vector3.up, pointDirection) * pointDirection;
+
+            if (backOfHand.sqrMagnitude < 0.001f)
+                backOfHand = Vector3.forward - Vector3.Dot(Vector3.forward, pointDirection) * pointDirection;
+
+            backOfHand.Normalize();
+
+            target.rotation = Quaternion.LookRotation(-backOfHand, pointDirection);
         }
     }
 }
