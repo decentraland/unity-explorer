@@ -178,7 +178,7 @@ namespace DCL.Character.CharacterMotion.Systems
                     Debug.Log("Look up", avatarBase);
             }
 
-            return (dot, needToRotate);
+            return (Vector3.Dot(avatarBase.transform.forward, rigidTransform.LookDirection), needToRotate);
         }
 
         [Query]
@@ -207,7 +207,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
-            pointAt.RotationCompleted = rotationInfo.dot > 0.8f || pointAt.IsDragging || !rotationInfo.needToRotate;
+            pointAt.RotationCompleted = Mathf.Abs(rotationInfo.dot) > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
             avatarBase.RightHandIK.weight = Mathf.MoveTowards(
                 avatarBase.RightHandIK.weight, pointAt.RotationCompleted ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
