@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5335d94c1c60de24c9e1a40fdd36f893, type: 3}
   m_Name: ChatReactionFlightPathConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.Configs.ChatReactionFlightPathConfig
-  <ExitKickRange>k__BackingField: {x: 0.24, y: 0.11}
-  <ExitAngleVarianceDeg>k__BackingField: 10
-  <FloatDriftRange>k__BackingField: 0.15
-  <FloatUpAcceleration>k__BackingField: 0.2
+  <ExitKickRange>k__BackingField: {x: 80, y: 180}
+  <ExitAngleVarianceDeg>k__BackingField: 20
+  <FloatDriftRange>k__BackingField: 15
+  <FloatUpAcceleration>k__BackingField: 50
   <SizeOverLifetime>k__BackingField:
     serializedVersion: 2
     m_Curve:

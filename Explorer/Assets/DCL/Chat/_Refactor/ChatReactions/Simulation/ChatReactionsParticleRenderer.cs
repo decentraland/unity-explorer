@@ -5,9 +5,8 @@ namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Drives <c>Graphics.DrawMeshInstanced</c> for GPU-instanced emoji particle rendering.
-    /// Batches up to 1023 particles per draw call (hard limit of DrawMeshInstanced).
-    /// All per-frame properties are pushed through a <c>MaterialPropertyBlock</c> —
-    /// the shared material asset is never mutated at runtime.
+    /// Converts screen-space particle positions to world space each frame so particles
+    /// stay fixed on screen when the camera moves. Batches up to 1023 particles per draw call.
     /// </summary>
     public sealed class ChatReactionsParticleRenderer
     {
@@ -41,11 +40,19 @@ namespace DCL.Chat.ChatReactions
             this.sizeOverLifetime = sizeOverLifetime;
         }
 
-        /// <param name="cam">Camera to render to. Pass <c>null</c> to render to all cameras
-        /// whose culling mask includes <paramref name="layer"/>.</param>
-        public void Draw(Camera cam, ChatReactionsParticle[] particles, int layer, float globalAlpha = 1f)
+        /// <summary>Draws screen-space particles by converting to world space each frame (camera-independent).</summary>
+        /// <param name="cam">Camera used for screen-to-world conversion. Required; no draw if null.</param>
+        /// <param name="depthFromCamera">World-space depth at which to place particles.</param>
+        public void Draw(Camera cam, UiReactionParticle[] particles, int layer, float depthFromCamera, float globalAlpha = 1f)
         {
-            if (mat == null) return;
+            if (mat == null || cam == null) return;
+
+            float worldSizePerPixel = cam.orthographic
+                ? (2f * cam.orthographicSize) / cam.pixelHeight
+                : (2f * depthFromCamera * Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f)) / cam.pixelHeight;
+
+            if (worldSizePerPixel <= 0f || cam.pixelHeight <= 0)
+                return;
 
             int batchCount = 0;
 
@@ -53,21 +60,25 @@ namespace DCL.Chat.ChatReactions
             {
                 if (particles[i].alive == 0) continue;
 
-                ref var p = ref particles[i];
+                ref readonly var p = ref particles[i];
 
                 float t = p.lifetime > 0f ? Mathf.Clamp01(p.age / p.lifetime) : 0f;
-                float startSize = p.startSize;
-                float endSize = p.endSize;
+                float startSizePx = p.startSizePx;
+                float endSizePx = p.endSizePx;
 
                 if (sizeOverLifetime != null)
                 {
                     float multiplier = sizeOverLifetime.Evaluate(t);
-                    startSize *= multiplier;
-                    endSize *= multiplier;
+                    startSizePx *= multiplier;
+                    endSizePx *= multiplier;
                 }
 
+                Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(p.screenPos.x, p.screenPos.y, depthFromCamera));
+                float startSize = startSizePx * worldSizePerPixel;
+                float endSize = endSizePx * worldSizePerPixel;
+
                 matrices[batchCount] = Matrix4x4.identity;
-                posSize[batchCount] = new Vector4(p.pos.x, p.pos.y, p.pos.z, startSize);
+                posSize[batchCount] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
                 extra[batchCount] = new Vector4(endSize, 0f, 0f, 0f);
                 emoji[batchCount] = new Vector4(p.emojiIndex, 0f, 0f, 0f);
                 lifeT[batchCount] = new Vector4(t, 0f, 0f, 0f);
@@ -76,16 +87,16 @@ namespace DCL.Chat.ChatReactions
 
                 if (batchCount == BATCH_SIZE)
                 {
-                    Flush(cam, layer, batchCount, globalAlpha);
+                    Flush(layer, batchCount, globalAlpha);
                     batchCount = 0;
                 }
             }
 
             if (batchCount > 0)
-                Flush(cam, layer, batchCount, globalAlpha);
+                Flush(layer, batchCount, globalAlpha);
         }
 
-        private void Flush(Camera cam, int layer, int count, float globalAlpha)
+        private void Flush(int layer, int count, float globalAlpha)
         {
             mpb.Clear();
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
@@ -95,7 +106,7 @@ namespace DCL.Chat.ChatReactions
             mpb.SetVectorArray(LifeTId, lifeT);
 
             Graphics.DrawMeshInstanced(quad, 0, mat, matrices, count, mpb,
-                ShadowCastingMode.Off, false, layer, cam);
+                ShadowCastingMode.Off, false, layer, null);
         }
 
         private static Mesh CreateQuadMesh()
@@ -113,7 +124,7 @@ namespace DCL.Chat.ChatReactions
             m.uv = new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(1, 1) };
             m.triangles = new[] { 0, 2, 1, 2, 3, 1 };
 
-            m.RecalculateBounds();
+            m.bounds = new Bounds(Vector3.zero, Vector3.one * 10000f);
             m.UploadMeshData(true);
             return m;
         }

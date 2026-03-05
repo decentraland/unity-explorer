@@ -11,15 +11,15 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1a32f19ca03e4c458218e5d9e37ba30, type: 3}
   m_Name: ChatReactionsUILaneConfig
-  m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsUILaneConfig
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.Configs.ChatReactionsUILaneConfig
   <MaxParticles>k__BackingField: 1023
   <DepthFromCamera>k__BackingField: 1
-  <LifetimeRange>k__BackingField: {x: 1, y: 2}
-  <SpeedRange>k__BackingField: {x: 0.3, y: 0.6}
-  <SizeRange>k__BackingField: {x: 0.03, y: 0.05}
+  <LifetimeRange>k__BackingField: {x: 2, y: 3}
+  <SpeedRange>k__BackingField: {x: 300, y: 500}
+  <SizeRange>k__BackingField: {x: 20, y: 40}
   <Drag>k__BackingField: 1.2
-  <Gravity>k__BackingField: {x: 0.7, y: -0.2, z: 0}
-  <StreamRatePerSecond>k__BackingField: 200
+  <Gravity>k__BackingField: {x: 0, y: 0}
+  <StreamRatePerSecond>k__BackingField: 100
   <StreamBurst>k__BackingField: 1
   <DefaultEmojiIndex>k__BackingField: 500
   <RandomEmoji>k__BackingField: 1

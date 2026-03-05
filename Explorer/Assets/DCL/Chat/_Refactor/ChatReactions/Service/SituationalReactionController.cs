@@ -2,14 +2,14 @@ using System;
 using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DCL.Chat.Reactions
 {
     /// <summary>
     /// Thin MonoBehaviour driver for the situational reaction particle system.
-    /// Handles the Unity lifecycle (Update/LateUpdate) and delegates to the
-    /// underlying <see cref="ChatReactionSimulation"/>. All tuning lives in
-    /// <see cref="ChatReactionsSituationalConfig"/>.
+    /// Physics tick runs in Update; rendering runs in URP's beginCameraRendering
+    /// callback so the camera transform is guaranteed to be final (after Cinemachine).
     /// </summary>
     public sealed class SituationalReactionController : MonoBehaviour, ISituationalReactionService, IDisposable
     {
@@ -31,11 +31,25 @@ namespace DCL.Chat.Reactions
             simulation = null;
         }
 
+        private void OnEnable()
+        {
+            RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+        }
+
+        private void OnDisable()
+        {
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+        }
+
         private void Update() =>
             simulation?.Tick(Time.unscaledDeltaTime);
 
-        private void LateUpdate() =>
-            simulation?.Draw();
+        private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
+        {
+            if (cam != Camera.main) return;
+
+            simulation?.Draw(cam);
+        }
 
         public void TriggerUIReaction(int emojiIndex, int count) =>
             simulation?.TriggerUIReaction(emojiIndex, count);

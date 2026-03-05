@@ -6,8 +6,8 @@ namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Pure C# simulation for the situational reaction particle system.
+    /// Particles live in screen space (pixels) so they do not move with the camera.
     /// Owns the particle pool, GPU renderer, spawn resolver, and stream emitter.
-    /// No Unity lifecycle — driven explicitly by <see cref="DCL.Chat.Reactions.SituationalReactionController"/>.
     /// </summary>
     public sealed class ChatReactionSimulation : IDisposable
     {
@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatReactions
         private static readonly int FlipYId = Shader.PropertyToID("_FlipY");
 
         private readonly ChatReactionsSituationalConfig config;
-        private readonly ChatReactionsParticlePool uiPool;
+        private readonly UiReactionParticlePool uiPool;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
@@ -31,8 +31,8 @@ namespace DCL.Chat.ChatReactions
             ApplyAtlasToMaterial(config);
 
             rng = new System.Random();
-            uiPool = new ChatReactionsParticlePool(config.UILane.MaxParticles);
-            spawnResolver = new UIReactionSpawnResolver(laneRect, config.UILane.DepthFromCamera);
+            uiPool = new UiReactionParticlePool(config.UILane.MaxParticles);
+            spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
 
             if (config.UILane.FlightPath != null)
@@ -47,29 +47,31 @@ namespace DCL.Chat.ChatReactions
 
         public void Tick(float dt)
         {
+            uiPool.Update(dt, config.UILane.Gravity, config.UILane.Drag);
             TickFlightSteering(dt);
-            uiPool.Tick(dt, config.UILane.Gravity, config.UILane.Drag);
             ClampLiveParticlesToLane();
             TickStream(dt);
         }
 
-        public void Draw()
+        public void Draw(Camera cam)
         {
-            renderer.Draw(null, uiPool.Raw, config.UILane.RenderLayer);
+            if (cam == null) return;
+
+            renderer.Draw(cam, uiPool.Raw, config.UILane.RenderLayer, config.UILane.DepthFromCamera);
         }
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
-            if (!spawnResolver.TryGetSpawnPosBottomCenter(out Vector3 basePos)) return;
+            if (!spawnResolver.TryGetSpawnPxBottomCenter(out Vector2 basePx)) return;
 
-            SpawnBurst(basePos, emojiIndex, count, jitterH: 0.05f, jitterV: 0.03f);
+            SpawnBurst(basePx, emojiIndex, count, jitterH: 12f, jitterV: 8f);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
-            if (!spawnResolver.TryGetSpawnPosFromRectCenter(sourceRect, out Vector3 basePos)) return;
+            if (!spawnResolver.TryGetSpawnPxFromRectCenter(sourceRect, out Vector2 basePx)) return;
 
-            SpawnBurst(basePos, emojiIndex, count, jitterH: 0.02f, jitterV: 0.01f);
+            SpawnBurst(basePx, emojiIndex, count, jitterH: 8f, jitterV: 4f);
         }
 
         public void TriggerDefaultUIReaction()
@@ -106,7 +108,7 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < particles.Length; i++)
             {
                 if (particles[i].alive == 0) continue;
-                spawnResolver.ClampToLane(ref particles[i].pos);
+                spawnResolver.ClampToLane(ref particles[i].screenPos);
             }
         }
 
@@ -128,7 +130,6 @@ namespace DCL.Chat.ChatReactions
         {
             if (flightController == null) return;
 
-            spawnResolver.TryGetCameraAxes(out Vector3 right, out Vector3 up);
             var particles = uiPool.Raw;
 
             for (int i = 0; i < particles.Length; i++)
@@ -138,44 +139,36 @@ namespace DCL.Chat.ChatReactions
 
                 float normalizedAge = p.lifetime > 0f ? p.age / p.lifetime : 0f;
                 Vector2 accel2D = flightController.GetSteering2D(normalizedAge);
-                p.vel += (right * accel2D.x + up * accel2D.y) * dt;
+                p.screenVel += accel2D * dt;
             }
         }
 
-        private void SpawnBurst(Vector3 basePos, int emojiIndex, int count, float jitterH, float jitterV)
+        private void SpawnBurst(Vector2 basePx, int emojiIndex, int count, float jitterH, float jitterV)
         {
-            spawnResolver.TryGetCameraAxes(out Vector3 right, out Vector3 up);
             var ui = config.UILane;
 
             for (int i = 0; i < Mathf.Max(1, count); i++)
             {
-                float endSize = Rand(ui.SizeRange.x, ui.SizeRange.y);
-                float startSize = endSize * Rand(0.2f, 0.5f);
+                float endSizePx = Rand(ui.SizeRange.x, ui.SizeRange.y);
+                float startSizePx = endSizePx * Rand(0.2f, 0.5f);
                 float lifetime = Rand(ui.LifetimeRange.x, ui.LifetimeRange.y);
-                float baseSpeed = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
+                float baseSpeedPx = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
 
-                Vector3 vel;
+                Vector2 velPx;
 
                 if (flightController != null)
                 {
-                    Vector2 vel2D = flightController.GetSpawnVelocity2D(baseSpeed);
-                    vel = right * vel2D.x + up * vel2D.y;
+                    velPx = flightController.GetSpawnVelocity2D(baseSpeedPx);
                 }
                 else
                 {
-                    vel = FallbackUpwards(baseSpeed);
+                    velPx = new Vector2(Rand(-20f, 20f), baseSpeedPx);
                 }
 
-                Vector3 jitter = right * Rand(-jitterH, jitterH) + up * Rand(-jitterV, jitterV);
+                Vector2 jitter = new Vector2(Rand(-jitterH, jitterH), Rand(-jitterV, jitterV));
 
-                uiPool.Spawn(basePos + jitter, vel, lifetime, startSize, endSize, emojiIndex);
+                uiPool.Spawn(basePx + jitter, velPx, lifetime, startSizePx, endSizePx, emojiIndex);
             }
-        }
-
-        private Vector3 FallbackUpwards(float speed)
-        {
-            var dir = new Vector3(Rand(-0.35f, 0.35f), 1f, Rand(-0.35f, 0.35f));
-            return dir.normalized * speed;
         }
 
         private float Rand(float min, float max) =>

@@ -1,15 +1,15 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
     public struct UiReactionParticle
     {
-        public Vector2 screenPos;   // pixels
-        public Vector2 screenVel;   // pixels/sec
+        public Vector2 screenPos;
+        public Vector2 screenVel;
         public float age;
         public float lifetime;
-        public float startSizePx;   // pixels
-        public float endSizePx;     // pixels
+        public float startSizePx;
+        public float endSizePx;
         public int emojiIndex;
         public byte alive;
     }
@@ -48,27 +48,20 @@ namespace DCL.Chat.ChatReactions
         {
             for (int i = 0; i < particles.Length; i++)
             {
-                if (particles[i].alive == 0) continue;
+                ref var p = ref particles[i];
+                if (p.alive == 0) continue;
 
-                var p = particles[i];
                 p.age += dt;
 
                 if (p.age >= p.lifetime)
                 {
                     p.alive = 0;
-                    particles[i] = p;
                     continue;
                 }
 
-                // accelerate in screen space (px/sec^2)
                 p.screenVel += accelPx * dt;
-
-                // better drag model (frame-rate stable)
                 p.screenVel *= Mathf.Exp(-drag * dt);
-
                 p.screenPos += p.screenVel * dt;
-
-                particles[i] = p;
             }
         }
     }

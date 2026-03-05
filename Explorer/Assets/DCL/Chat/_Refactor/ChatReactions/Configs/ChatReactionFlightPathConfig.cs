@@ -4,7 +4,8 @@ namespace DCL.Chat.ChatReactions.Configs
 {
     /// <summary>
     /// Tweakable config for how emoji particles travel after being spawned.
-    /// All velocity values are in camera-local 2D space (X = camera right, Y = camera up).
+    /// All values are in screen space: pixels/sec for velocity, pixels/sec² for acceleration.
+    /// X = screen right, Y = screen up.
     /// </summary>
     [CreateAssetMenu(fileName = "ChatReactionFlightPathConfig",
                      menuName = "DCL/Chat/Reactions/Flight Path Config")]
@@ -12,25 +13,24 @@ namespace DCL.Chat.ChatReactions.Configs
     {
         [field: Header("Exit Kick — applied once at spawn")]
 
-        [field: Tooltip("Lateral exit speed range (camera-right direction) in world units/sec. " +
-                        "Kick pushes particles out of the chat panel toward the open world.")]
-        [field: SerializeField] public Vector2 ExitKickRange { get; private set; } = new(0.6f, 1.4f);
+        [field: Tooltip("Lateral exit speed range (screen-right) in pixels/sec. " +
+                        "Kick pushes particles out of the chat panel.")]
+        [field: SerializeField] public Vector2 ExitKickRange { get; private set; } = new(80f, 180f);
 
         [field: Min(0f)]
         [field: Tooltip("Randomises the exit angle ± this many degrees around pure camera-right. " +
                         "Zero = all particles exit straight right.")]
         [field: SerializeField] public float ExitAngleVarianceDeg { get; private set; } = 20f;
 
-        [field: Tooltip("Adds a random upward component to the spawn velocity (world units/sec, ±range). " +
+        [field: Tooltip("Adds a random upward component to the spawn velocity (pixels/sec, ±range). " +
                         "Positive values spread the stream vertically.")]
-        [field: SerializeField] public float FloatDriftRange { get; private set; } = 0.15f;
+        [field: SerializeField] public float FloatDriftRange { get; private set; } = 15f;
 
         [field: Header("Float — sustained per-frame upward force")]
 
-        [field: Tooltip("Upward acceleration in world units/sec² applied every frame. " +
-                        "Counteracts drag to keep particles rising after the exit kick decays. " +
-                        "Set to 0 to let drag alone determine how long they travel.")]
-        [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 0.5f;
+        [field: Tooltip("Upward acceleration in pixels/sec² applied every frame. " +
+                        "Counteracts drag to keep particles rising. Set to 0 to let drag alone determine travel.")]
+        [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 50f;
 
         [field: Header("Pop — size animation over lifetime")]
 

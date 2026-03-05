@@ -5,6 +5,7 @@ namespace DCL.Chat.ChatReactions.Configs
     /// <summary>
     /// Tuning for the screen-space UI particle lane — the emoji bursts that float upward
     /// above the chat panel when a user triggers a situational reaction.
+    /// All physics values are in screen space (pixels, pixels/sec, pixels/sec²).
     /// </summary>
     [CreateAssetMenu(fileName = "ChatReactionsUILaneConfig",
                      menuName = "DCL/Chat/Reactions/UI Lane Config")]
@@ -18,26 +19,25 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [field: Header("Placement")]
         [field: Min(0.1f)]
-        [field: Tooltip("Distance in front of the camera (world units) at which particles are placed.")]
+        [field: Tooltip("Distance in front of the camera (world units) at which particles are rendered.")]
         [field: SerializeField] public float DepthFromCamera { get; private set; } = 1.0f;
 
-        [field: Header("Physics")]
+        [field: Header("Physics (screen space — pixels, px/sec, px/sec²)")]
         [field: Tooltip("Particle lifetime in seconds (min, max).")]
         [field: SerializeField] public Vector2 LifetimeRange { get; private set; } = new(1.0f, 1.8f);
 
-        [field: Tooltip("Initial upward speed in world units/sec (min, max).")]
-        [field: SerializeField] public Vector2 SpeedRange { get; private set; } = new(0.4f, 1.2f);
+        [field: Tooltip("Initial upward speed in pixels/sec (min, max).")]
+        [field: SerializeField] public Vector2 SpeedRange { get; private set; } = new(80f, 200f);
 
-        [field: Tooltip("World-space particle size at death (min, max). Spawn size is 20–50% of this.")]
-        [field: SerializeField] public Vector2 SizeRange { get; private set; } = new(0.03f, 0.05f);
+        [field: Tooltip("Particle size at death in pixels (min, max). Spawn size is 20–50% of this.")]
+        [field: SerializeField] public Vector2 SizeRange { get; private set; } = new(40f, 80f);
 
         [field: Min(0f)]
         [field: Tooltip("Linear drag coefficient. Higher values slow particles faster.")]
         [field: SerializeField] public float Drag { get; private set; } = 1.2f;
 
-        [field: Tooltip("Gravity vector applied to UI particles (world units/sec²). " +
-                        "Keep at zero for the floating-upward look.")]
-        [field: SerializeField] public Vector3 Gravity { get; private set; } = Vector3.zero;
+        [field: Tooltip("Acceleration in screen space (pixels/sec²). Keep at zero for floating-upward look.")]
+        [field: SerializeField] public Vector2 Gravity { get; private set; } = Vector2.zero;
 
         [field: Header("Streaming (hold-to-emit)")]
         [field: Min(0f)]
