@@ -58,12 +58,17 @@ namespace DCL.VoiceChat
             var spreadBinding = new ElementBinding<float>(0f,
                 evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpread = evt.newValue; });
 
+            var rolloffBinding = new EnumElementBinding<AudioRolloffMode>(
+                AudioRolloffMode.Logarithmic,
+                onValueChange: mode => { if (configHolder.Config != null) configHolder.Config.ProximityRolloffMode = mode; });
+
             debugBuilder.TryAddWidget("Proximity Audio")
                        ?.AddFloatSliderField("Spatial Blend", spatialBlendBinding, 0f, 1f)
                         .AddFloatSliderField("Doppler Level", dopplerBinding, 0f, 5f)
                         .AddFloatSliderField("Min Distance", minDistanceBinding, 0f, 100f)
                         .AddFloatSliderField("Max Distance", maxDistanceBinding, 1f, 500f)
-                        .AddFloatSliderField("Spread", spreadBinding, 0f, 360f);
+                        .AddFloatSliderField("Spread", spreadBinding, 0f, 360f)
+                        .AddControl(new DebugDropdownDef(rolloffBinding, "Rolloff Mode"), null);
         }
 
         protected override void Update(float t)
