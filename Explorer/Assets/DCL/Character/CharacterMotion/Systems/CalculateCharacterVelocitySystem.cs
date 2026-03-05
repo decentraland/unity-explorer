@@ -13,7 +13,6 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
-using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.CharacterMotion.Utils;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -144,7 +143,7 @@ namespace DCL.Character.CharacterMotion.Systems
             else
                 ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
 
-            if (!settings.EnableCharacterRotationBySlope)
+            if (settings.EnableCharacterRotationBySlope)
                 ApplySlopeConditionalRotation.Execute(ref rigidTransform, in settings);
         }
     }

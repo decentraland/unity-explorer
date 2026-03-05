@@ -3,17 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.DemoScripts.Components;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Systems;
-using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using DCL.Time.Systems;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
-using System;
-using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
 {

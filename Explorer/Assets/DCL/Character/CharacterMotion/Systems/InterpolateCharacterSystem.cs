@@ -8,7 +8,6 @@ using DCL.CharacterMotion.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
-using System;
 using UnityEngine;
 using Utility;
 
