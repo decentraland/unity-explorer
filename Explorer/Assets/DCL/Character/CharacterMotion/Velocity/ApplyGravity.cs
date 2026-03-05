@@ -26,7 +26,7 @@ namespace DCL.Character.CharacterMotion
                 characterPhysics.SlopeGravity = gravityDirection * currentGravityMagnitude;
             }
 
-            if (IsFalling(characterPhysics))
+            if (IsFalling(characterPhysics, jumpState.JustJumped))
             {
                 float gravity = Math.Abs(settings.Gravity); // gravity in settings is negative
 
@@ -45,8 +45,8 @@ namespace DCL.Character.CharacterMotion
                 // When external force counteracts gravity (e.g., wind tunnel), effective gravity approaches zero
                 float effectiveGravity = gravity - characterPhysics.ExternalAcceleration.y;
 
-                characterPhysics.GravityVelocity += gravityDirection * (effectiveGravity * deltaTime);
-                characterPhysics.SlopeGravity += gravityDirection * (effectiveGravity * deltaTime);
+                characterPhysics.GravityVelocity += gravityDirection * (effectiveGravity * dt);
+                characterPhysics.SlopeGravity += gravityDirection * (effectiveGravity * dt);
             }
             else // Grounded: compute effective gravity without jump modifiers
             {
@@ -56,7 +56,7 @@ namespace DCL.Character.CharacterMotion
                 if (effectiveGravity <= 0f)
                     characterPhysics.IsGrounded = false;
 
-                characterPhysics.GravityVelocity = gravityDirection * (effectiveGravity * deltaTime);
+                characterPhysics.GravityVelocity = gravityDirection * (effectiveGravity * dt);
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
 
@@ -65,11 +65,8 @@ namespace DCL.Character.CharacterMotion
             characterPhysics.GravityMultiplier = 1;
 
             return;
-            bool IsFalling(CharacterRigidTransform characterRigidTransform) =>
-                !characterRigidTransform.IsGrounded || jumpState.JustJumped || characterRigidTransform is { IsOnASteepSlope: true, IsStuck: false };
+            bool IsFalling(CharacterRigidTransform characterRigidTransform, bool justJumped) =>
+                !characterRigidTransform.IsGrounded || justJumped || characterRigidTransform is { IsOnASteepSlope: true, IsStuck: false };
         }
-
-        private static float PhysicsToDeltaTime(int ticks) =>
-            UnityEngine.Time.fixedDeltaTime * ticks;
     }
 }

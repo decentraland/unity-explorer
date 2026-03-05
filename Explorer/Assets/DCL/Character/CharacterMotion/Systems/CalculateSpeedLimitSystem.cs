@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.Character.CharacterMotion.Components;
+using DCL.Character.CharacterMotion.Systems;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
