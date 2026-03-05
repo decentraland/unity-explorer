@@ -79,8 +79,19 @@ namespace DCL.SDKComponents.MediaStream
 
             currentStream = livekitAddress.Match(
                 this,
-                onUserStream: static (self, userStream) => //Audio via user stream are not supported yet
-                    (self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid)), Weak<AudioStream>.Null),
+                onUserStream: static (self, userStream) =>
+                {
+                    var video = self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
+                    var audio = self.FindPairedAudio(userStream.Identity, userStream.Sid);
+
+                    if (audio.Resource.Has)
+                    {
+                        self.audioSource.Construct(audio);
+                        self.audioSource.Play();
+                    }
+
+                    return (video, audio);
+                },
                 onCurrentStream: static self =>
                 {
                     var videoTrack = self.FirstVideo();
@@ -135,6 +146,45 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             return null;
+        }
+
+        private Weak<AudioStream> FindPairedAudio(string identity, string videoSid)
+        {
+            lock (room.Participants)
+            {
+                var participant = room.Participants.RemoteParticipant(identity);
+
+                if (participant == null)
+                    return Weak<AudioStream>.Null;
+
+                TrackSource? targetAudioSource = null;
+
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
+                {
+                    if (sid == videoSid)
+                    {
+                        targetAudioSource = track.Source switch
+                        {
+                            TrackSource.SourceCamera => TrackSource.SourceMicrophone,
+                            TrackSource.SourceScreenshare => TrackSource.SourceScreenshareAudio,
+                            _ => null,
+                        };
+
+                        break;
+                    }
+                }
+
+                if (targetAudioSource == null)
+                    return Weak<AudioStream>.Null;
+
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
+                {
+                    if (track.Source == targetAudioSource)
+                        return room.AudioStreams.ActiveStream(new StreamKey(identity, sid));
+                }
+            }
+
+            return Weak<AudioStream>.Null;
         }
 
         public void CloseCurrentStream()
