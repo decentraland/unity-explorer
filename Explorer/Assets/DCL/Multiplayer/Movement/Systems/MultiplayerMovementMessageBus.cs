@@ -6,12 +6,16 @@ using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
+using Decentraland.Pulse;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -23,28 +27,31 @@ namespace DCL.Multiplayer.Movement.Systems
             Compressed,
         }
 
+        private const float WALK_EPSILON = 0.05f;
+
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly PulseMultiplayerService pulseService;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-
         private readonly World globalWorld;
+        private readonly PeerIdCache peerIdCache;
 
-        private NetworkMessageEncoder messageEncoder;
-
+        private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
-        private IMultiplayerMovementSettings settingsValue;
+        private IMultiplayerMovementSettings? settingsValue;
+        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub,
+            PulseMultiplayerService pulseService,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            World globalWorld,
+            PeerIdCache peerIdCache)
         {
             this.messagePipesHub = messagePipesHub;
+            this.pulseService = pulseService;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
-
-            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-
-            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            this.peerIdCache = peerIdCache;
         }
 
         public void Dispose()
@@ -60,6 +67,100 @@ namespace DCL.Multiplayer.Movement.Systems
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, landscapeData);
         }
 
+        public UniTask SubscribeToIncomingMessagesAsync(CancellationToken ct)
+        {
+            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+
+            return UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
+                SubscribeToPlayerStateFullAsync(ct),
+                SubscribeToPlayerStateDeltaAsync(ct));
+        }
+
+        private async UniTask SubscribeToPlayerJoinedAsync(CancellationToken ct)
+        {
+            await foreach (PlayerJoined playerJoined in pulseService.SubscribeAsync<PlayerJoined>(ServerMessage.MessageOneofCase.PlayerJoined, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                    break;
+                }
+
+                peerIdCache.Set(playerJoined.UserId, playerJoined.State.SubjectId);
+
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
+                lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
+
+                Inbox(movementMessage, playerJoined.UserId);
+            }
+        }
+
+        private async UniTask SubscribeToPlayerStateFullAsync(CancellationToken ct)
+        {
+            await foreach (PlayerStateFull playerStateFull in pulseService.SubscribeAsync<PlayerStateFull>(ServerMessage.MessageOneofCase.PlayerStateFull, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                    break;
+                }
+
+                PlayerState playerState = playerStateFull.State;
+
+                if (!peerIdCache.TryGetWallet(playerState.SubjectId, out string wallet))
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerState.SubjectId}");
+                    continue;
+                }
+
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerState);
+
+                if (lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
+                {
+                    if (lastMessage.sequence < playerState.Sequence)
+                        lastMovementMessages[playerState.SubjectId] = (playerState.Sequence, movementMessage);
+                }
+                else
+                    lastMovementMessages[playerState.SubjectId] = (playerState.Sequence, movementMessage);
+
+                Inbox(movementMessage, wallet);
+            }
+        }
+
+        private async UniTask SubscribeToPlayerStateDeltaAsync(CancellationToken ct)
+        {
+            await foreach (PlayerStateDelta playerState in pulseService.SubscribeAsync<PlayerStateDelta>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                    break;
+                }
+
+                if (!peerIdCache.TryGetWallet(playerState.SubjectId, out string wallet))
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerState.SubjectId}");
+                    continue;
+                }
+
+                if (!lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {playerState.SubjectId}");
+                    continue;
+                }
+
+                NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, playerState);
+
+                if (lastMovement.sequence < playerState.NewSeq)
+                    lastMovementMessages[playerState.SubjectId] = (playerState.NewSeq, movementMessage);
+
+                Inbox(movementMessage, wallet);
+            }
+        }
+
         private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
         {
             if (isDisposed)
@@ -73,8 +174,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                NetworkMovementMessage message = UncompressedMovementMessage(receivedMessage.Payload);
-                Inbox(message, receivedMessage.FromWalletId);
+                Inbox(UncompressedMovementMessage(receivedMessage.Payload), receivedMessage.FromWalletId);
             }
         }
 
@@ -112,7 +212,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             var vel = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ);
 
-            const float WALK_EPSILON = 0.05f;
             float movementBlend = Mathf.Clamp(proto.MovementBlendValue, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
 
@@ -260,6 +359,129 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
+        }
+
+        private static NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState)
+        {
+            Vector3 vel = new Vector3(playerState.Velocity.X, playerState.Velocity.Y, playerState.Velocity.Z);
+
+            float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
+            var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
+
+            var message = new NetworkMovementMessage
+            {
+                // TODO: timestamp might not be the same as serverTick (?)
+                timestamp = playerState.ServerTick,
+                position = new Vector3(playerState.Position.X, playerState.Position.Y, playerState.Position.Z),
+                rotationY = playerState.RotationY,
+                velocity = vel,
+                velocitySqrMagnitude = vel.sqrMagnitude,
+                movementKind = movementKind,
+
+                animState = new AnimationStates
+                {
+                    MovementBlendValue = movementBlend,
+                    SlideBlendValue = playerState.SlideBlend,
+                    IsGrounded = (playerState.StateFlags & (1 << 1)) != 0,
+                    IsJumping = (playerState.StateFlags & (1 << 2)) != 0,
+                    IsLongJump = (playerState.StateFlags & (1 << 3)) != 0,
+                    IsFalling = (playerState.StateFlags & (1 << 4)) != 0,
+                    IsLongFall = (playerState.StateFlags & (1 << 5)) != 0,
+                },
+                isStunned = (playerState.StateFlags & (1 << 6)) != 0,
+
+                // TODO: resolve instant (?)
+                isInstant = false,
+
+                // TODO: resolve emoting
+                isEmoting = false,
+
+                headIKYawEnabled = (playerState.StateFlags & (1 << 7)) != 0,
+                headIKPitchEnabled = (playerState.StateFlags & (1 << 8)) != 0,
+                headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
+            };
+
+            return message;
+        }
+
+        private static NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDelta delta)
+        {
+            // TODO: timestamp might not be the same as serverTick (?)
+            last.timestamp = delta.ServerTick;
+
+            var velocityChanged = false;
+            var movementBlendChanged = false;
+
+            if (delta.HasPositionX) last.position.x = delta.PositionX;
+            if (delta.HasPositionY) last.position.y = delta.PositionY;
+            if (delta.HasPositionZ) last.position.z = delta.PositionZ;
+
+            if (delta.HasRotationY) last.rotationY = delta.RotationY;
+
+            if (delta.HasVelocityX)
+            {
+                last.velocity.x = delta.VelocityX;
+                velocityChanged = true;
+            }
+
+            if (delta.HasVelocityY)
+            {
+                last.velocity.y = delta.VelocityY;
+                velocityChanged = true;
+            }
+
+            if (delta.HasVelocityZ)
+            {
+                last.velocity.z = delta.VelocityZ;
+                velocityChanged = true;
+            }
+
+            if (velocityChanged)
+                last.velocitySqrMagnitude = last.velocity.sqrMagnitude;
+
+            // Animation blends
+            if (delta.HasMovementBlend)
+            {
+                float movementBlend = Mathf.Clamp(delta.MovementBlend, 0, 3);
+                last.animState.MovementBlendValue = movementBlend;
+                movementBlendChanged = true;
+            }
+
+            if (delta.HasSlideBlend)
+                last.animState.SlideBlendValue = delta.SlideBlend;
+
+            // Head IK / look
+            if (delta.HasHeadYaw)
+                last.headYawAndPitch.x = delta.HeadYaw;
+
+            if (delta.HasHeadPitch)
+                last.headYawAndPitch.y = delta.HeadPitch;
+
+            uint flags = delta.StateFlags;
+
+            last.animState.IsGrounded = (flags & (1 << 1)) != 0;
+            last.animState.IsJumping = (flags & (1 << 2)) != 0;
+            last.animState.IsLongJump = (flags & (1 << 3)) != 0;
+            last.animState.IsFalling = (flags & (1 << 4)) != 0;
+            last.animState.IsLongFall = (flags & (1 << 5)) != 0;
+            last.isStunned = (flags & (1 << 6)) != 0;
+            last.headIKYawEnabled = (flags & (1 << 7)) != 0;
+            last.headIKPitchEnabled = (flags & (1 << 8)) != 0;
+
+            // movementKind depends on MovementBlendValue, so recompute if that changed
+            if (movementBlendChanged)
+            {
+                float mb = last.animState.MovementBlendValue;
+
+                last.movementKind = (MovementKind)Mathf.Max(
+                    Mathf.RoundToInt(mb),
+                    mb > WALK_EPSILON ? 1 : 0
+                );
+            }
+
+            // TODO: isInstant, isEmoting
+
+            return last;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<ServerMessage.MessageOneofCase, ISubscriber> subscribers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
-        private CancellationTokenSource? connectionCts;
+        private CancellationTokenSource? connectionLifeCycleCts;
 
         public PulseMultiplayerService(
             ITransport transport,
@@ -39,9 +39,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             // TODO: get the address from IDecentralandUrlsSource (?)
             await transport.ConnectAsync("127.0.0.1", 7777, ct);
 
-            connectionCts = connectionCts.SafeRestartLinked(ct);
-            transport.ListenForIncomingDataAsync(connectionCts.Token).SuppressToResultAsync().Forget();
-            RouteIncomingMessagesAsync(connectionCts.Token).Forget();
+            connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
+            transport.ListenForIncomingDataAsync(connectionLifeCycleCts.Token).SuppressToResultAsync().Forget();
+            RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
             pipe.Send(new MessagePipe.OutgoingMessage(new ClientMessage
             {
@@ -55,14 +55,19 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 if (!response.Success)
                 {
-                    connectionCts.SafeCancelAndDispose();
-                    await transport.DisconnectAsync(ct);
+                    await DisconnectAsync(ct);
                     throw new PulseException(response.HasError ? response.Error : "Handshake failed");
                 }
 
                 // Wait for handshake once
                 break;
             }
+        }
+
+        public async UniTask DisconnectAsync(CancellationToken ct)
+        {
+            connectionLifeCycleCts.SafeCancelAndDispose();
+            await transport.DisconnectAsync(ct);
         }
 
         public IUniTaskAsyncEnumerable<T> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
