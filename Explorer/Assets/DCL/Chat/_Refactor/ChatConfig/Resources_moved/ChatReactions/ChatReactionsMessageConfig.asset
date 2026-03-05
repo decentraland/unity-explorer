@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a97ef075d8c414184d10c1056ad9ec, type: 3}
+  m_Name: ChatReactionsMessageConfig
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
+  <AvailableEmojiIndices>k__BackingField: 
+  <ReactionPickerIcons>k__BackingField: []
+  <MaxReactionTypesPerMessage>k__BackingField: 6
+  <NetworkDebounceSeconds>k__BackingField: 0.5
+  <AppearDuration>k__BackingField: 0.15
+  <DisappearDuration>k__BackingField: 0.1
+  <CountIncrementBounceDuration>k__BackingField: 0.12
