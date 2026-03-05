@@ -197,8 +197,9 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Transform target = avatarBase.RightHandSubTarget;
 
+            float ikSpeed = pointAt.IsDragging ? settings.IKPositionSpeed : settings.IKPositionSpeed / 2;
             target.position = Vector3.MoveTowards(
-                target.position, ikTargetPos, settings.IKPositionSpeed * dt);
+                target.position, ikTargetPos, ikSpeed * dt);
 
             Vector3 pointDirection = (ikTargetPos - avatarBase.RightShoulderAnchorPoint.position).normalized;
             target.up = pointDirection;
