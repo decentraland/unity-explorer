@@ -10,8 +10,12 @@ namespace DCL.Character.CharacterMotion
     public static class ApplyGravity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, in JumpInputComponent jumpInputComponent,
-            int physicsTick, float deltaTime)
+        public static void Execute(ICharacterControllerSettings settings,
+            ref CharacterRigidTransform characterPhysics,
+            in JumpState jumpState,
+            in JumpInputComponent jumpInput,
+            int physicsTick,
+            float dt)
         {
             Vector3 gravityDirection = characterPhysics.IsOnASteepSlope ? characterPhysics.GravityDirection : Vector3.down;
 
@@ -26,8 +30,11 @@ namespace DCL.Character.CharacterMotion
             {
                 float gravity = Math.Abs(settings.Gravity); // gravity in settings is negative
 
+                // Apply general multiplier
+                gravity *= characterPhysics.GravityMultiplier;
+
                 // To jump higher when pressing the jump button, we reduce the gravity
-                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
+                if (jumpInput.IsPressed && (physicsTick - jumpInput.Trigger.TickWhenJumpWasConsumed) * dt < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
                 // To feel less floaty when jumping, we increase the gravity when going up (the jump velocity is also scaled up)
@@ -53,9 +60,13 @@ namespace DCL.Character.CharacterMotion
                 characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
 
+            // Reset the multiplier to 1 (neutral)
+            // The value needs to be applied every frame if needed
+            characterPhysics.GravityMultiplier = 1;
+
             return;
             bool IsFalling(CharacterRigidTransform characterRigidTransform) =>
-                !characterRigidTransform.IsGrounded || characterRigidTransform.JustJumped || characterRigidTransform is { IsOnASteepSlope: true, IsStuck: false };
+                !characterRigidTransform.IsGrounded || jumpState.JustJumped || characterRigidTransform is { IsOnASteepSlope: true, IsStuck: false };
         }
 
         private static float PhysicsToDeltaTime(int ticks) =>

@@ -13,6 +13,8 @@ using DCL.Time.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using DCL.AvatarRendering.DemoScripts.Components;
+using DCL.CharacterMotion.Utils;
 
 namespace DCL.Character.CharacterMotion.Systems
 {
@@ -49,11 +51,23 @@ namespace DCL.Character.CharacterMotion.Systems
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            in MovementInputComponent movementInput)
-        {
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, cameraComponent.Camera.transform);
-        }
+            ref JumpInputComponent jumpInput,
+            ref JumpState jumpState,
+            ref GlideState glideState,
+            in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit) =>
+            ResolveAvatarVelocity(dt,
+                physicsTick,
+                in cameraComponent,
+                ref settings,
+                ref rigidTransform,
+                ref characterController,
+                ref jumpInput,
+                ref jumpState,
+                ref glideState,
+                in movementInput,
+                in speedLimit,
+                cameraComponent.Camera.transform);
 
         [Query]
         [All(typeof(RandomAvatar))]
@@ -65,26 +79,43 @@ namespace DCL.Character.CharacterMotion.Systems
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
-            in MovementInputComponent movementInput)
-        {
-            // Random avatars are not affected by the player's camera
-            ResolveAvatarVelocity(dt, physicsTick, in cameraComponent, ref settings, ref rigidTransform, ref characterController, ref jump, in movementInput, characterController.transform);
-        }
+            ref JumpInputComponent jumpInput,
+            ref JumpState jumpState,
+            ref GlideState glideState,
+            in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit) =>
+            ResolveAvatarVelocity(dt,
+                physicsTick,
+                in cameraComponent,
+                ref settings,
+                ref rigidTransform,
+                ref characterController,
+                ref jumpInput,
+                ref jumpState,
+                ref glideState,
+                in movementInput,
+                in speedLimit,
+                // For random avatars we use the character's transform as viewer pov
+                characterController.transform);
 
-        private void ResolveAvatarVelocity(
-            [Data] float dt,
+        private void ResolveAvatarVelocity([Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent cameraComponent,
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref JumpInputComponent jump,
+            ref JumpInputComponent jumpInput,
+            ref JumpState jumpState,
+            ref GlideState glideState,
             in MovementInputComponent movementInput,
+            in MovementSpeedLimit speedLimit,
             Transform viewerTransform)
         {
+            var viewerForward = LookDirectionUtils.FlattenLookDirection(viewerTransform.forward, viewerTransform.up);
+            var viewerRight = Vector3.Cross(-viewerForward, Vector3.up);
+
             // Apply velocity based on input
-            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerTransform, in movementInput, dt);
+            ApplyCharacterMovementVelocity.Execute(settings, ref rigidTransform, viewerForward, viewerRight, in movementInput, speedLimit.Value, dt);
 
             // Apply velocity based on edge slip
             ApplyEdgeSlip.Execute(dt, settings, ref rigidTransform, characterController);
@@ -96,8 +127,9 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyExternalForce.Execute(settings, ref rigidTransform, dt);
 
             // Vertical velocity (jump + gravity with effective gravity from external forces)
-            ApplyJump.Execute(settings, ref rigidTransform, ref jump, in movementInput, physicsTick);
-            ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
+            ApplyJump.Execute(settings, ref rigidTransform, ref jumpState, ref jumpInput, in movementInput, viewerForward, viewerRight, physicsTick, dt);
+            ApplyGravity.Execute(settings, ref rigidTransform, jumpState, in jumpInput, physicsTick, dt);
+            ApplyGliding.Execute(settings, in rigidTransform, jumpState, in jumpInput, ref glideState, physicsTick, dt);
 
             // External impulses must run after gravity so it nullify gravity velocity.y
             ApplyExternalImpulse.Execute(settings, ref rigidTransform);
