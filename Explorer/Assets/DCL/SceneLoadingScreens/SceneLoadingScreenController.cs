@@ -230,6 +230,8 @@ namespace DCL.SceneLoadingScreens
 
         private void ShowTip(int index)
         {
+            if (tips.Tips.Count == 0) return;
+
             if (index < 0)
                 index = tips.Tips.Count - 1;
 
@@ -257,6 +259,8 @@ namespace DCL.SceneLoadingScreens
 
             async UniTaskVoid ShowTipWithFadeAsync(CancellationToken ct)
             {
+                if (tips.Tips.Count == 0) return;
+
                 if (index < 0)
                     index = tips.Tips.Count - 1;
 

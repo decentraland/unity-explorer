@@ -1,4 +1,4 @@
-﻿#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX && !UNITY_WEBGL
+﻿#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 
 //#define DEBUG_VIDEO_PRIORITIES
 // When the definition is enabled, a colored cube will be created next to each video's mesh renderer. Its color corresponds to the current priority of the video.

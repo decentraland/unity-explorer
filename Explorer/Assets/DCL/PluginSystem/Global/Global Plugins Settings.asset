@@ -53,12 +53,12 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 657752310186246267
   - rid: 6478896861045588059
-  - rid: 6169970366055448665
   - rid: 2008243996523495520
   - rid: 3821626543930605662
   - rid: 1154744868092248158
   - rid: 745469515127586908
   - rid: 5190442831932031144
+  - rid: 9054173791040831784
   references:
     version: 2
     RefIds:
@@ -107,15 +107,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        GiftTransferPopupStatusTitle: Preparing Gift for
-        GiftTransferPopupStatusWaitingMessage: A browser window should open for you
-          to confirm the transaction.
-        GiftTransferPopupStatusProcessingMessage: Processing...
-        GiftTransferErrorPopupTitle: Something went wrong
-        GiftTransferErrorPopupAdditionalUrlTitle: Your gift wasn't delivered. Please
-          try again of contact Support.
-        GiftTransferErrorPopupCloseButtonText: CLOSE
-        GiftTransferErrorPopupConfirmButtonText: TRY AGAIN
         <BackpackSettings>k__BackingField:
           <CategoryIconsMapping>k__BackingField:
             m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
@@ -963,15 +954,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 6169970366055448665
-      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
-      data:
-        <MediaPlayerPrefab>k__BackingField:
-          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 6478896861045588059
       type: {class: ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1175,6 +1157,15 @@ MonoBehaviour:
       data:
         <CreditsUnlockedPrefab>k__BackingField:
           m_AssetGUID: adccb7c4aa6e2424c95ac85e0d3f0a35
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 9054173791040831784
+      type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
+      data:
+        <MediaPlayerPrefab>k__BackingField:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

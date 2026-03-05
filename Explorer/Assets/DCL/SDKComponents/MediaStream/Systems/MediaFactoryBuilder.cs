@@ -1,6 +1,4 @@
-﻿#if !UNITY_WEBGL
-
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
@@ -71,5 +69,3 @@ namespace DCL.SDKComponents.MediaStream
                     performanceBudget);
     }
 }
-
-#endif

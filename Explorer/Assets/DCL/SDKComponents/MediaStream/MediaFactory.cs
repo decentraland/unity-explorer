@@ -1,7 +1,4 @@
-﻿// MediaPlayerComponent is not supported on WebGL
-#if !UNITY_WEBGL
-
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
@@ -50,18 +47,18 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
         public MediaFactory(
-                ISceneData sceneData, 
+                ISceneData sceneData,
 
 #if !NO_LIVEKIT_MODE
-                IRoom streamingRoom, 
+                IRoom streamingRoom,
 #endif
 
-                MediaPlayerCustomPool mediaPlayerPool, 
-                ISceneStateProvider sceneStateProvider, 
+                MediaPlayerCustomPool mediaPlayerPool,
+                ISceneStateProvider sceneStateProvider,
                 MediaVolume mediaVolume,
-                IObjectPool<RenderTexture> videoTexturesPool, 
+                IObjectPool<RenderTexture> videoTexturesPool,
                 IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
-                World world, 
+                World world,
                 IWebRequestController webRequestController,
                 IPerformanceBudget frameBudget)
         {
@@ -163,8 +160,10 @@ namespace DCL.SDKComponents.MediaStream
 
             if (url.IsLivekitAddress())
             {
+#if !UNITY_WEBGL
                 isValidLocalPath = true;
                 isValidStreamUrl = true;
+#endif
             }
 
             else
@@ -184,11 +183,20 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
             MultiMediaPlayer player = address.Match(
                 (streamingRoom, mediaPlayerPool),
                 onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                 onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
             );
+#else
+            // For now: LivekitPlayer is not available on WebGL; LiveKit addresses produce a silent no-op AvPro player
+            MultiMediaPlayer player = address.Match(
+                mediaPlayerPool,
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.GetOrCreateReusableMediaPlayer(address.Url), ctx)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.GetOrCreateReusableMediaPlayer(string.Empty), ctx))
+            );
+#endif
 
             var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
             {
@@ -213,5 +221,3 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
-
-#endif
