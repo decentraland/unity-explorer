@@ -29,6 +29,7 @@ using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.UI.ConfirmationDialog.Opener;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -55,6 +56,10 @@ namespace DCL.UI
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
+        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
+        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string REPORT_USER_CONFIRM_TEXT = "Report";
+        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
         private static readonly Vector2 SUBMENU_CONTEXT_MENU_OFFSET = new (0, -30);
@@ -71,6 +76,7 @@ namespace DCL.UI
         private readonly bool includeCommunities;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -127,6 +133,7 @@ namespace DCL.UI
             this.realmNavigator = realmNavigator;
             this.includeCommunities = includeCommunities;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.contextMenuSettings = contextMenuSettings;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -370,7 +377,25 @@ namespace DCL.UI
 
         private void OnReportUserClicked(string userId)
         {
-            // TODO (Santi): Implement this...
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            ShowReportConfirmationDialogAsync(targetProfile, cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(Profile.CompactInfo userProfile, CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, userProfile.Name),
+                                                                                     REPORT_USER_CANCEL_TEXT,
+                                                                                     REPORT_USER_CONFIRM_TEXT,
+                                                                                     contextMenuSettings.ReportButtonConfig.Sprite,
+                                                                                     false, false,
+                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.PROFILE);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)

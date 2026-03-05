@@ -27,6 +27,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.UI.ConfirmationDialog.Opener;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
@@ -43,6 +44,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
+        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
+        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string REPORT_USER_CONFIRM_TEXT = "Report";
+        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
 
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
@@ -74,6 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
         private CancellationTokenSource communityOperationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private UniTaskCompletionSource? panelLifecycleTask;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
 
@@ -108,6 +114,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.GiftUserRequested += OnGiftUserRequested;
             this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
+            this.view.ReportUserRequested += ReportUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
             this.view.TransferOwnershipRequested += OnTransferOwnership;
@@ -135,6 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             communityOperationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
             view.ElementMainButtonClicked -= OnMainButtonClicked;
             view.ContextMenuUserProfileButtonClicked -= HandleContextMenuUserProfileButtonAsync;
@@ -146,6 +154,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
             view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
+            view.ReportUserRequested -= ReportUserClickedAsync;
             view.GiftUserRequested -= OnGiftUserRequested;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
@@ -232,6 +241,29 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
+        }
+
+        private void ReportUserClickedAsync(ICommunityMemberData profile)
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(ICommunityMemberData memberData, CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, memberData.Name),
+                                                                                     REPORT_USER_CANCEL_TEXT,
+                                                                                     REPORT_USER_CONFIRM_TEXT,
+                                                                                     view.contextMenuSettings.ReportSprite,
+                                                                                     false, false,
+                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.PROFILE);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private void OnBanUser(ICommunityMemberData profile)

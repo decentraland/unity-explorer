@@ -48,6 +48,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
 using Newtonsoft.Json;
@@ -72,6 +73,10 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
+        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
+        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string REPORT_USER_CONFIRM_TEXT = "Report";
+        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
 
         private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
@@ -151,8 +156,10 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
         private readonly ImageControllerProvider imageControllerProvider;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<string, bool>? PassportOpened;
@@ -532,6 +539,7 @@ namespace DCL.Passport
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Clear();
@@ -591,6 +599,7 @@ namespace DCL.Passport
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
 
@@ -941,7 +950,25 @@ namespace DCL.Passport
 
         private void ReportUserClicked()
         {
-            // TODO (Santi): Implement this...
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, targetProfile!.Name),
+                                                                                     REPORT_USER_CANCEL_TEXT,
+                                                                                     REPORT_USER_CONFIRM_TEXT,
+                                                                                     viewInstance!.ReportSprite,
+                                                                                     false, false,
+                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.PROFILE);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private void ShowMutualFriends()

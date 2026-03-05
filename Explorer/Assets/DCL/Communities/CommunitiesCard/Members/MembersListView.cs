@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
 
         [field: Header("Assets")]
-        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] public CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
         [field: SerializeField] private Sprite transferOwnershipSprite { get; set; } = null!;
         [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
         [field: SerializeField] private Sprite banSprite { get; set; } = null!;

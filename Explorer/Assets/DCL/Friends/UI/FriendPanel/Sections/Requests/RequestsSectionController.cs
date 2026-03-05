@@ -5,8 +5,10 @@ using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -21,12 +23,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
+        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string REPORT_USER_CONFIRM_TEXT = "Report";
+        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
 
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
 
         private CancellationTokenSource friendshipOperationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private Profile.CompactInfo? lastClickedProfileCtx;
 
         public event Action<int>? ReceivedRequestsCountChanged;
@@ -82,6 +89,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
         }
 
         public override void Reset()
@@ -97,7 +105,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void ReportUserClicked(Profile.CompactInfo profile)
         {
-            // TODO (Santi): Implement this...
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(Profile.CompactInfo userProfile, CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, userProfile.Name),
+                                                                                     REPORT_USER_CANCEL_TEXT,
+                                                                                     REPORT_USER_CONFIRM_TEXT,
+                                                                                     view.ContextMenuSettings.ReportSprite,
+                                                                                     false, false,
+                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.PROFILE);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private void HandleContextMenuUserProfileButton(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)

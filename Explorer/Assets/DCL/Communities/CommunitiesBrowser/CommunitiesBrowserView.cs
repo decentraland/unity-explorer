@@ -1,10 +1,19 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
+using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -50,9 +59,18 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Invites & Requests Section")]
         [SerializeField] private CommunitiesInvitesAndRequestsView invitesAndRequestsView = null!;
 
+        [Header("Assets")]
+        [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+
         public CommunitiesInvitesAndRequestsView InvitesAndRequestsView => invitesAndRequestsView;
 
+        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
+        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string REPORT_USER_CONFIRM_TEXT = "Report";
+        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
+
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private CancellationTokenSource? reportConfirmationDialogCts;
 
         private void Awake()
         {
@@ -102,8 +120,13 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.ManageRequestReceivedRequested -= OnManageRequestReceived;
         }
 
-        public void SetViewActive(bool isActive) =>
+        public void SetViewActive(bool isActive)
+        {
             gameObject.SetActive(isActive);
+
+            if (!isActive)
+                reportConfirmationDialogCts.SafeCancelAndDispose();
+        }
 
         public void PlayAnimator(int triggerId)
         {
@@ -175,7 +198,25 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnReportUser(ICommunityMemberData profile)
         {
-            // TODO (Santi): Implement this...
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(ICommunityMemberData memberData, CancellationToken ct)
+            {
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, memberData.Name),
+                                                                                     REPORT_USER_CANCEL_TEXT,
+                                                                                     REPORT_USER_CONFIRM_TEXT,
+                                                                                     contextMenuSettings.ReportSprite,
+                                                                                     false, false,
+                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
