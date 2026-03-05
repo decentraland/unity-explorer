@@ -175,9 +175,10 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private void SendToPeer(Peer peer, ENetChannel channel, IMessage message)
         {
             int size = message.CalculateSize();
-            message.WriteTo((CodedOutputStream) new Span<byte>(sendBuffer, 0, size));
+            var span = new Span<byte>(sendBuffer, 0, size);
+            message.WriteTo(span);
             var packet = default(Packet);
-            packet.Create(sendBuffer, 0, size, channel.PacketMode);
+            packet.Create(span, channel.PacketMode);
             peer.Send(channel.ChannelId, ref packet);
         }
 
