@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
-    "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+    "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#shape/web_client",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
