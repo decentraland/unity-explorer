@@ -3,6 +3,7 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
@@ -16,6 +17,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
+using DCL.Chat.Reactions;
 using DCL.Translation;
 using DCL.Translation.Service;
 using UnityEngine.InputSystem;
@@ -60,7 +62,8 @@ namespace DCL.Chat
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
-            ITranslationCache translationCache)
+            ITranslationCache translationCache,
+            ISituationalReactionService? situationalReactionService = null)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -150,6 +153,14 @@ namespace DCL.Chat
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionHandler);
 
+            ChatReactionButtonPresenter? reactionButtonPresenter = null;
+
+            if (situationalReactionService != null && view.ChatReactionButton != null)
+            {
+                reactionButtonPresenter = new ChatReactionButtonPresenter(view.ChatReactionButton, situationalReactionService);
+                uiScope.Add(reactionButtonPresenter);
+            }
+
             var mediator = new ChatUIMediator(
                 view,
                 chatConfig,
@@ -158,7 +169,8 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                communityVoiceChatSubTitleButtonPresenter);
+                communityVoiceChatSubTitleButtonPresenter,
+                reactionButtonPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,

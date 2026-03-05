@@ -1,5 +1,6 @@
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatViews;
 using DCL.VoiceChat;
 using DG.Tweening;
@@ -15,13 +16,13 @@ namespace DCL.Chat
         [field: SerializeField] public ChatInputView InputView { get; private set; } = null!;
         [field: SerializeField] public ChatTitlebarView TitlebarView { get; private set; } = null!;
         [field: SerializeField] public ChannelMemberFeedView MemberListView { get; private set; } = null!;
+        [field: SerializeField] public ChatReactionButtonView ChatReactionButton { get; private set; } = null!;
 
         [field: Header("Voice Chat")]
         [field: SerializeField] public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; } = null!;
 
         public void SetSharedBackgroundFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
-            // This is the logic that was previously in ChatMessageFeedView, now in its correct home.
             sharedBackgroundCanvasGroup.DOKill();
 
             float targetAlpha = isFocused ? 1.0f : 0.0f;

@@ -34,6 +34,7 @@ using System.Threading;
 using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
+using DCL.Chat.Reactions;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
@@ -47,6 +48,7 @@ using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Configs;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -100,6 +102,7 @@ namespace DCL.PluginSystem.Global
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
+        private ISituationalReactionService? situationalReactionService;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -182,8 +185,26 @@ namespace DCL.PluginSystem.Global
             eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
         }
 
+        private void InitializeSituationalReactions(ChatPluginSettings settings)
+        {
+            if (settings.ReactionsConfig == null) return;
+
+            var controller = mainUIView.ChatMainView.SituationalReactionController;
+
+            if (controller == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,
+                    "SituationalReactionController is not assigned on ChatMainSharedAreaView — reactions will be inactive.");
+                return;
+            }
+
+            controller.Initialize(settings.ReactionsConfig.SituationalReactions);
+            situationalReactionService = controller;
+        }
+
         public void Dispose()
         {
+            (situationalReactionService as IDisposable)?.Dispose();
             chatStorage?.Dispose();
             pluginScope.Dispose();
             pluginCts.SafeCancelAndDispose();
@@ -200,6 +221,8 @@ namespace DCL.PluginSystem.Global
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
+
+            InitializeSituationalReactions(settings);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
@@ -344,7 +367,8 @@ namespace DCL.PluginSystem.Global
                 chatSharedAreaEventBus,
                 translationSettings,
                 translationMemory,
-                translationCache
+                translationCache,
+                situationalReactionService
             );
 
             pluginScope.Add(chatPanelPresenter);
@@ -441,7 +465,10 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
         [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; }
 
-        [Header("Audio")]
+        [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
+
+        [field: Header("Reactions")]
+        [field: SerializeField] public ChatReactionsConfig ReactionsConfig { get; private set; }
     }
 }
