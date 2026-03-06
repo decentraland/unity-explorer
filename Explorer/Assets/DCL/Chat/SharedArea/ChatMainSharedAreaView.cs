@@ -15,7 +15,7 @@ namespace DCL.ChatArea
 
         [field: SerializeField] public ChatPanelView ChatPanelView { get; private set; } = null!;
         [field: SerializeField] public VoiceChatPanelView VoiceChatPanelView { get; private set; } = null!;
-        [field: SerializeField] public SituationalReactionController SituationalReactionController { get; private set; } = null!;
+        [field: SerializeField] public SituationalReactionView SituationalReactionView { get; private set; } = null!;
 
         public void OnPointerEnter(PointerEventData eventData)
         {

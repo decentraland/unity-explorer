@@ -64,7 +64,7 @@ namespace DCL.Chat
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ISituationalReactionService situationalReactionService,
+            SituationalReactionService situationalReactionService,
             ChatReactionsConfig reactionsConfig)
         {
             this.view = view;
@@ -155,6 +155,8 @@ namespace DCL.Chat
                 reactionsConfig,
                 view.EmojiPanelView);
 
+            var situationalReactionPresenter = new SituationalReactionPresenter(situationalReactionService);
+            
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
             uiScope.Add(messageFeedPresenter);
@@ -162,7 +164,8 @@ namespace DCL.Chat
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionHandler);
             uiScope.Add(reactionsPresenter);
-
+            uiScope.Add(situationalReactionPresenter);
+            
             var mediator = new ChatUIMediator(
                 view,
                 chatConfig,
