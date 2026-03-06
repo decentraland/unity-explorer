@@ -20,7 +20,6 @@ using DCL.Backpack.Gifting.Services.GiftItemLoaderService;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
-using DCL.Backpack.Gifting.Tests;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -28,7 +27,6 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utility;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -167,7 +165,6 @@ namespace DCL.PluginSystem.Global
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
                 wearablesProvider,
                 emoteProvider,
-                web3IdentityCache,
                 loadThumbnailCommand,
                 wearableCatalog,
                 pendingTransferService,
@@ -208,19 +205,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
-
-#region EDITOR_TEST
-#if UNITY_EDITOR
-
-            // NOTE: For triggering notification in the editor because
-            // NOTE: method in the documentation for faking notifications doesn't work
-            // NOTE: look for TestGiftNotification component on TEST_GIFT_NOTIFICATIONS game object
-            // NOTE: and trigger notification through context menu by
-            // NOTE: choosing "Trigger Gift Notification" option
-            var go = new GameObject().AddComponent<TestGiftNotification>();
-            go.name = "TEST_GIFT_NOTIFICATIONS";
-#endif
-#endregion
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

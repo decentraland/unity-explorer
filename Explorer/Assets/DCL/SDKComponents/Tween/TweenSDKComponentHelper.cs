@@ -1,4 +1,5 @@
 using CRDT;
+using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -54,6 +55,21 @@ namespace DCL.SDKComponents.Tween
 
         public static Ease GetEase(EasingFunction easingFunction) =>
             EASING_FUNCTIONS_MAP.GetValueOrDefault(easingFunction, Linear);
+
+        /// <summary>
+        /// Resolves undefined position/rotation/scale from the entity's current Transform.
+        /// Used so that sequence steps use up-to-date transform when the step starts.
+        /// </summary>
+        public static void ResolveMoveRotateScale(MoveRotateScale moveRotateScale, Transform? transform, out ResolvedMoveRotateScale resolved)
+        {
+            resolved = new ResolvedMoveRotateScale(
+                moveRotateScale.PositionStart?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.PositionEnd?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.RotationStart?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.RotationEnd?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.ScaleStart?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one),
+                moveRotateScale.ScaleEnd?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TweenStateStatus GetTweenerState(ITweener tweener)
@@ -242,7 +258,11 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+            if (sdkTweenComponent.TweenMode is PBTween.ModeOneofCase.MoveRotateScale)
+                SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isInCurrentScene);
+            else
+                UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+
             WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
@@ -275,4 +295,28 @@ namespace DCL.SDKComponents.Tween
             && !sdkTweenComponent.CustomTweener.IsFinished()
             && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
     }
+
+    /// <summary>
+    /// Resolved MoveRotateScale values with undefined fields filled from current Transform.
+    /// </summary>
+    public readonly struct ResolvedMoveRotateScale
+    {
+        public readonly Vector3 PositionStart;
+        public readonly Vector3 PositionEnd;
+        public readonly Quaternion RotationStart;
+        public readonly Quaternion RotationEnd;
+        public readonly Vector3 ScaleStart;
+        public readonly Vector3 ScaleEnd;
+
+        public ResolvedMoveRotateScale(Vector3 positionStart, Vector3 positionEnd, Quaternion rotationStart, Quaternion rotationEnd, Vector3 scaleStart, Vector3 scaleEnd)
+        {
+            PositionStart = positionStart;
+            PositionEnd = positionEnd;
+            RotationStart = rotationStart;
+            RotationEnd = rotationEnd;
+            ScaleStart = scaleStart;
+            ScaleEnd = scaleEnd;
+        }
+    }
+
 }

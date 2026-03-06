@@ -325,8 +325,7 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController,
-                imageControllerProvider));
+                passportErrorsController));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
@@ -411,6 +410,7 @@ namespace DCL.Passport
                                       getUserPositionBuffer,
                                       onlineUsersProvider,
                                       realmNavigator,
+                                      decentralandUrlsSource,
                                       parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
                                           parcel))),
                               false));
@@ -462,7 +462,7 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,
                 parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
         }
 

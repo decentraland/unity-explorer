@@ -75,6 +75,12 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
+        public class AvatarOutlineSettingsRef : AssetReferenceT<AvatarHighlightData>
+        {
+            public AvatarOutlineSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
         public class RoadDataRef : AssetReferenceT<RoadSettingsAsset>
         {
             public RoadDataRef(string guid) : base(guid) { }
