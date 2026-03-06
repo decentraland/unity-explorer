@@ -41,7 +41,6 @@ namespace DCL.Multiplayer.Movement.Systems
         private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
-        private NetworkMovementMessage? lastMovementSent;
         private uint lastSequenceSent;
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub,
@@ -75,28 +74,15 @@ namespace DCL.Multiplayer.Movement.Systems
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
 
-            var sendMessage = new ClientMessage();
-            ITransport.PacketMode packetMode;
+            lastSequenceSent++;
 
-            if (lastMovementSent == null)
+            pulseService.Send(new ClientMessage
             {
-                packetMode = ITransport.PacketMode.RELIABLE;
-                lastMovementSent = message;
-                lastSequenceSent = 0;
-
-                sendMessage.PlayerStateFull = new PlayerStateFull
+                PlayerStateFull = new PlayerStateFull
                 {
-                    State = ToPlayerState(message, 0),
-                };
-            }
-            else
-            {
-                packetMode = ITransport.PacketMode.UNRELIABLE_UNSEQUENCED;
-                lastSequenceSent++;
-                sendMessage.PlayerStateDelta = ToPlayerStateDelta(lastMovementSent.Value, message, lastSequenceSent);
-            }
-
-            pulseService.Send(sendMessage, packetMode);
+                    State = ToPlayerState(message, lastSequenceSent),
+                },
+            }, ITransport.PacketMode.UNRELIABLE_SEQUENCED);
         }
 
         public UniTask SubscribeToIncomingMessagesAsync(CancellationToken ct)
@@ -412,7 +398,6 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = playerState.SlideBlend,
                     IsGrounded = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Grounded),
-
                     IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
                     IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
                     IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
@@ -479,23 +464,24 @@ namespace DCL.Multiplayer.Movement.Systems
                 last.animState.SlideBlendValue = delta.SlideBlend;
 
             if (delta.HasHeadYaw)
+            {
                 last.headYawAndPitch.x = delta.HeadYaw;
+                last.headIKYawEnabled = true;
+            }
 
             if (delta.HasHeadPitch)
+            {
                 last.headYawAndPitch.y = delta.HeadPitch;
+                last.headIKPitchEnabled = true;
+            }
 
             uint flags = delta.StateFlags;
 
-            last.animState.IsGrounded = (flags & (1 << 1)) != 0;
-
-            // TODO Jumping was reworked
-            // last.animState.IsJumping = (flags & (1 << 2)) != 0;
-            last.animState.IsLongJump = (flags & (1 << 3)) != 0;
-            last.animState.IsFalling = (flags & (1 << 4)) != 0;
-            last.animState.IsLongFall = (flags & (1 << 5)) != 0;
-            last.isStunned = (flags & (1 << 6)) != 0;
-            last.headIKYawEnabled = (flags & (1 << 7)) != 0;
-            last.headIKPitchEnabled = (flags & (1 << 8)) != 0;
+            last.animState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
+            last.animState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
+            last.animState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
+            last.animState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
+            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
 
             if (movementBlendChanged)
             {
@@ -545,94 +531,24 @@ namespace DCL.Multiplayer.Movement.Systems
             };
         }
 
-        private static PlayerStateDelta ToPlayerStateDelta(
-            NetworkMovementMessage previous,
-            NetworkMovementMessage current,
-            uint newSeq)
-        {
-            var delta = new PlayerStateDelta
-            {
-                // No need own subjectId, can be resolved on the server
-                // SubjectId = subjectId,
-                NewSeq = newSeq,
-                // ServerTick = (uint)current.timestamp,
-            };
-
-            // TODO: use quantizer instead of casting
-            if (Changed(previous.position.x, current.position.x))
-                delta.PositionX = (uint) current.position.x;
-
-            if (Changed(previous.position.y, current.position.y))
-                delta.PositionY = (uint) current.position.y;
-
-            if (Changed(previous.position.z, current.position.z))
-                delta.PositionZ = (uint) current.position.z;
-
-            if (Changed(previous.velocity.x, current.velocity.x))
-                delta.VelocityX = (uint) current.velocity.x;
-
-            if (Changed(previous.velocity.y, current.velocity.y))
-                delta.VelocityY = (uint) current.velocity.y;
-
-            if (Changed(previous.velocity.z, current.velocity.z))
-                delta.VelocityZ = (uint) current.velocity.z;
-
-            if (Changed(previous.rotationY, current.rotationY))
-                delta.RotationY = (uint) current.rotationY;
-
-            float currentMovementBlend = Mathf.Clamp(current.animState.MovementBlendValue, 0, 3);
-            float previousMovementBlend = Mathf.Clamp(previous.animState.MovementBlendValue, 0, 3);
-
-            if (Changed(previousMovementBlend, currentMovementBlend))
-                delta.MovementBlend = (uint) currentMovementBlend;
-
-            if (Changed(previous.animState.SlideBlendValue, current.animState.SlideBlendValue))
-                delta.SlideBlend = (uint) current.animState.SlideBlendValue;
-
-            if (Changed(previous.headYawAndPitch.x, current.headYawAndPitch.x))
-                delta.HeadYaw = (uint) current.headYawAndPitch.x;
-
-            if (Changed(previous.headYawAndPitch.y, current.headYawAndPitch.y))
-                delta.HeadPitch = (uint) current.headYawAndPitch.y;
-
-            uint currentFlags = BuildStateFlags(current);
-
-            delta.StateFlags = currentFlags;
-
-            return delta;
-
-            bool Changed(float a, float b, float epsilon = 0.0001f) =>
-                Mathf.Abs(a - b) > epsilon;
-        }
-
         private static uint BuildStateFlags(NetworkMovementMessage message)
         {
             uint flags = 0;
 
             if (message.animState.IsGrounded)
-                flags |= 1u << 1;
-
-            // TODO: jumping has been reworked
-            // if (message.animState.IsJumping)
-            //     flags |= 1u << 2;
+                flags |= (uint) PlayerAnimationFlags.Grounded;
 
             if (message.animState.IsLongJump)
-                flags |= 1u << 3;
+                flags |= (uint) PlayerAnimationFlags.LongJump;
 
             if (message.animState.IsFalling)
-                flags |= 1u << 4;
+                flags |= (uint) PlayerAnimationFlags.Falling;
 
             if (message.animState.IsLongFall)
-                flags |= 1u << 5;
+                flags |= (uint) PlayerAnimationFlags.LongFall;
 
             if (message.isStunned)
-                flags |= 1u << 6;
-
-            if (message.headIKYawEnabled)
-                flags |= 1u << 7;
-
-            if (message.headIKPitchEnabled)
-                flags |= 1u << 8;
+                flags |= (uint) PlayerAnimationFlags.Stunned;
 
             return flags;
         }
