@@ -12,10 +12,10 @@ namespace DCL.Web3.Authenticators
 #if !UNITY_WEBGL
     public partial class DappWeb3Authenticator
     {
-        public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+        public class Default : IWeb3Authenticator, IEthereumApi
         {
-            private readonly IWeb3VerifiedAuthenticator originAuth;
-            private readonly IVerifiedEthereumApi originApi;
+            private readonly IWeb3Authenticator originAuth;
+            private readonly IEthereumApi originApi;
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -69,21 +69,12 @@ namespace DCL.Web3.Authenticators
             public UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct) =>
                 originApi.SendAsync(request, ct);
 
-            public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
-                originApi.AddVerificationListener(callback);
-
-            public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
-                originAuth.LoginAsync(ct);
-
             public UniTask LogoutAsync(CancellationToken cancellationToken) =>
                 originAuth.LogoutAsync(cancellationToken);
 
-            public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-                originAuth.SetVerificationListener(callback);
-
-            public void CancelCurrentWeb3Operation()
+            public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct, IWeb3Authenticator.VerificationDelegate? codeVerificationCallback)
             {
-                originAuth.CancelCurrentWeb3Operation();
+                return originAuth.LoginAsync(ct, codeVerificationCallback);
             }
 
             private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag

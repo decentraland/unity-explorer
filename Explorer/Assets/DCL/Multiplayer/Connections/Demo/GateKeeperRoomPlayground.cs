@@ -18,6 +18,7 @@ using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
 using Utility;
+using DCL.Multiplayer.Connections.FfiClients;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -32,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Demo
         private async UniTaskVoid LaunchAsync()
         {
 #if UNITY_EDITOR
-            DCL.Multiplayer.Connections.FfiClients.IFFIClient.Default.EnsureInitialize();
+            global::LiveKit.Internal.FFIClients.IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
