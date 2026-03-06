@@ -79,15 +79,13 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
-            if (!spawnResolver.TryGetSpawnPxBottomCenter(out Vector2 basePx)) return;
-
+            Vector2 basePx = spawnResolver.GetSpawnPxBottomCenter();
             SpawnBurst(basePx, emojiIndex, count, LANE_JITTER_H, LANE_JITTER_V);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
-            if (!spawnResolver.TryGetSpawnPxFromRectCenter(sourceRect, out Vector2 basePx)) return;
-
+            Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect);
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
 

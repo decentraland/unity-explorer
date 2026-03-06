@@ -11,6 +11,10 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly RectTransform laneRect;
         private readonly Camera uiCamera;
+        private readonly Vector3[] corners = new Vector3[4];
+
+        private Rect cachedLaneRect;
+        private int cachedFrame = -1;
 
         public UIReactionSpawnResolver(RectTransform laneRect)
         {
@@ -19,50 +23,46 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>Screen position (pixels) at the center of the given rect.</summary>
-        public bool TryGetSpawnPxFromRectCenter(RectTransform rect, out Vector2 px)
+        public Vector2 GetSpawnPxFromRectCenter(RectTransform rect)
         {
             Vector3 worldCenter = rect.TransformPoint(rect.rect.center);
-            px = RectTransformUtility.WorldToScreenPoint(uiCamera, worldCenter);
-            return true;
+            return RectTransformUtility.WorldToScreenPoint(uiCamera, worldCenter);
         }
 
         /// <summary>Screen position (pixels) at the bottom 12% of the lane rect.</summary>
-        public bool TryGetSpawnPxBottomCenter(out Vector2 px)
+        public Vector2 GetSpawnPxBottomCenter()
         {
             Rect r = GetLaneScreenRect();
-            px = new Vector2(r.center.x, Mathf.Lerp(r.yMin, r.yMax, 0.12f));
-            return true;
+            return new Vector2(r.center.x, Mathf.Lerp(r.yMin, r.yMax, 0.12f));
         }
 
         /// <summary>
         /// Clamps a particle's screen position (pixels) to the lane's screen rect.
-        /// Returns <c>true</c> if the position was changed.
         /// </summary>
-        public bool ClampToLane(ref Vector2 screenPos)
+        public void ClampToLane(ref Vector2 screenPos)
         {
             Rect lane = GetLaneScreenRect();
-            float cx = Mathf.Clamp(screenPos.x, lane.xMin, lane.xMax);
-            float cy = Mathf.Clamp(screenPos.y, lane.yMin, lane.yMax);
-
-            if (Mathf.Approximately(screenPos.x, cx) && Mathf.Approximately(screenPos.y, cy))
-                return false;
-
-            screenPos.x = cx;
-            screenPos.y = cy;
-            return true;
+            screenPos.x = Mathf.Clamp(screenPos.x, lane.xMin, lane.xMax);
+            screenPos.y = Mathf.Clamp(screenPos.y, lane.yMin, lane.yMax);
         }
 
         private Rect GetLaneScreenRect()
         {
-            Vector3[] corners = new Vector3[4];
+            int frame = Time.frameCount;
+            if (frame == cachedFrame)
+                return cachedLaneRect;
+
+            cachedFrame = frame;
             laneRect.GetWorldCorners(corners);
 
             Vector2 a = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[0]);
             Vector2 b = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[2]);
 
-            return Rect.MinMaxRect(
+            cachedLaneRect = Rect.MinMaxRect(
                 Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y),
                 Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+
+            return cachedLaneRect;
         }
     }
 }
