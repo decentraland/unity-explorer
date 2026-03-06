@@ -152,7 +152,8 @@ namespace DCL.Chat
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
-                reactionsConfig);
+                reactionsConfig,
+                view.EmojiPanelView);
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);

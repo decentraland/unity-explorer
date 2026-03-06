@@ -1428,6 +1428,7 @@ MonoBehaviour:
   <MemberListView>k__BackingField: {fileID: 6528608093430661434}
   <ChatReactionButton>k__BackingField: {fileID: 6539120710582331771}
   <ChatReactionsSelector>k__BackingField: {fileID: 7903621782038610178}
+  <EmojiPanelView>k__BackingField: {fileID: 2800827025687150752}
   <JoinCommunityLiveStreamSubTitleButton>k__BackingField: {fileID: 8540153266423022452}
 --- !u!114 &4399116881984022075
 MonoBehaviour:
@@ -3170,6 +3171,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2800827025687150752 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1062488254353314167, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+  m_PrefabInstance: {fileID: 2909393696600658391}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ebd3771315604fc09ca02ca37850846, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &6797469552898877357 stripped

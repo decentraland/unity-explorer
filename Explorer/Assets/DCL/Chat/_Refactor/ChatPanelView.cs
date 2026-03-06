@@ -2,6 +2,7 @@ using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatViews;
+using DCL.Emoji;
 using DCL.VoiceChat;
 using DG.Tweening;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace DCL.Chat
         [field: SerializeField] public ChannelMemberFeedView MemberListView { get; private set; } = null!;
         [field: SerializeField] public ChatReactionButtonView ChatReactionButton { get; private set; } = null!;
         [field: SerializeField] public ChatReactionsSelectorView ChatReactionsSelector { get; private set; } = null!;
+        [field: SerializeField] public EmojiPanelView EmojiPanelView { get; private set; } = null!;
 
         [field: Header("Voice Chat")]
         [field: SerializeField] public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; } = null!;

@@ -18,6 +18,8 @@ namespace DCL.Chat.ChatReactions
 
         private ChatReactionsAtlasConfig atlasConfig;
 
+        public RectTransform AddButtonRect => (RectTransform)addButton.transform;
+
         public event Action? OnAddClicked;
         public event Action<int>? OnReactionClicked;
 

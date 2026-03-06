@@ -1,6 +1,8 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.Reactions;
+using DCL.Emoji;
+using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -14,14 +16,25 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionsSelectorPresenter selectorPresenter;
         private readonly ChatReactionButtonView buttonView;
         private readonly ChatReactionsAtlasConfig atlasConfig;
+        private readonly EmojiPanelView emojiPanelView;
+        private readonly RectTransform emojiPanelRect;
+        private readonly RectTransform addButtonRect;
+
+        private Vector3 originalPanelPosition;
+        private bool emojiPanelOpenedByReactions;
 
         public ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView selectorView,
             ISituationalReactionService reactionService,
-            ChatReactionsConfig reactionsConfig)
+            ChatReactionsConfig reactionsConfig,
+            EmojiPanelView emojiPanelView)
         {
             this.buttonView = buttonView;
+            this.emojiPanelView = emojiPanelView;
+
+            emojiPanelRect = (RectTransform)emojiPanelView.transform;
+            addButtonRect = selectorView.AddButtonRect;
 
             var messageConfig = reactionsConfig.MessageReactions;
             atlasConfig = reactionsConfig.SituationalReactions.Atlas;
@@ -52,28 +65,57 @@ namespace DCL.Chat.ChatReactions
         private void OnSelectorReactionClicked(int atlasIndex)
         {
             buttonView.SetEmoji(atlasIndex, atlasConfig);
+            HideEmojiPanel();
             selectorPresenter.Hide();
         }
 
         private void OnAddClicked()
         {
-            // TODO: open existing EmojiPanelPresenter
+            if (emojiPanelOpenedByReactions)
+            {
+                HideEmojiPanel();
+                return;
+            }
+
+            ShowEmojiPanel();
+        }
+
+        private void ShowEmojiPanel()
+        {
+            originalPanelPosition = emojiPanelRect.position;
+            emojiPanelRect.position = addButtonRect.position;
+            emojiPanelView.gameObject.SetActive(true);
+            emojiPanelView.EmojiContainer.gameObject.SetActive(true);
+            emojiPanelOpenedByReactions = true;
+        }
+
+        private void HideEmojiPanel()
+        {
+            if (!emojiPanelOpenedByReactions) return;
+
+            emojiPanelView.gameObject.SetActive(false);
+            emojiPanelView.EmojiContainer.gameObject.SetActive(false);
+            emojiPanelRect.position = originalPanelPosition;
+            emojiPanelOpenedByReactions = false;
         }
 
         public void Show()
         {
+            HideEmojiPanel();
             buttonPresenter.Show();
             selectorPresenter.Hide();
         }
 
         public void Hide()
         {
+            HideEmojiPanel();
             buttonPresenter.Hide();
             selectorPresenter.Hide();
         }
 
         public void Dispose()
         {
+            HideEmojiPanel();
             buttonPresenter.HoldTriggered -= OnHoldTriggered;
             selectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
             selectorPresenter.AddClicked -= OnAddClicked;
