@@ -41,6 +41,13 @@ namespace DCL.SceneBannedUsers
 
         private void OnRoomMetadataChanged(string metadata)
         {
+            UpdateBannedList(metadata);
+        }
+
+        private void UpdateBannedList(string metadata)
+        {
+            if (string.IsNullOrEmpty(metadata)) return;
+
             roomMetadata = metadata;
             bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
 
