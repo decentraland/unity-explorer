@@ -133,7 +133,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private async UniTask SubscribeToPlayerStateDeltaAsync(CancellationToken ct)
         {
-            await foreach (PlayerStateDelta playerState in pulseService.SubscribeAsync<PlayerStateDelta>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
+            await foreach (PlayerStateDeltaTier0 playerState in pulseService.SubscribeAsync<PlayerStateDeltaTier0>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
             {
                 if (isDisposed)
                 {
@@ -408,7 +408,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return message;
         }
 
-        private static NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDelta delta)
+        private static NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
         {
             // TODO: timestamp might not be the same as serverTick (?)
             last.timestamp = delta.ServerTick;
