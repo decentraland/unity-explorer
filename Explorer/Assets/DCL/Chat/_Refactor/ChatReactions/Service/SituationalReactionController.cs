@@ -16,6 +16,7 @@ namespace DCL.Chat.Reactions
         [field: SerializeField] public RectTransform LaneRect { get; private set; } = null!;
 
         private ChatReactionSimulation? simulation;
+        private Camera? cachedMainCamera;
 
         public void Initialize(ChatReactionsSituationalConfig config)
         {
@@ -27,6 +28,7 @@ namespace DCL.Chat.Reactions
 
         public void Dispose()
         {
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
             simulation?.Dispose();
             simulation = null;
         }
@@ -41,12 +43,15 @@ namespace DCL.Chat.Reactions
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
         }
 
-        private void Update() =>
+        private void Update()
+        {
+            cachedMainCamera = Camera.main;
             simulation?.Tick(Time.unscaledDeltaTime);
+        }
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
         {
-            if (cam != Camera.main) return;
+            if (cam != cachedMainCamera || cachedMainCamera == null) return;
 
             simulation?.Draw(cam);
         }
