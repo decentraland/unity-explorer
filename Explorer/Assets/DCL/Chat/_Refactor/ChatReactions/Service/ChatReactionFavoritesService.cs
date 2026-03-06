@@ -13,6 +13,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly int[] defaultIndices;
         private readonly List<int> favorites = new();
+        private readonly System.Text.StringBuilder saveBuilder = new();
 
         public IReadOnlyList<int> Favorites => favorites;
 
@@ -73,16 +74,15 @@ namespace DCL.Chat.ChatReactions
                 return;
             }
 
-            // Manual join to avoid LINQ / string.Join with IEnumerable
-            var sb = new System.Text.StringBuilder(favorites.Count * 4);
+            saveBuilder.Clear();
 
             for (int i = 0; i < favorites.Count; i++)
             {
-                if (i > 0) sb.Append(SEPARATOR);
-                sb.Append(favorites[i]);
+                if (i > 0) saveBuilder.Append(SEPARATOR);
+                saveBuilder.Append(favorites[i]);
             }
 
-            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, sb.ToString(), save: true);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, saveBuilder.ToString(), save: true);
         }
     }
 }

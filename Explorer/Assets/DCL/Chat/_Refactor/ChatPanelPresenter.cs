@@ -65,7 +65,7 @@ namespace DCL.Chat
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
             ISituationalReactionService situationalReactionService,
-            ChatReactionsMessageConfig messageReactionsConfig)
+            ChatReactionsConfig reactionsConfig)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -152,7 +152,7 @@ namespace DCL.Chat
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
-                messageReactionsConfig);
+                reactionsConfig);
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);

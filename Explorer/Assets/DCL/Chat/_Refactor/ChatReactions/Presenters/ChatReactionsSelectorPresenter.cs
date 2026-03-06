@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.ChatReactions.Configs;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -12,10 +13,13 @@ namespace DCL.Chat.ChatReactions
 
         public ChatReactionsSelectorPresenter(
             ChatReactionsSelectorView view,
-            ChatReactionFavoritesService favoritesService)
+            ChatReactionFavoritesService favoritesService,
+            ChatReactionsAtlasConfig atlasConfig)
         {
             this.view = view;
             this.favoritesService = favoritesService;
+
+            view.SetAtlasConfig(atlasConfig);
 
             view.OnAddClicked += OnAddClicked;
             view.OnReactionClicked += OnReactionClicked;

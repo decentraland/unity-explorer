@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using DCL.Prefs;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,9 +10,9 @@ namespace DCL.Chat.ChatReactions.Editor
         [MenuItem("Decentraland/Cache/Clear Reaction Favorites")]
         public static void ClearReactionFavorites()
         {
-            PlayerPrefs.DeleteKey("ChatReaction_Favorites");
+            PlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_FAVORITES);
             PlayerPrefs.Save();
-            Debug.Log("Cleared ChatReaction_Favorites from PlayerPrefs");
+            Debug.Log("Cleared " + DCLPrefKeys.CHAT_REACTION_FAVORITES + " from PlayerPrefs");
         }
     }
 }

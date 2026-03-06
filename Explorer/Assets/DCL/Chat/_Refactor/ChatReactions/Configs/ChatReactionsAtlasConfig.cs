@@ -27,5 +27,19 @@ namespace DCL.Chat.ChatReactions.Configs
         public int Cols => Atlas != null ? Mathf.Max(1, Atlas.width / TileSizePx) : 1;
         public int Rows => Atlas != null ? Mathf.Max(1, Atlas.height / TileSizePx) : 1;
         public int TotalTiles => Cols * Rows;
+
+        public Rect GetUVRect(int tileIndex)
+        {
+            int col = tileIndex % Cols;
+            int row = tileIndex / Cols;
+
+            if (FlipY)
+                row = Rows - 1 - row;
+
+            float w = 1f / Cols;
+            float h = 1f / Rows;
+
+            return new Rect(col * w, row * h, w, h);
+        }
     }
 }

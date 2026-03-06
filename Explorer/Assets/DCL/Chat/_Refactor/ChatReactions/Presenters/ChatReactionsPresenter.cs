@@ -12,23 +12,52 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly ChatReactionButtonPresenter buttonPresenter;
         private readonly ChatReactionsSelectorPresenter selectorPresenter;
+        private readonly ChatReactionButtonView buttonView;
+        private readonly ChatReactionsAtlasConfig atlasConfig;
 
         public ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView selectorView,
             ISituationalReactionService reactionService,
-            ChatReactionsMessageConfig messageConfig)
+            ChatReactionsConfig reactionsConfig)
         {
+            this.buttonView = buttonView;
+
+            var messageConfig = reactionsConfig.MessageReactions;
+            atlasConfig = reactionsConfig.SituationalReactions.Atlas;
+
             var favoritesService = new ChatReactionFavoritesService(messageConfig.DefaultFavoriteEmojiIndices);
 
-            selectorPresenter = new ChatReactionsSelectorPresenter(selectorView, favoritesService);
+            selectorPresenter = new ChatReactionsSelectorPresenter(
+                selectorView,
+                favoritesService,
+                atlasConfig);
+
             buttonPresenter = new ChatReactionButtonPresenter(buttonView, reactionService);
             buttonPresenter.HoldTriggered += OnHoldTriggered;
+
+            selectorPresenter.ReactionClicked += OnSelectorReactionClicked;
+            selectorPresenter.AddClicked += OnAddClicked;
+
+            // Set initial button icon from first favorite (if any)
+            if (favoritesService.Favorites.Count > 0)
+                buttonView.SetEmoji(favoritesService.Favorites[0], atlasConfig);
         }
 
         private void OnHoldTriggered()
         {
             selectorPresenter.Show();
+        }
+
+        private void OnSelectorReactionClicked(int atlasIndex)
+        {
+            buttonView.SetEmoji(atlasIndex, atlasConfig);
+            selectorPresenter.Hide();
+        }
+
+        private void OnAddClicked()
+        {
+            // TODO: open existing EmojiPanelPresenter
         }
 
         public void Show()
@@ -46,6 +75,9 @@ namespace DCL.Chat.ChatReactions
         public void Dispose()
         {
             buttonPresenter.HoldTriggered -= OnHoldTriggered;
+            selectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
+            selectorPresenter.AddClicked -= OnAddClicked;
+
             buttonPresenter.Dispose();
             selectorPresenter.Dispose();
         }

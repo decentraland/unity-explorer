@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,12 +16,19 @@ namespace DCL.Chat.ChatReactions
 
         private readonly List<ChatReactionItemView> items = new();
 
+        private ChatReactionsAtlasConfig atlasConfig;
+
         public event Action? OnAddClicked;
         public event Action<int>? OnReactionClicked;
 
         private void Awake()
         {
             addButton.onClick.AddListener(() => OnAddClicked?.Invoke());
+        }
+
+        public void SetAtlasConfig(ChatReactionsAtlasConfig config)
+        {
+            atlasConfig = config;
         }
 
         public void Clear()
@@ -48,7 +56,7 @@ namespace DCL.Chat.ChatReactions
         {
             var item = Instantiate(reactionItemPrefab, container);
 
-            item.Initialize(atlasIndex);
+            item.Initialize(atlasIndex, atlasConfig);
 
             item.OnClicked += () =>
             {

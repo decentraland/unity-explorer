@@ -373,6 +373,78 @@ MonoBehaviour:
   container: {fileID: 3854583167658118028}
   reactionItemPrefab: {fileID: 3045088065712388552, guid: b2cc74ed9db280946a1e5ce942b4e1ab, type: 3}
   addButton: {fileID: 4251436806075189262}
+--- !u!1 &2064033349664676976
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8273674488207155936}
+  - component: {fileID: 4866299234665505858}
+  - component: {fileID: 8730811576143869113}
+  m_Layer: 5
+  m_Name: Icon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8273674488207155936
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064033349664676976}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8563957045350075967}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -16, y: -16}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4866299234665505858
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064033349664676976}
+  m_CullTransparentMesh: 1
+--- !u!114 &8730811576143869113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064033349664676976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 0}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
 --- !u!1 &2136441464727451040
 GameObject:
   m_ObjectHideFlags: 0
@@ -530,6 +602,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
   <ReactionButton>k__BackingField: {fileID: 4251436806075189262}
+  <EmojiIcon>k__BackingField: {fileID: 0}
   <PickerView>k__BackingField: {fileID: 0}
 --- !u!114 &5186545154324102699
 MonoBehaviour:
@@ -1449,7 +1522,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5935630019596604557
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1940,9 +2013,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8563957045350075967}
   - component: {fileID: 3918191157871155901}
+  - component: {fileID: 6539120710582331771}
   - component: {fileID: 9134375418826102299}
   - component: {fileID: 1081093265604003498}
-  - component: {fileID: 6539120710582331771}
   m_Layer: 5
   m_Name: ReactionButton
   m_TagString: Untagged
@@ -1963,6 +2036,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5935630019596604557}
+  - {fileID: 8273674488207155936}
   m_Father: {fileID: 3431309469859280520}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
@@ -1978,6 +2052,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8019160993208901318}
   m_CullTransparentMesh: 1
+--- !u!114 &6539120710582331771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8019160993208901318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b319d4f9713466a44a366c12dbedf87a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
+  <ReactionButton>k__BackingField: {fileID: 9134375418826102299}
+  <EmojiIcon>k__BackingField: {fileID: 8730811576143869113}
+  <PickerView>k__BackingField: {fileID: 0}
 --- !u!114 &9134375418826102299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2042,20 +2131,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &6539120710582331771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8019160993208901318}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b319d4f9713466a44a366c12dbedf87a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
-  <ReactionButton>k__BackingField: {fileID: 9134375418826102299}
-  <PickerView>k__BackingField: {fileID: 0}
 --- !u!1 &8328964895859875958
 GameObject:
   m_ObjectHideFlags: 0

@@ -369,7 +369,7 @@ namespace DCL.PluginSystem.Global
                 translationMemory,
                 translationCache,
                 situationalReactionService,
-                settings.ReactionsConfig.MessageReactions
+                settings.ReactionsConfig
             );
 
             pluginScope.Add(chatPanelPresenter);
