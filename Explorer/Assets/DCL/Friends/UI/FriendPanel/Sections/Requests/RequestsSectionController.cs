@@ -108,7 +108,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                     ViewDependencies.ConfirmationDialogOpener,
                     userProfile.Name,
                     view.ContextMenuSettings.ReportSprite,
-                    ReportCategory.PROFILE,
+                    ReportCategory.FRIENDS,
                     ct);
 
                 if (!confirmed)
