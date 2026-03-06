@@ -321,23 +321,15 @@ namespace DCL.VoiceChat
 
         private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
         {
-            LivekitAudioSource source = LivekitAudioSource.New(true);
+            LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, mono: spatial);
 
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
 
             if (spatial)
-            {
                 configuration.ApplyProximitySettingsTo(audioSource);
 
-                var feeder = source.gameObject.AddComponent<SpatialAudioStreamFeeder>();
-                feeder.Initialize(stream, audioSource);
-            }
-            else
-            {
-                source.Construct(stream);
-            }
-
+            source.Construct(stream);
             source.name = $"ProximityAudio_{key.identity}";
             return source;
         }
@@ -348,11 +340,6 @@ namespace DCL.VoiceChat
 
             source.Stop();
             source.Free();
-
-            var feeder = source.GetComponent<SpatialAudioStreamFeeder>();
-            if (feeder != null)
-                feeder.Free();
-
             source.gameObject.SelfDestroy();
         }
 
