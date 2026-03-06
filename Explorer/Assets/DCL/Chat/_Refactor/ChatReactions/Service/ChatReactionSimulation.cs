@@ -11,26 +11,39 @@ namespace DCL.Chat.ChatReactions
     /// </summary>
     public sealed class ChatReactionSimulation : IDisposable
     {
+        private const float LANE_JITTER_H = 12f;
+        private const float LANE_JITTER_V = 8f;
+        private const float RECT_JITTER_H = 8f;
+        private const float RECT_JITTER_V = 4f;
+        private const float FALLBACK_LATERAL_RANGE = 20f;
+        private const float SPAWN_SIZE_MIN_RATIO = 0.2f;
+        private const float SPAWN_SIZE_MAX_RATIO = 0.5f;
+
         private static readonly int AtlasTexId = Shader.PropertyToID("_AtlasTex");
         private static readonly int AtlasColsId = Shader.PropertyToID("_AtlasCols");
         private static readonly int AtlasRowsId = Shader.PropertyToID("_AtlasRows");
         private static readonly int FlipYId = Shader.PropertyToID("_FlipY");
 
         private readonly ChatReactionsSituationalConfig config;
+        private readonly Material runtimeMaterial;
         private readonly UiReactionParticlePool uiPool;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
         private readonly ChatReactionFlightController? flightController;
         private readonly System.Random rng;
+        private readonly int atlasTotalTiles;
 
         public ChatReactionSimulation(ChatReactionsSituationalConfig config, RectTransform laneRect)
         {
             this.config = config;
 
-            ApplyAtlasToMaterial(config);
+            runtimeMaterial = new Material(config.EmojiMaterial);
+            runtimeMaterial.name = config.EmojiMaterial.name + " (Runtime)";
+            ApplyAtlasToMaterial(runtimeMaterial, config);
 
             rng = new System.Random();
+            atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
             uiPool = new UiReactionParticlePool(config.UILane.MaxParticles);
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
@@ -39,11 +52,15 @@ namespace DCL.Chat.ChatReactions
                 flightController = new ChatReactionFlightController(config.UILane.FlightPath, rng);
 
             renderer = new ChatReactionsParticleRenderer(
-                config.EmojiMaterial,
+                runtimeMaterial,
                 config.UILane.FlightPath?.SizeOverLifetime);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            if (runtimeMaterial != null)
+                UnityEngine.Object.Destroy(runtimeMaterial);
+        }
 
         public void Tick(float dt)
         {
@@ -64,20 +81,20 @@ namespace DCL.Chat.ChatReactions
         {
             if (!spawnResolver.TryGetSpawnPxBottomCenter(out Vector2 basePx)) return;
 
-            SpawnBurst(basePx, emojiIndex, count, jitterH: 12f, jitterV: 8f);
+            SpawnBurst(basePx, emojiIndex, count, LANE_JITTER_H, LANE_JITTER_V);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
             if (!spawnResolver.TryGetSpawnPxFromRectCenter(sourceRect, out Vector2 basePx)) return;
 
-            SpawnBurst(basePx, emojiIndex, count, jitterH: 8f, jitterV: 4f);
+            SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
 
         public void TriggerDefaultUIReaction()
         {
             int index = config.UILane.RandomEmoji
-                ? rng.Next(0, GetAtlasTotalTiles())
+                ? rng.Next(0, atlasTotalTiles)
                 : config.UILane.DefaultEmojiIndex;
 
             TriggerUIReaction(index, config.UILane.StreamBurst);
@@ -86,7 +103,7 @@ namespace DCL.Chat.ChatReactions
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
         {
             int index = config.UILane.RandomEmoji
-                ? rng.Next(0, GetAtlasTotalTiles())
+                ? rng.Next(0, atlasTotalTiles)
                 : config.UILane.DefaultEmojiIndex;
 
             TriggerUIReactionFromRect(sourceRect, index, config.UILane.StreamBurst);
@@ -119,10 +136,13 @@ namespace DCL.Chat.ChatReactions
             for (int t = 0; t < ticks; t++)
             {
                 int index = config.UILane.RandomEmoji
-                    ? rng.Next(0, GetAtlasTotalTiles())
+                    ? rng.Next(0, atlasTotalTiles)
                     : config.UILane.DefaultEmojiIndex;
 
-                TriggerUIReactionFromRect(streamEmitter.Source!, index, config.UILane.StreamBurst);
+                RectTransform? source = streamEmitter.Source;
+                if (source == null) return;
+
+                TriggerUIReactionFromRect(source, index, config.UILane.StreamBurst);
             }
         }
 
@@ -149,20 +169,13 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < Mathf.Max(1, count); i++)
             {
                 float endSizePx = Rand(ui.SizeRange.x, ui.SizeRange.y);
-                float startSizePx = endSizePx * Rand(0.2f, 0.5f);
+                float startSizePx = endSizePx * Rand(SPAWN_SIZE_MIN_RATIO, SPAWN_SIZE_MAX_RATIO);
                 float lifetime = Rand(ui.LifetimeRange.x, ui.LifetimeRange.y);
                 float baseSpeedPx = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
 
-                Vector2 velPx;
-
-                if (flightController != null)
-                {
-                    velPx = flightController.GetSpawnVelocity2D(baseSpeedPx);
-                }
-                else
-                {
-                    velPx = new Vector2(Rand(-20f, 20f), baseSpeedPx);
-                }
+                Vector2 velPx = flightController != null
+                    ? flightController.GetSpawnVelocity2D(baseSpeedPx)
+                    : new Vector2(Rand(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), baseSpeedPx);
 
                 Vector2 jitter = new Vector2(Rand(-jitterH, jitterH), Rand(-jitterV, jitterV));
 
@@ -173,17 +186,14 @@ namespace DCL.Chat.ChatReactions
         private float Rand(float min, float max) =>
             (float)(min + rng.NextDouble() * (max - min));
 
-        private int GetAtlasTotalTiles() =>
-            config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
-
-        private static void ApplyAtlasToMaterial(ChatReactionsSituationalConfig config)
+        private static void ApplyAtlasToMaterial(Material mat, ChatReactionsSituationalConfig config)
         {
-            if (config.EmojiMaterial == null || config.Atlas == null) return;
+            if (mat == null || config.Atlas == null) return;
 
-            config.EmojiMaterial.SetTexture(AtlasTexId, config.Atlas.Atlas);
-            config.EmojiMaterial.SetFloat(AtlasColsId, config.Atlas.Cols);
-            config.EmojiMaterial.SetFloat(AtlasRowsId, config.Atlas.Rows);
-            config.EmojiMaterial.SetFloat(FlipYId, config.Atlas.FlipY ? 1f : 0f);
+            mat.SetTexture(AtlasTexId, config.Atlas.Atlas);
+            mat.SetFloat(AtlasColsId, config.Atlas.Cols);
+            mat.SetFloat(AtlasRowsId, config.Atlas.Rows);
+            mat.SetFloat(FlipYId, config.Atlas.FlipY ? 1f : 0f);
         }
     }
 }
