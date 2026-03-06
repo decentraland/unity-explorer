@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.Reactions
+namespace DCL.Chat.ChatReactions.Configs
 {
     /// <summary>
     /// Describes the emoji sprite atlas used by the situational reaction particle system.

@@ -1,4 +1,3 @@
-using DCL.Chat.Reactions;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Configs
