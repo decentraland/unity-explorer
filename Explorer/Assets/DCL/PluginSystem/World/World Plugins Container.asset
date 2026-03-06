@@ -30,6 +30,7 @@ MonoBehaviour:
   - rid: 3414978285727645698
   - rid: 3414978285727645699
   - rid: 6144113899072913497
+  - rid: 4938242198007709791
   references:
     version: 2
     RefIds:
@@ -219,6 +220,15 @@ MonoBehaviour:
         <FadeSpeed>k__BackingField: 1
         <FlipMaterial>k__BackingField: {fileID: 2100000, guid: d08e60223593f4abe8863c64316f3476, type: 2}
         VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
+    - rid: 4938242198007709791
+      type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <ParticleSystemPrefab>k__BackingField:
+          m_AssetGUID: cb23ae366d31146bf85b403f6149419b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6144113899072913497
       type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
       data:
