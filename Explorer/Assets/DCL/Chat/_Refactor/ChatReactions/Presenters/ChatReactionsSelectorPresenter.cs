@@ -1,39 +1,38 @@
 using System;
-using System.Collections.Generic;
 
 namespace DCL.Chat.ChatReactions
 {
     public sealed class ChatReactionsSelectorPresenter : IDisposable
     {
         private readonly ChatReactionsSelectorView view;
-        private readonly List<string> reactions = new();
+        private readonly ChatReactionFavoritesService favoritesService;
 
-        public ChatReactionsSelectorPresenter(ChatReactionsSelectorView view)
+        public event Action<int>? ReactionClicked;
+        public event Action? AddClicked;
+
+        public ChatReactionsSelectorPresenter(
+            ChatReactionsSelectorView view,
+            ChatReactionFavoritesService favoritesService)
         {
             this.view = view;
+            this.favoritesService = favoritesService;
 
             view.OnAddClicked += OnAddClicked;
             view.OnReactionClicked += OnReactionClicked;
 
             view.gameObject.SetActive(false);
-        }
 
-        public void Initialize(IEnumerable<string> existingReactions)
-        {
-            reactions.Clear();
-            reactions.AddRange(existingReactions);
-
-            view.SetReactions(reactions);
+            view.SetReactions(favoritesService.Favorites);
         }
 
         public void Show() => view.gameObject.SetActive(true);
 
         public void Hide() => view.gameObject.SetActive(false);
 
-        public void AddReaction(string emoji)
+        public void AddReaction(int atlasIndex)
         {
-            reactions.Add(emoji);
-            view.AddReaction(emoji);
+            favoritesService.Add(atlasIndex);
+            view.AddReaction(atlasIndex);
         }
 
         public void Dispose()
@@ -44,12 +43,12 @@ namespace DCL.Chat.ChatReactions
 
         private void OnAddClicked()
         {
-            // TODO: open emoji picker
+            AddClicked?.Invoke();
         }
 
-        private void OnReactionClicked(string emoji)
+        private void OnReactionClicked(int atlasIndex)
         {
-            // TODO: send reaction event
+            ReactionClicked?.Invoke(atlasIndex);
         }
     }
 }

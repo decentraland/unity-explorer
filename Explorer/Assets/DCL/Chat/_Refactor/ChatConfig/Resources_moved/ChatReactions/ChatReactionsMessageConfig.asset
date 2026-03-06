@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
   <AvailableEmojiIndices>k__BackingField: 
   <ReactionPickerIcons>k__BackingField: []
+  <DefaultFavoriteEmojiIndices>k__BackingField: f40100001e000000210000000200000005000000
   <MaxReactionTypesPerMessage>k__BackingField: 6
   <NetworkDebounceSeconds>k__BackingField: 0.5
   <AppearDuration>k__BackingField: 0.15

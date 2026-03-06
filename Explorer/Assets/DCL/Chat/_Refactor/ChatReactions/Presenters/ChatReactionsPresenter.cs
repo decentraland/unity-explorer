@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.Reactions;
 
 namespace DCL.Chat.ChatReactions
@@ -15,9 +16,12 @@ namespace DCL.Chat.ChatReactions
         public ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView selectorView,
-            ISituationalReactionService reactionService)
+            ISituationalReactionService reactionService,
+            ChatReactionsMessageConfig messageConfig)
         {
-            selectorPresenter = new ChatReactionsSelectorPresenter(selectorView);
+            var favoritesService = new ChatReactionFavoritesService(messageConfig.DefaultFavoriteEmojiIndices);
+
+            selectorPresenter = new ChatReactionsSelectorPresenter(selectorView, favoritesService);
             buttonPresenter = new ChatReactionButtonPresenter(buttonView, reactionService);
             buttonPresenter.HoldTriggered += OnHoldTriggered;
         }

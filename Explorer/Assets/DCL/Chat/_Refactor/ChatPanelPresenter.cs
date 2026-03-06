@@ -17,6 +17,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.Reactions;
 using DCL.Translation;
 using DCL.Translation.Service;
@@ -63,7 +64,8 @@ namespace DCL.Chat
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ISituationalReactionService situationalReactionService)
+            ISituationalReactionService situationalReactionService,
+            ChatReactionsMessageConfig messageReactionsConfig)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -149,7 +151,8 @@ namespace DCL.Chat
             var reactionsPresenter = new ChatReactionsPresenter(
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
-                situationalReactionService);
+                situationalReactionService,
+                messageReactionsConfig);
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatReactions
         private readonly List<ChatReactionItemView> items = new();
 
         public event Action? OnAddClicked;
-        public event Action<string>? OnReactionClicked;
+        public event Action<int>? OnReactionClicked;
 
         private void Awake()
         {
@@ -31,28 +31,28 @@ namespace DCL.Chat.ChatReactions
             items.Clear();
         }
 
-        public void SetReactions(IEnumerable<string> emojis)
+        public void SetReactions(IReadOnlyList<int> atlasIndices)
         {
             Clear();
 
-            foreach (var emoji in emojis)
-                AddReactionInternal(emoji);
+            for (int i = 0; i < atlasIndices.Count; i++)
+                AddReactionInternal(atlasIndices[i]);
         }
 
-        public void AddReaction(string emoji)
+        public void AddReaction(int atlasIndex)
         {
-            AddReactionInternal(emoji);
+            AddReactionInternal(atlasIndex);
         }
 
-        private void AddReactionInternal(string emoji)
+        private void AddReactionInternal(int atlasIndex)
         {
             var item = Instantiate(reactionItemPrefab, container);
 
-            item.Initialize(emoji);
+            item.Initialize(atlasIndex);
 
             item.OnClicked += () =>
             {
-                OnReactionClicked?.Invoke(emoji);
+                OnReactionClicked?.Invoke(atlasIndex);
             };
 
             // Ensure Add button stays last

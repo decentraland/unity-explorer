@@ -19,6 +19,11 @@ namespace DCL.Chat.ChatReactions.Configs
                         "Must be the same length as AvailableEmojiIndices.")]
         [field: SerializeField] public Sprite[] ReactionPickerIcons { get; private set; } = System.Array.Empty<Sprite>();
 
+        [field: Header("Selector Defaults")]
+        [field: Tooltip("Atlas tile indices shown in the reaction selector on first launch " +
+                        "(before the user customizes). Keep this short (3–5 items).")]
+        [field: SerializeField] public int[] DefaultFavoriteEmojiIndices { get; private set; } = System.Array.Empty<int>();
+
         [field: Header("Behaviour")]
         [field: Min(1)]
         [field: Tooltip("Maximum number of distinct reaction types displayed on a single message.")]
