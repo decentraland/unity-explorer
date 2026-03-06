@@ -22,6 +22,7 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
         }
 
         ZWrite Off
+        ZTest  Always
         Cull   Off
         Blend  SrcAlpha OneMinusSrcAlpha
 
