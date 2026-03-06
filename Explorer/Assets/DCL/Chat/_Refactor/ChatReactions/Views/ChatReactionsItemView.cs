@@ -18,4 +18,4 @@ namespace DCL.Chat.ChatReactions
             button.onClick.AddListener(() => OnClicked?.Invoke());
         }
     }
-}g
+}

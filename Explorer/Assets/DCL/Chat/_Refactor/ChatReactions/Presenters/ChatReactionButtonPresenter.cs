@@ -31,6 +31,8 @@ namespace DCL.Chat.ChatReactions
         private bool pickerOpen;
         private bool isStreaming;
 
+        public event Action? HoldTriggered;
+
         public ChatReactionButtonPresenter(ChatReactionButtonView view, ISituationalReactionService reactionService)
         {
             if (view == null) throw new ArgumentNullException(nameof(view));
@@ -138,6 +140,8 @@ namespace DCL.Chat.ChatReactions
                     TimeSpan.FromSeconds(HOLD_THRESHOLD_SEC),
                     ignoreTimeScale: true,
                     cancellationToken: ct);
+
+                HoldTriggered?.Invoke();
 
                 if (view.PickerView != null)
                 {

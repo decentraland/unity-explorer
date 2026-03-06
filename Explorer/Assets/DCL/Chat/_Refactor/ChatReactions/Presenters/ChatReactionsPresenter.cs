@@ -19,11 +19,18 @@ namespace DCL.Chat.ChatReactions
         {
             selectorPresenter = new ChatReactionsSelectorPresenter(selectorView);
             buttonPresenter = new ChatReactionButtonPresenter(buttonView, reactionService);
+            buttonPresenter.HoldTriggered += OnHoldTriggered;
+        }
+
+        private void OnHoldTriggered()
+        {
+            selectorPresenter.Show();
         }
 
         public void Show()
         {
             buttonPresenter.Show();
+            selectorPresenter.Hide();
         }
 
         public void Hide()
@@ -34,6 +41,7 @@ namespace DCL.Chat.ChatReactions
 
         public void Dispose()
         {
+            buttonPresenter.HoldTriggered -= OnHoldTriggered;
             buttonPresenter.Dispose();
             selectorPresenter.Dispose();
         }
