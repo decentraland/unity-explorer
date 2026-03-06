@@ -51,7 +51,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
-using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -73,11 +72,6 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
-        private const string REPORT_USER_TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
-        private const string REPORT_USER_SUB_TEXT_FORMAT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
-        private const string REPORT_USER_CONFIRM_TEXT = "Report";
-        private const string REPORT_USER_CANCEL_TEXT = "Cancel";
-
         private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
         private readonly ICursor cursor;
@@ -956,15 +950,14 @@ namespace DCL.Passport
 
             async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(REPORT_USER_TEXT_FORMAT, targetProfile!.Name),
-                                                                                     REPORT_USER_CANCEL_TEXT,
-                                                                                     REPORT_USER_CONFIRM_TEXT,
-                                                                                     viewInstance!.ReportSprite,
-                                                                                     false, false,
-                                                                                     subText: REPORT_USER_SUB_TEXT_FORMAT), ct)
-                                                                                .SuppressToResultAsync(ReportCategory.PROFILE);
+                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                    ViewDependencies.ConfirmationDialogOpener,
+                    targetProfile!.Name,
+                    viewInstance!.ReportSprite,
+                    ReportCategory.PROFILE,
+                    ct);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL)
+                if (!confirmed)
                     return;
 
                 // TODO (Santi): Implement reporting user!
