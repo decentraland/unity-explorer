@@ -426,7 +426,8 @@ namespace DCL.Passport
                     BlockUserClicked),
                 false));
 
-            contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
                     viewInstance.ReportSprite,
                     ReportUserClicked));
 

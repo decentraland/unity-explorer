@@ -121,8 +121,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!)));
+                .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!)));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =

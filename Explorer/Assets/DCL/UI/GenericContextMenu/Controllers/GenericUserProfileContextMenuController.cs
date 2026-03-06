@@ -157,8 +157,10 @@ namespace DCL.UI
                 contextMenu.AddControl(contextGiftButton);
 
             contextMenu.AddControl(contextMenuJumpInButton)
-                       .AddControl(contextMenuBlockUserButton)
-                       .AddControl(reportButtonControlSettings);
+                       .AddControl(contextMenuBlockUserButton);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(reportButtonControlSettings);
 
             if (includeCommunities)
             {

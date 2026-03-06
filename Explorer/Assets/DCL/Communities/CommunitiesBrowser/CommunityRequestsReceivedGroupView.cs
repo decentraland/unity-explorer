@@ -1,5 +1,6 @@
 ﻿using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using DCL.UI;
@@ -69,8 +70,10 @@ namespace DCL.Communities.CommunitiesBrowser
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx)))
-                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx)));
+                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx)));
         }
 
         public void Initialize()

@@ -50,6 +50,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || Application.isEditor, requireDebug: false),
                 [FeatureId.DOUBLE_JUMP] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
                 [FeatureId.GLIDING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GLIDING, featureFlags.IsEnabled(FeatureFlagsStrings.GLIDING) || Application.isEditor),
+                [FeatureId.REPORT_USER] = featureFlags.IsEnabled(FeatureFlagsStrings.REPORT_USER) || Application.isEditor,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -61,8 +62,13 @@ namespace DCL.FeatureFlags
         /// <summary>
         ///     Checks if a feature is enabled.
         /// </summary>
-        public bool IsEnabled(FeatureId featureId) =>
-            featureStates.GetValueOrDefault(featureId, false);
+        public bool IsEnabled(FeatureId featureId)
+        {
+            if (featureId == FeatureId.REPORT_USER)
+                return false;
+
+            return featureStates.GetValueOrDefault(featureId, false);
+        }
 
         /// <summary>
         ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
@@ -164,5 +170,6 @@ namespace DCL.FeatureFlags
         AVATAR_HIGHLIGHT,
         DOUBLE_JUMP,
         GLIDING,
+        REPORT_USER,
     }
 }
