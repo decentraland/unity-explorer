@@ -38,38 +38,45 @@ namespace Decentraland.Pulse {
             "LmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGxIABJCChJwbGF5",
             "ZXJfc3RhdGVfZGVsdGEYAyABKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuUGxh",
             "eWVyU3RhdGVEZWx0YUgAEjkKDXBsYXllcl9qb2luZWQYBCABKAsyIC5kZWNl",
-            "bnRyYWxhbmQucHVsc2UuUGxheWVySm9pbmVkSABCCQoHbWVzc2FnZSKiAgoL",
+            "bnRyYWxhbmQucHVsc2UuUGxheWVySm9pbmVkSABCCQoHbWVzc2FnZSL9AgoL",
             "UGxheWVyU3RhdGUSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgC",
             "IAEoDRITCgtzZXJ2ZXJfdGljaxgDIAEoDRItCghwb3NpdGlvbhgEIAEoCzIb",
             "LmRlY2VudHJhbGFuZC5wdWxzZS5WZWN0b3IzEi0KCHZlbG9jaXR5GAUgASgL",
             "MhsuZGVjZW50cmFsYW5kLnB1bHNlLlZlY3RvcjMSEgoKcm90YXRpb25feRgG",
             "IAEoAhIWCg5tb3ZlbWVudF9ibGVuZBgHIAEoAhITCgtzbGlkZV9ibGVuZBgI",
-            "IAEoAhIQCghoZWFkX3lhdxgJIAEoAhISCgpoZWFkX3BpdGNoGAogASgCEhMK",
-            "C3N0YXRlX2ZsYWdzGAsgASgNIp8EChBQbGF5ZXJTdGF0ZURlbHRhEhIKCnN1",
-            "YmplY3RfaWQYASABKA0SDwoHbmV3X3NlcRgCIAEoDRITCgtzZXJ2ZXJfdGlj",
-            "axgDIAEoDRIXCgpwb3NpdGlvbl94GAQgASgNSACIAQESFwoKcG9zaXRpb25f",
-            "eRgFIAEoDUgBiAEBEhcKCnBvc2l0aW9uX3oYBiABKA1IAogBARIXCgp2ZWxv",
-            "Y2l0eV94GAcgASgNSAOIAQESFwoKdmVsb2NpdHlfeRgIIAEoDUgEiAEBEhcK",
-            "CnZlbG9jaXR5X3oYCSABKA1IBYgBARIXCgpyb3RhdGlvbl95GAogASgNSAaI",
-            "AQESGwoObW92ZW1lbnRfYmxlbmQYCyABKA1IB4gBARIYCgtzbGlkZV9ibGVu",
-            "ZBgMIAEoDUgIiAEBEhUKCGhlYWRfeWF3GA0gASgNSAmIAQESFwoKaGVhZF9w",
-            "aXRjaBgOIAEoDUgKiAEBEhMKC3N0YXRlX2ZsYWdzGA8gASgNQg0KC19wb3Np",
-            "dGlvbl94Qg0KC19wb3NpdGlvbl95Qg0KC19wb3NpdGlvbl96Qg0KC192ZWxv",
-            "Y2l0eV94Qg0KC192ZWxvY2l0eV95Qg0KC192ZWxvY2l0eV96Qg0KC19yb3Rh",
-            "dGlvbl95QhEKD19tb3ZlbWVudF9ibGVuZEIOCgxfc2xpZGVfYmxlbmRCCwoJ",
-            "X2hlYWRfeWF3Qg0KC19oZWFkX3BpdGNoIkEKD1BsYXllclN0YXRlRnVsbBIu",
-            "CgVzdGF0ZRgBIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
-            "ZSJPCgxQbGF5ZXJKb2luZWQSDwoHdXNlcl9pZBgBIAEoCRIuCgVzdGF0ZRgC",
-            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSIqCgdWZWN0",
-            "b3IzEgkKAXgYASABKAISCQoBeRgCIAEoAhIJCgF6GAMgASgCYgZwcm90bzM="));
+            "IAEoAhIVCghoZWFkX3lhdxgJIAEoAkgAiAEBEhcKCmhlYWRfcGl0Y2gYCiAB",
+            "KAJIAYgBARITCgtzdGF0ZV9mbGFncxgLIAEoDRIzCgtnbGlkZV9zdGF0ZRgM",
+            "IAEoDjIeLmRlY2VudHJhbGFuZC5wdWxzZS5HbGlkZVN0YXRlQgsKCV9oZWFk",
+            "X3lhd0INCgtfaGVhZF9waXRjaCKfBAoQUGxheWVyU3RhdGVEZWx0YRISCgpz",
+            "dWJqZWN0X2lkGAEgASgNEg8KB25ld19zZXEYAiABKA0SEwoLc2VydmVyX3Rp",
+            "Y2sYAyABKA0SFwoKcG9zaXRpb25feBgEIAEoDUgAiAEBEhcKCnBvc2l0aW9u",
+            "X3kYBSABKA1IAYgBARIXCgpwb3NpdGlvbl96GAYgASgNSAKIAQESFwoKdmVs",
+            "b2NpdHlfeBgHIAEoDUgDiAEBEhcKCnZlbG9jaXR5X3kYCCABKA1IBIgBARIX",
+            "Cgp2ZWxvY2l0eV96GAkgASgNSAWIAQESFwoKcm90YXRpb25feRgKIAEoDUgG",
+            "iAEBEhsKDm1vdmVtZW50X2JsZW5kGAsgASgNSAeIAQESGAoLc2xpZGVfYmxl",
+            "bmQYDCABKA1ICIgBARIVCghoZWFkX3lhdxgNIAEoDUgJiAEBEhcKCmhlYWRf",
+            "cGl0Y2gYDiABKA1ICogBARITCgtzdGF0ZV9mbGFncxgPIAEoDUINCgtfcG9z",
+            "aXRpb25feEINCgtfcG9zaXRpb25feUINCgtfcG9zaXRpb25fekINCgtfdmVs",
+            "b2NpdHlfeEINCgtfdmVsb2NpdHlfeUINCgtfdmVsb2NpdHlfekINCgtfcm90",
+            "YXRpb25feUIRCg9fbW92ZW1lbnRfYmxlbmRCDgoMX3NsaWRlX2JsZW5kQgsK",
+            "CV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaCJBCg9QbGF5ZXJTdGF0ZUZ1bGwS",
+            "LgoFc3RhdGUYASABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3Rh",
+            "dGUiTwoMUGxheWVySm9pbmVkEg8KB3VzZXJfaWQYASABKAkSLgoFc3RhdGUY",
+            "AiABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGUiKgoHVmVj",
+            "dG9yMxIJCgF4GAEgASgCEgkKAXkYAiABKAISCQoBehgDIAEoAipmChRQbGF5",
+            "ZXJBbmltYXRpb25GbGFncxIICgROT05FEAASDAoIR1JPVU5ERUQQARINCglM",
+            "T05HX0pVTVAQAhINCglMT05HX0ZBTEwQBBILCgdGQUxMSU5HEAgSCwoHU1RV",
+            "Tk5FRBAQKk4KCkdsaWRlU3RhdGUSDwoLUFJPUF9DTE9TRUQQABIQCgxPUEVO",
+            "SU5HX1BST1AQARILCgdHTElESU5HEAISEAoMQ0xPU0lOR19QUk9QEANiBnBy",
+            "b3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeResponse), global::Decentraland.Pulse.HandshakeResponse.Parser, new[]{ "Success", "Error" }, new[]{ "Error" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDelta), global::Decentraland.Pulse.PlayerStateDelta.Parser, new[]{ "SubjectId", "NewSeq", "ServerTick", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags" }, new[]{ "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "State" }, null, null, null, null),
@@ -79,6 +86,25 @@ namespace Decentraland.Pulse {
     #endregion
 
   }
+  #region Enums
+  public enum PlayerAnimationFlags {
+    [pbr::OriginalName("NONE")] None = 0,
+    [pbr::OriginalName("GROUNDED")] Grounded = 1,
+    [pbr::OriginalName("LONG_JUMP")] LongJump = 2,
+    [pbr::OriginalName("LONG_FALL")] LongFall = 4,
+    [pbr::OriginalName("FALLING")] Falling = 8,
+    [pbr::OriginalName("STUNNED")] Stunned = 16,
+  }
+
+  public enum GlideState {
+    [pbr::OriginalName("PROP_CLOSED")] PropClosed = 0,
+    [pbr::OriginalName("OPENING_PROP")] OpeningProp = 1,
+    [pbr::OriginalName("GLIDING")] Gliding = 2,
+    [pbr::OriginalName("CLOSING_PROP")] ClosingProp = 3,
+  }
+
+  #endregion
+
   #region Messages
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class HandshakeRequest : pb::IMessage<HandshakeRequest>
@@ -1282,6 +1308,7 @@ namespace Decentraland.Pulse {
   {
     private static readonly pb::MessageParser<PlayerState> _parser = new pb::MessageParser<PlayerState>(() => new PlayerState());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<PlayerState> Parser { get { return _parser; } }
@@ -1309,6 +1336,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerState(PlayerState other) : this() {
+      _hasBits0 = other._hasBits0;
       subjectId_ = other.subjectId_;
       sequence_ = other.sequence_;
       serverTick_ = other.serverTick_;
@@ -1320,6 +1348,7 @@ namespace Decentraland.Pulse {
       headYaw_ = other.headYaw_;
       headPitch_ = other.headPitch_;
       stateFlags_ = other.stateFlags_;
+      glideState_ = other.glideState_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1427,26 +1456,56 @@ namespace Decentraland.Pulse {
 
     /// <summary>Field number for the "head_yaw" field.</summary>
     public const int HeadYawFieldNumber = 9;
+    private readonly static float HeadYawDefaultValue = 0F;
+
     private float headYaw_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float HeadYaw {
-      get { return headYaw_; }
+      get { if ((_hasBits0 & 1) != 0) { return headYaw_; } else { return HeadYawDefaultValue; } }
       set {
+        _hasBits0 |= 1;
         headYaw_ = value;
       }
+    }
+    /// <summary>Gets whether the "head_yaw" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasHeadYaw {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "head_yaw" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearHeadYaw() {
+      _hasBits0 &= ~1;
     }
 
     /// <summary>Field number for the "head_pitch" field.</summary>
     public const int HeadPitchFieldNumber = 10;
+    private readonly static float HeadPitchDefaultValue = 0F;
+
     private float headPitch_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float HeadPitch {
-      get { return headPitch_; }
+      get { if ((_hasBits0 & 2) != 0) { return headPitch_; } else { return HeadPitchDefaultValue; } }
       set {
+        _hasBits0 |= 2;
         headPitch_ = value;
       }
+    }
+    /// <summary>Gets whether the "head_pitch" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasHeadPitch {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "head_pitch" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearHeadPitch() {
+      _hasBits0 &= ~2;
     }
 
     /// <summary>Field number for the "state_flags" field.</summary>
@@ -1458,6 +1517,18 @@ namespace Decentraland.Pulse {
       get { return stateFlags_; }
       set {
         stateFlags_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "glide_state" field.</summary>
+    public const int GlideStateFieldNumber = 12;
+    private global::Decentraland.Pulse.GlideState glideState_ = global::Decentraland.Pulse.GlideState.PropClosed;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.GlideState GlideState {
+      get { return glideState_; }
+      set {
+        glideState_ = value;
       }
     }
 
@@ -1487,6 +1558,7 @@ namespace Decentraland.Pulse {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadYaw, other.HeadYaw)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadPitch, other.HeadPitch)) return false;
       if (StateFlags != other.StateFlags) return false;
+      if (GlideState != other.GlideState) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1502,9 +1574,10 @@ namespace Decentraland.Pulse {
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
       if (MovementBlend != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MovementBlend);
       if (SlideBlend != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SlideBlend);
-      if (HeadYaw != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadYaw);
-      if (HeadPitch != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadPitch);
+      if (HasHeadYaw) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadYaw);
+      if (HasHeadPitch) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadPitch);
       if (StateFlags != 0) hash ^= StateFlags.GetHashCode();
+      if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) hash ^= GlideState.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1555,17 +1628,21 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(69);
         output.WriteFloat(SlideBlend);
       }
-      if (HeadYaw != 0F) {
+      if (HasHeadYaw) {
         output.WriteRawTag(77);
         output.WriteFloat(HeadYaw);
       }
-      if (HeadPitch != 0F) {
+      if (HasHeadPitch) {
         output.WriteRawTag(85);
         output.WriteFloat(HeadPitch);
       }
       if (StateFlags != 0) {
         output.WriteRawTag(88);
         output.WriteUInt32(StateFlags);
+      }
+      if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
+        output.WriteRawTag(96);
+        output.WriteEnum((int) GlideState);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -1609,17 +1686,21 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(69);
         output.WriteFloat(SlideBlend);
       }
-      if (HeadYaw != 0F) {
+      if (HasHeadYaw) {
         output.WriteRawTag(77);
         output.WriteFloat(HeadYaw);
       }
-      if (HeadPitch != 0F) {
+      if (HasHeadPitch) {
         output.WriteRawTag(85);
         output.WriteFloat(HeadPitch);
       }
       if (StateFlags != 0) {
         output.WriteRawTag(88);
         output.WriteUInt32(StateFlags);
+      }
+      if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
+        output.WriteRawTag(96);
+        output.WriteEnum((int) GlideState);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -1655,14 +1736,17 @@ namespace Decentraland.Pulse {
       if (SlideBlend != 0F) {
         size += 1 + 4;
       }
-      if (HeadYaw != 0F) {
+      if (HasHeadYaw) {
         size += 1 + 4;
       }
-      if (HeadPitch != 0F) {
+      if (HasHeadPitch) {
         size += 1 + 4;
       }
       if (StateFlags != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(StateFlags);
+      }
+      if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) GlideState);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1706,14 +1790,17 @@ namespace Decentraland.Pulse {
       if (other.SlideBlend != 0F) {
         SlideBlend = other.SlideBlend;
       }
-      if (other.HeadYaw != 0F) {
+      if (other.HasHeadYaw) {
         HeadYaw = other.HeadYaw;
       }
-      if (other.HeadPitch != 0F) {
+      if (other.HasHeadPitch) {
         HeadPitch = other.HeadPitch;
       }
       if (other.StateFlags != 0) {
         StateFlags = other.StateFlags;
+      }
+      if (other.GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
+        GlideState = other.GlideState;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1784,6 +1871,10 @@ namespace Decentraland.Pulse {
             StateFlags = input.ReadUInt32();
             break;
           }
+          case 96: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -1851,6 +1942,10 @@ namespace Decentraland.Pulse {
           }
           case 88: {
             StateFlags = input.ReadUInt32();
+            break;
+          }
+          case 96: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
             break;
           }
         }

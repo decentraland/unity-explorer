@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -35,11 +36,11 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly World globalWorld;
         private readonly PeerIdCache peerIdCache;
+        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
 
         private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
-        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub,
             PulseMultiplayerService pulseService,
@@ -69,10 +70,10 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public UniTask SubscribeToIncomingMessagesAsync(CancellationToken ct)
         {
-            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
 
             return UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
                 SubscribeToPlayerStateFullAsync(ct),
@@ -322,7 +323,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
         {
-            if (entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry) == false)
+            if (!entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
                 return;
@@ -366,7 +367,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private static NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState)
         {
-            Vector3 vel = new Vector3(playerState.Velocity.X, playerState.Velocity.Y, playerState.Velocity.Z);
+            var vel = new Vector3(playerState.Velocity.X, playerState.Velocity.Y, playerState.Velocity.Z);
 
             float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
@@ -385,15 +386,13 @@ namespace DCL.Multiplayer.Movement.Systems
                 {
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = playerState.SlideBlend,
-                    IsGrounded = (playerState.StateFlags & (1 << 1)) != 0,
+                    IsGrounded = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Grounded),
 
-                    // TODO Jumping was reworked
-                    // IsJumping = (playerState.StateFlags & (1 << 2)) != 0,
-                    IsLongJump = (playerState.StateFlags & (1 << 3)) != 0,
-                    IsFalling = (playerState.StateFlags & (1 << 4)) != 0,
-                    IsLongFall = (playerState.StateFlags & (1 << 5)) != 0,
+                    IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
+                    IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
+                    IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
                 },
-                isStunned = (playerState.StateFlags & (1 << 6)) != 0,
+                isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
 
                 // TODO: resolve instant (?)
                 isInstant = false,
@@ -401,8 +400,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 // TODO: resolve emoting
                 isEmoting = false,
 
-                headIKYawEnabled = (playerState.StateFlags & (1 << 7)) != 0,
-                headIKPitchEnabled = (playerState.StateFlags & (1 << 8)) != 0,
+                headIKYawEnabled = playerState.HasHeadYaw,
+                headIKPitchEnabled = playerState.HasHeadPitch,
                 headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
             };
 
