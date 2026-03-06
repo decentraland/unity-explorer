@@ -98,6 +98,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
         [field: SerializeField] public Transform Armature { get; private set; }
 
+        [field: SerializeField] public GameObject GhostRenderer { get; private set; }
+
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;

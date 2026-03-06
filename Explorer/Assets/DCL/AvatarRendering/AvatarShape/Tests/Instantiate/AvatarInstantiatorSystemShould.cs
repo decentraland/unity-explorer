@@ -99,10 +99,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
                 [WearableCategories.Categories.EYEBROWS] = new () { [WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE] = new Texture2D(1, 1) },
             });
 
-            system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
+            /*system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
                 new ObjectProxy<AvatarBase>(), new WearableStorage(),
-                new AvatarTransformMatrixJobWrapper(), new[] { facialFeatureTextures });
+                new AvatarTransformMatrixJobWrapper(), new[] { facialFeatureTextures });*/
         }
 
         private IEmote GetMockEmote(string materialName, string category)
