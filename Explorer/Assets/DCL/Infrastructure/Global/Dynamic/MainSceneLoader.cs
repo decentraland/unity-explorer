@@ -382,7 +382,7 @@ namespace Global.Dynamic
                 singleInstanceLock.Lock(0, 0);
             }
             catch (IOException) { return true; }
-            catch (Exception e) { Debug.LogException(e); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
 
             return false;
         }
