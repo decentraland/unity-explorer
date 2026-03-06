@@ -1,8 +1,10 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.CommunicationData.URLHelpers;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
@@ -38,6 +40,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly PhotoDetailInfoView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
@@ -46,6 +49,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public bool IsReelUserOwned => reelOwnerAddress == web3IdentityCache.Identity?.Address;
 
         private Vector2Int screenshotParcel = Vector2Int.zero;
+        private string screenshotRealm;
         private string reelOwnerAddress;
         private CancellationTokenSource teleportCts = new ();
 
@@ -70,6 +74,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.mvcManager = mvcManager;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -123,6 +128,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             screenshotParcel.x = Convert.ToInt32(reelData.metadata.scene.location.x);
             screenshotParcel.y = Convert.ToInt32(reelData.metadata.scene.location.y);
+            screenshotRealm = reelData.metadata.realm;
 
             reelOwnerAddress = reelData.metadata.userAddress;
 
@@ -153,7 +159,11 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void JumpInClicked()
         {
             JumpIn?.Invoke();
-            realmNavigator.TeleportToParcelAsync(screenshotParcel, teleportCts.Token, false).Forget();
+
+            if (!string.IsNullOrEmpty(screenshotRealm) && screenshotRealm.IsEns())
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(screenshotRealm).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))), teleportCts.Token).Forget();
+            else
+                realmNavigator.TeleportToParcelAsync(screenshotParcel, teleportCts.Token, false).Forget();
         }
 
         public void Release()
