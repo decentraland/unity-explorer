@@ -16,7 +16,10 @@ using DCL.WebRequests.RequestsHub;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
+
+#if !UNITY_WEBGL
 using DCL.Multiplayer.Connections.FfiClients;
+#endif
 
 namespace DCL.Multiplayer.Connections.Demo
 {
