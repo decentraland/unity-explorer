@@ -117,39 +117,46 @@ namespace DCL.SDKComponents.SceneUI.Components
                 return;
             }
 
-            // rightNode may already be linked (e.g. it became head via head ??= newNode),
-            // so unlink it from its current position first to prevent cycles.
+            // Detach rightNode from its predecessor while keeping its forward chain intact.
             if (rightNode == head)
             {
-                head = rightNode.Next;
-
-                if (head != null)
-                    head.Previous = null;
+                head = null;
             }
-            else
+            else if (rightNode.Previous != null)
             {
-                if (rightNode.Previous != null)
-                    rightNode.Previous.Next = rightNode.Next;
-
-                if (rightNode.Next != null)
-                    rightNode.Next.Previous = rightNode.Previous;
+                rightNode.Previous.Next = null;
             }
 
-            rightNode.Next = null;
             rightNode.Previous = null;
 
-            // Splice rightNode after leftNode
-            rightNode.Next = leftNode.Next;
+            // Walk rightNode's forward chain to find the tail.
+            // If leftNode is within the chain, truncate there to prevent a cycle.
+            Node tail = rightNode;
+            int safety = nodes.Count;
+
+            while (tail.Next != null && safety-- > 0)
+            {
+                if (tail.Next == leftNode)
+                {
+                    tail.Next = null;
+                    leftNode.Previous = null;
+                    break;
+                }
+
+                tail = tail.Next;
+            }
+
+            // Splice the chain (rightNode → ... → tail) after leftNode
+            tail.Next = leftNode.Next;
 
             if (leftNode.Next != null)
-                leftNode.Next.Previous = rightNode;
+                leftNode.Next.Previous = tail;
 
             leftNode.Next = rightNode;
             rightNode.Previous = leftNode;
 
             Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
 
-            // If head was cleared (rightNode was the sole head), re-establish it
             if (head == null)
             {
                 for (head = leftNode; head.Previous != null; head = head.Previous) { }
