@@ -14,6 +14,7 @@ namespace Global.AppArgs
         public const string AUTOPILOT = "autopilot";
         public const string AUTOPILOT_CSV = "csv";
         public const string AUTOPILOT_SUMMARY = "summary";
+        public const string PROFILER_LOG_FILE = "raw";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
@@ -78,6 +79,10 @@ namespace Global.AppArgs
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "private-chat-requires-topic";
         public const string CHECK_DISK_SPACE = "check-disk-space";
         public const string FORCE_CHECK_DISK_SPACE = "force-check-disk-space";
+
+        public const string DOUBLE_JUMP = "double-jump";
+
+        public const string GLIDING = "gliding";
 
         public static class Multiplayer
         {

@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
@@ -84,9 +85,14 @@ namespace DCL.AvatarRendering.Emotes
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
+        private void TriggerEmote([Data] int emoteIndex,
+            in Entity entity,
+            in Profile profile,
+            in InputModifierComponent inputModifier,
+            in AvatarShapeComponent avatarShapeComponent,
+            in GlideState glideState)
         {
-            if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
+            if (inputModifier.DisableEmote || !avatarShapeComponent.IsVisible || glideState.Value != GlideStateValue.PROP_CLOSED) return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
