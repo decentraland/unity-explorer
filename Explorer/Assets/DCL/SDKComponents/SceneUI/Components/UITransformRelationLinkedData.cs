@@ -159,7 +159,11 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             if (head == null)
             {
-                for (head = leftNode; head.Previous != null; head = head.Previous) { }
+            if (head == null)
+            {
+                int headSafety = nodes.Count;
+                for (head = leftNode; head.Previous != null && headSafety-- > 0; head = head.Previous) { }
+            }
             }
 
             pendingRightOf.Remove(newlyAddedEntityId);
