@@ -4,6 +4,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
@@ -21,6 +22,26 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 _ => throw new ArgumentOutOfRangeException()
             };
 
+        private static string ResolveDisplayName(Participant participant)
+        {
+            string metadata = participant.Metadata;
+
+            if (!string.IsNullOrEmpty(metadata))
+            {
+                try
+                {
+                    var json = JObject.Parse(metadata);
+                    string displayName = json.Value<string>("displayName");
+
+                    if (!string.IsNullOrEmpty(displayName))
+                        return displayName;
+                }
+                catch (JsonException) { }
+            }
+
+            return !string.IsNullOrEmpty(participant.Name) ? participant.Name : participant.Identity;
+        }
+
         private static void WriteTo(JsonWriter writer, string identity, string trackSid, Participant participant, TrackPublication publication)
         {
             var sourceType = From(publication.Source);
@@ -33,7 +54,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             writer.WritePropertyName("sourceType");
             writer.WriteValue(sourceType);
             writer.WritePropertyName("name");
-            writer.WriteValue(participant.Name);
+            writer.WriteValue(ResolveDisplayName(participant));
             writer.WritePropertyName("speaking");
             writer.WriteValue(participant.Speaking);
             writer.WritePropertyName("trackName");
