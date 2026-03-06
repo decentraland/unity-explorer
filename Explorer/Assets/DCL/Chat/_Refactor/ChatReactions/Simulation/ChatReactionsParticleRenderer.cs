@@ -43,7 +43,7 @@ namespace DCL.Chat.ChatReactions
         /// <summary>Draws screen-space particles by converting to world space each frame (camera-independent).</summary>
         /// <param name="cam">Camera used for screen-to-world conversion. Required; no draw if null.</param>
         /// <param name="depthFromCamera">World-space depth at which to place particles.</param>
-        public void Draw(Camera cam, UiReactionParticle[] particles, int layer, float depthFromCamera, float globalAlpha = 1f)
+        public void Draw(Camera cam, ChatReactionsUiParticle[] particles, int layer, float depthFromCamera, float globalAlpha = 1f)
         {
             if (mat == null || cam == null) return;
 

@@ -26,7 +26,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly ChatReactionsSituationalConfig config;
         private readonly Material runtimeMaterial;
-        private readonly UiReactionParticlePool uiPool;
+        private readonly ChatReactionsUiParticlePool uiPool;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
@@ -44,7 +44,7 @@ namespace DCL.Chat.ChatReactions
 
             rng = new System.Random();
             atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
-            uiPool = new UiReactionParticlePool(config.UILane.MaxParticles);
+            uiPool = new ChatReactionsUiParticlePool(config.UILane.MaxParticles);
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
 

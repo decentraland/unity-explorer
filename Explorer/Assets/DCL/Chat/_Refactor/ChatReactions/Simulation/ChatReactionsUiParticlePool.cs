@@ -2,36 +2,28 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
-    public struct UiReactionParticle
+    /// <summary>
+    /// Fixed-capacity ring-buffer particle pool for screen-space UI particles.
+    /// Oldest particles are overwritten when the buffer is full.
+    /// </summary>
+    public sealed class ChatReactionsUiParticlePool
     {
-        public Vector2 screenPos;
-        public Vector2 screenVel;
-        public float age;
-        public float lifetime;
-        public float startSizePx;
-        public float endSizePx;
-        public int emojiIndex;
-        public byte alive;
-    }
-
-    public sealed class UiReactionParticlePool
-    {
-        private readonly UiReactionParticle[] particles;
+        private readonly ChatReactionsUiParticle[] particles;
         private int cursor;
 
-        public UiReactionParticlePool(int capacity)
+        public ChatReactionsUiParticlePool(int capacity)
         {
-            particles = new UiReactionParticle[Mathf.Max(64, capacity)];
+            particles = new ChatReactionsUiParticle[Mathf.Max(64, capacity)];
         }
 
-        public UiReactionParticle[] Raw => particles;
+        public ChatReactionsUiParticle[] Raw => particles;
 
         public void Spawn(Vector2 screenPos, Vector2 screenVel, float lifetime, float startSizePx, float endSizePx, int emojiIndex)
         {
             int i = cursor;
             cursor = (cursor + 1) % particles.Length;
 
-            particles[i] = new UiReactionParticle
+            particles[i] = new ChatReactionsUiParticle
             {
                 screenPos = screenPos,
                 screenVel = screenVel,
