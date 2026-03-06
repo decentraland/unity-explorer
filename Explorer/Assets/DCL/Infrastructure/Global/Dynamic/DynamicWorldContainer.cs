@@ -113,6 +113,8 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -396,7 +398,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 
@@ -418,12 +420,14 @@ namespace Global.Dynamic
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
-            IRoomHub roomHub = new RoomHub(
-                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                gateKeeperSceneRoom,
-                chatRoom,
-                voiceChatRoom
-            );
+            // IRoomHub roomHub = new RoomHub(
+            //     localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+            //     gateKeeperSceneRoom,
+            //     chatRoom,
+            //     voiceChatRoom
+            // );
+
+            IRoomHub roomHub = new NullRoomHub();
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -487,6 +491,11 @@ namespace Global.Dynamic
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
+            var pulseMessagePipe = new MessagePipe();
+            var ENetTransport = new ENetTransport(new ENetTransportOptions(), pulseMessagePipe);
+            var pulseMultiplayerService = new PulseMultiplayerService(ENetTransport, pulseMessagePipe, identityCache);
+            var pulsePeerIdCache = new PeerIdCache();
+
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
@@ -502,7 +511,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                pulseMultiplayerService);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -629,7 +639,7 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
-            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
+            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, pulseMultiplayerService, entityParticipantTable, globalWorld, pulsePeerIdCache);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 

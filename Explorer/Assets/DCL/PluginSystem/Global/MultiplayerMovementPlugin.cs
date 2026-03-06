@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -10,6 +11,7 @@ using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Platforms;
+using DCL.Utilities.Extensions;
 using ECS;
 using Global.AppArgs;
 using System.Threading;
@@ -32,8 +34,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
 
+        private CancellationTokenSource? lifeCycleCts;
         private MultiplayerMovementSettings settings;
-
         private Entity? selfReplicaEntity;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
@@ -54,6 +56,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            lifeCycleCts.SafeCancelAndDispose();
             messageBus.Dispose();
         }
 
@@ -64,6 +67,12 @@ namespace DCL.PluginSystem.Global
             ConfigureCompressionUsage();
 
             messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, (await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct)).Value);
+
+            lifeCycleCts = lifeCycleCts.SafeRestartLinked(ct);
+
+            messageBus.SubscribeToIncomingMessagesAsync(lifeCycleCts.Token)
+                      .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
+                      .Forget();
         }
 
         private void ConfigureCompressionUsage()
