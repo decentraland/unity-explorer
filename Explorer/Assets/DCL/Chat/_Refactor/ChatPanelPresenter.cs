@@ -63,7 +63,7 @@ namespace DCL.Chat
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ISituationalReactionService? situationalReactionService = null)
+            ISituationalReactionService situationalReactionService)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -145,6 +145,11 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
+            
+            var reactionsPresenter = new ChatReactionsPresenter(
+                view.ChatReactionButton,
+                view.ChatReactionsSelector,
+                situationalReactionService);
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
@@ -152,14 +157,7 @@ namespace DCL.Chat
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionHandler);
-
-            ChatReactionButtonPresenter? reactionButtonPresenter = null;
-
-            if (situationalReactionService != null && view.ChatReactionButton != null)
-            {
-                reactionButtonPresenter = new ChatReactionButtonPresenter(view.ChatReactionButton, situationalReactionService);
-                uiScope.Add(reactionButtonPresenter);
-            }
+            uiScope.Add(reactionsPresenter);
 
             var mediator = new ChatUIMediator(
                 view,
@@ -170,7 +168,7 @@ namespace DCL.Chat
                 inputPresenter,
                 memberListPresenter,
                 communityVoiceChatSubTitleButtonPresenter,
-                reactionButtonPresenter);
+                reactionsPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
