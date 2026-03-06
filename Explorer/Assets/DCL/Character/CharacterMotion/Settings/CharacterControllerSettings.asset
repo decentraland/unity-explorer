@@ -172,3 +172,7 @@ MonoBehaviour:
   <HeadIKRemotePlayersDistance>k__BackingField: 10
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
+  <CharacterMass>k__BackingField: 1
+  <ExternalEnvDrag>k__BackingField: 1.5
+  <ExternalGroundFriction>k__BackingField: 4
+  <MaxExternalVelocity>k__BackingField: 50

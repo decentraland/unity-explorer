@@ -48,6 +48,7 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.PhysicsImpulse.Systems;
 using DCL.SDKComponents.SkyboxTime;
 using DCL.Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -311,6 +312,7 @@ namespace Global
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
                 new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
+                new SDKExternalPhysicsPlugin(globalWorld, playerEntity),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
