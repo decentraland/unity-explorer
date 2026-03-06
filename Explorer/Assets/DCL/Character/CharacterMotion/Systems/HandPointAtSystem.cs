@@ -28,12 +28,14 @@ namespace DCL.Character.CharacterMotion.Systems
         private const float DRAG_THRESHOLD_SQR = 25f;
 
         private readonly DCLInput dclInput;
+        private readonly ICharacterControllerSettings localSettings;
 
         private SingleInstanceEntity camera;
 
-        private HandPointAtSystem(World world) : base(world)
+        private HandPointAtSystem(World world, ICharacterControllerSettings localSettings) : base(world)
         {
             dclInput = DCLInput.Instance;
+            this.localSettings = localSettings;
         }
 
         public override void Initialize()
@@ -257,20 +259,20 @@ namespace DCL.Character.CharacterMotion.Systems
         private void ApplyRemotePointAtIK(
             [Data] float dt,
             ref HandPointAtComponent pointAt,
-            ref AvatarBase avatarBase,
-            in ICharacterControllerSettings settings
+            ref AvatarBase avatarBase
         )
         {
-            ApplyAnimationWeight(ref pointAt, ref avatarBase, in settings, dt);
+            ApplyAnimationWeight(ref pointAt, ref avatarBase, in localSettings, dt);
+            avatarBase.RightHandIK.weight = pointAt.AnimationWeight;
+            avatarBase.HandsIKRig.weight = pointAt.AnimationWeight;
 
-            if (!pointAt.IsPointing) return;
+            if (!pointAt.IsPointing)
+                return;
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
             Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
 
-            float dot = Vector3.Dot(avatarBase.transform.forward, Vector3.ProjectOnPlane(directionToTarget, Vector3.up));
-
-            ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, (dot, false));
+            ApplyHandIK(ref pointAt, ref avatarBase, in localSettings, dt, directionToTarget, shoulderPos, (1f, false));
         }
     }
 }

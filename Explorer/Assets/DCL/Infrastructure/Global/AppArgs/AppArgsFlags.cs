@@ -83,6 +83,7 @@ namespace Global.AppArgs
         public const string DOUBLE_JUMP = "double-jump";
 
         public const string GLIDING = "gliding";
+        public const string POINT_AT = "point-at";
 
         public static class Multiplayer
         {

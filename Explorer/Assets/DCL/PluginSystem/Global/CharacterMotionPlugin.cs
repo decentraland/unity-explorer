@@ -11,6 +11,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
@@ -125,7 +126,11 @@ namespace DCL.PluginSystem.Global
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
             GroundDistanceSystem.InjectToWorld(ref builder);
             GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
-            HandPointAtSystem.InjectToWorld(ref builder);
+
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
+                return;
+
+            HandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
             PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool);
             PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
         }

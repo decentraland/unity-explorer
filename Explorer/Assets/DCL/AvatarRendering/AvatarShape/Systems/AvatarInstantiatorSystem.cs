@@ -128,12 +128,13 @@ namespace DCL.AvatarRendering.AvatarShape
 
             // Only enable the rig if head-sync is enabled
             // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
-            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
+            bool pointAtEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
+            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) || pointAtEnabled;
+            avatarBase.HandsIKRig.enabled = pointAtEnabled;
 
-            // Hands / Feet IK components are not added to remote entities
+            // Feet IK components are not added to remote entities
             // We still disable the rigs to ensure no cpu time is wasted
             // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
-            avatarBase.HandsIKRig.enabled = false;
             avatarBase.FeetIKRig.enabled = false;
 
             return avatarBase;
