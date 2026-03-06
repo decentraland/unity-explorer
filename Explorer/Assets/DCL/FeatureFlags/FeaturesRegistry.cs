@@ -62,13 +62,8 @@ namespace DCL.FeatureFlags
         /// <summary>
         ///     Checks if a feature is enabled.
         /// </summary>
-        public bool IsEnabled(FeatureId featureId)
-        {
-            if (featureId == FeatureId.REPORT_USER)
-                return false;
-
-            return featureStates.GetValueOrDefault(featureId, false);
-        }
+        public bool IsEnabled(FeatureId featureId) =>
+            featureStates.GetValueOrDefault(featureId, false);
 
         /// <summary>
         ///     Checks if a feature is enabled in an async way using FeatureProviders that can contain more complex logic.
