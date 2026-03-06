@@ -131,14 +131,13 @@ namespace DCL.Chat.ChatReactions
             if (flightController == null) return;
 
             var particles = uiPool.Raw;
+            Vector2 accel2D = flightController.GetSteering2D();
 
             for (int i = 0; i < particles.Length; i++)
             {
                 ref var p = ref particles[i];
                 if (p.alive == 0) continue;
 
-                float normalizedAge = p.lifetime > 0f ? p.age / p.lifetime : 0f;
-                Vector2 accel2D = flightController.GetSteering2D(normalizedAge);
                 p.screenVel += accel2D * dt;
             }
         }

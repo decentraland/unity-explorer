@@ -6,8 +6,8 @@ namespace DCL.Chat.ChatReactions
     /// <summary>
     /// Stateless helper that computes emoji particle trajectories from
     /// <see cref="ChatReactionFlightPathConfig"/>.
-    /// All values are in 2D camera-local space: X = camera right, Y = camera up.
-    /// The caller is responsible for converting to world space using the camera basis vectors.
+    /// All values are in screen space: pixels/sec for velocity, pixels/sec² for acceleration.
+    /// X = screen right, Y = screen up.
     /// </summary>
     public sealed class ChatReactionFlightController
     {
@@ -21,9 +21,8 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Returns the initial 2D spawn velocity for a single particle (camera-local units/sec).
-        /// X = camera-right (exit kick away from panel), Y = camera-up (base upward component).
-        /// All randomness is resolved here so the particle's trajectory is fixed at birth.
+        /// Returns the initial 2D spawn velocity for a single particle (pixels/sec).
+        /// X = screen-right (exit kick away from panel), Y = screen-up (base upward component).
         /// </summary>
         /// <param name="baseUpSpeed">The upward speed drawn from <c>SpeedRange</c> for this particle.</param>
         public Vector2 GetSpawnVelocity2D(float baseUpSpeed)
@@ -42,18 +41,10 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Returns the additional 2D acceleration to apply each frame (camera-local units/sec²).
-        /// Currently a constant upward float force; extend with curves here if needed.
+        /// Returns the sustained 2D acceleration applied each frame (pixels/sec²).
         /// </summary>
-        public Vector2 GetSteering2D(float normalizedAge) =>
-            new Vector2(0f, config.FloatUpAcceleration);
-
-        /// <summary>
-        /// Evaluates the <see cref="ChatReactionFlightPathConfig.SizeOverLifetime"/> curve
-        /// to produce a size multiplier for the pop effect.
-        /// </summary>
-        public float GetSizeMultiplier(float normalizedAge) =>
-            config.SizeOverLifetime.Evaluate(normalizedAge);
+        public Vector2 GetSteering2D() =>
+            new(0f, config.FloatUpAcceleration);
 
         private float Rand(float min, float max) =>
             (float)(min + rng.NextDouble() * (max - min));
