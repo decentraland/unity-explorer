@@ -33,6 +33,10 @@ namespace DCL.Multiplayer.Movement
         public bool HeadIKPitchEnabled;
         public float2 HeadIKYawAndPitch;
 
+        public bool IsPointingAt;
+        public bool IsDraggingPointAt;
+        public float3 PointAtWorldHitPoint;
+
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.queuePool = queuePool;
@@ -50,6 +54,10 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = false;
             HeadIKPitchEnabled = false;
             HeadIKYawAndPitch = float2.zero;
+
+            IsPointingAt = false;
+            IsDraggingPointAt = false;
+            PointAtWorldHitPoint = float3.zero;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -83,6 +91,13 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = message.headIKYawEnabled;
             HeadIKPitchEnabled = message.headIKPitchEnabled;
             HeadIKYawAndPitch = message.headYawAndPitch;
+        }
+
+        public void UpdatePointAtIK(in NetworkMovementMessage message)
+        {
+            IsPointingAt = message.isPointingAt;
+            IsDraggingPointAt = message.isDraggingPointAt;
+            PointAtWorldHitPoint = message.pointAtWorldHitPoint;
         }
 
         public void Dispose()

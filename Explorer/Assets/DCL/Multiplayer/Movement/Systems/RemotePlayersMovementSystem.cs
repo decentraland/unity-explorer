@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -37,13 +38,15 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleFirstMessage(ref CharacterTransform transComp, ref HeadIKComponent headIK, in NetworkMovementMessage firstRemote,
-            ref RemotePlayerMovementComponent remotePlayerMovement)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref HandPointAtComponent handPointAt)
         {
             SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
             ApplyHeadIK(ref headIK, firstRemote.headIKYawEnabled, firstRemote.headIKPitchEnabled, firstRemote.headYawAndPitch);
+            ApplyPointAtIK(ref handPointAt, firstRemote.isPointingAt, firstRemote.isDraggingPointAt, firstRemote.pointAtWorldHitPoint);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.UpdateHeadIK(firstRemote);
+            remotePlayerMovement.UpdatePointAtIK(firstRemote);
             remotePlayerMovement.Initialized = true;
         }
 
@@ -54,7 +57,8 @@ namespace DCL.Multiplayer.Movement.Systems
             ref HeadIKComponent headIK,
             ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp,
-            ref ExtrapolationComponent extComp)
+            ref ExtrapolationComponent extComp,
+            ref HandPointAtComponent handPointAt)
         {
             SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
@@ -64,7 +68,7 @@ namespace DCL.Multiplayer.Movement.Systems
             // First message
             if (!remotePlayerMovement.Initialized && playerInbox.Count > 0)
             {
-                HandleFirstMessage(ref transComp, ref headIK, playerInbox.Dequeue(), ref remotePlayerMovement);
+                HandleFirstMessage(ref transComp, ref headIK, playerInbox.Dequeue(), ref remotePlayerMovement, ref handPointAt);
                 if (playerInbox.Count == 0) return;
             }
 
@@ -78,6 +82,8 @@ namespace DCL.Multiplayer.Movement.Systems
             var headYawAndPitch = Vector2.zero;
             if (remotePlayerMovement.HeadIKYawEnabled || remotePlayerMovement.HeadIKPitchEnabled) headYawAndPitch = Interpolation.InterpolateHeadIK(headIK, remotePlayerMovement.HeadIKYawAndPitch, settings.InterpolationSettings.HeadIKInterpolationFactor);
             ApplyHeadIK(ref headIK, remotePlayerMovement.HeadIKYawEnabled, remotePlayerMovement.HeadIKPitchEnabled, headYawAndPitch);
+
+            ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, remotePlayerMovement.IsDraggingPointAt, remotePlayerMovement.PointAtWorldHitPoint);
 
             if (intComp.Enabled)
             {
@@ -114,6 +120,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             remotePlayerMovement.UpdateHeadIK(remote);
+            remotePlayerMovement.UpdatePointAtIK(remote);
 
             var isBlend = false;
 
@@ -134,6 +141,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 remote = playerInbox.Dequeue();
                 remotePlayerMovement.UpdateHeadIK(remote);
+                remotePlayerMovement.UpdatePointAtIK(remote);
             }
 
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
@@ -297,6 +305,13 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             headIK.SetEnabled(yawEnabled, pitchEnabled);
             headIK.LookAt = angles.sqrMagnitude > 0.0001f ? Quaternion.Euler(angles.y, angles.x, 0) * Vector3.forward : Vector3.forward;
+        }
+
+        private static void ApplyPointAtIK(ref HandPointAtComponent pointAt, bool isPointingAt, bool isDraggingPointAt, Vector3 worldHitPoint)
+        {
+            pointAt.IsPointing = isPointingAt;
+            pointAt.IsDragging = isDraggingPointAt;
+            pointAt.WorldHitPoint = worldHitPoint;
         }
     }
 }
