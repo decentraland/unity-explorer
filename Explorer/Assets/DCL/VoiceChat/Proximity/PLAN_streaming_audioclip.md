@@ -1,87 +1,124 @@
-# Proximity Voice Chat: Spatial Audio — План
+# Proximity Voice Chat: Spatial Audio — План имплементации
 
-## Контекст
+## Выбранный подход
 
-`OnAudioFilterRead` в `LivekitAudioSource` обеспечивает distance rolloff, audio effects и reverb zones. Но **angular panning** (left/right в 3D) не работает из-за стерео формата данных на m_wetGroup — FMOD не панорамирует стерео-источники. См. [ADR](ADR_streaming_audioclip.md).
+**Вариант 6: Mono в LiveKit SDK fork + Manual Angular Panning в OnAudioFilterRead**
 
----
-
-## Что уже работает (без изменений)
-
-- Distance rolloff (затухание с расстоянием) ✓
-- Audio Effects на AudioSource (если после LivekitAudioSource в компонентах) ✓
-- Reverb Zones ✓
-- Amplification/Silence zones (через volume) ✓
+Подробный анализ и обоснование — см. [ADR](ADR_streaming_audioclip.md).
 
 ---
 
-## Что нужно решить
+## Предусловия
 
-1. **Angular panning** — направление звука (лево/право) при spatialBlend=1
-2. **Camera-relative panning** — пан относительно камеры, не аватара (3rd person)
-
----
-
-## Варианты для Angular Panning (в обсуждении)
-
-### Вариант 1: Manual Angular Panning в OnAudioFilterRead
-
-**Подход:** Оставить OnAudioFilterRead. После ReadAudio вручную применить L/R balance.
-
-**Шаги:**
-1. Кешировать listener position/rotation с main thread каждый кадр (в ECS-системе или Update)
-2. В OnAudioFilterRead: рассчитать угол, применить gain к L/R каналам
-3. Привязать расчёт к камере (а не AudioListener) для camera-relative panning
-
-**Файлы:**
-- Модификация `LivekitAudioSource.cs` (в форке SDK) или новый компонент рядом
-
-**Оценка:** ~1-2 дня
-
-### Вариант 2: Streaming Mono AudioClip + Ring Buffer
-
-**Подход:** Streaming моно AudioClip + промежуточный ring buffer для сглаживания jitter.
-
-**Шаги:**
-1. Создать ring buffer для накопления LiveKit аудио
-2. PCMReaderCallback читает из ring buffer (а не напрямую из AudioStream)
-3. Pre-fill ring buffer для избежания underrun
-4. Моно клип → нативный FMOD angular panning
-
-**Файлы:**
-- `SpatialAudioStreamFeeder.cs` (расширить ring buffer) или новый компонент
-- Возможно модификация LiveKit SDK для прямого доступа к native буферу
-
-**Оценка:** ~3-5 дней (включая тюнинг буфера)
-
-### Вариант 4: Mono Silent Clip + OnAudioFilterRead (эксперимент)
-
-**Подход:** Быстрый тест — назначить моно silent clip, проверить получает ли OnAudioFilterRead channels=1.
-
-**Шаги:**
-1. Создать AudioClip.Create("silence", sampleRate, 1, sampleRate, false) — моно, не streaming
-2. Назначить на AudioSource, loop=true, Play()
-3. В OnAudioFilterRead проверить значение channels
-4. Если channels=1 → проверить angular panning
-
-**Оценка:** ~30 минут (эксперимент)
+- Локальный форк LiveKit SDK: `c:\DCL\LiveKit\client-sdk-unity`
+- Удалённый репозиторий: `https://github.com/decentraland/client-sdk-unity.git`
+- Текущая ветка: `chore/rust-audio-for-mac-intel`
+- Unity manifest ссылается на: `com.decentraland.livekit-sdk` → Git URL + branch
 
 ---
 
-## Camera-Relative Panning
+## Итерация 1: Mono + Zero Pan (проверка теории)
 
-Независимо от варианта angular panning:
+Цель: проверить что LiveKit выдаёт чистый моно-сигнал и OnAudioFilterRead без артефактов дублирует его в стерео.
 
-**При Варианте 1 (Manual Pan):** расчёт угла напрямую относительно `Camera.main.transform` — не зависит от AudioListener.
+### Шаг 1: Git — создать ветку в SDK fork
 
-**При Вариантах 2/4 (нативный FMOD):** AudioListener rotation = camera rotation. Два способа:
-- AudioListener на камере (простой, расстояние от камеры)
-- AudioListener на аватаре + `rotation = camera.rotation` каждый кадр (точное расстояние)
+```
+cd c:\DCL\LiveKit\client-sdk-unity
+git fetch origin
+git checkout chore/rust-audio-for-mac-intel
+git checkout -b feat/mono-spatial-audio
+```
+
+### Шаг 2: SDK — добавить mono mode в LivekitAudioSource
+
+**Файл:** `Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs`
+
+Изменения:
+1. Добавить `bool _monoMode` поле
+2. Расширить `New()` — принимать параметр `mono`:
+   ```csharp
+   public static LivekitAudioSource New(bool playing = true, bool mono = false)
+   ```
+3. Добавить `float[] _monoBuffer` — промежуточный буфер для чтения моно данных
+4. В `OnAudioFilterRead`:
+   - Если `_monoMode = false` → текущая логика без изменений (стерео ReadAudio)
+   - Если `_monoMode = true`:
+     1. Выделить/переиспользовать `_monoBuffer` размером `data.Length / 2`
+     2. `ReadAudio(_monoBuffer, 1, sampleRate)` — запросить 1 канал
+     3. Дублировать: `data[i*2] = _monoBuffer[i]; data[i*2+1] = _monoBuffer[i];`
+
+### Шаг 3: SDK — изменить AudioStream для поддержки моно
+
+**Файл:** `Runtime/Scripts/Rooms/Streaming/Audio/AudioStream.cs`
+
+Изменения:
+- Убрать хардкод `currentChannels = 2`
+- Принимать `channels` через параметр `ReadAudio(data, channels, sampleRate)`
+- Нативный слой (FFI) запрашивает `channels` каналов
+
+### Шаг 4: SDK — commit и push
+
+```
+git add -A
+git commit -m "feat: add mono mode to LivekitAudioSource for spatial audio panning"
+git push -u origin feat/mono-spatial-audio
+```
+
+### Шаг 5: Unity — обновить manifest.json
+
+**Файл:** `Explorer/Packages/manifest.json`
+
+```json
+"com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#feat/mono-spatial-audio"
+```
+
+Альтернатива для локальной разработки — использовать `file:` протокол:
+```json
+"com.decentraland.livekit-sdk": "file:../../../LiveKit/client-sdk-unity"
+```
+
+### Шаг 6: Unity — ProximityVoiceChatManager
+
+**Файл:** `Explorer/Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs`
+
+Изменения в `CreateSource`:
+- Для `spatial = true`: вызвать `LivekitAudioSource.New(mono: true)` вместо `LivekitAudioSource.New(true)`
+- Убрать создание `SpatialAudioStreamFeeder` (больше не нужен)
+- `source.Construct(stream)` — стандартный путь (моно-режим внутри LivekitAudioSource)
+
+Изменения в `DestroySource`:
+- Убрать cleanup `SpatialAudioStreamFeeder`
+
+Private/Community Voice Chat — без изменений (используют `LivekitAudioSource.New(true)` → стерео по умолчанию).
+
+### Шаг 7: Cleanup
+
+- Удалить `SpatialAudioStreamFeeder.cs` (если больше не нужен)
+- Проверить что нет других ссылок на него
+
+### Проверка
+
+- [ ] Аудио чистое, без артефактов (микро-паузы, рваность)
+- [ ] Distance rolloff работает при spatialBlend=1
+- [ ] Private/Community voice chat не сломан (стерео по умолчанию)
+- [ ] L=R одинаковый (нулевой pan) — как отправная точка
 
 ---
 
-## Рекомендуемый порядок действий
+## Итерация 2: Angular Panning (следующая)
 
-1. **Сначала** — Вариант 4 (эксперимент ~30мин): проверить mono silent clip
-2. **Если channels=1 и angular panning работает** → использовать Вариант 4
-3. **Если нет** → выбрать между Вариантом 1 (manual pan, быстро, производительно) и Вариантом 2 (нативный FMOD, но latency и сложность)
+После подтверждения что моно работает чисто:
+
+1. Кешировать позицию/ориентацию камеры в `Update()` (main thread → volatile/lock-free переменные для audio thread)
+2. В `OnAudioFilterRead` после чтения моно:
+   - Рассчитать угол: `angle = SignedAngle(camera.forward, sourcePos - cameraPos, camera.up)`
+   - L gain = `cos((angle + 90) * PI / 360)`; R gain = `sin((angle + 90) * PI / 360)`
+   - `data[i*2] = _monoBuffer[i] * leftGain; data[i*2+1] = _monoBuffer[i] * rightGain;`
+3. Вопрос: реализовать в LivekitAudioSource (SDK) или в отдельном компоненте (Unity project)
+
+---
+
+## Итерация 3: Camera-Relative Panning (позже)
+
+Разделение: позиция AudioListener из головы аватара, ориентация из камеры.
