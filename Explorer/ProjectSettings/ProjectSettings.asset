@@ -666,7 +666,7 @@ PlayerSettings:
   enableInternalProfiler: 0
   logObjCUncaughtExceptions: 1
   enableCrashReportAPI: 0
-  cameraUsageDescription: 
+  cameraUsageDescription: Chat
   locationUsageDescription: 
   microphoneUsageDescription: This app requires access to the microphone for voice
     chat functionality.

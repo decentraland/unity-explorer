@@ -19,6 +19,10 @@ using LiveKit.Internal.FFIClients;
 using UnityEngine;
 using Utility;
 
+#if !UNITY_WEBGL
+using DCL.Multiplayer.Connections.FfiClients;
+#endif
+
 namespace DCL.Multiplayer.Connections.Demo
 {
     public class GateKeeperRoomPlayground : MonoBehaviour
@@ -32,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Demo
         private async UniTaskVoid LaunchAsync()
         {
 #if UNITY_EDITOR
-            DCL.Multiplayer.Connections.FfiClients.IFFIClient.Default.EnsureInitialize();
+            global::LiveKit.Internal.FFIClients.IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));

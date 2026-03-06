@@ -7,7 +7,9 @@ namespace DCL.Multiplayer.Connections.FfiClients
 {
     public static class FfiClientExtensions
     {
-        public static void EnsureInitialize(this IFFIClient ffiClient)
+        public static void EnsureInitialize(
+                this global::LiveKit.Internal.FFIClients.IFFIClient ffiClient
+                )
         {
             bool initialized = ffiClient.Initialized();
             ReportHub.Log(ReportData.UNSPECIFIED, $"FfiClient initilized: {initialized}");

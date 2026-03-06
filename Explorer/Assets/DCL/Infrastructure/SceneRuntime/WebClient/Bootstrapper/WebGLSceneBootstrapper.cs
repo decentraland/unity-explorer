@@ -1,3 +1,5 @@
+#if UNITY_WEBGL
+
 using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -956,3 +958,5 @@ namespace SceneRuntime.WebClient.Bootstrapper
         }
     }
 }
+
+#endif
