@@ -16,6 +16,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.Unity.GliderProp;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -34,7 +35,8 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private CharacterControllerSettings settings;
+        private CharacterMotionSettings settings;
+        private GliderPropView gliderPropPrefab;
         private IObjectPool<PointAtMarkerHolder> pointAtMarkerPool;
 
         public CharacterMotionPlugin(
@@ -61,7 +63,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
         {
-            this.settings = settings.controllerSettings;
+            this.settings = settings;
+            gliderPropPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.Gliding.PropPrefab, ct)).Value;
 
             PointAtMarkerHolder prefab = (await assetsProvisioner.ProvideMainAssetAsync(
                 settings.PointAtMarkerPrefab, ct: ct)).Value.GetComponent<PointAtMarkerHolder>();
@@ -88,7 +91,7 @@ namespace DCL.PluginSystem.Global
             // Add Motion components
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
-                (ICharacterControllerSettings)settings,
+                (ICharacterControllerSettings)settings.ControllerSettings,
                 characterObject,
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
@@ -98,6 +101,9 @@ namespace DCL.PluginSystem.Global
                 new FeetIKComponent(),
                 new HandsIKComponent(),
                 new HeadIKComponent(),
+                new MovementSpeedLimit(),
+                new GlideState(),
+                new JumpState(),
                 new HandPointAtComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
@@ -105,6 +111,7 @@ namespace DCL.PluginSystem.Global
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
+            CalculateSpeedLimitSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
@@ -113,9 +120,11 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.ControllerSettings);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
+            GroundDistanceSystem.InjectToWorld(ref builder);
+            GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
             HandPointAtSystem.InjectToWorld(ref builder);
             PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool);
             PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);

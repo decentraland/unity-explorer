@@ -417,6 +417,119 @@ namespace DCL.SDKComponents.Tween.Tests
             UnityEngine.Object.DestroyImmediate(material);
         }
 
+        [Test]
+        public async Task MoveRotateScaleTweenCompletesAfterDuration()
+        {
+            Vector3 posStart = CreateVector3(0, 0, 0);
+            Vector3 posEnd = CreateVector3(5, 0, 0);
+            Quaternion rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            Quaternion rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+            Vector3 scaleStart = CreateVector3(1, 1, 1);
+            Vector3 scaleEnd = CreateVector3(2, 2, 2);
+
+            Entity testEntity = CreateSingleTween(
+                CreateMoveRotateScaleTween(posStart, posEnd, rotStart, rotEnd, scaleStart, scaleEnd, 500)
+            );
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            SDKTweenComponent comp = world.Get<SDKTweenComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+            Assert.IsInstanceOf<TransformTweener>(comp.CustomTweener);
+
+            await RunSystemForSeconds(600, testEntity);
+
+            comp = world.Get<SDKTweenComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
+            Assert.IsTrue(comp.CustomTweener.IsFinished());
+        }
+
+        [Test]
+        public async Task MoveRotateScaleTweenUpdatesAllTransformFields()
+        {
+            Vector3 posStart = CreateVector3(0, 0, 0);
+            Vector3 posEnd = CreateVector3(10, 0, 0);
+            Quaternion rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            Quaternion rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+            Vector3 scaleStart = CreateVector3(1, 1, 1);
+            Vector3 scaleEnd = CreateVector3(3, 3, 3);
+
+            Entity testEntity = CreateSingleTween(
+                CreateMoveRotateScaleTween(posStart, posEnd, rotStart, rotEnd, scaleStart, scaleEnd, 500)
+            );
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            await RunSystemForSeconds(600, testEntity);
+
+            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.AreEqual(posEnd.X, sdkTransform.Position.Value.x, 0.5f, "Position X should reach end value");
+            Assert.AreEqual(scaleEnd.X, sdkTransform.Scale.x, 0.5f, "Scale X should reach end value");
+        }
+
+        [Test]
+        public async Task TweenSequenceWithMoveRotateScaleCompletes()
+        {
+            Vector3 posStart = CreateVector3(0, 0, 0);
+            Vector3 posEnd = CreateVector3(5, 0, 0);
+            Quaternion rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            Quaternion rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+            Vector3 scaleStart = CreateVector3(1, 1, 1);
+            Vector3 scaleEnd = CreateVector3(2, 2, 2);
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateMoveRotateScaleTween(posStart, posEnd, rotStart, rotEnd, scaleStart, scaleEnd, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            SDKTweenSequenceComponent comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+
+            await RunSystemForSeconds(600, testEntity);
+
+            comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
+        }
+
+        [Test]
+        public async Task TweenSequenceWithMoveRotateScaleWithOmittedScale_ResolvesScaleFromCurrentTransform()
+        {
+            // Step 1: Scale 1 -> 2. Step 2: MoveRotateScale with only position+rotation (scale omitted).
+            // When step 2 runs, Explorer resolves omitted scale from current transform (2,2,2 from step 1).
+            Vector3 scaleStart = CreateVector3(1, 1, 1);
+            Vector3 scaleEnd = CreateVector3(2, 2, 2);
+            Vector3 posStart = CreateVector3(0, 0, 0);
+            Vector3 posEnd = CreateVector3(5, 0, 0);
+            Quaternion rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            Quaternion rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+
+            Entity testEntity = CreateTweenSequenceNoLoop(new[]
+            {
+                CreateScaleTween(scaleStart, scaleEnd, 500),
+                CreateMoveRotateScaleTweenPositionRotationOnly(posStart, posEnd, rotStart, rotEnd, 500)
+            });
+
+            loaderSystem.Update(0);
+            system.Update(0);
+
+            SDKTweenSequenceComponent comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+
+            await RunSystemForSeconds(1100, testEntity);
+
+            comp = world.Get<SDKTweenSequenceComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
+
+            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            Assert.AreEqual(scaleEnd.X, sdkTransform.Scale.x, 0.5f,
+                "Scale should remain 2 after step 2 (omitted scale resolved from current transform at step start)");
+        }
+
         private Entity CreateTweenSequence(PBTween[] tweens, TweenLoop loopType)
         {
             var crdtEntity = new CRDTEntity(1);
@@ -531,6 +644,63 @@ namespace DCL.SDKComponents.Tween.Tests
                 Z = z,
             };
 
+        private PBTween CreateMoveRotateScaleTween(Vector3 posStart, Vector3 posEnd,
+            Quaternion rotStart, Quaternion rotEnd,
+            Vector3 scaleStart, Vector3 scaleEnd, int duration)
+        {
+            return new PBTween
+            {
+                CurrentTime = 0,
+                Duration = duration,
+                EasingFunction = EasingFunction.EfLinear,
+                IsDirty = true,
+                Playing = true,
+                MoveRotateScale = new MoveRotateScale
+                {
+                    PositionStart = posStart,
+                    PositionEnd = posEnd,
+                    RotationStart = rotStart,
+                    RotationEnd = rotEnd,
+                    ScaleStart = scaleStart,
+                    ScaleEnd = scaleEnd
+                }
+            };
+        }
+
+        /// <summary>
+        /// Creates a MoveRotateScale tween with only position and rotation (scale omitted).
+        /// Explorer resolves omitted scale from current transform when the step starts.
+        /// </summary>
+        private PBTween CreateMoveRotateScaleTweenPositionRotationOnly(Vector3 posStart, Vector3 posEnd,
+            Quaternion rotStart, Quaternion rotEnd, int duration)
+        {
+            return new PBTween
+            {
+                CurrentTime = 0,
+                Duration = duration,
+                EasingFunction = EasingFunction.EfLinear,
+                IsDirty = true,
+                Playing = true,
+                MoveRotateScale = new MoveRotateScale
+                {
+                    PositionStart = posStart,
+                    PositionEnd = posEnd,
+                    RotationStart = rotStart,
+                    RotationEnd = rotEnd
+                    // ScaleStart, ScaleEnd omitted - resolved from current transform at step start
+                }
+            };
+        }
+
+        private Entity CreateSingleTween(PBTween pbTween)
+        {
+            var crdtEntity = new CRDTEntity(1);
+            var entity = world.Create(PartitionComponent.TOP_PRIORITY);
+            AddTransformToEntity(entity);
+            world.Add(entity, crdtEntity, pbTween);
+            return entity;
+        }
+
         private Quaternion CreateQuaternion(UnityEngine.Quaternion unityQuaternion) =>
             new()
             {
@@ -550,13 +720,13 @@ namespace DCL.SDKComponents.Tween.Tests
                 currentInterval += updateInterval;
                 system!.Update(updateInterval);
 
+                var pbTween = world.TryGetRef<PBTween>(testEntity, out bool tweenExists);
+                pbTween.IsDirty = false;
+
                 if (world.Has<PBTweenSequence>(testEntity))
                 {
-                    var pbTweenSequence = world.TryGetRef<PBTweenSequence>(testEntity, out bool exists);
-                    pbTweenSequence.IsDirty = false; // simulate dirty reset system
-
-                    var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists2);
-                    pbTween.IsDirty = false; // simulate dirty reset system
+                    var pbTweenSequence = world.TryGetRef<PBTweenSequence>(testEntity, out bool seqExists);
+                    pbTweenSequence.IsDirty = false;
                 }
             }
         }
