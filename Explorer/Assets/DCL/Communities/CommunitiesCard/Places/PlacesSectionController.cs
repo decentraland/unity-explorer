@@ -218,23 +218,60 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
-            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
-                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            // Partition: valid GUIDs → Places API; world ENS names (e.g. "name.dcl.eth") → Worlds API
+            var uuidIds = new List<string>();
+            var worldNames = new List<string>();
 
-            if (ct.IsCancellationRequested)
-                return 0;
-
-            if (!response.Success)
+            foreach (string id in slice)
             {
-                placesFetchData.PageNumber--;
-                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
-                return placesFetchData.TotalToFetch;
+                if (Guid.TryParse(id, out _))
+                    uuidIds.Add(id);
+                else
+                    worldNames.Add(id);
+            }
+
+            var combinedPlaceData = new List<PlaceInfo>();
+            int combinedTotal = 0;
+
+            if (uuidIds.Count > 0)
+            {
+                Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(uuidIds, ct)
+                                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return 0;
+
+                if (!response.Success)
+                {
+                    placesFetchData.PageNumber--;
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE));
+                    return placesFetchData.TotalToFetch;
+                }
+
+                combinedPlaceData.AddRange(response.Value.Data);
+                combinedTotal += response.Value.Total;
+            }
+
+            foreach (string worldName in worldNames)
+            {
+                if (ct.IsCancellationRequested)
+                    return 0;
+
+                Result<PlacesData.PlaceInfo?> worldResult = await placesAPIService.GetWorldAsync(worldName, ct)
+                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (worldResult.Success && worldResult.Value != null)
+                {
+                    combinedPlaceData.Add(worldResult.Value);
+                    combinedTotal++;
+                }
             }
 
             using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
-            foreach (var place in response.Value.Data)
-               if (!userNames.ContainsKey(place.owner))
-                   userIds.Value.Add(place.owner);
+
+            foreach (var place in combinedPlaceData)
+                if (!userNames.ContainsKey(place.owner))
+                    userIds.Value.Add(place.owner);
 
             if (userIds.Value.Count > 0)
             {
@@ -250,14 +287,14 @@ namespace DCL.Communities.CommunitiesCard.Places
                     }
             }
 
-            foreach (var place in response.Value.Data)
+            foreach (var place in combinedPlaceData)
                 placesFetchData.Items.Add(new PlaceData
                 {
                     PlaceInfo = place,
                     OwnerName = userNames.GetValueOrDefault(place.owner, string.Empty)
                 });
 
-            return response.Value.Total;
+            return combinedTotal;
         }
 
         public void ShowPlaces(CommunityData community, string[] placeIds, CancellationToken token)
