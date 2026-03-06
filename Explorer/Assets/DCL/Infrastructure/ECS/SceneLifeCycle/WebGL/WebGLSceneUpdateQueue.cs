@@ -1,7 +1,9 @@
 #if UNITY_WEBGL && !UNITY_EDITOR
 
+using DCL.Diagnostics;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
+using System;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.WebGL
@@ -46,6 +48,11 @@ namespace ECS.SceneLifeCycle.WebGL
                 catch (JavaScriptExecutionException e)
                 {
                     exceptionHandler.OnJavaScriptException(e);
+                }
+                catch (InvalidOperationException e)
+                {
+                    // Scene was disposed before this queued tick could run; skip it silently
+                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Skipped tick on disposed scene '{scene.Info}': {e.Message}");
                 }
             }
 

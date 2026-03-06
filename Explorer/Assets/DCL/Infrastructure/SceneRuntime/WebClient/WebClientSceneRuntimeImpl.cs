@@ -198,6 +198,9 @@ namespace SceneRuntime.WebClient
 
         public UniTask StartScene()
         {
+            if (isDisposingTokenSource.IsCancellationRequested)
+                return UniTask.CompletedTask;
+
             resetableSource.Reset();
             startFunc.InvokeAsFunction();
             return resetableSource.Task;
@@ -205,6 +208,9 @@ namespace SceneRuntime.WebClient
 
         public UniTask UpdateScene(float dt)
         {
+            if (isDisposingTokenSource.IsCancellationRequested)
+                return UniTask.CompletedTask;
+
             nextUint8Array = 0;
             IRuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
             RuntimeHeapInfo = heapInfo;
