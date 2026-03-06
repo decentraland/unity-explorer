@@ -38,6 +38,9 @@ namespace DCL.Chat.ChatReactions
             mpb = new MaterialPropertyBlock();
             quad = CreateQuadMesh();
             this.sizeOverLifetime = sizeOverLifetime;
+
+            for (int i = 0; i < BATCH_SIZE; i++)
+                matrices[i] = Matrix4x4.identity;
         }
 
         /// <summary>Draws screen-space particles by converting to world space each frame (camera-independent).</summary>
@@ -77,7 +80,6 @@ namespace DCL.Chat.ChatReactions
                 float startSize = startSizePx * worldSizePerPixel;
                 float endSize = endSizePx * worldSizePerPixel;
 
-                matrices[batchCount] = Matrix4x4.identity;
                 posSize[batchCount] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
                 extra[batchCount] = new Vector4(endSize, 0f, 0f, 0f);
                 emoji[batchCount] = new Vector4(p.emojiIndex, 0f, 0f, 0f);
@@ -98,7 +100,6 @@ namespace DCL.Chat.ChatReactions
 
         private void Flush(int layer, int count, float globalAlpha)
         {
-            mpb.Clear();
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
             mpb.SetVectorArray(PosSizeId, posSize);
             mpb.SetVectorArray(ExtraId, extra);
@@ -124,6 +125,7 @@ namespace DCL.Chat.ChatReactions
             m.uv = new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(1, 1) };
             m.triangles = new[] { 0, 2, 1, 2, 3, 1 };
 
+            // Oversized bounds prevent frustum culling — the shader repositions vertices via _PosSize instance data
             m.bounds = new Bounds(Vector3.zero, Vector3.one * 10000f);
             m.UploadMeshData(true);
             return m;
