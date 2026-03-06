@@ -6,9 +6,9 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.SDKComponents.InputModifier.Components;
-using DCL.Time;
 using DCL.Time.Systems;
 using ECS.Abstract;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading.Tasks;
@@ -35,7 +35,8 @@ namespace DCL.CharacterMotion.Tests
                 new PlayerComponent(),
                 controllerSettings,
                 new CharacterRigidTransform { IsGrounded = true },
-                new InputModifierComponent());
+                new InputModifierComponent(),
+                new JumpState());
 
             updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world);
             updateInputJumpSystem = new UpdateInputJumpSystem(world, DCLInput.Instance.Player.Jump);
@@ -43,6 +44,14 @@ namespace DCL.CharacterMotion.Tests
 
             fixedTick = world.CachePhysicsTick();
         }
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         private UpdatePhysicsTickSystem updatePhysicsTickSystem;
         private UpdateInputJumpSystem updateInputJumpSystem;

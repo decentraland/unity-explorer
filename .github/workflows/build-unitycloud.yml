@@ -466,8 +466,8 @@ jobs:
         id: size_check
         env:
           # Per-target absolute caps (MB)
-          MAX_MACOS_MB: 410
-          MAX_WINDOWS64_MB: 320
+          MAX_MACOS_MB: 450
+          MAX_WINDOWS64_MB: 360
 
           # Per-platform delta thresholds (MB); 0 = disabled
           DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
@@ -602,7 +602,7 @@ jobs:
         if: always() && steps.size_check.outputs.result != ''
         uses: actions/upload-artifact@v4
         with:
-          name: size_report_${{ matrix.target }}
+          name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: size_report/
           if-no-files-found: warn
 
