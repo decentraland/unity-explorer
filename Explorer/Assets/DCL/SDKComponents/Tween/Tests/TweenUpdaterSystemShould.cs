@@ -1,4 +1,4 @@
-﻿using CRDT;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
@@ -358,6 +358,72 @@ namespace DCL.SDKComponents.Tween.Tests
             tweener = (Vector3Tweener)comp.CustomTweener;
             // Value should have changed (moved in Y direction)
             Assert.Greater(tweener.CurrentValue.y, startValue.y, "Tween should continue to move indefinitely.");
+        }
+
+        [Test]
+        public async Task MoveRotateScaleCompletesAfterDuration()
+        {
+            var posStart = CreateVector3(0, 0, 0);
+            var posEnd = CreateVector3(5, 3, 0);
+            var rotStart = CreateQuaternion(UnityEngine.Quaternion.identity);
+            var rotEnd = CreateQuaternion(UnityEngine.Quaternion.Euler(0, 90, 0));
+            var scaleStart = CreateVector3(1, 1, 1);
+            var scaleEnd = CreateVector3(2, 2, 2);
+            int duration = 500;
+            Entity testEntity = CreateMoveRotateScaleTween(duration, posStart, posEnd, rotStart, rotEnd, scaleStart, scaleEnd);
+
+            SDKTweenComponent comp = world.Get<SDKTweenComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsActive, comp.TweenStateStatus);
+            Assert.IsNotNull(comp.CustomTweener);
+            Assert.IsInstanceOf<TransformTweener>(comp.CustomTweener);
+
+            await RunSystemForSeconds(duration, testEntity);
+
+            comp = world.Get<SDKTweenComponent>(testEntity);
+            Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus, "Tween should be marked as completed.");
+            Assert.IsTrue(comp.CustomTweener.IsFinished(), "Tweener should be marked as finished.");
+        }
+
+        private Entity CreateMoveRotateScaleTween(
+            float duration,
+            Vector3 posStart, Vector3 posEnd,
+            Quaternion rotStart, Quaternion rotEnd,
+            Vector3 scaleStart, Vector3 scaleEnd)
+        {
+            var crdtEntity = new CRDTEntity(3);
+            var moveRotateScale = new MoveRotateScale
+            {
+                PositionStart = posStart,
+                PositionEnd = posEnd,
+                RotationStart = rotStart,
+                RotationEnd = rotEnd,
+                ScaleStart = scaleStart,
+                ScaleEnd = scaleEnd,
+            };
+
+            var pbTween = new PBTween
+            {
+                CurrentTime = 0,
+                Duration = duration,
+                EasingFunction = EasingFunction.EfLinear,
+                IsDirty = true,
+                Playing = true,
+                MoveRotateScale = moveRotateScale,
+            };
+
+            Assert.AreEqual(PBTween.ModeOneofCase.MoveRotateScale, pbTween.ModeCase);
+
+            var entity = world.Create(PartitionComponent.TOP_PRIORITY);
+            AddTransformToEntity(entity);
+
+            world.Add(entity, crdtEntity, pbTween,
+                new MaterialComponent { Result = DefaultMaterial.New() },
+                new SDKTweenComponent { IsDirty = true }
+            );
+            system.Update(0);
+
+            Assert.IsTrue(world.Has<SDKTweenComponent>(entity));
+            return entity;
         }
 
         private Entity CreateTransformTween<TMode>(

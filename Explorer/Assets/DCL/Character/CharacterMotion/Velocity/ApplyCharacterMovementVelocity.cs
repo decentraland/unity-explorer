@@ -10,25 +10,12 @@ namespace DCL.CharacterMotion
     {
         public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            Transform cameraTransform,
+            Vector3 viewerForward,
+            Vector3 viewerRight,
             in MovementInputComponent input,
+            float speedLimit,
             float dt)
         {
-            Vector3 cameraForward = cameraTransform.forward;
-
-            // if we're looking straight up / down use the camera up instead of forward
-            // we use negative sign of Y because up (y=+1) needs -up to go forward, down (y=-1) needs +up
-            if (Mathf.Approximately(Mathf.Abs(cameraTransform.forward.y), 1f))
-                cameraForward = -Mathf.Sign(cameraTransform.forward.y) * cameraTransform.up;
-
-            cameraForward.y = 0;
-            cameraForward.Normalize(); // Normalize the forward to avoid slower forward speeds when looking up/down
-
-            Vector3 cameraRight = cameraTransform.right;
-            cameraRight.y = 0;
-
-            float speedLimit = MovementSpeedLimitHelper.GetMovementSpeedLimit(settings, input.Kind);
-
             // Apply movement speed increase/decrease based on the current slope angle
             var slopeForward = Vector3.Cross(rigidTransform.CurrentSlopeNormal, Vector3.Cross(rigidTransform.LookDirection, rigidTransform.CurrentSlopeNormal));
             float slopeAngle = Vector3.SignedAngle(rigidTransform.LookDirection, slopeForward, Vector3.Cross(rigidTransform.LookDirection, Vector3.up));
@@ -67,7 +54,7 @@ namespace DCL.CharacterMotion
                 // Any minimal movement in the position will be reflected, producing undesired results
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.SmoothDamp(rigidTransform.MoveVelocity.ZVelocity, yAxis, ref rigidTransform.MoveVelocity.ZDamp, settings.StopTimeSec);
 
-            Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
+            Vector3 targetForward = (viewerForward * rigidTransform.MoveVelocity.ZVelocity) + (viewerRight * rigidTransform.MoveVelocity.XVelocity);
             targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
 
             if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)
