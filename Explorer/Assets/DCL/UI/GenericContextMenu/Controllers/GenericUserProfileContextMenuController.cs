@@ -7,7 +7,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -29,6 +28,7 @@ using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.UI.ConfirmationDialog.Opener;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -71,6 +71,7 @@ namespace DCL.UI
         private readonly bool includeCommunities;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -81,6 +82,7 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> giftButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> reportButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
@@ -126,6 +128,7 @@ namespace DCL.UI
             this.realmNavigator = realmNavigator;
             this.includeCommunities = includeCommunities;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.contextMenuSettings = contextMenuSettings;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -133,6 +136,7 @@ namespace DCL.UI
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             giftButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.GiftInButtonConfig.Text, contextMenuSettings.GiftInButtonConfig.Sprite, new StringDelegate(OnGiftUserClicked));
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
+            reportButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.ReportButtonConfig.Text, contextMenuSettings.ReportButtonConfig.Sprite, new StringDelegate(OnReportUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
 
@@ -154,6 +158,9 @@ namespace DCL.UI
 
             contextMenu.AddControl(contextMenuJumpInButton)
                        .AddControl(contextMenuBlockUserButton);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(reportButtonControlSettings);
 
             if (includeCommunities)
             {
@@ -204,6 +211,7 @@ namespace DCL.UI
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
+            reportButtonControlSettings.SetData(profile.UserId);
 
             if (includeVoiceChat)
             {
@@ -362,6 +370,28 @@ namespace DCL.UI
         private void OnBlockUserClicked(string userId)
         {
             ShowBlockUserPromptAsync(targetProfile).Forget();
+        }
+
+        private void OnReportUserClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            ShowReportConfirmationDialogAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
+            {
+                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                    ViewDependencies.ConfirmationDialogOpener,
+                    targetProfile.Name,
+                    contextMenuSettings.ReportButtonConfig.Sprite,
+                    ReportCategory.PROFILE,
+                    ct);
+
+                if (!confirmed)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
         }
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)

@@ -50,6 +50,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || Application.isEditor, requireDebug: false),
                 [FeatureId.DOUBLE_JUMP] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
                 [FeatureId.GLIDING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GLIDING, featureFlags.IsEnabled(FeatureFlagsStrings.GLIDING) || Application.isEditor),
+                [FeatureId.REPORT_USER] = featureFlags.IsEnabled(FeatureFlagsStrings.REPORT_USER) || Application.isEditor,
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -164,5 +165,6 @@ namespace DCL.FeatureFlags
         AVATAR_HIGHLIGHT,
         DOUBLE_JUMP,
         GLIDING,
+        REPORT_USER,
     }
 }

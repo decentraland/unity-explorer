@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
 
         [field: Header("Assets")]
-        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] public CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
         [field: SerializeField] private Sprite transferOwnershipSprite { get; set; } = null!;
         [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
         [field: SerializeField] private Sprite banSprite { get; set; } = null!;
@@ -77,6 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
         public event Action<ICommunityMemberData>? RemoveModeratorRequested;
         public event Action<ICommunityMemberData>? AddModeratorRequested;
         public event Action<ICommunityMemberData>? TransferOwnershipRequested;
@@ -121,6 +122,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!)));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =

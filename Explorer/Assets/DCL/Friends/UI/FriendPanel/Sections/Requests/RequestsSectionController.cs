@@ -1,13 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -21,12 +22,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
-
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
 
         private CancellationTokenSource friendshipOperationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private Profile.CompactInfo? lastClickedProfileCtx;
 
         public event Action<int>? ReceivedRequestsCountChanged;
@@ -47,6 +48,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!.Value)))
                          .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!.Value)), includeUserBlocking));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => ReportUserClicked(lastClickedProfileCtx!.Value)));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
@@ -81,6 +85,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
         }
 
         public override void Reset()
@@ -93,6 +98,28 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void BlockUserClicked(Profile.CompactInfo profile) =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
+
+        private void ReportUserClicked(Profile.CompactInfo profile)
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(Profile.CompactInfo userProfile, CancellationToken ct)
+            {
+                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                    ViewDependencies.ConfirmationDialogOpener,
+                    userProfile.Name,
+                    view.ContextMenuSettings.ReportSprite,
+                    ReportCategory.FRIENDS,
+                    ct);
+
+                if (!confirmed)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
+        }
 
         private void HandleContextMenuUserProfileButton(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {

@@ -1,10 +1,17 @@
+using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
+using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -50,9 +57,13 @@ namespace DCL.Communities.CommunitiesBrowser
         [Header("Invites & Requests Section")]
         [SerializeField] private CommunitiesInvitesAndRequestsView invitesAndRequestsView = null!;
 
+        [Header("Assets")]
+        [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+
         public CommunitiesInvitesAndRequestsView InvitesAndRequestsView => invitesAndRequestsView;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private CancellationTokenSource? reportConfirmationDialogCts;
 
         private void Awake()
         {
@@ -76,6 +87,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.OpenUserChatRequested += OnOpenUserChat;
             invitesAndRequestsView.CallUserRequested += OnCallUser;
             invitesAndRequestsView.BlockUserRequested += OnBlockUser;
+            invitesAndRequestsView.ReportUserRequested += OnReportUser;
             invitesAndRequestsView.ManageRequestReceivedRequested += OnManageRequestReceived;
         }
 
@@ -97,11 +109,17 @@ namespace DCL.Communities.CommunitiesBrowser
             invitesAndRequestsView.OpenUserChatRequested -= OnOpenUserChat;
             invitesAndRequestsView.CallUserRequested -= OnCallUser;
             invitesAndRequestsView.BlockUserRequested -= OnBlockUser;
+            invitesAndRequestsView.ReportUserRequested -= OnReportUser;
             invitesAndRequestsView.ManageRequestReceivedRequested -= OnManageRequestReceived;
         }
 
-        public void SetViewActive(bool isActive) =>
+        public void SetViewActive(bool isActive)
+        {
             gameObject.SetActive(isActive);
+
+            if (!isActive)
+                reportConfirmationDialogCts.SafeCancelAndDispose();
+        }
 
         public void PlayAnimator(int triggerId)
         {
@@ -170,6 +188,28 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnBlockUser(ICommunityMemberData profile) =>
             BlockUserRequested?.Invoke(profile);
+
+        private void OnReportUser(ICommunityMemberData profile)
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowReportConfirmationDialogAsync(ICommunityMemberData memberData, CancellationToken ct)
+            {
+                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                    ViewDependencies.ConfirmationDialogOpener,
+                    memberData.Name,
+                    contextMenuSettings.ReportSprite,
+                    ReportCategory.COMMUNITIES,
+                    ct);
+
+                if (!confirmed)
+                    return;
+
+                // TODO (Santi): Implement reporting user!
+            }
+        }
 
         private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
             ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);
