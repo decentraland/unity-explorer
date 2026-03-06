@@ -386,7 +386,9 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = playerState.SlideBlend,
                     IsGrounded = (playerState.StateFlags & (1 << 1)) != 0,
-                    IsJumping = (playerState.StateFlags & (1 << 2)) != 0,
+
+                    // TODO Jumping was reworked
+                    // IsJumping = (playerState.StateFlags & (1 << 2)) != 0,
                     IsLongJump = (playerState.StateFlags & (1 << 3)) != 0,
                     IsFalling = (playerState.StateFlags & (1 << 4)) != 0,
                     IsLongFall = (playerState.StateFlags & (1 << 5)) != 0,
@@ -463,7 +465,9 @@ namespace DCL.Multiplayer.Movement.Systems
             uint flags = delta.StateFlags;
 
             last.animState.IsGrounded = (flags & (1 << 1)) != 0;
-            last.animState.IsJumping = (flags & (1 << 2)) != 0;
+
+            // TODO Jumping was reworked
+            // last.animState.IsJumping = (flags & (1 << 2)) != 0;
             last.animState.IsLongJump = (flags & (1 << 3)) != 0;
             last.animState.IsFalling = (flags & (1 << 4)) != 0;
             last.animState.IsLongFall = (flags & (1 << 5)) != 0;
