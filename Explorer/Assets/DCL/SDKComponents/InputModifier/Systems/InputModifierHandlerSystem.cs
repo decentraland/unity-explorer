@@ -53,12 +53,7 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         private void ResetModifiers()
         {
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-            inputModifier.DisableAll = false;
-            inputModifier.DisableWalk = false;
-            inputModifier.DisableJog = false;
-            inputModifier.DisableRun = false;
-            inputModifier.DisableJump = false;
-            inputModifier.DisableEmote = false;
+            inputModifier.RemoveAllModifiers();
 
             SendBusMessage(inputModifier);
         }
@@ -83,6 +78,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableRun = pb.DisableRun;
                 inputModifier.DisableJump = pb.DisableJump;
                 inputModifier.DisableEmote = pb.DisableEmote;
+                inputModifier.DisableDoubleJump = pb.DisableDoubleJump;
+                inputModifier.DisableGliding = pb.DisableGliding;
             }
 
             SendBusMessage(inputModifier);

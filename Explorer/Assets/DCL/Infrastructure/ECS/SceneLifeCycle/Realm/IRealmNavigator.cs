@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utility.Types;
 using System;
@@ -14,7 +14,22 @@ namespace ECS.SceneLifeCycle.Realm
         NotReachable,
         LocalSceneDevelopmentBlocked,
         UnauthorizedWorldAccess,
-        Timeout
+        Timeout,
+
+        /// <summary>
+        /// World requires a password to access.
+        /// </summary>
+        PasswordRequired,
+
+        /// <summary>
+        /// User cancelled the password entry.
+        /// </summary>
+        PasswordCancelled,
+
+        /// <summary>
+        /// User is not on the allow-list for this world.
+        /// </summary>
+        WhitelistAccessDenied
     }
 
     public static class ChangeRealmErrors
@@ -27,6 +42,10 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 ChangeRealmError.LocalSceneDevelopmentBlocked => TaskError.MessageError,
                 ChangeRealmError.Timeout => TaskError.Timeout,
+                ChangeRealmError.PasswordRequired => TaskError.MessageError,
+                ChangeRealmError.PasswordCancelled => TaskError.Cancelled,
+                ChangeRealmError.WhitelistAccessDenied => TaskError.MessageError,
+                ChangeRealmError.UnauthorizedWorldAccess => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
 
