@@ -176,6 +176,6 @@ MonoBehaviour:
   <PointAtRotationHorizontalRightThreshold>k__BackingField: 0.8
   <PointAtRotationHorizontalLeftThreshold>k__BackingField: 0.3
   <PointAtRotationVerticalThreshold>k__BackingField: 0.5
-  <PointAtRotationSpeed>k__BackingField: 170
+  <PointAtRotationSpeed>k__BackingField: 250
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
