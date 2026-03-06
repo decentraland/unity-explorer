@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.Tests
 {
@@ -19,6 +20,7 @@ namespace DCL.Tests
     {
         private ISceneStateProvider sceneStateProvider;
         private IComponentPool<UnityEngine.ParticleSystem> pool;
+        private IObjectPool<Material> materialPool;
 
         [SetUp]
         public void SetUp()
@@ -27,12 +29,13 @@ namespace DCL.Tests
             sceneStateProvider.IsCurrent.Returns(true);
 
             pool = Substitute.For<IComponentPool<UnityEngine.ParticleSystem>>();
+            materialPool = Substitute.For<IObjectPool<Material>>();
 
             var go = new GameObject("TestParticleSystem");
             var ps = go.AddComponent<UnityEngine.ParticleSystem>();
             pool.Get().Returns(ps);
 
-            system = new ParticleSystemLifecycleSystem(world, sceneStateProvider, pool);
+            system = new ParticleSystemLifecycleSystem(world, sceneStateProvider, pool, materialPool);
         }
 
         [TearDown]

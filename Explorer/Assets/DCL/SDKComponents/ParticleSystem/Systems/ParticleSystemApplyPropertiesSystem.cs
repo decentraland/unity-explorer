@@ -15,6 +15,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.Rendering;
 
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -31,16 +32,19 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
         private static readonly int SRC_BLEND_ID = Shader.PropertyToID("_SrcBlend");
         private static readonly int DST_BLEND_ID = Shader.PropertyToID("_DstBlend");
-        private static readonly int BLEND_OP_ID = Shader.PropertyToID("_BlendOp");
-        private static readonly int COLOR_MASK_ID = Shader.PropertyToID("_ColorMask");
+        private static readonly int BLEND_MODE_ID = Shader.PropertyToID("_Blend");
+        private static readonly int SURFACE_ID = Shader.PropertyToID("_Surface");
+        private static readonly int ZWRITE_ID = Shader.PropertyToID("_ZWrite");
 
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent partitionComponent;
+        private readonly IObjectPool<Material> materialPool;
 
-        internal ParticleSystemApplyPropertiesSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
+        internal ParticleSystemApplyPropertiesSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent, IObjectPool<Material> materialPool) : base(world)
         {
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
+            this.materialPool = materialPool;
         }
 
         protected override void Update(float t)
@@ -272,36 +276,40 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 component.CleanUpTexture(World);
         }
 
-        private static void EnsureMaterial(ref ParticleSystemComponent component, PBParticleSystem.Types.BlendMode blendMode)
+        private void EnsureMaterial(ref ParticleSystemComponent component, PBParticleSystem.Types.BlendMode blendMode)
         {
             if (component.ParticleMaterial == null)
-            {
-                var shader = Shader.Find("Particles/Standard Unlit");
-                if (shader == null) shader = Shader.Find("Legacy Shaders/Particles/Additive");
-                component.ParticleMaterial = new Material(shader);
-            }
+                component.ParticleMaterial = materialPool.Get();
+
+            ApplyBlendMode(component.ParticleMaterial, blendMode);
+        }
+
+        private static void ApplyBlendMode(Material mat, PBParticleSystem.Types.BlendMode blendMode)
+        {
+            // All particle blend modes require a transparent surface in URP
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.SetInt(SURFACE_ID, 1);
+            mat.SetInt(ZWRITE_ID, 0);
+            mat.renderQueue = (int)RenderQueue.Transparent;
 
             switch (blendMode)
             {
                 case PBParticleSystem.Types.BlendMode.PsbAdd:
-                    component.ParticleMaterial.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
-                    component.ParticleMaterial.SetInt(DST_BLEND_ID, (int)BlendMode.One);
-                    component.ParticleMaterial.SetInt(BLEND_OP_ID, (int)BlendOp.Add);
-                    component.ParticleMaterial.SetInt(COLOR_MASK_ID, (int)ColorWriteMask.All);
+                    mat.SetInt(BLEND_MODE_ID, 2); // Additive
+                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
+                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.One);
                     break;
 
                 case PBParticleSystem.Types.BlendMode.PsbMultiply:
-                    component.ParticleMaterial.SetInt(SRC_BLEND_ID, (int)BlendMode.DstColor);
-                    component.ParticleMaterial.SetInt(DST_BLEND_ID, (int)BlendMode.Zero);
-                    component.ParticleMaterial.SetInt(BLEND_OP_ID, (int)BlendOp.Add);
-                    component.ParticleMaterial.SetInt(COLOR_MASK_ID, (int)ColorWriteMask.All);
+                    mat.SetInt(BLEND_MODE_ID, 3); // Multiply
+                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.DstColor);
+                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.Zero);
                     break;
 
                 default: // PSB_ALPHA
-                    component.ParticleMaterial.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
-                    component.ParticleMaterial.SetInt(DST_BLEND_ID, (int)BlendMode.OneMinusSrcAlpha);
-                    component.ParticleMaterial.SetInt(BLEND_OP_ID, (int)BlendOp.Add);
-                    component.ParticleMaterial.SetInt(COLOR_MASK_ID, (int)ColorWriteMask.All);
+                    mat.SetInt(BLEND_MODE_ID, 0); // Alpha
+                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
+                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.OneMinusSrcAlpha);
                     break;
             }
         }

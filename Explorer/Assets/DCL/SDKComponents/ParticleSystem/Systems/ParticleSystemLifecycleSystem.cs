@@ -12,6 +12,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
@@ -24,12 +25,14 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
     {
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IComponentPool<UnityEngine.ParticleSystem> pool;
+        private readonly IObjectPool<Material> materialPool;
 
         internal ParticleSystemLifecycleSystem(World world, ISceneStateProvider sceneStateProvider,
-            IComponentPool<UnityEngine.ParticleSystem> pool) : base(world)
+            IComponentPool<UnityEngine.ParticleSystem> pool, IObjectPool<Material> materialPool) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.pool = pool;
+            this.materialPool = materialPool;
         }
 
         protected override void Update(float t)
@@ -83,7 +86,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             component.CleanUpTexture(world);
 
             if (component.ParticleMaterial != null)
-                Object.Destroy(component.ParticleMaterial);
+                materialPool.Release(component.ParticleMaterial);
 
             component.ParticleSystemInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             component.ParticleSystemInstance.transform.SetParent(null);

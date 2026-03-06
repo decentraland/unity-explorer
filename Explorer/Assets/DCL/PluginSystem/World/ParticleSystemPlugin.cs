@@ -14,7 +14,9 @@ using ECS.LifeCycle.Systems;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
 using Object = UnityEngine.Object;
+using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -25,6 +27,7 @@ namespace DCL.PluginSystem.World
         private readonly CacheCleaner cacheCleaner;
 
         private IComponentPool<ParticleSystem>? particleSystemPool;
+        private IObjectPool<Material>? particleMaterialPool;
 
         public ParticleSystemPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
         {
@@ -47,12 +50,14 @@ namespace DCL.PluginSystem.World
             var lifecycleSystem = ParticleSystemLifecycleSystem.InjectToWorld(
                 ref builder,
                 sharedDependencies.SceneStateProvider,
-                particleSystemPool);
+                particleSystemPool,
+                particleMaterialPool!);
 
             ParticleSystemApplyPropertiesSystem.InjectToWorld(
                 ref builder,
                 sharedDependencies.SceneData,
-                sharedDependencies.ScenePartition);
+                sharedDependencies.ScenePartition,
+                particleMaterialPool!);
 
             ParticleSystemPlaybackSystem.InjectToWorld(ref builder);
 
@@ -69,6 +74,13 @@ namespace DCL.PluginSystem.World
                 onRelease: OnPoolRelease);
 
             cacheCleaner.Register(particleSystemPool);
+
+            particleMaterialPool = new ObjectPool<Material>(
+                createFunc: () => new Material(settings.ParticleMaterial),
+                actionOnRelease: m => m.CopyPropertiesFromMaterial(settings.ParticleMaterial),
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                defaultCapacity: 64,
+                maxSize: 512);
         }
 
         private static void OnPoolRelease(ParticleSystem ps)
@@ -83,6 +95,13 @@ namespace DCL.PluginSystem.World
         {
             [field: SerializeField]
             public AssetReferenceGameObject ParticleSystemPrefab { get; private set; }
+
+            /// <summary>
+            ///     Base material for particle rendering. Should point to same Material used in MaterialWorldPlugin.
+            ///     Kept as a direct reference (not Addressable) to ensure shader variants are compiled.
+            /// </summary>
+            [field: SerializeField]
+            public Material ParticleMaterial { get; private set; }
         }
     }
 }
