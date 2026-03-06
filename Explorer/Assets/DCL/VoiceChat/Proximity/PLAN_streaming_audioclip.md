@@ -1,108 +1,87 @@
-# Streaming AudioClip для Proximity Voice Chat — План реализации
+# Proximity Voice Chat: Spatial Audio — План
 
 ## Контекст
 
-`OnAudioFilterRead` в `LivekitAudioSource` обходит часть Unity audio pipeline (panStereo, Audio Effects до фильтра). Заменяем доставку аудио для spatial-источников на streaming `AudioClip` с `PCMReaderCallback`. См. [ADR](ADR_streaming_audioclip.md) (в этой же папке).
+`OnAudioFilterRead` в `LivekitAudioSource` обеспечивает distance rolloff, audio effects и reverb zones. Но **angular panning** (left/right в 3D) не работает из-за стерео формата данных на m_wetGroup — FMOD не панорамирует стерео-источники. См. [ADR](ADR_streaming_audioclip.md).
 
 ---
 
-## Вариант A: Без модификации LiveKit SDK (текущий)
+## Что уже работает (без изменений)
 
-Дополнительный компонент `SpatialAudioStreamFeeder` рядом с `LivekitAudioSource`.
-
-### Шаг 1: Создать SpatialAudioStreamFeeder
-
-**Файл:** `Assets/DCL/VoiceChat/Proximity/SpatialAudioStreamFeeder.cs`
-
-Компонент MonoBehaviour:
-- `Initialize(Weak<AudioStream>, AudioSource)` — принимает стрим и целевой AudioSource
-- Создаёт `AudioClip.Create("SpatialLivekitStream", sampleRate, 1, sampleRate, true, OnPCMRead)` — моно, streaming
-- Назначает клип на AudioSource, `loop = true`
-- `OnPCMRead(float[] data)` — вызывается Unity на audio thread; читает `AudioStream.ReadAudio(data, 1, sampleRate)`
-- `Free()` — обнуляет ссылку на стрим
-- Обработка `AudioSettings.OnAudioConfigurationChanged` — пересоздаёт клип при смене sample rate
-
-### Шаг 2: Изменить ProximityVoiceChatManager.CreateSource
-
-**Файл:** `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs`
-
-В методе `CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)`:
-
-```
-ЕСЛИ spatial:
-    - НЕ вызывать source.Construct(stream)
-    - Применить spatial настройки к AudioSource
-    - Добавить SpatialAudioStreamFeeder на GO
-    - Вызвать feeder.Initialize(stream, audioSource)
-ИНАЧЕ:
-    - Вызвать source.Construct(stream) как раньше
-```
-
-`LivekitAudioSource.OnAudioFilterRead` станет no-op для spatial-источников: `stream.Resource.Has` = false → данные не перезаписываются → клип проходит через весь пайплайн.
-
-### Шаг 3: Обновить DestroySource
-
-**Файл:** `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs`
-
-В методе `DestroySource`:
-- Перед `gameObject.SelfDestroy()` найти `SpatialAudioStreamFeeder` на GO
-- Вызвать `feeder.Free()` для освобождения ссылки на стрим
-
-### Файлы — сводка
-
-| Действие | Файл |
-|----------|------|
-| Создать | `Assets/DCL/VoiceChat/Proximity/SpatialAudioStreamFeeder.cs` |
-| Изменить | `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs` |
-
-### Проверка
-
-1. **panStereo:** `spatialBlend = 0`, pan полностью влево → звук только в левом канале
-2. **3D Spatial:** `spatialBlend = 1`, два участника на разных позициях → звук идёт с корректных направлений
-3. **Distance Rolloff:** удалить аватар → громкость падает по rolloff-кривой
-4. **Audio Effects:** добавить AudioLowPassFilter на GO → эффект применяется к голосу
-5. **Loopback:** `EnableLocalTrackPlayback = true` → loopback работает как раньше (через OnAudioFilterRead, не через streaming clip)
-6. **Смена устройства:** переключить audio output → клип пересоздаётся, звук продолжается
+- Distance rolloff (затухание с расстоянием) ✓
+- Audio Effects на AudioSource (если после LivekitAudioSource в компонентах) ✓
+- Reverb Zones ✓
+- Amplification/Silence zones (через volume) ✓
 
 ---
 
-## Вариант B: С модификацией LiveKit SDK (будущее)
+## Что нужно решить
 
-Тот же подход (streaming AudioClip + PCMReaderCallback), но код живёт внутри `LivekitAudioSource` вместо отдельного компонента. Требует форк [decentraland/client-sdk-unity](https://github.com/decentraland/client-sdk-unity).
+1. **Angular panning** — направление звука (лево/право) при spatialBlend=1
+2. **Camera-relative panning** — пан относительно камеры, не аватара (3rd person)
 
-### Шаг 1: Добавить spatial-режим в LivekitAudioSource
+---
 
-**Файл (в форке):** `Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs`
+## Варианты для Angular Panning (в обсуждении)
 
-- Добавить параметр `bool spatialAudio = false` в `LivekitAudioSource.New()`
-- Когда `spatialAudio = true`:
-  - В `Construct()` или `OnEnable()` создать streaming моно AudioClip
-  - PCMReaderCallback читает из `stream` через `ReadAudio(data, 1, sampleRate)`
-  - `OnAudioFilterRead` — skip (`if (useSpatialClip) return;`)
-- Когда `spatialAudio = false`: текущее поведение без изменений
-- Обработка `AudioSettings.OnAudioConfigurationChanged` — пересоздание клипа
+### Вариант 1: Manual Angular Panning в OnAudioFilterRead
 
-### Шаг 2: Обновить ProximityVoiceChatManager
+**Подход:** Оставить OnAudioFilterRead. После ReadAudio вручную применить L/R balance.
 
-**Файл:** `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs`
+**Шаги:**
+1. Кешировать listener position/rotation с main thread каждый кадр (в ECS-системе или Update)
+2. В OnAudioFilterRead: рассчитать угол, применить gain к L/R каналам
+3. Привязать расчёт к камере (а не AudioListener) для camera-relative panning
 
-```
-LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, spatialAudio: spatial);
-source.Construct(stream);  // теперь всегда вызываем — внутри SDK решает способ доставки
-```
+**Файлы:**
+- Модификация `LivekitAudioSource.cs` (в форке SDK) или новый компонент рядом
 
-### Шаг 3: Удалить SpatialAudioStreamFeeder
+**Оценка:** ~1-2 дня
 
-Компонент больше не нужен — логика внутри SDK.
+### Вариант 2: Streaming Mono AudioClip + Ring Buffer
 
-### Преимущества перед Вариантом A
+**Подход:** Streaming моно AudioClip + промежуточный ring buffer для сглаживания jitter.
 
-- Один компонент вместо двух на GO
-- Единая точка ответственности за доставку аудио (LiveKit SDK)
-- Проще поддержка WAV-записи (один стрим, одна точка tee)
-- Чище API: `LivekitAudioSource.New(spatialAudio: true)` — явный контракт
+**Шаги:**
+1. Создать ring buffer для накопления LiveKit аудио
+2. PCMReaderCallback читает из ring buffer (а не напрямую из AudioStream)
+3. Pre-fill ring buffer для избежания underrun
+4. Моно клип → нативный FMOD angular panning
 
-### Когда переходить
+**Файлы:**
+- `SpatialAudioStreamFeeder.cs` (расширить ring buffer) или новый компонент
+- Возможно модификация LiveKit SDK для прямого доступа к native буферу
 
-- При первой необходимости форка SDK для других целей
-- Или когда SpatialAudioStreamFeeder покажет ограничения (WAV-запись, сложные сценарии)
+**Оценка:** ~3-5 дней (включая тюнинг буфера)
+
+### Вариант 4: Mono Silent Clip + OnAudioFilterRead (эксперимент)
+
+**Подход:** Быстрый тест — назначить моно silent clip, проверить получает ли OnAudioFilterRead channels=1.
+
+**Шаги:**
+1. Создать AudioClip.Create("silence", sampleRate, 1, sampleRate, false) — моно, не streaming
+2. Назначить на AudioSource, loop=true, Play()
+3. В OnAudioFilterRead проверить значение channels
+4. Если channels=1 → проверить angular panning
+
+**Оценка:** ~30 минут (эксперимент)
+
+---
+
+## Camera-Relative Panning
+
+Независимо от варианта angular panning:
+
+**При Варианте 1 (Manual Pan):** расчёт угла напрямую относительно `Camera.main.transform` — не зависит от AudioListener.
+
+**При Вариантах 2/4 (нативный FMOD):** AudioListener rotation = camera rotation. Два способа:
+- AudioListener на камере (простой, расстояние от камеры)
+- AudioListener на аватаре + `rotation = camera.rotation` каждый кадр (точное расстояние)
+
+---
+
+## Рекомендуемый порядок действий
+
+1. **Сначала** — Вариант 4 (эксперимент ~30мин): проверить mono silent clip
+2. **Если channels=1 и angular panning работает** → использовать Вариант 4
+3. **Если нет** → выбрать между Вариантом 1 (manual pan, быстро, производительно) и Вариантом 2 (нативный FMOD, но latency и сложность)

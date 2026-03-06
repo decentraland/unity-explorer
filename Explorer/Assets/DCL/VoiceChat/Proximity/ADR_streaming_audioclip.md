@@ -1,125 +1,200 @@
-# ADR: Streaming AudioClip для Proximity Voice Chat
+# ADR: Spatial Audio Pipeline для Proximity Voice Chat
 
-**Status:** Accepted  
+**Status:** In Discussion (angular panning approach)  
 **Date:** 2026-03-06  
 **Authors:** Voice Chat team  
-**Supersedes:** Частично итерацию 2 из ADR_proximity_voice_chat (способ доставки аудио)
+**Related:** Итерация 2 из ADR_proximity_voice_chat
 
 ---
 
 ## Context
 
-В итерации 2 Proximity Voice Chat реализован 3D spatial audio через `LivekitAudioSource` из LiveKit SDK. Этот компонент использует `OnAudioFilterRead` для инъекции аудио данных в Unity audio pipeline.
+В итерации 2 Proximity Voice Chat реализован 3D spatial audio через `LivekitAudioSource` из LiveKit SDK. Компонент использует `OnAudioFilterRead` для инъекции аудио в Unity audio pipeline.
 
-**Обнаруженная проблема:** `panStereo` (2D стерео-панорама) не работает. При `spatialBlend = 0` и полном смещении pan влево/вправо звук идёт одинаково в оба канала. При этом обычный AudioSource с клипом работает корректно.
-
-**Эмпирическое тестирование** показало:
-- `spatialBlend = 1` (3D) + rolloff — **работает** ✓
-- `panStereo` при `spatialBlend = 0` (2D) — **не работает** ✗
+**Обнаруженные проблемы:**
+1. `panStereo` (2D pan) не работает — звук одинаков в обоих каналах при любом значении pan
+2. **Angular panning (left/right в 3D)** не работает — при `spatialBlend = 1` звук не смещается влево/вправо при перемещении источника вокруг слушателя
+3. Distance rolloff (затухание с расстоянием) — **работает** корректно
 
 ---
 
 ## Analysis
 
-### Порядок DSP-пайплайна Unity
+### Точный DSP-пайплайн Unity (из исходного кода)
 
-Точного официального описания порядка Unity не публиковала. На основе эмпирических тестов и документации Native Audio Plugin SDK установлен следующий порядок:
+На основе анализа `AudioSource.cpp`, `SoundChannel.cpp`, `AudioCustomFilter.cpp` из исходного кода Unity (FMOD-based):
 
 ```
-AudioClip PCM (или тишина если нет клипа)
-    ↓
-Source-level: panStereo, volume, pitch                   [1]
-    ↓
-DSP Filter chain: OnAudioFilterRead + Audio Effects      [2]
-    ↓
-3D Spatialization (spatialBlend, rolloff, spread)        [3]
-    ↓
-AudioMixer → Output
+1.  AudioClip PCM / PCMReaderCallback
+         ↓
+2.  Pitch (FMOD Channel: setFrequency = pitch × dopplerPitch × baseFreq)
+         ↓
+3.  FMOD Head DSP: panStereo (setPan → matrix DSP в начале цепочки)     ← PRE-DSP
+         ↓
+    ═══ m_dryGroup ═══
+4.  [Опц.] Spatializer Plugin (pre-effects, если spatializePostEffects=false)
+         ↓
+    ═══ m_wetGroup ═══
+5.  Built-in Effects + OnAudioFilterRead                                  ← в порядке компонентов
+         ↓
+6.  [Опц.] Spatializer Plugin (post-effects, если spatializePostEffects=true)
+         ↓
+    ═══ Channel Output Mixing (FMOD) ═══
+7.  Volume (setVolume = CachedRolloff × channelVol × ambientVol)          ← POST-DSP
+8.  3D Angular Panning (set3DPanLevel × set3DAttributes × set3DSpread)    ← POST-DSP
+         ↓
+9.  Parent Group (AudioMixer / AudioManager + Listener Effects)
+         +
+    Reverb Zones (параллельный SEND, не insert)
 ```
 
-### Почему OnAudioFilterRead ломает panStereo
+**Источники в коде Unity:**
 
-`LivekitAudioSource.New()` создаёт AudioSource **без клипа**. Пайплайн при этом:
+- `panStereo` → `SoundChannel.cpp:UpdateStereoPan()` → `setPan()` → FMOD вставляет matrix DSP в HEAD цепочки (PRE-DSP)
+- `Volume` → `SoundChannel.cpp:UpdateVolume()` → `setVolume(CachedRolloff × ...)` → POST-DSP (output mixing)
+- `CachedRolloff` → `AudioSource.cpp:ApplyDistanceAttenuation()` → `lerp(1, distanceAttenuation, spatialBlend)`
+- `3D Position` → `AudioSource.cpp:ApplyPositional()` → `set3DAttributes()` → POST-DSP (FMOD 3D mix matrix)
+- `OnAudioFilterRead` → `AudioCustomFilter.cpp:readCallback()` → DSP на m_wetGroup
+- Порядок DSP на m_wetGroup → `AudioSource.cpp:GetOrCreateFilterComponents()` → итерация `GetComponentAtIndex(i)` → **порядок компонентов на GameObject**
 
-1. **[1]** AudioSource применяет panStereo к тишине (нет клипа) → тишина
-2. **[2]** `OnAudioFilterRead` перезаписывает буфер сырыми данными LiveKit (стерео, L=R)
-3. **[3]** 3D Spatialization применяется к данным LiveKit → работает
+### Почему panStereo не работает
 
-panStereo был применён к тишине на этапе [1] и перезаписан на этапе [2]. Этап [3] (3D) происходит после фильтров, поэтому работает.
+`setPan()` реализован как FMOD Head DSP (этап 3) — ДО m_wetGroup. Применяется к тишине (нет клипа), затем `OnAudioFilterRead` (этап 5) перезаписывает буфер данными LiveKit.
 
-### Дополнительные ограничения OnAudioFilterRead
+### Почему angular panning не работает
 
-- **Audio Effects** (AudioLowPassFilter, AudioReverbFilter и т.д.) — работают только если добавлены **после** `LivekitAudioSource` в списке компонентов. Неявная зависимость от порядка `AddComponent` — хрупко.
-- **Стерео вход** — LiveKit `AudioStream` запрашивает 2 канала (`currentChannels = 2`). Моно-голос дублируется в оба канала. Для 3D spatializer моно-источник каноничнее.
-- **Reverb Zones** — поведение не определено, зависит от реализации в конкретной версии Unity.
+FMOD's 3D mix matrix (этап 8) — POST-DSP, применяется к данным из m_wetGroup. Однако **формат канала** определяет поведение:
+- **Моно источник** → FMOD берёт 1 канал и распределяет по выходным каналам на основе 3D позиции → angular panning работает
+- **Стерео источник** → FMOD сохраняет стерео-образ и применяет только distance attenuation → angular panning **не работает**
+
+`OnAudioFilterRead` на m_wetGroup **всегда** работает в стерео (channels=2), потому что m_wetGroup процессит в формате системного выхода. LiveKit пишет одинаковые данные в L и R (моно в стерео обёртке). FMOD видит стерео → не делает angular panning.
+
+### Почему distance rolloff работает
+
+`setVolume(CachedRolloff × ...)` (этап 7) — POST-DSP, не зависит от формата каналов. Скалярное умножение громкости применяется к любому формату.
+
+### Что работает и не работает с текущим OnAudioFilterRead
+
+| Функция | Работает? | Почему |
+|---|---|---|
+| Distance rolloff | **Да** ✓ | `setVolume` = POST-DSP, скалярный, не зависит от формата |
+| Angular panning (L/R в 3D) | **Нет** ✗ | FMOD 3D mix matrix не панорамирует стерео-источники |
+| panStereo (2D) | **Нет** ✗ | Head DSP, PRE-DSP → применяется к тишине |
+| Audio Effects | **Да** ✓ | На m_wetGroup, если компонент после LivekitAudioSource |
+| Reverb Zones | **Да** ✓ | Параллельный SEND, не insert |
+| Amplification/Silence zones | **Да** ✓ | Через volume = POST-DSP |
+
+---
+
+## Problem Statement
+
+Для proximity voice chat нужно angular panning — игрок должен слышать, с какой стороны идёт голос другого игрока. Текущий `OnAudioFilterRead` не обеспечивает angular panning из-за стерео формата канала.
+
+Дополнительное требование: **пан должен быть относительно камеры**, а не головы аватара. В 3rd person при повороте аватара на 180° при неподвижной камере звук должен оставаться "слева в кадре", а не переходить в правый канал. Решается через AudioListener (rotation = camera rotation).
+
+---
+
+## Варианты решения Angular Panning
+
+### Вариант 1: Manual Angular Panning в OnAudioFilterRead
+
+**Суть:** Оставить `OnAudioFilterRead` для доставки аудио. После `ReadAudio` вручную рассчитать угол между источником и слушателем и применить L/R balance к стерео данным.
+
+```
+OnAudioFilterRead:
+    1. ReadAudio(data, 2, sampleRate)  — LiveKit пишет стерео (L=R)
+    2. angle = SignedAngle(listener.forward, sourcePos - listenerPos, listener.up)
+    3. leftGain = cos((angle + 90) × π / 360)
+    4. rightGain = sin((angle + 90) × π / 360)
+    5. data[i*2] *= leftGain; data[i*2+1] *= rightGain
+```
+
+**Плюсы:**
+- Нет buffer underrun — OnAudioFilterRead синхронен с DSP output
+- Максимальная производительность (простая тригонометрия per-sample)
+- Не требует модификации LiveKit SDK (можно сделать в ProximityVoiceChatManager или отдельном компоненте)
+- Distance rolloff, Audio Effects, Reverb Zones продолжают работать нативно
+- Полный контроль: можно привязать к камере а не к AudioListener
+- Можно реализовать spread (ширина источника) через blend коэффициентов
+
+**Минусы:**
+- Ручная реализация pan law — не точно соответствует нативному FMOD 3D panning
+- Потоковая безопасность: позиции listener/source нужно кешировать с main thread (OnAudioFilterRead на audio thread)
+- Не работает с custom Spatializer Plugins (Steam Audio, Resonance Audio)
+- panStereo (2D) по-прежнему не работает (не нужен для proximity)
+- Нужно самостоятельно поддерживать HRTF если понадобится
+
+### Вариант 2: Streaming Mono AudioClip (через PCMReaderCallback)
+
+**Суть:** Подавать аудио через `AudioClip.Create(stream: true, channels: 1)`. FMOD создаёт моно канал → нативный 3D angular panning работает.
+
+**Плюсы:**
+- Нативное 3D angular panning от FMOD — точное, проверенное
+- panStereo работает (данные в начале пайплайна)
+- Audio Effects работают без зависимости от порядка компонентов
+- Моно-источник — каноничный формат для 3D audio
+- Совместимо с custom Spatializer Plugins
+
+**Минусы:**
+- **Buffer underrun** — PCMReaderCallback вызывается асинхронно относительно LiveKit буфера; при нехватке данных → нули → микро-паузы, рваный звук (подтверждено тестированием)
+- Для fix buffer underrun нужен промежуточный ring buffer → +20-40мс latency
+- Streaming AudioClip менее предсказуем по таймингу чем OnAudioFilterRead
+- При смене audio device нужно пересоздавать AudioClip
+
+### Вариант 3: Streaming Mono AudioClip в форке LiveKit SDK
+
+**Суть:** То же что Вариант 2, но инкапсулировано внутри `LivekitAudioSource` через флаг `spatialAudio`.
+
+**Плюсы:** Те же что Вариант 2 + один компонент вместо двух, чище API  
+**Минусы:** Те же что Вариант 2 + требует поддержку форка SDK
+
+### Вариант 4: Mono Silent Clip + OnAudioFilterRead
+
+**Суть:** Создать короткий бесшумный моно AudioClip, назначить на AudioSource. FMOD создаёт моно канал. `OnAudioFilterRead` получает `channels=1` (гипотеза) → пишем моно данные → FMOD делает нативный 3D angular panning.
+
+**Плюсы:**
+- Синхронная доставка через OnAudioFilterRead (нет buffer underrun)
+- Нативный 3D angular panning (если FMOD действительно обработает моно)
+- Минимальные изменения (только создать silent clip)
+
+**Минусы:**
+- **Не проверено** — неизвестно, получает ли OnAudioFilterRead channels=1 при моно клипе или m_wetGroup всегда форсит стерео
+- Если m_wetGroup процессит в стерео (вероятно), то FMOD всё равно увидит стерео на выходе → angular panning не сработает
+- panStereo по-прежнему не работает (Head DSP к тишине)
+
+### Вариант 5: Native Spatializer Plugin
+
+**Суть:** Написать нативный C/C++ Spatializer Plugin который обрабатывает данные после OnAudioFilterRead.
+
+**Плюсы:** Полный контроль на нативном уровне, максимальная производительность  
+**Минусы:** Overkill; нужна кросс-платформенная сборка; огромный объём работы
+
+### Сводная таблица
+
+| | Вар.1: Manual Pan | Вар.2: Streaming Clip | Вар.3: SDK Fork | Вар.4: Silent Clip | Вар.5: Native Plugin |
+|---|---|---|---|---|---|
+| Angular panning | Ручной (simple pan law) | Нативный FMOD | Нативный FMOD | Нативный FMOD (если работает) | Нативный |
+| Buffer underrun | **Нет** | **Да** (проблема) | **Да** | **Нет** | **Нет** |
+| Latency | 0 | +20-40мс (с ring buffer fix) | +20-40мс | 0 | 0 |
+| Сложность | Низкая | Средняя | Средняя | Минимальная (но непроверено) | Очень высокая |
+| Модификация SDK | Нет | Нет | Да | Нет | Нет |
+| Совместимость с Spatializer Plugins | Нет | Да | Да | Да (если работает) | Да |
+| Производительность | Высокая | Средняя | Средняя | Высокая | Максимальная |
+
+---
+
+## Camera-Relative Panning
+
+Независимо от выбранного варианта, angular panning должен быть относительно камеры:
+
+**Вариант A: AudioListener на камере** — стандартный подход Unity. Пан относительно камеры автоматически. Расстояние считается от камеры (не аватара) — отличие ~5-10м в 3rd person при min/max distance 2-50м, приемлемо.
+
+**Вариант B: AudioListener на аватаре, rotation = camera.rotation** — точное расстояние от аватара, пан относительно камеры. Нужен скрипт синхронизации rotation каждый кадр.
+
+При Варианте 1 (Manual Pan) можно привязать расчёт угла напрямую к камере, без привязки к AudioListener.
 
 ---
 
 ## Decision
 
-### Заменить OnAudioFilterRead на streaming AudioClip
-
-Вместо инъекции аудио через `OnAudioFilterRead` (этап [2] пайплайна), подавать данные через `AudioClip.Create(stream: true)` с `PCMReaderCallback` (этап [0] — до всего пайплайна).
-
-**Подход:** Новый компонент `SpatialAudioStreamFeeder` создаёт моно streaming AudioClip, читает аудио из LiveKit `AudioStream` через `PCMReaderCallback` и назначает клип на AudioSource.
-
-**Для spatial-источников:**
-1. `LivekitAudioSource.New()` создаёт GO с AudioSource + LivekitAudioSource
-2. `LivekitAudioSource.Construct()` **НЕ** вызывается → `OnAudioFilterRead` — no-op
-3. `SpatialAudioStreamFeeder` добавляется на тот же GO
-4. Streaming AudioClip (моно, 1 канал) подаёт данные в AudioSource
-5. AudioSource обрабатывает клип штатным пайплайном
-
-**Для non-spatial источников** (loopback): поведение не меняется — `LivekitAudioSource.Construct()` работает как раньше.
-
-### Alternatives Considered
-
-| Вариант | Описание | Причина отказа |
-|---------|----------|----------------|
-| Ручная спатиализация в OnAudioFilterRead | Pan/rolloff/spread вручную после ReadAudio | Фактически переписывание аудио-движка Unity; не совместимо с Reverb Zones, сторонними spatializer-плагинами |
-| Двойной GO с ring buffer | Отдельный GO для захвата (OnAudioFilterRead → ring buffer), отдельный для воспроизведения (AudioClip из ring buffer) | +20мс latency (доп. буфер); двойная буферизация; избыточная сложность |
-| Silent clip trick | Назначить пустой AudioClip и надеяться что pan/spatial применится к выходу OnAudioFilterRead | Не решает проблему: panStereo применяется ДО OnAudioFilterRead к данным клипа (тишина) и перезаписывается |
-| Модификация LiveKit SDK (Вариант B) | Тот же streaming AudioClip, но инкапсулированный внутри `LivekitAudioSource` через флаг `spatialAudio` | Тот же подход, отличие только организационное (1 компонент вместо 2). Отложен: требует форк SDK, текущий подход решает задачу без изменений SDK |
-| Native Spatializer Plugin | Нативный C/C++ плагин для постобработки | Overkill; нужна кросс-платформенная сборка |
-
----
-
-## Technical Details
-
-### Почему моно (1 канал)
-
-Голосовой сигнал — моно по природе. LiveKit SDK в текущей реализации запрашивает 2 канала и дублирует моно в оба. Для 3D spatialization Unity берёт моно-сигнал и распределяет по каналам на основе позиции источника. Стерео-вход (L=R) — избыточен и некорректен для 3D.
-
-`AudioStream.ReadAudio(data, channels, sampleRate)` поддерживает смену каналов: при первом вызове с `channels=1` пересоздаёт внутренний FFI-стрим на 1 канал (одноразовая операция).
-
-### Потенциальная задержка
-
-`PCMReaderCallback` может вносить задержку порядка одного DSP-буфера (~21мс при 1024 сэмплах / 48kHz). Для voice chat допустимо. При необходимости — уменьшить DSP Buffer Size в Project Settings → Audio.
-
-### Thread Safety
-
-`PCMReaderCallback` вызывается на audio thread — аналогично `OnAudioFilterRead`. `AudioStream.ReadAudio` использует mutex для доступа к буферу — безопасно.
-
----
-
-## Consequences
-
-### Positive
-
-- panStereo работает корректно (данные в начале пайплайна)
-- Audio Effects работают без зависимости от порядка компонентов
-- Моно-источник — каноничный формат для Unity 3D audio
-- LiveKit SDK не модифицируется
-- Минимальные изменения в существующем коде
-- Производительность ≈ текущей (меньше данных — моно вместо стерео)
-
-### Negative / Risks
-
-- Дополнительный компонент (`SpatialAudioStreamFeeder`) на GO рядом с `LivekitAudioSource`
-- При смене audio device (sample rate) нужно пересоздавать AudioClip
-- Одноразовый FFI-вызов при переключении AudioStream с 2 на 1 канал
-
-### Future Considerations
-
-- При форке LiveKit SDK (Вариант B) можно инкапсулировать streaming AudioClip прямо в `LivekitAudioSource` через флаг `spatialMode`, убрав необходимость в отдельном компоненте
-- Проверить совместимость с Reverb Zones и сторонними spatializer-плагинами (Steam Audio, Resonance Audio)
+**В обсуждении.** Рекомендуемые кандидаты: Вариант 1 (Manual Pan) или Вариант 4 (Silent Mono Clip — требует проверки).
