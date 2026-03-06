@@ -83,7 +83,9 @@ namespace DCL.Multiplayer.Movement.Systems
             if (remotePlayerMovement.HeadIKYawEnabled || remotePlayerMovement.HeadIKPitchEnabled) headYawAndPitch = Interpolation.InterpolateHeadIK(headIK, remotePlayerMovement.HeadIKYawAndPitch, settings.InterpolationSettings.HeadIKInterpolationFactor);
             ApplyHeadIK(ref headIK, remotePlayerMovement.HeadIKYawEnabled, remotePlayerMovement.HeadIKPitchEnabled, headYawAndPitch);
 
-            ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, remotePlayerMovement.IsDraggingPointAt, remotePlayerMovement.PointAtWorldHitPoint);
+            var pointAtWorldHitPoint = Vector3.zero;
+            if (remotePlayerMovement.IsPointingAt) pointAtWorldHitPoint = Interpolation.InterpolatePointAtIK(handPointAt, remotePlayerMovement.PointAtWorldHitPoint, settings.InterpolationSettings.PointAtIKInterpolationFactor);
+            ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, remotePlayerMovement.IsDraggingPointAt, pointAtWorldHitPoint);
 
             if (intComp.Enabled)
             {

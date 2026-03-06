@@ -12,6 +12,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System;
@@ -43,7 +44,8 @@ namespace DCL.Character.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
-            ApplyPointAtIKQuery(World, t);
+            ApplyLocalPointAtIKQuery(World, t);
+            ApplyRemotePointAtIKQuery(World, t);
         }
 
         private (bool isPressed, Vector2 pointerPos) HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
@@ -181,14 +183,11 @@ namespace DCL.Character.CharacterMotion.Systems
             return (Vector3.Dot(avatarBase.transform.forward, rigidTransform.LookDirection), needToRotate);
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void ApplyPointAtIK(
-            [Data] float dt,
+        private void ApplyAnimationWeight(
             ref HandPointAtComponent pointAt,
             ref AvatarBase avatarBase,
-            ref CharacterRigidTransform rigidTransform,
-            in ICharacterControllerSettings settings)
+            in ICharacterControllerSettings settings,
+            float dt)
         {
             float targetAnimWeight = pointAt is { IsPointing: true, RotationCompleted: true } ? 1f : 0f;
 
@@ -196,14 +195,17 @@ namespace DCL.Character.CharacterMotion.Systems
                 pointAt.AnimationWeight, targetAnimWeight, settings.HandsIKWeightSpeed * dt);
 
             avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
+        }
 
-            if (!pointAt.IsPointing) return;
-
-            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
-            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
-
-            var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
-
+        private void ApplyHandIK(
+            ref HandPointAtComponent pointAt,
+            ref AvatarBase avatarBase,
+            in ICharacterControllerSettings settings,
+            float dt,
+            Vector3 directionToTarget,
+            Vector3 shoulderPos,
+            (float dot, bool needToRotate) rotationInfo)
+        {
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
             pointAt.RotationCompleted = Mathf.Abs(rotationInfo.dot) > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
@@ -226,6 +228,49 @@ namespace DCL.Character.CharacterMotion.Systems
             backOfHand.Normalize();
 
             target.rotation = Quaternion.LookRotation(-backOfHand, pointDirection);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(RemotePlayerMovementComponent))]
+        private void ApplyLocalPointAtIK(
+            [Data] float dt,
+            ref HandPointAtComponent pointAt,
+            ref AvatarBase avatarBase,
+            ref CharacterRigidTransform rigidTransform,
+            in ICharacterControllerSettings settings)
+        {
+            ApplyAnimationWeight(ref pointAt, ref avatarBase, in settings, dt);
+
+            if (!pointAt.IsPointing) return;
+
+            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
+            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
+
+            ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, rotationInfo);
+        }
+
+        [Query]
+        [All(typeof(RemotePlayerMovementComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyRemotePointAtIK(
+            [Data] float dt,
+            ref HandPointAtComponent pointAt,
+            ref AvatarBase avatarBase,
+            in ICharacterControllerSettings settings
+        )
+        {
+            ApplyAnimationWeight(ref pointAt, ref avatarBase, in settings, dt);
+
+            if (!pointAt.IsPointing) return;
+
+            Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
+            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            float dot = Vector3.Dot(avatarBase.transform.forward, Vector3.ProjectOnPlane(directionToTarget, Vector3.up));
+
+            ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, (dot, false));
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DCL.Character.Components;
+﻿using DCL.Character.CharacterMotion.Components;
+using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using Unity.Mathematics;
 using UnityEngine;
@@ -80,6 +81,11 @@ namespace DCL.Multiplayer.Movement
             Vector3 interpolatedYawAndPitch = interpolatedRotation.eulerAngles;
 
             return new Vector2(interpolatedYawAndPitch.y, interpolatedYawAndPitch.x);
+        }
+
+        public static Vector3 InterpolatePointAtIK(in HandPointAtComponent pointAt, Vector3 targetHitPoint, float interpolationFactor)
+        {
+            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * Time.deltaTime);
         }
     }
 }
