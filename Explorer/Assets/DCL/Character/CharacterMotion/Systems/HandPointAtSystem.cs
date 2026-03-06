@@ -182,7 +182,6 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void ApplyPointAtIK(
             [Data] float dt,
