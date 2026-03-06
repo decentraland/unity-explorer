@@ -80,6 +80,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             return subscriber.Channel.ReadAllAsync(ct);
         }
 
+        public void Send(ClientMessage message, ITransport.PacketMode packetMode) =>
+            pipe.Send(new MessagePipe.OutgoingMessage(message, packetMode));
+
         private async UniTaskVoid RouteIncomingMessagesAsync(CancellationToken ct)
         {
             try
@@ -92,7 +95,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
             catch (OperationCanceledException)
             {
-                int a = 0;
             }
         }
 

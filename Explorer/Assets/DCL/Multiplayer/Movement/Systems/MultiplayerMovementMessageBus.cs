@@ -41,6 +41,8 @@ namespace DCL.Multiplayer.Movement.Systems
         private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
+        private NetworkMovementMessage? lastMovementSent;
+        private uint lastSequenceSent;
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub,
             PulseMultiplayerService pulseService,
@@ -66,6 +68,35 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             this.settingsValue = settingsValue;
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, landscapeData);
+        }
+
+        public void Send(NetworkMovementMessage message)
+        {
+            WriteAndSend(message, messagePipesHub.IslandPipe());
+            WriteAndSend(message, messagePipesHub.ScenePipe());
+
+            var sendMessage = new ClientMessage();
+            ITransport.PacketMode packetMode;
+
+            if (lastMovementSent == null)
+            {
+                packetMode = ITransport.PacketMode.RELIABLE;
+                lastMovementSent = message;
+                lastSequenceSent = 0;
+
+                sendMessage.PlayerStateFull = new PlayerStateFull
+                {
+                    State = ToPlayerState(message, 0),
+                };
+            }
+            else
+            {
+                packetMode = ITransport.PacketMode.UNRELIABLE_UNSEQUENCED;
+                lastSequenceSent++;
+                sendMessage.PlayerStateDelta = ToPlayerStateDelta(lastMovementSent.Value, message, lastSequenceSent);
+            }
+
+            pulseService.Send(sendMessage, packetMode);
         }
 
         public UniTask SubscribeToIncomingMessagesAsync(CancellationToken ct)
@@ -201,12 +232,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
             }
-        }
-
-        public void Send(NetworkMovementMessage message)
-        {
-            WriteAndSend(message, messagePipesHub.IslandPipe());
-            WriteAndSend(message, messagePipesHub.ScenePipe());
         }
 
         private static NetworkMovementMessage UncompressedMovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto)
@@ -443,7 +468,6 @@ namespace DCL.Multiplayer.Movement.Systems
             if (velocityChanged)
                 last.velocitySqrMagnitude = last.velocity.sqrMagnitude;
 
-            // Animation blends
             if (delta.HasMovementBlend)
             {
                 float movementBlend = Mathf.Clamp(delta.MovementBlend, 0, 3);
@@ -454,7 +478,6 @@ namespace DCL.Multiplayer.Movement.Systems
             if (delta.HasSlideBlend)
                 last.animState.SlideBlendValue = delta.SlideBlend;
 
-            // Head IK / look
             if (delta.HasHeadYaw)
                 last.headYawAndPitch.x = delta.HeadYaw;
 
@@ -474,7 +497,6 @@ namespace DCL.Multiplayer.Movement.Systems
             last.headIKYawEnabled = (flags & (1 << 7)) != 0;
             last.headIKPitchEnabled = (flags & (1 << 8)) != 0;
 
-            // movementKind depends on MovementBlendValue, so recompute if that changed
             if (movementBlendChanged)
             {
                 float mb = last.animState.MovementBlendValue;
@@ -488,6 +510,131 @@ namespace DCL.Multiplayer.Movement.Systems
             // TODO: isInstant, isEmoting
 
             return last;
+        }
+
+        private static PlayerState ToPlayerState(NetworkMovementMessage message, uint sequence)
+        {
+            return new PlayerState
+            {
+                // No need own subjectId, can be resolved on the server
+                // SubjectId = subjectId,
+                Sequence = sequence,
+
+                // ServerTick = (uint)message.timestamp,
+
+                Position = new Decentraland.Pulse.Vector3
+                {
+                    X = message.position.x,
+                    Y = message.position.y,
+                    Z = message.position.z,
+                },
+
+                Velocity = new Decentraland.Pulse.Vector3
+                {
+                    X = message.velocity.x,
+                    Y = message.velocity.y,
+                    Z = message.velocity.z,
+                },
+
+                RotationY = message.rotationY,
+                MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3),
+                SlideBlend = message.animState.SlideBlendValue,
+                HeadYaw = message.headYawAndPitch.x,
+                HeadPitch = message.headYawAndPitch.y,
+                StateFlags = BuildStateFlags(message),
+            };
+        }
+
+        private static PlayerStateDelta ToPlayerStateDelta(
+            NetworkMovementMessage previous,
+            NetworkMovementMessage current,
+            uint newSeq)
+        {
+            var delta = new PlayerStateDelta
+            {
+                // No need own subjectId, can be resolved on the server
+                // SubjectId = subjectId,
+                NewSeq = newSeq,
+                // ServerTick = (uint)current.timestamp,
+            };
+
+            // TODO: use quantizer instead of casting
+            if (Changed(previous.position.x, current.position.x))
+                delta.PositionX = (uint) current.position.x;
+
+            if (Changed(previous.position.y, current.position.y))
+                delta.PositionY = (uint) current.position.y;
+
+            if (Changed(previous.position.z, current.position.z))
+                delta.PositionZ = (uint) current.position.z;
+
+            if (Changed(previous.velocity.x, current.velocity.x))
+                delta.VelocityX = (uint) current.velocity.x;
+
+            if (Changed(previous.velocity.y, current.velocity.y))
+                delta.VelocityY = (uint) current.velocity.y;
+
+            if (Changed(previous.velocity.z, current.velocity.z))
+                delta.VelocityZ = (uint) current.velocity.z;
+
+            if (Changed(previous.rotationY, current.rotationY))
+                delta.RotationY = (uint) current.rotationY;
+
+            float currentMovementBlend = Mathf.Clamp(current.animState.MovementBlendValue, 0, 3);
+            float previousMovementBlend = Mathf.Clamp(previous.animState.MovementBlendValue, 0, 3);
+
+            if (Changed(previousMovementBlend, currentMovementBlend))
+                delta.MovementBlend = (uint) currentMovementBlend;
+
+            if (Changed(previous.animState.SlideBlendValue, current.animState.SlideBlendValue))
+                delta.SlideBlend = (uint) current.animState.SlideBlendValue;
+
+            if (Changed(previous.headYawAndPitch.x, current.headYawAndPitch.x))
+                delta.HeadYaw = (uint) current.headYawAndPitch.x;
+
+            if (Changed(previous.headYawAndPitch.y, current.headYawAndPitch.y))
+                delta.HeadPitch = (uint) current.headYawAndPitch.y;
+
+            uint currentFlags = BuildStateFlags(current);
+
+            delta.StateFlags = currentFlags;
+
+            return delta;
+
+            bool Changed(float a, float b, float epsilon = 0.0001f) =>
+                Mathf.Abs(a - b) > epsilon;
+        }
+
+        private static uint BuildStateFlags(NetworkMovementMessage message)
+        {
+            uint flags = 0;
+
+            if (message.animState.IsGrounded)
+                flags |= 1u << 1;
+
+            // TODO: jumping has been reworked
+            // if (message.animState.IsJumping)
+            //     flags |= 1u << 2;
+
+            if (message.animState.IsLongJump)
+                flags |= 1u << 3;
+
+            if (message.animState.IsFalling)
+                flags |= 1u << 4;
+
+            if (message.animState.IsLongFall)
+                flags |= 1u << 5;
+
+            if (message.isStunned)
+                flags |= 1u << 6;
+
+            if (message.headIKYawEnabled)
+                flags |= 1u << 7;
+
+            if (message.headIKPitchEnabled)
+                flags |= 1u << 8;
+
+            return flags;
         }
     }
 }
