@@ -111,7 +111,7 @@ float4 frag(VertexOutput i) : SV_Target
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
     Dithering(_FadeDistance, i.positionCS, _StartFadeDistance, _StartFadeDistance);
     float3 positionOS = mul(GetWorldToObjectMatrix(), float4(i.positionWS, 1.0)).xyz;
-    if (_RevealPosition.y > -1e5 && positionOS.y < _RevealPosition.y)
+    if (_RevealPosition.y > -1e5 && positionOS.y > _RevealPosition.y)
         clip(-1);
     //v.2.0.5
     // if (_ZOverDrawMode > 0.99f)

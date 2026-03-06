@@ -27,6 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public readonly List<Renderer> OutlineCompatibleRenderers;
 
         public bool ShowOnlyWearables;
+        public bool IsReady;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
             Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
@@ -45,6 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
+            IsReady = false;
         }
 
         public void CreateOutlineCompatibilityList()
