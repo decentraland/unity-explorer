@@ -70,3 +70,5 @@ Explorer/UserSettings
 Explorer/.cursorignore
 .cursorignore
 CLAUDE.md
+/Explorer/.claude
+.claude/settings.local.json

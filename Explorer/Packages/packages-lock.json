@@ -8,11 +8,11 @@
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "avprovideo": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#shape/web_client",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e2829214b1aafe79d339f51dc2e05eb927eebacb"
+      "hash": "b716fb630f9ba13af4956ebb66bea35e17548cad"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -69,7 +69,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "0098438a9f0ecc04b100fc1fb19bf81c6ec76163"
+      "hash": "2f41cf6e30a6fe2becc84086be03d3612dd313d4"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -86,11 +86,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/webgpu-shader-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "55a640291aaa8430ac0c917d96e974b1b39bcb1e"
+      "hash": "8ec9ea2c5325c7ef6ca5afada5f2b9b7271b60e3"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",

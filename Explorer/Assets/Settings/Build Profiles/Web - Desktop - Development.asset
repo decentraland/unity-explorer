@@ -44,7 +44,6 @@ MonoBehaviour:
   - {fileID: 4800000, guid: c87696e8d053c4e49a546cd5b75e224d, type: 3}
   m_LightProbeOutsideHullStrategy: 0
   m_PreloadedShaders:
-  - {fileID: 20000000, guid: 622e919733c115b40bf276cf626d2211, type: 2}
   - {fileID: 20000000, guid: 5cdf6711ee9677f488992eeacb9b08a9, type: 2}
   - {fileID: 20000000, guid: 6ce2513ef52770e48bb210879e4ba7bf, type: 2}
   m_PreloadShadersBatchTimeLimit: -1
