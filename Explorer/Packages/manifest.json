@@ -46,7 +46,7 @@
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#4.0.0",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
-    "org.decentraland.clearscript": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package",
+    "org.decentraland.clearscript": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#v2",
     "superscrollview": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
