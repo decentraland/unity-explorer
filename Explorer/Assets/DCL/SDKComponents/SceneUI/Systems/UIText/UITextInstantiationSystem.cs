@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
             UiElementUtils.SetElementDefaultStyle(label.style);
-            uiTransformComponent.Transform.Add(label);
+            uiTransformComponent.ContentContainer.Add(label);
             var uiTextComponent = new UITextComponent();
             uiTextComponent.Label = label;
             World.Add(entity, uiTextComponent);
