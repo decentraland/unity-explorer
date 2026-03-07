@@ -18,6 +18,8 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public GlidingSettings Gliding { get; private set; }
 
+        [field: SerializeField] internal AssetReferenceGameObject PointAtMarkerPrefab { get; private set; }
+
         [Serializable]
         public class GlidingSettings
         {

@@ -396,7 +396,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 

@@ -96,6 +96,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     temporalData = receivedMessage.Payload.TemporalData,
                     movementData = receivedMessage.Payload.MovementData,
                     headSyncData = receivedMessage.Payload.HeadSyncData,
+                    pointAtData = receivedMessage.Payload.PointAtData,
                 };
 
                 Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
@@ -146,6 +147,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 headIKYawEnabled = proto.HeadIkYawEnabled,
                 headIKPitchEnabled = proto.HeadIkPitchEnabled,
                 headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
+
+                isPointingAt = proto.IsPointingAt,
+                isDraggingPointAt = proto.IsDraggingPointAt,
+                pointAtWorldHitPoint = new Vector3(proto.PointAtX, proto.PointAtY, proto.PointAtZ),
             };
         }
 
@@ -206,6 +211,12 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.HeadIkPitchEnabled = message.headIKPitchEnabled;
             movement.HeadYaw = message.headYawAndPitch.x;
             movement.HeadPitch = message.headYawAndPitch.y;
+
+            movement.IsPointingAt = message.isPointingAt;
+            movement.IsDraggingPointAt = message.isDraggingPointAt;
+            movement.PointAtX = message.pointAtWorldHitPoint.x;
+            movement.PointAtY = message.pointAtWorldHitPoint.y;
+            movement.PointAtZ = message.pointAtWorldHitPoint.z;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
@@ -213,6 +224,7 @@ namespace DCL.Multiplayer.Movement.Systems
             proto.TemporalData = message.temporalData;
             proto.MovementData = message.movementData;
             proto.HeadSyncData = message.headSyncData;
+            proto.PointAtData = message.pointAtData;
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

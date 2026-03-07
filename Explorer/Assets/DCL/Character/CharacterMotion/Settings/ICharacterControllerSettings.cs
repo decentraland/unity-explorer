@@ -94,5 +94,12 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
+        float PointAtMaxDistance { get; set; }
+        float PointAtDuration { get; set; }
+        float PointAtArmReach { get; set; }
+        float PointAtRotationHorizontalRightThreshold { get; set; }
+        float PointAtRotationHorizontalLeftThreshold { get; set; }
+        float PointAtRotationVerticalThreshold { get; set; }
+        float PointAtRotationSpeed { get; set; }
     }
 }

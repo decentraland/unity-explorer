@@ -366,6 +366,48 @@ namespace DCL.CharacterMotion.Settings
             set => impl.StepOffset = value;
         }
 
+        public float PointAtMaxDistance
+        {
+            get => impl.PointAtMaxDistance;
+            set => impl.PointAtMaxDistance = value;
+        }
+
+        public float PointAtDuration
+        {
+            get => impl.PointAtDuration;
+            set => impl.PointAtDuration = value;
+        }
+
+        public float PointAtArmReach
+        {
+            get => impl.PointAtArmReach;
+            set => impl.PointAtArmReach = value;
+        }
+
+        public float PointAtRotationHorizontalRightThreshold
+        {
+            get => impl.PointAtRotationHorizontalRightThreshold;
+            set => impl.PointAtRotationHorizontalRightThreshold = value;
+        }
+
+        public float PointAtRotationHorizontalLeftThreshold
+        {
+            get => impl.PointAtRotationHorizontalLeftThreshold;
+            set => impl.PointAtRotationHorizontalLeftThreshold = value;
+        }
+
+        public float PointAtRotationVerticalThreshold
+        {
+            get => impl.PointAtRotationVerticalThreshold;
+            set => impl.PointAtRotationVerticalThreshold = value;
+        }
+
+        public float PointAtRotationSpeed
+        {
+            get => impl.PointAtRotationSpeed;
+            set => impl.PointAtRotationSpeed = value;
+        }
+
         public float HeadIKWeightChangeSpeed
         {
             get => impl.HeadIKWeightChangeSpeed;
