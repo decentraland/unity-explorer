@@ -62,11 +62,12 @@ namespace DCL.SDKComponents.SceneUI.Components
             if (!RelationData.layoutIsDirty)
                 return;
 
-            Assert.IsNotNull(RelationData.head);
-
-            // Instead of creating a new collection with VisualElements keep the index in the tabIndex
+            if (RelationData.head == null)
+                return;
 
             int i = 0;
+            int safetyLimit = RelationData.NodeCount;
+
             for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
             {
                 var childEntityId = node.EntityId;
@@ -74,11 +75,11 @@ namespace DCL.SDKComponents.SceneUI.Components
                 if (entitiesMap.TryGetValue(childEntityId, out var child))
                 {
                     var childTransform = world.Get<UITransformComponent>(child);
-
                     childTransform.Transform.tabIndex = childTransform.ZIndex ?? i;
                 }
 
-                i++;
+                if (++i > safetyLimit)
+                    break;
             }
 
             Transform.Sort(CACHED_COMPARISON);
