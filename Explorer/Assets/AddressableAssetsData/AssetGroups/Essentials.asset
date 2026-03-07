@@ -285,6 +285,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb23ae366d31146bf85b403f6149419b
+    m_Address: SDKParticleSystem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d08e60223593f4abe8863c64316f3476
     m_Address: FlipLinearToGammaMaterial.mat
     m_ReadOnly: 0

@@ -322,6 +322,8 @@ namespace DCL.Diagnostics
 
         public const string LIGHT_SOURCE = nameof(LIGHT_SOURCE);
 
+        public const string PARTICLE_SYSTEM = nameof(PARTICLE_SYSTEM);
+
         public const string ALWAYS = nameof(ALWAYS);
 
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);

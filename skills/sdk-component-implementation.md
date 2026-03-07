@@ -68,16 +68,19 @@ container.Register<PBMyComponent>(ComponentID.MY_COMPONENT);
 ```
 Assets/DCL/SDKComponents/<Feature>/
 ├── Components/
-│   └── <Feature>Component.cs          // Internal ECS component
+│   └── <Feature>Component.cs              // Internal ECS component
 ├── Systems/
-│   ├── <Feature>LifecycleSystem.cs     // Create/destroy internal components
-│   ├── <Feature>ApplyPropertiesSystem.cs // Apply SDK data to Unity objects
-│   └── CleanUp<Feature>System.cs       // Cleanup on removal/destruction
-├── Tests/
-│   └── EditMode/
-│       └── <Feature>SystemShould.cs
-└── <Feature>.asmdef
+│   ├── <Feature>.Systems.asmref           // → DCL.Plugins (GUID: fc4fd35fb877e904d8cedee73b2256f6)
+│   ├── <Feature>LifecycleSystem.cs        // Create/destroy internal components
+│   ├── <Feature>ApplyPropertiesSystem.cs  // Apply SDK data to Unity objects
+│   └── CleanUp<Feature>System.cs          // Cleanup on removal/destruction
+└── Tests/
+    └── EditMode/
+        ├── <Feature>.Tests.asmref         // → DCL.EditMode.Tests
+        └── <Feature>SystemShould.cs
 ```
+
+**Assembly references:** always use `asmref` pointing at the existing shared assemblies (`DCL.Plugins` for systems, `DCL.EditMode.Tests` for edit-mode tests). Only create a new `asmdef` if the feature genuinely needs isolated compilation or has conflicting dependencies. Prefer edit-mode tests over play-mode tests unless the feature requires scene lifecycle or physics simulation.
 
 ### Plugin Creation
 
@@ -119,7 +122,14 @@ ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
 
 ## IsDirty Handling
 
-Systems must check `IsDirty` before processing SDK component updates:
+Prefer injecting `ResetDirtyFlagSystem<T>` in the plugin — it clears `IsDirty` automatically after all systems in the group have run, with no per-system boilerplate:
+
+```csharp
+// In plugin InjectToWorld — always do this
+ResetDirtyFlagSystem<PBMyComponent>.InjectToWorld(ref builder);
+```
+
+Systems then only need to check the flag, not clear it:
 
 ```csharp
 [Query]
@@ -128,11 +138,12 @@ private void UpdateFeature(ref PBMyComponent sdkComponent, ref MyComponent inter
     if (!sdkComponent.IsDirty)
         return;
 
-    // Apply changes from SDK component
+    // Apply changes — no need to set IsDirty = false here
     internalComponent.Value = sdkComponent.SomeValue;
-    sdkComponent.IsDirty = false;
 }
 ```
+
+Only set `sdkComponent.IsDirty = false` manually inside a query when you need granular control — e.g. a system that handles one sub-case and must leave the flag set for a downstream system to process.
 
 ## Scene-Current Awareness
 
