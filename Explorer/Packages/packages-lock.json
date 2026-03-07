@@ -102,11 +102,11 @@
       "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/RSUV",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "55a640291aaa8430ac0c917d96e974b1b39bcb1e"
+      "hash": "d24b532829f5d2258d3548a4738484b32b4b9769"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
