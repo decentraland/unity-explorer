@@ -429,17 +429,16 @@ mergeInto(LibraryManager.library, {
             // Create require function FIRST and add it to global
             // so that globalAssignments will include it
             var requireFunc = function(moduleName) {
-                // console.log('[require] Loading module:', moduleName);
                 
                 var scriptId = context.modules[moduleName];
                 if (!scriptId) {
-                    console.warn('[require] Module not found:', moduleName, 'Available:', Object.keys(context.modules));
+                    console.error('[require] Module not found:', moduleName, 'Available:', Object.keys(context.modules));
                     return {};
                 }
                 
                 var compiledData = context.compiledScripts[scriptId];
                 if (!compiledData || !compiledData.source) {
-                    console.warn('[require] Compiled script not found for:', moduleName);
+                    console.error('[require] Compiled script not found for:', moduleName);
                     return {};
                 }
                 
@@ -487,7 +486,6 @@ mergeInto(LibraryManager.library, {
                         return {};
                     }
                 } else {
-                    // console.log('[require] No CommonJS wrapper detected, executing directly');
                     var moduleGlobalAssignments = getGlobalAssignments();
                     var moduleCode = moduleGlobalAssignments + '\n' + source;
                     
@@ -662,20 +660,18 @@ mergeInto(LibraryManager.library, {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
         const objectIdStr = UTF8ToString(objectId);
-        // console.log('[JSContext_AddHostObject] contextId:', contextIdStr, 'name:', nameStr);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_AddHostObject] Context not found!');
             return 0;
         }
-        // console.log('[JSContext_AddHostObject] context.global before add, has name?:', nameStr in context.global);
         
         context.hostObjects[objectIdStr] = nameStr;
         
         // Helper function to call the registered C# callback for host object method invocation (void return)
         const invokeHostObjectCallback = function(methodName, args) {
             if (!hostObjectCallback) {
-                console.warn('[JSContext] No host object callback registered');
+                console.error('[JSContext] No host object callback registered');
                 return;
             }
             // Guard: context was disposed while a JS microtask was still pending
@@ -742,7 +738,7 @@ mergeInto(LibraryManager.library, {
         // Helper function to call C# and get a return value
         const invokeHostObjectCallbackWithReturn = function(methodName, args) {
             if (!hostObjectCallbackWithReturn) {
-                console.warn('[JSContext] No host object callback with return registered');
+                console.error('[JSContext] No host object callback with return registered');
                 return null;
             }
             // Guard: context was disposed while a JS microtask was still pending
@@ -750,11 +746,6 @@ mergeInto(LibraryManager.library, {
                 return null;
             }
 
-            const connectionRelated = /connection|quality|status|room|state/i;
-            if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
-                console.log('[JSBridge] HostObject call objectId=' + objectIdStr + ' methodName=' + methodName);
-            }
-            
             // Allocate strings on the heap for the callback
             const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
             const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
@@ -783,28 +774,16 @@ mergeInto(LibraryManager.library, {
                 
                 if (resultLen < 0) {
                     console.warn('[JSContext] Result buffer too small, needed:', -resultLen);
-                    if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
-                        console.warn('[JSBridge] Connection-related call failed: buffer too small objectId=' + objectIdStr + ' methodName=' + methodName);
-                    }
                     return null;
                 }
-                
+
                 if (resultLen === 0) {
-                    if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
-                        console.log('[JSBridge] Connection-related call returned empty objectId=' + objectIdStr + ' methodName=' + methodName);
-                    }
                     return null;
                 }
-                
+
                 // Read the result string from the buffer
                 const resultStr = UTF8ToString(resultBufferPtr, resultLen);
-                
-                // Debug: log connection/room-related returns to trace LiveKit Scene room status
-                if (connectionRelated.test(methodName) || connectionRelated.test(objectIdStr)) {
-                    const preview = resultStr.length > 300 ? resultStr.substring(0, 300) + '...' : resultStr;
-                    console.log('[JSBridge] HostObject return objectId=' + objectIdStr + ' methodName=' + methodName + ' resultLen=' + resultLen + ' resultPreview=' + preview);
-                }
-                
+
                 // Parse and deserialize the result
                 return deserializeResult(resultStr, context);
             } finally {
@@ -819,23 +798,18 @@ mergeInto(LibraryManager.library, {
         // Helper function to deserialize C# result with special type handling
         // Note: contextIdStr is captured from outer closure in JSContext_AddHostObject
         const deserializeResult = function(resultStr, context) {
-            // console.log('[deserializeResult] contextId:', contextIdStr, 'Input resultStr:', typeof resultStr, resultStr ? resultStr.substring(0, 200) : resultStr);
-            // console.log('[deserializeResult] Context objectInstances keys:', Object.keys(context.objectInstances));
             
             if (!resultStr || resultStr === 'null') {
-                // console.log('[deserializeResult] Returning null (empty or null string)');
                 return null;
             }
             
             try {
                 const parsed = JSON.parse(resultStr);
-                // console.log('[deserializeResult] Parsed type:', typeof parsed, Array.isArray(parsed) ? 'array' : '');
-                
+                                
                 // Handle special types (objects with markers)
                 if (parsed && typeof parsed === 'object') {
                     // ByteArray type - convert Base64 to Uint8Array
                     if (parsed.__type === 'ByteArray') {
-                        // console.log('[deserializeResult] Returning ByteArray');
                         if (parsed.isEmpty) {
                             return new Uint8Array(0);
                         }
@@ -851,37 +825,35 @@ mergeInto(LibraryManager.library, {
                     // Object reference - look up in context
                     if (parsed.__objectRef) {
                         const obj = context.objectInstances[parsed.__objectRef];
-                        // console.log('[deserializeResult] Returning objectRef:', parsed.__objectRef, 'found:', !!obj);
                         return obj || parsed;
                     }
                     
                     // Error response
                     if (parsed.error) {
-                        console.warn('[JSContext] C# method returned error:', parsed.error);
+                        console.error('[JSContext] C# method returned error:', parsed.error);
                         return null;
                     }
                     
-                    // WebSocket ReceiveResponse: must return parsed object so data.type, data.binary, data.text work
-                    if (parsed.type === 'Text' || parsed.type === 'Binary' || parsed.type === 'Close') {
-                        return parsed;
-                    }
-                    
-                    // Other Plain object without special markers - return unparsed string: so caller (SDK) can parse if needed
-                    return resultStr;
+                    // Return the parsed object so callers can access properties directly (e.g. response.data, data.text)
+                    return parsed;
                 }
                 
                 // Primitives (string, number, boolean) - return parsed value
-                // console.log('[deserializeResult] Returning primitive:', typeof parsed);
+                // Empty strings from C# cannot be valid JSON - return null so callers get JSON.parse(null)=null rather than crashing
+                if (typeof parsed === 'string' && parsed.length === 0) {
+                    console.warn('[deserializeResult] Bridge method returned empty string, returning null');
+                    return null;
+                }
                 return parsed;
             } catch (e) {
                 // If JSON parse fails, return the raw string
-                // console.log('[deserializeResult] JSON parse failed, returning raw string:', e.message);
+                console.error('[deserializeResult] JSON parse failed, returning raw string:', e.message);
                 return resultStr;
             }
         };
         
-        // Create a proxy that handles host object methods
-        // Different objects get different stub implementations
+        // Create a proxy that dispatches host object method calls to C# via the registered callback.
+        // Special objects (UnityOpsApi, __resetableSource) have JS-side handling for specific methods.
         const hostObjectName = nameStr;
         const hostObjectProxy = new Proxy({}, {
             get: function(target, prop, receiver) {
@@ -897,12 +869,12 @@ mergeInto(LibraryManager.library, {
                                 const moduleName = args[0];
                                 const scriptId = context.modules[moduleName];
                                 if (!scriptId) {
-                                    console.warn('Module not found:', moduleName);
+                                    console.error('Module not found:', moduleName);
                                     return null;
                                 }
                                 const compiledData = context.compiledScripts[scriptId];
                                 if (!compiledData) {
-                                    console.warn('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
+                                    console.error('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
                                     return null;
                                 }
                                 
@@ -927,19 +899,14 @@ mergeInto(LibraryManager.library, {
                                 
                                 return evalFunc(globalObj, internalRequire);
                             }
-                            if (methodName === 'Log') { console.log('[Scene]', args[0]); return null; }
-                            if (methodName === 'Warning') { console.warn('[Scene]', args[0]); return null; }
-                            if (methodName === 'Error') { console.error('[Scene]', args[0]); return null; }
-                        }
+                            }
                         
                         // === Generic handler for all other registered host objects ===
                         // This calls the actual C# method via the callback mechanism
                         // Skip for __resetableSource which has special void-return handling below
                         if (hostObjectName !== '__resetableSource') {
                             // Call the C# method and get the return value
-                            // console.log('[HostObject] Calling:', hostObjectName + '.' + methodName);
                             const result = invokeHostObjectCallbackWithReturn(methodName, args);
-                            // console.log('[HostObject] Result:', typeof result, result);
                             return result;
                         }
                         
@@ -963,9 +930,6 @@ mergeInto(LibraryManager.library, {
                             }
                         }
                         
-                        // === Default: log and return null ===
-                        console.warn('[STUB] Unknown method called:', hostObjectName + '.' + methodName, 'args:', args);
-                        return null;
                     } catch (e) {
                         console.error('Error in host object method call:', hostObjectName + '.' + methodName, e);
                         throw e;
@@ -979,7 +943,6 @@ mergeInto(LibraryManager.library, {
         });
         
         context.global[nameStr] = hostObjectProxy;
-        // console.log('[JSContext_AddHostObject] Added to context.global, verify:', nameStr in context.global, typeof context.global[nameStr]);
         return 1;
     },
     
@@ -1067,8 +1030,6 @@ mergeInto(LibraryManager.library, {
     JSContext_StoreObject: function(contextId, expression, objectIdPtr, objectIdSize) {
         const contextIdStr = UTF8ToString(contextId);
         const exprStr = UTF8ToString(expression);
-        // console.log('[JSContext_StoreObject] contextId:', contextIdStr);
-        // console.log('[JSContext_StoreObject] expression (first 500 chars):', exprStr.substring(0, 500));
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_StoreObject] Context not found for:', contextIdStr);
@@ -1087,25 +1048,11 @@ mergeInto(LibraryManager.library, {
             }).filter(d => d.length > 0).join('\n');
             
             const wrappedExpr = objectInstanceDeclarations + '\nreturn ' + exprStr;
-            // console.log('[JSContext_StoreObject] wrappedExpr (first 600 chars):', wrappedExpr.substring(0, 600));
-            
-            // Check for promise resolvers specifically
-            // const allKeys = Object.keys(context.global);
-            // const resolverKeys = allKeys.filter(k => k.startsWith('__promiseResolver'));
-            // console.log('[JSContext_StoreObject] context.global total keys:', allKeys.length);
-            // console.log('[JSContext_StoreObject] Resolver keys found:', resolverKeys);
-            
-            // Also check if any Unity APIs are registered
-            // const unityKeys = allKeys.filter(k => k.startsWith('Unity') || k.startsWith('__'));
-            // console.log('[JSContext_StoreObject] Unity/internal keys:', unityKeys);
             
             const func = new Function('globalThis', '__objectInstances', 'console', wrappedExpr);
-            // console.log('[JSContext_StoreObject] Function created successfully');
             const obj = func(context.global, context.objectInstances, console);
-            // console.log('[JSContext_StoreObject] Function executed, result:', obj, 'type:', typeof obj);
             const objectId = '__obj_' + (++context.objectIdCounter);
             context.objectInstances[objectId] = obj;
-            // console.log('[JSContext_StoreObject] Stored object:', objectId, 'type:', typeof obj, 'isPromise:', obj instanceof Promise);
             const len = lengthBytesUTF8(objectId) + 1;
             if (objectIdSize < len) {
                 return -len;
