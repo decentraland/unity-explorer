@@ -2,12 +2,17 @@
 
 ## Activation
 
-Use this skill when implementing a new SDK7 component end-to-end — from protocol definition through C# code generation to system implementation and testing.
+Use this skill when implementing a new SDK7 component end-to-end, modifying an existing SDK component's systems, or adding result components for scene-to-explorer communication.
 
 ## Sources
 
-- `docs/how-to-implement-new-sdk-components.md` — Step-by-step implementation guide
-- `docs/scene-runtime.md` — SDK7 scene execution and CRDT bridge
+- `docs/how-to-implement-new-sdk-components.md` -- Step-by-step implementation guide
+- `docs/scene-runtime.md` -- SDK7 scene execution and CRDT bridge
+- `Explorer/Assets/DCL/Infrastructure/ProtobufPartialClasses/IDirtyMarker.cs` -- IDirtyMarker registration
+- `Explorer/Assets/DCL/Infrastructure/Global/ComponentsContainer.cs` -- Component registration
+- `Explorer/Assets/DCL/Infrastructure/Global/StaticContainer.cs` -- Plugin instantiation
+- `Explorer/Assets/DCL/Infrastructure/ECS/LifeCycle/Systems/ResetDirtyFlagSystem.cs` -- Dirty flag reset
+- `Explorer/Assets/Protocol/DecentralandProtocol/ComponentID.gen.cs` -- Generated component IDs
 
 ---
 
@@ -16,9 +21,9 @@ Use this skill when implementing a new SDK7 component end-to-end — from protoc
 ### Step 1: Protocol Definition
 
 Create protobuf definition in the `protocol` repository with a unique component ID:
-- `12xx` — Main components
-- `14xx` — Experimental components
-- `16xx` — Protocol Squad components
+- `12xx` -- Main components
+- `14xx` -- Experimental components
+- `16xx` -- Protocol Squad components
 
 ### Step 2: TypeScript Code Generation
 
@@ -28,10 +33,12 @@ In `js-sdk-toolchain`, generate serialization code and optional helper functions
 
 In `unity-explorer`:
 1. Run protocol update: `npm install @dcl/protocol@experimental && npm run build-protocol`
-2. Add partial class to `IDirtyMarker`
-3. Register in `ComponentsContainer`
-4. Create feature folder and plugin
-5. Implement systems
+2. Add partial class to `IDirtyMarker.cs`
+3. Register in `ComponentsContainer.cs` using `SDKComponentBuilder<T>`
+4. Create feature folder under `Explorer/Assets/DCL/SDKComponents/<Feature>/`
+5. Create plugin at `Explorer/Assets/DCL/PluginSystem/World/<Feature>Plugin.cs`
+6. Instantiate plugin in `StaticContainer.cs` (in the `ECSWorldPlugins` array)
+7. Implement systems (lifecycle, properties, cleanup)
 
 ### Step 4: Test Scene
 
@@ -39,131 +46,277 @@ Create example test scene in `sdk7-test-scenes`.
 
 ### PR Merge Order
 
-Protocol first → update both `js-sdk-toolchain` and `unity-explorer` → merge in any order.
+Protocol first -> update both `js-sdk-toolchain` and `unity-explorer` -> merge in any order.
 
-## C# Implementation Details
+---
 
-### IDirtyMarker Registration
+## Registration Steps
 
-Each SDK component needs a partial class added to `IDirtyMarker` for dirty-flag tracking:
+### 1. IDirtyMarker Partial Class
+
+**File:** `Explorer/Assets/DCL/Infrastructure/ProtobufPartialClasses/IDirtyMarker.cs`
+
+Add a partial class with a manually implemented `IsDirty` property:
 
 ```csharp
 public partial class PBMyComponent : IDirtyMarker
 {
-    // Auto-generated IsDirty property
+    public bool IsDirty { get; set; }
 }
 ```
 
-### ComponentsContainer Registration
+### 2. ComponentsContainer Registration
 
-Register the component in the container chain so it can be deserialized from CRDT messages:
+**File:** `Explorer/Assets/DCL/Infrastructure/Global/ComponentsContainer.cs`
+
+Register using `SDKComponentBuilder<T>` fluent API. Choose the pattern that fits:
 
 ```csharp
-// In ComponentsContainer
-container.Register<PBMyComponent>(ComponentID.MY_COMPONENT);
+// Standard protobuf component (most common)
+.Add(SDKComponentBuilder<PBMyComponent>.Create(ComponentID.MY_COMPONENT).AsProtobufComponent())
+
+// Result component (explorer -> scene, LWW)
+.Add(SDKComponentBuilder<PBMyResult>.Create(ComponentID.MY_RESULT).AsProtobufResult())
+
+// Custom pool + serializer (rare, e.g. SDKTransform)
+.Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM)
+    .WithPool(t => { t.Clear(); SDKComponentBuilderExtensions.SetAsDirty(t); })
+    .WithCustomSerializer(new SDKTransformSerializer())
+    .Build())
 ```
 
-### Feature Folder Structure
+### 3. StaticContainer Plugin Instantiation
+
+**File:** `Explorer/Assets/DCL/Infrastructure/Global/StaticContainer.cs`
+
+Add the plugin to the `ECSWorldPlugins` array (~line 274):
+
+```csharp
+new MyFeaturePlugin(poolsRegistry, assetsProvisioner),
+```
+
+---
+
+## Feature Folder Structure
+
+Real example from `Explorer/Assets/DCL/SDKComponents/LightSource/`:
 
 ```
 Assets/DCL/SDKComponents/<Feature>/
-├── Components/
-│   └── <Feature>Component.cs          // Internal ECS component
-├── Systems/
-│   ├── <Feature>LifecycleSystem.cs     // Create/destroy internal components
-│   ├── <Feature>ApplyPropertiesSystem.cs // Apply SDK data to Unity objects
-│   └── CleanUp<Feature>System.cs       // Cleanup on removal/destruction
-├── Tests/
-│   └── EditMode/
-│       └── <Feature>SystemShould.cs
-└── <Feature>.asmdef
++-- Components/
+|   +-- <Feature>Component.cs           // Internal ECS struct component
++-- Prefab/                              // Optional: Unity prefabs for pooled objects
++-- Systems/
+|   +-- <Feature>LifecycleSystem.cs      // Create/destroy internal components
+|   +-- <Feature>ApplyPropertiesSystem.cs // Apply SDK data to Unity objects
+|   +-- CleanUp<Feature>System.cs        // Cleanup on removal/destruction
+|   +-- <Feature>Group.cs               // Custom SystemGroup for execution ordering
+|   +-- <Feature>.Systems.asmref         // Assembly reference (JSON with GUID)
++-- Tests/
+|   +-- EditMode/
+|       +-- <Feature>SystemShould.cs
 ```
 
-### Plugin Creation
+The `.asmref` file references the parent assembly by GUID:
+```json
+{ "reference": "GUID:fc4fd35fb877e904d8cedee73b2256f6" }
+```
 
-Create a world plugin at `DCL/PluginSystem/World/` and instantiate it in `StaticContainer`:
+---
+
+## Plugin Creation
+
+Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` and `TweenPlugin.cs` for examples of each.
+
+**File:** `Explorer/Assets/DCL/PluginSystem/World/<Feature>Plugin.cs`
 
 ```csharp
-public class MyFeaturePlugin : IDCLWorldPlugin<MyFeaturePlugin.Settings>
+// With settings (LightSourcePlugin pattern)
+public class MyPlugin : IDCLWorldPlugin<MyPlugin.MySettings>
 {
-    public void InjectToWorld(
-        ref ArchSystemsWorldBuilder<World> builder,
+    public MyPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner) { ... }
+
+    public async UniTask InitializeAsync(MySettings settings, CancellationToken ct)
+    {
+        // Load prefabs, create pools, etc.
+    }
+
+    public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
         in ECSWorldInstanceSharedDependencies sharedDependencies,
         in PersistentEntities persistentEntities,
         List<IFinalizeWorldSystem> finalizeWorldSystems,
         List<ISceneIsCurrentListener> sceneIsCurrentListeners)
     {
-        // Always inject dirty-flag reset for SDK components
         ResetDirtyFlagSystem<PBMyComponent>.InjectToWorld(ref builder);
+        var lifecycle = MyLifecycleSystem.InjectToWorld(ref builder, ...);
+        MyApplyPropertiesSystem.InjectToWorld(ref builder, ...);
+        finalizeWorldSystems.Add(lifecycle);
+    }
 
-        var lifecycleSystem = MyFeatureLifecycleSystem.InjectToWorld(ref builder, ...);
-        MyFeatureApplyPropertiesSystem.InjectToWorld(ref builder, ...);
+    [Serializable]
+    public class MySettings : IDCLPluginSettings { public AssetReferenceGameObject Prefab; }
+    public void Dispose() { }
+}
 
-        finalizeWorldSystems.Add(lifecycleSystem);
+// Without settings (TweenPlugin pattern) -- implement IDCLWorldPluginWithoutSettings instead
+```
+
+---
+
+## System Patterns
+
+### Lifecycle System (first-occurrence detection)
+
+From `LightSourceLifecycleSystem.cs` -- `[None]` detects entities with SDK component but no internal component yet:
+
+```csharp
+[Query]
+[None(typeof(LightSourceComponent))]  // Matches only NEW entities
+private void CreateLightSourceComponent(in Entity entity, ref PBLightSource pbLightSource,
+    in TransformComponent transform)
+{
+    Light light = poolRegistry.Get();
+    light.transform.SetParent(transform.Transform, false);
+    World.Add(entity, new LightSourceComponent(light));
+    pbLightSource.IsDirty = true;  // Force downstream update
+}
+```
+
+The system inherits `BaseUnityLoopSystem` and `IFinalizeWorldSystem`, with `[UpdateInGroup(typeof(LightSourcesGroup))]`.
+
+### Apply Properties System (IsDirty guard)
+
+From `LightSourceApplyPropertiesSystem.cs`:
+
+```csharp
+[Query]
+private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent component)
+{
+    component.LightSourceInstance.enabled = LightSourceHelper.IsPBLightSourceActive(pbLightSource, ...);
+    if (pbLightSource.IsDirty) ApplyPBLightSource(pbLightSource, ref component);
+}
+```
+
+`ResetDirtyFlagSystem<T>` resets `IsDirty = false` at end of frame -- systems do NOT manually reset it.
+
+### Cleanup System (three scenarios)
+
+From `CleanUpAudioSourceSystem.cs` -- all three cleanup triggers with query attributes:
+
+```csharp
+// 1. SDK component removed (entity alive): [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
+// 2. Entity destroyed:                     [All(typeof(DeleteEntityIntention))]
+// 3. World disposed:                       IFinalizeWorldSystem.FinalizeComponents(in Query)
+[UpdateInGroup(typeof(CleanUpGroup))]
+[ThrottlingEnabled]
+public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+{
+    protected override void Update(float t)
+    {
+        HandleEntityDestructionQuery(World);
+        HandleComponentRemovalQuery(World);
+        World.Remove<AudioSourceComponent>(in HandleComponentRemoval_QueryDescription);
+    }
+
+    [Query] [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
+    private void HandleComponentRemoval(ref AudioSourceComponent component) { Release(ref component); }
+
+    [Query] [All(typeof(DeleteEntityIntention))]
+    private void HandleEntityDestruction(ref AudioSourceComponent component) { Release(ref component); }
+
+    public void FinalizeComponents(in Query query) { /* InlineQuery to release all remaining */ }
+}
+```
+
+### Custom SystemGroup (only when needed)
+
+Most systems can use existing groups (e.g., `ComponentInstantiationGroup`, `CleanUpGroup`). Only create a custom group when you need fine-grained ordering between multiple systems in the same feature:
+
+```csharp
+[UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+[UpdateAfter(typeof(ComponentInstantiationGroup))]
+[ThrottlingEnabled]
+public partial class LightSourcesGroup { }
+```
+
+---
+
+## CRDT Bridge (Result Components)
+
+Use `IECSToCRDTWriter` (available via `sharedDependencies.EcsToCRDTWriter`) to send data back to the scene runtime.
+
+```csharp
+// LWW PUT -- simple (overwrites prior state)
+ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
+
+// LWW PUT -- with prepare callback
+ecsToCRDTWriter.PutMessage<PBRealmInfo, (IRealmData rd, CommsRoomInfo ci)>(
+    static (c, d) => { c.BaseUrl = d.rd.Ipfs.CatalystBaseUrl.Value; c.RealmName = d.rd.RealmName; },
+    SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmData, commsRoomInfo));
+
+// GOVS APPEND -- accumulates values (events)
+ecsToCRDTWriter.AppendMessage<PBAudioEvent, (MediaState state, uint ts)>(
+    static (e, d) => { e.State = d.state; e.Timestamp = d.ts; },
+    sdkEntity, (int)sceneStateProvider.TickNumber, (mediaState, sceneStateProvider.TickNumber));
+
+// DELETE
+ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
+```
+
+---
+
+## LWW vs GOVS Components
+
+- **LWW (Last Write Wins):** Standard for most components. Uses `PutMessage`. The latest value overwrites previous. Registered with `.AsProtobufComponent()` or `.AsProtobufResult()`.
+- **GOVS (Grow-Only Value Set):** For components that accumulate values (e.g., events). Uses `AppendMessage`. Must be listed in `generateIndex.ts` in the protocol repo.
+
+---
+
+## Test Pattern
+
+From `TweenUpdaterSystemShould.cs`:
+
+```csharp
+[TestFixture]
+public class TweenUpdaterSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
+{
+    [SetUp]
+    public void SetUp()
+    {
+        var sceneStateProvider = Substitute.For<ISceneStateProvider>();
+        sceneStateProvider.IsCurrent.Returns(true);
+        system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(),
+            new TweenerPool(), sceneStateProvider);
+    }
+
+    [Test]
+    public void ChangingPBTweenUpdatesState()
+    {
+        Entity entity = world.Create(new PBTween { ... }, new SDKTweenComponent { ... });
+        system!.Update(0);
+        Assert.IsTrue(world.Get<SDKTweenComponent>(entity).TweenStateStatus == TweenStateStatus.TsActive);
     }
 }
 ```
 
-### ResetDirtyFlagSystem Injection
+`UnitySystemTestBase<T>` provides `world` and `system` fields. Mock with `Substitute.For<T>()`. Constructors are `internal` + `[InternalsVisibleTo]`.
 
-From `LightSourcePlugin.cs` — always inject the dirty-flag reset for SDK components:
+Prefer **EditMode** tests -- they are faster and sufficient for most system logic. Only use **PlayMode** tests when you need Unity lifecycle callbacks (Awake, Start, coroutines) or real frame timing that EditMode cannot provide.
 
-```csharp
-ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
-```
-
-## LWW vs GOVS Components
-
-- **LWW (Last Write Wins):** Uses `PUT` operation. Standard for most components. The latest value wins.
-- **GOVS (Grow-Only Value Set):** Uses `APPEND` operation. For components that accumulate values. Must be listed in `generateIndex.ts`.
-
-## IsDirty Handling
-
-Systems must check `IsDirty` before processing SDK component updates:
-
-```csharp
-[Query]
-private void UpdateFeature(ref PBMyComponent sdkComponent, ref MyComponent internalComponent)
-{
-    if (!sdkComponent.IsDirty)
-        return;
-
-    // Apply changes from SDK component
-    internalComponent.Value = sdkComponent.SomeValue;
-    sdkComponent.IsDirty = false;
-}
-```
-
-## Scene-Current Awareness
-
-Systems that should only run in the currently active scene implement `ISceneIsCurrentListener`:
-
-```csharp
-// Register in plugin
-sceneIsCurrentListeners.Add(mySystem);
-
-// Or check via ISceneStateProvider
-if (!sceneStateProvider.IsCurrent)
-    return;
-```
-
-## CRDT Bridge
-
-- Custom allocation-free CRDT implementation runs off main thread
-- `MutexSync` for thread safety between scene thread and main thread
-- `SyncedGroup` for system updates synchronized with scene state
-- `IECSToCRDTWriter` for outgoing messages: `PUT`, `APPEND`, `DELETE`
-- Uses `PoolableCollection` with `ArrayPool<T>.Shared` for zero-allocation deserialization
+---
 
 ## Implementation Checklist
 
-- [ ] Systems separation (lifecycle, properties, cleanup)
-- [ ] Promise handling for async assets
-- [ ] Pool usage for Unity objects
-- [ ] Minimal intention components
-- [ ] `UpdateGroup` ordering attributes
-- [ ] Scene-current checks where needed
-- [ ] Test coverage
+- [ ] **IDirtyMarker** -- add partial class in `IDirtyMarker.cs`
+- [ ] **ComponentsContainer** -- register with `SDKComponentBuilder<T>` in `ComponentsContainer.cs`
+- [ ] **StaticContainer** -- instantiate plugin in `ECSWorldPlugins` array in `StaticContainer.cs`
+- [ ] **Plugin** -- create at `DCL/PluginSystem/World/<Feature>Plugin.cs`
+- [ ] **ResetDirtyFlagSystem** -- inject `ResetDirtyFlagSystem<PBComponent>.InjectToWorld(ref builder)` in plugin
+- [ ] **Lifecycle system** -- `[None(typeof(InternalComponent))]` for first-occurrence detection
+- [ ] **Properties system** -- `IsDirty` guard on expensive updates
+- [ ] **Cleanup system** -- handle component removal, entity destruction, world finalization
+- [ ] **SystemGroup** -- create custom group with `[UpdateInGroup]` and `[ThrottlingEnabled]`
+- [ ] **Tests** -- `UnitySystemTestBase<T>` with NSubstitute mocks
+- [ ] **Result component** (if needed) -- `IECSToCRDTWriter` PUT/APPEND in `ComponentsContainer`
 - [ ] Allocation optimization (no LINQ, no closures in Update)
-- [ ] `ResetDirtyFlagSystem<T>` injection in plugin
-- [ ] Registration in `ComponentsContainer`
+- [ ] Scene-current checks where needed (`ISceneStateProvider.IsCurrent`)
