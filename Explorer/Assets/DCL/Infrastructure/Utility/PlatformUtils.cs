@@ -5,8 +5,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine;
-#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
-#endif
 
 namespace DCL.Utility
 {
@@ -41,7 +39,7 @@ namespace DCL.Utility
                 case RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer:
                     platformSuffix = "_linux"; break;
                 case RuntimePlatform.WebGLPlayer:
-                    platformSuffix = string.Empty; break;
+                    platformSuffix = "_webgl"; break;
                 default:
                     platformSuffix = string.Empty; break;
             }
