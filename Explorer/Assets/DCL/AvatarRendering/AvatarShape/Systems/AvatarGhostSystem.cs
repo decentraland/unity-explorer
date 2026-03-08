@@ -6,6 +6,8 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
@@ -72,7 +74,15 @@ namespace DCL.AvatarRendering.AvatarShape
                 Renderer r = avatarBase.GhostRenderer.GetComponent<Renderer>();
 
                 if (r != null && r.material != null)
+                {
                     r.material.SetVector(AvatarGhostComponent.REVEAL_POSITION_SHADER_ID, new Vector4(0, AvatarGhostComponent.HIDE_TARGET, 0, 0));
+
+                    Color nametagColor = World.TryGet(entity, out Profile? profile)
+                        ? profile!.UserNameColor
+                        : NameColorHelper.GetNameColor(avatarShapeComponent.Name);
+
+                    r.material.SetColor(AvatarGhostComponent.COLOR_SHADER_ID, nametagColor);
+                }
             }
 
             avatarBase.gameObject.SetActive(true);
@@ -104,6 +114,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private void CheckWearablesReadyStartRevealTransition(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
+
+            if (AvatarGhostComponent.DEBUG_FREEZE_GHOST) return;
 
             if (!avatarShapeComponent.IsReady) return;
 

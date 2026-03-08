@@ -22,13 +22,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// </summary>
     public struct AvatarGhostComponent
     {
-        public const float REVEAL_DURATION_SEC = 2f;
-        public const float HIDE_DURATION_SEC = 2f;
+        public const float REVEAL_DURATION_SEC = 0.2f;
+        public const float HIDE_DURATION_SEC = 0.4f;
+
+        /// <summary>Debug flag: keep ghost visible indefinitely, never transition to wearables.</summary>
+        public const bool DEBUG_FREEZE_GHOST = true;
         public const float REVEAL_TARGET = 2f;
         public const float HIDE_TARGET = 0f;
 
         public static readonly int REVEAL_POSITION_SHADER_ID = Shader.PropertyToID("_RevealPosition");
         public static readonly int REVEAL_NORMAL_SHADER_ID = Shader.PropertyToID("_RevealNormal");
+        public static readonly int COLOR_SHADER_ID = Shader.PropertyToID("_FresnelColor");
 
         private static readonly Vector4 REVEAL_NORMAL_DEFAULT = new (0, 1, 0, 0);
         private static readonly Vector4 REVEAL_NORMAL_FLIPPED = new (0, -1, 0, 0);
