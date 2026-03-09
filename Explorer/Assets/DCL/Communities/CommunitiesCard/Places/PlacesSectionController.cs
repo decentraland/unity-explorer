@@ -39,6 +39,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private const int PAGE_SIZE = 10;
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
+        private static readonly ListObjectPool<string> PLACE_IDS_POOL = new (defaultCapacity: 10);
+        private static readonly ListObjectPool<string> WORLD_NAMES_POOL = new (defaultCapacity: 2);
 
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
         private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
@@ -219,14 +221,17 @@ namespace DCL.Communities.CommunitiesCard.Places
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
             // Partition: valid GUIDs → Places API; world ENS names (e.g. "name.dcl.eth") → Worlds API
-            var uuidIds = new List<string>();
-            var worldNames = new List<string>();
+            using PoolExtensions.Scope<List<string>> uuidIdsScope = PLACE_IDS_POOL.AutoScope();
+            using PoolExtensions.Scope<List<string>> worldNamesScope = WORLD_NAMES_POOL.AutoScope();
+
+            List<string> uuidIds = uuidIdsScope.Value;
+            List<string> worldNames = worldNamesScope.Value;
 
             foreach (string id in slice)
             {
                 if (Guid.TryParse(id, out _))
                     uuidIds.Add(id);
-                else
+                else if (id.EndsWith(".dcl.eth", StringComparison.OrdinalIgnoreCase))
                     worldNames.Add(id);
             }
 
