@@ -21,5 +21,9 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Header("Lanes")]
         [field: SerializeField] public ChatReactionsUILaneConfig UILane { get; private set; }
         [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; private set; }
+
+        [field: Header("Debug")]
+        [field: Tooltip("Optional. Assign to enable Inspector toggles and live stats for testing. Leave null in production.")]
+        [field: SerializeField] public ChatReactionsDebugConfig DebugConfig { get; private set; }
     }
 }

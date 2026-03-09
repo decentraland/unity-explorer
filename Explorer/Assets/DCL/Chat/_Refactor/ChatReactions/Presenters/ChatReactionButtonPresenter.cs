@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Reactions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -29,7 +28,6 @@ namespace DCL.Chat.ChatReactions
 
         private CancellationTokenSource? holdCts;
         private bool pickerOpen;
-        private bool isStreaming;
 
         public event Action? HoldTriggered;
 
@@ -61,13 +59,6 @@ namespace DCL.Chat.ChatReactions
         {
             view.PickerView?.Hide();
             pickerOpen = false;
-
-            if (isStreaming)
-            {
-                reactionService.EndUIStream();
-                isStreaming = false;
-            }
-
             CancelHoldTimer();
             view.gameObject.SetActive(false);
         }
@@ -75,12 +66,6 @@ namespace DCL.Chat.ChatReactions
         public void Dispose()
         {
             CancelHoldTimer();
-
-            if (isStreaming)
-            {
-                reactionService.EndUIStream();
-                isStreaming = false;
-            }
 
             if (view.PickerView != null)
             {
@@ -106,15 +91,8 @@ namespace DCL.Chat.ChatReactions
         {
             CancelHoldTimer();
 
-            if (isStreaming)
-            {
-                reactionService.EndUIStream();
-                isStreaming = false;
-            }
-            else if (!pickerOpen)
-            {
+            if (!pickerOpen)
                 reactionService.TriggerDefaultUIReactionFromRect(buttonRect);
-            }
 
             pickerOpen = false;
         }
@@ -147,11 +125,6 @@ namespace DCL.Chat.ChatReactions
                 {
                     pickerOpen = true;
                     view.PickerView.Show();
-                }
-                else
-                {
-                    isStreaming = true;
-                    reactionService.BeginUIStream(buttonRect);
                 }
             }
             catch (OperationCanceledException) { }

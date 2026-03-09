@@ -18,9 +18,9 @@ using DCL.VoiceChat;
 using System;
 using System.Threading;
 using DCL.Chat.ChatReactions.Configs;
-using DCL.Chat.Reactions;
 using DCL.Translation;
 using DCL.Translation.Service;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -155,7 +155,10 @@ namespace DCL.Chat
                 reactionsConfig,
                 view.EmojiPanelView);
 
-            var situationalReactionPresenter = new SituationalReactionPresenter(situationalReactionService);
+            var situationalReactionPresenter = new SituationalReactionPresenter(
+                situationalReactionService,
+                reactionsConfig.SituationalReactions.DebugConfig,
+                view.ChatReactionButton.ReactionButton);
             
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
