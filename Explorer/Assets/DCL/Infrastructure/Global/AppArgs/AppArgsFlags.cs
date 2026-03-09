@@ -85,6 +85,8 @@ namespace Global.AppArgs
         public const string GLIDING = "gliding";
         public const string POINT_AT = "point-at";
 
+        public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

@@ -270,6 +270,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 494be8ab667634d13bf2844a5230ae70
+    m_Address: Assets/DCL/SingleRunningInstance/SingleRunningInstancePopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 497073cedbc8540c2b17104cfee96158
     m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/SubMenuButton.prefab
     m_ReadOnly: 0
