@@ -52,7 +52,7 @@ namespace DCL.Character.CharacterMotion.Systems
         [Query]
         [None(typeof(PointAtMarkerHolder), typeof(DeleteEntityIntention))]
         private void SpawnMarker(
-            Entity entity,
+            in Entity entity,
             in HandPointAtComponent pointAt,
             in Profile profile)
         {
@@ -78,7 +78,7 @@ namespace DCL.Character.CharacterMotion.Systems
             [Data] in float3 cameraUp,
             in HandPointAtComponent pointAt,
             in Profile profile,
-            PointAtMarkerHolder marker)
+            ref PointAtMarkerHolder marker)
         {
             if (!pointAt.IsPointing)
                 return;
@@ -96,9 +96,9 @@ namespace DCL.Character.CharacterMotion.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ReleaseMarker(
-            Entity entity,
+            in Entity entity,
             in HandPointAtComponent pointAt,
-            PointAtMarkerHolder marker)
+            ref PointAtMarkerHolder marker)
         {
             if (pointAt.IsPointing)
                 return;
