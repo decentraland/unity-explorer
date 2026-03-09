@@ -20,7 +20,7 @@ namespace DCL.WebRequests.Tests
         [Test]
         public void CreateStringAfterHandlerIsCreated()
         {
-            using var buffer = new BufferedStringUploadHandler(50);
+            var buffer = new BufferedStringUploadHandler(50);
             buffer.WriteString(TEST_VALUE);
 
             buffer.CreateUploadHandler();
@@ -31,7 +31,7 @@ namespace DCL.WebRequests.Tests
         [Test]
         public void ThrowIfBufferIsNotCreated()
         {
-            using var buffer = new BufferedStringUploadHandler();
+            using var buffer = default(BufferedStringUploadHandler);
 
             Assert.Throws<ObjectDisposedException>(() => buffer.ToString());
         }
