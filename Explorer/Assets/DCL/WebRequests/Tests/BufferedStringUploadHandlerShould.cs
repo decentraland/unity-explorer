@@ -23,7 +23,7 @@ namespace DCL.WebRequests.Tests
             var buffer = new BufferedStringUploadHandler(50);
             buffer.WriteString(TEST_VALUE);
 
-            buffer.CreateUploadHandler();
+            using UploadHandlerRaw _ = buffer.CreateUploadHandler();
 
             Assert.That(buffer.ToString(), Is.EqualTo(TEST_VALUE));
         }
