@@ -146,7 +146,7 @@ namespace ECS.Unity.GliderProp
             if (template == null || template.clip == null || OneShotAudioPool == null) return;
 
             OneShotAudioSource oneShot = OneShotAudioPool.Get();
-            oneShot.Play(template, transform.position);
+            oneShot.Play(template, transform.position, Settings.AudioPriority);
         }
 
         private void OnCloseAnimationCompleted() =>
