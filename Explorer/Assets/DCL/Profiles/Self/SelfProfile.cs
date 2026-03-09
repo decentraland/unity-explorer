@@ -154,7 +154,6 @@ namespace DCL.Profiles.Self
                 if (savedProfile != null)
                 {
                     profileCache.Set(savedProfile.UserId, savedProfile);
-                    isProfileUpdatePending = false;
                     copyOfOwnProfile?.Dispose();
                     copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
                 }
@@ -187,9 +186,9 @@ namespace DCL.Profiles.Self
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
                 profileCache.Set(savedProfile.UserId, savedProfile);
-                UpdateAvatarInWorld(savedProfile!);
+                UpdateAvatarInWorld(savedProfile);
                 copyOfOwnProfile?.Dispose();
-                copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
+                copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
                 return savedProfile;
             }
             catch (Exception e) when (e is not OperationCanceledException)
