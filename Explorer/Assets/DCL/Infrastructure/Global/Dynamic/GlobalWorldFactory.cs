@@ -5,6 +5,7 @@ using CrdtEcsBridge.RestrictedActions;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.GlobalPartitioning;
+using DCL.Interaction.Raycast;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -166,7 +167,11 @@ namespace Global.Dynamic
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams);
+            {
+                URLDomain worldContentServerBaseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldServer));
+                URLDomain worldContentServerContentsUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer));
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundleCdnUrl, hybridSceneParams, worldContentServerContentsUrl, worldContentServerBaseUrl);
+            }
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundleCdnUrl);
 
@@ -199,7 +204,7 @@ namespace Global.Dynamic
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);
             ResetCameraSamplingDataDirty.InjectToWorld(ref builder, realmData, cameraSamplingData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
-
+            ResetRaycastResultSystem.InjectToWorld(ref builder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             UpdatePhysicsTickSystem.InjectToWorld(ref builder);
