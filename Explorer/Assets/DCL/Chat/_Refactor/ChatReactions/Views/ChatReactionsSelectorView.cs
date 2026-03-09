@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,65 +8,29 @@ namespace DCL.Chat.ChatReactions
     {
         [Header("UI")]
         [SerializeField] private RectTransform container;
-
         [SerializeField] private ChatReactionItemView reactionItemPrefab;
         [SerializeField] private Button addButton;
 
-        private readonly List<ChatReactionItemView> items = new();
-
-        private ChatReactionsAtlasConfig atlasConfig;
-
+        public RectTransform Container => container;
+        public ChatReactionItemView ItemPrefab => reactionItemPrefab;
         public RectTransform AddButtonRect => (RectTransform)addButton.transform;
 
         public event Action? OnAddClicked;
-        public event Action<int>? OnReactionClicked;
+
+        public void Show() => gameObject.SetActive(true);
+
+        public void Hide() => gameObject.SetActive(false);
 
         private void Awake()
         {
-            addButton.onClick.AddListener(() => OnAddClicked?.Invoke());
+            addButton.onClick.AddListener(HandleAddClicked);
         }
 
-        public void SetAtlasConfig(ChatReactionsAtlasConfig config)
+        private void OnDestroy()
         {
-            atlasConfig = config;
+            addButton.onClick.RemoveListener(HandleAddClicked);
         }
 
-        public void Clear()
-        {
-            foreach (var item in items)
-                Destroy(item.gameObject);
-
-            items.Clear();
-        }
-
-        public void SetReactions(IReadOnlyList<int> atlasIndices)
-        {
-            Clear();
-
-            for (int i = 0; i < atlasIndices.Count; i++)
-                AddReactionInternal(atlasIndices[i]);
-        }
-
-        public void AddReaction(int atlasIndex)
-        {
-            AddReactionInternal(atlasIndex);
-        }
-
-        private void AddReactionInternal(int atlasIndex)
-        {
-            var item = Instantiate(reactionItemPrefab, container);
-
-            item.Initialize(atlasIndex, atlasConfig);
-
-            item.OnClicked += () =>
-            {
-                OnReactionClicked?.Invoke(atlasIndex);
-            };
-
-            // Ensure Add button stays last
-            item.transform.SetSiblingIndex(container.childCount - 2);
-
-            items.Add(item);
-        }
+        private void HandleAddClicked() => OnAddClicked?.Invoke();
     }
 }

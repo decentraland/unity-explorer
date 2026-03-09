@@ -28,8 +28,10 @@ namespace DCL.Chat.ChatReactions
 
         private CancellationTokenSource? holdCts;
         private bool pickerOpen;
+        private int selectedEmojiIndex = -1;
 
         public event Action? HoldTriggered;
+        public event Action<int>? PickerEmojiSelected;
 
         public ChatReactionButtonPresenter(ChatReactionButtonView view, ISituationalReactionService reactionService)
         {
@@ -45,22 +47,21 @@ namespace DCL.Chat.ChatReactions
                 view.PickerView.EmojiSelected += OnEmojiSelected;
             }
 
-            eventTrigger = view.ReactionButton.gameObject.GetComponent<EventTrigger>()
-                           ?? view.ReactionButton.gameObject.AddComponent<EventTrigger>();
+            eventTrigger = view.ButtonEventTrigger;
 
             pointerDownEntry = AddTriggerEntry(EventTriggerType.PointerDown, _ => OnPointerDown());
             pointerUpEntry = AddTriggerEntry(EventTriggerType.PointerUp, _ => OnPointerUp());
             pointerExitEntry = AddTriggerEntry(EventTriggerType.PointerExit, _ => OnPointerExit());
         }
 
-        public void Show() => view.gameObject.SetActive(true);
+        public void Show() => view.Show();
 
         public void Hide()
         {
             view.PickerView?.Hide();
             pickerOpen = false;
             CancelHoldTimer();
-            view.gameObject.SetActive(false);
+            view.Hide();
         }
 
         public void Dispose()
@@ -92,7 +93,12 @@ namespace DCL.Chat.ChatReactions
             CancelHoldTimer();
 
             if (!pickerOpen)
-                reactionService.TriggerDefaultUIReactionFromRect(buttonRect);
+            {
+                if (selectedEmojiIndex >= 0)
+                    reactionService.TriggerUIReactionFromRect(buttonRect, selectedEmojiIndex, count: 1);
+                else
+                    reactionService.TriggerDefaultUIReactionFromRect(buttonRect);
+            }
 
             pickerOpen = false;
         }
@@ -104,10 +110,17 @@ namespace DCL.Chat.ChatReactions
             CancelHoldTimer();
         }
 
+        public void SetSelectedEmoji(int atlasIndex)
+        {
+            selectedEmojiIndex = atlasIndex;
+        }
+
         private void OnEmojiSelected(int atlasIndex)
         {
             pickerOpen = false;
+            selectedEmojiIndex = atlasIndex;
             reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            PickerEmojiSelected?.Invoke(atlasIndex);
         }
 
         private async UniTaskVoid WaitForHoldAsync(CancellationToken ct)

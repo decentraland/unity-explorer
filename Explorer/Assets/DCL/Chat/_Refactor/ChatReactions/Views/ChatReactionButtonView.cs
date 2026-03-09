@@ -1,5 +1,6 @@
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat.ChatReactions
@@ -13,6 +14,16 @@ namespace DCL.Chat.ChatReactions
         [field: SerializeField] public Button ReactionButton { get; private set; } = null!;
         [field: SerializeField] public RawImage EmojiIcon { get; private set; } = null!;
         [field: SerializeField] public SituationalReactionPickerView PickerView { get; private set; } = null!;
+
+        private EventTrigger cachedEventTrigger;
+
+        public EventTrigger ButtonEventTrigger =>
+            cachedEventTrigger ??= ReactionButton.GetComponent<EventTrigger>()
+                                   ?? ReactionButton.gameObject.AddComponent<EventTrigger>();
+
+        public void Show() => gameObject.SetActive(true);
+
+        public void Hide() => gameObject.SetActive(false);
 
         public void SetEmoji(int atlasIndex, ChatReactionsAtlasConfig atlasConfig)
         {
