@@ -68,7 +68,6 @@ namespace DCL.UserInAppInitializationFlow
 #endif
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
 
-            // TODO teleportation is broken at the moment, fix required
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);

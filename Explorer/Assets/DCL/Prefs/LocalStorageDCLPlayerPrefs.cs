@@ -129,6 +129,14 @@ namespace DCL.Prefs
             {
                 int result = DCLPrefs_Load(ptr, bufferSize);
 
+                if (result < 0)
+                {
+                    bufferSize = -result;
+                    Marshal.FreeHGlobal(ptr);
+                    ptr = Marshal.AllocHGlobal(bufferSize);
+                    result = DCLPrefs_Load(ptr, bufferSize);
+                }
+
                 if (result > 0)
                 {
                     var buffer = new byte[result];
