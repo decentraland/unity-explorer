@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.PhysicsImpulse.Systems
@@ -38,6 +39,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 
         [Query]
         [All(typeof(PBPhysicsCombinedForce))]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyPhysicsForce(in PBPhysicsCombinedForce pbPhysicsForce, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
@@ -51,6 +53,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 
         [Query]
         [All(typeof(PBPhysicsCombinedImpulse))]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyPhysicsImpulse(in PBPhysicsCombinedImpulse pbPhysicsImpulse, in CRDTEntity crdtEntity)
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY) return;
