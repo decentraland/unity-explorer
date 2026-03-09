@@ -504,6 +504,12 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  singleInstanceRunningPopupPrefab:
+    m_AssetGUID: 494be8ab667634d13bf2844a5230ae70
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0
