@@ -19,11 +19,6 @@ namespace DCL.Chat.ChatReactions
         private const float SPAWN_SIZE_MIN_RATIO = 0.2f;
         private const float SPAWN_SIZE_MAX_RATIO = 0.5f;
 
-        private static readonly int AtlasTexId = Shader.PropertyToID("_AtlasTex");
-        private static readonly int AtlasColsId = Shader.PropertyToID("_AtlasCols");
-        private static readonly int AtlasRowsId = Shader.PropertyToID("_AtlasRows");
-        private static readonly int FlipYId = Shader.PropertyToID("_FlipY");
-
         private readonly ChatReactionsSituationalConfig config;
         private readonly Material runtimeMaterial;
         private readonly ChatReactionsUiParticlePool uiPool;
@@ -40,7 +35,7 @@ namespace DCL.Chat.ChatReactions
 
             runtimeMaterial = new Material(config.EmojiMaterial);
             runtimeMaterial.name = config.EmojiMaterial.name + " (Runtime)";
-            ApplyAtlasToMaterial(runtimeMaterial, config);
+            ChatReactionsAtlasHelper.ApplyAtlasToMaterial(runtimeMaterial, config);
 
             rng = new System.Random();
             atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
@@ -183,15 +178,5 @@ namespace DCL.Chat.ChatReactions
 
         private float Rand(float min, float max) =>
             (float)(min + rng.NextDouble() * (max - min));
-
-        private static void ApplyAtlasToMaterial(Material mat, ChatReactionsSituationalConfig config)
-        {
-            if (mat == null || config.Atlas == null) return;
-
-            mat.SetTexture(AtlasTexId, config.Atlas.Atlas);
-            mat.SetFloat(AtlasColsId, config.Atlas.Cols);
-            mat.SetFloat(AtlasRowsId, config.Atlas.Rows);
-            mat.SetFloat(FlipYId, config.Atlas.FlipY ? 1f : 0f);
-        }
     }
 }
