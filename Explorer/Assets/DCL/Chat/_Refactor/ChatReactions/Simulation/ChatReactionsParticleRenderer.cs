@@ -12,7 +12,8 @@ namespace DCL.Chat.ChatReactions
     {
         private const int BATCH_SIZE = 1023;
 
-        private readonly Mesh quad;
+        private static Mesh? sharedQuad;
+
         private readonly Material mat;
         private readonly MaterialPropertyBlock mpb;
         private readonly AnimationCurve? sizeOverLifetime;
@@ -36,11 +37,56 @@ namespace DCL.Chat.ChatReactions
         {
             mat = material;
             mpb = new MaterialPropertyBlock();
-            quad = CreateQuadMesh();
+            sharedQuad ??= CreateQuadMesh();
             this.sizeOverLifetime = sizeOverLifetime;
 
+            // DrawMeshInstanced uses matrices for frustum culling; identity keeps the
+            // oversized mesh bounds visible while the shader repositions vertices via _PosSize.
             for (int i = 0; i < BATCH_SIZE; i++)
                 matrices[i] = Matrix4x4.identity;
+        }
+
+        /// <summary>
+        /// Draws world-space particles. Positions and sizes are already in world units —
+        /// no screen-to-world conversion is performed.
+        /// </summary>
+        public void Draw(ChatReactionsParticle[] particles, int layer, float globalAlpha = 1f)
+        {
+            if (mat == null) return;
+
+            int batchCount = 0;
+
+            for (int i = 0; i < particles.Length; i++)
+            {
+                if (particles[i].alive == 0) continue;
+
+                ref readonly var p = ref particles[i];
+
+                float t = p.lifetime > 0f ? Mathf.Clamp01(p.age / p.lifetime) : 0f;
+                float startSize = p.startSize;
+                float endSize = p.endSize;
+
+                if (sizeOverLifetime != null)
+                {
+                    float multiplier = sizeOverLifetime.Evaluate(t);
+                    startSize *= multiplier;
+                    endSize *= multiplier;
+                }
+
+                posSize[batchCount] = new Vector4(p.pos.x, p.pos.y, p.pos.z, startSize);
+                extra[batchCount]   = new Vector4(endSize, 0f, 0f, 0f);
+                emoji[batchCount]   = new Vector4(p.emojiIndex, 0f, 0f, 0f);
+                lifeT[batchCount]   = new Vector4(t, 0f, 0f, 0f);
+
+                if (++batchCount == BATCH_SIZE)
+                {
+                    Flush(layer, batchCount, globalAlpha);
+                    batchCount = 0;
+                }
+            }
+
+            if (batchCount > 0)
+                Flush(layer, batchCount, globalAlpha);
         }
 
         /// <summary>Draws screen-space particles by converting to world space each frame (camera-independent).</summary>
@@ -106,7 +152,7 @@ namespace DCL.Chat.ChatReactions
             mpb.SetVectorArray(EmojiId, emoji);
             mpb.SetVectorArray(LifeTId, lifeT);
 
-            Graphics.DrawMeshInstanced(quad, 0, mat, matrices, count, mpb,
+            Graphics.DrawMeshInstanced(sharedQuad, 0, mat, matrices, count, mpb,
                 ShadowCastingMode.Off, false, layer, null);
         }
 

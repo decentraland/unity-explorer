@@ -16,6 +16,7 @@ namespace DCL.Chat.ChatReactions
             particles = new ChatReactionsUiParticle[Mathf.Max(64, capacity)];
         }
 
+        public int Capacity => particles.Length;
         public ChatReactionsUiParticle[] Raw => particles;
 
         public void Spawn(Vector2 screenPos, Vector2 screenVel, float lifetime, float startSizePx, float endSizePx, int emojiIndex)
@@ -36,8 +37,11 @@ namespace DCL.Chat.ChatReactions
             };
         }
 
-        public void Update(float dt, Vector2 accelPx, float drag)
+        /// <summary>Advances physics for all live particles. Returns alive count.</summary>
+        public int Update(float dt, Vector2 accelPx, float drag)
         {
+            int aliveCount = 0;
+
             for (int i = 0; i < particles.Length; i++)
             {
                 ref var p = ref particles[i];
@@ -54,7 +58,10 @@ namespace DCL.Chat.ChatReactions
                 p.screenVel += accelPx * dt;
                 p.screenVel *= Mathf.Exp(-drag * dt);
                 p.screenPos += p.screenVel * dt;
+                aliveCount++;
             }
+
+            return aliveCount;
         }
     }
 }

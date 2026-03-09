@@ -29,6 +29,11 @@ namespace DCL.Chat.ChatReactions
         private readonly System.Random rng;
         private readonly int atlasTotalTiles;
 
+        private int uiAliveCount;
+
+        public int AliveCount => uiAliveCount;
+        public int PoolCapacity => uiPool.Capacity;
+
         public ChatReactionSimulation(ChatReactionsSituationalConfig config, RectTransform laneRect)
         {
             this.config = config;
@@ -59,7 +64,7 @@ namespace DCL.Chat.ChatReactions
 
         public void Tick(float dt)
         {
-            uiPool.Update(dt, config.UILane.Gravity, config.UILane.Drag);
+            uiAliveCount = uiPool.Update(dt, config.UILane.Gravity, config.UILane.Drag);
             TickFlightSteering(dt);
             ClampLiveParticlesToLane();
             TickStream(dt);
@@ -102,6 +107,8 @@ namespace DCL.Chat.ChatReactions
             TriggerUIReactionFromRect(sourceRect, index, config.UILane.StreamBurst);
         }
 
+        public bool IsStreaming => streamEmitter.IsStreaming;
+
         public void BeginUIStream(RectTransform sourceRect) =>
             streamEmitter.Begin(sourceRect);
 
@@ -110,6 +117,11 @@ namespace DCL.Chat.ChatReactions
 
         public void ToggleUIStream(RectTransform sourceRect) =>
             streamEmitter.Toggle(sourceRect);
+
+#if UNITY_EDITOR || DEBUG
+        public void BeginDebugUIStream(RectTransform? sourceRect = null) => streamEmitter.Begin(sourceRect);
+        public void EndDebugUIStream() => streamEmitter.End();
+#endif
 
         private void ClampLiveParticlesToLane()
         {
@@ -133,9 +145,10 @@ namespace DCL.Chat.ChatReactions
                     : config.UILane.DefaultEmojiIndex;
 
                 RectTransform? source = streamEmitter.Source;
-                if (source == null) return;
-
-                TriggerUIReactionFromRect(source, index, config.UILane.StreamBurst);
+                if (source != null)
+                    TriggerUIReactionFromRect(source, index, config.UILane.StreamBurst);
+                else
+                    TriggerUIReaction(index, config.UILane.StreamBurst);
             }
         }
 

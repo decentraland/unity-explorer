@@ -34,7 +34,7 @@ using System.Threading;
 using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
-using DCL.Chat.Reactions;
+using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
@@ -48,6 +48,8 @@ using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
+using DCL.Character.Components;
+using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatReactions.Configs;
 using TMPro;
 using UnityEngine;
@@ -203,7 +205,14 @@ namespace DCL.PluginSystem.Global
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
 
-            var situationalReactionService = new SituationalReactionService(settings.ReactionsConfig.SituationalReactions, mainUIView.ChatMainView.SituationalReactionView.LaneRect);
+            var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
+            var situationalReactionService = new SituationalReactionService(
+                settings.ReactionsConfig.SituationalReactions,
+                mainUIView.ChatMainView.SituationalReactionView.LaneRect,
+                avatarReactionPosition);
+            
+            // Handle chat reactions in the chat
+            // var chatReactionService = new ChatReactionService();
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {

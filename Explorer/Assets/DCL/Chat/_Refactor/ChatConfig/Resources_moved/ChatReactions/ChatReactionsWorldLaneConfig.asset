@@ -13,9 +13,63 @@ MonoBehaviour:
   m_Name: ChatReactionsWorldLaneConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsWorldLaneConfig
   <MaxParticles>k__BackingField: 1023
-  <LifetimeRange>k__BackingField: {x: 0.6, y: 1}
-  <SpeedRange>k__BackingField: {x: 0.8, y: 2}
-  <SizeRange>k__BackingField: {x: 0.08, y: 0.12}
+  <LifetimeRange>k__BackingField: {x: 2, y: 4}
+  <SpeedRange>k__BackingField: {x: 0.4, y: 0.8}
+  <SizeRange>k__BackingField: {x: 0.16, y: 0.32}
   <Drag>k__BackingField: 0.4
-  <Gravity>k__BackingField: {x: 0, y: -0.2, z: 0}
+  <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
+  <BurstCount>k__BackingField: 1
+  <StreamRatePerSecond>k__BackingField: 1
+  <DebugRatePerSecond>k__BackingField: 3
   <RenderLayer>k__BackingField: 0
+  <SizeOverLifetime>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.2
+      inSlope: 6.666667
+      outSlope: 6.666667
+      tangentMode: 35
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.12
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.72
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7383374
+      value: 1.3339287
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

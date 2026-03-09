@@ -14,7 +14,8 @@ namespace DCL.Chat.ChatReactions
         public bool IsStreaming { get; private set; }
         public RectTransform? Source { get; private set; }
 
-        public void Begin(RectTransform source)
+        /// <param name="source">Source rect for spawn position. Pass null for lane-bottom streaming (debug).</param>
+        public void Begin(RectTransform? source)
         {
             IsStreaming = true;
             Source = source;
@@ -40,7 +41,7 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public int Tick(float dt, float ratePerSecond)
         {
-            if (!IsStreaming || Source == null) return 0;
+            if (!IsStreaming) return 0;
 
             accumulator += dt * ratePerSecond;
 

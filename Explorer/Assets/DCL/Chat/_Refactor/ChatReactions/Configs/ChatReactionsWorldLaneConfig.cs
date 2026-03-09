@@ -33,8 +33,27 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Tooltip("Gravity vector in world space (world units/sec²).")]
         [field: SerializeField] public Vector3 Gravity { get; private set; } = new(0f, -0.2f, 0f);
 
+        [field: Header("Burst")]
+        [field: Min(1)]
+        [field: Tooltip("How many particles to spawn per burst trigger (tap or stream tick).")]
+        [field: SerializeField] public int BurstCount { get; private set; } = 5;
+
+        [field: Header("Streaming")]
+        [field: Min(0f)]
+        [field: Tooltip("Particles emitted per second per avatar while world stream is active.")]
+        [field: SerializeField] public float StreamRatePerSecond { get; private set; } = 6f;
+
+        [field: Header("Debug")]
+        [field: Min(0f)]
+        [field: Tooltip("Particles emitted per second per nearby avatar during debug mode.")]
+        [field: SerializeField] public float DebugRatePerSecond { get; private set; } = 3f;
+
         [field: Header("Rendering")]
         [field: Tooltip("Unity rendering layer for world particles.")]
         [field: SerializeField] public int RenderLayer { get; private set; } = 0;
+
+        [field: Tooltip("Optional size multiplier over normalised lifetime [0,1]. " +
+                        "Enables pop/shrink effects on world particles. Leave null to use raw start→end interpolation.")]
+        [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; }
     }
 }
