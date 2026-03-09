@@ -51,12 +51,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         [None(typeof(GltfContainerComponent))]
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
+            //TODO WEBGL -> Disabled for Now as it spams the console
             //WebGLDebugLog.Log($"[AB-Loading] LoadGltfContainerSystem.StartLoading: src={sdkComponent.Src}");
             GltfContainerComponent component;
             sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
 
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
+                //TODO WEBGL -> Disabled for Now as it spams the console
                 //WebGLDebugLog.LogWarning($"[AB-Loading] GLTF source not found in content: {sdkComponent.Src}");
 
                 component = GltfContainerComponent.CreateFaulty(

@@ -13,8 +13,9 @@ namespace ECS.SceneLifeCycle.WebGL
     /// </summary>
     public class WebGLSceneUpdateQueue
     {
-        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> pending = new (32);
-        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> processing = new (32);
+        private const int QUEUE_CAPACITY = 32;
+        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> pending = new (QUEUE_CAPACITY);
+        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> processing = new (QUEUE_CAPACITY);
 
         public void Enqueue(ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler)
         {

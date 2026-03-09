@@ -237,6 +237,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
+                        //TODO WEBGL -> DISABLED FOR NOW as it can spam the console until ABs are properly built
                         //ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
@@ -245,6 +246,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
                     {
+                        //TODO WEBGL -> DISABLED FOR NOW as it can spam the console until ABs are properly built
                         //ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
