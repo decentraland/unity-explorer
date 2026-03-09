@@ -16,6 +16,8 @@ namespace ECS.Unity.GliderProp
 
         public void Play(AudioSource template, Vector3 position, int priority = -1)
         {
+            if (template == null || template.clip == null) return;
+
             CancelInvoke();
             transform.position = position;
             audioSource.clip = template.clip;

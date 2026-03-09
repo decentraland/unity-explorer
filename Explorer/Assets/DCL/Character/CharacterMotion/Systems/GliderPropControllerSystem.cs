@@ -53,7 +53,7 @@ namespace DCL.CharacterMotion.Systems
             oneShotAudioPool = new GameObjectPool<OneShotAudioSource>(poolRoot, () =>
             {
                 var go = new GameObject("GliderOneShotAudio");
-                var oneShot = go.AddComponent<AudioSource>();
+                go.AddComponent<AudioSource>();
                 var component = go.AddComponent<OneShotAudioSource>();
                 component.Initialize(oneShotAudioPool);
                 return component;
