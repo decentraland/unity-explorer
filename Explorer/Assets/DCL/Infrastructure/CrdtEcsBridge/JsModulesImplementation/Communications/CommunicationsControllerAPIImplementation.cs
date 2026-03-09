@@ -23,7 +23,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             int dataOffset;
             var array = jsOperations.GetTempUint8Array();
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // WebGL has no direct memory access — build the payload in managed memory then bulk-copy to JS
             byte[] walletIdBytes = Encoding.UTF8.GetBytes(walletId);
             int walletIdByteLength = Math.Min(walletIdBytes.Length, byte.MaxValue);

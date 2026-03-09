@@ -24,7 +24,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using Temp.Helper.WebClient;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 using SceneRuntime.WebClient;
 #else
@@ -66,7 +66,7 @@ namespace Global
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ,
             IWebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
@@ -83,7 +83,7 @@ namespace Global
                 staticContainer.ECSWorldPlugins);
             WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
@@ -128,7 +128,7 @@ namespace Global
 
                     dclEnvironment,
                     systemClipboard
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                     ,
                     webglSceneUpdateQueue
 #endif

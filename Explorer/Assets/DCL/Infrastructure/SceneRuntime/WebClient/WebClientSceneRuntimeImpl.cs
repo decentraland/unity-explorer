@@ -1,4 +1,4 @@
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;

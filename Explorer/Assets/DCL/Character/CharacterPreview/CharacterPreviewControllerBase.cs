@@ -102,7 +102,7 @@ namespace DCL.CharacterPreview
 
             // WebGL: use 1 sample to avoid "Attachment created with 1 samples but 4 samples were requested" (MSAA mismatch)
             int msaaSamples = 4;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             msaaSamples = 1;
 #endif
             currentRenderTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())

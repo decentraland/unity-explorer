@@ -9,7 +9,7 @@ namespace DCL.Browser
     {
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         [DllImport("__Internal")]
         private static extern void OpenUrlInNewTab(string url);
 #endif
@@ -22,7 +22,7 @@ namespace DCL.Browser
         public void OpenUrl(string url)
         {
             var escaped = Uri.EscapeUriString(url);
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             Debug.Log($"[WebBrowser] OpenUrl (WebGL new tab): {escaped}");
             OpenUrlInNewTab(escaped);
             Debug.Log("[WebBrowser] OpenUrlInNewTab called");

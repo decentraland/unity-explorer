@@ -296,7 +296,7 @@ namespace Global.Dynamic
 #if UNITY_WEBGL
                 lodCache = new NoOpLODCache();
                 roadCoordinates = new HashSet<Vector2Int>();
-                lodSettings = new LODSettingsStub();
+                lodSettings = new WebGLLODSettingsStub();
                 roadAssetsPool = new RoadAssetsPool(staticContainer.RealmData, new List<GameObject>(), null);
 #else
                 lodContainer = await LODContainer

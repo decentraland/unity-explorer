@@ -4,7 +4,7 @@ using DCL.PluginSystem.World;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using System;
@@ -150,7 +150,7 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                     deps.SyncDeps.WebGLSceneUpdateQueue.Enqueue(this, deltaTime, sceneExceptionsHandler);
                     sceneCodeIsRunning.Reset();
 #else

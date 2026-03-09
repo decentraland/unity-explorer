@@ -23,7 +23,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using MVC;
@@ -72,7 +72,7 @@ namespace SceneRunner
         private readonly MultiThreadSync ecsMultiThreadSync;
 #endif
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         public readonly IWebGLSceneUpdateQueue WebGLSceneUpdateQueue;
 #endif
 
@@ -138,14 +138,14 @@ namespace SceneRunner
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
             ISceneEntityFactory entityFactory
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ,
             IWebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
         )
         {
             this.sceneData = sceneData;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             WebGLSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.permissionsProvider = permissionsProvider;

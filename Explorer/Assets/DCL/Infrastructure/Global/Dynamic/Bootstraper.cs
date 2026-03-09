@@ -43,7 +43,7 @@ using UnityEngine.UIElements;
 using Utility;
 using JsCodeResolver = DCL.AssetsProvision.CodeResolver.JsCodeResolver;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 
@@ -265,7 +265,7 @@ namespace Global.Dynamic
             }
 
             WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before SceneSharedContainer.Create");
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             IWebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
 #endif
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
@@ -290,7 +290,7 @@ namespace Global.Dynamic
                 webJsSources,
                 bootstrapContainer.Environment,
                 dynamicWorldContainer.SystemClipboard
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 ,
                 webglSceneUpdateQueue
 #endif
@@ -303,7 +303,7 @@ namespace Global.Dynamic
             {
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
                     sceneSharedContainer.SceneFactory, playerEntity
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                     , webglSceneUpdateQueue
 #endif
                 );

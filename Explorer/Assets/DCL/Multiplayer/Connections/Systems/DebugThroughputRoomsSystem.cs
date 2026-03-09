@@ -122,7 +122,7 @@ namespace DCL.Multiplayer.Connections.Systems
 
             foreach ((string sid, _) in participants)
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 var participant = participantsHub.RemoteParticipant(sid).Value;
 #else
                 var participant = participantsHub.RemoteParticipant(sid);

@@ -7,7 +7,7 @@ namespace Utility.Networking
     // Desktop / WebGL friendly implementation
     public class DCLWebSocket : IDisposable
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         private DCL.WebSockets.JS.WebGLWebSocket ws = new ();
 #else
         private System.Net.WebSockets.ClientWebSocket ws = new ();
@@ -18,7 +18,7 @@ namespace Utility.Networking
         {
             get
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return ws.State;
 #else
                 return (WebSocketState) ws.State; // Direct mapping
@@ -35,7 +35,7 @@ namespace Utility.Networking
         {
             try
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
 #else
 
@@ -54,7 +54,7 @@ namespace Utility.Networking
         {
             try
             {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return await ws.ReceiveAsync(buffer, cancellationToken);
 #else
                 System.Net.WebSockets.ValueWebSocketReceiveResult result = await ws.ReceiveAsync(buffer, cancellationToken);
@@ -92,7 +92,7 @@ namespace Utility.Networking
             try
             {
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.CloseAsync(status, description, cancellationToken);
 #else
                 System.Net.WebSockets.WebSocketCloseStatus statusType = (System.Net.WebSockets.WebSocketCloseStatus)status;
@@ -107,7 +107,7 @@ namespace Utility.Networking
 
         public void Abort()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // Ignore, WebGL doesn't expose raw TCP sockets to hard interrupt
 #else
             ws.Abort();

@@ -37,7 +37,7 @@ using System.Threading;
 using DCL.Clipboard;
 using DCL.Infrastructure.Global;
 using Temp.Helper.WebClient;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using UnityEngine;
@@ -81,7 +81,7 @@ namespace SceneRunner
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         private readonly IWebGLSceneUpdateQueue webglSceneUpdateQueue;
 #endif
 
@@ -117,7 +117,7 @@ namespace SceneRunner
 
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ,
             IWebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
@@ -145,7 +145,7 @@ namespace SceneRunner
             this.realmData = realmData;
             this.portableExperiencesController = portableExperiencesController;
             this.skyboxSettings = skyboxSettings;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             this.webglSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.messagePipesHub = messagePipesHub;
@@ -212,7 +212,7 @@ namespace SceneRunner
             WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={UnityEngine.Time.realtimeSinceStartup:F1}", "LOAD");
 
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 ,
                 webglSceneUpdateQueue
 #endif

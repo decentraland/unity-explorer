@@ -36,7 +36,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         [UsedImplicitly]
         public PoolableByteArray CrdtSendToRenderer(
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 object data
 #else
                 ITypedArray<byte> data

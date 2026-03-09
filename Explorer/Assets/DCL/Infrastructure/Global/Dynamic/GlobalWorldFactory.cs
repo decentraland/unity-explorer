@@ -44,7 +44,7 @@ using UnityEngine;
 using Utility;
 using OwnAvatarLoaderFromDebugMenuSystem = DCL.AvatarRendering.AvatarShape.OwnAvatarLoaderFromDebugMenuSystem;
 using Temp.Helper.WebClient;
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 
@@ -142,7 +142,7 @@ namespace Global.Dynamic
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ,
             IWebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
@@ -194,7 +194,7 @@ namespace Global.Dynamic
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             ProcessWebGLSceneUpdatesSystem.InjectToWorld(ref builder, webglSceneUpdateQueue);
 #endif
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
