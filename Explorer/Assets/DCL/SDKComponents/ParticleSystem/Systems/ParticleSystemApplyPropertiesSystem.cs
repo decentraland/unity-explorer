@@ -67,6 +67,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyRotationOverLifetime(pb, ps);
             ApplyColorOverLifetime(pb, ps);
             ApplyForceOverLifetime(pb, ps);
+            ApplyLimitVelocityOverLifetime(pb, ps);
             ApplySpriteSheet(pb, ps);
             ApplyRenderer(pb, ref component);
         }
@@ -75,7 +76,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         {
             var main = ps.main;
 
-            main.loop = true;
+            main.loop = !pb.HasLoop || pb.Loop;
+            main.prewarm = main.loop && pb.HasPrewarm && pb.Prewarm;
 
             if (pb.HasLifetime)
                 main.startLifetime = pb.Lifetime;
@@ -229,6 +231,23 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             fol.x = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.X);
             fol.y = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.Y);
             fol.z = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.Z);
+        }
+
+        private static void ApplyLimitVelocityOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        {
+            var lvol = ps.limitVelocityOverLifetime;
+
+            if (pb.LimitVelocity == null)
+            {
+                lvol.enabled = false;
+                return;
+            }
+
+            lvol.enabled = true;
+            lvol.separateAxes = false;
+            lvol.space = ParticleSystemSimulationSpace.Local;
+            lvol.limit = new UnityEngine.ParticleSystem.MinMaxCurve(pb.LimitVelocity.Speed);
+            lvol.dampen = pb.LimitVelocity.HasDampen ? pb.LimitVelocity.Dampen : 1f;
         }
 
         private static void ApplySpriteSheet(PBParticleSystem pb, UnityEngine.ParticleSystem ps)

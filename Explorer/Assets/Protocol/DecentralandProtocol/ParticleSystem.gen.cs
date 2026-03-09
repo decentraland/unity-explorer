@@ -28,7 +28,7 @@ namespace DCL.ECSComponents {
             "LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJh",
             "bGFuZC9jb21tb24vY29sb3JzLnByb3RvGiFkZWNlbnRyYWxhbmQvY29tbW9u",
             "L3RleHR1cmUucHJvdG8aIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5w",
-            "cm90byLhEgoQUEJQYXJ0aWNsZVN5c3RlbRITCgZhY3RpdmUYASABKAhIAYgB",
+            "cm90byLMFAoQUEJQYXJ0aWNsZVN5c3RlbRITCgZhY3RpdmUYASABKAhIAYgB",
             "ARIRCgRyYXRlGAIgASgCSAKIAQESGgoNbWF4X3BhcnRpY2xlcxgDIAEoDUgD",
             "iAEBEhUKCGxpZmV0aW1lGAQgASgCSASIAQESFAoHZ3Jhdml0eRgFIAEoAkgF",
             "iAEBEjsKEGFkZGl0aW9uYWxfZm9yY2UYBiABKAsyHC5kZWNlbnRyYWxhbmQu",
@@ -58,37 +58,43 @@ namespace DCL.ECSComponents {
             "EkIKBGNvbmUYFCABKAsyMi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
             "UEJQYXJ0aWNsZVN5c3RlbS5Db25lSAASQAoDYm94GBUgASgLMjEuZGVjZW50",
             "cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0ZW0uQm94SAAS",
-            "WAoOcGxheWJhY2tfc3RhdGUYFiABKA4yOy5kZWNlbnRyYWxhbmQuc2RrLmNv",
-            "bXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBKIAQES",
-            "GgoNcmVzdGFydF9jb3VudBgXIAEoDUgTiAEBGigKCkZsb2F0UmFuZ2USDQoF",
-            "c3RhcnQYASABKAISCwoDZW5kGAIgASgCGmIKCkNvbG9yUmFuZ2USKgoFc3Rh",
-            "cnQYASABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNBIoCgNlbmQY",
-            "AiABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNBqaAQoUU3ByaXRl",
-            "U2hlZXRBbmltYXRpb24SDwoHdGlsZXNfeBgBIAEoDRIPCgd0aWxlc195GAIg",
-            "ASgNEhMKC3N0YXJ0X2ZyYW1lGAMgASgNEhEKCWVuZF9mcmFtZRgEIAEoDRIg",
-            "ChNjeWNsZXNfcGVyX2xpZmV0aW1lGAUgASgCSACIAQFCFgoUX2N5Y2xlc19w",
-            "ZXJfbGlmZXRpbWUaBwoFUG9pbnQaKAoGU3BoZXJlEhMKBnJhZGl1cxgBIAEo",
-            "AkgAiAEBQgkKB19yYWRpdXMaRAoEQ29uZRISCgVhbmdsZRgBIAEoAkgAiAEB",
-            "EhMKBnJhZGl1cxgCIAEoAkgBiAEBQggKBl9hbmdsZUIJCgdfcmFkaXVzGj8K",
-            "A0JveBIvCgRzaXplGAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
-            "b3IzSACIAQFCBwoFX3NpemUiOQoJQmxlbmRNb2RlEg0KCVBTQl9BTFBIQRAA",
-            "EgsKB1BTQl9BREQQARIQCgxQU0JfTVVMVElQTFkQAiI+Cg1QbGF5YmFja1N0",
-            "YXRlEg4KClBTX1BMQVlJTkcQABINCglQU19QQVVTRUQQARIOCgpQU19TVE9Q",
-            "UEVEEAJCBwoFc2hhcGVCCQoHX2FjdGl2ZUIHCgVfcmF0ZUIQCg5fbWF4X3Bh",
-            "cnRpY2xlc0ILCglfbGlmZXRpbWVCCgoIX2dyYXZpdHlCEwoRX2FkZGl0aW9u",
-            "YWxfZm9yY2VCDwoNX2luaXRpYWxfc2l6ZUIRCg9fc2l6ZV9vdmVyX3RpbWVC",
-            "EwoRX2luaXRpYWxfcm90YXRpb25CFQoTX3JvdGF0aW9uX292ZXJfdGltZUIQ",
-            "Cg5faW5pdGlhbF9jb2xvckISChBfY29sb3Jfb3Zlcl90aW1lQhkKF19pbml0",
-            "aWFsX3ZlbG9jaXR5X3NwZWVkQgoKCF90ZXh0dXJlQg0KC19ibGVuZF9tb2Rl",
-            "QgwKCl9iaWxsYm9hcmRCDwoNX3Nwcml0ZV9zaGVldEIRCg9fcGxheWJhY2tf",
-            "c3RhdGVCEAoOX3Jlc3RhcnRfY291bnRCFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "EQoEbG9vcBgYIAEoCEgSiAEBEhQKB3ByZXdhcm0YGSABKAhIE4gBARJYCg5s",
+            "aW1pdF92ZWxvY2l0eRgaIAEoCzI7LmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
+            "ZW50cy5QQlBhcnRpY2xlU3lzdGVtLkxpbWl0VmVsb2NpdHlIFIgBARJYCg5w",
+            "bGF5YmFja19zdGF0ZRgWIAEoDjI7LmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
+            "ZW50cy5QQlBhcnRpY2xlU3lzdGVtLlBsYXliYWNrU3RhdGVIFYgBARIaCg1y",
+            "ZXN0YXJ0X2NvdW50GBcgASgNSBaIAQEaKAoKRmxvYXRSYW5nZRINCgVzdGFy",
+            "dBgBIAEoAhILCgNlbmQYAiABKAIaYgoKQ29sb3JSYW5nZRIqCgVzdGFydBgB",
+            "IAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0EigKA2VuZBgCIAEo",
+            "CzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0GpoBChRTcHJpdGVTaGVl",
+            "dEFuaW1hdGlvbhIPCgd0aWxlc194GAEgASgNEg8KB3RpbGVzX3kYAiABKA0S",
+            "EwoLc3RhcnRfZnJhbWUYAyABKA0SEQoJZW5kX2ZyYW1lGAQgASgNEiAKE2N5",
+            "Y2xlc19wZXJfbGlmZXRpbWUYBSABKAJIAIgBAUIWChRfY3ljbGVzX3Blcl9s",
+            "aWZldGltZRo+Cg1MaW1pdFZlbG9jaXR5Eg0KBXNwZWVkGAEgASgCEhMKBmRh",
+            "bXBlbhgCIAEoAkgAiAEBQgkKB19kYW1wZW4aBwoFUG9pbnQaKAoGU3BoZXJl",
+            "EhMKBnJhZGl1cxgBIAEoAkgAiAEBQgkKB19yYWRpdXMaRAoEQ29uZRISCgVh",
+            "bmdsZRgBIAEoAkgAiAEBEhMKBnJhZGl1cxgCIAEoAkgBiAEBQggKBl9hbmds",
+            "ZUIJCgdfcmFkaXVzGj8KA0JveBIvCgRzaXplGAEgASgLMhwuZGVjZW50cmFs",
+            "YW5kLmNvbW1vbi5WZWN0b3IzSACIAQFCBwoFX3NpemUiOQoJQmxlbmRNb2Rl",
+            "Eg0KCVBTQl9BTFBIQRAAEgsKB1BTQl9BREQQARIQCgxQU0JfTVVMVElQTFkQ",
+            "AiI+Cg1QbGF5YmFja1N0YXRlEg4KClBTX1BMQVlJTkcQABINCglQU19QQVVT",
+            "RUQQARIOCgpQU19TVE9QUEVEEAJCBwoFc2hhcGVCCQoHX2FjdGl2ZUIHCgVf",
+            "cmF0ZUIQCg5fbWF4X3BhcnRpY2xlc0ILCglfbGlmZXRpbWVCCgoIX2dyYXZp",
+            "dHlCEwoRX2FkZGl0aW9uYWxfZm9yY2VCDwoNX2luaXRpYWxfc2l6ZUIRCg9f",
+            "c2l6ZV9vdmVyX3RpbWVCEwoRX2luaXRpYWxfcm90YXRpb25CFQoTX3JvdGF0",
+            "aW9uX292ZXJfdGltZUIQCg5faW5pdGlhbF9jb2xvckISChBfY29sb3Jfb3Zl",
+            "cl90aW1lQhkKF19pbml0aWFsX3ZlbG9jaXR5X3NwZWVkQgoKCF90ZXh0dXJl",
+            "Qg0KC19ibGVuZF9tb2RlQgwKCl9iaWxsYm9hcmRCDwoNX3Nwcml0ZV9zaGVl",
+            "dEIHCgVfbG9vcEIKCghfcHJld2FybUIRCg9fbGltaXRfdmVsb2NpdHlCEQoP",
+            "X3BsYXliYWNrX3N0YXRlQhAKDl9yZXN0YXJ0X2NvdW50QhSqAhFEQ0wuRUNT",
+            "Q29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "PlaybackState", "RestartCount" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "PlaybackState", "RestartCount" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange), global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange), global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.ColorRange), global::DCL.ECSComponents.PBParticleSystem.Types.ColorRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "StartFrame", "EndFrame", "CyclesPerLifetime" }, new[]{ "CyclesPerLifetime" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity), global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity.Parser, new[]{ "Speed", "Dampen" }, new[]{ "Dampen" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Point), global::DCL.ECSComponents.PBParticleSystem.Types.Point.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Sphere), global::DCL.ECSComponents.PBParticleSystem.Types.Sphere.Parser, new[]{ "Radius" }, new[]{ "Radius" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Cone), global::DCL.ECSComponents.PBParticleSystem.Types.Cone.Parser, new[]{ "Angle", "Radius" }, new[]{ "Angle", "Radius" }, null, null, null),
@@ -152,6 +158,9 @@ namespace DCL.ECSComponents {
       blendMode_ = other.blendMode_;
       billboard_ = other.billboard_;
       spriteSheet_ = other.spriteSheet_ != null ? other.spriteSheet_.Clone() : null;
+      loop_ = other.loop_;
+      prewarm_ = other.prewarm_;
+      limitVelocity_ = other.limitVelocity_ != null ? other.limitVelocity_.Clone() : null;
       playbackState_ = other.playbackState_;
       restartCount_ = other.restartCount_;
       switch (other.ShapeCase) {
@@ -572,6 +581,77 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "loop" field.</summary>
+    public const int LoopFieldNumber = 24;
+    private bool loop_;
+    /// <summary>
+    /// --- Simulation ---
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Loop {
+      get { if ((_hasBits0 & 512) != 0) { return loop_; } else { return false; } }
+      set {
+        _hasBits0 |= 512;
+        loop_ = value;
+      }
+    }
+    /// <summary>Gets whether the "loop" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasLoop {
+      get { return (_hasBits0 & 512) != 0; }
+    }
+    /// <summary>Clears the value of the "loop" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearLoop() {
+      _hasBits0 &= ~512;
+    }
+
+    /// <summary>Field number for the "prewarm" field.</summary>
+    public const int PrewarmFieldNumber = 25;
+    private bool prewarm_;
+    /// <summary>
+    /// default = false. Start as if already simulated for one full loop cycle. Requires loop = true.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Prewarm {
+      get { if ((_hasBits0 & 1024) != 0) { return prewarm_; } else { return false; } }
+      set {
+        _hasBits0 |= 1024;
+        prewarm_ = value;
+      }
+    }
+    /// <summary>Gets whether the "prewarm" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPrewarm {
+      get { return (_hasBits0 & 1024) != 0; }
+    }
+    /// <summary>Clears the value of the "prewarm" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPrewarm() {
+      _hasBits0 &= ~1024;
+    }
+
+    /// <summary>Field number for the "limit_velocity" field.</summary>
+    public const int LimitVelocityFieldNumber = 26;
+    private global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity limitVelocity_;
+    /// <summary>
+    /// --- Limit Velocity Over Lifetime ---
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity LimitVelocity {
+      get { return limitVelocity_; }
+      set {
+        limitVelocity_ = value;
+      }
+    }
+
     /// <summary>Field number for the "playback_state" field.</summary>
     public const int PlaybackStateFieldNumber = 22;
     private global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState playbackState_;
@@ -687,6 +767,9 @@ namespace DCL.ECSComponents {
       if (!object.Equals(Sphere, other.Sphere)) return false;
       if (!object.Equals(Cone, other.Cone)) return false;
       if (!object.Equals(Box, other.Box)) return false;
+      if (Loop != other.Loop) return false;
+      if (Prewarm != other.Prewarm) return false;
+      if (!object.Equals(LimitVelocity, other.LimitVelocity)) return false;
       if (PlaybackState != other.PlaybackState) return false;
       if (RestartCount != other.RestartCount) return false;
       if (ShapeCase != other.ShapeCase) return false;
@@ -718,6 +801,9 @@ namespace DCL.ECSComponents {
       if (shapeCase_ == ShapeOneofCase.Sphere) hash ^= Sphere.GetHashCode();
       if (shapeCase_ == ShapeOneofCase.Cone) hash ^= Cone.GetHashCode();
       if (shapeCase_ == ShapeOneofCase.Box) hash ^= Box.GetHashCode();
+      if (HasLoop) hash ^= Loop.GetHashCode();
+      if (HasPrewarm) hash ^= Prewarm.GetHashCode();
+      if (limitVelocity_ != null) hash ^= LimitVelocity.GetHashCode();
       if (HasPlaybackState) hash ^= PlaybackState.GetHashCode();
       if (HasRestartCount) hash ^= RestartCount.GetHashCode();
       hash ^= (int) shapeCase_;
@@ -831,6 +917,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(184, 1);
         output.WriteUInt32(RestartCount);
       }
+      if (HasLoop) {
+        output.WriteRawTag(192, 1);
+        output.WriteBool(Loop);
+      }
+      if (HasPrewarm) {
+        output.WriteRawTag(200, 1);
+        output.WriteBool(Prewarm);
+      }
+      if (limitVelocity_ != null) {
+        output.WriteRawTag(210, 1);
+        output.WriteMessage(LimitVelocity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -933,6 +1031,18 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(184, 1);
         output.WriteUInt32(RestartCount);
       }
+      if (HasLoop) {
+        output.WriteRawTag(192, 1);
+        output.WriteBool(Loop);
+      }
+      if (HasPrewarm) {
+        output.WriteRawTag(200, 1);
+        output.WriteBool(Prewarm);
+      }
+      if (limitVelocity_ != null) {
+        output.WriteRawTag(210, 1);
+        output.WriteMessage(LimitVelocity);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1005,6 +1115,15 @@ namespace DCL.ECSComponents {
       }
       if (shapeCase_ == ShapeOneofCase.Box) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(Box);
+      }
+      if (HasLoop) {
+        size += 2 + 1;
+      }
+      if (HasPrewarm) {
+        size += 2 + 1;
+      }
+      if (limitVelocity_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(LimitVelocity);
       }
       if (HasPlaybackState) {
         size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) PlaybackState);
@@ -1104,6 +1223,18 @@ namespace DCL.ECSComponents {
           SpriteSheet = new global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation();
         }
         SpriteSheet.MergeFrom(other.SpriteSheet);
+      }
+      if (other.HasLoop) {
+        Loop = other.Loop;
+      }
+      if (other.HasPrewarm) {
+        Prewarm = other.Prewarm;
+      }
+      if (other.limitVelocity_ != null) {
+        if (limitVelocity_ == null) {
+          LimitVelocity = new global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity();
+        }
+        LimitVelocity.MergeFrom(other.LimitVelocity);
       }
       if (other.HasPlaybackState) {
         PlaybackState = other.PlaybackState;
@@ -1295,6 +1426,21 @@ namespace DCL.ECSComponents {
             RestartCount = input.ReadUInt32();
             break;
           }
+          case 192: {
+            Loop = input.ReadBool();
+            break;
+          }
+          case 200: {
+            Prewarm = input.ReadBool();
+            break;
+          }
+          case 210: {
+            if (limitVelocity_ == null) {
+              LimitVelocity = new global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity();
+            }
+            input.ReadMessage(LimitVelocity);
+            break;
+          }
         }
       }
     #endif
@@ -1450,6 +1596,21 @@ namespace DCL.ECSComponents {
           }
           case 184: {
             RestartCount = input.ReadUInt32();
+            break;
+          }
+          case 192: {
+            Loop = input.ReadBool();
+            break;
+          }
+          case 200: {
+            Prewarm = input.ReadBool();
+            break;
+          }
+          case 210: {
+            if (limitVelocity_ == null) {
+              LimitVelocity = new global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity();
+            }
+            input.ReadMessage(LimitVelocity);
             break;
           }
         }
@@ -2339,6 +2500,256 @@ namespace DCL.ECSComponents {
       }
 
       /// <summary>
+      /// Clamps particle speed over lifetime.
+      /// </summary>
+      public sealed partial class LimitVelocity : pb::IMessage<LimitVelocity>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<LimitVelocity> _parser = new pb::MessageParser<LimitVelocity>(() => new LimitVelocity());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<LimitVelocity> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[3]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public LimitVelocity() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public LimitVelocity(LimitVelocity other) : this() {
+          _hasBits0 = other._hasBits0;
+          speed_ = other.speed_;
+          dampen_ = other.dampen_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public LimitVelocity Clone() {
+          return new LimitVelocity(this);
+        }
+
+        /// <summary>Field number for the "speed" field.</summary>
+        public const int SpeedFieldNumber = 1;
+        private float speed_;
+        /// <summary>
+        /// Maximum particle speed (m/s).
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Speed {
+          get { return speed_; }
+          set {
+            speed_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "dampen" field.</summary>
+        public const int DampenFieldNumber = 2;
+        private float dampen_;
+        /// <summary>
+        /// default = 1. Fraction (0–1) of excess velocity removed per frame. 1 = hard clamp.
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Dampen {
+          get { if ((_hasBits0 & 1) != 0) { return dampen_; } else { return 0F; } }
+          set {
+            _hasBits0 |= 1;
+            dampen_ = value;
+          }
+        }
+        /// <summary>Gets whether the "dampen" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDampen {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "dampen" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDampen() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as LimitVelocity);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(LimitVelocity other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Dampen, other.Dampen)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
+          if (HasDampen) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Dampen);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (Speed != 0F) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Speed);
+          }
+          if (HasDampen) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Dampen);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Speed != 0F) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Speed);
+          }
+          if (HasDampen) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Dampen);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (Speed != 0F) {
+            size += 1 + 4;
+          }
+          if (HasDampen) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(LimitVelocity other) {
+          if (other == null) {
+            return;
+          }
+          if (other.Speed != 0F) {
+            Speed = other.Speed;
+          }
+          if (other.HasDampen) {
+            Dampen = other.Dampen;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                Speed = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                Dampen = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                Speed = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                Dampen = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      /// <summary>
       /// Emitter spawns particles from a single point.
       /// </summary>
       public sealed partial class Point : pb::IMessage<Point>
@@ -2355,7 +2766,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[3]; }
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[4]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2511,7 +2922,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[4]; }
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[5]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2721,7 +3132,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[5]; }
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[6]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2983,7 +3394,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[6]; }
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[7]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
