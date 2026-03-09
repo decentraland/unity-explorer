@@ -84,16 +84,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
-        private static async UniTaskVoid PumpJobAsync(CancellationTokenSource cts)
-        {
-            while (cts.IsCancellationRequested == false)
-            {
-                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
-                if (result > 0) continue; // instantly jump to new iteration;
-                await UniTask.Delay(PUMP_DELAY);
-            }
-        }
-
         // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
