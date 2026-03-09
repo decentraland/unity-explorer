@@ -347,6 +347,12 @@ namespace DCL.WebRequests
         {
             buffer.Dispose();
             preservedArray.Dispose();
-        }
+    public void Dispose()
+    {
+        if (buffer.IsCreated)
+            buffer.Dispose();
+        // preservedArray ownership is transferred to UploadHandlerRaw when CreateUploadHandler() is called;
+        // only UploadHandlerRaw should free it
+    }
     }
 }
