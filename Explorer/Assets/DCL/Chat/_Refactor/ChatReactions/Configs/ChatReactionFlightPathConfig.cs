@@ -3,40 +3,41 @@ using UnityEngine;
 namespace DCL.Chat.ChatReactions.Configs
 {
     /// <summary>
-    /// Tweakable config for how emoji particles travel after being spawned.
+    /// Balloon-style flight config for screen-space emoji particles.
+    /// Particles get a horizontal kick at spawn, then float upward with zig-zag oscillation.
     /// All values are in screen space: pixels/sec for velocity, pixels/sec² for acceleration.
-    /// X = screen right, Y = screen up.
     /// </summary>
     [CreateAssetMenu(fileName = "ChatReactionFlightPathConfig",
                      menuName = "DCL/Chat/Reactions/Flight Path Config")]
     public class ChatReactionFlightPathConfig : ScriptableObject
     {
-        [field: Header("Exit Kick — applied once at spawn")]
+        [field: Header("Kick — applied once at spawn (px/sec)")]
 
-        [field: Tooltip("Lateral exit speed range (screen-right) in pixels/sec. " +
-                        "Kick pushes particles out of the chat panel.")]
-        [field: SerializeField] public Vector2 ExitKickRange { get; private set; } = new(80f, 180f);
+        [field: Tooltip("Horizontal kick speed range. Pushes particles away from the chat panel.")]
+        [field: SerializeField] public Vector2 KickSpeedRange { get; private set; } = new(120f, 220f);
 
-        [field: Min(0f)]
-        [field: Tooltip("Randomises the exit angle ± this many degrees around pure camera-right. " +
-                        "Zero = all particles exit straight right.")]
-        [field: SerializeField] public float ExitAngleVarianceDeg { get; private set; } = 20f;
+        [field: Tooltip("Initial upward speed range at spawn. Keep low for balloon-like gentle release. " +
+                        "Overrides UILaneConfig.SpeedRange when flight path is assigned.")]
+        [field: SerializeField] public Vector2 InitialUpRange { get; private set; } = new(10f, 40f);
 
-        [field: Tooltip("Adds a random upward component to the spawn velocity (pixels/sec, ±range). " +
-                        "Positive values spread the stream vertically.")]
-        [field: SerializeField] public float FloatDriftRange { get; private set; } = 15f;
+        [field: Header("Float — sustained upward buoyancy")]
 
-        [field: Header("Float — sustained per-frame upward force")]
+        [field: Tooltip("Upward acceleration in px/sec² applied every frame. Counteracts drag to keep particles rising.")]
+        [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 60f;
 
-        [field: Tooltip("Upward acceleration in pixels/sec² applied every frame. " +
-                        "Counteracts drag to keep particles rising. Set to 0 to let drag alone determine travel.")]
-        [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 50f;
+        [field: Header("Zig-Zag — lateral oscillation while floating")]
 
-        [field: Header("Pop — size animation over lifetime")]
+        [field: Tooltip("Peak lateral acceleration in px/sec² for the sinusoidal zig-zag. Higher = wider sway.")]
+        [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 50f;
 
-        [field: Tooltip("Multiplier applied to the particle's interpolated size at each normalised lifetime [0,1]. " +
-                        "Default creates a small spawn, full size through mid-life, a brief enlargement, " +
-                        "then a snap to zero (the 'pop'). Set all keys to 1 to disable.")]
+        [field: Min(0.1f)]
+        [field: Tooltip("Oscillation frequency in Hz. Lower = slow gentle sway, higher = rapid wobble.")]
+        [field: SerializeField] public float ZigZagFrequency { get; private set; } = 1.2f;
+
+        [field: Header("Size animation over lifetime")]
+
+        [field: Tooltip("Size multiplier curve over normalised lifetime [0,1]. " +
+                        "Default: small spawn, full size mid-life, brief enlargement, then pop to zero.")]
         [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; } = DefaultSizeCurve();
 
         private static AnimationCurve DefaultSizeCurve() =>

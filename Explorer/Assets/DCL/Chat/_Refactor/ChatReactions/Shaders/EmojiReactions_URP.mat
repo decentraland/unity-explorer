@@ -123,8 +123,9 @@ Material:
     - _EmissiveMapUVs: 0
     - _EnvironmentReflections: 1
     - _FadeDirection: 0
-    - _FadeIn: 0.2
-    - _FadeOut: 0.7
+
+    - _FadeIn: 0.01
+    - _FadeOut: 0.9
     - _FadeThickness: 5
     - _FlipY: 1
     - _GlobalAlpha: 1

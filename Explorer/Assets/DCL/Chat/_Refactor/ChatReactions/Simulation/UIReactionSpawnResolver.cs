@@ -36,16 +36,6 @@ namespace DCL.Chat.ChatReactions
             return new Vector2(r.center.x, Mathf.Lerp(r.yMin, r.yMax, 0.12f));
         }
 
-        /// <summary>
-        /// Clamps a particle's screen position (pixels) to the lane's screen rect.
-        /// </summary>
-        public void ClampToLane(ref Vector2 screenPos)
-        {
-            Rect lane = GetLaneScreenRect();
-            screenPos.x = Mathf.Clamp(screenPos.x, lane.xMin, lane.xMax);
-            screenPos.y = Mathf.Clamp(screenPos.y, lane.yMin, lane.yMax);
-        }
-
         private Rect GetLaneScreenRect()
         {
             int frame = Time.frameCount;

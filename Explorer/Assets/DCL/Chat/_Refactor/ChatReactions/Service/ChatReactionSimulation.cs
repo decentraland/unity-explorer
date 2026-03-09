@@ -73,8 +73,6 @@ namespace DCL.Chat.ChatReactions
             TickFlightSteering(dt);
             Profiler.EndSample();
 
-            ClampLiveParticlesToLane();
-
             Profiler.BeginSample("ChatReactions.UI.Stream");
             TickStream(dt);
             Profiler.EndSample();
@@ -135,17 +133,6 @@ namespace DCL.Chat.ChatReactions
         public void EndDebugUIStream() => streamEmitter.End();
 #endif
 
-        private void ClampLiveParticlesToLane()
-        {
-            var particles = uiPool.Raw;
-
-            for (int i = 0; i < particles.Length; i++)
-            {
-                if (particles[i].alive == 0) continue;
-                spawnResolver.ClampToLane(ref particles[i].screenPos);
-            }
-        }
-
         private void TickStream(float dt)
         {
             int ticks = streamEmitter.Tick(dt, config.UILane.StreamRatePerSecond);
@@ -169,14 +156,14 @@ namespace DCL.Chat.ChatReactions
             if (flightController == null) return;
 
             var particles = uiPool.Raw;
-            Vector2 accel2D = flightController.GetSteering2D();
 
             for (int i = 0; i < particles.Length; i++)
             {
                 ref var p = ref particles[i];
                 if (p.alive == 0) continue;
 
-                p.screenVel += accel2D * dt;
+                Vector2 accel = flightController.GetSteering2D(p.age, p.zigZagPhase);
+                p.screenVel += accel * dt;
             }
         }
 
@@ -189,15 +176,24 @@ namespace DCL.Chat.ChatReactions
                 float endSizePx = Rand(ui.SizeRange.x, ui.SizeRange.y);
                 float startSizePx = endSizePx * Rand(SPAWN_SIZE_MIN_RATIO, SPAWN_SIZE_MAX_RATIO);
                 float lifetime = Rand(ui.LifetimeRange.x, ui.LifetimeRange.y);
-                float baseSpeedPx = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
 
-                Vector2 velPx = flightController != null
-                    ? flightController.GetSpawnVelocity2D(baseSpeedPx)
-                    : new Vector2(Rand(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), baseSpeedPx);
+                Vector2 velPx;
+                float phase = 0f;
+
+                if (flightController != null)
+                {
+                    velPx = flightController.GetSpawnVelocity2D();
+                    phase = flightController.GetRandomPhase();
+                }
+                else
+                {
+                    float baseSpeedPx = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
+                    velPx = new Vector2(Rand(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), baseSpeedPx);
+                }
 
                 Vector2 jitter = new Vector2(Rand(-jitterH, jitterH), Rand(-jitterV, jitterV));
 
-                uiPool.Spawn(basePx + jitter, velPx, lifetime, startSizePx, endSizePx, emojiIndex);
+                uiPool.Spawn(basePx + jitter, velPx, lifetime, startSizePx, endSizePx, emojiIndex, phase);
             }
         }
 

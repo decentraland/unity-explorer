@@ -11,6 +11,7 @@ namespace DCL.Chat.ChatReactions
         public float startSizePx;
         public float endSizePx;
         public int emojiIndex;
+        public float zigZagPhase;
         public byte alive;
     }
 }
