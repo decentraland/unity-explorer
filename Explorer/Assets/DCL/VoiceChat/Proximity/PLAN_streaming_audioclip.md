@@ -2,9 +2,9 @@
 
 ## Выбранный подход
 
-**Вариант 6: Mono в LiveKit SDK fork + Manual Angular Panning в OnAudioFilterRead**
+**Ручная спатиализация в `LivekitAudioSource.OnAudioFilterRead`** с итеративным развитием алгоритмов.
 
-Подробный анализ и обоснование — см. [ADR](ADR_streaming_audioclip.md).
+Подробный анализ — см. [ADR](ADR_streaming_audioclip.md).
 
 ---
 
@@ -12,113 +12,149 @@
 
 - Локальный форк LiveKit SDK: `c:\DCL\LiveKit\client-sdk-unity`
 - Удалённый репозиторий: `https://github.com/decentraland/client-sdk-unity.git`
-- Текущая ветка: `chore/rust-audio-for-mac-intel`
-- Unity manifest ссылается на: `com.decentraland.livekit-sdk` → Git URL + branch
+- Ветка SDK: `feat/mono-spatial-audio` (от `chore/rust-audio-for-mac-intel`)
+- Unity manifest (dev): `file:../../../LiveKit/client-sdk-unity`
 
 ---
 
-## Итерация 1: Mono + Zero Pan (проверка теории)
+## Завершённые итерации
 
-Цель: проверить что LiveKit выдаёт чистый моно-сигнал и OnAudioFilterRead без артефактов дублирует его в стерео.
+### Итерация 1: Mono + Zero Pan — ЗАВЕРШЕНА
 
-### Шаг 1: Git — создать ветку в SDK fork
+Моно извлечение из стерео-буфера, дублирование L=R. Без артефактов.
 
-```
-cd c:\DCL\LiveKit\client-sdk-unity
-git fetch origin
-git checkout chore/rust-audio-for-mac-intel
-git checkout -b feat/mono-spatial-audio
-```
+### Итерация 2: Базовый ILD (Equal-Power Pan) — ЗАВЕРШЕНА
 
-### Шаг 2: SDK — добавить mono mode в LivekitAudioSource
+`Pan` property + `ProximityPanCalculator` + equal-power cos/sin. Работает, но резкий скачок pan при проходе сзади.
 
-**Файл:** `Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs`
+---
 
-Изменения:
-1. Добавить `bool _monoMode` поле
-2. Расширить `New()` — принимать параметр `mono`:
-   ```csharp
-   public static LivekitAudioSource New(bool playing = true, bool mono = false)
+## Итерация 3: Fix ILD + 3D углы
+
+**Цель:** Плавный pan при проходе сзади, поддержка elevation (3D).
+
+### SDK (`LivekitAudioSource.cs`)
+
+1. Добавить enum `SpatializationMode` (None, ILD, ITD, ITD_ILD, ParametricHRTF)
+2. Заменить `Pan` property на `SetSpatialAngles(float azimuth, float elevation)` — два float, set main thread, read audio thread
+3. Заменить `monoMode` + pan → `spatializationMode != None` означает mono mode
+4. Добавить Inspector-параметры с `[Header]`:
    ```
-3. Добавить `float[] _monoBuffer` — промежуточный буфер для чтения моно данных
-4. В `OnAudioFilterRead`:
-   - Если `_monoMode = false` → текущая логика без изменений (стерео ReadAudio)
-   - Если `_monoMode = true`:
-     1. Выделить/переиспользовать `_monoBuffer` размером `data.Length / 2`
-     2. `ReadAudio(_monoBuffer, 1, sampleRate)` — запросить 1 канал
-     3. Дублировать: `data[i*2] = _monoBuffer[i]; data[i*2+1] = _monoBuffer[i];`
+   [Header("Spatialization")]
+   SpatializationMode spatializationMode
 
-### Шаг 3: SDK — изменить AudioStream для поддержки моно
+   [Header("ILD — Interaural Level Difference")]
+   float ildStrength = 1.0          // 0..1
 
-**Файл:** `Runtime/Scripts/Rooms/Streaming/Audio/AudioStream.cs`
+   [Header("ITD — Interaural Time Difference")]
+   float headRadius = 0.0875        // метры, 0.05..0.15
 
-Изменения:
-- Убрать хардкод `currentChannels = 2`
-- Принимать `channels` через параметр `ReadAudio(data, channels, sampleRate)`
-- Нативный слой (FFI) запрашивает `channels` каналов
+   [Header("Parametric HRTF — Head Shadow")]
+   float shadowCutoffHz = 1500      // 500..4000
+   float shadowStrength = 0.7       // 0..1
+   float elevationInfluence = 0.5   // 0..1
+   ```
+5. В `OnAudioFilterRead`, ILD ветка:
+   ```
+   pan = sin(azimuth) * cos(elevation) * ildStrength
+   gainL = cos((pan+1)*0.5 * PI/2)
+   gainR = sin((pan+1)*0.5 * PI/2)
+   ```
 
-### Шаг 4: SDK — commit и push
+### Unity (`ProximityPanCalculator.cs`)
 
-```
-git add -A
-git commit -m "feat: add mono mode to LivekitAudioSource for spatial audio panning"
-git push -u origin feat/mono-spatial-audio
-```
-
-### Шаг 5: Unity — обновить manifest.json
-
-**Файл:** `Explorer/Packages/manifest.json`
-
-```json
-"com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#feat/mono-spatial-audio"
-```
-
-Альтернатива для локальной разработки — использовать `file:` протокол:
-```json
-"com.decentraland.livekit-sdk": "file:../../../LiveKit/client-sdk-unity"
-```
-
-### Шаг 6: Unity — ProximityVoiceChatManager
-
-**Файл:** `Explorer/Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs`
-
-Изменения в `CreateSource`:
-- Для `spatial = true`: вызвать `LivekitAudioSource.New(mono: true)` вместо `LivekitAudioSource.New(true)`
-- Убрать создание `SpatialAudioStreamFeeder` (больше не нужен)
-- `source.Construct(stream)` — стандартный путь (моно-режим внутри LivekitAudioSource)
-
-Изменения в `DestroySource`:
-- Убрать cleanup `SpatialAudioStreamFeeder`
-
-Private/Community Voice Chat — без изменений (используют `LivekitAudioSource.New(true)` → стерео по умолчанию).
-
-### Шаг 7: Cleanup
-
-- Удалить `SpatialAudioStreamFeeder.cs` (если больше не нужен)
-- Проверить что нет других ссылок на него
+1. Вычислять azimuth и elevation (радианы) вместо pan:
+   ```
+   local = listenerTransform.InverseTransformDirection(direction)
+   azimuth = Atan2(local.x, local.z)                        // -PI..+PI
+   horizontalDist = sqrt(local.x² + local.z²)
+   elevation = Atan2(local.y, horizontalDist)                // -PI/2..+PI/2
+   livekitAudioSource.SetSpatialAngles(azimuth, elevation)
+   ```
+2. Убрать spatialBlend из расчёта (SDK решает сам)
 
 ### Проверка
 
-- [ ] Аудио чистое, без артефактов (микро-паузы, рваность)
-- [ ] Distance rolloff работает при spatialBlend=1
-- [ ] Private/Community voice chat не сломан (стерео по умолчанию)
-- [ ] L=R одинаковый (нулевой pan) — как отправная точка
+- [ ] Плавный переход pan при проходе источника сзади (нет скачка)
+- [ ] Источник точно сверху/снизу → звук по центру (elevation)
+- [ ] Enum переключается в Inspector → меняется алгоритм в реальном времени
+- [ ] `SpatializationMode.None` → стерео passthrough (обратная совместимость)
 
 ---
 
-## Итерация 2: Angular Panning (следующая)
+## Итерация A: + ITD (Interaural Time Difference)
 
-После подтверждения что моно работает чисто:
+**Цель:** Задержка звука в дальнем ухе. Улучшает пространственное восприятие на низких частотах.
 
-1. Кешировать позицию/ориентацию камеры в `Update()` (main thread → volatile/lock-free переменные для audio thread)
-2. В `OnAudioFilterRead` после чтения моно:
-   - Рассчитать угол: `angle = SignedAngle(camera.forward, sourcePos - cameraPos, camera.up)`
-   - L gain = `cos((angle + 90) * PI / 360)`; R gain = `sin((angle + 90) * PI / 360)`
-   - `data[i*2] = _monoBuffer[i] * leftGain; data[i*2+1] = _monoBuffer[i] * rightGain;`
-3. Вопрос: реализовать в LivekitAudioSource (SDK) или в отдельном компоненте (Unity project)
+### SDK (`LivekitAudioSource.cs`)
+
+1. Добавить кольцевой буфер (delay line) — `float[] delayBuffer`, `int delayWritePos`
+   - Размер: `(int)(headRadius / 343f * sampleRate) * 2 + 2` — максимальная задержка с запасом
+   - Аллоцируется один раз при `OnEnable` или при смене sampleRate
+2. В `OnAudioFilterRead`, ITD ветка:
+   ```
+   delaySamples = headRadius * (azimuth + sin(azimuth)) / (2 * 343) * sampleRate
+   Ухо, к которому источник ближе: без задержки
+   Дальнее ухо: читать из delay line с delaySamples назад
+   Записать текущий sample в delay line
+   ```
+3. Ветка `ITD_ILD`: применить и delay, и gains одновременно
+
+### Проверка
+
+- [ ] ITD: при перемещении источника слева направо ощущается "движение", даже при одинаковой громкости L/R
+- [ ] ITD_ILD: более выраженная локализация чем ILD или ITD по отдельности
+- [ ] Нет артефактов (щелчков, треска) — delay line корректно работает
+- [ ] headRadius slider меняет эффект в реальном времени
 
 ---
 
-## Итерация 3: Camera-Relative Panning (позже)
+## Итерация B: + Parametric HRTF (Head Shadow)
 
-Разделение: позиция AudioListener из головы аватара, ориентация из камеры.
+**Цель:** Моделирование затенения головой — low-pass фильтр на дальнем ухе.
+
+### SDK (`LivekitAudioSource.cs`)
+
+1. Добавить one-pole low-pass filter state: `float lpfStateL, lpfStateR`
+2. Cutoff зависит от угла: `cutoff = lerp(20000, shadowCutoffHz, abs(sin(azimuth)) * shadowStrength)`
+3. Рассчитать коэффициент: `alpha = 1 / (1 + sampleRate / (2 * PI * cutoff))`
+4. В `OnAudioFilterRead`:
+   ```
+   На ближнем ухе: без фильтра
+   На дальнем ухе: y[n] = y[n-1] + alpha * (x[n] - y[n-1])
+   ```
+5. Elevation: `cutoff *= lerp(1, cos(elevation), elevationInfluence)`
+
+### Проверка
+
+- [ ] Звук сбоку/сзади: дальнее ухо заметно "приглушённее" на высоких частотах
+- [ ] Перключение ILD → ITD_ILD → HRTF: заметное улучшение локализации
+- [ ] Нет артефактов при резкой смене углов
+- [ ] Параметры cutoff/strength настраиваются из Inspector
+
+---
+
+## Файлы проекта
+
+### SDK (LiveKit fork)
+
+| Файл | Изменения |
+|------|-----------|
+| `LivekitAudioSource.cs` | `SpatializationMode` enum, `SetSpatialAngles()`, Inspector параметры с Headers, ILD/ITD/HRTF в OnAudioFilterRead |
+
+### Unity project
+
+| Файл | Изменения |
+|------|-----------|
+| `ProximityPanCalculator.cs` | Вычисление azimuth + elevation вместо pan |
+| `ProximityVoiceChatManager.cs` | `mono: spatial` → задать `spatializationMode` |
+| `manifest.json` | `file:` ссылка на локальный SDK (dev) |
+
+---
+
+## Финализация (после всех итераций)
+
+1. Push SDK на GitHub
+2. Переключить `manifest.json` на Git URL
+3. Оценить перенос `ProximityPanCalculator` в ECS для производительности (50+ участников)
+4. Оценить FFI mono оптимизацию (чтение 1 канала из нативного слоя)

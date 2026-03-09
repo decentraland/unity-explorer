@@ -1,6 +1,6 @@
 # ADR: Spatial Audio Pipeline для Proximity Voice Chat
 
-**Status:** Accepted (Вариант 6 — Mono в LiveKit SDK + Manual Angular Panning)  
+**Status:** Implemented (ILD базовый). Итеративное развитие: ILD fix → +ITD → ITD+ILD → Parametric HRTF  
 **Date:** 2026-03-06  
 **Authors:** Voice Chat team  
 **Related:** Итерация 2 из ADR_proximity_voice_chat
@@ -48,122 +48,148 @@
     Reverb Zones (параллельный SEND, не insert)
 ```
 
-**Источники в коде Unity:**
+### Почему panStereo и angular panning не работают
 
-- `panStereo` → `SoundChannel.cpp:UpdateStereoPan()` → `setPan()` → FMOD Head DSP (PRE-DSP)
-- `Volume` → `SoundChannel.cpp:UpdateVolume()` → `setVolume(CachedRolloff × ...)` → POST-DSP
-- `CachedRolloff` → `AudioSource.cpp:ApplyDistanceAttenuation()` → `lerp(1, distanceAttenuation, spatialBlend)`
-- `3D Position` → `AudioSource.cpp:ApplyPositional()` → `set3DAttributes()` → POST-DSP (FMOD 3D mix matrix)
-- `OnAudioFilterRead` → `AudioCustomFilter.cpp:readCallback()` → DSP на m_wetGroup
-- Порядок DSP на m_wetGroup → `AudioSource.cpp:GetOrCreateFilterComponents()` → **порядок компонентов на GameObject**
+- `panStereo` = FMOD Head DSP (этап 3, PRE-DSP) → применяется к тишине (нет клипа), `OnAudioFilterRead` перезаписывает
+- `Angular panning` = FMOD 3D mix matrix (этап 8, POST-DSP) → не панорамирует стерео источники (только моно)
+- `OnAudioFilterRead` всегда работает в стерео (channels=2), LiveKit дублирует моно в L=R → FMOD видит стерео
 
-### Почему panStereo не работает
+### Что работает
 
-`setPan()` = FMOD Head DSP (этап 3) — ДО m_wetGroup. Применяется к тишине (нет клипа), затем `OnAudioFilterRead` (этап 5) перезаписывает буфер.
-
-### Почему angular panning не работает
-
-FMOD's 3D mix matrix (этап 8) — POST-DSP, но поведение зависит от **формата канала**:
-- **Моно** → FMOD распределяет 1 канал по выходам на основе 3D позиции → angular panning
-- **Стерео** → FMOD сохраняет стерео-образ, применяет только distance attenuation → нет angular panning
-
-`OnAudioFilterRead` на m_wetGroup **всегда** работает в стерео (channels=2). LiveKit `AudioStream` запрашивает 2 канала у нативного слоя (`currentChannels = 2` хардкод), моно-голос дублируется в L=R. FMOD видит стерео → нет angular panning.
-
-### Почему distance rolloff работает
-
-`setVolume(CachedRolloff × ...)` (этап 7) — POST-DSP, скалярный, не зависит от формата каналов.
-
-### Что работает и не работает с текущим OnAudioFilterRead
-
-| Функция | Работает? | Почему |
-|---|---|---|
-| Distance rolloff | **Да** | `setVolume` = POST-DSP, скалярный |
-| Angular panning (L/R в 3D) | **Нет** | FMOD 3D mix matrix не панорамирует стерео |
-| panStereo (2D) | **Нет** | Head DSP к тишине (не нужен для proximity) |
-| Audio Effects | **Да** | На m_wetGroup, если после LivekitAudioSource в компонентах |
-| Reverb Zones | **Да** | Параллельный SEND |
+- Distance rolloff (`setVolume`, POST-DSP, скалярный)
+- Audio Effects (на m_wetGroup)
+- Reverb Zones (параллельный SEND)
 
 ---
 
-## Рассмотренные варианты
+## Решение: Ручная спатиализация в OnAudioFilterRead
 
-### Вариант 1: Manual Angular Panning (стерео из LiveKit)
+Поскольку FMOD не может панорамировать стерео-буфер из `OnAudioFilterRead`, реализуем спатиализацию вручную в `LivekitAudioSource` (LiveKit SDK fork). SDK получает 3D-углы от вызывающего кода и применяет алгоритм в `OnAudioFilterRead`.
 
-Оставить стерео LiveKit. В `OnAudioFilterRead` после `ReadAudio(data, 2, ...)` вручную применить L/R balance по углу.
+### Архитектура
 
-**+** Нет buffer underrun, синхронный, простой  
-**-** Нативный слой LiveKit делает лишнюю моно→стерео конверсию; пишем L=R и потом перевзвешиваем — неэффективно
+```
+[Unity Project]                                    [LiveKit SDK fork]
+ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
+  - AudioListener transform                          .SetSpatialAngles(azimuth, elevation)
+  - InverseTransformDirection                         .spatializationMode = enum
+  - azimuth = Atan2(local.x, local.z)
+  - elevation = Atan2(local.y, horizontalDist)        OnAudioFilterRead:
+  - livekitAudioSource.SetSpatialAngles(az, el)         1. ReadAudio(data, channels=2)
+                                                        2. Extract mono (left channel)
+                                                        3. Apply selected algorithm
+```
 
-### Вариант 2: Streaming Mono AudioClip (PCMReaderCallback)
+### Разделение ответственности
 
-`AudioClip.Create(stream: true, channels: 1)` → нативный FMOD angular panning.
+- **SDK** — алгоритмы спатиализации, переключаемые enum в Inspector. Project-agnostic: принимает углы, не знает про камеру/listener
+- **Unity project** — расчёт углов из пространственного контекста (AudioListener → source)
 
-**+** Нативный FMOD panning, все свойства AudioSource работают  
-**-** **Buffer underrun** подтверждён тестированием (микро-паузы, рваный звук). Для fix нужен ring buffer → +20-40мс latency
+### API: углы вместо pan
 
-### Вариант 3: Streaming Mono AudioClip в форке SDK
+Передаём `azimuth` и `elevation` (радианы), а не `pan` (-1..+1), потому что:
+- Игра 3D — игроки на разных высотах, elevation нужен
+- ITD и HRTF требуют угол, а не pan value
+- Каждый алгоритм сам решает как интерпретировать угол
 
-То же что Вариант 2, инкапсулировано в `LivekitAudioSource`.
+### Ограничение: AudioStream.ReadAudio с channels=1
 
-**+** Чище API  
-**-** Те же проблемы buffer underrun + поддержка форка
-
-### Вариант 4: Mono Silent Clip + OnAudioFilterRead
-
-Назначить моно silent clip → FMOD создаёт моно канал → `OnAudioFilterRead` получает channels=1 (гипотеза).
-
-**+** Минимальные изменения  
-**-** Не проверено; m_wetGroup вероятно форсит стерео → channels=2 → не сработает
-
-### Вариант 5: Native Spatializer Plugin
-
-Нативный C/C++ плагин.
-
-**+** Максимальный контроль  
-**-** Overkill; кросс-платформенная сборка; огромный объём работы
-
-### Вариант 6: Mono в LiveKit SDK + Manual Angular Panning (ВЫБРАН)
-
-В форке LiveKit SDK: `LivekitAudioSource` читает **моно** из нативного слоя и **сам** распределяет по L/R каналам стерео-буфера `OnAudioFilterRead` с angular panning.
-
-**+** Нет buffer underrun (синхронный OnAudioFilterRead)  
-**+** Нативный слой не делает лишнюю моно→стерео конверсию  
-**+** Буфер LiveKit в 2 раза меньше (моно)  
-**+** FFI передаёт в 2 раза меньше данных  
-**+** Полный контроль: panning привязывается к камере напрямую  
-**+** Distance rolloff, Audio Effects, Reverb Zones работают нативно  
-**+** Обратная совместимость: `mono` параметр opt-in, стерео по умолчанию  
-**-** Ручная реализация pan law (простая тригонометрия, приемлемо для voice chat)  
-**-** Кеширование позиций с main thread для audio thread  
-**-** Не совместимо с custom Spatializer Plugins (не нужны для proximity)
+`ReadAudio(data, 1, sampleRate)` на audio thread вызывает crash (AudioStream пересоздание → `persistentDataPath`, main-thread-only). Читаем стерео и извлекаем моно клиентски.
 
 ---
 
-## Decision
+## Стратегия итеративного развития алгоритмов
 
-**Вариант 6: Mono в LiveKit SDK fork + Manual Angular Panning.**
+Инкрементальный путь с полной преемственностью. Каждая итерация добавляет эффект поверх предыдущих. Переключение через enum в Inspector для A/B сравнения.
 
-### Итерация 1 (текущая): Mono + Zero Pan
+### 1. ILD — Interaural Level Difference (текущий, требует fix)
 
-Цель — проверить теорию. В форке SDK:
-- `LivekitAudioSource.New(mono: true)` читает моно из `AudioStream`
-- В `OnAudioFilterRead` дублирует моно в L=R (нулевой pan)
-- Никакого angular panning — только проверка что аудио работает чисто без артефактов
+Разница громкости между ушами. Equal-power pan law (cos/sin).
 
-### Итерация 2 (следующая): Angular Panning
+**Текущая проблема:** `Atan2(local.x, local.z) / (PI*0.5)` + clamp — резкий скачок pan с +1 на -1 при переходе источника через "сзади".
 
-- Добавить расчёт угла camera → source
-- Применить L/R gains в `OnAudioFilterRead`
+**Fix:** Использовать `sin(azimuth)` вместо clamp:
+- front-right (45°): sin = 0.707 → правее
+- right (90°): sin = 1.0 → полностью вправо
+- back-right (135°): sin = 0.707 → правее (уже тише)
+- back (180°): sin = 0.0 → центр
+- Плавный переход, нет скачков
 
-### Итерация 3 (позже): Camera-Relative Panning
+**3D:** `pan = sin(azimuth) * cos(elevation)` — при источнике сверху/снизу ILD уменьшается (оба уха одинаково).
 
-Пан относительно камеры: позиция от аватара, ориентация от камеры.
+**Параметры Inspector:** `ildStrength` (0..1)
+
+### 2. + ITD — Interaural Time Difference
+
+Задержка звука в дальнем ухе. Мозг использует ITD для локализации на низких частотах (<1.5kHz).
+
+**Физика:** max ITD = headRadius / speedOfSound ≈ 0.0875m / 343m/s ≈ 0.255ms ≈ ~12 сэмплов при 48kHz.
+
+**Реализация:** Кольцевой буфер (delay line) в OnAudioFilterRead. Задержка = `headRadius * (azimuth + sin(azimuth)) / (2 * speedOfSound)` (формула Вудворта для сферической головы).
+
+**Параметры Inspector:** `headRadius` (0.05..0.15, default 0.0875)
+
+**Buffer underrun?** Нет — delay line внутри OnAudioFilterRead, не PCMReaderCallback. Данные уже в буфере.
+
+### 3. ITD + ILD (комбинация)
+
+Оба эффекта вместе. ITD на низких частотах + ILD на высоких — дополняют друг друга.
+
+**Параметры Inspector:** headRadius + ildStrength
+
+### 4. + Parametric HRTF
+
+Упрощённый HRTF без таблиц. Моделирует затенение головой (head shadow) через low-pass фильтр на дальнем ухе.
+
+**Реализация:** One-pole low-pass filter на contralateral ear. Частота среза зависит от угла — чем больше угол, тем ниже cutoff (голова экранирует ВЧ).
+
+**Параметры Inspector:**
+- `shadowCutoffHz` (500..4000, default 1500) — минимальный cutoff при 90°
+- `shadowStrength` (0..1) — сила эффекта
+- `elevationInfluence` (0..1) — влияние elevation на фильтрацию
+
+**Преемственность:** ITD (delay) + ILD (level) + head shadow (filter) = три канала пространственного восприятия. Не полный HRTF с PRTF-таблицами пинны, но значительно лучше чистого ILD.
+
+### Сводная таблица
+
+| Алгоритм | Что моделирует | CPU cost | Качество | Преемственность |
+|---|---|---|---|---|
+| ILD | Разница громкости L/R | Минимальный | Базовый pan | Основа для всех |
+| ITD | Задержка дальнего уха | +delay line ~12 samples | Улучшенная локализация | Добавляется к ILD |
+| ITD+ILD | Оба | = ITD + ILD | Хорошая локализация | Комбинация |
+| Parametric HRTF | +Head shadow (ВЧ фильтр) | +one-pole filter | Заметно лучше | Добавляется к ITD+ILD |
+
+### Enum для переключения
+
+```csharp
+public enum SpatializationMode
+{
+    None,            // Стерео passthrough (обратная совместимость)
+    ILD,             // Equal-power pan (sin(azimuth) * cos(elevation))
+    ITD,             // Только задержка (без разницы громкости — для теста)
+    ITD_ILD,         // Задержка + громкость
+    ParametricHRTF   // Задержка + громкость + head shadow filter
+}
+```
 
 ---
 
 ## Camera-Relative Panning
 
-Требование: в 3rd person пан относительно камеры, не аватара. При повороте аватара на 180° при неподвижной камере — звук остаётся "слева в кадре".
+Требование: в 3rd person пан относительно камеры. При повороте аватара на 180° при неподвижной камере — звук остаётся "слева в кадре".
 
-**Итерация 1:** Используем позицию камеры для расчёта угла (простой подход).  
-**Итерация 2+:** Разделяем — позиция из головы аватара, ориентация из камеры.
+**Текущая реализация:** `ProximityPanCalculator` использует `AudioListener.transform`. Если listener на камере, panning уже camera-relative.
+
+**Будущее:** Позиция из головы аватара (distance rolloff), ориентация из камеры (panning).
+
+---
+
+## Завершённые итерации
+
+### Итерация 1: Mono + Zero Pan — ЗАВЕРШЕНА
+
+`LivekitAudioSource.New(mono: true)` — читает стерео, извлекает L канал, дублирует L=R. Аудио чистое.
+
+### Итерация 2: Angular Panning (базовый ILD) — ЗАВЕРШЕНА
+
+`Pan` property (-1..+1) + equal-power pan law. `ProximityPanCalculator` вычисляет pan через `Atan2` + clamp. Работает, но резкий скачок при проходе источника сзади.
