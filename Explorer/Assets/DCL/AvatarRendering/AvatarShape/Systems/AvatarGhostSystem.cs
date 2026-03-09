@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
 
-            if (AvatarGhostComponent.DEBUG_FREEZE_GHOST) return;
+            //if (AvatarGhostComponent.DEBUG_FREEZE_GHOST) return;
 
             if (!avatarShapeComponent.IsReady) return;
 
