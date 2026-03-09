@@ -26,6 +26,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private Profile? copyOfOwnProfile;
+        private bool isProfileUpdatePending;
 
         public Profile? OwnProfile { get; private set; }
 
@@ -87,7 +88,7 @@ namespace DCL.Profiles.Self
             if (OwnProfile == null || profile.Version > OwnProfile.Version)
                 OwnProfile = profile;
 
-            if (copyOfOwnProfile == null || profile.Version > copyOfOwnProfile.Version)
+            if (!isProfileUpdatePending && (copyOfOwnProfile == null || profile.Version > copyOfOwnProfile.Version))
             {
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(profile).Build();
@@ -153,12 +154,17 @@ namespace DCL.Profiles.Self
                 if (savedProfile != null)
                 {
                     profileCache.Set(savedProfile.UserId, savedProfile);
+                    isProfileUpdatePending = false;
                     copyOfOwnProfile?.Dispose();
                     copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
                 }
 
                 return savedProfile;
             }
+
+            // Prevent concurrent ProfileAsync calls (e.g. from ProfileBroadcast) from overwriting
+            // copyOfOwnProfile with the unconfirmed optimistic cache entry
+            isProfileUpdatePending = true;
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
@@ -190,6 +196,7 @@ namespace DCL.Profiles.Self
                 // breaking the avatar and the backpack
                 profileCache.Set(savedProfile.UserId, savedProfile);
                 UpdateAvatarInWorld(savedProfile!);
+                isProfileUpdatePending = false;
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
                 return savedProfile;
@@ -218,6 +225,7 @@ namespace DCL.Profiles.Self
 
         private void InvalidateOwnProfile()
         {
+            isProfileUpdatePending = false;
             copyOfOwnProfile = null;
             OwnProfile = null;
             // We also need to clear the owned nfts since they need to be re-initialized, otherwise we might end up with wrong nftIds (last part of the urn chunks)
