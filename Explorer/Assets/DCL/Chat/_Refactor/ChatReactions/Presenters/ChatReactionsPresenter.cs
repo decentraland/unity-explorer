@@ -1,6 +1,5 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
-using DCL.Chat.Reactions;
 using DCL.Emoji;
 using UnityEngine;
 

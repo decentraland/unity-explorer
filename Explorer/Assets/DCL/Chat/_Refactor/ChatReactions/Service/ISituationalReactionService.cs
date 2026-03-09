@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.Reactions
+namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Public contract for triggering GPU-instanced emoji burst reactions.
@@ -29,5 +29,17 @@ namespace DCL.Chat.Reactions
 
         /// <summary>Toggle continuous emission on/off from a source rect.</summary>
         void ToggleUIStream(RectTransform sourceRect);
+
+        /// <summary>
+        /// Spawn a burst of emoji particles rising from <paramref name="worldPos"/> in world space
+        /// (e.g. above an avatar's head). The position must be pre-resolved by the caller.
+        /// </summary>
+        void TriggerWorldReaction(Vector3 worldPos, int emojiIndex, int count);
+
+        /// <summary>
+        /// Spawns a burst above the avatar identified by <paramref name="walletId"/>.
+        /// No-op if the avatar is not in the scene or the world simulation is inactive.
+        /// </summary>
+        void TriggerWorldReactionForAvatar(string walletId, int emojiIndex, int count);
     }
 }
