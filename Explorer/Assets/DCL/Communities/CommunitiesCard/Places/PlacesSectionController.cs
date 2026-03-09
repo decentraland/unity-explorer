@@ -231,7 +231,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             {
                 if (Guid.TryParse(id, out _))
                     uuidIds.Add(id);
-                else if (id.EndsWith(".dcl.eth", StringComparison.OrdinalIgnoreCase))
+                else if (id.EndsWith(".eth", StringComparison.OrdinalIgnoreCase)) // covers both DCL names (name.dcl.eth) and ENS names (name.eth)
                     worldNames.Add(id);
             }
 
