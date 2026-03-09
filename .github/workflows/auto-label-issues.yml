@@ -24,6 +24,7 @@ jobs:
       - name: AI label analysis
         uses: anthropics/claude-code-action@v1
         with:
+          allowed_bots: "sentry"
           prompt: |
             You are an issue triage assistant. Your ONLY action is to apply labels — do NOT post any comments.
 
