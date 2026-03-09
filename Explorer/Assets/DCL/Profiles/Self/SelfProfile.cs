@@ -175,7 +175,9 @@ namespace DCL.Profiles.Self
             try
             {
                 await profileRepository.SetAsync(newProfile, ct);
+
                 Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, expectedVersion, ct,
+
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
                     false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
@@ -186,7 +188,6 @@ namespace DCL.Profiles.Self
                 // breaking the avatar and the backpack
                 profileCache.Set(savedProfile.UserId, savedProfile);
                 UpdateAvatarInWorld(savedProfile!);
-                isProfileUpdatePending = false;
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
                 return savedProfile;
@@ -202,8 +203,11 @@ namespace DCL.Profiles.Self
                 profileCache.Set(oldProfile.UserId, oldProfile);
                 UpdateAvatarInWorld(oldProfile);
                 OwnProfile = oldProfile;
-                isProfileUpdatePending = false;
                 throw;
+            }
+            finally
+            {
+                isProfileUpdatePending = false;
             }
         }
 
