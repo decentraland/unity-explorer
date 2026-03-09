@@ -77,7 +77,7 @@ namespace Global.AppArgs
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
+                ReportHub.LogWarning(ReportCategory.STARTUP,$"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
             }
 
             try
@@ -105,7 +105,7 @@ namespace Global.AppArgs
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WebGL] Failed to parse URL query for '{GENESIS_SCENE_QUERY_PARAM}': {e.Message}");
+                ReportHub.LogWarning(ReportCategory.STARTUP,$"[WebGL] Failed to parse URL query for '{GENESIS_SCENE_QUERY_PARAM}': {e.Message}");
             }
         }
 #endif
