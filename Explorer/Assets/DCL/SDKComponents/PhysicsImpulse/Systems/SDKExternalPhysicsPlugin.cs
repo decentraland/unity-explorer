@@ -18,7 +18,11 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             this.globalPlayerEntity = globalPlayerEntity;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            SDKExternalPhysicsSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.SceneStateProvider);
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+            var system = SDKExternalPhysicsSystems.InjectToWorld(ref builder, globalWorld, globalPlayerEntity, sharedDependencies.SceneStateProvider);
+            sceneIsCurrentListeners.Add(system);
+            finalizeWorldSystems.Add(system);
+        }
     }
 }

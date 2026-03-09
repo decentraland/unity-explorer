@@ -13,7 +13,6 @@ namespace DCL.Character.CharacterMotion
             if (characterPhysics.ExternalForce.sqrMagnitude < float.Epsilon)
             {
                 characterPhysics.ExternalAcceleration = Vector3.zero;
-                characterPhysics.ExternalForce = Vector3.zero;
                 return;
             }
 
@@ -23,8 +22,6 @@ namespace DCL.Character.CharacterMotion
             // v += a * dt (Vertical acceleration is read by ApplyGravity via ExternalAcceleration.y)
             characterPhysics.ExternalVelocity.x += characterPhysics.ExternalAcceleration.x * dt;
             characterPhysics.ExternalVelocity.z += characterPhysics.ExternalAcceleration.z * dt;
-
-            characterPhysics.ExternalForce = Vector3.zero;
         }
     }
 }

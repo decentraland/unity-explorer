@@ -48,7 +48,7 @@ namespace DCL.CharacterMotion.Components
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
 
-        // Net external force acting on the character this frame (cleared after applying)
+        // Net external force acting on the character (persistent while source is active, managed by the writer's lifecycle)
         public Vector3 ExternalForce;
 
         // Computed acceleration from ExternalForce (a = F / mass), per-frame
