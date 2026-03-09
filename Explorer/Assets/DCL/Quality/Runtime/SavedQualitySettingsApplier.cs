@@ -14,7 +14,7 @@ namespace DCL.Quality.Runtime
             public int FpsLimit;
             public bool VSync;
             public float ResolutionScale;
-            public bool Msaa;
+            public MsaaLevel Msaa;
             public bool Hdr;
             public bool Bloom;
             public bool AvatarOutline;
@@ -45,7 +45,7 @@ namespace DCL.Quality.Runtime
                 FpsLimit = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_FPS_LIMIT, basePresetData.FpsLimit),
                 VSync = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_VSYNC, basePresetData.VSyncEnabled ? 1 : 0) == 1,
                 ResolutionScale = DCLPlayerPrefs.GetFloat(DCLPrefKeys.PS_RESOLUTION_SCALE, basePresetData.ResolutionScale),
-                Msaa = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MSAA, basePresetData.MsaaEnabled ? 1 : 0) == 1,
+                Msaa = EnumUtils.FromInt<MsaaLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MSAA, EnumUtils.ToInt(basePresetData.MsaaLevel))),
                 Hdr = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_HDR_NEW, basePresetData.HdrEnabled ? 1 : 0) == 1,
                 Bloom = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_BLOOM, basePresetData.BloomEnabled ? 1 : 0) == 1,
                 AvatarOutline = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_AVATAR_OUTLINE, basePresetData.AvatarOutlineEnabled ? 1 : 0) == 1,

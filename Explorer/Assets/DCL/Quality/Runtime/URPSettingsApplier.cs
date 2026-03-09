@@ -10,15 +10,15 @@ namespace DCL.Quality.Runtime
     /// </summary>
     internal static class URPSettingsApplier
     {
-        public static void ApplyMsaa(UniversalRenderPipelineAsset urpAsset, bool enabled)
+        public static void ApplyMsaa(UniversalRenderPipelineAsset urpAsset, MsaaLevel level)
         {
-            urpAsset.msaaSampleCount = enabled ? 4 : 1;
+            urpAsset.msaaSampleCount = level.ToSampleCount();
         }
 
-        public static void ApplyMsaa(bool enabled)
+        public static void ApplyMsaa(MsaaLevel level)
         {
             foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ApplyMsaa((UniversalRenderPipelineAsset)pipeline, enabled);
+                ApplyMsaa((UniversalRenderPipelineAsset)pipeline, level);
         }
 
         public static void ApplyHdr(UniversalRenderPipelineAsset urpAsset, bool enabled)
@@ -30,6 +30,14 @@ namespace DCL.Quality.Runtime
         {
             foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
                 ApplyHdr((UniversalRenderPipelineAsset)pipeline, enabled);
+        }
+
+        public static void ApplyBloom(bool enabled)
+        {
+            if(profile == null)
+                return;
+            if(profile.TryGet(out Bloom bloom))
+                bloom.active = enabled;
         }
 
         public static void ApplyResolutionScale(UniversalRenderPipelineAsset urpAsset, float scale)
@@ -76,6 +84,11 @@ namespace DCL.Quality.Runtime
                 ApplyShadows((UniversalRenderPipelineAsset)pipeline, config, distanceLevel);
         }
 
+        public static void ApplyResolution(int width, int height, FullScreenMode screenMode, RefreshRate refreshRate)
+        {
+            Screen.SetResolution(width, height, screenMode, refreshRate);
+        }
+
         public static void ApplySceneLights(bool sceneLightsEnabled, int maxSceneLights) { }
 
         public static void ApplyRendererFeature<T>(IRendererFeaturesCache cache, bool enabled) where T : ScriptableRendererFeature
@@ -92,5 +105,11 @@ namespace DCL.Quality.Runtime
                 ShadowDistanceLevel.Far => 100f,
                 _ => 60f,
             };
+
+        private static VolumeProfile profile;
+        public static void InjectVolume(VolumeProfile profile)
+        {
+            URPSettingsApplier.profile = profile;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace DCL.Quality.Runtime
 {
@@ -13,9 +14,12 @@ namespace DCL.Quality.Runtime
         int FpsLimit { get; }
         bool VSync { get; }
         float ResolutionScale { get; }
+        int ResolutionWidth { get; }
+        int ResolutionHeight { get; }
+        RefreshRate ResolutionRefreshRate { get; }
 
         // Post Processing
-        bool Msaa { get; }
+        MsaaLevel Msaa { get; }
         bool Hdr { get; }
         bool Bloom { get; }
         bool AvatarOutline { get; }
@@ -46,9 +50,10 @@ namespace DCL.Quality.Runtime
         void SetFpsLimit(int fps);
         void SetVSync(bool enabled);
         void SetResolutionScale(float scale);
+        void SetResolution(int width, int height, RefreshRate refreshRate);
 
         // Post Processing
-        void SetMsaa(bool enabled);
+        void SetMsaa(MsaaLevel level);
         void SetHdr(bool enabled);
         void SetBloom(bool enabled);
         void SetAvatarOutline(bool enabled);

@@ -80,7 +80,7 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
-                SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
+                SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, qualitySettingsController),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(),
             };

@@ -438,7 +438,7 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
-            QualitySettingsController qualitySettingsController = new QualitySettingsController(settings.QualityPresets);
+            QualitySettingsController qualitySettingsController = new QualitySettingsController(settings.QualityPresets, upscalingController, settings.RealmPartitionSettings, appArgs);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),

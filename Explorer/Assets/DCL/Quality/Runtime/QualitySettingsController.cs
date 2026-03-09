@@ -1,5 +1,10 @@
 using System;
 using DCL.Prefs;
+using DCL.Utilities;
+using ECS.Prioritization;
+using Global.AppArgs;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using Utility;
 
 namespace DCL.Quality.Runtime
@@ -12,7 +17,10 @@ namespace DCL.Quality.Runtime
         public int FpsLimit { get; private set; }
         public bool VSync { get; private set; }
         public float ResolutionScale { get; private set; }
-        public bool Msaa { get; private set; }
+        public int ResolutionWidth { get; private set; }
+        public int ResolutionHeight { get; private set; }
+        public RefreshRate ResolutionRefreshRate { get; private set; }
+        public MsaaLevel Msaa { get; private set; }
         public bool Hdr { get; private set; }
         public bool Bloom { get; private set; }
         public bool AvatarOutline { get; private set; }
@@ -26,11 +34,19 @@ namespace DCL.Quality.Runtime
         public ShadowDistanceLevel ShadowDistance { get; private set; }
 
         private readonly QualityPresetsAsset presetsAsset;
+        private readonly UpscalingController upscalingController;
+        private readonly RealmPartitionSettingsAsset realmPartitionAsset;
+        private readonly IAppArgs appArgs;
         private QualityPresetData presetData;
 
-        public QualitySettingsController(QualityPresetsAsset presetsAsset)
+        public QualitySettingsController(QualityPresetsAsset presetsAsset, UpscalingController upscalingController, RealmPartitionSettingsAsset realmPartitionAsset, IAppArgs appArgs)
         {
+            UnityEngine.Debug.Log("Alex: creating Quality Settings Controller");
+
             this.presetsAsset = presetsAsset;
+            this.upscalingController = upscalingController;
+            this.realmPartitionAsset = realmPartitionAsset;
+            this.appArgs = appArgs;
 
             QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
@@ -44,6 +60,8 @@ namespace DCL.Quality.Runtime
             {
                 SetPreset(savedPreset);
             }
+
+            LoadSavedResolution(); // Resolution is set aside from other saved values because it's not tied to presets.
         }
 
         public void SetPreset(QualityPresetLevel level)
@@ -60,6 +78,7 @@ namespace DCL.Quality.Runtime
 
             CurrentPreset = level;
             presetData = preset;
+
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(level));
 
             DeleteCustomSettings();
@@ -67,7 +86,7 @@ namespace DCL.Quality.Runtime
             FpsLimit = preset.FpsLimit;
             VSync = preset.VSyncEnabled;
             ResolutionScale = preset.ResolutionScale;
-            Msaa = preset.MsaaEnabled;
+            Msaa = preset.MsaaLevel;
             Hdr = preset.HdrEnabled;
             Bloom = preset.BloomEnabled;
             AvatarOutline = preset.AvatarOutlineEnabled;
@@ -87,8 +106,10 @@ namespace DCL.Quality.Runtime
         public void ApplyAllSettings()
         {
             URPSettingsApplier.ApplyVSync(VSync, FpsLimit);
-            URPSettingsApplier.ApplyResolutionScale(ResolutionScale);
+            upscalingController.UpdateUpscaling(ResolutionScale);
+
             URPSettingsApplier.ApplyMsaa(Msaa);
+            URPSettingsApplier.ApplyBloom(Bloom);
             URPSettingsApplier.ApplyHdr(Hdr);
             URPSettingsApplier.ApplySceneLights(SceneLights, MaxSceneLights);
 
@@ -116,15 +137,51 @@ namespace DCL.Quality.Runtime
             ResolutionScale = scale;
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.PS_RESOLUTION_SCALE, scale);
             SwitchToCustom();
-            URPSettingsApplier.ApplyResolutionScale(scale);
+            upscalingController.UpdateUpscaling(ResolutionScale);
         }
 
-        public void SetMsaa(bool enabled)
+        public void SetResolution(int width, int height, RefreshRate refreshRate)
         {
-            Msaa = enabled;
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_MSAA, enabled ? 1 : 0);
+            ResolutionWidth = width;
+            ResolutionHeight = height;
+            ResolutionRefreshRate = refreshRate;
+
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_WIDTH, width);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_HEIGHT, height);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_NUM, (int)refreshRate.numerator);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_DEN, (int)refreshRate.denominator);
+
+            FullScreenMode screenMode = GetTargetScreenMode();
+            URPSettingsApplier.ApplyResolution(width, height, screenMode, refreshRate);
+        }
+
+        private FullScreenMode GetTargetScreenMode()
+        {
+            if (appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE))
+                return FullScreenMode.Windowed;
+
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
+            {
+                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+
+                return index switch
+                {
+                    0 => FullScreenMode.Windowed,
+                    1 => FullScreenMode.FullScreenWindow,
+                    2 => FullScreenMode.ExclusiveFullScreen,
+                    _ => FullScreenMode.FullScreenWindow,
+                };
+            }
+
+            return FullScreenMode.FullScreenWindow;
+        }
+
+        public void SetMsaa(MsaaLevel level)
+        {
+            Msaa = level;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_MSAA, EnumUtils.ToInt(level));
             SwitchToCustom();
-            URPSettingsApplier.ApplyMsaa(enabled);
+            URPSettingsApplier.ApplyMsaa(level);
         }
 
         public void SetHdr(bool enabled)
@@ -140,6 +197,7 @@ namespace DCL.Quality.Runtime
             Bloom = enabled;
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_BLOOM, enabled ? 1 : 0);
             SwitchToCustom();
+            URPSettingsApplier.ApplyBloom(enabled);
         }
 
         public void SetAvatarOutline(bool enabled)
@@ -207,6 +265,20 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, EnumUtils.ToInt(level));
             SwitchToCustom();
             URPSettingsApplier.ApplyShadows(GetCurrentShadowConfig(), ShadowDistance);
+        }
+
+        private void LoadSavedResolution()
+        {
+            if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.PS_RESOLUTION_WIDTH))
+                return;
+
+            ResolutionWidth = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_WIDTH);
+            ResolutionHeight = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_HEIGHT);
+            ResolutionRefreshRate = new RefreshRate
+            {
+                numerator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_NUM),
+                denominator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_DEN, 1),
+            };
         }
 
         private void SwitchToCustom()

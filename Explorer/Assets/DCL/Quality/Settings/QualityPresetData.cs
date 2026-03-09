@@ -9,10 +9,10 @@ namespace DCL.Quality
         [Header("Display")]
         [SerializeField] internal int fpsLimit;
         [SerializeField] internal bool vSyncEnabled;
-        [SerializeField] [Range(0.1f, 1f)] internal float resolutionScale = 1f;
+        [SerializeField] [Range(0.1f, 1.2f)] internal float resolutionScale = 1f;
 
         [Header("Post Processing")]
-        [SerializeField] internal bool msaaEnabled;
+        [SerializeField] internal MsaaLevel msaaLevel = MsaaLevel.Off;
         [SerializeField] internal bool hdrEnabled;
         [SerializeField] internal bool bloomEnabled;
         [SerializeField] internal bool avatarOutlineEnabled;
@@ -41,7 +41,7 @@ namespace DCL.Quality
         public int FpsLimit => fpsLimit;
         public bool VSyncEnabled => vSyncEnabled;
         public float ResolutionScale => resolutionScale;
-        public bool MsaaEnabled => msaaEnabled;
+        public MsaaLevel MsaaLevel => msaaLevel;
         public bool HdrEnabled => hdrEnabled;
         public bool BloomEnabled => bloomEnabled;
         public bool AvatarOutlineEnabled => avatarOutlineEnabled;

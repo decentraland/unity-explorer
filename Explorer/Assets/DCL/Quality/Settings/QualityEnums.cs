@@ -35,4 +35,25 @@ namespace DCL.Quality
         Medium = 1,
         Far = 2,
     }
+
+    public enum MsaaLevel
+    {
+        Off = 0,
+        X2 = 1,
+        X4 = 2,
+        X8 = 3,
+    }
+
+    public static class MsaaLevelExtensions
+    {
+        public static int ToSampleCount(this MsaaLevel level) =>
+            level switch
+            {
+                MsaaLevel.Off => 0,
+                MsaaLevel.X2 => 2,
+                MsaaLevel.X4 => 4,
+                MsaaLevel.X8 => 8,
+                _ => 0,
+            };
+    }
 }

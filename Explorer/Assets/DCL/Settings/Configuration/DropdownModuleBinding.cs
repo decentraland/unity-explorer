@@ -39,8 +39,8 @@ namespace DCL.Settings.Configuration
             CHAT_DMS_MODES_FEATURE,
             CHAT_BUBBLES_MODES_FEATURE,
             VOICECHAT_INPUT_DEVICE,
-            CHAT_TRANSLATE_FEATURE
-
+            CHAT_TRANSLATE_FEATURE,
+            MSAA_FEATURE
             // add other features...
         }
 
@@ -80,7 +80,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController, appParameters),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, appParameters),
                 DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
@@ -105,6 +105,7 @@ namespace DCL.Settings.Configuration
                     chatSettingsAsset,
                     isTranslationChatEnabled,
                     eventBus),
+                DropdownFeatures.MSAA_FEATURE => new MSAASettingsController(viewInstance, qualitySettingsController),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

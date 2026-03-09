@@ -8,10 +8,10 @@ namespace DCL.Settings.ModuleControllers
     public class GraphicsVSyncController : SettingsFeatureController
     {
         private readonly SettingsToggleModuleView view;
-        private readonly QualitySettingsController qualitySettingsController;
+        private readonly IQualitySettingsController qualitySettingsController;
         private SettingsFeatureController fpsLimitController;
 
-        public GraphicsVSyncController(SettingsToggleModuleView view, QualitySettingsController qualitySettingsController)
+        public GraphicsVSyncController(SettingsToggleModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
             this.qualitySettingsController = qualitySettingsController;

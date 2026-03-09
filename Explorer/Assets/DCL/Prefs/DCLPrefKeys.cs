@@ -53,6 +53,10 @@ namespace DCL.Prefs
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_RESOLUTION_WIDTH = "QS_ResolutionWidth";
+        public const string PS_RESOLUTION_HEIGHT = "QS_ResolutionHeight";
+        public const string PS_RESOLUTION_REFRESH_NUM = "QS_ResolutionRefreshNum";
+        public const string PS_RESOLUTION_REFRESH_DEN = "QS_ResolutionRefreshDen";
 
         public const string SETTINGS_VSYNC_ENABLED = "Settings_VSync";
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
@@ -66,7 +70,7 @@ namespace DCL.Prefs
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
-        public const string SETTINGS_RESOLUTION = "Settings_Resolution";
+
         public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";

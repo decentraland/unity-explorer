@@ -31,9 +31,18 @@ MonoBehaviour:
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
-      - rid: 2404945435829993577
-      - rid: 2404945435829993579
+      - rid: 2404945502817747114
       - rid: 2404945502817747041
+      - rid: 2404945502817747108
+      - rid: 2404945435829993579
+    - <GroupTitle>k__BackingField: Post Processing
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 2404945502817747070
+      - rid: 2404945502817747082
+      - rid: 2404945502817747083
+      - rid: 2404945502817747084
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -113,22 +122,6 @@ MonoBehaviour:
           - All Chats
           defaultOptionIndex: 2
         <Feature>k__BackingField: 10
-    - rid: 2404945435829993577
-      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <FeatureId>k__BackingField: 0
-        <View>k__BackingField:
-          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: VS Sync
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          defaultIsOn: 0
-        <Feature>k__BackingField: 1
     - rid: 2404945435829993579
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -157,7 +150,7 @@ MonoBehaviour:
       data:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
-          m_AssetGUID: 
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -172,6 +165,119 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 10
         <Feature>k__BackingField: 10
+    - rid: 2404945502817747070
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: MSAA
+          <Description>k__BackingField: Smooths out jagged edges on objects and surfaces.
+            Turning this on improves visual quality but uses additional GPU resources.
+            Disable this if you are experiencing low frame rates.
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 13
+    - rid: 2404945502817747082
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: HDR
+          <Description>k__BackingField: Enhances the range of colours and brightness
+            in the scene, making lights brighter and shadows deeper. Produces a more
+            visually realistic image. Disable this on lower-end devices to improve
+            performance.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 4
+    - rid: 2404945502817747083
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Bloom
+          <Description>k__BackingField: Adds a soft glow effect around bright light
+            sources, mimicking how real eyes perceive intense light. This is a purely
+            visual effect turning it off has no impact on gameplay but can improve
+            performance on weaker devices.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 5
+    - rid: 2404945502817747084
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Avatar Outline
+          <Description>k__BackingField: Enables a stylised toon-shading effect on
+            avatars. Disable this for a more realistic avatar appearance and a minor
+            performance gain.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 6
+    - rid: 2404945502817747108
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: VSync
+          <Description>k__BackingField: VSync synchronises the game's frame rate
+            with your monitor's refresh rate, reducing screen tearing. A higher FPS
+            cap makes movement feel smoother but requires more processing power.
+            If your device runs hot or slow, try lowering the FPS limit.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 1
+    - rid: 2404945502817747114
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Resolution
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 3
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

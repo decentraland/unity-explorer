@@ -31,6 +31,9 @@ namespace DCL.Settings.Configuration
             GRAPHICS_VSYNC_TOGGLE_FEATURE,
             HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
             HEAD_SYNC_FEATURE,
+            HDR_FEATURE,
+            BLOOM_FEATURE,
+            AVATAR_OUTLINE_FEATURE,
             // add other features...
         }
 
@@ -64,6 +67,9 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
+                ToggleFeatures.HDR_FEATURE => new HdrSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.BLOOM_FEATURE => new BloomSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.AVATAR_OUTLINE_FEATURE => new AvatarOutlineSettingsController(viewInstance, qualitySettingsController),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
