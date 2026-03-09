@@ -26,13 +26,17 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private const string EMPTY_JSON = "{}";
 
+        private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
+
+        private static volatile RustSegmentAnalyticsService? current;
+
+
         private readonly string anonId;
         private volatile string? cachedUserId;
 
         private readonly Dictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
-
-        private static volatile RustSegmentAnalyticsService? current;
+        private readonly CancellationTokenSource cancellationTokenSource;
 
         private long trackId;
         private long flushId;
@@ -56,13 +60,29 @@ namespace Plugins.RustSegment.SegmentServerWrap
             if (result == false)
                 throw new Exception("Rust Segment initialization failed");
 
+            this.cancellationTokenSource = new CancellationTokenSource();
+            PumpJobAsync(this.cancellationTokenSource).Forget();
+
             ReportHub.Log(ReportCategory.ANALYTICS, "Rust Segment initialized");
             current = this;
+        }
+
+        private static async UniTaskVoid PumpJobAsync(CancellationTokenSource cts)
+        {
+            while (cts.IsCancellationRequested == false)
+            {
+                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
+                if (result > 0) continue; // instantly jump to new iteration;
+                await UniTask.Delay(PUMP_DELAY);
+            }
         }
 
         // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
+            current.cancellationTokenSource.Cancel();
+            current.cancellationTokenSource.Dispose();
+
             current = null;
             bool result = NativeMethods.SegmentServerDispose();
 
