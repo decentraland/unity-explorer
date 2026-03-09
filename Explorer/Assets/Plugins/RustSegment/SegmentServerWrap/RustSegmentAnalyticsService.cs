@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -39,9 +40,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private readonly string anonId;
         private volatile string? cachedUserId;
 
-        private readonly Mutex<Dictionary<ulong, (Operation, List<MarshaledString>)>> afterClean = new (new ());
+        private readonly ConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
         private readonly CancellationTokenSource cancellationTokenSource;
+
+        // Lock for public operations, cannot be used by callbacks or private methods
+        private readonly object publicLock = new (); 
 
         private long trackId;
         private long flushId;
@@ -87,116 +91,129 @@ namespace Plugins.RustSegment.SegmentServerWrap
         // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
-            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+            lock (publicLock)
+            {
+                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
 
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+                cancellationTokenSource.Cancel();
+                cancellationTokenSource.Dispose();
 
-            instanceGuard.Value = null;
-            bool result = NativeMethods.SegmentServerDispose();
+                instanceGuard.Value = null;
+                bool result = NativeMethods.SegmentServerDispose();
 
-            if (result == false)
-                throw new Exception("Rust Segment dispose failed");
+                if (result == false)
+                    throw new Exception("Rust Segment dispose failed");
+            }
         }
 
         public void Identify(string? userId, JObject? traits = null)
         {
-            using var afterCleanGuard = afterClean.Lock();
+            lock (publicLock)
+            {
+                cachedUserId = userId;
 
-            cachedUserId = userId;
+                var list = ListPool<MarshaledString>.Get()!;
 
-            var list = ListPool<MarshaledString>.Get()!;
+                var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
+                var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
 
-            var mUserId = new MarshaledString(cachedUserId);
-            var mAnonId = new MarshaledString(anonId);
-            var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(contextSource.ContextJson());
+                ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mAnonId.Ptr, mTraits.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
 
-            ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mAnonId.Ptr, mTraits.Ptr, mContext.Ptr);
-            AlertIfInvalid(operationId);
+                list.Add(mUserId);
+                list.Add(mTraits);
+                list.Add(mContext);
 
-            list.Add(mUserId);
-            list.Add(mTraits);
-            list.Add(mContext);
-
-            afterCleanGuard.Value.Add(operationId, (Operation.Identify, list));
+                afterCleanGuard.Value.Add(operationId, (Operation.Identify, list));
+            }
         }
 
         public void Track(string eventName, JObject? properties = null)
         {
-            using var afterCleanGuard = afterClean.Lock();
-
+            lock (publicLock)
+            {
 #if UNITY_EDITOR || DEBUG
-            ReportIfIdentityWasNotCalled();
+                ReportIfIdentityWasNotCalled();
 #endif
 
-            List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
 
-            var mUserId = new MarshaledString(cachedUserId);
-            var mAnonId = new MarshaledString(anonId);
-            var mEventName = new MarshaledString(eventName);
-            var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(contextSource.ContextJson());
+                var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
+                var mEventName = new MarshaledString(eventName);
+                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
 
-            ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
-            AlertIfInvalid(operationId);
+                ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
 
-            list.Add(mUserId);
-            list.Add(mEventName);
-            list.Add(mProperties);
-            list.Add(mContext);
+                list.Add(mUserId);
+                list.Add(mEventName);
+                list.Add(mProperties);
+                list.Add(mContext);
 
-            afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
+                afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
 
-            trackId++;
-            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
+                trackId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
+            }
         }
 
         public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
-            using var afterCleanGuard = afterClean.Lock();
-
+            lock (publicLock)
+            {
 #if UNITY_EDITOR || DEBUG
-            ReportIfIdentityWasNotCalled();
+                ReportIfIdentityWasNotCalled();
 #endif
 
-            List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
 
-            var mUserId = new MarshaledString(cachedUserId);
-            var mAnonId = new MarshaledString(anonId);
-            var mEventName = new MarshaledString(eventName);
-            var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-            var mContext = new MarshaledString(contextSource.ContextJson());
+                var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
+                var mEventName = new MarshaledString(eventName);
+                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+                var mContext = new MarshaledString(contextSource.ContextJson());
 
-            ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
-            AlertIfInvalid(operationId);
+                ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+                AlertIfInvalid(operationId);
 
-            list.Add(mUserId);
-            list.Add(mEventName);
-            list.Add(mProperties);
-            list.Add(mContext);
+                list.Add(mUserId);
+                list.Add(mEventName);
+                list.Add(mProperties);
+                list.Add(mContext);
 
-            afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
+                afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
 
-            trackId++;
-            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
+                trackId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
+            }
         }
 
         public void AddPlugin(IAnalyticsPlugin plugin)
         {
-            contextSource.Register(plugin);
+            lock (publicLock)
+            {
+                contextSource.Register(plugin);
+            }
         }
 
         public void Flush()
         {
-            using var afterCleanGuard = afterClean.Lock();
+            lock (publicLock)
+            {
 
-            ulong operationId = NativeMethods.SegmentServerFlush();
-            AlertIfInvalid(operationId);
-            afterCleanGuard.Value.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+                ulong operationId = NativeMethods.SegmentServerFlush();
+                AlertIfInvalid(operationId);
 
-            flushId++;
-            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
+                afterCleanGuard.Value.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+
+                flushId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
+
+            }
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
@@ -261,18 +278,18 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             if (operationId == 0)
                 ReportHub.LogError(
-                    ReportCategory.ANALYTICS,
-                    $"Segment invalid async operation is called"
-                );
+                        ReportCategory.ANALYTICS,
+                        $"Segment invalid async operation is called"
+                        );
         }
 
         private void ReportIfIdentityWasNotCalled()
         {
             if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId!))
                 ReportHub.LogError(
-                    ReportCategory.ANALYTICS,
-                    $"Segment to track an event, you must call Identify first"
-                );
+                        ReportCategory.ANALYTICS,
+                        $"Segment to track an event, you must call Identify first"
+                        );
         }
     }
 }
