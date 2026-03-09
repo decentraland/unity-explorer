@@ -13,6 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         private int rightPointAtLayerIndex;
+        private int rotationLayerIndex;
 
         public int RandomID;
 
@@ -121,6 +122,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             RandomID = Random.Range(0, 1000);
 
             rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
+            rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -145,6 +147,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetPointAtLayerWeight(float weight)
         {
             AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
+
+        public void SetRotationLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
         }
 
         public void SetAnimatorFloat(int hash, float value)
