@@ -57,8 +57,10 @@ namespace DCL.CharacterMotion.Systems
 
             if (!stunComponent.IsStunned)
             {
-                float speed = pointAtComponent.IsPointing ? settings.PointAtRotationSpeed : settings.RotationSpeed;
-                characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, speed * dt);
+                float speed = pointAtComponent.IsPointing
+                    ? pointAtComponent.IsDragging ? settings.PointAtRotationSpeed * 2 : settings.PointAtRotationSpeed
+                    : settings.RotationSpeed;
+                characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotation, speed * dt);
             }
 
             // If we are on a platform we save our local rotation

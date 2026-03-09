@@ -136,7 +136,7 @@ MonoBehaviour:
   <WallSlideDetectionDistance>k__BackingField: 0.5
   <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
   <StepOffset>k__BackingField: 0.35
-  <RotationSpeed>k__BackingField: 400
+  <RotationSpeed>k__BackingField: 10
   <MoveAnimBlendMaxWalkSpeed>k__BackingField: 1.5
   <MoveAnimBlendMaxJogSpeed>k__BackingField: 8
   <MoveAnimBlendMaxRunSpeed>k__BackingField: 10
@@ -176,6 +176,6 @@ MonoBehaviour:
   <PointAtRotationHorizontalRightThreshold>k__BackingField: 0.8
   <PointAtRotationHorizontalLeftThreshold>k__BackingField: 0.3
   <PointAtRotationVerticalThreshold>k__BackingField: 0.5
-  <PointAtRotationSpeed>k__BackingField: 250
+  <PointAtRotationSpeed>k__BackingField: 5
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
