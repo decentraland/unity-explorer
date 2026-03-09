@@ -174,7 +174,17 @@ namespace DCL.Profiles.Self
                     false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                 if (savedProfile == null || savedProfile.Version < expectedVersion)
+                {
+                    //We are gonna make the current profile whatever was returned from the registry
+                    //If its null, we are gonna keep what was set already.
+                    //TODO: But this will show a very corrupted state, because the registry has no profile stored. Which is bad. What do we do in these situation?
+                    if (savedProfile != null)
+                    {
+                        copyOfOwnProfile?.Dispose();
+                        copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
+                    }
                     throw new Exception($"Profile update could not be confirmed. Expected version {expectedVersion}, got {savedProfile?.Version.ToString() ?? "null"}");
+                }
 
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
