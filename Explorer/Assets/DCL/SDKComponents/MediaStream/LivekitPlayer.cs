@@ -57,9 +57,14 @@ namespace DCL.SDKComponents.MediaStream
             if (playingAddress == null) return;
             if (IsVideoOpened) return;
 
-            var address = playingAddress.Value;
+            // If a specific user stream died, fallback to current-stream (first available track)
+            if (playingAddress.Value.IsUserStream(out _))
+            {
+                OpenMedia(LivekitAddress.CurrentStream());
+                return;
+            }
 
-            OpenMedia(address);
+            OpenMedia(playingAddress.Value);
         }
 
         public void EnsureAudioIsPlaying()
@@ -68,9 +73,14 @@ namespace DCL.SDKComponents.MediaStream
             if (playingAddress == null) return;
             if (isAudioOpened) return;
 
-            var address = playingAddress.Value;
+            // If a specific user stream died, fallback to current-stream (first available track)
+            if (playingAddress.Value.IsUserStream(out _))
+            {
+                OpenMedia(LivekitAddress.CurrentStream());
+                return;
+            }
 
-            OpenMedia(address);
+            OpenMedia(playingAddress.Value);
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
