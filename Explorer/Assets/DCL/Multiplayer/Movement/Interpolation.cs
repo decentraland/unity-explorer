@@ -85,6 +85,8 @@ namespace DCL.Multiplayer.Movement
 
         public static Vector3 InterpolatePointAtIK(in HandPointAtComponent pointAt, Vector3 targetHitPoint, float interpolationFactor)
         {
+            if (pointAt.WorldHitPoint == Vector3.zero) return targetHitPoint;
+
             return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * Time.deltaTime);
         }
     }

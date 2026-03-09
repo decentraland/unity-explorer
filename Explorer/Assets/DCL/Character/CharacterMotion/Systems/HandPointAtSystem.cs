@@ -45,6 +45,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
+            CancelPointAtIfEmotingQuery(World);
             UpdateHandPointAtQuery(World, in camera.GetCameraComponent(World), t);
             ApplyLocalPointAtIKQuery(World, t);
             ApplyRemotePointAtIKQuery(World, t);
@@ -85,6 +86,16 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void CancelPointAtIfEmoting(
+            in CharacterEmoteComponent emoteComponent,
+            ref HandPointAtComponent handPointAtComponent)
+        {
+            if (emoteComponent.IsPlayingEmote)
+                handPointAtComponent.RefreshDuration(0f);
+        }
+
+        [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHandPointAt(
@@ -93,14 +104,13 @@ namespace DCL.Character.CharacterMotion.Systems
             ref HandPointAtComponent handPointAtComponent,
             in CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
-            in CharacterEmoteComponent emoteComponent,
+            ref CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent,
             in ICharacterControllerSettings settings)
         {
             bool canPointAt = rigidTransform.IsGrounded
                               && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
                               && !stunComponent.IsStunned
-                              && !emoteComponent.IsPlayingEmote
                               && !platformComponent.PositionChanged;
 
             handPointAtComponent.TickDuration(dt);
@@ -112,6 +122,9 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (!canPointAt || !cursorInfo.isPressed)
                 return;
+
+            if (emoteComponent.IsPlayingEmote)
+                emoteComponent.StopEmote = true;
 
             handPointAtComponent.RefreshDuration(settings.PointAtDuration);
 
