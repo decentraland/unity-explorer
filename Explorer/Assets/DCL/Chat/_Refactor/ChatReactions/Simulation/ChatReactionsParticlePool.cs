@@ -11,6 +11,7 @@ namespace DCL.Chat.ChatReactions
         public float startSize;
         public float endSize;
         public int emojiIndex;
+        public float zigZagPhase;
         public byte alive;
     }
 
@@ -33,7 +34,7 @@ namespace DCL.Chat.ChatReactions
             particles = new ChatReactionsParticle[Mathf.Max(64, capacity)];
         }
 
-        public void Spawn(Vector3 pos, Vector3 vel, float lifetime, float startSize, float endSize, int emojiIndex)
+        public void Spawn(Vector3 pos, Vector3 vel, float lifetime, float startSize, float endSize, int emojiIndex, float zigZagPhase = 0f)
         {
             int i = cursor;
             cursor = (cursor + 1) % particles.Length;
@@ -47,6 +48,7 @@ namespace DCL.Chat.ChatReactions
                 startSize = startSize,
                 endSize = endSize,
                 emojiIndex = emojiIndex,
+                zigZagPhase = zigZagPhase,
                 alive = 1,
             };
         }

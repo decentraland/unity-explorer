@@ -17,6 +17,7 @@ namespace DCL.Chat.ChatReactions
         private const float SPAWN_SIZE_MAX_RATIO = 0.5f;
         private const float JITTER_XZ = 0.05f;
         private const float JITTER_Y  = 0.02f;
+        private const float TWO_PI = Mathf.PI * 2f;
 
         private readonly ChatReactionsSituationalConfig config;
         private readonly Material runtimeMaterial;
@@ -65,6 +66,10 @@ namespace DCL.Chat.ChatReactions
         {
             Profiler.BeginSample("ChatReactions.World.PoolTick");
             aliveCount = worldPool.Tick(dt, config.WorldLane.Gravity, config.WorldLane.Drag);
+            Profiler.EndSample();
+
+            Profiler.BeginSample("ChatReactions.World.ZigZag");
+            TickZigZag(dt);
             Profiler.EndSample();
 
             Profiler.BeginSample("ChatReactions.World.Stream");
@@ -177,7 +182,29 @@ namespace DCL.Chat.ChatReactions
                     speed,
                     Rand(-JITTER_XZ, JITTER_XZ) * 2f);
 
-                worldPool.Spawn(spawnPos, vel, lifetime, startSize, endSize, emojiIndex);
+                float phase = Rand(0f, TWO_PI);
+                worldPool.Spawn(spawnPos, vel, lifetime, startSize, endSize, emojiIndex, phase);
+            }
+        }
+
+        private void TickZigZag(float dt)
+        {
+            var lane = config.WorldLane;
+            if (lane.ZigZagAmplitude <= 0f) return;
+
+            var particles = worldPool.Raw;
+
+            for (int i = 0; i < particles.Length; i++)
+            {
+                ref var p = ref particles[i];
+                if (p.alive == 0) continue;
+
+                float oscillation = Mathf.Sin(p.age * lane.ZigZagFrequency * TWO_PI + p.zigZagPhase)
+                                  * lane.ZigZagAmplitude;
+
+                // Each particle oscillates in a unique horizontal direction based on its phase
+                p.vel.x += Mathf.Cos(p.zigZagPhase) * oscillation * dt;
+                p.vel.z += Mathf.Sin(p.zigZagPhase) * oscillation * dt;
             }
         }
 

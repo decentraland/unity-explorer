@@ -48,6 +48,16 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Tooltip("Particles emitted per second per nearby avatar during debug mode.")]
         [field: SerializeField] public float DebugRatePerSecond { get; private set; } = 3f;
 
+        [field: Header("Zig-Zag — lateral oscillation while floating")]
+
+        [field: Tooltip("Peak lateral acceleration in world units/sec² for the sinusoidal zig-zag. " +
+                        "Each particle oscillates in a random horizontal direction.")]
+        [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 0.15f;
+
+        [field: Min(0.1f)]
+        [field: Tooltip("Oscillation frequency in Hz. Lower = slow gentle sway, higher = rapid wobble.")]
+        [field: SerializeField] public float ZigZagFrequency { get; private set; } = 0.5f;
+
         [field: Header("Rendering")]
         [field: Tooltip("Unity rendering layer for world particles.")]
         [field: SerializeField] public int RenderLayer { get; private set; } = 0;

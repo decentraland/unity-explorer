@@ -21,6 +21,8 @@ MonoBehaviour:
   <BurstCount>k__BackingField: 1
   <StreamRatePerSecond>k__BackingField: 1
   <DebugRatePerSecond>k__BackingField: 3
+  <ZigZagAmplitude>k__BackingField: 0.15
+  <ZigZagFrequency>k__BackingField: 0.5
   <RenderLayer>k__BackingField: 0
   <SizeOverLifetime>k__BackingField:
     serializedVersion: 2
