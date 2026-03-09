@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -62,9 +63,17 @@ namespace DCL.Chat.ChatReactions
 
         public void Tick(float dt)
         {
+            Profiler.BeginSample("ChatReactions.World.PoolTick");
             aliveCount = worldPool.Tick(dt, config.WorldLane.Gravity, config.WorldLane.Drag);
+            Profiler.EndSample();
+
+            Profiler.BeginSample("ChatReactions.World.Stream");
             TickStream(dt);
+            Profiler.EndSample();
+
+            Profiler.BeginSample("ChatReactions.World.DebugNearby");
             TickDebug(dt);
+            Profiler.EndSample();
         }
 
         public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex)
@@ -137,7 +146,10 @@ namespace DCL.Chat.ChatReactions
         public void Draw(Camera cam)
         {
             if (cam == null || aliveCount == 0) return;
+
+            Profiler.BeginSample("ChatReactions.World.Draw");
             renderer.Draw(worldPool.Raw, config.WorldLane.RenderLayer);
+            Profiler.EndSample();
         }
 
         /// <summary>

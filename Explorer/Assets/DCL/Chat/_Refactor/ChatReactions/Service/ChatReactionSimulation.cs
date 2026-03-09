@@ -1,6 +1,7 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -64,17 +65,28 @@ namespace DCL.Chat.ChatReactions
 
         public void Tick(float dt)
         {
+            Profiler.BeginSample("ChatReactions.UI.PoolTick");
             uiAliveCount = uiPool.Update(dt, config.UILane.Gravity, config.UILane.Drag);
+            Profiler.EndSample();
+
+            Profiler.BeginSample("ChatReactions.UI.FlightSteer");
             TickFlightSteering(dt);
+            Profiler.EndSample();
+
             ClampLiveParticlesToLane();
+
+            Profiler.BeginSample("ChatReactions.UI.Stream");
             TickStream(dt);
+            Profiler.EndSample();
         }
 
         public void Draw(Camera cam)
         {
             if (cam == null) return;
 
+            Profiler.BeginSample("ChatReactions.UI.Draw");
             renderer.Draw(cam, uiPool.Raw, config.UILane.RenderLayer, config.UILane.DepthFromCamera);
+            Profiler.EndSample();
         }
 
         public void TriggerUIReaction(int emojiIndex, int count)

@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -56,6 +57,7 @@ namespace DCL.Chat.ChatReactions
 
         public List<Vector3> GetAllNearbyHeadPositions()
         {
+            Profiler.BeginSample("ChatReactions.GetNearbyHeads");
             nearbyPositionsCache.Clear();
 
             foreach (string walletId in entityParticipantTable.Wallets())
@@ -71,6 +73,7 @@ namespace DCL.Chat.ChatReactions
                 nearbyPositionsCache.Add(avatarBase.GetAdaptiveNametagPosition());
             }
 
+            Profiler.EndSample();
             return nearbyPositionsCache;
         }
     }

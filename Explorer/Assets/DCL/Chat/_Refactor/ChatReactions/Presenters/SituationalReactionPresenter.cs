@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using Utility;
@@ -47,12 +48,16 @@ namespace DCL.Chat.ChatReactions
                 try
                 {
                     float dt = Time.unscaledDeltaTime;
+
+                    Profiler.BeginSample("ChatReactions.Tick");
                     service.Tick(dt);
+                    Profiler.EndSample();
 
 #if UNITY_EDITOR || DEBUG
                     if (debugConfig != null)
                     {
                         ApplyDebugToggles();
+                        Profiler.BeginSample("ChatReactions.DebugStats");
                         debugConfig.UpdateStats(
                             service.UIAliveCount,
                             service.UIPoolCapacity,
@@ -62,6 +67,7 @@ namespace DCL.Chat.ChatReactions
                             service.IsUIStreaming,
                             service.IsWorldStreaming,
                             service.IsDebugNearbyActive);
+                        Profiler.EndSample();
                     }
 #endif
 
@@ -107,9 +113,17 @@ namespace DCL.Chat.ChatReactions
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
         {
-            if (cam != Camera.main || Camera.main == null) return;
+            Profiler.BeginSample("ChatReactions.CameraMain");
+            if (cam != Camera.main || Camera.main == null)
+            {
+                Profiler.EndSample();
+                return;
+            }
+            Profiler.EndSample();
 
+            Profiler.BeginSample("ChatReactions.Draw");
             service.Draw(cam);
+            Profiler.EndSample();
         }
     }
 }

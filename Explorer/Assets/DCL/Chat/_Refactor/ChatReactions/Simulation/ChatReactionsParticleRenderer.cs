@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
 namespace DCL.Chat.ChatReactions
@@ -146,6 +147,7 @@ namespace DCL.Chat.ChatReactions
 
         private void Flush(int layer, int count, float globalAlpha)
         {
+            Profiler.BeginSample("ChatReactions.Flush");
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
             mpb.SetVectorArray(PosSizeId, posSize);
             mpb.SetVectorArray(ExtraId, extra);
@@ -154,6 +156,7 @@ namespace DCL.Chat.ChatReactions
 
             Graphics.DrawMeshInstanced(sharedQuad, 0, mat, matrices, count, mpb,
                 ShadowCastingMode.Off, false, layer, null);
+            Profiler.EndSample();
         }
 
         private static Mesh CreateQuadMesh()
