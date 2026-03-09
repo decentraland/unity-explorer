@@ -1,5 +1,6 @@
 using AOT;
 using DCL.Diagnostics;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
@@ -11,6 +12,7 @@ using System.Threading;
 using UnityEngine.Device;
 using UnityEngine.Pool;
 using Cysharp.Threading.Tasks;
+using Utility.Multithreading;
 
 namespace Plugins.RustSegment.SegmentServerWrap
 {
@@ -30,13 +32,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
-        private static volatile RustSegmentAnalyticsService? current;
+        // nullable service
+        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!);
 
 
         private readonly string anonId;
         private volatile string? cachedUserId;
 
-        private readonly Dictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
+        private readonly Mutex<Dictionary<ulong, (Operation, List<MarshaledString>)>> afterClean = new (new ());
         private readonly IContextSource contextSource = new ContextSource();
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -45,10 +48,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
+            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
 
-            if (current != null)
+            if (instanceGuard.Value != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
@@ -66,7 +71,17 @@ namespace Plugins.RustSegment.SegmentServerWrap
             PumpJobAsync(this.cancellationTokenSource).Forget();
 
             ReportHub.Log(ReportCategory.ANALYTICS, "Rust Segment initialized");
-            current = this;
+            instanceGuard.Value = this;
+        }
+
+        private static async UniTaskVoid PumpJobAsync(CancellationTokenSource cts)
+        {
+            while (cts.IsCancellationRequested == false)
+            {
+                Int32 result = NativeMethods.SegmentServerPumpNextEvent();
+                if (result > 0) continue; // instantly jump to new iteration;
+                await UniTask.Delay(PUMP_DELAY);
+            }
         }
 
         private static async UniTaskVoid PumpJobAsync(CancellationTokenSource cts)
@@ -82,10 +97,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
-            current.cancellationTokenSource.Cancel();
-            current.cancellationTokenSource.Dispose();
+            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
 
-            current = null;
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
+
+            instanceGuard.Value = null;
             bool result = NativeMethods.SegmentServerDispose();
 
             if (result == false)
@@ -94,88 +111,85 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void Identify(string? userId, JObject? traits = null)
         {
-            lock (afterClean)
-            {
-                cachedUserId = userId;
+            using var afterCleanGuard = afterClean.Lock();
 
-                var list = ListPool<MarshaledString>.Get()!;
+            cachedUserId = userId;
 
-                var mUserId = new MarshaledString(cachedUserId);
-                var mAnonId = new MarshaledString(anonId);
-                var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
-                var mContext = new MarshaledString(contextSource.ContextJson());
+            var list = ListPool<MarshaledString>.Get()!;
 
-                ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mAnonId.Ptr, mTraits.Ptr, mContext.Ptr);
-                AlertIfInvalid(operationId);
+            var mUserId = new MarshaledString(cachedUserId);
+            var mAnonId = new MarshaledString(anonId);
+            var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
+            var mContext = new MarshaledString(contextSource.ContextJson());
 
-                list.Add(mUserId);
-                list.Add(mTraits);
-                list.Add(mContext);
+            ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mAnonId.Ptr, mTraits.Ptr, mContext.Ptr);
+            AlertIfInvalid(operationId);
 
-                afterClean.Add(operationId, (Operation.Identify, list));
-            }
+            list.Add(mUserId);
+            list.Add(mTraits);
+            list.Add(mContext);
+
+            afterCleanGuard.Value.Add(operationId, (Operation.Identify, list));
         }
 
         public void Track(string eventName, JObject? properties = null)
         {
-            lock (afterClean)
-            {
+            using var afterCleanGuard = afterClean.Lock();
+
 #if UNITY_EDITOR || DEBUG
-                ReportIfIdentityWasNotCalled();
+            ReportIfIdentityWasNotCalled();
 #endif
 
-                var list = ListPool<MarshaledString>.Get()!;
+            List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
 
-                var mUserId = new MarshaledString(cachedUserId);
-                var mAnonId = new MarshaledString(anonId);
-                var mEventName = new MarshaledString(eventName);
-                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-                var mContext = new MarshaledString(contextSource.ContextJson());
+            var mUserId = new MarshaledString(cachedUserId);
+            var mAnonId = new MarshaledString(anonId);
+            var mEventName = new MarshaledString(eventName);
+            var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+            var mContext = new MarshaledString(contextSource.ContextJson());
 
-                ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
-                AlertIfInvalid(operationId);
+            ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+            AlertIfInvalid(operationId);
 
-                list.Add(mUserId);
-                list.Add(mEventName);
-                list.Add(mProperties);
-                list.Add(mContext);
+            list.Add(mUserId);
+            list.Add(mEventName);
+            list.Add(mProperties);
+            list.Add(mContext);
 
-                afterClean.Add(operationId, (Operation.Track, list));
+            afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
 
-                trackId++;
-                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
-            }
+            trackId++;
+            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
         }
 
         public void InstantTrackAndFlush(string eventName, JObject? properties = null)
         {
-            lock (afterClean)
-            {
+            using var afterCleanGuard = afterClean.Lock();
+
 #if UNITY_EDITOR || DEBUG
-                ReportIfIdentityWasNotCalled();
+            ReportIfIdentityWasNotCalled();
 #endif
 
-                var list = ListPool<MarshaledString>.Get()!;
+            List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
 
-                var mUserId = new MarshaledString(cachedUserId);
-                var mAnonId = new MarshaledString(anonId);
-                var mEventName = new MarshaledString(eventName);
-                var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
-                var mContext = new MarshaledString(contextSource.ContextJson());
+            var mUserId = new MarshaledString(cachedUserId);
+            var mAnonId = new MarshaledString(anonId);
+            var mEventName = new MarshaledString(eventName);
+            var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
+            var mContext = new MarshaledString(contextSource.ContextJson());
 
-                ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
-                AlertIfInvalid(operationId);
+            ulong operationId = NativeMethods.SegmentServerInstantTrackAndFlush(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+            AlertIfInvalid(operationId);
 
-                list.Add(mUserId);
-                list.Add(mEventName);
-                list.Add(mProperties);
-                list.Add(mContext);
+            list.Add(mUserId);
+            list.Add(mEventName);
+            list.Add(mProperties);
+            list.Add(mContext);
 
-                afterClean.Add(operationId, (Operation.Track, list));
+            afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
 
-                trackId++;
-                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
-            }
+            trackId++;
+            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
         }
 
         public void AddPlugin(IAnalyticsPlugin plugin)
@@ -185,15 +199,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         public void Flush()
         {
-            lock (afterClean)
-            {
-                ulong operationId = NativeMethods.SegmentServerFlush();
-                AlertIfInvalid(operationId);
-                afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+            using var afterCleanGuard = afterClean.Lock();
 
-                flushId++;
-                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
-            }
+            ulong operationId = NativeMethods.SegmentServerFlush();
+            AlertIfInvalid(operationId);
+            afterCleanGuard.Value.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+
+            flushId++;
+            ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
@@ -221,19 +234,22 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
-                if (current == null) return;
+                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+                if (instanceGuard.Value == null) return;
 
-                lock (current.afterClean)
+
+                Operation type = default;
                 {
-                    var type = current.afterClean[operationId].Item1;
-
-                    ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
-
-                    if (response is not NativeMethods.Response.Success)
-                        ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
-
-                    current.CleanMemory(operationId);
+                    using var afterCleanGuard = instanceGuard.Value.afterClean.Lock();
+                    type = afterCleanGuard.Value[operationId].Item1;
                 }
+
+                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+
+                if (response is not NativeMethods.Response.Success)
+                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+
+                instanceGuard.Value.CleanMemory(operationId);
             }
             catch
             {
@@ -243,10 +259,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void CleanMemory(ulong operationId)
         {
-            var list = afterClean[operationId]!;
+            using var afterCleanGuard = afterClean.Lock();
+
+            var list = afterCleanGuard.Value[operationId]!;
             foreach (var item in list.Item2) item.Dispose();
-            afterClean.Remove(operationId);
-            ListPool<MarshaledString>.Release(list.Item2);
+            afterCleanGuard.Value.Remove(operationId);
+            ThreadSafeListPool<MarshaledString>.SHARED.Release(list.Item2);
         }
 
         private static void AlertIfInvalid(ulong operationId)
