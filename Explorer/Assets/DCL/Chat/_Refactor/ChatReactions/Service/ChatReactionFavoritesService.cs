@@ -17,10 +17,32 @@ namespace DCL.Chat.ChatReactions
 
         public IReadOnlyList<int> Favorites => favorites;
 
+        public int SelectedIndex { get; private set; } = -1;
+
         public ChatReactionFavoritesService(int[] defaultIndices)
         {
             this.defaultIndices = defaultIndices;
             Load();
+            LoadSelected();
+        }
+
+        public bool TryGetFirstFavorite(out int atlasIndex)
+        {
+            if (favorites.Count > 0)
+            {
+                atlasIndex = favorites[0];
+                return true;
+            }
+
+            atlasIndex = -1;
+            return false;
+        }
+
+        public void SetSelected(int atlasIndex)
+        {
+            if (SelectedIndex == atlasIndex) return;
+            SelectedIndex = atlasIndex;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.CHAT_REACTION_SELECTED, atlasIndex, save: true);
         }
 
         public void Add(int atlasIndex)
@@ -57,13 +79,40 @@ namespace DCL.Chat.ChatReactions
             if (string.IsNullOrEmpty(saved))
                 return;
 
-            string[] parts = saved.Split(SEPARATOR);
+            int value = 0;
+            bool parsing = false;
 
-            for (int i = 0; i < parts.Length; i++)
+            for (int i = 0; i <= saved.Length; i++)
             {
-                if (int.TryParse(parts[i], out int index))
-                    favorites.Add(index);
+                char c = i < saved.Length ? saved[i] : SEPARATOR;
+
+                if (c >= '0' && c <= '9')
+                {
+                    value = value * 10 + (c - '0');
+                    parsing = true;
+                }
+                else if (c == SEPARATOR && parsing)
+                {
+                    if (!favorites.Contains(value))
+                        favorites.Add(value);
+
+                    value = 0;
+                    parsing = false;
+                }
+                else
+                {
+                    value = 0;
+                    parsing = false;
+                }
             }
+        }
+
+        private void LoadSelected()
+        {
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_SELECTED))
+                SelectedIndex = DCLPlayerPrefs.GetInt(DCLPrefKeys.CHAT_REACTION_SELECTED);
+            else if (TryGetFirstFavorite(out int first))
+                SelectedIndex = first;
         }
 
         private void Save()
