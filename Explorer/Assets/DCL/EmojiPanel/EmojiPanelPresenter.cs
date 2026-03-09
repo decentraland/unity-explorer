@@ -44,6 +44,8 @@ namespace DCL.Emoji
             view.EmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
             view.SectionSelected += OnSectionSelected;
+
+            view.SetVisible(false);
         }
 
         private void OnSearchTextChanged(string searchText)
@@ -74,7 +76,7 @@ namespace DCL.Emoji
 
         public void SetPanelVisibility(bool isVisible)
         {
-            view.gameObject.SetActive(isVisible);
+            view.SetVisible(isVisible);
         }
 
         private void ConfigureEmojiSectionSizes()

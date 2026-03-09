@@ -18,6 +18,7 @@ using DCL.VoiceChat;
 using System;
 using System.Threading;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Emoji;
 using DCL.Translation;
 using DCL.Translation.Service;
 using UnityEngine;
@@ -128,6 +129,15 @@ namespace DCL.Chat
                 commandRegistry.TranslateMessageCommand,
                 commandRegistry.RevertToOriginalCommand);
 
+            var emojiContainer = view.InputView.emojiContainer;
+            var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
+            var emojiPanelPresenter = new EmojiPanelPresenter(
+                emojiContainer.emojiPanel,
+                emojiContainer.emojiPanelConfiguration,
+                emojiMapping,
+                emojiContainer.emojiSectionViewPrefab,
+                emojiContainer.emojiButtonPrefab);
+
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,
                 chatConfig,
@@ -138,7 +148,9 @@ namespace DCL.Chat
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
                 commandRegistry.SendMessage,
-                textFormatter);
+                textFormatter,
+                emojiMapping,
+                emojiPanelPresenter);
 
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
@@ -148,12 +160,17 @@ namespace DCL.Chat
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
             
+            var favoritesService = new ChatReactionFavoritesService(
+                reactionsConfig.MessageReactions.DefaultFavoriteEmojiIndices);
+
             var reactionsPresenter = new ChatReactionsPresenter(
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
-                reactionsConfig,
-                view.EmojiPanelView);
+                reactionsConfig.SituationalReactions.Atlas,
+                favoritesService,
+                view.EmojiPanelView,
+                emojiPanelPresenter);
 
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,
@@ -168,6 +185,7 @@ namespace DCL.Chat
             uiScope.Add(chatClickDetectionHandler);
             uiScope.Add(reactionsPresenter);
             uiScope.Add(situationalReactionPresenter);
+            uiScope.Add(emojiPanelPresenter);
             
             var mediator = new ChatUIMediator(
                 view,

@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
@@ -42,6 +42,7 @@ namespace DCL.Chat.ChatInput
             IChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,
             EmojiMapping emojiMapping,
+            EmojiPanelPresenter emojiPanelPresenter,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             CancellationToken stateMachineDisposalCt)
@@ -53,7 +54,7 @@ namespace DCL.Chat.ChatInput
 
             pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
             suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
-            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping);
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiPanelPresenter);
             inputField = view.inputField;
         }
 
