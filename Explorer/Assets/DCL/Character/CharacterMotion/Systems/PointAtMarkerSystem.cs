@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Assets;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
@@ -24,6 +25,8 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(HandPointAtSystem))]
     public partial class PointAtMarkerSystem : BaseUnityLoopSystem
     {
+        private const float MAX_POINT_AT_DISTANCE_SQR = 100f * 100f; // Max distance to show the marker (100 units)
+
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ObjectProxy<FriendsCache> friendsCache;
@@ -63,10 +66,14 @@ namespace DCL.Character.CharacterMotion.Systems
         private void SpawnMarker(
             in Entity entity,
             in HandPointAtComponent pointAt,
-            in Profile profile)
+            in Profile profile,
+            in AvatarBase avatarBase)
         {
             // User must be pointing and either be the local player or a friend to show the marker
             if (!pointAt.IsPointing || (profile.UserId != web3IdentityCache.Identity?.Address && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
+                return;
+
+            if ((pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude > MAX_POINT_AT_DISTANCE_SQR)
                 return;
 
             PointAtMarkerHolder marker = markerPool.Get();
@@ -108,9 +115,10 @@ namespace DCL.Character.CharacterMotion.Systems
         private void ReleaseMarker(
             in Entity entity,
             in HandPointAtComponent pointAt,
+            in AvatarBase avatarBase,
             ref PointAtMarkerHolder marker)
         {
-            if (pointAt.IsPointing)
+            if (pointAt.IsPointing && (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude <= MAX_POINT_AT_DISTANCE_SQR)
                 return;
 
             markerPool.Release(marker);
