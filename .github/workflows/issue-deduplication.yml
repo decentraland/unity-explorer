@@ -23,6 +23,7 @@ jobs:
       - name: Check for duplicate issues
         uses: anthropics/claude-code-action@v1
         with:
+          allowed_bots: "sentry"
           prompt: |
             Analyze this new issue and check if it's a duplicate of existing issues in the repository.
             Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
