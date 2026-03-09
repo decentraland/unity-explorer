@@ -73,7 +73,8 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!pointAt.IsPointing || (profile.UserId != web3IdentityCache.Identity?.Address && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
                 return;
 
-            if ((pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude > MAX_POINT_AT_DISTANCE_SQR)
+            float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;
+            if (distanceSqr > MAX_POINT_AT_DISTANCE_SQR)
                 return;
 
             PointAtMarkerHolder marker = markerPool.Get();
@@ -82,7 +83,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 ? spriteData.Sprite
                 : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
 
-            marker.Setup(sprite, profile.UserId);
+            marker.Setup(sprite, profile.UserId, distanceSqr);
             marker.transform.position = pointAt.WorldHitPoint;
 
             World.Add(entity, marker);
@@ -95,6 +96,7 @@ namespace DCL.Character.CharacterMotion.Systems
             [Data] in float3 cameraUp,
             in HandPointAtComponent pointAt,
             in Profile profile,
+            in AvatarBase avatarBase,
             ref PointAtMarkerHolder marker)
         {
             if (!pointAt.IsPointing)
@@ -104,7 +106,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 ? spriteData.Sprite
                 : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
 
-            marker.Setup(sprite, profile.UserId);
+            marker.Setup(sprite, profile.UserId, (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
             marker.transform.LookAt(
                 pointAt.WorldHitPoint + (Vector3)cameraForward, cameraUp);

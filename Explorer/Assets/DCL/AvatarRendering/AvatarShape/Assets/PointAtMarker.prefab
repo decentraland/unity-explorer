@@ -105,3 +105,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: AvatarShape::PointAtMarkerHolder
   <SpriteRenderer>k__BackingField: {fileID: 2910063314006034652}
+  <MinData>k__BackingField:
+    Size: 0.1
+    DistanceUnit: 5
+  <MaxData>k__BackingField:
+    Size: 0.5
+    DistanceUnit: 80
