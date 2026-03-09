@@ -5,7 +5,9 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
+using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -197,6 +199,7 @@ namespace DCL.Profiles.Self
             profile.IsDirty = true;
             // We assume that the profile already exists at this point, so we don't add it but update it
             world.Set(playerEntity, profile);
+            ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
         }
 
         private void InvalidateOwnProfile()
