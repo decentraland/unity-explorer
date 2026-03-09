@@ -345,14 +345,9 @@ namespace DCL.WebRequests
 
         public void Dispose()
         {
+            // it's OK to dispose not created buffers as it's checked secured properly in their Dispose implementation
             buffer.Dispose();
             preservedArray.Dispose();
-    public void Dispose()
-    {
-        if (buffer.IsCreated)
-            buffer.Dispose();
-        // preservedArray ownership is transferred to UploadHandlerRaw when CreateUploadHandler() is called;
-        // only UploadHandlerRaw should free it
-    }
+        }
     }
 }
