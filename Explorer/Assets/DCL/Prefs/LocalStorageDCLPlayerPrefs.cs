@@ -1,4 +1,4 @@
-#if UNITY_WEBGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,9 +18,9 @@ namespace DCL.Prefs
     {
         private readonly UserData userData;
 
-        private byte[] encodeBuffer   = Array.Empty<byte>();
-        private IntPtr nativeBuffer   = IntPtr.Zero;
-        private int    nativeCapacity;
+        private byte[] encodeBuffer = Array.Empty<byte>();
+        private IntPtr nativeBuffer = IntPtr.Zero;
+        private int nativeCapacity;
 
         public LocalStorageDCLPlayerPrefs()
         {
@@ -33,19 +33,49 @@ namespace DCL.Prefs
                 Marshal.FreeHGlobal(nativeBuffer);
         }
 
-        public void SetString(string key, string value) { DeleteKey(key); userData.Strings[key] = value; Save(); }
-        public void SetInt   (string key, int value)    { DeleteKey(key); userData.Ints[key]    = value; Save(); }
-        public void SetFloat (string key, float value)  { DeleteKey(key); userData.Floats[key]  = value; Save(); }
-        public void SetBool  (string key, bool value)   { DeleteKey(key); userData.Bools[key]   = value; Save(); }
+        public void SetString(string key, string value)
+        {
+            DeleteKey(key);
+            userData.Strings[key] = value;
+            Save();
+        }
 
-        public string GetString(string key, string defaultValue) => userData.Strings.GetValueOrDefault(key, defaultValue);
-        public int    GetInt   (string key, int defaultValue)    => userData.Ints.GetValueOrDefault(key, defaultValue);
-        public float  GetFloat (string key, float defaultValue)  => userData.Floats.GetValueOrDefault(key, defaultValue);
-        public bool   GetBool  (string key, bool defaultValue)   => userData.Bools.GetValueOrDefault(key, defaultValue);
+        public void SetInt(string key, int value)
+        {
+            DeleteKey(key);
+            userData.Ints[key] = value;
+            Save();
+        }
+
+        public void SetFloat(string key, float value)
+        {
+            DeleteKey(key);
+            userData.Floats[key] = value;
+            Save();
+        }
+
+        public void SetBool(string key, bool value)
+        {
+            DeleteKey(key);
+            userData.Bools[key] = value;
+            Save();
+        }
+
+        public string GetString(string key, string defaultValue) =>
+            userData.Strings.GetValueOrDefault(key, defaultValue);
+
+        public int GetInt(string key, int defaultValue) =>
+            userData.Ints.GetValueOrDefault(key, defaultValue);
+
+        public float GetFloat(string key, float defaultValue) =>
+            userData.Floats.GetValueOrDefault(key, defaultValue);
+
+        public bool GetBool(string key, bool defaultValue) =>
+            userData.Bools.GetValueOrDefault(key, defaultValue);
 
         public bool HasKey(string key) =>
             userData.Strings.ContainsKey(key) || userData.Ints.ContainsKey(key) ||
-            userData.Floats.ContainsKey(key)  || userData.Bools.ContainsKey(key);
+            userData.Floats.ContainsKey(key) || userData.Bools.ContainsKey(key);
 
         public void DeleteKey(string key)
         {
@@ -69,6 +99,7 @@ namespace DCL.Prefs
             string json = JsonConvert.SerializeObject(userData);
 
             int maxBytes = Encoding.UTF8.GetMaxByteCount(json.Length);
+
             if (encodeBuffer.Length < maxBytes)
                 encodeBuffer = new byte[maxBytes];
 
@@ -76,10 +107,11 @@ namespace DCL.Prefs
 
             // Ensure unmanaged buffer has room for encoded bytes + null terminator.
             int required = byteCount + 1;
+
             if (nativeCapacity < required)
             {
                 if (nativeBuffer != IntPtr.Zero) Marshal.FreeHGlobal(nativeBuffer);
-                nativeBuffer   = Marshal.AllocHGlobal(required);
+                nativeBuffer = Marshal.AllocHGlobal(required);
                 nativeCapacity = required;
             }
 
@@ -99,7 +131,7 @@ namespace DCL.Prefs
 
                 if (result > 0)
                 {
-                    byte[] buffer = new byte[result];
+                    var buffer = new byte[result];
                     Marshal.Copy(ptr, buffer, 0, result);
                     string json = Encoding.UTF8.GetString(buffer);
                     return JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
@@ -120,9 +152,9 @@ namespace DCL.Prefs
         private class UserData
         {
             public Dictionary<string, string> Strings { get; set; } = new ();
-            public Dictionary<string, int>    Ints    { get; set; } = new ();
-            public Dictionary<string, float>  Floats  { get; set; } = new ();
-            public Dictionary<string, bool>   Bools   { get; set; } = new ();
+            public Dictionary<string, int> Ints { get; set; } = new ();
+            public Dictionary<string, float> Floats { get; set; } = new ();
+            public Dictionary<string, bool> Bools { get; set; } = new ();
         }
     }
 }

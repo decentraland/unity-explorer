@@ -84,8 +84,6 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
                 {
-                    //TODO FRAN: DISABLED FOR NOW
-                    //WebGLDebugLog.Log("AB.Emote", "kept", $"emoteId={emote.DTO.id} bodyShape={bodyShape}");
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 }
                 else

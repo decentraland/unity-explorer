@@ -13,14 +13,14 @@ namespace DCL.AssetsProvision
     {
         private static void LogAssetRequest(string op, string assetKey, string typeName)
         {
-            //TODO FRAN: DISABLED FOR NOW
+            //TODO WEBGL: DISABLED FOR NOW
             //WebGLDebugLog.Log(op, assetKey, typeName);
         }
-
 
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
         {
             LogAssetRequest("ProvideMainAssetAsync", assetReferenceT?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
+
             // if the main asset was already loaded just return it
             if (assetReferenceT.OperationHandle.IsValid())
                 return new ProvidedAsset<T>(assetReferenceT.OperationHandle.Convert<T>());
@@ -34,6 +34,7 @@ namespace DCL.AssetsProvision
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(ComponentReference<T> componentReference, CancellationToken ct) where T: Object
         {
             LogAssetRequest("ProvideMainAssetAsync", componentReference?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
+
             // if the main asset was already loaded just return it
             if (componentReference.OperationHandle.IsValid())
                 return new ProvidedAsset<T>(componentReference.OperationHandle.Convert<T>());
@@ -44,13 +45,16 @@ namespace DCL.AssetsProvision
             return new ProvidedAsset<T>(asyncOp);
         }
 
-        private static void EnsureLoadSucceeded<T>(AsyncOperationHandle<T> handle, string? assetKey, string typeName) where T : Object
+        private static void EnsureLoadSucceeded<T>(AsyncOperationHandle<T> handle, string? assetKey, string typeName) where T: Object
         {
             if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
                 return;
-            string msg = $"Addressables load failed: key={assetKey} type={typeName} status={handle.Status}";
+
+            var msg = $"Addressables load failed: key={assetKey} type={typeName} status={handle.Status}";
+
             if (handle.OperationException != null)
                 throw new InvalidOperationException(msg, handle.OperationException);
+
             throw new InvalidOperationException(msg + " (Result is null or status not Succeeded).");
         }
 

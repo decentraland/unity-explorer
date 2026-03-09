@@ -273,7 +273,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                     {
-                        //TODO FRAN: DISABLED FOR NOW
+                        // TODO WEBGL: DISABLED FOR NOW -> without the ABs many emotes cannot be played which generates a lot of SPAM
+                        // Until we have working AB converter this is necessary to keep the console clean
                         //ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                     }
 

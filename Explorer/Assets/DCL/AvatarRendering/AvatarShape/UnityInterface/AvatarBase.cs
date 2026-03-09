@@ -13,15 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         public int RandomID;
-
-        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
-        private AnimationClip lastEmote;
-
-        private AnimatorOverrideController overrideController;
-
-        [field: SerializeField] public Animator AvatarAnimator { get; private set; }
         [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
-
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
@@ -69,6 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
         [field: Header("OTHER")]
+
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
         [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
@@ -107,7 +100,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
+
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
+        private AnimationClip lastEmote;
+
+        private AnimatorOverrideController overrideController;
 
         private void Awake()
         {
@@ -124,6 +122,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
             overrideController.ApplyOverrides(animationOverrides);
         }
+
+        [field: SerializeField] public Animator AvatarAnimator { get; private set; }
 
         public Transform GetTransform() =>
             transform;
@@ -215,7 +215,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         }
 
         /// <summary>
-        /// Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
+        ///     Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
         /// </summary>
         public void UpdateHeadWearableOffset(in Bounds skinningBounds, in GetWearablesByPointersIntention wearable)
         {
@@ -230,11 +230,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
                 ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
                 ReportHub.LogError(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
 
+                /* TODO WEBGL: DISABLED FOR NOW, this spams the console and there is nothing we can do.
                 foreach (URN pointer in wearable.Pointers)
                 {
-                    //TODO FRAN: DISABLED FOR NOW
-                    //ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
-                }
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
+                }*/
 
                 cachedHeadWearableOffset = nametagBoundedOffset;
             }
@@ -243,9 +243,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public interface IAvatarView
     {
-        Transform GetTransform();
-
         Animator AvatarAnimator { get; }
+
+        Transform GetTransform();
 
         void SetAnimatorFloat(int hash, float value);
 

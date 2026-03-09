@@ -266,7 +266,7 @@ namespace Global.Dynamic
 
             WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before SceneSharedContainer.Create");
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            IWebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
+            WebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
 #endif
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
@@ -295,9 +295,10 @@ namespace Global.Dynamic
                 webglSceneUpdateQueue
 #endif
             );
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after SceneSharedContainer.Create");
 
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after SceneSharedContainer.Create");
             WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before GlobalWorldFactory.Create");
+
             GlobalWorld globalWorld;
             try
             {
