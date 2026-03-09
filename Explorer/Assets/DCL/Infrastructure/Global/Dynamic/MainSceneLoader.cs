@@ -219,7 +219,6 @@ namespace Global.Dynamic
             Option<ChromeDevtoolProtocolClient> cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
 
             LogInit("MainSceneLoader:before_WebRequestsCreate", "before WebRequestsContainer.Create", null, null, staticSettings == null);
-            WebGLDebugLog.Log("MainSceneLoader.cs:208");
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
 
 #if UNITY_WEBGL
@@ -227,7 +226,6 @@ namespace Global.Dynamic
 #endif
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            WebGLDebugLog.Log("MainSceneLoader.cs:212");
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 

@@ -9,7 +9,7 @@ namespace DCL.LOD
     /// Stub ILODSettingsAsset for WebGL where LOD streaming and road systems are disabled.
     /// Provides default values for VisualSceneStateResolver and other consumers; debug/capacity members are no-op.
     /// </summary>
-    public class LODSettingsStub : ILODSettingsAsset
+    public class WebGLLODSettingsStub : ILODSettingsAsset
     {
         private static readonly int[] DefaultBucketThresholds = { 5 };
         private static readonly Color[] DefaultDebugColors = { Color.green, Color.yellow, Color.red };
