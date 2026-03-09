@@ -126,7 +126,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 list.Add(mTraits);
                 list.Add(mContext);
 
-                afterCleanGuard.Value.Add(operationId, (Operation.Identify, list));
+                afterClean[operationId] = (Operation.Identify, list);
             }
         }
 
@@ -154,7 +154,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 list.Add(mProperties);
                 list.Add(mContext);
 
-                afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
+                afterClean[operationId] = (Operation.Track, list);
 
                 trackId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
@@ -185,7 +185,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 list.Add(mProperties);
                 list.Add(mContext);
 
-                afterCleanGuard.Value.Add(operationId, (Operation.Track, list));
+                afterClean[operationId] = (Operation.Track, list);
 
                 trackId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Instant Track scheduled operationId: {operationId} trackId: {trackId}");
@@ -204,15 +204,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (publicLock)
             {
-
                 ulong operationId = NativeMethods.SegmentServerFlush();
                 AlertIfInvalid(operationId);
 
-                afterCleanGuard.Value.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+                List<MarshaledString> list = ThreadSafeListPool<MarshaledString>.SHARED.Get()!;
+                afterClean[operationId] = (Operation.Flush, list!);
 
                 flushId++;
                 ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
-
             }
         }
 
@@ -244,12 +243,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
                 if (instanceGuard.Value == null) return;
 
-
-                Operation type = default;
-                {
-                    using var afterCleanGuard = instanceGuard.Value.afterClean.Lock();
-                    type = afterCleanGuard.Value[operationId].Item1;
-                }
+                Operation type = instanceGuard.Value.afterClean[operationId].Item1;
 
                 ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
@@ -266,12 +260,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void CleanMemory(ulong operationId)
         {
-            using var afterCleanGuard = afterClean.Lock();
-
-            var list = afterCleanGuard.Value[operationId]!;
-            foreach (var item in list.Item2) item.Dispose();
-            afterCleanGuard.Value.Remove(operationId);
-            ThreadSafeListPool<MarshaledString>.SHARED.Release(list.Item2);
+            if (afterClean.TryRemove(operationId, out var list))
+            {
+                foreach (var item in list.Item2) item.Dispose();
+                ThreadSafeListPool<MarshaledString>.SHARED.Release(list.Item2);
+            }
         }
 
         private static void AlertIfInvalid(ulong operationId)
