@@ -13,6 +13,7 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using DCL.Audio;
+using DCL.Quality.Runtime;
 using DCL.SkyBox;
 using Global.AppArgs;
 using UnityEngine;
@@ -43,6 +44,7 @@ namespace DCL.Settings.Configuration
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,

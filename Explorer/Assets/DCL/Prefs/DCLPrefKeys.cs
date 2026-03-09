@@ -34,6 +34,26 @@ namespace DCL.Prefs
         public const string PS_CHUNK_CULL_DISTANCE = "ChunkCullDistance";
         public const string PS_MAX_SIMULTANEOUS_VIDEOS = "MaxSimultaneousVideos";
 
+        // New quality settings controller
+        public const string PS_QUALITY_PRESET = "QualityPreset";
+        public const string PS_CUSTOM_BASE_PRESET = "QS_CustomBasePreset";
+        public const string PS_FPS_LIMIT = "QS_FpsLimit";
+        public const string PS_VSYNC = "QS_VSync";
+        public const string PS_RESOLUTION_SCALE = "QS_ResolutionScale";
+        public const string PS_MSAA = "QS_MSAA";
+        public const string PS_HDR_NEW = "QS_HDR";
+        public const string PS_BLOOM = "QS_Bloom";
+        public const string PS_AVATAR_OUTLINE = "QS_AvatarOutline";
+        public const string PS_SCENE_DISTANCE_NEW = "QS_SceneDistance";
+        public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
+        public const string PS_GRASS_PRESET = "QS_GrassPreset";
+        public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SCENE_LIGHTS = "QS_SceneLights";
+        public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
+        public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
+        public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
+        public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+
         public const string SETTINGS_VSYNC_ENABLED = "Settings_VSync";
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";

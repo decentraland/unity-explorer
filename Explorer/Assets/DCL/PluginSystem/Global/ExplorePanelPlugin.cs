@@ -62,6 +62,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
+using DCL.Quality.Runtime;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -437,9 +438,12 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
+            QualitySettingsController qualitySettingsController = new QualitySettingsController(settings.QualityPresets);
+
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
                 settings.SettingsMenuConfiguration,
+                qualitySettingsController,
                 generalAudioMixer.Value,
                 settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
@@ -716,6 +720,9 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Event Detail Panel")]
             [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
+
+            [field: Header("Quality Settings")]
+            [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
         }
     }
 }

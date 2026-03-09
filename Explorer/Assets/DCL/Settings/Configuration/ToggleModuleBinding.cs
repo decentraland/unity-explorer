@@ -5,6 +5,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -35,6 +36,7 @@ namespace DCL.Settings.Configuration
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
@@ -59,7 +61,7 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
                 // add other cases...

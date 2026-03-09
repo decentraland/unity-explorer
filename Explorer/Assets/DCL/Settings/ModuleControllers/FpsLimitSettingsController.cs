@@ -1,40 +1,55 @@
-﻿using DCL.Prefs;
+﻿using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
 using System;
-using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class FpsLimitSettingsController : SettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
+        private readonly IQualitySettingsController qualitySettingsController;
 
-        public FpsLimitSettingsController(SettingsDropdownModuleView view)
+        public FpsLimitSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
+            this.qualitySettingsController = qualitySettingsController;
 
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FPS_LIMIT))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT);
-            else
-                view.DropdownView.Dropdown.value = 1; //Default to 30 FPS
-
-            view.DropdownView.Dropdown.onValueChanged.AddListener(SetFpsLimitSettings);
-            SetFpsLimitSettings(view.DropdownView.Dropdown.value);
+            qualitySettingsController.OnPresetChanged += OnPresetChanged;
+            view.DropdownView.Dropdown.value = FpsToDropdownIndex(qualitySettingsController.FpsLimit);
+            view.DropdownView.Dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
 
-        private void SetFpsLimitSettings(int index)
+        private void OnPresetChanged(QualityPresetLevel _)
         {
-            var fpsLimitToApply = 0;
-            if (index != 0)
-                fpsLimitToApply = Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
+            view.DropdownView.Dropdown.SetValueWithoutNotify(FpsToDropdownIndex(qualitySettingsController.FpsLimit));
+        }
 
-            Application.targetFrameRate = fpsLimitToApply;
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
+        private void OnDropdownValueChanged(int index)
+        {
+            int fps = index == 0 ? 0 : Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
+
+            qualitySettingsController.SetFpsLimit(fps);
+        }
+
+        private int FpsToDropdownIndex(int fps)
+        {
+            if (fps == 0)
+                return 0;
+
+            for (int i = 1; i < view.DropdownView.Dropdown.options.Count; i++)
+            {
+                if (Convert.ToInt32(view.DropdownView.Dropdown.options[i].text) == fps)
+                    return i;
+            }
+
+            return 0;
         }
 
         public override void Dispose()
         {
-            view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetFpsLimitSettings);
+            view.DropdownView.Dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
+            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

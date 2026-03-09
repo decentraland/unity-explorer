@@ -5,6 +5,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -45,6 +46,7 @@ namespace DCL.Settings.Configuration
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
@@ -69,17 +71,18 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance,
-                    realmPartitionSettingsAsset,
-                    landscapeData,
-                    qualitySettingsAsset,
-                    skyboxSettingsAsset),
+                // DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController_OLD(viewInstance,
+                //     realmPartitionSettingsAsset,
+                //     landscapeData,
+                //     qualitySettingsAsset,
+                //     skyboxSettingsAsset),
 
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
                 DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController, appParameters),
                 DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, appParameters),
-                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
                 DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
                     systemMemoryCap,

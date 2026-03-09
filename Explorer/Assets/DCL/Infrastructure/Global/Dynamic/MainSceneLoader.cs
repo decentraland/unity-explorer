@@ -365,7 +365,7 @@ namespace Global.Dynamic
 
             if (!hasMinimumSpecs)
             {
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsPresetSettingsController_OLD.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
                 DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
             }
 

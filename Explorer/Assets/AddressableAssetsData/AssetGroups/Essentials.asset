@@ -280,6 +280,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b42532e2af88d479961e27dd400651
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown_Unselectable.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9a7adc162dc338449107a4654a26d50
     m_Address: WorldAudioContainer
     m_ReadOnly: 0
