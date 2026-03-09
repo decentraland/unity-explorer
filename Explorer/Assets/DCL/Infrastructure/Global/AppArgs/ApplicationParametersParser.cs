@@ -43,8 +43,9 @@ namespace Global.AppArgs
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         /// <summary>
-        /// On WebGL, read ?world=... from the page URL and set realm so we connect to
-        /// https://worlds-content-server.decentraland.org/world/{world}/about
+        /// On WebGL, read all relevant query parameters from the page URL in a single pass.
+        /// Handles ?world=, ?genesisScene=, and ?guestMode= without early returns so that
+        /// combined URLs like ?world=X&amp;guestMode=true set all flags correctly.
         /// </summary>
         private void ParseWebGLUrlQuery()
         {
@@ -61,6 +62,8 @@ namespace Global.AppArgs
                     return;
 
                 NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+
+                // Parse ?world= → REALM
                 string? world = query[WORLD_QUERY_PARAM];
                 if (!string.IsNullOrEmpty(world))
                 {
@@ -69,43 +72,29 @@ namespace Global.AppArgs
                     {
                         if (!world.EndsWith(".eth", StringComparison.OrdinalIgnoreCase))
                             world += ".dcl.eth";
-                        world = world.ToLowerInvariant();
-                        appParameters[AppArgsFlags.REALM] = world;
-                        return;
+                        appParameters[AppArgsFlags.REALM] = world.ToLowerInvariant();
                     }
                 }
+
+                // Parse ?genesisScene= → GENESIS_SCENE (only when no realm/world was resolved)
+                if (!appParameters.ContainsKey(AppArgsFlags.REALM))
+                {
+                    string? genesisScene = query[GENESIS_SCENE_QUERY_PARAM];
+                    if (!string.IsNullOrEmpty(genesisScene))
+                    {
+                        genesisScene = HttpUtility.UrlDecode(genesisScene);
+                        if (!string.IsNullOrEmpty(genesisScene) && TryParseParcel(genesisScene, out _, out _))
+                            appParameters[AppArgsFlags.GENESIS_SCENE] = genesisScene;
+                    }
+                }
+
+                // Parse ?guestMode= → GUEST_MODE (independent of realm/world)
+                if (!string.IsNullOrEmpty(query[AppArgsFlags.GUEST_MODE]))
+                    appParameters[AppArgsFlags.GUEST_MODE] = string.Empty;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
-            }
-
-            try
-            {
-                string? currentUrl = Application.absoluteURL;
-                if (string.IsNullOrEmpty(currentUrl))
-                    return;
-
-                if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
-                    return;
-
-                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
-                string? genesisScene = query[GENESIS_SCENE_QUERY_PARAM];
-                if (string.IsNullOrEmpty(genesisScene))
-                    return;
-
-                genesisScene = HttpUtility.UrlDecode(genesisScene);
-                if (string.IsNullOrEmpty(genesisScene))
-                    return;
-
-                if (!TryParseParcel(genesisScene, out _, out _))
-                    return;
-
-                appParameters[AppArgsFlags.GENESIS_SCENE] = genesisScene;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[WebGL] Failed to parse URL query for '{GENESIS_SCENE_QUERY_PARAM}': {e.Message}");
+                Debug.LogWarning($"[WebGL] Failed to parse URL query: {e.Message}");
             }
         }
 #endif

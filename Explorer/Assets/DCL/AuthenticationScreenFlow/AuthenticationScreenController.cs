@@ -217,6 +217,13 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
+            // If guestMode URL param is present but there is no prior guest session in prefs,
+            // the cached identity (if any) belongs to a real-wallet user. Discarding it prevents
+            // accidentally marking that user's Catalyst profile as hasConnectedWeb3=false.
+            if (appArgs.HasFlag(AppArgsFlags.GUEST_MODE)
+                && DCLPlayerPrefs.GetString(DCLPrefKeys.IS_GUEST_SESSION, string.Empty) != "true")
+                storedIdentity = null;
+
             if (storedIdentity is { IsExpired: false }
 
                 // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
@@ -279,7 +286,11 @@ namespace DCL.AuthenticationScreenFlow
             else
             {
                 sentryTransactionManager.EndCurrentSpan(LOADING_TRANSACTION_NAME);
-                SwitchState(ViewState.Login);
+
+                if (IsGuestMode())
+                    StartLoginFlowUntilEnd(); // GuestWeb3Authenticator.LoginAsync is instant — no UI needed
+                else
+                    SwitchState(ViewState.Login);
             }
 
             if (splashScreen != null) // Splash screen is destroyed after first login
@@ -293,6 +304,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
+            // Guests use randomly-generated addresses that are never in any allow-list
+            if (IsGuestMode()) return true;
+
             if (Application.isEditor)
                 return true;
 
@@ -464,6 +478,10 @@ namespace DCL.AuthenticationScreenFlow
             SwitchState(ViewState.LoginInProgress);
         }
 
+        private bool IsGuestMode() =>
+            appArgs.HasFlag(AppArgsFlags.GUEST_MODE)
+            || DCLPlayerPrefs.GetString(DCLPrefKeys.IS_GUEST_SESSION, string.Empty) == "true";
+
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
             WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "calling selfProfile.ProfileAsync");
@@ -471,8 +489,34 @@ namespace DCL.AuthenticationScreenFlow
 
             if (profile == null)
             {
-                WebGLDebugLog.LogError("AuthScreen.FetchProfileAsync", "ProfileAsync returned null");
-                throw new ProfileNotFoundException();
+                if (!IsGuestMode())
+                {
+                    WebGLDebugLog.LogError("AuthScreen.FetchProfileAsync", "ProfileAsync returned null");
+                    throw new ProfileNotFoundException();
+                }
+
+                // New guest with no Catalyst profile yet: create and publish a random one
+                WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "Guest has no profile — calling UpdateProfileAsync to create and publish");
+                Profile randomProfile = Profile.NewRandomProfile(storedIdentityProvider.Identity?.Address.ToString());
+
+                try { profile = await selfProfile.UpdateProfileAsync(randomProfile, ct, updateAvatarInWorld: false); }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    WebGLDebugLog.LogError("AuthScreen.FetchProfileAsync", "UpdateProfileAsync threw during guest profile creation", e.Message);
+                    throw;
+                }
+
+                WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "UpdateProfileAsync returned", profile == null ? "null" : $"profile v{profile.Version}");
+
+                if (profile == null)
+                {
+                    // SetAsync completed without throwing (the publish succeeded), but the immediate
+                    // re-fetch hit the Catalyst lambdas endpoint before it had indexed the new entity.
+                    // Use the locally-constructed profile — UpdateProfileAsync mutated it in-place
+                    // with the correct UserId and Version before calling SetAsync.
+                    WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "Post-publish re-fetch returned null — using local guest profile");
+                    profile = randomProfile;
+                }
             }
 
             WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "Profile loaded", $"userId={profile.UserId} name={profile.Name}");
@@ -480,8 +524,8 @@ namespace DCL.AuthenticationScreenFlow
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
 
-            // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
-            profile.HasConnectedWeb3 = true;
+            // Catalysts don't manipulate this field; guests stay disconnected from web3
+            profile.HasConnectedWeb3 = !IsGuestMode();
 
             profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
             characterPreviewController?.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_2);

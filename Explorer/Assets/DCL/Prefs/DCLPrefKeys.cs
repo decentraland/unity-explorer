@@ -73,5 +73,8 @@ namespace DCL.Prefs
         public const string GIFTING_PENDING_GIFTS = "PendingGifts";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
+
+        public const string GUEST_SIGNER_KEY = "GuestAuth.SignerKey";
+        public const string IS_GUEST_SESSION  = "GuestAuth.IsGuest";
     }
 }

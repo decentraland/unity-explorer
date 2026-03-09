@@ -58,6 +58,8 @@ namespace Global.AppArgs
 
         public const string HEAD_SYNC = "head-sync";
 
+        public const string GUEST_MODE = "guestMode";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

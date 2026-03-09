@@ -30,7 +30,6 @@ namespace DCL.Profiles
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly Dictionary<string, byte[]> files = new ();
 
         /// <summary>
         ///     It's a simple list, not a dictionary because the number of different lambdas is very limited
@@ -38,12 +37,6 @@ namespace DCL.Profiles
         private readonly List<ProfilesBatchRequest> pendingBatches = new (10);
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
-
-        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
-
-        // Catalyst servers requires a face thumbnail texture of 256x256
-        // Otherwise it will fail when the profile is published
-        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
@@ -78,46 +71,41 @@ namespace DCL.Profiles
 
             IIpfsRealm ipfs = realm.Ipfs;
 
-            // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
-            byte[] faceSnapshotTextureFile = whiteTexturePng;
-            byte[] bodySnapshotTextureFile = whiteTexturePng;
-
-            string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
-            string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
-
-            using GetProfileJsonRootDto profileDto = NewProfileJsonRootDto(profile, bodyHash, faceHash);
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, profileDto, bodyHash, faceHash);
-
-            files.Clear();
-            files[bodyHash] = bodySnapshotTextureFile;
-            files[faceHash] = faceSnapshotTextureFile;
+            using GetProfileJsonRootDto profileDto = NewProfileJsonRootDto(profile);
+            IpfsProfileEntity entity = NewPublishProfileEntity(profile, profileDto);
 
             try
             {
-                await ipfs.PublishAsync(entity, ct, files);
+                Debug.Log($"[RealmProfileRepository] Publishing profile userId={profile.UserId} to {ipfs.LambdasBaseUrl}");
+                await ipfs.PublishAsync(entity, ct);
+                Debug.Log($"[RealmProfileRepository] Publish succeeded for userId={profile.UserId}");
                 profileCache.Set(profile.UserId, profile);
             }
-            finally { files.Clear(); }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                Debug.LogError($"[RealmProfileRepository] Publish FAILED for userId={profile.UserId}: {e.Message}");
+                throw;
+            }
         }
 
-        private static GetProfileJsonRootDto NewProfileJsonRootDto(Profile profile, string bodyHash, string faceHash)
+        private static GetProfileJsonRootDto NewProfileJsonRootDto(Profile profile)
         {
             var profileDto = GetProfileJsonRootDto.Create();
             profileDto.CopyFrom(profile);
-            profileDto.avatars[0]!.avatar.snapshots.body = bodyHash;
-            profileDto.avatars[0]!.avatar.snapshots.face256 = faceHash;
+
+            // Catalyst forbids snapshot data in profile entities — any non-null value in
+            // snapshots.body/face256 triggers "Avatars must not have snapshots", and empty
+            // strings fail the CIDv1 pattern validator. JSON null bypasses both checks.
+            profileDto.avatars[0]!.avatar.snapshots.body = null;
+            profileDto.avatars[0]!.avatar.snapshots.face256 = null;
             return profileDto;
         }
 
-        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto, string bodyHash, string faceHash) =>
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, GetProfileJsonRootDto profileJsonRootDto) =>
             new (string.Empty, profileJsonRootDto)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new ContentDefinition[]
-                {
-                    new () { file = "body.png", hash = bodyHash },
-                    new () { file = "face256.png", hash = faceHash },
-                },
+                content = Array.Empty<ContentDefinition>(),
                 pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),

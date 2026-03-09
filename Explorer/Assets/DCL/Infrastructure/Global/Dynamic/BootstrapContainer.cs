@@ -11,6 +11,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Prefs;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -243,7 +244,12 @@ namespace Global.Dynamic
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
-            IWeb3Authenticator coreWeb3Authenticator = new ProxyWeb3Authenticator(dappWeb3Authenticator, identityCache);
+            bool isGuestMode = appArgs.HasFlag(AppArgsFlags.GUEST_MODE)
+                            || DCLPlayerPrefs.GetString(DCLPrefKeys.IS_GUEST_SESSION, string.Empty) == "true";
+
+            IWeb3Authenticator coreWeb3Authenticator = isGuestMode
+                ? new ProxyWeb3Authenticator(new GuestWeb3Authenticator(web3AccountFactory), identityCache)
+                : new ProxyWeb3Authenticator(dappWeb3Authenticator, identityCache);
 
             IWeb3Authenticator autoLoginAuthenticator = new TokenFileAuthenticator(
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),

@@ -10,6 +10,7 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Profiles.Self
 {
@@ -142,10 +143,14 @@ namespace DCL.Profiles.Self
 
             if (!updateAvatarInWorld)
             {
+                Debug.Log($"[SelfProfile] Calling SetAsync for userId={newProfile.UserId} version={newProfile.Version}");
                 await profileRepository.SetAsync(newProfile, ct);
-                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                Debug.Log($"[SelfProfile] SetAsync completed — calling GetAsync for userId={newProfile.UserId} version={newProfile.Version}");
+                Profile? fetchedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
                     false, IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET);
+                Debug.Log($"[SelfProfile] GetAsync returned {(fetchedProfile == null ? "null" : $"profile v{fetchedProfile.Version}")}");
+                return fetchedProfile;
             }
 
             // Update profile immediately to prevent UI inconsistencies
