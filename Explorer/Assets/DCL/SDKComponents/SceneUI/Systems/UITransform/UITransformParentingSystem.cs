@@ -46,8 +46,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             var head = uiTransformComponentToBeDeleted.RelationData.head;
             if (head == null) return;
 
-            for (var current = head; current != null; current = current.Next)
+            // Save Next before RemoveChild, as it releases the node to the pool and resets its links
+            for (var current = head; current != null;)
             {
+                var next = current.Next;
+
                 if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
                 {
                     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
@@ -55,12 +58,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     if (!exists)
                     {
                         ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
+                        current = next;
                         continue;
                     }
 
                     uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
                     SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
                 }
+
+                current = next;
             }
         }
 
