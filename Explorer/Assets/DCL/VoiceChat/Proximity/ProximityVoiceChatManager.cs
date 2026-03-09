@@ -327,7 +327,10 @@ namespace DCL.VoiceChat
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
 
             if (spatial)
+            {
                 configuration.ApplyProximitySettingsTo(audioSource);
+                source.gameObject.AddComponent<ProximityPanCalculator>();
+            }
 
             source.Construct(stream);
             source.name = $"ProximityAudio_{key.identity}";
