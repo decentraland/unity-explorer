@@ -11,13 +11,7 @@ namespace ECS.SceneLifeCycle.WebGL
     /// <summary>
     ///     Queue for WebGL scene updates. Scenes enqueue ticks; main loop drains before scene ECS runs.
     /// </summary>
-    public interface IWebGLSceneUpdateQueue
-    {
-        void Enqueue(ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler);
-        void ProcessPendingUpdates();
-    }
-
-    public class WebGLSceneUpdateQueue : IWebGLSceneUpdateQueue
+    public class WebGLSceneUpdateQueue
     {
         private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> pending = new (32);
         private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> processing = new (32);
@@ -39,16 +33,14 @@ namespace ECS.SceneLifeCycle.WebGL
             for (var i = 0; i < processing.Count; i++)
             {
                 (ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler) = processing[i];
+
                 try
                 {
                     scene.Tick(dt).GetAwaiter().GetResult();
                     scene.OpenEcsGate(); // ensure gate is open for scene-world ECS this frame
                     scene.SceneStateProvider.TickNumber++;
                 }
-                catch (JavaScriptExecutionException e)
-                {
-                    exceptionHandler.OnJavaScriptException(e);
-                }
+                catch (JavaScriptExecutionException e) { exceptionHandler.OnJavaScriptException(e); }
                 catch (InvalidOperationException e)
                 {
                     // Scene was disposed before this queued tick could run; skip it silently

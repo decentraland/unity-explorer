@@ -1,7 +1,6 @@
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.WebGL;
@@ -15,9 +14,9 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(ControlSceneUpdateLoopSystem))]
     public partial class ProcessWebGLSceneUpdatesSystem : BaseUnityLoopSystem
     {
-        private readonly IWebGLSceneUpdateQueue webglSceneUpdateQueue;
+        private readonly WebGLSceneUpdateQueue webglSceneUpdateQueue;
 
-        internal ProcessWebGLSceneUpdatesSystem(World world, IWebGLSceneUpdateQueue webglSceneUpdateQueue) : base(world)
+        internal ProcessWebGLSceneUpdatesSystem(World world, WebGLSceneUpdateQueue webglSceneUpdateQueue) : base(world)
         {
             this.webglSceneUpdateQueue = webglSceneUpdateQueue;
         }

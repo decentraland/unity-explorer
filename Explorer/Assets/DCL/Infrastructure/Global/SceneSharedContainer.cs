@@ -27,6 +27,7 @@ using Temp.Helper.WebClient;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 using SceneRuntime.WebClient;
+
 #else
 using SceneRuntime.V8;
 #endif
@@ -67,8 +68,8 @@ namespace Global
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            ,
-            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+           ,
+            WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
         )
         {
@@ -77,10 +78,12 @@ namespace Global
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             WebGLDebugLog.Log("SceneSharedContainer.Create: before ECSWorldFactory");
+
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
+
             WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -90,49 +93,47 @@ namespace Global
 #endif
 
             WebGLDebugLog.Log("SceneSharedContainer.Create: before SceneFactory ctor");
+
             var sceneFactory = new SceneFactory(
-                    ecsWorldFactory,
-                    new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
-                        webJsSources),
-                    new SharedPoolsProvider(),
-                    new CRDTSerializer(),
-                    staticContainer.ComponentsContainer.SDKComponentsRegistry,
-                    sharedDependencies.EntityFactory,
-                    staticContainer.EntityCollidersGlobalCache,
-                    staticContainer.EthereumApi,
-                    mvcManager,
-                    profileRepository,
-                    web3IdentityCache,
-                    decentralandUrlsSource,
-                    webRequestController,
+                ecsWorldFactory,
+                new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
+                    webJsSources),
+                new SharedPoolsProvider(),
+                new CRDTSerializer(),
+                staticContainer.ComponentsContainer.SDKComponentsRegistry,
+                sharedDependencies.EntityFactory,
+                staticContainer.EntityCollidersGlobalCache,
+                staticContainer.EthereumApi,
+                mvcManager,
+                profileRepository,
+                web3IdentityCache,
+                decentralandUrlsSource,
+                webRequestController,
+#if !NO_LIVEKIT_MODE
+                roomHub,
+#endif
+                realmData,
+                staticContainer.PortableExperiencesController,
+                staticContainer.StaticSettings.SkyboxSettings,
+                new SceneCommunicationPipe(
+                    messagePipesHub
 
 #if !NO_LIVEKIT_MODE
-                    roomHub,
+                  , roomHub.SceneRoom()
 #endif
-
-                    realmData,
-                    staticContainer.PortableExperiencesController,
-                    staticContainer.StaticSettings.SkyboxSettings,
-                    new SceneCommunicationPipe(
-                            messagePipesHub
-
+                ),
 #if !NO_LIVEKIT_MODE
-                            , roomHub.SceneRoom()
+                remoteMetadata,
 #endif
 
-                            ),
-
-#if !NO_LIVEKIT_MODE
-                    remoteMetadata,
-#endif
-
-                    dclEnvironment,
-                    systemClipboard
+                dclEnvironment,
+                systemClipboard
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-                    ,
-                    webglSceneUpdateQueue
+               ,
+                webglSceneUpdateQueue
 #endif
-                    );
+            );
+
             WebGLDebugLog.Log("SceneSharedContainer.Create: after SceneFactory ctor");
             return new SceneSharedContainer { SceneFactory = sceneFactory };
         }

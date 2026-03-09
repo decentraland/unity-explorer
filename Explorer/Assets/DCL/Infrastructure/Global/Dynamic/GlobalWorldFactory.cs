@@ -37,7 +37,6 @@ using System.Threading;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Roads.Systems;
-using DCL.SkyBox;
 using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
@@ -143,12 +142,13 @@ namespace Global.Dynamic
 
         public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            ,
-            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+           ,
+            WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
         )
         {
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: start");
+
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
@@ -188,6 +188,7 @@ namespace Global.Dynamic
             // Increasing radius: loads scenes by distance from camera. Required for Genesis (ScenesAreFixed=false).
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, roadCoordinates, realmData, landscapeParcelData);
 
@@ -228,6 +229,7 @@ namespace Global.Dynamic
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before pluginArgs");
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before foreach plugins");
+
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
             {
                 if (plugin == null)
@@ -235,10 +237,12 @@ namespace Global.Dynamic
                     WebGLDebugLog.LogError("GlobalWorldFactory.cs", "null plugin in globalPlugins list");
                     continue;
                 }
+
                 string pluginName = plugin.GetType().Name;
                 WebGLDebugLog.Log("GlobalWorldFactory.cs", "InjectToWorld", pluginName);
                 plugin.InjectToWorld(ref builder, pluginArgs);
             }
+
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before finalizeWorldSystems");
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
@@ -249,6 +253,7 @@ namespace Global.Dynamic
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };
+
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after finalizeWorldSystems array");
 
             SystemGroupWorld worldSystems = builder.Finish();

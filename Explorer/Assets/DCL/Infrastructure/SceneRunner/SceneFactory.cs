@@ -82,7 +82,7 @@ namespace SceneRunner
         private readonly ISystemClipboard systemClipboard;
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-        private readonly IWebGLSceneUpdateQueue webglSceneUpdateQueue;
+        private readonly WebGLSceneUpdateQueue webglSceneUpdateQueue;
 #endif
 
         private IGlobalWorldActions globalWorldActions = null!;
@@ -101,11 +101,9 @@ namespace SceneRunner
             IWeb3IdentityCache identityCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
-
 #if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
 #endif
-
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
@@ -118,8 +116,8 @@ namespace SceneRunner
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            ,
-            IWebGLSceneUpdateQueue webglSceneUpdateQueue
+           ,
+            WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
         )
         {
@@ -209,11 +207,11 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={UnityEngine.Time.realtimeSinceStartup:F1}", "LOAD");
+            WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={Time.realtimeSinceStartup:F1}", "LOAD");
 
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-                ,
+               ,
                 webglSceneUpdateQueue
 #endif
             );
@@ -222,10 +220,11 @@ namespace SceneRunner
             ISceneRuntime sceneRuntime;
 
             WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Calling CreateByPathAsync with URL: {deps.SceneCodeUrl.Value}");
+
             try
             {
                 sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SWITCH_TO_THREAD_POOL);
-                WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - CreateByPathAsync completed successfully");
+                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - CreateByPathAsync completed successfully");
             }
             catch (Exception e)
             {
@@ -255,21 +254,21 @@ namespace SceneRunner
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(
-                        deps,
-                        sceneRuntime,
-                        sharedPoolsProvider,
-                        crdtSerializer,
-                        mvcManager,
-                        globalWorldActions,
-                        realmData!,
-                        messagePipesHub,
-                        webRequestController,
-                        skyboxSettings,
+                    deps,
+                    sceneRuntime,
+                    sharedPoolsProvider,
+                    crdtSerializer,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData!,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
 #if !UNITY_WEBGL
                         engineAPIMutexOwner,
 #endif
-                        systemClipboard
-                        );
+                    systemClipboard
+                );
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -296,7 +295,7 @@ namespace SceneRunner
                     portableExperiencesController
 
 #if !NO_LIVEKIT_MODE
-                    , remoteMetadata
+                  , remoteMetadata
 #endif
 
                 );
@@ -304,21 +303,21 @@ namespace SceneRunner
             else
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
-                        deps,
-                        sceneRuntime,
-                        sharedPoolsProvider,
-                        crdtSerializer,
-                        mvcManager,
-                        globalWorldActions,
-                        realmData!,
-                        messagePipesHub,
-                        webRequestController,
-                        skyboxSettings,
+                    deps,
+                    sceneRuntime,
+                    sharedPoolsProvider,
+                    crdtSerializer,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData!,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
 #if !UNITY_WEBGL
                         engineAPIMutexOwner,
 #endif
-                        systemClipboard
-                        );
+                    systemClipboard
+                );
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -345,17 +344,18 @@ namespace SceneRunner
                     portableExperiencesController
 
 #if !NO_LIVEKIT_MODE
-                    , remoteMetadata
+                  , remoteMetadata
 #endif
 
                 );
             }
 
-            WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Executing scene JSON");
+            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Executing scene JSON");
+
             try
             {
                 sceneRuntime.ExecuteSceneJson();
-                WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Scene JSON executed successfully");
+                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Scene JSON executed successfully");
             }
             catch (Exception e)
             {
@@ -364,24 +364,27 @@ namespace SceneRunner
                 throw;
             }
 
-            WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Creating SceneFacade");
+            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating SceneFacade");
+
             if (sceneData.IsPortableExperience())
             {
-                WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Creating PortableExperienceSceneFacade");
+                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating PortableExperienceSceneFacade");
+
                 return new PortableExperienceSceneFacade(
                     sceneData,
                     runtimeDeps
                 );
             }
 
-            WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Creating regular SceneFacade");
+            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating regular SceneFacade");
+
             return new SceneFacade(
                 sceneData,
                 runtimeDeps
             );
         }
 
-        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T: IDisposable
         {
             // JavaScriptExecutionException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is JavaScriptExecutionException javascriptExecutionException)
