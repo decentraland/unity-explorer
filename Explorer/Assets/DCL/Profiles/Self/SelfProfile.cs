@@ -202,6 +202,7 @@ namespace DCL.Profiles.Self
                 profileCache.Set(oldProfile.UserId, oldProfile);
                 UpdateAvatarInWorld(oldProfile);
                 OwnProfile = oldProfile;
+                isProfileUpdatePending = false;
                 throw;
             }
         }
