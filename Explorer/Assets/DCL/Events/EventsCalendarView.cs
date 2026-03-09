@@ -49,7 +49,8 @@ namespace DCL.Events
             public HoverableUiElement hoverableUiElement;
             public CanvasGroup scrollBarCanvasGroup;
             public SkeletonLoadingView skeletonLoadingView;
-            public GameObject moreEventsArrow;
+            public Button moreEventsArrowUp;
+            public Button moreEventsArrowDown;
             public ScrollRect scrollRect;
         }
 
@@ -271,8 +272,11 @@ namespace DCL.Events
 
         private void OnEventsScrollValueChanged(int eventsListIndex)
         {
+            bool scrollIsNotAtTheTop = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition < 0.99f && currentOccupancies[eventsListIndex] > 1.5f;
+            eventsLists[eventsListIndex].moreEventsArrowUp.gameObject.SetActive(scrollIsNotAtTheTop);
+
             bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f;
-            eventsLists[eventsListIndex].moreEventsArrow.SetActive(scrollIsNotAtTheBottom);
+            eventsLists[eventsListIndex].moreEventsArrowDown.gameObject.SetActive(scrollIsNotAtTheBottom);
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>

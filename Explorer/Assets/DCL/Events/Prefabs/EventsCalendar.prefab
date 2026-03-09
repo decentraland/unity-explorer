@@ -63,31 +63,36 @@ MonoBehaviour:
     hoverableUiElement: {fileID: 3477280417435618825}
     scrollBarCanvasGroup: {fileID: 2461234395685577569}
     skeletonLoadingView: {fileID: 416504037545551716}
-    moreEventsArrow: {fileID: 1573886918667806213}
+    moreEventsArrowUp: {fileID: 5332255762572809136}
+    moreEventsArrowDown: {fileID: 1573886918667806213}
     scrollRect: {fileID: 2359533236403494331}
   - eventsLoopList: {fileID: 3738975182734106253}
     hoverableUiElement: {fileID: 1597163425666689874}
     scrollBarCanvasGroup: {fileID: 307234426083345978}
     skeletonLoadingView: {fileID: 2570486140353954367}
-    moreEventsArrow: {fileID: 3727883599318598494}
+    moreEventsArrowUp: {fileID: 8040176497368594155}
+    moreEventsArrowDown: {fileID: 3727883599318598494}
     scrollRect: {fileID: 492358332875094240}
   - eventsLoopList: {fileID: 5487901310950478848}
     hoverableUiElement: {fileID: 7629432675356336607}
     scrollBarCanvasGroup: {fileID: 8901636387862514871}
     skeletonLoadingView: {fileID: 6658361708959516850}
-    moreEventsArrow: {fileID: 5509988483074574803}
+    moreEventsArrowUp: {fileID: 1179664754505808998}
+    moreEventsArrowDown: {fileID: 5509988483074574803}
     scrollRect: {fileID: 8727490640817795693}
   - eventsLoopList: {fileID: 198525293060395570}
     hoverableUiElement: {fileID: 2812651906672781293}
     scrollBarCanvasGroup: {fileID: 3846438812686060165}
     skeletonLoadingView: {fileID: 1337283401707245184}
-    moreEventsArrow: {fileID: 188823307627679713}
+    moreEventsArrowUp: {fileID: 6824851473253071444}
+    moreEventsArrowDown: {fileID: 188823307627679713}
     scrollRect: {fileID: 4032967857757008991}
   - eventsLoopList: {fileID: 3199526206237952356}
     hoverableUiElement: {fileID: 697707833446644923}
     scrollBarCanvasGroup: {fileID: 2001575339934601683}
     skeletonLoadingView: {fileID: 4334910049829721558}
-    moreEventsArrow: {fileID: 3186464268004365495}
+    moreEventsArrowUp: {fileID: 8075222221110026498}
+    moreEventsArrowDown: {fileID: 3186464268004365495}
     scrollRect: {fileID: 1824441033303977737}
   objectsToHideWhenBanner:
   - {fileID: 2824101531171263795}
@@ -1430,6 +1435,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0d4738770ed4c8593def980de78d738, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::DCL.UI.SkeletonLoadingView
+--- !u!1 &8075222221110026498 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9013331336601610876, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 938220744999144318}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1076755910157235313
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2520,6 +2530,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e190d043ef387ee4fad4acea6146931e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &8040176497368594155 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9013331336601610876, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 1333550324535811223}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1912091578676918958
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3601,6 +3616,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &6824851473253071444 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9013331336601610876, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 2568027440106819624}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3063248477068815302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4670,6 +4690,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b957b2848dd4bdfb33b5004f1022b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UI::HoverableUiElement
+--- !u!1 &5332255762572809136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9013331336601610876, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 3812916409234078156}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4137734289951933012
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6178,6 +6203,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+--- !u!1 &1179664754505808998 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9013331336601610876, guid: 7a44239bf7231454eac81127662aa285, type: 3}
+  m_PrefabInstance: {fileID: 7875330926175376922}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &5487901310950478848 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2405549927914422810, guid: 7a44239bf7231454eac81127662aa285, type: 3}
