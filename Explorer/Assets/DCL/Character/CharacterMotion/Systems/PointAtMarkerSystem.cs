@@ -6,8 +6,11 @@ using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
+using DCL.Friends;
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using Unity.Mathematics;
@@ -22,15 +25,21 @@ namespace DCL.Character.CharacterMotion.Systems
     public partial class PointAtMarkerSystem : BaseUnityLoopSystem
     {
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ObjectProxy<FriendsCache> friendsCache;
 
         private SingleInstanceEntity camera;
 
         internal PointAtMarkerSystem(
             World world,
-            IObjectPool<PointAtMarkerHolder> markerPool
+            IObjectPool<PointAtMarkerHolder> markerPool,
+            IWeb3IdentityCache web3IdentityCache,
+            ObjectProxy<FriendsCache> friendsCache
         ) : base(world)
         {
             this.markerPool = markerPool;
+            this.web3IdentityCache = web3IdentityCache;
+            this.friendsCache = friendsCache;
         }
 
         public override void Initialize()
@@ -56,7 +65,8 @@ namespace DCL.Character.CharacterMotion.Systems
             in HandPointAtComponent pointAt,
             in Profile profile)
         {
-            if (!pointAt.IsPointing)
+            // User must be pointing and either be the local player or a friend to show the marker
+            if (!pointAt.IsPointing || (profile.UserId != web3IdentityCache.Identity?.Address && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
                 return;
 
             PointAtMarkerHolder marker = markerPool.Get();

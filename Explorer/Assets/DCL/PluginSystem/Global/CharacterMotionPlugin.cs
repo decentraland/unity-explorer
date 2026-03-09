@@ -12,7 +12,10 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -35,6 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly ILandscape landscape;
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ObjectProxy<FriendsCache> friendsCache;
 
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
@@ -47,7 +52,9 @@ namespace DCL.PluginSystem.Global
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILandscape landscape,
             IScenesCache scenesCache,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IWeb3IdentityCache web3IdentityCache,
+            ObjectProxy<FriendsCache> friendsCache)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -56,6 +63,8 @@ namespace DCL.PluginSystem.Global
             this.landscape = landscape;
             this.scenesCache = scenesCache;
             this.assetsProvisioner = assetsProvisioner;
+            this.web3IdentityCache = web3IdentityCache;
+            this.friendsCache = friendsCache;
         }
 
         public void Dispose()
@@ -131,7 +140,7 @@ namespace DCL.PluginSystem.Global
                 return;
 
             HandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
-            PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool);
+            PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache);
             PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
         }
     }
