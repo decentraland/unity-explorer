@@ -136,6 +136,10 @@ namespace DCL.Profiles.Self
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
 
+            // Capture version before async operations — newProfile may be disposed by the
+            // profile cache when a fetched profile replaces it, resetting Version to 0
+            int expectedVersion = newProfile.Version;
+
             OwnProfile = newProfile;
 
             if (!updateAvatarInWorld)
@@ -165,13 +169,16 @@ namespace DCL.Profiles.Self
             try
             {
                 await profileRepository.SetAsync(newProfile, ct);
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, expectedVersion, ct,
                     // force to fetch the profile: there are some fields that might change, like the profile picture url
                     false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
+                if (savedProfile == null || savedProfile.Version < expectedVersion)
+                    throw new Exception($"Profile update could not be confirmed. Expected version {expectedVersion}, got {savedProfile?.Version.ToString() ?? "null"}");
+
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
-                profileCache.Set(savedProfile!.UserId, savedProfile);
+                profileCache.Set(savedProfile.UserId, savedProfile);
                 UpdateAvatarInWorld(savedProfile!);
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
