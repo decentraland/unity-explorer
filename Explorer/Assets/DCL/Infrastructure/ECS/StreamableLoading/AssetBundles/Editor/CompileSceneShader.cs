@@ -157,7 +157,7 @@ namespace DCL.Rendering.Menus
                         importer = AssetImporter.GetAtPath(fullAssetPath);
                     }
 
-                    importer.SetAssetBundleNameAndVariant(bundleName, "");
+                    importer.SetAssetBundleNameAndVariant(bundleName, string.Empty);
                     importer.SaveAndReimport();
                     importers.Add(importer);
                     allAssetPaths.Add(fullAssetPath);
@@ -241,11 +241,11 @@ namespace DCL.Rendering.Menus
         {
             return EditorUserBuildSettings.activeBuildTarget switch
             {
-                BuildTarget.WebGL => ("", BuildTarget.WebGL),
+                BuildTarget.WebGL => ("_webgl", BuildTarget.WebGL),
                 BuildTarget.StandaloneWindows64 => ("_windows", BuildTarget.StandaloneWindows64),
                 BuildTarget.StandaloneOSX => ("_mac", BuildTarget.StandaloneOSX),
                 BuildTarget.StandaloneLinux64 => ("_linux", BuildTarget.StandaloneLinux64),
-                _ => ("", BuildTarget.WebGL),
+                _ => throw new ArgumentOutOfRangeException(),
             };
         }
 
@@ -338,7 +338,7 @@ namespace DCL.Rendering.Menus
                     importer = AssetImporter.GetAtPath(fullAssetPath);
                 }
 
-                importer.SetAssetBundleNameAndVariant(bundleName, "");
+                importer.SetAssetBundleNameAndVariant(bundleName, string.Empty);
                 importer.SaveAndReimport();
                 importers.Add(importer);
             }

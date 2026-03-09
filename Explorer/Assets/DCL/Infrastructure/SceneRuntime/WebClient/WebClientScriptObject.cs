@@ -59,7 +59,7 @@ namespace SceneRuntime.WebClient
 
             try
             {
-                int bufferSize = 1024 * 128; // Increased to 128KB to handle large CRDT state responses
+                int bufferSize = 1024 * 128;
                 IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
                 try
@@ -106,7 +106,7 @@ namespace SceneRuntime.WebClient
 
                 try
                 {
-                    int bufferSize = 1024 * 128; // Increased to 128KB to handle large CRDT state responses
+                    int bufferSize = 1024 * 128;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
                     try
@@ -142,7 +142,7 @@ namespace SceneRuntime.WebClient
 
                 try
                 {
-                    int bufferSize = 1024 * 128; // Increased to 128KB to handle large CRDT state responses
+                    int bufferSize = 1024 * 128;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
                     try
@@ -182,7 +182,7 @@ namespace SceneRuntime.WebClient
 
                 try
                 {
-                    int bufferSize = 1024 * 128; // Increased to 128KB to handle large CRDT state responses
+                    int bufferSize = 1024 * 128;
                     IntPtr resultPtr = Marshal.AllocHGlobal(bufferSize);
 
                     try

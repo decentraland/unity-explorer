@@ -8,13 +8,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
     {
         private readonly IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures;
         private readonly bool enableRawGltfWearables;
-        private readonly bool useWebGLTextureFormats;
 
-        public TextureArrayContainerFactory(IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures, bool enableRawGltfWearables = false, bool useWebGLTextureFormats = false)
+        public TextureArrayContainerFactory(IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures, bool enableRawGltfWearables = false)
         {
             this.defaultTextures = defaultTextures;
             this.enableRawGltfWearables = enableRawGltfWearables;
-            this.useWebGLTextureFormats = useWebGLTextureFormats;
         }
 
         private TextureArrayContainer CreateSceneLOD(TextureFormat textureFormat, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutionsDescriptors,
@@ -39,9 +37,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateToon(IReadOnlyList<int> defaultResolutions)
         {
-            var basemapFormat = useWebGLTextureFormats ? DEFAULT_WEBGL_TEXTURE_FORMAT : DEFAULT_BASEMAP_TEXTURE_FORMAT;
-            var normalFormat = useWebGLTextureFormats ? DEFAULT_WEBGL_TEXTURE_FORMAT : DEFAULT_NORMALMAP_TEXTURE_FORMAT;
-            var emissiveFormat = useWebGLTextureFormats ? DEFAULT_WEBGL_TEXTURE_FORMAT : DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT;
+#if UNITY_WEBGL
+            var basemapFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
+            var normalFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
+            var emissiveFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
+#else
+            var basemapFormat = DEFAULT_BASEMAP_TEXTURE_FORMAT;
+            var normalFormat = DEFAULT_NORMALMAP_TEXTURE_FORMAT;
+            var emissiveFormat = DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT;
+#endif
 
             var textureArrayMapping = new List<TextureArrayMapping>
             {
@@ -125,11 +129,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateFacial(IReadOnlyList<int> defaultResolutions)
         {
-            var basemapFormat = useWebGLTextureFormats ? DEFAULT_WEBGL_TEXTURE_FORMAT : DEFAULT_BASEMAP_TEXTURE_FORMAT;
+#if UNITY_WEBGL
+            var basemapFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
+#else
+            var basemapFormat = DEFAULT_BASEMAP_TEXTURE_FORMAT;
+#endif
 
             var textureArrayMapping = new List<TextureArrayMapping>
             {
-                // Asset Bundle Facial Feature Wearables (BC7 on desktop, DXT1 on WebGL)
+                // Asset Bundle Facial Feature Wearables (BC7 on desktop, DXT5 on WebGL)
                 new (new TextureArrayHandler("Avatar_Facial_Feature", FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, basemapFormat, defaultTextures),
                     MAINTEX_ORIGINAL_TEXTURE, FACIAL_FEATURES_TEXTURE_RESOLUTION),
                 new (new TextureArrayHandler("Avatar_Facial_Feature", FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MASK_ARR_SHADER_ID, MASK_ARR_TEX_SHADER_ID, defaultResolutions, basemapFormat, defaultTextures),

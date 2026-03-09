@@ -67,9 +67,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         }
 
         private bool IsFormatValidForDefaultTex(TextureFormat texFormat) =>
+#if UNITY_WEBGL
+            texFormat == DEFAULT_WEBGL_TEXTURE_FORMAT;
+#else
             texFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
             || texFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT
-            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
-            || texFormat == DEFAULT_WEBGL_TEXTURE_FORMAT;
+            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT;
+#endif
     }
 }

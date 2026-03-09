@@ -14,13 +14,13 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
 
     public static class HighlightedObjectsExtensions
     {
-        public static void Highlight(this IHighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers, Color color, float thickness)
+        public static void Highlight(this HighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers, Color color, float thickness)
         {
             foreach (Renderer renderer in renderers)
                 highlightedObjects.Highlight(renderer, color, thickness);
         }
 
-        public static void Disparage(this IHighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers)
+        public static void Disparage(this HighlightedObjects highlightedObjects, IEnumerable<Renderer> renderers)
         {
             foreach (Renderer renderer in renderers)
                 highlightedObjects.Disparage(renderer);

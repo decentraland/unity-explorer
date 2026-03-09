@@ -13,8 +13,7 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
     public partial class RenderFeature_ObjectHighlight : ScriptableRendererFeature
     {
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers = new ();
-
-        public static readonly IHighlightedObjects HighlightedObjects = new HighlightedObjects(m_HighLightRenderers);
+        public static readonly HighlightedObjects HIGHLIGHTED_OBJECTS = new (m_HighLightRenderers);
 
         // Pass Data
         private RenderPass_DrawObjects renderPass_DrawObjects = null!;

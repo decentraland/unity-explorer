@@ -93,7 +93,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
+                RenderFeature_ObjectHighlight.HIGHLIGHTED_OBJECTS.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
             }
         }
 
@@ -112,7 +112,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Disparage(renderers);
+                RenderFeature_ObjectHighlight.HIGHLIGHTED_OBJECTS.Disparage(renderers);
             }
         }
 

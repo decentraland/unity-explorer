@@ -81,12 +81,13 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
 
-                // WebGL: BC7 not supported; use DXT arrays for Asset Bundle wearables.
-                bool isWebGL = Application.platform == RuntimePlatform.WebGLPlayer;
+#if UNITY_WEBGL
+                var enableRawGltfWearables = false;
+#else
+                bool enableRawGltfWearables = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
+#endif
 
-                bool enableRawGltfWearables = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS) && !isWebGL;
-                bool useWebGLTextureFormats = isWebGL;
-                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables, useWebGLTextureFormats);
+                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables);
             });
         }
     }
