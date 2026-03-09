@@ -7,8 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnityEngine.Device;
 using UnityEngine.Pool;
+using Cysharp.Threading.Tasks;
 
 namespace Plugins.RustSegment.SegmentServerWrap
 {
