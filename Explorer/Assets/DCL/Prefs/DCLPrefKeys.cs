@@ -81,5 +81,6 @@ namespace DCL.Prefs
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
 
         public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
+        public const string CHAT_REACTION_SELECTED = "ChatReaction_Selected";
     }
 }
