@@ -35,10 +35,10 @@ Material:
     m_Ints: []
     m_Floats:
     - PixelSnap: 0
+    - _BorderBrightness: 3
+    - _BorderThickness: 0.04
     - _CircleRadius: 0.5
     - _CircleSoftness: 0.01
-    - _BorderThickness: 0.04
-    - _BorderBrightness: 1.6
     - _EnableExternalAlpha: 0
     m_Colors:
     - _BackgroundColor: {r: 0.2, g: 0.2, b: 0.8, a: 1}
