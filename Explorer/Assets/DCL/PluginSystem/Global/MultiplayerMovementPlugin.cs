@@ -34,7 +34,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
 
-        private CancellationTokenSource? lifeCycleCts;
         private MultiplayerMovementSettings settings;
         private Entity? selfReplicaEntity;
 
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            lifeCycleCts.SafeCancelAndDispose();
             messageBus.Dispose();
         }
 
@@ -67,12 +65,6 @@ namespace DCL.PluginSystem.Global
             ConfigureCompressionUsage();
 
             messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, (await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct)).Value);
-
-            lifeCycleCts = lifeCycleCts.SafeRestartLinked(ct);
-
-            messageBus.SubscribeToIncomingMessagesAsync(lifeCycleCts.Token)
-                      .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
-                      .Forget();
         }
 
         private void ConfigureCompressionUsage()

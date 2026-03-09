@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
@@ -12,7 +11,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using Decentraland.Pulse;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -28,32 +26,25 @@ namespace DCL.Multiplayer.Movement.Systems
             Compressed,
         }
 
-        private const float WALK_EPSILON = 0.05f;
+        internal const float WALK_EPSILON = 0.05f;
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly PulseMultiplayerService pulseService;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly MovementInbox movementInbox;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly World globalWorld;
-        private readonly PeerIdCache peerIdCache;
-        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
 
         private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
-        private uint lastSequenceSent;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub,
-            PulseMultiplayerService pulseService,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
-            World globalWorld,
-            PeerIdCache peerIdCache)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, MovementInbox movementInbox)
         {
             this.messagePipesHub = messagePipesHub;
-            this.pulseService = pulseService;
-            this.entityParticipantTable = entityParticipantTable;
-            this.globalWorld = globalWorld;
-            this.peerIdCache = peerIdCache;
+            this.movementInbox = movementInbox;
+
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
         }
 
         public void Dispose()
@@ -73,110 +64,6 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             WriteAndSend(message, messagePipesHub.IslandPipe());
             WriteAndSend(message, messagePipesHub.ScenePipe());
-
-            lastSequenceSent++;
-
-            pulseService.Send(new ClientMessage
-            {
-                PlayerStateFull = new PlayerStateFull
-                {
-                    State = ToPlayerState(message, lastSequenceSent),
-                },
-            }, ITransport.PacketMode.UNRELIABLE_SEQUENCED);
-        }
-
-        public UniTask SubscribeToIncomingMessagesAsync(CancellationToken ct)
-        {
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-
-            return UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
-                SubscribeToPlayerStateFullAsync(ct),
-                SubscribeToPlayerStateDeltaAsync(ct));
-        }
-
-        private async UniTask SubscribeToPlayerJoinedAsync(CancellationToken ct)
-        {
-            await foreach (PlayerJoined playerJoined in pulseService.SubscribeAsync<PlayerJoined>(ServerMessage.MessageOneofCase.PlayerJoined, ct))
-            {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                peerIdCache.Set(playerJoined.UserId, playerJoined.State.SubjectId);
-
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
-                lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
-
-                Inbox(movementMessage, playerJoined.UserId);
-            }
-        }
-
-        private async UniTask SubscribeToPlayerStateFullAsync(CancellationToken ct)
-        {
-            await foreach (PlayerStateFull playerStateFull in pulseService.SubscribeAsync<PlayerStateFull>(ServerMessage.MessageOneofCase.PlayerStateFull, ct))
-            {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                PlayerState playerState = playerStateFull.State;
-
-                if (!peerIdCache.TryGetWallet(playerState.SubjectId, out string wallet))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerState.SubjectId}");
-                    continue;
-                }
-
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerState);
-
-                if (lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
-                {
-                    if (lastMessage.sequence < playerState.Sequence)
-                        lastMovementMessages[playerState.SubjectId] = (playerState.Sequence, movementMessage);
-                }
-                else
-                    lastMovementMessages[playerState.SubjectId] = (playerState.Sequence, movementMessage);
-
-                Inbox(movementMessage, wallet);
-            }
-        }
-
-        private async UniTask SubscribeToPlayerStateDeltaAsync(CancellationToken ct)
-        {
-            await foreach (PlayerStateDeltaTier0 playerState in pulseService.SubscribeAsync<PlayerStateDeltaTier0>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
-            {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                if (!peerIdCache.TryGetWallet(playerState.SubjectId, out string wallet))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerState.SubjectId}");
-                    continue;
-                }
-
-                if (!lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {playerState.SubjectId}");
-                    continue;
-                }
-
-                NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, playerState);
-
-                if (lastMovement.sequence < playerState.NewSeq)
-                    lastMovementMessages[playerState.SubjectId] = (playerState.NewSeq, movementMessage);
-
-                Inbox(movementMessage, wallet);
-            }
         }
 
         private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
@@ -328,22 +215,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            TryEnqueue(@for, fullMovementMessage);
-            ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
-        }
-
-        private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
-        {
-            if (!entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
-                return;
-            }
-
-            Entity entity = entry.Entity;
-
-            if (globalWorld.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
-                remotePlayerMovementComponent.Enqueue(fullMovementMessage);
+            movementInbox.TryEnqueue(fullMovementMessage, @for);
         }
 
         /// <summary>
@@ -376,181 +248,5 @@ namespace DCL.Multiplayer.Movement.Systems
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
         }
 
-        private static NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState)
-        {
-            var vel = new Vector3(playerState.Velocity.X, playerState.Velocity.Y, playerState.Velocity.Z);
-
-            float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
-            var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
-
-            var message = new NetworkMovementMessage
-            {
-                // TODO: timestamp might not be the same as serverTick (?)
-                timestamp = playerState.ServerTick,
-                position = new Vector3(playerState.Position.X, playerState.Position.Y, playerState.Position.Z),
-                rotationY = playerState.RotationY,
-                velocity = vel,
-                velocitySqrMagnitude = vel.sqrMagnitude,
-                movementKind = movementKind,
-
-                animState = new AnimationStates
-                {
-                    MovementBlendValue = movementBlend,
-                    SlideBlendValue = playerState.SlideBlend,
-                    IsGrounded = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Grounded),
-                    IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
-                    IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
-                    IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
-                },
-                isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
-
-                // TODO: resolve instant (?)
-                isInstant = false,
-
-                // TODO: resolve emoting
-                isEmoting = false,
-
-                headIKYawEnabled = playerState.HasHeadYaw,
-                headIKPitchEnabled = playerState.HasHeadPitch,
-                headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
-            };
-
-            return message;
-        }
-
-        private static NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
-        {
-            // TODO: timestamp might not be the same as serverTick (?)
-            last.timestamp = delta.ServerTick;
-
-            var velocityChanged = false;
-            var movementBlendChanged = false;
-
-            if (delta.HasPositionX) last.position.x = delta.PositionX;
-            if (delta.HasPositionY) last.position.y = delta.PositionY;
-            if (delta.HasPositionZ) last.position.z = delta.PositionZ;
-
-            if (delta.HasRotationY) last.rotationY = delta.RotationY;
-
-            if (delta.HasVelocityX)
-            {
-                last.velocity.x = delta.VelocityX;
-                velocityChanged = true;
-            }
-
-            if (delta.HasVelocityY)
-            {
-                last.velocity.y = delta.VelocityY;
-                velocityChanged = true;
-            }
-
-            if (delta.HasVelocityZ)
-            {
-                last.velocity.z = delta.VelocityZ;
-                velocityChanged = true;
-            }
-
-            if (velocityChanged)
-                last.velocitySqrMagnitude = last.velocity.sqrMagnitude;
-
-            if (delta.HasMovementBlend)
-            {
-                float movementBlend = Mathf.Clamp(delta.MovementBlend, 0, 3);
-                last.animState.MovementBlendValue = movementBlend;
-                movementBlendChanged = true;
-            }
-
-            if (delta.HasSlideBlend)
-                last.animState.SlideBlendValue = delta.SlideBlend;
-
-            if (delta.HasHeadYaw)
-            {
-                last.headYawAndPitch.x = delta.HeadYaw;
-                last.headIKYawEnabled = true;
-            }
-
-            if (delta.HasHeadPitch)
-            {
-                last.headYawAndPitch.y = delta.HeadPitch;
-                last.headIKPitchEnabled = true;
-            }
-
-            uint flags = delta.StateFlags;
-
-            last.animState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
-            last.animState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
-            last.animState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
-            last.animState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
-            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
-
-            if (movementBlendChanged)
-            {
-                float mb = last.animState.MovementBlendValue;
-
-                last.movementKind = (MovementKind)Mathf.Max(
-                    Mathf.RoundToInt(mb),
-                    mb > WALK_EPSILON ? 1 : 0
-                );
-            }
-
-            // TODO: isInstant, isEmoting
-
-            return last;
-        }
-
-        private static PlayerState ToPlayerState(NetworkMovementMessage message, uint sequence)
-        {
-            return new PlayerState
-            {
-                // No need own subjectId, can be resolved on the server
-                // SubjectId = subjectId,
-                Sequence = sequence,
-
-                // ServerTick = (uint)message.timestamp,
-
-                Position = new Decentraland.Pulse.Vector3
-                {
-                    X = message.position.x,
-                    Y = message.position.y,
-                    Z = message.position.z,
-                },
-
-                Velocity = new Decentraland.Pulse.Vector3
-                {
-                    X = message.velocity.x,
-                    Y = message.velocity.y,
-                    Z = message.velocity.z,
-                },
-
-                RotationY = message.rotationY,
-                MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3),
-                SlideBlend = message.animState.SlideBlendValue,
-                HeadYaw = message.headYawAndPitch.x,
-                HeadPitch = message.headYawAndPitch.y,
-                StateFlags = BuildStateFlags(message),
-            };
-        }
-
-        private static uint BuildStateFlags(NetworkMovementMessage message)
-        {
-            uint flags = 0;
-
-            if (message.animState.IsGrounded)
-                flags |= (uint) PlayerAnimationFlags.Grounded;
-
-            if (message.animState.IsLongJump)
-                flags |= (uint) PlayerAnimationFlags.LongJump;
-
-            if (message.animState.IsFalling)
-                flags |= (uint) PlayerAnimationFlags.Falling;
-
-            if (message.animState.IsLongFall)
-                flags |= (uint) PlayerAnimationFlags.LongFall;
-
-            if (message.isStunned)
-                flags |= (uint) PlayerAnimationFlags.Stunned;
-
-            return flags;
-        }
     }
 }

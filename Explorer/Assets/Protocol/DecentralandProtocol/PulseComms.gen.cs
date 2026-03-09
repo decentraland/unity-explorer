@@ -26,61 +26,62 @@ namespace Decentraland.Pulse {
           string.Concat(
             "CiRkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2VfY29tbXMucHJvdG8SEmRlY2Vu",
             "dHJhbGFuZC5wdWxzZRohZGVjZW50cmFsYW5kL2NvbW1vbi9vcHRpb25zLnBy",
-            "b3RvIiYKEEhhbmRzaGFrZVJlcXVlc3QSEgoKYXV0aF9jaGFpbhgBIAEoDCJC",
-            "ChFIYW5kc2hha2VSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEhIKBWVycm9y",
-            "GAIgASgJSACIAQFCCAoGX2Vycm9yIpcBCg1DbGllbnRNZXNzYWdlEjkKCWhh",
-            "bmRzaGFrZRgBIAEoCzIkLmRlY2VudHJhbGFuZC5wdWxzZS5IYW5kc2hha2VS",
-            "ZXF1ZXN0SAASQAoRcGxheWVyX3N0YXRlX2Z1bGwYAiABKAsyIy5kZWNlbnRy",
-            "YWxhbmQucHVsc2UuUGxheWVyU3RhdGVGdWxsSABCCQoHbWVzc2FnZSKcAgoN",
-            "U2VydmVyTWVzc2FnZRI6CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRyYWxh",
-            "bmQucHVsc2UuSGFuZHNoYWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3RhdGVf",
-            "ZnVsbBgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1",
-            "bGxIABJHChJwbGF5ZXJfc3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRyYWxh",
-            "bmQucHVsc2UuUGxheWVyU3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVyX2pv",
-            "aW5lZBgEIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2luZWRI",
-            "AEIJCgdtZXNzYWdlIv0CCgtQbGF5ZXJTdGF0ZRISCgpzdWJqZWN0X2lkGAEg",
-            "ASgNEhAKCHNlcXVlbmNlGAIgASgNEhMKC3NlcnZlcl90aWNrGAMgASgNEi0K",
-            "CHBvc2l0aW9uGAQgASgLMhsuZGVjZW50cmFsYW5kLnB1bHNlLlZlY3RvcjMS",
-            "LQoIdmVsb2NpdHkYBSABKAsyGy5kZWNlbnRyYWxhbmQucHVsc2UuVmVjdG9y",
-            "MxISCgpyb3RhdGlvbl95GAYgASgCEhYKDm1vdmVtZW50X2JsZW5kGAcgASgC",
-            "EhMKC3NsaWRlX2JsZW5kGAggASgCEhUKCGhlYWRfeWF3GAkgASgCSACIAQES",
-            "FwoKaGVhZF9waXRjaBgKIAEoAkgBiAEBEhMKC3N0YXRlX2ZsYWdzGAsgASgN",
-            "EjMKC2dsaWRlX3N0YXRlGAwgASgOMh4uZGVjZW50cmFsYW5kLnB1bHNlLkds",
-            "aWRlU3RhdGVCCwoJX2hlYWRfeWF3Qg0KC19oZWFkX3BpdGNoIssEChVQbGF5",
-            "ZXJTdGF0ZURlbHRhVGllcjASEgoKc3ViamVjdF9pZBgBIAEoDRIPCgduZXdf",
-            "c2VxGAIgASgNEhMKC3NlcnZlcl90aWNrGAMgASgNEhcKCnBvc2l0aW9uX3gY",
-            "BCABKA1IAIgBARIXCgpwb3NpdGlvbl95GAUgASgNSAGIAQESFwoKcG9zaXRp",
-            "b25fehgGIAEoDUgCiAEBEhcKCnZlbG9jaXR5X3gYByABKA1IA4gBARIXCgp2",
-            "ZWxvY2l0eV95GAggASgNSASIAQESFwoKdmVsb2NpdHlfehgJIAEoDUgFiAEB",
-            "EiQKCnJvdGF0aW9uX3kYCiABKA1CC4q1GAcVAAC0QxgHSAaIAQESGwoObW92",
-            "ZW1lbnRfYmxlbmQYCyABKA1IB4gBARIYCgtzbGlkZV9ibGVuZBgMIAEoDUgI",
-            "iAEBEiIKCGhlYWRfeWF3GA0gASgNQguKtRgHFQAAtEMYB0gJiAEBEiQKCmhl",
-            "YWRfcGl0Y2gYDiABKA1CC4q1GAcVAAA0QxgGSAqIAQESEwoLc3RhdGVfZmxh",
-            "Z3MYDyABKA1CDQoLX3Bvc2l0aW9uX3hCDQoLX3Bvc2l0aW9uX3lCDQoLX3Bv",
-            "c2l0aW9uX3pCDQoLX3ZlbG9jaXR5X3hCDQoLX3ZlbG9jaXR5X3lCDQoLX3Zl",
-            "bG9jaXR5X3pCDQoLX3JvdGF0aW9uX3lCEQoPX21vdmVtZW50X2JsZW5kQg4K",
-            "DF9zbGlkZV9ibGVuZEILCglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2giQQoP",
-            "UGxheWVyU3RhdGVGdWxsEi4KBXN0YXRlGAEgASgLMh8uZGVjZW50cmFsYW5k",
-            "LnB1bHNlLlBsYXllclN0YXRlIk8KDFBsYXllckpvaW5lZBIPCgd1c2VyX2lk",
-            "GAEgASgJEi4KBXN0YXRlGAIgASgLMh8uZGVjZW50cmFsYW5kLnB1bHNlLlBs",
-            "YXllclN0YXRlIioKB1ZlY3RvcjMSCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkK",
-            "AXoYAyABKAIqZgoUUGxheWVyQW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAAEgwK",
-            "CEdST1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJTE9OR19GQUxMEAQSCwoH",
-            "RkFMTElORxAIEgsKB1NUVU5ORUQQECpOCgpHbGlkZVN0YXRlEg8KC1BST1Bf",
-            "Q0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENM",
-            "T1NJTkdfUFJPUBADYgZwcm90bzM="));
+            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8iJgoQSGFu",
+            "ZHNoYWtlUmVxdWVzdBISCgphdXRoX2NoYWluGAEgASgMIkIKEUhhbmRzaGFr",
+            "ZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSEgoFZXJyb3IYAiABKAlIAIgB",
+            "AUIICgZfZXJyb3IijAEKDUNsaWVudE1lc3NhZ2USOQoJaGFuZHNoYWtlGAEg",
+            "ASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLkhhbmRzaGFrZVJlcXVlc3RIABI1",
+            "CgVpbnB1dBgCIAEoCzIkLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
+            "ZUlucHV0SABCCQoHbWVzc2FnZSKcAgoNU2VydmVyTWVzc2FnZRI6CgloYW5k",
+            "c2hha2UYASABKAsyJS5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVz",
+            "cG9uc2VIABJAChFwbGF5ZXJfc3RhdGVfZnVsbBgCIAEoCzIjLmRlY2VudHJh",
+            "bGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGxIABJHChJwbGF5ZXJfc3RhdGVf",
+            "ZGVsdGEYAyABKAsyKS5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVE",
+            "ZWx0YVRpZXIwSAASOQoNcGxheWVyX2pvaW5lZBgEIAEoCzIgLmRlY2VudHJh",
+            "bGFuZC5wdWxzZS5QbGF5ZXJKb2luZWRIAEIJCgdtZXNzYWdlIkIKEFBsYXll",
+            "clN0YXRlSW5wdXQSLgoFc3RhdGUYASABKAsyHy5kZWNlbnRyYWxhbmQucHVs",
+            "c2UuUGxheWVyU3RhdGUixAIKC1BsYXllclN0YXRlEi4KCHBvc2l0aW9uGAEg",
+            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEi4KCHZlbG9jaXR5",
+            "GAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEhIKCnJvdGF0",
+            "aW9uX3kYAyABKAISFgoObW92ZW1lbnRfYmxlbmQYBCABKAISEwoLc2xpZGVf",
+            "YmxlbmQYBSABKAISFQoIaGVhZF95YXcYBiABKAJIAIgBARIXCgpoZWFkX3Bp",
+            "dGNoGAcgASgCSAGIAQESEwoLc3RhdGVfZmxhZ3MYCCABKA0SMwoLZ2xpZGVf",
+            "c3RhdGUYCSABKA4yHi5kZWNlbnRyYWxhbmQucHVsc2UuR2xpZGVTdGF0ZUIL",
+            "CglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2giywQKFVBsYXllclN0YXRlRGVs",
+            "dGFUaWVyMBISCgpzdWJqZWN0X2lkGAEgASgNEg8KB25ld19zZXEYAiABKA0S",
+            "EwoLc2VydmVyX3RpY2sYAyABKA0SFwoKcG9zaXRpb25feBgEIAEoDUgAiAEB",
+            "EhcKCnBvc2l0aW9uX3kYBSABKA1IAYgBARIXCgpwb3NpdGlvbl96GAYgASgN",
+            "SAKIAQESFwoKdmVsb2NpdHlfeBgHIAEoDUgDiAEBEhcKCnZlbG9jaXR5X3kY",
+            "CCABKA1IBIgBARIXCgp2ZWxvY2l0eV96GAkgASgNSAWIAQESJAoKcm90YXRp",
+            "b25feRgKIAEoDUILirUYBxUAALRDGAdIBogBARIbCg5tb3ZlbWVudF9ibGVu",
+            "ZBgLIAEoDUgHiAEBEhgKC3NsaWRlX2JsZW5kGAwgASgNSAiIAQESIgoIaGVh",
+            "ZF95YXcYDSABKA1CC4q1GAcVAAC0QxgHSAmIAQESJAoKaGVhZF9waXRjaBgO",
+            "IAEoDUILirUYBxUAADRDGAZICogBARITCgtzdGF0ZV9mbGFncxgPIAEoDUIN",
+            "CgtfcG9zaXRpb25feEINCgtfcG9zaXRpb25feUINCgtfcG9zaXRpb25fekIN",
+            "CgtfdmVsb2NpdHlfeEINCgtfdmVsb2NpdHlfeUINCgtfdmVsb2NpdHlfekIN",
+            "Cgtfcm90YXRpb25feUIRCg9fbW92ZW1lbnRfYmxlbmRCDgoMX3NsaWRlX2Js",
+            "ZW5kQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaCJ8Cg9QbGF5ZXJTdGF0",
+            "ZUZ1bGwSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEoDRIT",
+            "CgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2VudHJh",
+            "bGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJTCgxQbGF5ZXJKb2luZWQSDwoHdXNl",
+            "cl9pZBgBIAEoCRIyCgVzdGF0ZRgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxz",
+            "ZS5QbGF5ZXJTdGF0ZUZ1bGwqZgoUUGxheWVyQW5pbWF0aW9uRmxhZ3MSCAoE",
+            "Tk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJTE9OR19G",
+            "QUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5ORUQQECpOCgpHbGlkZVN0YXRl",
+            "Eg8KC1BST1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElO",
+            "RxACEhAKDENMT1NJTkdfUFJPUBADYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeResponse), global::Decentraland.Pulse.HandshakeResponse.Parser, new[]{ "Success", "Error" }, new[]{ "Error" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "PlayerStateFull" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateInput), global::Decentraland.Pulse.PlayerStateInput.Parser, new[]{ "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "NewSeq", "ServerTick", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags" }, new[]{ "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.Vector3), global::Decentraland.Pulse.Vector3.Parser, new[]{ "X", "Y", "Z" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "State" }, null, null, null, null)
           }));
     }
     #endregion
@@ -592,8 +593,8 @@ namespace Decentraland.Pulse {
         case MessageOneofCase.Handshake:
           Handshake = other.Handshake.Clone();
           break;
-        case MessageOneofCase.PlayerStateFull:
-          PlayerStateFull = other.PlayerStateFull.Clone();
+        case MessageOneofCase.Input:
+          Input = other.Input.Clone();
           break;
       }
 
@@ -618,15 +619,15 @@ namespace Decentraland.Pulse {
       }
     }
 
-    /// <summary>Field number for the "player_state_full" field.</summary>
-    public const int PlayerStateFullFieldNumber = 2;
+    /// <summary>Field number for the "input" field.</summary>
+    public const int InputFieldNumber = 2;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Pulse.PlayerStateFull PlayerStateFull {
-      get { return messageCase_ == MessageOneofCase.PlayerStateFull ? (global::Decentraland.Pulse.PlayerStateFull) message_ : null; }
+    public global::Decentraland.Pulse.PlayerStateInput Input {
+      get { return messageCase_ == MessageOneofCase.Input ? (global::Decentraland.Pulse.PlayerStateInput) message_ : null; }
       set {
         message_ = value;
-        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.PlayerStateFull;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.Input;
       }
     }
 
@@ -635,7 +636,7 @@ namespace Decentraland.Pulse {
     public enum MessageOneofCase {
       None = 0,
       Handshake = 1,
-      PlayerStateFull = 2,
+      Input = 2,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -667,7 +668,7 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (!object.Equals(Handshake, other.Handshake)) return false;
-      if (!object.Equals(PlayerStateFull, other.PlayerStateFull)) return false;
+      if (!object.Equals(Input, other.Input)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -677,7 +678,7 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (messageCase_ == MessageOneofCase.Handshake) hash ^= Handshake.GetHashCode();
-      if (messageCase_ == MessageOneofCase.PlayerStateFull) hash ^= PlayerStateFull.GetHashCode();
+      if (messageCase_ == MessageOneofCase.Input) hash ^= Input.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -701,9 +702,9 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteMessage(Handshake);
       }
-      if (messageCase_ == MessageOneofCase.PlayerStateFull) {
+      if (messageCase_ == MessageOneofCase.Input) {
         output.WriteRawTag(18);
-        output.WriteMessage(PlayerStateFull);
+        output.WriteMessage(Input);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -719,9 +720,9 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteMessage(Handshake);
       }
-      if (messageCase_ == MessageOneofCase.PlayerStateFull) {
+      if (messageCase_ == MessageOneofCase.Input) {
         output.WriteRawTag(18);
-        output.WriteMessage(PlayerStateFull);
+        output.WriteMessage(Input);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -736,8 +737,8 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.Handshake) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Handshake);
       }
-      if (messageCase_ == MessageOneofCase.PlayerStateFull) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PlayerStateFull);
+      if (messageCase_ == MessageOneofCase.Input) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Input);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -758,11 +759,11 @@ namespace Decentraland.Pulse {
           }
           Handshake.MergeFrom(other.Handshake);
           break;
-        case MessageOneofCase.PlayerStateFull:
-          if (PlayerStateFull == null) {
-            PlayerStateFull = new global::Decentraland.Pulse.PlayerStateFull();
+        case MessageOneofCase.Input:
+          if (Input == null) {
+            Input = new global::Decentraland.Pulse.PlayerStateInput();
           }
-          PlayerStateFull.MergeFrom(other.PlayerStateFull);
+          Input.MergeFrom(other.Input);
           break;
       }
 
@@ -795,12 +796,12 @@ namespace Decentraland.Pulse {
             break;
           }
           case 18: {
-            global::Decentraland.Pulse.PlayerStateFull subBuilder = new global::Decentraland.Pulse.PlayerStateFull();
-            if (messageCase_ == MessageOneofCase.PlayerStateFull) {
-              subBuilder.MergeFrom(PlayerStateFull);
+            global::Decentraland.Pulse.PlayerStateInput subBuilder = new global::Decentraland.Pulse.PlayerStateInput();
+            if (messageCase_ == MessageOneofCase.Input) {
+              subBuilder.MergeFrom(Input);
             }
             input.ReadMessage(subBuilder);
-            PlayerStateFull = subBuilder;
+            Input = subBuilder;
             break;
           }
         }
@@ -832,12 +833,12 @@ namespace Decentraland.Pulse {
             break;
           }
           case 18: {
-            global::Decentraland.Pulse.PlayerStateFull subBuilder = new global::Decentraland.Pulse.PlayerStateFull();
-            if (messageCase_ == MessageOneofCase.PlayerStateFull) {
-              subBuilder.MergeFrom(PlayerStateFull);
+            global::Decentraland.Pulse.PlayerStateInput subBuilder = new global::Decentraland.Pulse.PlayerStateInput();
+            if (messageCase_ == MessageOneofCase.Input) {
+              subBuilder.MergeFrom(Input);
             }
             input.ReadMessage(subBuilder);
-            PlayerStateFull = subBuilder;
+            Input = subBuilder;
             break;
           }
         }
@@ -1247,6 +1248,216 @@ namespace Decentraland.Pulse {
 
   }
 
+  /// <summary>
+  /// Since the server doesn't simulate the scenes state, it trusts the values from the client
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class PlayerStateInput : pb::IMessage<PlayerStateInput>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<PlayerStateInput> _parser = new pb::MessageParser<PlayerStateInput>(() => new PlayerStateInput());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<PlayerStateInput> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[4]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerStateInput() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerStateInput(PlayerStateInput other) : this() {
+      state_ = other.state_ != null ? other.state_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerStateInput Clone() {
+      return new PlayerStateInput(this);
+    }
+
+    /// <summary>Field number for the "state" field.</summary>
+    public const int StateFieldNumber = 1;
+    private global::Decentraland.Pulse.PlayerState state_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.PlayerState State {
+      get { return state_; }
+      set {
+        state_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as PlayerStateInput);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(PlayerStateInput other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(State, other.State)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (state_ != null) hash ^= State.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (state_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(State);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (state_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(State);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (state_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(PlayerStateInput other) {
+      if (other == null) {
+        return;
+      }
+      if (other.state_ != null) {
+        if (state_ == null) {
+          State = new global::Decentraland.Pulse.PlayerState();
+        }
+        State.MergeFrom(other.State);
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (state_ == null) {
+              State = new global::Decentraland.Pulse.PlayerState();
+            }
+            input.ReadMessage(State);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (state_ == null) {
+              State = new global::Decentraland.Pulse.PlayerState();
+            }
+            input.ReadMessage(State);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class PlayerState : pb::IMessage<PlayerState>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -1263,7 +1474,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1284,9 +1495,6 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerState(PlayerState other) : this() {
       _hasBits0 = other._hasBits0;
-      subjectId_ = other.subjectId_;
-      sequence_ = other.sequence_;
-      serverTick_ = other.serverTick_;
       position_ = other.position_ != null ? other.position_.Clone() : null;
       velocity_ = other.velocity_ != null ? other.velocity_.Clone() : null;
       rotationY_ = other.rotationY_;
@@ -1305,48 +1513,12 @@ namespace Decentraland.Pulse {
       return new PlayerState(this);
     }
 
-    /// <summary>Field number for the "subject_id" field.</summary>
-    public const int SubjectIdFieldNumber = 1;
-    private uint subjectId_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint SubjectId {
-      get { return subjectId_; }
-      set {
-        subjectId_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "sequence" field.</summary>
-    public const int SequenceFieldNumber = 2;
-    private uint sequence_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Sequence {
-      get { return sequence_; }
-      set {
-        sequence_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "server_tick" field.</summary>
-    public const int ServerTickFieldNumber = 3;
-    private uint serverTick_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint ServerTick {
-      get { return serverTick_; }
-      set {
-        serverTick_ = value;
-      }
-    }
-
     /// <summary>Field number for the "position" field.</summary>
-    public const int PositionFieldNumber = 4;
-    private global::Decentraland.Pulse.Vector3 position_;
+    public const int PositionFieldNumber = 1;
+    private global::Decentraland.Common.Vector3 position_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Pulse.Vector3 Position {
+    public global::Decentraland.Common.Vector3 Position {
       get { return position_; }
       set {
         position_ = value;
@@ -1354,11 +1526,11 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "velocity" field.</summary>
-    public const int VelocityFieldNumber = 5;
-    private global::Decentraland.Pulse.Vector3 velocity_;
+    public const int VelocityFieldNumber = 2;
+    private global::Decentraland.Common.Vector3 velocity_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Pulse.Vector3 Velocity {
+    public global::Decentraland.Common.Vector3 Velocity {
       get { return velocity_; }
       set {
         velocity_ = value;
@@ -1366,7 +1538,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "rotation_y" field.</summary>
-    public const int RotationYFieldNumber = 6;
+    public const int RotationYFieldNumber = 3;
     private float rotationY_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1378,7 +1550,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "movement_blend" field.</summary>
-    public const int MovementBlendFieldNumber = 7;
+    public const int MovementBlendFieldNumber = 4;
     private float movementBlend_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1390,7 +1562,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "slide_blend" field.</summary>
-    public const int SlideBlendFieldNumber = 8;
+    public const int SlideBlendFieldNumber = 5;
     private float slideBlend_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1402,7 +1574,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_yaw" field.</summary>
-    public const int HeadYawFieldNumber = 9;
+    public const int HeadYawFieldNumber = 6;
     private readonly static float HeadYawDefaultValue = 0F;
 
     private float headYaw_;
@@ -1429,7 +1601,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_pitch" field.</summary>
-    public const int HeadPitchFieldNumber = 10;
+    public const int HeadPitchFieldNumber = 7;
     private readonly static float HeadPitchDefaultValue = 0F;
 
     private float headPitch_;
@@ -1456,7 +1628,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "state_flags" field.</summary>
-    public const int StateFlagsFieldNumber = 11;
+    public const int StateFlagsFieldNumber = 8;
     private uint stateFlags_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1468,7 +1640,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "glide_state" field.</summary>
-    public const int GlideStateFieldNumber = 12;
+    public const int GlideStateFieldNumber = 9;
     private global::Decentraland.Pulse.GlideState glideState_ = global::Decentraland.Pulse.GlideState.PropClosed;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1494,9 +1666,6 @@ namespace Decentraland.Pulse {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (SubjectId != other.SubjectId) return false;
-      if (Sequence != other.Sequence) return false;
-      if (ServerTick != other.ServerTick) return false;
       if (!object.Equals(Position, other.Position)) return false;
       if (!object.Equals(Velocity, other.Velocity)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(RotationY, other.RotationY)) return false;
@@ -1513,9 +1682,6 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
-      if (Sequence != 0) hash ^= Sequence.GetHashCode();
-      if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
       if (position_ != null) hash ^= Position.GetHashCode();
       if (velocity_ != null) hash ^= Velocity.GetHashCode();
       if (RotationY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(RotationY);
@@ -1543,52 +1709,40 @@ namespace Decentraland.Pulse {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (SubjectId != 0) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(SubjectId);
-      }
-      if (Sequence != 0) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(Sequence);
-      }
-      if (ServerTick != 0) {
-        output.WriteRawTag(24);
-        output.WriteUInt32(ServerTick);
-      }
       if (position_ != null) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(10);
         output.WriteMessage(Position);
       }
       if (velocity_ != null) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(18);
         output.WriteMessage(Velocity);
       }
       if (RotationY != 0F) {
-        output.WriteRawTag(53);
+        output.WriteRawTag(29);
         output.WriteFloat(RotationY);
       }
       if (MovementBlend != 0F) {
-        output.WriteRawTag(61);
+        output.WriteRawTag(37);
         output.WriteFloat(MovementBlend);
       }
       if (SlideBlend != 0F) {
-        output.WriteRawTag(69);
+        output.WriteRawTag(45);
         output.WriteFloat(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(77);
+        output.WriteRawTag(53);
         output.WriteFloat(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(85);
+        output.WriteRawTag(61);
         output.WriteFloat(HeadPitch);
       }
       if (StateFlags != 0) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(64);
         output.WriteUInt32(StateFlags);
       }
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
-        output.WriteRawTag(96);
+        output.WriteRawTag(72);
         output.WriteEnum((int) GlideState);
       }
       if (_unknownFields != null) {
@@ -1601,52 +1755,40 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (SubjectId != 0) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(SubjectId);
-      }
-      if (Sequence != 0) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(Sequence);
-      }
-      if (ServerTick != 0) {
-        output.WriteRawTag(24);
-        output.WriteUInt32(ServerTick);
-      }
       if (position_ != null) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(10);
         output.WriteMessage(Position);
       }
       if (velocity_ != null) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(18);
         output.WriteMessage(Velocity);
       }
       if (RotationY != 0F) {
-        output.WriteRawTag(53);
+        output.WriteRawTag(29);
         output.WriteFloat(RotationY);
       }
       if (MovementBlend != 0F) {
-        output.WriteRawTag(61);
+        output.WriteRawTag(37);
         output.WriteFloat(MovementBlend);
       }
       if (SlideBlend != 0F) {
-        output.WriteRawTag(69);
+        output.WriteRawTag(45);
         output.WriteFloat(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(77);
+        output.WriteRawTag(53);
         output.WriteFloat(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(85);
+        output.WriteRawTag(61);
         output.WriteFloat(HeadPitch);
       }
       if (StateFlags != 0) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(64);
         output.WriteUInt32(StateFlags);
       }
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) {
-        output.WriteRawTag(96);
+        output.WriteRawTag(72);
         output.WriteEnum((int) GlideState);
       }
       if (_unknownFields != null) {
@@ -1659,15 +1801,6 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (SubjectId != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
-      }
-      if (Sequence != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Sequence);
-      }
-      if (ServerTick != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
-      }
       if (position_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
       }
@@ -1707,24 +1840,15 @@ namespace Decentraland.Pulse {
       if (other == null) {
         return;
       }
-      if (other.SubjectId != 0) {
-        SubjectId = other.SubjectId;
-      }
-      if (other.Sequence != 0) {
-        Sequence = other.Sequence;
-      }
-      if (other.ServerTick != 0) {
-        ServerTick = other.ServerTick;
-      }
       if (other.position_ != null) {
         if (position_ == null) {
-          Position = new global::Decentraland.Pulse.Vector3();
+          Position = new global::Decentraland.Common.Vector3();
         }
         Position.MergeFrom(other.Position);
       }
       if (other.velocity_ != null) {
         if (velocity_ == null) {
-          Velocity = new global::Decentraland.Pulse.Vector3();
+          Velocity = new global::Decentraland.Common.Vector3();
         }
         Velocity.MergeFrom(other.Velocity);
       }
@@ -1768,57 +1892,45 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 8: {
-            SubjectId = input.ReadUInt32();
-            break;
-          }
-          case 16: {
-            Sequence = input.ReadUInt32();
-            break;
-          }
-          case 24: {
-            ServerTick = input.ReadUInt32();
-            break;
-          }
-          case 34: {
+          case 10: {
             if (position_ == null) {
-              Position = new global::Decentraland.Pulse.Vector3();
+              Position = new global::Decentraland.Common.Vector3();
             }
             input.ReadMessage(Position);
             break;
           }
-          case 42: {
+          case 18: {
             if (velocity_ == null) {
-              Velocity = new global::Decentraland.Pulse.Vector3();
+              Velocity = new global::Decentraland.Common.Vector3();
             }
             input.ReadMessage(Velocity);
             break;
           }
-          case 53: {
+          case 29: {
             RotationY = input.ReadFloat();
             break;
           }
-          case 61: {
+          case 37: {
             MovementBlend = input.ReadFloat();
             break;
           }
-          case 69: {
+          case 45: {
             SlideBlend = input.ReadFloat();
             break;
           }
-          case 77: {
+          case 53: {
             HeadYaw = input.ReadFloat();
             break;
           }
-          case 85: {
+          case 61: {
             HeadPitch = input.ReadFloat();
             break;
           }
-          case 88: {
+          case 64: {
             StateFlags = input.ReadUInt32();
             break;
           }
-          case 96: {
+          case 72: {
             GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
             break;
           }
@@ -1841,57 +1953,45 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 8: {
-            SubjectId = input.ReadUInt32();
-            break;
-          }
-          case 16: {
-            Sequence = input.ReadUInt32();
-            break;
-          }
-          case 24: {
-            ServerTick = input.ReadUInt32();
-            break;
-          }
-          case 34: {
+          case 10: {
             if (position_ == null) {
-              Position = new global::Decentraland.Pulse.Vector3();
+              Position = new global::Decentraland.Common.Vector3();
             }
             input.ReadMessage(Position);
             break;
           }
-          case 42: {
+          case 18: {
             if (velocity_ == null) {
-              Velocity = new global::Decentraland.Pulse.Vector3();
+              Velocity = new global::Decentraland.Common.Vector3();
             }
             input.ReadMessage(Velocity);
             break;
           }
-          case 53: {
+          case 29: {
             RotationY = input.ReadFloat();
             break;
           }
-          case 61: {
+          case 37: {
             MovementBlend = input.ReadFloat();
             break;
           }
-          case 69: {
+          case 45: {
             SlideBlend = input.ReadFloat();
             break;
           }
-          case 77: {
+          case 53: {
             HeadYaw = input.ReadFloat();
             break;
           }
-          case 85: {
+          case 61: {
             HeadPitch = input.ReadFloat();
             break;
           }
-          case 88: {
+          case 64: {
             StateFlags = input.ReadUInt32();
             break;
           }
-          case 96: {
+          case 72: {
             GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
             break;
           }
@@ -1918,7 +2018,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2800,7 +2900,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2820,6 +2920,9 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerStateFull(PlayerStateFull other) : this() {
+      subjectId_ = other.subjectId_;
+      sequence_ = other.sequence_;
+      serverTick_ = other.serverTick_;
       state_ = other.state_ != null ? other.state_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -2830,8 +2933,44 @@ namespace Decentraland.Pulse {
       return new PlayerStateFull(this);
     }
 
+    /// <summary>Field number for the "subject_id" field.</summary>
+    public const int SubjectIdFieldNumber = 1;
+    private uint subjectId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint SubjectId {
+      get { return subjectId_; }
+      set {
+        subjectId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "sequence" field.</summary>
+    public const int SequenceFieldNumber = 2;
+    private uint sequence_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Sequence {
+      get { return sequence_; }
+      set {
+        sequence_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "server_tick" field.</summary>
+    public const int ServerTickFieldNumber = 3;
+    private uint serverTick_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ServerTick {
+      get { return serverTick_; }
+      set {
+        serverTick_ = value;
+      }
+    }
+
     /// <summary>Field number for the "state" field.</summary>
-    public const int StateFieldNumber = 1;
+    public const int StateFieldNumber = 4;
     private global::Decentraland.Pulse.PlayerState state_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -2857,6 +2996,9 @@ namespace Decentraland.Pulse {
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if (SubjectId != other.SubjectId) return false;
+      if (Sequence != other.Sequence) return false;
+      if (ServerTick != other.ServerTick) return false;
       if (!object.Equals(State, other.State)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -2865,6 +3007,9 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (Sequence != 0) hash ^= Sequence.GetHashCode();
+      if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
       if (state_ != null) hash ^= State.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -2884,8 +3029,20 @@ namespace Decentraland.Pulse {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (Sequence != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Sequence);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(ServerTick);
+      }
       if (state_ != null) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(34);
         output.WriteMessage(State);
       }
       if (_unknownFields != null) {
@@ -2898,8 +3055,20 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (Sequence != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Sequence);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(ServerTick);
+      }
       if (state_ != null) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(34);
         output.WriteMessage(State);
       }
       if (_unknownFields != null) {
@@ -2912,6 +3081,15 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      if (SubjectId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
+      }
+      if (Sequence != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Sequence);
+      }
+      if (ServerTick != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
+      }
       if (state_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
       }
@@ -2926,6 +3104,15 @@ namespace Decentraland.Pulse {
     public void MergeFrom(PlayerStateFull other) {
       if (other == null) {
         return;
+      }
+      if (other.SubjectId != 0) {
+        SubjectId = other.SubjectId;
+      }
+      if (other.Sequence != 0) {
+        Sequence = other.Sequence;
+      }
+      if (other.ServerTick != 0) {
+        ServerTick = other.ServerTick;
       }
       if (other.state_ != null) {
         if (state_ == null) {
@@ -2952,7 +3139,19 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Sequence = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 34: {
             if (state_ == null) {
               State = new global::Decentraland.Pulse.PlayerState();
             }
@@ -2978,7 +3177,19 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Sequence = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 34: {
             if (state_ == null) {
               State = new global::Decentraland.Pulse.PlayerState();
             }
@@ -3007,7 +3218,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3052,10 +3263,10 @@ namespace Decentraland.Pulse {
 
     /// <summary>Field number for the "state" field.</summary>
     public const int StateFieldNumber = 2;
-    private global::Decentraland.Pulse.PlayerState state_;
+    private global::Decentraland.Pulse.PlayerStateFull state_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Pulse.PlayerState State {
+    public global::Decentraland.Pulse.PlayerStateFull State {
       get { return state_; }
       set {
         state_ = value;
@@ -3165,7 +3376,7 @@ namespace Decentraland.Pulse {
       }
       if (other.state_ != null) {
         if (state_ == null) {
-          State = new global::Decentraland.Pulse.PlayerState();
+          State = new global::Decentraland.Pulse.PlayerStateFull();
         }
         State.MergeFrom(other.State);
       }
@@ -3194,7 +3405,7 @@ namespace Decentraland.Pulse {
           }
           case 18: {
             if (state_ == null) {
-              State = new global::Decentraland.Pulse.PlayerState();
+              State = new global::Decentraland.Pulse.PlayerStateFull();
             }
             input.ReadMessage(State);
             break;
@@ -3224,281 +3435,9 @@ namespace Decentraland.Pulse {
           }
           case 18: {
             if (state_ == null) {
-              State = new global::Decentraland.Pulse.PlayerState();
+              State = new global::Decentraland.Pulse.PlayerStateFull();
             }
             input.ReadMessage(State);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class Vector3 : pb::IMessage<Vector3>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<Vector3> _parser = new pb::MessageParser<Vector3>(() => new Vector3());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Vector3> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[8]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Vector3() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Vector3(Vector3 other) : this() {
-      x_ = other.x_;
-      y_ = other.y_;
-      z_ = other.z_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Vector3 Clone() {
-      return new Vector3(this);
-    }
-
-    /// <summary>Field number for the "x" field.</summary>
-    public const int XFieldNumber = 1;
-    private float x_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float X {
-      get { return x_; }
-      set {
-        x_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "y" field.</summary>
-    public const int YFieldNumber = 2;
-    private float y_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Y {
-      get { return y_; }
-      set {
-        y_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "z" field.</summary>
-    public const int ZFieldNumber = 3;
-    private float z_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Z {
-      get { return z_; }
-      set {
-        z_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as Vector3);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Vector3 other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X, other.X)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y, other.Y)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z, other.Z)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (X != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X);
-      if (Y != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y);
-      if (Z != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z);
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (X != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(X);
-      }
-      if (Y != 0F) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Y);
-      }
-      if (Z != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Z);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (X != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(X);
-      }
-      if (Y != 0F) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Y);
-      }
-      if (Z != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Z);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (X != 0F) {
-        size += 1 + 4;
-      }
-      if (Y != 0F) {
-        size += 1 + 4;
-      }
-      if (Z != 0F) {
-        size += 1 + 4;
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Vector3 other) {
-      if (other == null) {
-        return;
-      }
-      if (other.X != 0F) {
-        X = other.X;
-      }
-      if (other.Y != 0F) {
-        Y = other.Y;
-      }
-      if (other.Z != 0F) {
-        Z = other.Z;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 13: {
-            X = input.ReadFloat();
-            break;
-          }
-          case 21: {
-            Y = input.ReadFloat();
-            break;
-          }
-          case 29: {
-            Z = input.ReadFloat();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 13: {
-            X = input.ReadFloat();
-            break;
-          }
-          case 21: {
-            Y = input.ReadFloat();
-            break;
-          }
-          case 29: {
-            Z = input.ReadFloat();
             break;
           }
         }

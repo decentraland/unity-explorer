@@ -248,6 +248,7 @@ namespace Global.Dynamic
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
+            PulseContainer pulseContainer = null!;
 
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
@@ -258,6 +259,8 @@ namespace Global.Dynamic
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             var screenModeController = new ScreenModeController(appArgs);
+            var entityParticipantTable = new EntityParticipantTable();
+            var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -286,6 +289,13 @@ namespace Global.Dynamic
                               ct
                           )
                          .ThrowOnFail();
+
+                pulseContainer =
+                    await PulseContainer.CreateAsync(
+                        settingsContainer,
+                        identityCache,
+                        movementInbox, ct
+                    );
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -446,7 +456,6 @@ namespace Global.Dynamic
                     : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
             );
 
-            var entityParticipantTable = new EntityParticipantTable();
             staticContainer.EntityParticipantTableProxy.SetObject(entityParticipantTable);
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
@@ -491,11 +500,6 @@ namespace Global.Dynamic
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
-            var pulseMessagePipe = new MessagePipe();
-            var ENetTransport = new ENetTransport(new ENetTransportOptions(), pulseMessagePipe);
-            var pulseMultiplayerService = new PulseMultiplayerService(ENetTransport, pulseMessagePipe, identityCache);
-            var pulsePeerIdCache = new PeerIdCache();
-
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
@@ -512,7 +516,7 @@ namespace Global.Dynamic
                 roomHub,
                 localSceneDevelopment,
                 staticContainer.CharacterContainer,
-                pulseMultiplayerService);
+                pulseContainer.pulseMultiplayerService);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -639,7 +643,7 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
-            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, pulseMultiplayerService, entityParticipantTable, globalWorld, pulsePeerIdCache);
+            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, movementInbox);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 

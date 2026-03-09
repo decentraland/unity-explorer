@@ -5,7 +5,6 @@
 using System;
 
 namespace Decentraland.Networking.Bitwise
-
     // ReSharper disable once ArrangeNamespaceBody
 {
     /// <summary>
