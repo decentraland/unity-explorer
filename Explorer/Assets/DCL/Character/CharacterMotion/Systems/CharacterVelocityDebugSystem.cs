@@ -29,10 +29,18 @@ namespace DCL.Character.CharacterMotion.Systems
         private readonly ElementBinding<float> maxAirAcc;
         private readonly ElementBinding<float> airDrag;
         private readonly ElementBinding<float> stopTime;
+
         private readonly ElementBinding<float> characterMass;
         private readonly ElementBinding<float> externalEnvDrag;
         private readonly ElementBinding<float> externalGroundFriction;
         private readonly ElementBinding<float> maxExternalVelocity;
+
+        private readonly ElementBinding<int> airJumpCount = new (0);
+        private readonly ElementBinding<float> airJumpHeight = new (0);
+        private readonly ElementBinding<float> airJumpDelay = new (0);
+        private readonly ElementBinding<float> airJumpGravityDuringDelay = new (0);
+        private readonly ElementBinding<float> cooldownBetweenJumps = new (0);
+        private readonly ElementBinding<float> airJumpImpulse = new (0);
 
         internal CharacterVelocityDebugSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -67,11 +75,21 @@ namespace DCL.Character.CharacterMotion.Systems
                         .AddFloatField("Air Acceleration", airAcc)
                         .AddFloatField("Max Air Acceleration", maxAirAcc)
                         .AddFloatField("Air Drag", airDrag)
-                        .AddFloatField("Grounded Stop Time", stopTime)
+                        .AddFloatField("Grounded Stop Time", stopTime);
+
+            debugBuilder.TryAddWidget("Locomotion: External Forces")?
                         .AddFloatField("Character Mass", characterMass)
                         .AddFloatField("External Env Drag", externalEnvDrag)
                         .AddFloatField("External Ground Friction", externalGroundFriction)
                         .AddFloatField("Max External Velocity", maxExternalVelocity);
+
+            debugBuilder.TryAddWidget("Locomotion: Air Jumping")?
+                        .AddControl( new DebugConstLabelDef("Air Jump Count"), new DebugIntFieldDef(airJumpCount) )
+                        .AddFloatField("Height", airJumpHeight)
+                        .AddFloatField("Delay", airJumpDelay)
+                        .AddFloatField("Gravity during Delay", airJumpGravityDuringDelay)
+                        .AddFloatField("Cooldown", cooldownBetweenJumps)
+                        .AddFloatField("Direction Change Impulse", airJumpImpulse);
         }
 
         public override void Initialize()
@@ -95,6 +113,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private void SyncBindingsFromSettings(ICharacterControllerSettings settings)
         {
+            // Base
             cameraRunFov.Value = settings.CameraFOVWhileRunning;
             walkSpeed.Value = settings.WalkSpeed;
             jogSpeed.Value = settings.JogSpeed;
@@ -108,14 +127,25 @@ namespace DCL.Character.CharacterMotion.Systems
             maxAirAcc.Value = settings.MaxAirAcceleration;
             airDrag.Value = settings.AirDrag;
             stopTime.Value = settings.StopTimeSec;
+
+            // External Force/Impulse
             characterMass.Value = settings.CharacterMass;
             externalEnvDrag.Value = settings.ExternalEnvDrag;
             externalGroundFriction.Value = settings.ExternalGroundFriction;
             maxExternalVelocity.Value = settings.MaxExternalVelocity;
+
+            // Glide and doubleJump
+            airJumpCount.Value = settings.AirJumpCount;
+            airJumpHeight.Value = settings.AirJumpHeight;
+            airJumpDelay.Value = settings.AirJumpDelay;
+            airJumpGravityDuringDelay.Value = settings.AirJumpGravityDuringDelay;
+            cooldownBetweenJumps.Value = settings.CooldownBetweenJumps;
+            airJumpImpulse.Value = settings.AirJumpDirectionChangeImpulse;
         }
 
         private void ApplyDebugBindingsToSettings(ICharacterControllerSettings settings)
         {
+            // Base
             settings.CameraFOVWhileRunning = cameraRunFov.Value;
             settings.WalkSpeed = walkSpeed.Value;
             settings.JogSpeed = jogSpeed.Value;
@@ -129,10 +159,20 @@ namespace DCL.Character.CharacterMotion.Systems
             settings.MaxAirAcceleration = maxAirAcc.Value;
             settings.AirDrag = airDrag.Value;
             settings.StopTimeSec = stopTime.Value;
+
+            // External Force/Impulse
             settings.CharacterMass = characterMass.Value;
             settings.ExternalEnvDrag = externalEnvDrag.Value;
             settings.ExternalGroundFriction = externalGroundFriction.Value;
             settings.MaxExternalVelocity = maxExternalVelocity.Value;
+
+            // Glide and doubleJump
+            settings.AirJumpCount = airJumpCount.Value;
+            settings.AirJumpHeight = airJumpHeight.Value;
+            settings.AirJumpDelay = airJumpDelay.Value;
+            settings.AirJumpGravityDuringDelay = airJumpGravityDuringDelay.Value;
+            settings.CooldownBetweenJumps = cooldownBetweenJumps.Value;
+            settings.AirJumpDirectionChangeImpulse = airJumpImpulse.Value;
         }
     }
 }

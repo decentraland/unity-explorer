@@ -14,7 +14,6 @@ using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using Utility.Animations;
 
 namespace DCL.CharacterMotion.Systems
 {

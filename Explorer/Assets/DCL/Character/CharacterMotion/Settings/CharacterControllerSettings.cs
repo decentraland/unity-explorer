@@ -34,6 +34,21 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField] [field: Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
 
+        [field: SerializeField] [field: Header("Air Jumps")] public int AirJumpCount { get; set; } = 1;
+        [field: SerializeField] public float AirJumpHeight { get; set; } = 2;
+        [field: SerializeField] public float AirJumpDelay { get; set; } = 0.2f;
+        [field: SerializeField] public float AirJumpGravityDuringDelay { get; set; }
+        [field: SerializeField] public float CooldownBetweenJumps { get; set; }
+        [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; set; }
+
+        [field: SerializeField] [field: Header("Gliding")] public float GlideSpeed { get; private set; } = 6;
+        [field: SerializeField] public float GlideMinGroundDistance { get; private set; } = 2;
+        [field: SerializeField] public float GlideMaxGravity { get; private set; } = 1;
+        [field: SerializeField] public float JumpToGlideTimeInterval { get; private set; } = 0.5f;
+        [field: SerializeField] public float GlideCooldown { get; private set; } = 0.5f;
+        [field: SerializeField] public float GlideAnimMaxAngle { get; private set; } = 30;
+        [field: SerializeField] public float GlideAnimBlendSpeed { get; private set; } = 10;
+
         [field: SerializeField] [field: Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
 
         [field: SerializeField] [field: Header("Hard fall stun")] public float JumpHeightStun { get; private set; } = 10f;

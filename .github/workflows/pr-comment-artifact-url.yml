@@ -117,16 +117,16 @@ jobs:
         run: |
           gh run download "$PREVIOUS_JOB_ID" \
             --repo "$OWNER/$REPO" \
-            --name size_report_windows64 \
+            --name size_report_windows64_launcher \
             --dir size_reports 2>/dev/null || true
           gh run download "$PREVIOUS_JOB_ID" \
             --repo "$OWNER/$REPO" \
-            --name size_report_macos \
+            --name size_report_macos_launcher \
             --dir size_reports 2>/dev/null || true
 
-          WINDOWS_ROW=$(grep "^|" size_reports/size_report_windows64.md 2>/dev/null || true)
-          MACOS_ROW=$(grep "^|" size_reports/size_report_macos.md 2>/dev/null || true)
-          RELEASE_TAG=$(grep "^release_tag=" size_reports/size_report_windows64.md size_reports/size_report_macos.md 2>/dev/null | head -1 | cut -d= -f2 || true)
+          WINDOWS_ROW=$(grep "^|" size_reports/size_report_windows64_launcher.md 2>/dev/null || true)
+          MACOS_ROW=$(grep "^|" size_reports/size_report_macos_launcher.md 2>/dev/null || true)
+          RELEASE_TAG=$(grep "^release_tag=" size_reports/size_report_windows64_launcher.md size_reports/size_report_macos_launcher.md 2>/dev/null | head -1 | cut -d= -f2 || true)
 
           if [ -n "$WINDOWS_ROW" ] || [ -n "$MACOS_ROW" ]; then
             {
@@ -186,7 +186,7 @@ jobs:
       - name: Find latest release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: gh release view --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
+        run: gh release view -R $GITHUB_REPOSITORY --json tagName --template "RELEASE_TAG={{.tagName}}" >> $GITHUB_ENV
 
       - name: Trigger performance test
         uses: peter-evans/repository-dispatch@v4
@@ -198,9 +198,9 @@ jobs:
             {
               "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
               "win_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
-              "win_base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
+              "win_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
               "mac_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
-              "mac_base_build_url": "${{ env.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
+              "mac_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_macos.zip"
             }
 
   comment-failed:
