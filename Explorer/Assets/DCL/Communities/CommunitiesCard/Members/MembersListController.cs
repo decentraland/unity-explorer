@@ -53,6 +53,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -101,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
@@ -264,8 +266,11 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (!confirmed)
                     return;
 
-                // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    memberData.Address));
             }
         }
 

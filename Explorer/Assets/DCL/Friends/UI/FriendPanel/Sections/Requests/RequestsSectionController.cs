@@ -7,6 +7,7 @@ using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Controls.Configs;
@@ -29,6 +30,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IPassportBridge passportBridge;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ISelfProfile selfProfile;
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource? reportConfirmationDialogCts;
@@ -44,12 +46,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IPassportBridge passportBridge,
             bool includeUserBlocking,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
             this.passportBridge = passportBridge;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
@@ -125,8 +129,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 if (!confirmed)
                     return;
 
-                // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    userProfile.UserId));
             }
         }
 

@@ -149,7 +149,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,
                 webBrowser,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                selfProfile
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

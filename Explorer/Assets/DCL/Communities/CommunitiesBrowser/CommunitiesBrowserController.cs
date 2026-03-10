@@ -919,8 +919,19 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OpenReportUserForm(ICommunityMemberData profile)
         {
-            // TODO (Santi): Implement reporting user!
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+            OpenReportUserFormAsync(profile).Forget();
+            return;
+
+            async UniTask OpenReportUserFormAsync(ICommunityMemberData reportedProfile, CancellationToken ct = default)
+            {
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    reportedProfile.Address));
+
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+            }
         }
 
         private void ManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention)

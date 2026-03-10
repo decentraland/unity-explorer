@@ -699,7 +699,8 @@ namespace Global.Dynamic
                 includeCommunities,
                 communitiesDataProvider,
                 bootstrapContainer.WebBrowser,
-                bootstrapContainer.DecentralandUrlsSource);
+                bootstrapContainer.DecentralandUrlsSource,
+                selfProfile);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,

@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
@@ -74,7 +75,8 @@ namespace DCL.Friends.UI.FriendPanel
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewFactory)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
@@ -119,7 +121,8 @@ namespace DCL.Friends.UI.FriendPanel
                 passportBridge,
                 includeUserBlocking,
                 webBrowser,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                selfProfile);
 
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,

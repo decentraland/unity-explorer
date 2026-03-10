@@ -961,8 +961,11 @@ namespace DCL.Passport
                 if (!confirmed)
                     return;
 
-                // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    targetProfile.UserId));
             }
         }
 

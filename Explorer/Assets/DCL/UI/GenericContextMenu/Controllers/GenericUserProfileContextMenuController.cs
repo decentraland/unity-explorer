@@ -29,6 +29,7 @@ using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
+using DCL.Profiles.Self;
 using DCL.UI.ConfirmationDialog.Opener;
 using UnityEngine;
 using Utility;
@@ -74,6 +75,7 @@ namespace DCL.UI
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
+        private readonly ISelfProfile selfProfile;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -113,7 +115,8 @@ namespace DCL.UI
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -126,6 +129,7 @@ namespace DCL.UI
             this.sharedSpaceManager = sharedSpaceManager;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
             this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -379,10 +383,10 @@ namespace DCL.UI
         private void OnReportUserClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowReportConfirmationDialogAsync(cancellationTokenSource.Token).Forget();
+            ShowReportConfirmationDialogAsync(userId, cancellationTokenSource.Token).Forget();
             return;
 
-            async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
+            async UniTask ShowReportConfirmationDialogAsync(string reportedUserId, CancellationToken ct)
             {
                 bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                     ViewDependencies.ConfirmationDialogOpener,
@@ -394,8 +398,11 @@ namespace DCL.UI
                 if (!confirmed)
                     return;
 
-                // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                    ownProfile != null ? ownProfile.UserId : string.Empty,
+                    reportedUserId));
             }
         }
 
