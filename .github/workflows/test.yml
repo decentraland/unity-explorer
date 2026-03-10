@@ -152,6 +152,9 @@ jobs:
             exit 1
           fi
 
+      - name: Clean temporary files
+        run: rm -f ghcr-pull.log
+
       # C# Linting using JetBrains ReSharper CLI
 
       # - name: Generate solution inside Unity Docker container
