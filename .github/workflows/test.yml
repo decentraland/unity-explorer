@@ -59,20 +59,8 @@ jobs:
       fail-fast: false   # keep all namespace jobs running so you see the full picture
       matrix:
         namespace:
-          - AddressableAssets
-          - AvatarTransformMatrixJobWrapperShould
-          - CRDT
-          - CrdtEcsBridge
           - DCL
-          - Diagnostics
-          - ECS
-          - Global
-          - MVC
-          - Plugins
-          - RoadInstantiatorSystemShould
           - SceneRunner
-          - SceneRuntime
-          - Utility
 
     steps:
       - name: Move Docker data-root to /mnt/docker
