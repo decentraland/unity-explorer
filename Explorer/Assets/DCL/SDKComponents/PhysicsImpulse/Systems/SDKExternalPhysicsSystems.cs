@@ -85,10 +85,8 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         }
 
         // The SDK scene keeps running while the player is outside the parcel.
-        // Buffered TriggerAreaResults may cause the scene to generate new impulse
-        // CRDT messages after IsCurrent becomes false. Since Update() early-returns
-        // when not current, these impulses accumulate with IsDirty=true and would
-        // fire the moment the player re-enters any parcel of this scene.
+        // Buffered TriggerAreaResults may cause the scene to generate new impulse CRDT messages after IsCurrent becomes false. Since Update() early-returns
+        // when not current, these impulses accumulate with IsDirty=true and would fire the moment the player re-enters any parcel of this scene.
         // Clearing dirty flags on re-activation prevents this stale impulse burst.
         [Query]
         [All(typeof(PBPhysicsCombinedImpulse))]
