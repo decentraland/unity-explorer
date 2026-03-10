@@ -99,7 +99,8 @@ namespace DCL.CharacterMotion.Settings
         float PointAtArmReach { get; set; }
         float PointAtRotationHorizontalRightThreshold { get; set; }
         float PointAtRotationHorizontalLeftThreshold { get; set; }
-        float PointAtRotationVerticalThreshold { get; set; }
+        float PointAtRotationVerticalUpThreshold { get; set; }
+        float PointAtRotationVerticalDownThreshold { get; set; }
         float PointAtRotationSpeed { get; set; }
     }
 }

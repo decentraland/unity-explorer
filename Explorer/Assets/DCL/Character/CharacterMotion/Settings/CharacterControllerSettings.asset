@@ -175,7 +175,8 @@ MonoBehaviour:
   <PointAtArmReach>k__BackingField: 1.525
   <PointAtRotationHorizontalRightThreshold>k__BackingField: 0.8
   <PointAtRotationHorizontalLeftThreshold>k__BackingField: 0.3
-  <PointAtRotationVerticalThreshold>k__BackingField: 0.5
+  <PointAtRotationVerticalUpThreshold>k__BackingField: 0.75
+  <PointAtRotationVerticalDownThreshold>k__BackingField: 0.75
   <PointAtRotationSpeed>k__BackingField: 5
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1

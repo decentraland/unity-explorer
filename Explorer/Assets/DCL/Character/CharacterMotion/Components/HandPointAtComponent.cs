@@ -12,7 +12,6 @@ namespace DCL.Character.CharacterMotion.Components
         public bool WasPressed;
         public Vector2 PressOrigin;
         public bool RotationCompleted;
-
         private float duration;
 
         public void RefreshDuration(float newDuration)

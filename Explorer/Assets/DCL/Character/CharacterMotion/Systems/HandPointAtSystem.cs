@@ -187,14 +187,6 @@ namespace DCL.Character.CharacterMotion.Systems
                 rigidTransform.LookDirection = ((c * dirH) + (s * perpH)) / m;
             }
 
-            if (Mathf.Abs(cross.x) > settings.PointAtRotationVerticalThreshold)
-            {
-                if (cross.x > 0)
-                    Debug.Log("Look down", avatarBase);
-                else
-                    Debug.Log("Look up", avatarBase);
-            }
-
             return (Vector3.Dot(avatarBase.transform.forward, rigidTransform.LookDirection), needToRotate);
         }
 
@@ -212,6 +204,24 @@ namespace DCL.Character.CharacterMotion.Systems
             avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
         }
 
+        private static Vector3 ClampElevation(Vector3 direction, float maxUp, float maxDown)
+        {
+            Vector3 horizontal = new Vector3(direction.x, 0f, direction.z);
+            float horizontalMag = horizontal.magnitude;
+
+            if (horizontalMag < 1e-6f)
+                return direction;
+
+            float elevation = Mathf.Atan2(direction.y, horizontalMag);
+            float clamped = Mathf.Clamp(elevation, -maxDown, maxUp);
+
+            if (Mathf.Approximately(elevation, clamped))
+                return direction;
+
+            Vector3 horizontalNorm = horizontal / horizontalMag;
+            return (horizontalNorm * Mathf.Cos(clamped)) + (Vector3.up * Mathf.Sin(clamped));
+        }
+
         private void ApplyHandIK(
             ref HandPointAtComponent pointAt,
             ref AvatarBase avatarBase,
@@ -221,6 +231,11 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 shoulderPos,
             (float dot, bool needToRotate) rotationInfo)
         {
+            directionToTarget = ClampElevation(
+                directionToTarget,
+                settings.PointAtRotationVerticalUpThreshold,
+                settings.PointAtRotationVerticalDownThreshold);
+
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
             pointAt.RotationCompleted = Mathf.Abs(rotationInfo.dot) > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;

@@ -113,7 +113,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField, Range(0.5f, 2f)] public float PointAtArmReach { get; set; } = 1.55f;
         [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationHorizontalRightThreshold { get; set; } = 0.5f;
         [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationHorizontalLeftThreshold { get; set; } = 0.3f;
-        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalThreshold { get; set; } = 0.5f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalUpThreshold { get; set; } = 0.5f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalDownThreshold { get; set; } = 0.5f;
         [field: SerializeField] public float PointAtRotationSpeed { get; set; } = 250f;
 
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;

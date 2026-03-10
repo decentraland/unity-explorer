@@ -396,10 +396,16 @@ namespace DCL.CharacterMotion.Settings
             set => impl.PointAtRotationHorizontalLeftThreshold = value;
         }
 
-        public float PointAtRotationVerticalThreshold
+        public float PointAtRotationVerticalUpThreshold
         {
-            get => impl.PointAtRotationVerticalThreshold;
-            set => impl.PointAtRotationVerticalThreshold = value;
+            get => impl.PointAtRotationVerticalUpThreshold;
+            set => impl.PointAtRotationVerticalUpThreshold = value;
+        }
+
+        public float PointAtRotationVerticalDownThreshold
+        {
+            get => impl.PointAtRotationVerticalDownThreshold;
+            set => impl.PointAtRotationVerticalDownThreshold = value;
         }
 
         public float PointAtRotationSpeed
