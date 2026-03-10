@@ -58,63 +58,61 @@
 
 ### Этап 9: Обсуждение алгоритмов спатиализации
 
-Вопрос: "Есть более точные алгоритмы, учитывающие психо-акустику?"
-
 Рассмотренные алгоритмы по качеству:
 
-1. **ILD (Interaural Level Difference)** — разница громкости L/R. Текущий (equal-power pan). Простой, но грубый. Проблема со скачком сзади.
+1. **ILD EqualPower** — разница громкости L/R. Простой, но грубый.
+2. **ILD HeadShadow** — частотно-зависимая ILD. Low-pass на дальнем ухе (голова экранирует ВЧ).
+3. **ITD** — задержка дальнего уха. Для локализации на НЧ (<1.5kHz).
+4. **Pinna HRTF** — notch-фильтры ушной раковины. Единственный cue для вертикальной локализации.
+5. **Full HRTF** (Steam Audio) — полные таблицы. Overkill для voice chat.
 
-2. **ITD (Interaural Time Difference)** — задержка дальнего уха. Мозг использует для низких частот (<1.5kHz). Delay line ~12 сэмплов при 48kHz. Не требует буфера (delay line внутри OnAudioFilterRead).
+### Этап 10: Итерация 3 — Fix ILD + 3D углы
 
-3. **ITD + ILD** — комбинация. ITD для низких частот + ILD для высоких — как в реальности.
+`sin(azimuth) * cos(elevation)` вместо clamp. `SetSpatialAngles(azimuth, elevation)` API. `SpatializationMode` enum. Плавный переход при проходе сзади.
 
-4. **Parametric HRTF** — упрощённый HRTF без таблиц. One-pole low-pass filter на дальнем ухе (head shadow). Моделирует затенение головой. Значительно лучше чем ILD, но без полного HRTF (нет pinna filtering).
+### Этап 11: Итерация A — ITD
 
-5. **Full HRTF** (Steam Audio, Resonance Audio) — полные PRTF-таблицы. Overkill для voice chat.
+Delay line (кольцевой буфер 256 сэмплов). Формула Woodworth для сферической головы. Линейная интерполяция для дробных задержек. Режимы ITD и ITD+ILD.
 
-### Этап 10: Решение — итеративный путь
+### Этап 12: Архитектурное решение — композиция вместо enum
 
-**Преемственность:** каждый алгоритм добавляет эффект поверх предыдущих, не ломая их. Полная совместимость назад.
+Вместо `SpatializationMode` (один enum, комбинаторный взрыв) — **независимые переключатели**:
 
-**Стратегия:** Fix ILD (sin вместо clamp, 3D) → + ITD → ITD+ILD → + Parametric HRTF
+```csharp
+public enum ILDMode { None, EqualPower, HeadShadow }
+public bool enableITD;
+public bool enableHRTF;
+```
 
-**API change:** `Pan` (-1..+1) → `SetSpatialAngles(azimuth, elevation)` (радианы). Углы нужны для ITD и HRTF, pan недостаточен.
-
-**Inspector:** Enum `SpatializationMode` для переключения алгоритмов на лету (A/B сравнение). Параметры с `[Header]` группировкой.
-
-**ILD fix:** `sin(azimuth)` вместо `Atan2/clamp`. Плавный переход:
-- right (90°) → sin=1 → полностью вправо
-- back (180°) → sin=0 → центр
-- Нет скачка
-
-**3D:** `pan = sin(azimuth) * cos(elevation)`. Elevation уменьшает ILD при источнике сверху/снизу.
+Любая комбинация допустима. Пайплайн: ITD → ILD → HRTF.
 
 ---
 
 ## Текущее состояние
 
-### Что работает
+### Что реализовано
 
+- **ILD EqualPower:** `sin(azimuth) * cos(elevation)` → equal-power pan law
+- **ITD:** Delay line + Woodworth + linear interpolation
+- **ITD+ILD:** Комбинация задержки и gains
 - Distance rolloff (нативный Unity, POST-DSP)
-- Angular panning ILD (ручной equal-power pan, есть скачок сзади)
 - Audio Effects, Reverb Zones
-- Обратная совместимость (Private/Community chat — стерео)
+- Обратная совместимость (Private/Community chat — стерео passthrough)
 
 ### Что нужно сделать (по порядку)
 
-1. **Fix ILD:** sin(azimuth) * cos(elevation), enum + Inspector параметры
-2. **+ ITD:** delay line, headRadius параметр
-3. **ITD+ILD:** комбинация
-4. **+ Parametric HRTF:** one-pole low-pass на дальнем ухе
+1. **Рефакторинг:** `SpatializationMode` → `ILDMode` enum + `enableITD` bool + `enableHRTF` bool
+2. **ILD HeadShadow:** One-pole low-pass на дальнем ухе (Frequency-Dependent ILD)
+3. **Pinna HRTF:** Notch-фильтры от elevation (вертикальная локализация)
 
 ### Файлы
 
 **SDK (LiveKit fork), ветка `feat/mono-spatial-audio`:**
-- `LivekitAudioSource.cs` — monoMode, Pan, equal-power panning (будет расширен: enum, angles, ITD, HRTF)
+- `LivekitAudioSource.cs` — ILDMode, enableITD, enableHRTF, pipeline, delay line, LPF (будет: notch)
 
 **Unity project:**
-- `ProximityPanCalculator.cs` — расчёт pan (будет: azimuth + elevation)
-- `ProximityVoiceChatManager.cs` — mono: spatial, AddComponent ProximityPanCalculator
+- `ProximityPanCalculator.cs` — azimuth + elevation из AudioListener
+- `ProximityVoiceChatManager.cs` — New(mono: spatial), AddComponent ProximityPanCalculator
 - `manifest.json` — file: ссылка на локальный SDK
 - `SpatialAudioStreamFeeder.cs` — удалён
 
@@ -124,6 +122,6 @@
 
 | Документ | Содержание |
 |----------|-----------|
-| `ADR_streaming_audioclip.md` | DSP-пайплайн, алгоритмы ILD/ITD/HRTF, enum, стратегия |
-| `PLAN_streaming_audioclip.md` | Пошаговый план итераций 3/A/B, Inspector параметры |
+| `ADR_streaming_audioclip.md` | DSP-пайплайн, архитектура композиции, алгоритмы, стратегия |
+| `PLAN_streaming_audioclip.md` | Пошаговый план итераций B (HeadShadow), C (Pinna) |
 | `SUMMARY_spatial_audio_investigation.md` | Этот документ — полная хронология |

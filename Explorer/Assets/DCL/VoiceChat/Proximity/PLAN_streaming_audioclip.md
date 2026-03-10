@@ -2,7 +2,7 @@
 
 ## Выбранный подход
 
-**Ручная спатиализация в `LivekitAudioSource.OnAudioFilterRead`** с итеративным развитием алгоритмов.
+**Ручная спатиализация в `LivekitAudioSource.OnAudioFilterRead`** с итеративным развитием алгоритмов. Композиция через независимые переключатели (`ILDMode` enum + `enableITD` bool + `enableHRTF` bool).
 
 Подробный анализ — см. [ADR](ADR_streaming_audioclip.md).
 
@@ -27,110 +27,101 @@
 
 `Pan` property + `ProximityPanCalculator` + equal-power cos/sin. Работает, но резкий скачок pan при проходе сзади.
 
+### Итерация 3: Fix ILD + 3D углы — ЗАВЕРШЕНА
+
+`sin(azimuth) * cos(elevation)` вместо clamp. `SetSpatialAngles(azimuth, elevation)`. Плавный переход сзади.
+
+### Итерация A: ITD — ЗАВЕРШЕНА
+
+Delay line (256 сэмплов), формула Woodworth, линейная интерполяция. Режимы ITD (только задержка) и ITD_ILD (задержка + gains).
+
 ---
 
-## Итерация 3: Fix ILD + 3D углы
+## Итерация B: Рефакторинг → композиция + HeadShadow
 
-**Цель:** Плавный pan при проходе сзади, поддержка elevation (3D).
+**Цель:** Заменить `SpatializationMode` enum на композицию (`ILDMode` + `enableITD` + `enableHRTF`). Реализовать Frequency-Dependent ILD (Head Shadow) — one-pole low-pass на дальнем ухе.
 
-### SDK (`LivekitAudioSource.cs`)
+### Шаг B.1: Рефакторинг переключателей
 
-1. Добавить enum `SpatializationMode` (None, ILD, ITD, ITD_ILD, ParametricHRTF)
-2. Заменить `Pan` property на `SetSpatialAngles(float azimuth, float elevation)` — два float, set main thread, read audio thread
-3. Заменить `monoMode` + pan → `spatializationMode != None` означает mono mode
-4. Добавить Inspector-параметры с `[Header]`:
+#### SDK (`LivekitAudioSource.cs`)
+
+1. Заменить `SpatializationMode` enum на `ILDMode`:
+   ```csharp
+   public enum ILDMode { None, EqualPower, HeadShadow }
    ```
-   [Header("Spatialization")]
-   SpatializationMode spatializationMode
-
+2. Заменить поле `spatializationMode` на:
+   ```csharp
    [Header("ILD — Interaural Level Difference")]
-   float ildStrength = 1.0          // 0..1
+   public ILDMode ildMode = ILDMode.None;
 
    [Header("ITD — Interaural Time Difference")]
-   float headRadius = 0.0875        // метры, 0.05..0.15
+   public bool enableITD = false;
 
-   [Header("Parametric HRTF — Head Shadow")]
-   float shadowCutoffHz = 1500      // 500..4000
-   float shadowStrength = 0.7       // 0..1
-   float elevationInfluence = 0.5   // 0..1
+   [Header("HRTF — Pinna / Spectral Cues")]
+   public bool enableHRTF = false;
    ```
-5. В `OnAudioFilterRead`, ILD ветка:
+3. `New(mono: true)` → `ildMode = ILDMode.EqualPower` (обратная совместимость)
+4. Обработка в `OnAudioFilterRead` как pipeline:
    ```
-   pan = sin(azimuth) * cos(elevation) * ildStrength
-   gainL = cos((pan+1)*0.5 * PI/2)
-   gainR = sin((pan+1)*0.5 * PI/2)
+   bool spatialized = (ildMode != None || enableITD || enableHRTF);
+   if (!spatialized || channels < 2) return;
+
+   ExtractMono → ApplyITD (optional) → ApplyILD (optional) → ApplyHRTF (optional) → WriteStereo
    ```
 
-### Unity (`ProximityPanCalculator.cs`)
+#### Unity (`ProximityVoiceChatManager.cs`)
 
-1. Вычислять azimuth и elevation (радианы) вместо pan:
+- Без изменений — `New(mono: spatial)` по-прежнему включает ILD EqualPower
+
+### Шаг B.2: HeadShadow (Frequency-Dependent ILD)
+
+#### SDK (`LivekitAudioSource.cs`)
+
+1. Добавить состояние one-pole LPF: `float lpfStateL, lpfStateR`
+2. В `ApplyILD`, ветка `HeadShadow`:
    ```
-   local = listenerTransform.InverseTransformDirection(direction)
-   azimuth = Atan2(local.x, local.z)                        // -PI..+PI
-   horizontalDist = sqrt(local.x² + local.z²)
-   elevation = Atan2(local.y, horizontalDist)                // -PI/2..+PI/2
-   livekitAudioSource.SetSpatialAngles(azimuth, elevation)
+   cutoff = lerp(20000, shadowCutoffHz, |sin(az)| * shadowStrength * cos(el))
+   alpha = 1 / (1 + sampleRate / (2 * PI * cutoff))
+
+   Ближнее ухо: обычный gain (без фильтра)
+   Дальнее ухо: y[n] = y[n-1] + alpha * (x[n] - y[n-1]), затем gain
    ```
-2. Убрать spatialBlend из расчёта (SDK решает сам)
+3. Параметры (уже объявлены): `shadowCutoffHz`, `shadowStrength`
 
 ### Проверка
 
-- [ ] Плавный переход pan при проходе источника сзади (нет скачка)
-- [ ] Источник точно сверху/снизу → звук по центру (elevation)
-- [ ] Enum переключается в Inspector → меняется алгоритм в реальном времени
-- [ ] `SpatializationMode.None` → стерео passthrough (обратная совместимость)
+- [ ] `ILDMode.None` + `enableITD = false` → стерео passthrough
+- [ ] `ILDMode.EqualPower` → прежний pan (регрессии нет)
+- [ ] `ILDMode.EqualPower` + `enableITD = true` → ITD + ILD
+- [ ] `ILDMode.HeadShadow` → дальнее ухо заметно "глуше"
+- [ ] `ILDMode.HeadShadow` + `enableITD` → полная локализация
+- [ ] Переключение в Inspector на ходу → без артефактов
+- [ ] `shadowCutoffHz` / `shadowStrength` меняют эффект в реальном времени
 
 ---
 
-## Итерация A: + ITD (Interaural Time Difference)
+## Итерация C: Pinna HRTF (Spectral Cues)
 
-**Цель:** Задержка звука в дальнем ухе. Улучшает пространственное восприятие на низких частотах.
-
-### SDK (`LivekitAudioSource.cs`)
-
-1. Добавить кольцевой буфер (delay line) — `float[] delayBuffer`, `int delayWritePos`
-   - Размер: `(int)(headRadius / 343f * sampleRate) * 2 + 2` — максимальная задержка с запасом
-   - Аллоцируется один раз при `OnEnable` или при смене sampleRate
-2. В `OnAudioFilterRead`, ITD ветка:
-   ```
-   delaySamples = headRadius * (azimuth + sin(azimuth)) / (2 * 343) * sampleRate
-   Ухо, к которому источник ближе: без задержки
-   Дальнее ухо: читать из delay line с delaySamples назад
-   Записать текущий sample в delay line
-   ```
-3. Ветка `ITD_ILD`: применить и delay, и gains одновременно
-
-### Проверка
-
-- [ ] ITD: при перемещении источника слева направо ощущается "движение", даже при одинаковой громкости L/R
-- [ ] ITD_ILD: более выраженная локализация чем ILD или ITD по отдельности
-- [ ] Нет артефактов (щелчков, треска) — delay line корректно работает
-- [ ] headRadius slider меняет эффект в реальном времени
-
----
-
-## Итерация B: + Parametric HRTF (Head Shadow)
-
-**Цель:** Моделирование затенения головой — low-pass фильтр на дальнем ухе.
+**Цель:** Вертикальная локализация через notch-фильтры ушной раковины.
 
 ### SDK (`LivekitAudioSource.cs`)
 
-1. Добавить one-pole low-pass filter state: `float lpfStateL, lpfStateR`
-2. Cutoff зависит от угла: `cutoff = lerp(20000, shadowCutoffHz, abs(sin(azimuth)) * shadowStrength)`
-3. Рассчитать коэффициент: `alpha = 1 / (1 + sampleRate / (2 * PI * cutoff))`
-4. В `OnAudioFilterRead`:
+1. Добавить biquad notch filter state: `float n1L, n2L, n1R, n2R` (2nd order)
+2. Notch frequency зависит от elevation:
    ```
-   На ближнем ухе: без фильтра
-   На дальнем ухе: y[n] = y[n-1] + alpha * (x[n] - y[n-1])
+   notchFreq = lerp(6000, 10000, (elevation + PI/2) / PI)   // ~6kHz внизу → ~10kHz вверху
+   Q = 3..5   // узкий notch
+   depth = elevationInfluence * ...
    ```
-5. Elevation: `cutoff *= lerp(1, cos(elevation), elevationInfluence)`
+3. Biquad коэффициенты пересчитываются при смене угла (раз в буфер, не каждый сэмпл)
+4. `enableHRTF = true` → применить notch после ILD
 
 ### Проверка
 
-- [ ] Звук сбоку/сзади: дальнее ухо заметно "приглушённее" на высоких частотах
-- [ ] Перключение ILD → ITD_ILD → HRTF: заметное улучшение локализации
+- [ ] Источник сверху vs снизу — ощущается разница тембра
+- [ ] Перед vs зад — различается (cone of confusion уменьшается)
+- [ ] Параметры настраиваются из Inspector
 - [ ] Нет артефактов при резкой смене углов
-- [ ] Параметры cutoff/strength настраиваются из Inspector
 
 ---
 
@@ -140,14 +131,14 @@
 
 | Файл | Изменения |
 |------|-----------|
-| `LivekitAudioSource.cs` | `SpatializationMode` enum, `SetSpatialAngles()`, Inspector параметры с Headers, ILD/ITD/HRTF в OnAudioFilterRead |
+| `LivekitAudioSource.cs` | `ILDMode` enum, `enableITD`, `enableHRTF`, pipeline в OnAudioFilterRead, HeadShadow LPF, (будущее: Pinna notch) |
 
 ### Unity project
 
 | Файл | Изменения |
 |------|-----------|
-| `ProximityPanCalculator.cs` | Вычисление azimuth + elevation вместо pan |
-| `ProximityVoiceChatManager.cs` | `mono: spatial` → задать `spatializationMode` |
+| `ProximityPanCalculator.cs` | Вычисление azimuth + elevation |
+| `ProximityVoiceChatManager.cs` | `New(mono: spatial)` → задать `ildMode` |
 | `manifest.json` | `file:` ссылка на локальный SDK (dev) |
 
 ---

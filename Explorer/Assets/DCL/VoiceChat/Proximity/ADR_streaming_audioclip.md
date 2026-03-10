@@ -1,6 +1,6 @@
 # ADR: Spatial Audio Pipeline для Proximity Voice Chat
 
-**Status:** Implemented (ILD базовый). Итеративное развитие: ILD fix → +ITD → ITD+ILD → Parametric HRTF  
+**Status:** Implemented (ILD EqualPower + ITD). Итеративное развитие: Mono → ILD → ILD fix → ITD → HeadShadow → Pinna HRTF  
 **Date:** 2026-03-06  
 **Authors:** Voice Chat team  
 **Related:** Итерация 2 из ADR_proximity_voice_chat
@@ -72,17 +72,19 @@
 [Unity Project]                                    [LiveKit SDK fork]
 ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
   - AudioListener transform                          .SetSpatialAngles(azimuth, elevation)
-  - InverseTransformDirection                         .spatializationMode = enum
-  - azimuth = Atan2(local.x, local.z)
-  - elevation = Atan2(local.y, horizontalDist)        OnAudioFilterRead:
-  - livekitAudioSource.SetSpatialAngles(az, el)         1. ReadAudio(data, channels=2)
+  - InverseTransformDirection                         .ildMode = EqualPower | HeadShadow
+  - azimuth = Atan2(local.x, local.z)                .enableITD = true/false
+  - elevation = Atan2(local.y, horizontalDist)        .enableHRTF = true/false
+  - livekitAudioSource.SetSpatialAngles(az, el)
+                                                      OnAudioFilterRead:
+                                                        1. ReadAudio(data, channels=2)
                                                         2. Extract mono (left channel)
-                                                        3. Apply selected algorithm
+                                                        3. Pipeline: ITD → ILD → HRTF
 ```
 
 ### Разделение ответственности
 
-- **SDK** — алгоритмы спатиализации, переключаемые enum в Inspector. Project-agnostic: принимает углы, не знает про камеру/listener
+- **SDK** — алгоритмы спатиализации, композиция через независимые переключатели. Project-agnostic: принимает углы, не знает про камеру/listener
 - **Unity project** — расчёт углов из пространственного контекста (AudioListener → source)
 
 ### API: углы вместо pan
@@ -98,79 +100,100 @@ ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
 
 ---
 
+## Архитектура переключателей (композиция вместо enum)
+
+Вместо одного `SpatializationMode` enum с комбинаторным взрывом — **независимые переключатели**. Каждый эффект включается/выключается отдельно, любая комбинация допустима.
+
+### Inspector layout
+
+```csharp
+[Header("ILD — Interaural Level Difference")]
+public ILDMode ildMode = ILDMode.None;       // None | EqualPower | HeadShadow
+[Range(0f, 1f)] public float ildStrength = 1f;
+[Range(500f, 4000f)] public float shadowCutoffHz = 1500f;  // только HeadShadow
+[Range(0f, 1f)] public float shadowStrength = 0.7f;        // только HeadShadow
+
+[Header("ITD — Interaural Time Difference")]
+public bool enableITD = false;
+[Range(0.05f, 0.15f)] public float headRadius = 0.0875f;
+
+[Header("HRTF — Pinna / Spectral Cues")]
+public bool enableHRTF = false;
+[Range(0f, 1f)] public float elevationInfluence = 0.5f;
+```
+
+### ILDMode enum
+
+```csharp
+public enum ILDMode
+{
+    None,         // Стерео passthrough (обратная совместимость)
+    EqualPower,   // sin(azimuth) * cos(elevation) → equal-power pan law
+    HeadShadow    // EqualPower + one-pole low-pass на дальнем ухе (Frequency-Dependent ILD)
+}
+```
+
+### Преимущества композиции
+
+- Любая комбинация без дублирования: `EqualPower`, `EqualPower + ITD`, `HeadShadow + ITD + HRTF`
+- Нет комбинаторного взрыва в enum
+- В Inspector сразу видно какие слои включены
+- Итеративное добавление не ломает предыдущие переключатели
+
+### Pipeline в OnAudioFilterRead
+
+Эффекты применяются как пайплайн, каждый в своей функции:
+
+```
+mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains/shadow] → [HRTF notch] → interleaved data[]
+```
+
+---
+
 ## Стратегия итеративного развития алгоритмов
 
-Инкрементальный путь с полной преемственностью. Каждая итерация добавляет эффект поверх предыдущих. Переключение через enum в Inspector для A/B сравнения.
+### 1. ILD EqualPower — ЗАВЕРШЁН
 
-### 1. ILD — Interaural Level Difference (текущий, требует fix)
+Разница громкости между ушами. `pan = sin(azimuth) * cos(elevation)`, equal-power pan law (cos/sin gains).
 
-Разница громкости между ушами. Equal-power pan law (cos/sin).
+**Elevation:** `cos(elevation)` уменьшает ILD — источник сверху → оба уха одинаково (голова не затеняет).
 
-**Текущая проблема:** `Atan2(local.x, local.z) / (PI*0.5)` + clamp — резкий скачок pan с +1 на -1 при переходе источника через "сзади".
+### 2. ITD — ЗАВЕРШЁН
 
-**Fix:** Использовать `sin(azimuth)` вместо clamp:
-- front-right (45°): sin = 0.707 → правее
-- right (90°): sin = 1.0 → полностью вправо
-- back-right (135°): sin = 0.707 → правее (уже тише)
-- back (180°): sin = 0.0 → центр
-- Плавный переход, нет скачков
+Задержка звука в дальнем ухе. Кольцевой буфер 256 сэмплов. Формула Woodworth для сферической головы.
 
-**3D:** `pan = sin(azimuth) * cos(elevation)` — при источнике сверху/снизу ILD уменьшается (оба уха одинаково).
+**Elevation:** `effectiveAz *= cos(elevation)` — путь до обоих ушей выравнивается при источнике сверху.
 
-**Параметры Inspector:** `ildStrength` (0..1)
+### 3. ILD HeadShadow (Frequency-Dependent ILD) — СЛЕДУЮЩИЙ
 
-### 2. + ITD — Interaural Time Difference
+Голова экранирует высокие частоты сильнее, чем низкие. Дальнее ухо получает one-pole low-pass filter.
 
-Задержка звука в дальнем ухе. Мозг использует ITD для локализации на низких частотах (<1.5kHz).
+**Физика:** `cutoff = lerp(20000, shadowCutoffHz, |sin(az)| * shadowStrength)`  
+**Elevation:** `cutoff` увеличивается при elevation (голова меньше экранирует сверху).
 
-**Физика:** max ITD = headRadius / speedOfSound ≈ 0.0875m / 343m/s ≈ 0.255ms ≈ ~12 сэмплов при 48kHz.
+### 4. Pinna HRTF (Spectral Cues) — БУДУЩИЙ
 
-**Реализация:** Кольцевой буфер (delay line) в OnAudioFilterRead. Задержка = `headRadius * (azimuth + sin(azimuth)) / (2 * speedOfSound)` (формула Вудворта для сферической головы).
+Ушная раковина создаёт notch-фильтры, зависящие от elevation. Это единственный cue для различения верх/низ и перед/зад (cone of confusion).
 
-**Параметры Inspector:** `headRadius` (0.05..0.15, default 0.0875)
+**Реализация:** Parametric biquad notch filter. Notch frequency зависит от elevation (~6-8 kHz при 0°, сдвигается с углом).
 
-**Buffer underrun?** Нет — delay line внутри OnAudioFilterRead, не PCMReaderCallback. Данные уже в буфере.
+### Психоакустика и elevation
 
-### 3. ITD + ILD (комбинация)
-
-Оба эффекта вместе. ITD на низких частотах + ILD на высоких — дополняют друг друга.
-
-**Параметры Inspector:** headRadius + ildStrength
-
-### 4. + Parametric HRTF
-
-Упрощённый HRTF без таблиц. Моделирует затенение головой (head shadow) через low-pass фильтр на дальнем ухе.
-
-**Реализация:** One-pole low-pass filter на contralateral ear. Частота среза зависит от угла — чем больше угол, тем ниже cutoff (голова экранирует ВЧ).
-
-**Параметры Inspector:**
-- `shadowCutoffHz` (500..4000, default 1500) — минимальный cutoff при 90°
-- `shadowStrength` (0..1) — сила эффекта
-- `elevationInfluence` (0..1) — влияние elevation на фильтрацию
-
-**Преемственность:** ITD (delay) + ILD (level) + head shadow (filter) = три канала пространственного восприятия. Не полный HRTF с PRTF-таблицами пинны, но значительно лучше чистого ILD.
+| Эффект | Что даёт elevation | В коде |
+|--------|-------------------|--------|
+| ILD | Уменьшается (голова не затеняет сверху) | `* cos(el)` |
+| ITD | Уменьшается (путь до ушей выравнивается) | `effectiveAz * cos(el)` |
+| Head Shadow | Уменьшается (нет экранирования сверху) | `cutoff` растёт |
+| Pinna HRTF | **Основной cue** для вертикальной локализации | notch freq от elevation |
 
 ### Сводная таблица
 
-| Алгоритм | Что моделирует | CPU cost | Качество | Преемственность |
-|---|---|---|---|---|
-| ILD | Разница громкости L/R | Минимальный | Базовый pan | Основа для всех |
-| ITD | Задержка дальнего уха | +delay line ~12 samples | Улучшенная локализация | Добавляется к ILD |
-| ITD+ILD | Оба | = ITD + ILD | Хорошая локализация | Комбинация |
-| Parametric HRTF | +Head shadow (ВЧ фильтр) | +one-pole filter | Заметно лучше | Добавляется к ITD+ILD |
-
-### Enum для переключения
-
-```csharp
-public enum SpatializationMode
-{
-    None,            // Стерео passthrough (обратная совместимость)
-    ILD,             // Equal-power pan (sin(azimuth) * cos(elevation))
-    ITD,             // Только задержка (без разницы громкости — для теста)
-    ITD_ILD,         // Задержка + громкость
-    ParametricHRTF   // Задержка + громкость + head shadow filter
-}
-```
+| Эффект | Что моделирует | CPU cost | Inspector |
+|--------|---------------|----------|-----------|
+| ILD EqualPower | Разница громкости L/R | Минимальный | `ildMode`, `ildStrength` |
+| ILD HeadShadow | + ВЧ фильтрация дальнего уха | +one-pole filter | + `shadowCutoffHz`, `shadowStrength` |
+| ITD | Задержка дальнего уха | +delay line | `enableITD`, `headRadius` |
+| Pinna HRTF | Notch от ушной раковины | +biquad filter | `enableHRTF`, `elevationInfluence` |
 
 ---
 
@@ -192,4 +215,12 @@ public enum SpatializationMode
 
 ### Итерация 2: Angular Panning (базовый ILD) — ЗАВЕРШЕНА
 
-`Pan` property (-1..+1) + equal-power pan law. `ProximityPanCalculator` вычисляет pan через `Atan2` + clamp. Работает, но резкий скачок при проходе источника сзади.
+`Pan` property (-1..+1) + equal-power pan law. Работает, но резкий скачок при проходе источника сзади.
+
+### Итерация 3: Fix ILD + 3D углы — ЗАВЕРШЕНА
+
+`sin(azimuth) * cos(elevation)` — плавный переход сзади, поддержка elevation.
+
+### Итерация A: ITD — ЗАВЕРШЕНА
+
+Delay line (256 сэмплов), формула Woodworth, линейная интерполяция. ITD и ITD+ILD режимы.
