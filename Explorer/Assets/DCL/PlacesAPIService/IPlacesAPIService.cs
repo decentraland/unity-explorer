@@ -19,7 +19,8 @@ namespace DCL.PlacesAPIService
             string? category = null,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null);
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null);
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
@@ -34,7 +35,8 @@ namespace DCL.PlacesAPIService
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null);
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
