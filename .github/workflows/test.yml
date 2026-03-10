@@ -118,20 +118,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Restore Unity image from GHCR
-        id: restore-image-lint
-        continue-on-error: true
+      - name: Restore Unity image from GHCR or seed from Docker Hub
         run: |
-          docker pull "${{ steps.img-lint.outputs.ghcr }}"
-
-      - name: Download from Docker Hub and upload to GHCR (if missing)
-        if: steps.restore-image-lint.outcome == 'failure'
-        run: |
-          upstream="${{ steps.img-lint.outputs.upstream }}"
+          set -o pipefail
           ghcr="${{ steps.img-lint.outputs.ghcr }}"
-          docker pull $upstream
-          docker tag  $upstream $ghcr
-          docker push $ghcr
+          upstream="${{ steps.img-lint.outputs.upstream }}"
+
+          if docker pull "$ghcr" 2>&1 | tee ghcr-pull.log; then
+            exit 0
+          fi
+
+          if grep -qiE 'manifest unknown|not found' ghcr-pull.log; then
+            echo "GHCR image missing, trying upstream..."
+            docker pull "$upstream"
+            docker tag "$upstream" "$ghcr"
+            docker push "$ghcr"
+          else
+            echo "GHCR pull failed, but not because the image is missing."
+            cat ghcr-pull.log
+            exit 1
+          fi
 
       # C# Linting using JetBrains ReSharper CLI
 
