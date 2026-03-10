@@ -154,28 +154,39 @@ jobs:
 
       # C# Linting using JetBrains ReSharper CLI
 
-      - name: Generate solution inside Unity Docker container
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/workspace" \
-            -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
-            -v /tmp/ssh-unity:/root/.ssh:ro \
-            -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
-            -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
-            -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
-            -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
-            -e UNITY_EMAIL="$UNITY_EMAIL" \
-            -e UNITY_PASSWORD="$UNITY_PASSWORD" \
-            -e UNITY_LICENSE="$UNITY_LICENSE" \
-            -w /workspace \
-            ${{ steps.img-lint.outputs.ghcr }} \
-            unity-editor \
-            -batchmode \
-            -nographics \
-            -projectPath /workspace/Explorer \
-            -executeMethod UnityEditor.SyncVS.SyncSolution \
-            -quit \
-            -logFile -
+      # - name: Generate solution inside Unity Docker container
+      #   run: |
+      #     docker run --rm \
+      #       -v "${{ github.workspace }}:/workspace" \
+      #       -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+      #       -v /tmp/ssh-unity:/root/.ssh:ro \
+      #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
+      #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
+      #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
+      #       -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+      #       -e UNITY_EMAIL="$UNITY_EMAIL" \
+      #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+      #       -e UNITY_LICENSE="$UNITY_LICENSE" \
+      #       -w /workspace \
+      #       ${{ steps.img-lint.outputs.ghcr }} \
+      #       unity-editor \
+      #       -batchmode \
+      #       -nographics \
+      #       -projectPath /workspace/Explorer \
+      #       -executeMethod UnityEditor.SyncVS.SyncSolution \
+      #       -quit \
+      #       -logFile -
+      - name: Generate solution with GameCI Builder
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Explorer
+          customImage: ${{ steps.img-lint.outputs.ghcr }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: CI.GenerateSolution.Run
 
       - name: Download ReSharper Command Line Tools
         run: |
