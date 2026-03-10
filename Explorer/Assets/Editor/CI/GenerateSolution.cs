@@ -13,12 +13,12 @@ namespace CI
             if (EditorUtility.scriptCompilationFailed)
                 throw new Exception("Script compilation failed before generating the solution.");
 
-            var editorAssembly = typeof(Editor).Assembly;
+            var editorAssembly = typeof(EditorApplication).Assembly;
             var syncVsType = editorAssembly.GetType("UnityEditor.SyncVS");
             var syncSolutionMethod = syncVsType?.GetMethod("SyncSolution", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
             if (syncSolutionMethod == null)
-                throw new Exception("UnityEditor.SyncVS.SyncSolution was not found.");
+                throw new Exception("UnityEditor.SyncVS.SyncSolution method not found.");
 
             syncSolutionMethod.Invoke(null, null);
 
