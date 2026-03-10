@@ -142,6 +142,9 @@ jobs:
             -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
             -v /tmp/ssh-unity:/root/.ssh:ro \
             -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+            -e UNITY_EMAIL="$UNITY_EMAIL" \
+            -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+            -e UNITY_LICENSE="$UNITY_LICENSE" \
             -w /workspace \
             ${{ steps.img-lint.outputs.ghcr }} \
             unity-editor \
