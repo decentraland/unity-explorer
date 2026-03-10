@@ -46,6 +46,10 @@ jobs:
           sudo mkdir -p /mnt/docker
           echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
           sudo systemctl start docker
+          for i in {1..10}; do
+            docker info >/dev/null 2>&1 && break
+            sleep 3
+          done
           docker info | sed -n '1,40p'
           df -h /mnt /mnt/docker
 
@@ -76,7 +80,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 'Add GitHub to the SSH known hosts file'
+      - name: Add GitHub to the SSH known hosts file
         run: |
           mkdir -p -m 0700 /home/runner/.ssh
           curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
@@ -112,11 +116,13 @@ jobs:
           echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+        run: |
+          for i in 1 2 3; do
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin && exit 0
+            echo "GHCR login failed, retry $i/3"
+            sleep $((i * 10))
+          done
+          exit 1
 
       - name: Restore Unity image from GHCR or seed from Docker Hub
         run: |
