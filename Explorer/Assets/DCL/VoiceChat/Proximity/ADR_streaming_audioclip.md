@@ -1,6 +1,6 @@
 # ADR: Spatial Audio Pipeline для Proximity Voice Chat
 
-**Status:** Implemented (ILD EqualPower + ITD). Итеративное развитие: Mono → ILD → ILD fix → ITD → HeadShadow → Pinna HRTF  
+**Status:** Implemented (ILD EqualPower/HeadShadow + ITD). Следующий шаг: Pinna HRTF  
 **Date:** 2026-03-06  
 **Authors:** Voice Chat team  
 **Related:** Итерация 2 из ADR_proximity_voice_chat
@@ -79,7 +79,7 @@ ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
                                                       OnAudioFilterRead:
                                                         1. ReadAudio(data, channels=2)
                                                         2. Extract mono (left channel)
-                                                        3. Pipeline: ITD → ILD → HRTF
+                                                        3. Pipeline: ITD → ILD/HeadShadow → HRTF
 ```
 
 ### Разделение ответственности
@@ -100,100 +100,98 @@ ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
 
 ---
 
-## Архитектура переключателей (композиция вместо enum)
+## Архитектура переключателей (композиция)
 
-Вместо одного `SpatializationMode` enum с комбинаторным взрывом — **независимые переключатели**. Каждый эффект включается/выключается отдельно, любая комбинация допустима.
+Независимые переключатели вместо монолитного enum. Каждый эффект включается отдельно, любая комбинация допустима.
 
 ### Inspector layout
 
 ```csharp
 [Header("ILD — Interaural Level Difference")]
-public ILDMode ildMode = ILDMode.None;       // None | EqualPower | HeadShadow
-[Range(0f, 1f)] public float ildStrength = 1f;
-[Range(500f, 4000f)] public float shadowCutoffHz = 1500f;  // только HeadShadow
-[Range(0f, 1f)] public float shadowStrength = 0.7f;        // только HeadShadow
+public ILDMode ildMode;                     // None | EqualPower | HeadShadow
+
+[Header("Head Shadow Filter")]
+public ShadowFilterOrder shadowFilterOrder; // OnePole6dB..FourPole24dB | Biquad12dB | MultiBand3
+// + shadowCutoffHz, shadowStrength, biquadQ
+// + crossoverLowMid, crossoverMidHigh, lowBandDb, midBandDb, highBandDb (MultiBand3)
 
 [Header("ITD — Interaural Time Difference")]
-public bool enableITD = false;
-[Range(0.05f, 0.15f)] public float headRadius = 0.0875f;
+public bool enableITD;
+// + headRadius
 
 [Header("HRTF — Pinna / Spectral Cues")]
-public bool enableHRTF = false;
-[Range(0f, 1f)] public float elevationInfluence = 0.5f;
+public bool enableHRTF;
+// + elevationInfluence
 ```
-
-### ILDMode enum
-
-```csharp
-public enum ILDMode
-{
-    None,         // Стерео passthrough (обратная совместимость)
-    EqualPower,   // sin(azimuth) * cos(elevation) → equal-power pan law
-    HeadShadow    // EqualPower + one-pole low-pass на дальнем ухе (Frequency-Dependent ILD)
-}
-```
-
-### Преимущества композиции
-
-- Любая комбинация без дублирования: `EqualPower`, `EqualPower + ITD`, `HeadShadow + ITD + HRTF`
-- Нет комбинаторного взрыва в enum
-- В Inspector сразу видно какие слои включены
-- Итеративное добавление не ломает предыдущие переключатели
 
 ### Pipeline в OnAudioFilterRead
 
-Эффекты применяются как пайплайн, каждый в своей функции:
-
 ```
-mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains/shadow] → [HRTF notch] → interleaved data[]
+mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains + HeadShadow filter] → [HRTF notch] → data[]
 ```
 
 ---
 
-## Стратегия итеративного развития алгоритмов
+## HeadShadow: режимы фильтрации
 
-### 1. ILD EqualPower — ЗАВЕРШЁН
+Реальный head shadow при 90° азимута: <500 Hz: ~0-2 dB, 1 kHz: ~5 dB, 2 kHz: ~10 dB, 4 kHz: ~15 dB, 8 kHz: ~20 dB.
 
-Разница громкости между ушами. `pan = sin(azimuth) * cos(elevation)`, equal-power pan law (cos/sin gains).
+| Режим | Спад | Описание |
+|-------|------|----------|
+| OnePole6dB | 6 dB/oct | Мягкий, subtle |
+| TwoPole12dB | 12 dB/oct | Дефолт, ближе всего к реальному ~8-10 dB/oct |
+| ThreePole18dB | 18 dB/oct | Усиленный |
+| FourPole24dB | 24 dB/oct | Агрессивный |
+| Biquad12dB | 12 dB/oct + Q | С настраиваемым резонансом |
+| MultiBand3 | 3-band | Точнее всего: per-band gain в dB по измеренной кривой |
 
-**Elevation:** `cos(elevation)` уменьшает ILD — источник сверху → оба уха одинаково (голова не затеняет).
+**MultiBand3** — 3-полосный кроссовер (LPF biquad + HPF biquad, mid = complementary). Gains интерполируются по `shadowAmount = |sin(az)| * strength * cos(el)`. Дефолты: low=-2 dB, mid=-10 dB, high=-20 dB — точно по измерениям (Blauert, 1997).
 
-### 2. ITD — ЗАВЕРШЁН
+---
 
-Задержка звука в дальнем ухе. Кольцевой буфер 256 сэмплов. Формула Woodworth для сферической головы.
+## HRTF: стратегия итеративной реализации
 
-**Elevation:** `effectiveAz *= cos(elevation)` — путь до обоих ушей выравнивается при источнике сверху.
+### Что такое HRTF
 
-### 3. ILD HeadShadow (Frequency-Dependent ILD) — СЛЕДУЮЩИЙ
+**Head-Related Transfer Function** — передаточная функция, описывающая как звук трансформируется на пути от источника до барабанной перепонки с учётом дифракции на голове, плечах и ушной раковине (pinna). HRTF — "аудио-отпечаток" формы ушей.
 
-Голова экранирует высокие частоты сильнее, чем низкие. Дальнее ухо получает one-pole low-pass filter.
+### Зачем HRTF
 
-**Физика:** `cutoff = lerp(20000, shadowCutoffHz, |sin(az)| * shadowStrength)`  
-**Elevation:** `cutoff` увеличивается при elevation (голова меньше экранирует сверху).
+ILD и ITD работают в горизонтальной плоскости. Но существует "cone of confusion" — множество точек, дающих одинаковые ILD/ITD (конус вокруг межушной оси). Pinna решает это: её складки создают elevation-зависимые спектральные провалы (notches) на 6-10 kHz. Мозг по ним определяет верх/низ/перед/зад.
 
-### 4. Pinna HRTF (Spectral Cues) — БУДУЩИЙ
+### Варианты реализации (без внешних плагинов)
 
-Ушная раковина создаёт notch-фильтры, зависящие от elevation. Это единственный cue для различения верх/низ и перед/зад (cone of confusion).
+| Вариант | Качество | CPU (150 src) | Pre-baked | Сложность |
+|---------|----------|---------------|-----------|-----------|
+| C1: 1 parametric notch | Базовая вертикаль | ~0.25 ms | Нет | Простая |
+| C2: 2 parametric notch | Хорошая вертикаль | ~0.5 ms | Нет | Простая |
+| D: Short FIR 64-tap (HRIR) | Полная 3D | ~9.8 ms | Да (HRIR ~125 KB) | Средняя |
+| SOFA HRTF | Полная 3D | ~9.8 ms | Да + парсер | Высокая, overkill |
 
-**Реализация:** Parametric biquad notch filter. Notch frequency зависит от elevation (~6-8 kHz при 0°, сдвигается с углом).
+### Решение: итеративный путь C1 → C2 → (может быть D)
 
-### Психоакустика и elevation
+**C1: 1 parametric notch** — biquad notch filter, частота от elevation. Notch ~6-10 kHz.  
+**C2: 2 parametric notch** — primary + secondary notch (~1.6× частоты). Более объёмная вертикаль.  
+**D: Short FIR** — реальная HRIR (MIT KEMAR, public domain). Возможно, если параметрика недостаточно. При 150 источниках ~9.8 ms (~47% audio budget) — допустимо при 50, на грани при 150.  
+**SOFA** — отмечен, но не планируется (избыточная сложность для voice chat).
 
-| Эффект | Что даёт elevation | В коде |
-|--------|-------------------|--------|
-| ILD | Уменьшается (голова не затеняет сверху) | `* cos(el)` |
+### Elevation в уже реализованных эффектах
+
+| Эффект | Как elevation влияет | В коде |
+|--------|---------------------|--------|
+| ILD EqualPower | Уменьшается (голова не затеняет сверху) | `pan * cos(el)` |
 | ITD | Уменьшается (путь до ушей выравнивается) | `effectiveAz * cos(el)` |
-| Head Shadow | Уменьшается (нет экранирования сверху) | `cutoff` растёт |
+| HeadShadow | Уменьшается (нет экранирования сверху) | `shadowAmount * cos(el)` |
 | Pinna HRTF | **Основной cue** для вертикальной локализации | notch freq от elevation |
 
-### Сводная таблица
+### Referенции
 
-| Эффект | Что моделирует | CPU cost | Inspector |
-|--------|---------------|----------|-----------|
-| ILD EqualPower | Разница громкости L/R | Минимальный | `ildMode`, `ildStrength` |
-| ILD HeadShadow | + ВЧ фильтрация дальнего уха | +one-pole filter | + `shadowCutoffHz`, `shadowStrength` |
-| ITD | Задержка дальнего уха | +delay line | `enableITD`, `headRadius` |
-| Pinna HRTF | Notch от ушной раковины | +biquad filter | `enableHRTF`, `elevationInfluence` |
+- Blauert, J. (1997). Spatial Hearing — ILD measurements по частотам
+- Woodworth & Schlosberg (1954) — ITD = r(θ + sin θ)/c
+- Algazi et al. (2001) — средний радиус головы 0.0875 m (CIPIC database)
+- Hebrank & Wright (1974) — pinna spectral cues для вертикальной локализации
+- Van Wanrooij & Van Opstal (2004) — head shadow как доминирующий ILD cue
+- Robert Bristow-Johnson — Audio EQ Cookbook (biquad формулы)
 
 ---
 
@@ -210,17 +208,19 @@ mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains/shadow] → [H
 ## Завершённые итерации
 
 ### Итерация 1: Mono + Zero Pan — ЗАВЕРШЕНА
-
-`LivekitAudioSource.New(mono: true)` — читает стерео, извлекает L канал, дублирует L=R. Аудио чистое.
+`LivekitAudioSource.New(mono: true)` — читает стерео, извлекает L канал, дублирует L=R.
 
 ### Итерация 2: Angular Panning (базовый ILD) — ЗАВЕРШЕНА
-
-`Pan` property (-1..+1) + equal-power pan law. Работает, но резкий скачок при проходе источника сзади.
+`Pan` property (-1..+1) + equal-power pan law. Резкий скачок при проходе сзади.
 
 ### Итерация 3: Fix ILD + 3D углы — ЗАВЕРШЕНА
-
-`sin(azimuth) * cos(elevation)` — плавный переход сзади, поддержка elevation.
+`sin(azimuth) * cos(elevation)` — плавный переход, поддержка elevation.
 
 ### Итерация A: ITD — ЗАВЕРШЕНА
+Delay line 256 сэмплов, формула Woodworth, линейная интерполяция.
 
-Delay line (256 сэмплов), формула Woodworth, линейная интерполяция. ITD и ITD+ILD режимы.
+### Итерация B: Рефакторинг + HeadShadow — ЗАВЕРШЕНА
+- Композиция: `ILDMode` enum + `enableITD` bool + `enableHRTF` bool
+- HeadShadow: 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
+- MultiBand3: 3-полосный кроссовер с per-band gain по измеренной кривой
+- Tooltips с физическими референсами на все параметры

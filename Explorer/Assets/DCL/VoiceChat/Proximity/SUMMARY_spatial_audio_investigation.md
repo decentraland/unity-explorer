@@ -72,7 +72,7 @@
 
 ### Этап 11: Итерация A — ITD
 
-Delay line (кольцевой буфер 256 сэмплов). Формула Woodworth для сферической головы. Линейная интерполяция для дробных задержек. Режимы ITD и ITD+ILD.
+Delay line (кольцевой буфер 256 сэмплов). Формула Woodworth для сферической головы. Линейная интерполяция для дробных задержек. ITD и ITD+ILD комбинации.
 
 ### Этап 12: Архитектурное решение — композиция вместо enum
 
@@ -84,7 +84,37 @@ public bool enableITD;
 public bool enableHRTF;
 ```
 
-Любая комбинация допустима. Пайплайн: ITD → ILD → HRTF.
+Любая комбинация допустима. Pipeline: ITD → ILD → HRTF.
+
+### Этап 13: Итерация B — HeadShadow (Frequency-Dependent ILD)
+
+Реализован Head Shadow с 6 режимами фильтрации через `ShadowFilterOrder` enum:
+
+- **OnePole6dB** — 6 dB/oct, subtle
+- **TwoPole12dB** — 12 dB/oct, дефолт (ближе к реальным ~8-10 dB/oct)
+- **ThreePole18dB** — 18 dB/oct, усиленный
+- **FourPole24dB** — 24 dB/oct, агрессивный
+- **Biquad12dB** — 12 dB/oct с настраиваемым Q
+- **MultiBand3** — 3-полосный кроссовер с per-band gain по измеренной кривой
+
+MultiBand3 реализован через комплементарные LPF/HPF biquad (Butterworth Q=0.707). Gains интерполируются по `shadowAmount = |sin(az)| * strength * cos(el)`: от 0 dB (фронт) до сконфигурированных значений (90°). Дефолты: low=-2 dB, mid=-10 dB, high=-20 dB — точно по измерениям Blauert (1997).
+
+Все параметры снабжены `[Tooltip]` с физическими объяснениями, формулами и академическими референсами. Реалистичные дефолты и диапазоны.
+
+### Этап 14: Обсуждение HRTF
+
+Разобрали HRTF (Head-Related Transfer Function) — передаточную функцию, описывающую трансформацию звука дифракцией на голове и ушной раковине. Ключевая роль: решение "cone of confusion" (ILD+ITD одинаковы для многих точек), вертикальная и перед/зад локализация.
+
+Варианты реализации без внешних плагинов:
+
+| Вариант | CPU (150 src) | Pre-baked | Статус |
+|---------|---------------|-----------|--------|
+| C1: 1 parametric notch | ~0.25 ms | Нет | **Планируется** |
+| C2: 2 parametric notch | ~0.5 ms | Нет | **Планируется** |
+| D: Short FIR 64-tap | ~9.8 ms | Да (HRIR ~125 KB) | **Опционально** |
+| SOFA HRTF | ~9.8 ms | Да + парсер | **Не планируется** |
+
+Решено идти итеративно: C1 → C2 → (опционально D).
 
 ---
 
@@ -93,22 +123,25 @@ public bool enableHRTF;
 ### Что реализовано
 
 - **ILD EqualPower:** `sin(azimuth) * cos(elevation)` → equal-power pan law
+- **ILD HeadShadow:** 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
+- **MultiBand3:** 3-полосный кроссовер, per-band gain по измеренной кривой head shadow
 - **ITD:** Delay line + Woodworth + linear interpolation
-- **ITD+ILD:** Комбинация задержки и gains
+- **Любая комбинация:** ILD + ITD работает, переключение в Inspector без артефактов
 - Distance rolloff (нативный Unity, POST-DSP)
 - Audio Effects, Reverb Zones
 - Обратная совместимость (Private/Community chat — стерео passthrough)
+- Tooltips с физическими описаниями и референсами на всех параметрах
 
-### Что нужно сделать (по порядку)
+### Следующие шаги
 
-1. **Рефакторинг:** `SpatializationMode` → `ILDMode` enum + `enableITD` bool + `enableHRTF` bool
-2. **ILD HeadShadow:** One-pole low-pass на дальнем ухе (Frequency-Dependent ILD)
-3. **Pinna HRTF:** Notch-фильтры от elevation (вертикальная локализация)
+1. **Итерация C1:** 1 parametric biquad notch (elevation → notch freq 6-10 kHz)
+2. **Итерация C2:** + secondary notch (×1.6 частоты primary)
+3. **Итерация D (опционально):** Short FIR 64-tap (HRIR из MIT KEMAR, если параметрика недостаточно)
 
 ### Файлы
 
 **SDK (LiveKit fork), ветка `feat/mono-spatial-audio`:**
-- `LivekitAudioSource.cs` — ILDMode, enableITD, enableHRTF, pipeline, delay line, LPF (будет: notch)
+- `LivekitAudioSource.cs` — ILDMode, ShadowFilterOrder, enableITD, enableHRTF, pipeline, delay line, cascade/biquad/multiband LPF (будет: notch, опц. FIR)
 
 **Unity project:**
 - `ProximityPanCalculator.cs` — azimuth + elevation из AudioListener
@@ -122,6 +155,6 @@ public bool enableHRTF;
 
 | Документ | Содержание |
 |----------|-----------|
-| `ADR_streaming_audioclip.md` | DSP-пайплайн, архитектура композиции, алгоритмы, стратегия |
-| `PLAN_streaming_audioclip.md` | Пошаговый план итераций B (HeadShadow), C (Pinna) |
+| `ADR_streaming_audioclip.md` | DSP-пайплайн, архитектура, все алгоритмы, HRTF стратегия, референсы |
+| `PLAN_streaming_audioclip.md` | Пошаговый план итераций C (Pinna HRTF) и D (опц. FIR) |
 | `SUMMARY_spatial_audio_investigation.md` | Этот документ — полная хронология |
