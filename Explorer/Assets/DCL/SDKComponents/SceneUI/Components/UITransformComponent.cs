@@ -1,5 +1,6 @@
 using Arch.Core;
 using CRDT;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Utils;
 using System;
@@ -67,8 +68,17 @@ namespace DCL.SDKComponents.SceneUI.Components
             // Instead of creating a new collection with VisualElements keep the index in the tabIndex
 
             int i = 0;
+            int maxNodes = RelationData.NodeCount;
+
             for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
             {
+                if (i > maxNodes)
+                {
+                    ReportHub.LogError(ReportCategory.SCENE_UI,
+                        "Cycle detected in sibling linked list during SortIfRequired — aborting sort");
+                    break;
+                }
+
                 var childEntityId = node.EntityId;
 
                 if (entitiesMap.TryGetValue(childEntityId, out var child))

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CRDT;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
@@ -52,6 +53,8 @@ namespace DCL.SDKComponents.SceneUI.Components
         /// Indicates that resorting is required
         /// </summary>
         internal bool layoutIsDirty;
+
+        internal int NodeCount => nodes?.Count ?? 0;
 
         internal bool ContainsNode(CRDTEntity entity) =>
             nodes != null && nodes.ContainsKey(entity);
@@ -108,9 +111,19 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             if (pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
             {
+                // Guard: skip if this would create a self-cycle or if rightNode is already linked
+                if (rightNode == leftNode || rightNode.Previous != null || rightNode.Next != null)
+                {
+                    ReportHub.LogError(ReportCategory.SCENE_UI,
+                        $"Skipping ResolvePending for entity {newlyAddedEntityId}: would create a cycle in the sibling linked list");
+                    pendingRightOf.Remove(newlyAddedEntityId);
+                    return;
+                }
+
                 if (leftNode.Next != null)
                     leftNode.Next.Previous = rightNode;
 
+                rightNode.Next = leftNode.Next;
                 leftNode.Next = rightNode;
                 rightNode.Previous = leftNode;
 
@@ -119,8 +132,16 @@ namespace DCL.SDKComponents.SceneUI.Components
                 if (rightNode == head)
                 {
                     // if the current head is the right node then the left-most becomes the new head
+                    int maxIterations = nodes.Count;
+
                     for (head = rightNode; head.Previous != null; head = head.Previous)
                     {
+                        if (--maxIterations <= 0)
+                        {
+                            ReportHub.LogError(ReportCategory.SCENE_UI,
+                                "Cycle detected in sibling linked list while finding head node");
+                            break;
+                        }
                     }
                 }
 
@@ -169,12 +190,11 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void Dispose()
         {
-            // Release all nodes
-            while (head != null)
+            // Release all nodes via dictionary to avoid traversing a potentially cyclic list
+            if (nodes != null)
             {
-                Node next = head.Next!;
-                Node.POOL.Release(head);
-                head = next;
+                foreach (var node in nodes.Values)
+                    Node.POOL.Release(node);
             }
 
             nodes?.Clear();

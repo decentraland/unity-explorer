@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     {
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly List<CRDTEntity> tempChildEntities = new (16);
 
         internal UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
@@ -46,20 +47,35 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             var head = uiTransformComponentToBeDeleted.RelationData.head;
             if (head == null) return;
 
+            // Collect child entity IDs before iterating, because RemoveChild releases
+            // nodes back to the pool (resetting Next to null) and would break iteration.
+            int maxNodes = uiTransformComponentToBeDeleted.RelationData.NodeCount;
+            tempChildEntities.Clear();
+
+            int i = 0;
+
             for (var current = head; current != null; current = current.Next)
             {
-                if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
+                if (++i > maxNodes) break; // cycle guard
+                tempChildEntities.Add(current.EntityId);
+            }
+
+            for (int j = 0; j < tempChildEntities.Count; j++)
+            {
+                var childEntityId = tempChildEntities[j];
+
+                if (entitiesMap.TryGetValue(childEntityId, out Entity childEntity))
                 {
                     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
 
                     if (!exists)
                     {
-                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
+                        ReportHub.LogError(GetReportData(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {childEntityId}");
                         continue;
                     }
 
-                    uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
-                    SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
+                    uiTransformComponentToBeDeleted.RelationData.RemoveChild(childEntityId, ref uiTransform.RelationData);
+                    SetNewChild(ref uiTransform, childEntityId, sceneRoot);
                 }
             }
         }
