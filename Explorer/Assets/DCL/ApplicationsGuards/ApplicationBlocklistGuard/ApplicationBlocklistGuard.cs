@@ -15,16 +15,22 @@ namespace DCL.ApplicationBlocklistGuard
     {
         public static async UniTask<GetBanStatusData> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, ModerationDataProvider moderationDataProvider, CancellationToken ct)
         {
-            try
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
             {
-                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
-                {
-                    var result = await moderationDataProvider.GetBanStatusAsync(userID, ct)
-                                                             .SuppressToResultAsync(ReportCategory.STARTUP);
+                var result = await moderationDataProvider.GetBanStatusAsync(userID, ct)
+                                                         .SuppressToResultAsync(ReportCategory.STARTUP);
 
-                    return result.Success ? result.Value.data : new GetBanStatusData { isBanned = false };
+                if (!result.Success)
+                {
+                    ReportHub.LogError(ReportCategory.STARTUP, $"Failed to get ban status: {result.ErrorMessage}. Skipping blocklist check.");
+                    return new GetBanStatusData { isBanned = false };
                 }
 
+                return result.Value.data;
+            }
+
+            try
+            {
                 FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                     urlsSource.Url(DecentralandUrl.Blocklist),
                     new FlatFetchResponse<GenericGetRequest>(),
