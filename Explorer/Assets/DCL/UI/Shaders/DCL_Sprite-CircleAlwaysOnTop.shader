@@ -28,7 +28,7 @@ Shader "DCL/Sprites/CircleAlwaysOnTop"
             "CanUseSpriteAtlas"="True"
         }
 
-        Cull Off
+        Cull Back
         Lighting Off
         ZWrite Off
         ZTest Always
