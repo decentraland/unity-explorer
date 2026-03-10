@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.Components.Conversion;
+﻿using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Conversion;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -32,14 +33,13 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.movementInbox = movementInbox;
         }
 
+        // TODO call
         public void Send(NetworkMovementMessage message)
         {
-            // TODO pooling
+            var clientMessage = MessagePipe.OutgoingMessage.Create<PlayerStateInput>(ITransport.PacketMode.UNRELIABLE_SEQUENCED);
+            WritePlayerStateInput(message, clientMessage.Message.Input);
 
-            pulseService.Send(new ClientMessage
-            {
-                Input = ToPlayerStateInput(message),
-            }, ITransport.PacketMode.UNRELIABLE_SEQUENCED);
+            pulseService.Send(clientMessage);
         }
 
         public void Dispose()
@@ -220,29 +220,24 @@ namespace DCL.Multiplayer.Connections.Pulse
             return last;
         }
 
-        private static PlayerStateInput ToPlayerStateInput(NetworkMovementMessage message)
+        private static void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
         {
-            var playerStateInput = new PlayerStateInput
-            {
-                State = new PlayerState
-                {
-                    Position = message.position.ToProtoVector(),
-                    Velocity = message.velocity.ToProtoVector(),
-                    RotationY = message.rotationY,
-                    MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3),
-                    SlideBlend = message.animState.SlideBlendValue,
-                    StateFlags = BuildStateFlags(message),
-                    GlideState = (GlideState)message.animState.GlideState,
-                },
-            };
+            PlayerState? state = input.State;
+            state.ClearProtobufComponent();
+
+            state.Position = message.position.ToProtoVector();
+            state.Velocity = message.velocity.ToProtoVector();
+            state.RotationY = message.rotationY;
+            state.MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
+            state.SlideBlend = message.animState.SlideBlendValue;
+            state.StateFlags = BuildStateFlags(message);
+            state.GlideState = (GlideState)message.animState.GlideState;
 
             if (message.headIKYawEnabled)
-                playerStateInput.State.HeadYaw = message.headYawAndPitch[0];
+                state.HeadYaw = message.headYawAndPitch[0];
 
             if (message.headIKPitchEnabled)
-                playerStateInput.State.HeadPitch = message.headYawAndPitch[1];
-
-            return playerStateInput;
+                state.HeadPitch = message.headYawAndPitch[1];
         }
 
         private static NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full)

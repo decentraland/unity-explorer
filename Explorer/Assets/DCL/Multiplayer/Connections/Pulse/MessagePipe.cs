@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Decentraland.Pulse;
+using Google.Protobuf;
 using System;
 using System.Threading;
 
@@ -57,16 +58,28 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        public readonly struct OutgoingMessage
+        public readonly struct OutgoingMessage : IDisposable
         {
-            public ClientMessage Message { get; }
-            public ITransport.PacketMode PacketMode { get; }
+            private static readonly ClientMessagePool POOL = new ();
 
-            public OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode)
+            public readonly ClientMessage Message;
+            public readonly ITransport.PacketMode PacketMode;
+            private readonly Type underlyingMessageType;
+
+            private OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode, Type underlyingMessageType)
             {
                 Message = message;
                 PacketMode = packetMode;
+                this.underlyingMessageType = underlyingMessageType;
             }
+
+            public void Dispose()
+            {
+                POOL.Release(underlyingMessageType, Message);
+            }
+
+            public static OutgoingMessage Create<T>(ITransport.PacketMode packetMode) where T: class, IMessage, new() =>
+                new (POOL.Get<T>(), packetMode, typeof(T));
         }
     }
 }

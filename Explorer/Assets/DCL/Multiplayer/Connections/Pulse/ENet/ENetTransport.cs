@@ -167,6 +167,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             {
                 ENetChannel channel = ToENetChannel(msg.PacketMode);
 
+                using MessagePipe.OutgoingMessage _ = msg;
+
                 if (serverPeer != null)
                     SendToPeer(serverPeer.Value, channel, msg.Message);
             }

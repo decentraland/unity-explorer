@@ -43,13 +43,10 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport.ListenForIncomingDataAsync(connectionLifeCycleCts.Token).SuppressToResultAsync().Forget();
             RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
-            pipe.Send(new MessagePipe.OutgoingMessage(new ClientMessage
-            {
-                Handshake = new HandshakeRequest
-                {
-                    AuthChain = ByteString.CopyFromUtf8(BuildAuthChain()),
-                },
-            }, ITransport.PacketMode.RELIABLE));
+            var handshakePacket = MessagePipe.OutgoingMessage.Create<HandshakeRequest>(ITransport.PacketMode.RELIABLE);
+            handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
+
+            Send(handshakePacket);
 
             await foreach (HandshakeResponse response in SubscribeAsync<HandshakeResponse>(ServerMessage.MessageOneofCase.Handshake, ct))
             {
@@ -80,8 +77,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             return subscriber.Channel.ReadAllAsync(ct);
         }
 
-        public void Send(ClientMessage message, ITransport.PacketMode packetMode) =>
-            pipe.Send(new MessagePipe.OutgoingMessage(message, packetMode));
+        public void Send(MessagePipe.OutgoingMessage outgoingMessage) =>
+            pipe.Send(outgoingMessage);
 
         private async UniTaskVoid RouteIncomingMessagesAsync(CancellationToken ct)
         {
