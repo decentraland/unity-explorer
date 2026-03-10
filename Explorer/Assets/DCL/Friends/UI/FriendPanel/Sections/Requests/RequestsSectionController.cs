@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
@@ -25,6 +27,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource? reportConfirmationDialogCts;
@@ -38,10 +42,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IMVCManager mvcManager,
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
-            bool includeUserBlocking)
+            bool includeUserBlocking,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
             this.passportBridge = passportBridge;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
@@ -118,6 +126,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                     return;
 
                 // TODO (Santi): Implement reporting user!
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.SupportLink));
             }
         }
 

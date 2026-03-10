@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 
@@ -16,6 +15,7 @@ namespace DCL.ApplicationBlocklistGuard
         {
             try
             {
+                // TODO (Santi): Call the new endpoint here!
                 FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                     urlsSource.Url(DecentralandUrl.Blocklist),
                     new FlatFetchResponse<GenericGetRequest>(),

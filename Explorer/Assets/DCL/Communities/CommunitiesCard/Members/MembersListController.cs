@@ -27,6 +27,8 @@ using System.Threading;
 using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.ConfirmationDialog.Opener;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -51,6 +53,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
 
@@ -86,7 +90,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            ISelfProfile selfProfile) : base(view, PAGE_SIZE)
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -95,6 +101,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             this.view.InitGrid();
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
@@ -257,6 +265,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
 
                 // TODO (Santi): Implement reporting user!
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.SupportLink));
             }
         }
 

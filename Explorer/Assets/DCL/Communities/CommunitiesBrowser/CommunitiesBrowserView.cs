@@ -31,6 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
         public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
         public bool IsSearchBarFocused => searchBar.inputField.isFocused;
@@ -58,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private CommunitiesInvitesAndRequestsView invitesAndRequestsView = null!;
 
         [Header("Assets")]
-        [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] public CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
 
         public CommunitiesInvitesAndRequestsView InvitesAndRequestsView => invitesAndRequestsView;
 
@@ -207,7 +208,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!confirmed)
                     return;
 
-                // TODO (Santi): Implement reporting user!
+                ReportUserRequested?.Invoke(profile);
             }
         }
 

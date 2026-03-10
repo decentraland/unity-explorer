@@ -396,7 +396,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 
@@ -694,6 +694,7 @@ namespace Global.Dynamic
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
                 communitiesDataProvider,
+                bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -1136,6 +1137,7 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.WebBrowser,
                     bootstrapContainer.DecentralandUrlsSource
                 );
 

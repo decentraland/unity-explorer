@@ -28,6 +28,7 @@ using System;
 using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.Browser;
 using DCL.UI.ConfirmationDialog.Opener;
 using UnityEngine;
 using Utility;
@@ -70,6 +71,7 @@ namespace DCL.UI
         private readonly bool includeVoiceChat;
         private readonly bool includeCommunities;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
+        private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
 
@@ -110,6 +112,7 @@ namespace DCL.UI
             ISharedSpaceManager sharedSpaceManager,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator,
+            IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.friendServiceProxy = friendServiceProxy;
@@ -121,6 +124,7 @@ namespace DCL.UI
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.includeUserBlocking = includeUserBlocking;
@@ -391,6 +395,7 @@ namespace DCL.UI
                     return;
 
                 // TODO (Santi): Implement reporting user!
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.SupportLink));
             }
         }
 
