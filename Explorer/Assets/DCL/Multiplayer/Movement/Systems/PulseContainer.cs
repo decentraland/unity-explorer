@@ -20,7 +20,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly MessagePipe messagePipe = new ();
 
         private ENetTransport? transport;
-        private PulseMultiplayerBus? pulseMultiplayerBus;
         private CancellationTokenSource? lifeCycleCts;
 
         public PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox)
@@ -28,6 +27,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.identityCache = identityCache;
             this.movementInbox = movementInbox;
         }
+
+        internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
 
         internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
 

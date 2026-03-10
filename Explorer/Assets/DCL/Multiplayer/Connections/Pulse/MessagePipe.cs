@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Decentraland.Pulse;
@@ -32,29 +33,65 @@ namespace DCL.Multiplayer.Connections.Pulse
         ///     Called on the Transport thread for every received packet.
         ///     Must be fast and must not throw — any exception here stalls the Transport loop.
         /// </summary>
-        public void OnDataReceived<TTransportPacket>(MessagePacket<TTransportPacket> packet)
-            where TTransportPacket: IDisposable
+        public void OnDataReceived(MessagePacket packet)
         {
             ServerMessage? message = null;
-
-            try { message = ServerMessage.Parser.ParseFrom(packet.Data); }
-            catch (Exception e) { ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse failed to parse packet: {e}"); }
 
             if (message is null)
                 return;
 
-            incomingChannel.TryWrite(new IncomingMessage(packet.FromPeer, message));
+            if (IncomingMessage.TryCreate(packet.FromPeer, packet.Data, out IncomingMessage incomingMessage))
+                incomingChannel.TryWrite(incomingMessage);
         }
 
-        public readonly struct IncomingMessage
+        /// <summary>
+        ///     Incoming message should be disposed of as soon as it's not needed on the consumer side to prevent leaks,
+        ///     The underlying proto message should be never stored
+        /// </summary>
+        public readonly struct IncomingMessage : IDisposable
         {
+            private static readonly ServerMessagePool POOL = new ();
+
             public PeerId From { get; }
             public ServerMessage Message { get; }
 
-            public IncomingMessage(PeerId from, ServerMessage message)
+            private IncomingMessage(PeerId from, ServerMessage message)
             {
                 From = from;
                 Message = message;
+            }
+
+            public static bool TryCreate(PeerId from, ReadOnlySpan<byte> data, out IncomingMessage message)
+            {
+                // Extract message case without parsing so we can get the message from the pool and merge it with new data
+                // Extract the field number from the first tag byte.
+                // The field numbers (1–4) map directly to ServerMessage.MessageOneofCase values.
+                ServerMessage.MessageOneofCase messageCase = data.Length > 0
+                    ? (ServerMessage.MessageOneofCase)(data[0] >> 3)
+                    : ServerMessage.MessageOneofCase.None;
+
+                message = default(IncomingMessage);
+
+                if (messageCase == ServerMessage.MessageOneofCase.None)
+                    return false;
+
+                try
+                {
+                    ServerMessage packet = POOL.Get(messageCase);
+                    packet.MergeFrom(data);
+                    message = new IncomingMessage(from, packet);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse failed to parse packet: {e}");
+                    return false;
+                }
+            }
+
+            public void Dispose()
+            {
+                POOL.Release(Message);
             }
         }
 
@@ -64,22 +101,20 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             public readonly ClientMessage Message;
             public readonly ITransport.PacketMode PacketMode;
-            private readonly Type underlyingMessageType;
 
-            private OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode, Type underlyingMessageType)
+            private OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode)
             {
                 Message = message;
                 PacketMode = packetMode;
-                this.underlyingMessageType = underlyingMessageType;
             }
 
             public void Dispose()
             {
-                POOL.Release(underlyingMessageType, Message);
+                POOL.Release(Message);
             }
 
-            public static OutgoingMessage Create<T>(ITransport.PacketMode packetMode) where T: class, IMessage, new() =>
-                new (POOL.Get<T>(), packetMode, typeof(T));
+            public static OutgoingMessage Create(ITransport.PacketMode packetMode, ClientMessage.MessageOneofCase kind) =>
+                new (POOL.Get(kind), packetMode);
         }
     }
 }

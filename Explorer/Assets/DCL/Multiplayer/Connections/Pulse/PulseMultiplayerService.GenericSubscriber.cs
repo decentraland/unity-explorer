@@ -1,10 +1,11 @@
 using Decentraland.Pulse;
+using Google.Protobuf;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerService
     {
-        private class GenericSubscriber<T> : ISubscriber where T: class
+        private class GenericSubscriber<T> : ISubscriber where T: class, IMessage
         {
             private readonly ServerMessage.MessageOneofCase type;
 
@@ -19,18 +20,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 if (message.MessageCase != type) return false;
 
-                T? payload = TryGetPayload(message);
+                var payload = message.GetUnderlyingData() as T;
 
                 return payload != null && Channel.TryWrite(payload);
-            }
-
-            private static T? TryGetPayload(ServerMessage message)
-            {
-                return message.MessageCase switch
-                       {
-                           ServerMessage.MessageOneofCase.Handshake => message.Handshake as T,
-                           _ => null
-                       };
             }
         }
     }

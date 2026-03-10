@@ -1,60 +1,70 @@
-﻿using DCL.Diagnostics;
+﻿using CrdtEcsBridge.Components;
 using DCL.Optimization.ThreadSafePool;
 using Decentraland.Pulse;
 using Google.Protobuf;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    /// <summary>
-    ///     Keeps pools per type of the underlying message separated so
-    ///     they never overlap and assign to the same field within the same pool
-    /// </summary>
-    public class PacketPool<TPacketType> where TPacketType: class, IMessage, new()
+    public class ClientMessagePool
     {
-        private readonly ConcurrentDictionary<Type, IObjectPool<TPacketType>> pools = new ();
-
-        private readonly IReadOnlyDictionary<Type, Action<TPacketType, IMessage>> setMessageToPacket;
-
-        public PacketPool(IReadOnlyDictionary<Type, Action<TPacketType, IMessage>> setMessageToPacket)
+        private static IObjectPool<ClientMessage> CreatePool<T>(Action<ClientMessage, T> setData) where T: class, IMessage, new()
         {
-            this.setMessageToPacket = setMessageToPacket;
-        }
-
-        public TPacketType Get<T>() where T: class, IMessage, new()
-        {
-            if (!pools.TryGetValue(typeof(T), out IObjectPool<TPacketType>? pool))
-                pool = pools[typeof(T)] = new ThreadSafeObjectPool<TPacketType>(() =>
-                {
-                    var packet = new TPacketType();
-                    setMessageToPacket[typeof(T)](packet, new T());
-                    return packet;
-                });
-
-            return pool.Get();
-        }
-
-        public void Release(Type type, TPacketType message)
-        {
-            if (!pools.TryGetValue(type, out IObjectPool<TPacketType>? pool))
+            return new ThreadSafeObjectPool<ClientMessage>(() =>
             {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Pool for {type} was not created");
-                return;
-            }
+                var packet = new ClientMessage();
 
-            pool.Release(message);
+                // Preallocated once and merged with after
+                setData.Invoke(packet, new T());
+                return packet;
+            }, actionOnRelease: packet => { packet.GetUnderlyingData()?.ClearProtobufComponent(); });
+        }
+
+        private static readonly IReadOnlyDictionary<ClientMessage.MessageOneofCase, IObjectPool<ClientMessage>> POOLS = new Dictionary<ClientMessage.MessageOneofCase, IObjectPool<ClientMessage>>
+        {
+            [ClientMessage.MessageOneofCase.Handshake] = CreatePool<HandshakeRequest>((packet, mes) => packet.Handshake = mes),
+            [ClientMessage.MessageOneofCase.Input] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
+        };
+
+        public ClientMessage Get(ClientMessage.MessageOneofCase kind) =>
+            POOLS[kind].Get();
+
+        public void Release(ClientMessage message)
+        {
+            POOLS[message.MessageCase].Release(message);
         }
     }
 
-    public class ClientMessagePool : PacketPool<ClientMessage>
+    public class ServerMessagePool
     {
-        public ClientMessagePool() : base(new Dictionary<Type, Action<ClientMessage, IMessage>>
+        private static IObjectPool<ServerMessage> CreatePool<T>(Action<ServerMessage, T> setData) where T: class, IMessage, new()
         {
-            [typeof(HandshakeRequest)] = (packet, message) => packet.Handshake = (HandshakeRequest)message,
-            [typeof(PlayerStateInput)] = (packet, message) => packet.Input = (PlayerStateInput)message,
-        }) { }
+            return new ThreadSafeObjectPool<ServerMessage>(() =>
+            {
+                var packet = new ServerMessage();
+
+                // Preallocated once and merged with after
+                setData.Invoke(packet, new T());
+                return packet;
+            }, actionOnRelease: packet => { packet.GetUnderlyingData()?.ClearProtobufComponent(); });
+        }
+
+        private static readonly IReadOnlyDictionary<ServerMessage.MessageOneofCase, IObjectPool<ServerMessage>> POOLS = new Dictionary<ServerMessage.MessageOneofCase, IObjectPool<ServerMessage>>
+        {
+            [ServerMessage.MessageOneofCase.Handshake] = CreatePool<HandshakeResponse>((packet, mes) => packet.Handshake = mes),
+            [ServerMessage.MessageOneofCase.PlayerJoined] = CreatePool<PlayerJoined>((packet, mes) => packet.PlayerJoined = mes),
+            [ServerMessage.MessageOneofCase.PlayerStateDelta] = CreatePool<PlayerStateDeltaTier0>((packet, mes) => packet.PlayerStateDelta = mes),
+            [ServerMessage.MessageOneofCase.PlayerStateFull] = CreatePool<PlayerStateFull>((packet, mes) => packet.PlayerStateFull = mes),
+        };
+
+        public ServerMessage Get(ServerMessage.MessageOneofCase kind) =>
+            POOLS[kind].Get();
+
+        public void Release(ServerMessage message)
+        {
+            POOLS[message.MessageCase].Release(message);
+        }
     }
 }

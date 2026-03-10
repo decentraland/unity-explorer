@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport.ListenForIncomingDataAsync(connectionLifeCycleCts.Token).SuppressToResultAsync().Forget();
             RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
-            var handshakePacket = MessagePipe.OutgoingMessage.Create<HandshakeRequest>(ITransport.PacketMode.RELIABLE);
+            var handshakePacket = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
 
             Send(handshakePacket);
@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         public IUniTaskAsyncEnumerable<T> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
-            where T: class
+            where T: class, IMessage
         {
             var subscriber = new GenericSubscriber<T>(type);
 

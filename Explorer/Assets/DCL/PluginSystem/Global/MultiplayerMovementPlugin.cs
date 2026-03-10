@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
@@ -25,6 +26,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly PulseMultiplayerBus pulseMultiplayerBus;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -37,12 +39,13 @@ namespace DCL.PluginSystem.Global
         private MultiplayerMovementSettings settings;
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
+            this.pulseMultiplayerBus = pulseMultiplayerBus;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
@@ -83,7 +86,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings, debugSettings);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, pulseMultiplayerBus, settings, debugSettings);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);

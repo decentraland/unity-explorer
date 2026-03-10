@@ -33,10 +33,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.movementInbox = movementInbox;
         }
 
-        // TODO call
         public void Send(NetworkMovementMessage message)
         {
-            var clientMessage = MessagePipe.OutgoingMessage.Create<PlayerStateInput>(ITransport.PacketMode.UNRELIABLE_SEQUENCED);
+            var clientMessage = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
             WritePlayerStateInput(message, clientMessage.Message.Input);
 
             pulseService.Send(clientMessage);
@@ -223,7 +222,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private static void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
         {
             PlayerState? state = input.State;
-            state.ClearProtobufComponent();
 
             state.Position = message.position.ToProtoVector();
             state.Velocity = message.velocity.ToProtoVector();

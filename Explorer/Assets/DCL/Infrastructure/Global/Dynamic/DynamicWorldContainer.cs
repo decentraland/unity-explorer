@@ -991,6 +991,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
+                    pulseContainer!.pulseMultiplayerBus,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
