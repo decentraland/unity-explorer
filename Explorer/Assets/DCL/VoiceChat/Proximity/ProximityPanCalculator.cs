@@ -4,22 +4,19 @@ using UnityEngine;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Calculates stereo pan for a <see cref="LivekitAudioSource"/> based on
-    /// the horizontal angle between the AudioListener and this transform.
-    /// Pan is blended by <see cref="AudioSource.spatialBlend"/> so 2D sources
-    /// stay centered.
+    /// Calculates 3D spatial angles (azimuth and elevation) between the AudioListener
+    /// and this transform, then passes them to <see cref="LivekitAudioSource.SetSpatialAngles"/>.
+    /// The spatialization algorithm is selected on <see cref="LivekitAudioSource"/> via Inspector enum.
     /// </summary>
     [RequireComponent(typeof(LivekitAudioSource))]
     public class ProximityPanCalculator : MonoBehaviour
     {
         private Transform listenerTransform;
         private LivekitAudioSource livekitAudioSource;
-        private AudioSource audioSource;
 
         private void Awake()
         {
             livekitAudioSource = GetComponent<LivekitAudioSource>();
-            audioSource = GetComponent<AudioSource>();
         }
 
         private void Update()
@@ -34,12 +31,11 @@ namespace DCL.VoiceChat
             Vector3 direction = transform.position - listenerTransform.position;
             Vector3 local = listenerTransform.InverseTransformDirection(direction);
 
-            float rawPan = Mathf.Atan2(local.x, local.z) / (Mathf.PI * 0.5f);
-            float pan = Mathf.Clamp(rawPan, -1f, 1f);
+            float azimuth = Mathf.Atan2(local.x, local.z);
+            float horizontalDist = Mathf.Sqrt(local.x * local.x + local.z * local.z);
+            float elevation = Mathf.Atan2(local.y, horizontalDist);
 
-            pan *= audioSource.spatialBlend;
-
-            livekitAudioSource.Pan = pan;
+            livekitAudioSource.SetSpatialAngles(azimuth, elevation);
         }
     }
 }
