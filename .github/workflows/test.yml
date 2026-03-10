@@ -201,7 +201,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           GIT_PRIVATE_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
-          GIT_CONFIG_EXTENSIONS: true
+          # GIT_CONFIG_EXTENSIONS: true
         with:
           projectPath: Explorer
           customImage: ${{ steps.img-lint.outputs.ghcr }}
