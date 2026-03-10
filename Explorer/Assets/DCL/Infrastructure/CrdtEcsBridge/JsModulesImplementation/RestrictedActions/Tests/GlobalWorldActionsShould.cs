@@ -305,11 +305,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         // Mocks
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
-            public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
+            public List<(URN emoteId, bool isLooping, AvatarEmoteMask mask)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
+            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) // Parameter name from interface
             {
-                SentEmotes.Add((urn, loopCyclePassed));
+                SentEmotes.Add((urn, loopCyclePassed, mask));
             }
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();

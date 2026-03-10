@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Profiles;
@@ -322,11 +323,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
         // Mock implementation of IEmotesMessageBus
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
-            public List<(URN emoteId, bool loopCyclePassed)> SentEmotes = new ();
+            public List<(URN emoteId, bool loopCyclePassed, AvatarEmoteMask mask)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed)
+            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask)
             {
-                SentEmotes.Add((urn, loopCyclePassed));
+                SentEmotes.Add((urn, loopCyclePassed, mask));
             }
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
