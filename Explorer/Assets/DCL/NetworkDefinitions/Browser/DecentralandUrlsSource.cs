@@ -214,6 +214,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ManaUsdRateApiUrl => "https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
+                DecentralandUrl.ReportUser => $"https://report.decentraland.{ENV}",
 
                 DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",

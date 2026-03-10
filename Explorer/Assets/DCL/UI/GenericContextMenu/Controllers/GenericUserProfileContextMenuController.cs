@@ -395,7 +395,7 @@ namespace DCL.UI
                     return;
 
                 // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.SupportLink));
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUser));
             }
         }
 
