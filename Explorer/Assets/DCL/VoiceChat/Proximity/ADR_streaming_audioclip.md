@@ -1,6 +1,6 @@
 # ADR: Spatial Audio Pipeline для Proximity Voice Chat
 
-**Status:** Implemented (ILD EqualPower/HeadShadow + ITD). Следующий шаг: Pinna HRTF  
+**Status:** Implemented (ILD EqualPower/HeadShadow + ITD + Pinna HRTF). Опционально: Short FIR (итерация D)  
 **Date:** 2026-03-06  
 **Authors:** Voice Chat team  
 **Related:** Итерация 2 из ADR_proximity_voice_chat
@@ -78,8 +78,9 @@ ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
   - livekitAudioSource.SetSpatialAngles(az, el)
                                                       OnAudioFilterRead:
                                                         1. ReadAudio(data, channels=2)
-                                                        2. Extract mono (left channel)
-                                                        3. Pipeline: ITD → ILD/HeadShadow → HRTF
+                                                        2. Extract mono → monoBuffer
+                                                        3. Multi-pass pipeline:
+                                                           [ITD] → [ILD] → [HeadShadow] → [HRTF]
 ```
 
 ### Разделение ответственности
@@ -109,6 +110,7 @@ ProximityPanCalculator (MonoBeh)          →        LivekitAudioSource
 ```csharp
 [Header("ILD — Interaural Level Difference")]
 public ILDMode ildMode;                     // None | EqualPower | HeadShadow
+// + ildStrength
 
 [Header("Head Shadow Filter")]
 public ShadowFilterOrder shadowFilterOrder; // OnePole6dB..FourPole24dB | Biquad12dB | MultiBand3
@@ -121,14 +123,31 @@ public bool enableITD;
 
 [Header("HRTF — Pinna / Spectral Cues")]
 public bool enableHRTF;
-// + elevationInfluence
+// + elevationInfluence, pinnaNotchFreq, pinnaNotchQ, pinnaNotchDepthDb
+
+[Header("HRTF — Secondary Notch (C2)")]
+// + pinnaSecondaryRatio, pinnaSecondaryStrength (0 = only primary notch)
 ```
 
-### Pipeline в OnAudioFilterRead
+### Multi-pass pipeline
+
+Pipeline разбит на **отдельные проходы** (не interleaved) — для корректного профилирования через `ProfilerMarker`:
 
 ```
-mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains + HeadShadow filter] → [HRTF notch] → data[]
+Extract mono → monoBuffer[]
+    ↓
+[LiveKit.Spatial.ITD]        — delay line, Woodworth, linear interpolation
+    ↓
+[LiveKit.Spatial.ILD]        — equal-power gains (cos/sin)
+    ↓
+[LiveKit.Spatial.HeadShadow] — LPF/biquad/multiband на контралатеральном ухе
+    ↓
+[LiveKit.Spatial.HRTF]       — peaking EQ notch(es), elevation-dependent
+    ↓
+interleaved data[]
 ```
+
+Каждая стадия — отдельный цикл по `samplesPerChannel`. При типичных буферах (1024 samples) данные помещаются в L1 cache, overhead от нескольких проходов минимален.
 
 ---
 
@@ -149,7 +168,7 @@ mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains + HeadShadow f
 
 ---
 
-## HRTF: стратегия итеративной реализации
+## Pinna HRTF: реализация
 
 ### Что такое HRTF
 
@@ -159,23 +178,24 @@ mono sample → [ITD delay] → (sampleL, sampleR) → [ILD gains + HeadShadow f
 
 ILD и ITD работают в горизонтальной плоскости. Но существует "cone of confusion" — множество точек, дающих одинаковые ILD/ITD (конус вокруг межушной оси). Pinna решает это: её складки создают elevation-зависимые спектральные провалы (notches) на 6-10 kHz. Мозг по ним определяет верх/низ/перед/зад.
 
-### Варианты реализации (без внешних плагинов)
+### Реализованная параметрика
 
-| Вариант | Качество | CPU (150 src) | Pre-baked | Сложность |
-|---------|----------|---------------|-----------|-----------|
-| C1: 1 parametric notch | Базовая вертикаль | ~0.25 ms | Нет | Простая |
-| C2: 2 parametric notch | Хорошая вертикаль | ~0.5 ms | Нет | Простая |
-| D: Short FIR 64-tap (HRIR) | Полная 3D | ~9.8 ms | Да (HRIR ~125 KB) | Средняя |
-| SOFA HRTF | Полная 3D | ~9.8 ms | Да + парсер | Высокая, overkill |
+**Primary notch (C1):** Peaking EQ biquad с отрицательным gain (Bristow-Johnson Audio EQ Cookbook). Частота зависит от elevation: `pinnaNotchFreq × (1 ± 40% × elevationInfluence)`. Дефолт: 7000 Hz, Q=4, depth=-9 dB.
 
-### Решение: итеративный путь C1 → C2 → (может быть D)
+**Secondary notch (C2):** На `primaryFreq × pinnaSecondaryRatio` (дефолт 1.6×). Глубина = `primaryDepth × pinnaSecondaryStrength` (дефолт 0.6 → -5.4 dB). Отключается при `pinnaSecondaryStrength = 0`.
 
-**C1: 1 parametric notch** — biquad notch filter, частота от elevation. Notch ~6-10 kHz.  
-**C2: 2 parametric notch** — primary + secondary notch (~1.6× частоты). Более объёмная вертикаль.  
-**D: Short FIR** — реальная HRIR (MIT KEMAR, public domain). Возможно, если параметрика недостаточно. При 150 источниках ~9.8 ms (~47% audio budget) — допустимо при 50, на грани при 150.  
-**SOFA** — отмечен, но не планируется (избыточная сложность для voice chat).
+Оба notch применяются к **обоим ушам** (pinna фильтрует обе стороны, elevation одинаков). L/R разница обеспечивается ILD/ITD/HeadShadow.
 
-### Elevation в уже реализованных эффектах
+### Варианты реализации (сравнение)
+
+| Вариант | Качество | CPU (150 src) | Pre-baked | Статус |
+|---------|----------|---------------|-----------|--------|
+| C1: 1 parametric notch | Базовая вертикаль | ~0.25 ms | Нет | **ЗАВЕРШЁН** |
+| C2: 2 parametric notch | Хорошая вертикаль | ~0.5 ms | Нет | **ЗАВЕРШЁН** |
+| D: Short FIR 64-tap (HRIR) | Полная 3D | ~9.8 ms | Да (HRIR ~125 KB) | Опционально |
+| SOFA HRTF | Полная 3D | ~9.8 ms | Да + парсер | Не планируется |
+
+### Elevation в реализованных эффектах
 
 | Эффект | Как elevation влияет | В коде |
 |--------|---------------------|--------|
@@ -184,14 +204,33 @@ ILD и ITD работают в горизонтальной плоскости. 
 | HeadShadow | Уменьшается (нет экранирования сверху) | `shadowAmount * cos(el)` |
 | Pinna HRTF | **Основной cue** для вертикальной локализации | notch freq от elevation |
 
-### Referенции
+---
+
+## Профилирование
+
+5 `ProfilerMarker` для мониторинга в Unity Profiler:
+
+| Маркер | Что измеряет |
+|--------|-------------|
+| `LiveKit.Spatial` | Весь pipeline (обёртка) |
+| `LiveKit.Spatial.ITD` | Delay line + Woodworth |
+| `LiveKit.Spatial.ILD` | Equal-power gains |
+| `LiveKit.Spatial.HeadShadow` | LPF/biquad/multiband фильтрация |
+| `LiveKit.Spatial.HRTF` | Peaking EQ notch(es) |
+
+Маркеры вызываются 1 раз за audio buffer (не per-sample) благодаря multi-pass архитектуре.
+
+---
+
+## Референции
 
 - Blauert, J. (1997). Spatial Hearing — ILD measurements по частотам
 - Woodworth & Schlosberg (1954) — ITD = r(θ + sin θ)/c
 - Algazi et al. (2001) — средний радиус головы 0.0875 m (CIPIC database)
 - Hebrank & Wright (1974) — pinna spectral cues для вертикальной локализации
+- Lopez-Poveda & Meddis (1996) — pinna notch depths 6-15 dB, harmonic ratios
 - Van Wanrooij & Van Opstal (2004) — head shadow как доминирующий ILD cue
-- Robert Bristow-Johnson — Audio EQ Cookbook (biquad формулы)
+- Robert Bristow-Johnson — Audio EQ Cookbook (biquad / peaking EQ формулы)
 
 ---
 
@@ -207,20 +246,62 @@ ILD и ITD работают в горизонтальной плоскости. 
 
 ## Завершённые итерации
 
-### Итерация 1: Mono + Zero Pan — ЗАВЕРШЕНА
+### Итерация 1: Mono + Zero Pan
 `LivekitAudioSource.New(mono: true)` — читает стерео, извлекает L канал, дублирует L=R.
 
-### Итерация 2: Angular Panning (базовый ILD) — ЗАВЕРШЕНА
+### Итерация 2: Angular Panning (базовый ILD)
 `Pan` property (-1..+1) + equal-power pan law. Резкий скачок при проходе сзади.
 
-### Итерация 3: Fix ILD + 3D углы — ЗАВЕРШЕНА
+### Итерация 3: Fix ILD + 3D углы
 `sin(azimuth) * cos(elevation)` — плавный переход, поддержка elevation.
 
-### Итерация A: ITD — ЗАВЕРШЕНА
+### Итерация A: ITD
 Delay line 256 сэмплов, формула Woodworth, линейная интерполяция.
 
-### Итерация B: Рефакторинг + HeadShadow — ЗАВЕРШЕНА
+### Итерация B: Рефакторинг + HeadShadow
 - Композиция: `ILDMode` enum + `enableITD` bool + `enableHRTF` bool
 - HeadShadow: 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
 - MultiBand3: 3-полосный кроссовер с per-band gain по измеренной кривой
 - Tooltips с физическими референсами на все параметры
+
+### Итерация C: Pinna HRTF (C1 + C2)
+- C1: Primary peaking EQ notch (elevation → freq 4-12 kHz, Q=4, depth=-9 dB)
+- C2: Secondary notch (×1.6 частоты, depth × 0.6), отключаемый через `pinnaSecondaryStrength`
+- Pipeline реструктурирован в отдельные проходы (multi-pass)
+- ProfilerMarkers для каждой стадии (ITD, ILD, HeadShadow, HRTF)
+- Кэшированный `monoBuffer` для allocation-free multi-pass
+
+---
+
+## Опциональная итерация D: Short FIR 64-tap (HRIR)
+
+Если параметрических notch недостаточно — convolution с реальными HRIR (MIT KEMAR, public domain). ~125 KB данных, ~65 µs/source. Решение принимается после субъективной оценки C1/C2.
+
+**SOFA HRTF** — отмечен, не планируется (избыточная сложность).
+
+---
+
+## Файлы проекта
+
+### SDK (LiveKit fork)
+
+| Файл | Изменения |
+|------|-----------|
+| `LivekitAudioSource.cs` | `ILDMode`/`ShadowFilterOrder` enum, `enableITD`/`enableHRTF`, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband HeadShadow, peaking EQ notch (primary + secondary) |
+
+### Unity project
+
+| Файл | Изменения |
+|------|-----------|
+| `ProximityPanCalculator.cs` | Вычисление azimuth + elevation |
+| `ProximityVoiceChatManager.cs` | `New(mono: spatial)` → задать `ildMode` |
+| `manifest.json` | `file:` ссылка на локальный SDK (dev) |
+
+---
+
+## Финализация (после всех итераций)
+
+1. Push SDK на GitHub
+2. Переключить `manifest.json` на Git URL
+3. Оценить перенос `ProximityPanCalculator` в ECS для производительности (50+ участников)
+4. Оценить FFI mono оптимизацию (чтение 1 канала из нативного слоя)

@@ -103,18 +103,33 @@ MultiBand3 реализован через комплементарные LPF/HP
 
 ### Этап 14: Обсуждение HRTF
 
-Разобрали HRTF (Head-Related Transfer Function) — передаточную функцию, описывающую трансформацию звука дифракцией на голове и ушной раковине. Ключевая роль: решение "cone of confusion" (ILD+ITD одинаковы для многих точек), вертикальная и перед/зад локализация.
+Разобрали HRTF (Head-Related Transfer Function) — передаточную функцию, описывающую трансформацию звука дифракцией на голове и ушной раковине. Ключевая роль: решение "cone of confusion", вертикальная и перед/зад локализация.
 
-Варианты реализации без внешних плагинов:
+Варианты: C1 (1 notch), C2 (2 notch), D (Short FIR), SOFA (не планируется). Решено: C1 → C2 → (опционально D).
 
-| Вариант | CPU (150 src) | Pre-baked | Статус |
-|---------|---------------|-----------|--------|
-| C1: 1 parametric notch | ~0.25 ms | Нет | **Планируется** |
-| C2: 2 parametric notch | ~0.5 ms | Нет | **Планируется** |
-| D: Short FIR 64-tap | ~9.8 ms | Да (HRIR ~125 KB) | **Опционально** |
-| SOFA HRTF | ~9.8 ms | Да + парсер | **Не планируется** |
+### Этап 15: Итерация C — Pinna HRTF (C1 + C2)
 
-Решено идти итеративно: C1 → C2 → (опционально D).
+Реализованы оба шага за одну итерацию:
+
+**C1 — Primary notch:** Peaking EQ biquad (Bristow-Johnson) с отрицательным gain. Частота зависит от elevation: `pinnaNotchFreq × (1 ± 40% × elevationInfluence)`. Дефолты: 7000 Hz, Q=4, depth=-9 dB.
+
+**C2 — Secondary notch:** На `primaryFreq × 1.6` (дефолт). Глубина = `primaryDepth × 0.6`. Отключается через `pinnaSecondaryStrength = 0` для A/B сравнения C1 vs C2.
+
+Оба notch применяются к обоим ушам. Хелперы: `ComputePeakingEQ()` (static, формулы Bristow-Johnson), `ApplyBiquad()` (generic Direct Form II Transposed).
+
+### Этап 16: ProfilerMarkers + multi-pass рефакторинг
+
+Pipeline реструктурирован из одного interleaved цикла в **отдельные проходы** (multi-pass). Каждая стадия — свой цикл по `samplesPerChannel` с `ProfilerMarker.Auto()`:
+
+| Маркер | Стадия |
+|--------|--------|
+| `LiveKit.Spatial` | Весь pipeline |
+| `LiveKit.Spatial.ITD` | Delay line |
+| `LiveKit.Spatial.ILD` | Equal-power gains |
+| `LiveKit.Spatial.HeadShadow` | LPF/multiband |
+| `LiveKit.Spatial.HRTF` | Peaking EQ notch(es) |
+
+Добавлен кэшированный `monoBuffer[]` для allocation-free multi-pass.
 
 ---
 
@@ -126,22 +141,25 @@ MultiBand3 реализован через комплементарные LPF/HP
 - **ILD HeadShadow:** 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
 - **MultiBand3:** 3-полосный кроссовер, per-band gain по измеренной кривой head shadow
 - **ITD:** Delay line + Woodworth + linear interpolation
-- **Любая комбинация:** ILD + ITD работает, переключение в Inspector без артефактов
+- **HRTF C1:** Primary pinna notch (peaking EQ, elevation-dependent)
+- **HRTF C2:** Secondary pinna notch (×1.6 freq, ×0.6 depth)
+- **ProfilerMarkers:** 5 маркеров, multi-pass архитектура
+- **Любая комбинация:** ILD + ITD + HRTF работает, переключение в Inspector без артефактов
 - Distance rolloff (нативный Unity, POST-DSP)
 - Audio Effects, Reverb Zones
 - Обратная совместимость (Private/Community chat — стерео passthrough)
 - Tooltips с физическими описаниями и референсами на всех параметрах
 
-### Следующие шаги
+### Опциональные следующие шаги
 
-1. **Итерация C1:** 1 parametric biquad notch (elevation → notch freq 6-10 kHz)
-2. **Итерация C2:** + secondary notch (×1.6 частоты primary)
-3. **Итерация D (опционально):** Short FIR 64-tap (HRIR из MIT KEMAR, если параметрика недостаточно)
+1. **Итерация D (опционально):** Short FIR 64-tap (HRIR из MIT KEMAR, если параметрика недостаточно)
+2. **Субъективная оценка:** A/B тестирование всех комбинаций для выбора оптимального пресета
+3. **ECS миграция:** Перенос `ProximityPanCalculator` в ECS при 50+ участниках
 
 ### Файлы
 
 **SDK (LiveKit fork), ветка `feat/mono-spatial-audio`:**
-- `LivekitAudioSource.cs` — ILDMode, ShadowFilterOrder, enableITD, enableHRTF, pipeline, delay line, cascade/biquad/multiband LPF (будет: notch, опц. FIR)
+- `LivekitAudioSource.cs` — ILDMode, ShadowFilterOrder, enableITD, enableHRTF, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband LPF, peaking EQ notch (C1+C2), ComputePeakingEQ, ApplyBiquad
 
 **Unity project:**
 - `ProximityPanCalculator.cs` — azimuth + elevation из AudioListener
@@ -155,6 +173,6 @@ MultiBand3 реализован через комплементарные LPF/HP
 
 | Документ | Содержание |
 |----------|-----------|
-| `ADR_streaming_audioclip.md` | DSP-пайплайн, архитектура, все алгоритмы, HRTF стратегия, референсы |
-| `PLAN_streaming_audioclip.md` | Пошаговый план итераций C (Pinna HRTF) и D (опц. FIR) |
+| `ADR_streaming_audioclip.md` | DSP-пайплайн, архитектура, все алгоритмы, HRTF, ProfilerMarkers, референсы |
+| `PLAN_streaming_audioclip.md` | Пошаговый план всех итераций (1-3, A-C завершены, D опционально) |
 | `SUMMARY_spatial_audio_investigation.md` | Этот документ — полная хронология |

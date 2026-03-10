@@ -61,78 +61,58 @@ MultiBand3 параметры: `crossoverLowMid=500Hz`, `crossoverMidHigh=2000Hz
 
 Все параметры с [Tooltip] и физическими референсами. Реалистичные дефолты и диапазоны.
 
----
+### Итерация C: Pinna HRTF (C1 + C2) — ЗАВЕРШЕНА
 
-## Итерация C: Pinna HRTF (Spectral Cues)
+#### C.1: Primary pinna notch
 
-**Цель:** Вертикальная локализация. Решение "cone of confusion" — множества точек с одинаковыми ILD/ITD. Ушная раковина (pinna) создаёт elevation-зависимые notch-фильтры в диапазоне 6-10 kHz.
+- Peaking EQ biquad (Bristow-Johnson Audio EQ Cookbook) с отрицательным dBGain → notch
+- Частота от elevation: `pinnaNotchFreq × (1 + elevationInfluence × normalizedEl × 0.4)` — ±40% сдвиг
+- Дефолты: 7000 Hz, Q=4, depth=-9 dB (Lopez-Poveda & Meddis, 1996)
+- Biquad state: `hrfZ1L, hrfZ2L, hrfZ1R, hrfZ2R`
+- Применяется к обоим ушам (pinna фильтрует обе стороны)
+- `enableHRTF = true` → Stage 4 после HeadShadow
 
-### Шаг C.1: 1 parametric notch
+#### C.2: Secondary pinna notch
 
-**CPU:** ~1.7 µs / source → ~0.25 ms при 150 источниках (1.2% audio budget)
+- Частота: `primaryFreq × pinnaSecondaryRatio` (дефолт 1.6× → ~11.2 kHz)
+- Глубина: `primaryDepth × pinnaSecondaryStrength` (дефолт 0.6 → -5.4 dB)
+- Biquad state: `hrf2Z1L, hrf2Z2L, hrf2Z1R, hrf2Z2R`
+- `pinnaSecondaryStrength = 0` → только primary notch (C1 mode)
 
-#### SDK (`LivekitAudioSource.cs`)
+#### Рефакторинг pipeline
 
-1. Добавить biquad notch state: `float hrfZ1L, hrfZ2L, hrfZ1R, hrfZ2R`
-2. Notch frequency зависит от elevation:
-   ```
-   notchFreq = lerp(6000, 10000, (elevation + PI/2) / PI)
-   Q = 3..5 (узкий notch)
-   depth = elevationInfluence × |sin(elevation)|
-   ```
-3. Biquad коэффициенты пересчитываются раз в буфер (не каждый сэмпл)
-4. `enableHRTF = true` → notch применяется после ILD/HeadShadow
+- Разбивка на отдельные проходы (multi-pass) вместо interleaved цикла
+- Кэшированный `monoBuffer[]` (allocation-free, resize only on change)
+- `ProfilerMarker` для каждой стадии:
+  - `LiveKit.Spatial` — обёртка всего pipeline
+  - `LiveKit.Spatial.ITD` — delay line
+  - `LiveKit.Spatial.ILD` — equal-power gains
+  - `LiveKit.Spatial.HeadShadow` — LPF/biquad/multiband
+  - `LiveKit.Spatial.HRTF` — peaking EQ notch(es)
 
-#### Inspector
+#### Inspector параметры HRTF
 
 ```csharp
 [Header("HRTF — Pinna / Spectral Cues")]
-public bool enableHRTF = false;
-[Tooltip("Влияние elevation на частоту notch-фильтра (0 = отключено, 1 = полный эффект).")]
+public bool enableHRTF;
 [Range(0f, 1f)] public float elevationInfluence = 0.5f;
-[Tooltip("Центральная частота notch при elevation=0 (горизонт). 6-8 kHz — типичные значения pinna resonance.")]
 [Range(4000f, 12000f)] public float pinnaNotchFreq = 7000f;
-[Tooltip("Q-фактор notch filter (узость). 3-5 — типично для pinna.")]
 [Range(1f, 10f)] public float pinnaNotchQ = 4f;
-[Tooltip("Глубина notch в dB. -6..-12 dB — типично.")]
 [Range(-20f, 0f)] public float pinnaNotchDepthDb = -9f;
-```
 
-#### Проверка
-
-- [ ] Источник сверху vs снизу — ощущается разница тембра
-- [ ] `elevationInfluence = 0` → notch отключен
-- [ ] Параметры настраиваются из Inspector в реальном времени
-- [ ] Нет артефактов при резкой смене углов
-
-### Шаг C.2: 2 parametric notch
-
-**CPU:** ~3.3 µs / source → ~0.5 ms при 150 источниках (2.4% audio budget)
-
-#### SDK (`LivekitAudioSource.cs`)
-
-1. Добавить вторую пару biquad state: `float hrf2Z1L, hrf2Z2L, hrf2Z1R, hrf2Z2R`
-2. Secondary notch на ~1.5-1.6× частоте primary (гармонический overtone pinna):
-   ```
-   secondaryFreq = primaryNotchFreq × pinnaSecondaryRatio
-   secondaryDepth = pinnaNotchDepthDb × 0.5..0.7
-   ```
-3. Оба notch применяются последовательно
-
-#### Inspector (дополнительно к C.1)
-
-```csharp
-[Tooltip("Множитель частоты secondary notch относительно primary. 1.5-1.6× — гармоника pinna.")]
-[Range(1.2f, 2.0f)] public float pinnaSecondaryRatio = 1.6f;
-[Tooltip("Глубина secondary notch относительно primary (0 = отключен, 1 = та же глубина).")]
+[Header("HRTF — Secondary Notch (C2)")]
+[Range(1.2f, 2.5f)] public float pinnaSecondaryRatio = 1.6f;
 [Range(0f, 1f)] public float pinnaSecondaryStrength = 0.6f;
 ```
 
 #### Проверка
 
-- [ ] Два notch ощущаются как более "объёмная" вертикаль
-- [ ] `pinnaSecondaryStrength = 0` → второй notch отключён (регрессия к C.1)
-- [ ] Переключение enableHRTF → без артефактов
+- [x] Источник сверху vs снизу — ощущается разница тембра
+- [x] `elevationInfluence = 0` → notch на фиксированной частоте
+- [x] `pinnaSecondaryStrength = 0` → только primary notch (C1)
+- [x] Параметры настраиваются из Inspector в реальном времени
+- [x] ProfilerMarkers видны в Unity Profiler
+- [x] Переключение enableHRTF → без артефактов
 
 ---
 
@@ -158,7 +138,7 @@ public bool enableHRTF = false;
 
 ### Решение о реализации
 
-Принимается после оценки итераций C1 и C2. Если двух параметрических notch достаточно для задач voice chat (субъективная оценка), итерация D пропускается.
+Принимается после субъективной оценки итераций C1 и C2. Если двух parametric notch достаточно для voice chat — итерация D пропускается.
 
 ---
 
@@ -166,13 +146,7 @@ public bool enableHRTF = false;
 
 ### SOFA HRTF (полные таблицы)
 
-Полная HRTF свёртка из SOFA-файлов (стандарт AES69). Даёт максимально точную 3D спатиализацию с индивидуализированными данными.
-
-**Почему не планируется:**
-- Требует SOFA-парсер (netCDF / HDF5) — тяжёлая зависимость
-- Файлы 5-50 MB на одну HRTF
-- Для voice chat overkill — разница с параметрическими notch на речевом сигнале минимальна
-- Существующие решения (Steam Audio, Resonance Audio) уже реализуют это как плагин
+Полная HRTF свёртка из SOFA-файлов (стандарт AES69). Overkill для voice chat.
 
 ---
 
@@ -182,7 +156,7 @@ public bool enableHRTF = false;
 
 | Файл | Изменения |
 |------|-----------|
-| `LivekitAudioSource.cs` | `ILDMode` enum, `ShadowFilterOrder` enum, `enableITD`, `enableHRTF`, pipeline в OnAudioFilterRead, cascade/biquad/multiband HeadShadow, (будет: Pinna notch, опц. FIR) |
+| `LivekitAudioSource.cs` | `ILDMode`/`ShadowFilterOrder` enum, `enableITD`/`enableHRTF`, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband HeadShadow, peaking EQ notch (C1+C2), `ComputePeakingEQ`, `ApplyBiquad` |
 
 ### Unity project
 
