@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Profiles.Bunches;
 
 namespace DCL.Multiplayer.Emotes
@@ -7,7 +8,7 @@ namespace DCL.Multiplayer.Emotes
     {
         OwnedBunch<RemoteEmoteIntention> EmoteIntentions();
 
-        void Send(URN urn, bool loopCyclePassed);
+        void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask);
 
         void OnPlayerRemoved(string walletId);
 

@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             };
         }
 
-        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, AvatarEmoteMask mask, in IAvatarView view,
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
@@ -89,16 +89,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             // (there's no other way to load them in runtime from a GLB)
             if (emoteReferences.legacy)
             {
+                // TODO (Maurizio) now dead code path, to be removed
+
                 // For consistency with processed scene assets in the AB converter (and performance), we only
                 // play legacy animations in Local Scene Dev mode (and only if they follow the naming requirements
                 // but that is checked higher up in the execution flow)
                 if (!legacyAnimationsEnabled)
                     return false;
 
-                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping, mask);
+                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
             }
             else
-                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping, mask);
+                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
             if (audioAsset != null)
             {
@@ -198,7 +200,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             return references;
         }
 
-        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop, AvatarEmoteMask mask)
+        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
             Animation animationComp = avatarView.AddOrGetLegacyAnimation();
 
@@ -223,7 +225,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping, AvatarEmoteMask mask)
+        private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
         {
             if (emoteReferences.avatarClip != null)
             {
@@ -247,6 +249,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 view.SetLayerWeight(layer, 0);
 
             // Select and set masking layer based on mask
+            AvatarEmoteMask mask = emoteComponent.Mask;
             string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
             view.SetLayerWeight(emoteLayer, 1);
 

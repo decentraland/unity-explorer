@@ -273,10 +273,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
 
                     emoteComponent.EmoteUrn = emoteId;
+                    emoteComponent.Mask = emoteIntent.Mask;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, emoteIntent.Mask, in avatarView, ref emoteComponent))
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -304,7 +305,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
 
-            messageBus.Send(animationComponent.EmoteUrn, true);
+            messageBus.Send(animationComponent.EmoteUrn, true, animationComponent.Mask);
         }
 
         [Query]

@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -10,6 +11,7 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
         public bool StopEmote;
+        public AvatarEmoteMask Mask;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
@@ -43,6 +45,7 @@ namespace DCL.AvatarRendering.Emotes
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;
+            Mask = AvatarEmoteMask.AemFullBody;
         }
     }
 }
