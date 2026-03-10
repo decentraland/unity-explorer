@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
@@ -15,19 +16,26 @@ namespace DCL.ApplicationBlocklistGuard
         {
             try
             {
-                // TODO (Santi): Call the new endpoint here!
-                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                    urlsSource.Url(DecentralandUrl.Blocklist),
-                    new FlatFetchResponse<GenericGetRequest>(),
-                    ct,
-                    ReportCategory.STARTUP,
-                    new WebRequestHeadersInfo());
-
-                BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
-
-                foreach (var t in bd.users)
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
                 {
-                    if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
+                    // TODO (Santi): Call the new endpoint here!
+                    // ...
+                }
+                else
+                {
+                    FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                        urlsSource.Url(DecentralandUrl.Blocklist),
+                        new FlatFetchResponse<GenericGetRequest>(),
+                        ct,
+                        ReportCategory.STARTUP,
+                        new WebRequestHeadersInfo());
+
+                    BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
+
+                    foreach (var t in bd.users)
+                    {
+                        if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
+                    }
                 }
 
                 return false;
