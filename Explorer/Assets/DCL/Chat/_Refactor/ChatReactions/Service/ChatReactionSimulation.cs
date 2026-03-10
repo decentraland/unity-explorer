@@ -30,10 +30,13 @@ namespace DCL.Chat.ChatReactions
         private readonly System.Random rng;
         private readonly int atlasTotalTiles;
 
+        private RectTransform? defaultSpawnRect;
         private int uiAliveCount;
 
         public int AliveCount => uiAliveCount;
         public int PoolCapacity => uiPool.Capacity;
+
+        public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
 
         public ChatReactionSimulation(ChatReactionsSituationalConfig config, RectTransform laneRect)
         {
@@ -89,7 +92,10 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
-            Vector2 basePx = spawnResolver.GetSpawnPxBottomCenter();
+            Vector2 basePx = defaultSpawnRect != null
+                ? spawnResolver.GetSpawnPxFromRectCenter(defaultSpawnRect)
+                : spawnResolver.GetSpawnPxBottomCenter();
+
             SpawnBurst(basePx, emojiIndex, count, LANE_JITTER_H, LANE_JITTER_V);
         }
 

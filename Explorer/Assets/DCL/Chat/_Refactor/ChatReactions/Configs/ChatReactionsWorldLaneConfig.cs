@@ -65,5 +65,25 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Tooltip("Optional size multiplier over normalised lifetime [0,1]. " +
                         "Enables pop/shrink effects on world particles. Leave null to use raw start→end interpolation.")]
         [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; }
+
+        [field: Header("Mock Simulation")]
+        [field: Tooltip("Enable the mock reaction simulation. Nearby avatars will appear to send random reactions.")]
+        [field: SerializeField] public bool MockEnabled { get; private set; } = false;
+
+        [field: Min(0.5f)]
+        [field: Tooltip("Minimum seconds between simulated incoming reactions.")]
+        [field: SerializeField] public float MockIntervalMin { get; private set; } = 1f;
+
+        [field: Min(0.5f)]
+        [field: Tooltip("Maximum seconds between simulated incoming reactions.")]
+        [field: SerializeField] public float MockIntervalMax { get; private set; } = 4f;
+
+        [field: Min(1)]
+        [field: Tooltip("Minimum number of emoji particles per simulated reaction burst.")]
+        [field: SerializeField] public int MockMinEmojisPerBurst { get; private set; } = 1;
+
+        [field: Min(1)]
+        [field: Tooltip("Maximum number of emoji particles per simulated reaction burst.")]
+        [field: SerializeField] public int MockMaxEmojisPerBurst { get; private set; } = 3;
     }
 }

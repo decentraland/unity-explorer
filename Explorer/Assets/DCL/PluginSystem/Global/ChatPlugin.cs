@@ -206,13 +206,28 @@ namespace DCL.PluginSystem.Global
             var chatConfig = chatConfigAsset.Value;
 
             var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
+
+            var situationalConfig = settings.ReactionsConfig.SituationalReactions;
+
+            IReactionMessageBus? reactionBus = null;
+
+#if UNITY_EDITOR || DEBUG
+            var mockBus = new MockReactionMessageBus(
+                entityParticipantTable,
+                situationalConfig.WorldLane,
+                situationalConfig.Atlas != null ? situationalConfig.Atlas.TotalTiles : 1);
+
+            pluginScope.Add(mockBus);
+            reactionBus = mockBus;
+#endif
+
             var situationalReactionService = new SituationalReactionService(
-                settings.ReactionsConfig.SituationalReactions,
+                situationalConfig,
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
-                avatarReactionPosition);
-            
-            // Handle chat reactions in the chat
-            // var chatReactionService = new ChatReactionService();
+                avatarReactionPosition,
+                reactionBus);
+
+            pluginScope.Add(situationalReactionService);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {

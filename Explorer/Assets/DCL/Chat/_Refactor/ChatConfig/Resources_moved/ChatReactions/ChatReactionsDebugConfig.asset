@@ -19,7 +19,7 @@ MonoBehaviour:
   uiPoolCapacity: 1023
   worldAliveCount: 0
   worldPoolCapacity: 1023
-  nearbyAvatarCount: 5
+  nearbyAvatarCount: 0
   isUIStreaming: 0
   isWorldStreaming: 0
   isDebugNearbyActive: 0

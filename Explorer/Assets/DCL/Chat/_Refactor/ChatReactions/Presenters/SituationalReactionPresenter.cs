@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
@@ -15,7 +16,7 @@ namespace DCL.Chat.ChatReactions
         private readonly SituationalReactionService service;
         private readonly ChatReactionsDebugConfig? debugConfig;
         private readonly RectTransform? debugButtonRect;
-        private CancellationTokenSource cts = new ();
+        private readonly CancellationTokenSource cts = new ();
 
 #if UNITY_EDITOR || DEBUG
         private bool prevStreamUI;
@@ -29,7 +30,11 @@ namespace DCL.Chat.ChatReactions
         {
             this.service = service;
             this.debugConfig = debugConfig;
-            this.debugButtonRect = debugButtonRect.GetComponent<RectTransform>();
+            this.debugButtonRect = debugButtonRect != null ? debugButtonRect.GetComponent<RectTransform>() : null;
+
+            if (this.debugButtonRect != null)
+                service.SetDefaultUISpawnRect(this.debugButtonRect);
+
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
             UpdateLoopAsync(cts.Token).Forget();
         }
@@ -38,7 +43,6 @@ namespace DCL.Chat.ChatReactions
         {
             cts.SafeCancelAndDispose();
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
-            service.Dispose();
         }
 
         private async UniTask UpdateLoopAsync(CancellationToken ct)
@@ -74,6 +78,7 @@ namespace DCL.Chat.ChatReactions
                     await UniTask.Yield(ct);
                 }
                 catch (OperationCanceledException) { break; }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
             }
         }
 

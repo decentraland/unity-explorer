@@ -27,5 +27,11 @@ namespace DCL.Chat.ChatReactions
         /// in the scene. The returned list is reused across calls — do not cache it.
         /// </summary>
         List<Vector3> GetAllNearbyHeadPositions();
+
+        /// <summary>
+        /// Count from the last <see cref="GetAllNearbyHeadPositions"/> call.
+        /// Zero-cost — does not re-query the ECS world.
+        /// </summary>
+        int LastNearbyCount { get; }
     }
 }

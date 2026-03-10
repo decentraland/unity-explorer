@@ -2,7 +2,6 @@ using Arch.Core;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -20,6 +19,8 @@ namespace DCL.Chat.ChatReactions
         private readonly Entity playerEntity;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly List<Vector3> nearbyPositionsCache = new (32);
+
+        public int LastNearbyCount => nearbyPositionsCache.Count;
 
         public AvatarReactionPositionProvider(
             World world,
@@ -62,7 +63,8 @@ namespace DCL.Chat.ChatReactions
 
             foreach (string walletId in entityParticipantTable.Wallets())
             {
-                var entry = entityParticipantTable.Get(walletId);
+                if (!entityParticipantTable.TryGet(walletId, out var entry))
+                    continue;
 
                 if (!world.IsAlive(entry.Entity))
                     continue;
