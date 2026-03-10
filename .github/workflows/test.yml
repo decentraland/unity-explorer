@@ -208,6 +208,62 @@ jobs:
           targetPlatform: StandaloneLinux64
           buildMethod: CI.GenerateSolution.Run
 
+      - name: Debug generated solution state
+        run: |
+          set -euxo pipefail
+
+          echo "===== pwd ====="
+          pwd
+
+          echo "===== workspace root ====="
+          ls -la
+
+          echo "===== Explorer root ====="
+          ls -la Explorer || true
+
+          echo "===== Find solution / project / editor files ====="
+          find Explorer -maxdepth 4 \( \
+            -name "*.sln" -o \
+            -name "*.csproj" -o \
+            -name "*.asmdef" -o \
+            -name "*.cs" -o \
+            -name "manifest.json" -o \
+            -name "packages-lock.json" \
+          \) | sort
+
+          echo "===== GenerateSolution script ====="
+          if [ -f Explorer/Assets/Editor/CI/GenerateSolution.cs ]; then
+            sed -n '1,200p' Explorer/Assets/Editor/CI/GenerateSolution.cs
+          else
+            echo "Explorer/Assets/Editor/CI/GenerateSolution.cs not found"
+          fi
+
+          echo "===== Look for executeMethod target references ====="
+          grep -RIn --include="*.cs" --include="*.asmdef" "GenerateSolution\|SyncVS\|CI\." Explorer/Assets Explorer/Packages || true
+
+          echo "===== Packages manifest ====="
+          if [ -f Explorer/Packages/manifest.json ]; then
+            sed -n '1,220p' Explorer/Packages/manifest.json
+          else
+            echo "Explorer/Packages/manifest.json not found"
+          fi
+
+          echo "===== Packages lock ====="
+          if [ -f Explorer/Packages/packages-lock.json ]; then
+            sed -n '1,260p' Explorer/Packages/packages-lock.json
+          else
+            echo "Explorer/Packages/packages-lock.json not found"
+          fi
+
+          echo "===== Editor folder tree ====="
+          find Explorer/Assets/Editor -maxdepth 4 -type f | sort || true
+
+          echo "===== Any solution outside Explorer ====="
+          find . -maxdepth 5 -name "*.sln" | sort || true
+
+          echo "===== Top-level Explorer files ====="
+          find Explorer -maxdepth 1 -type f | sort
+
       - name: Download ReSharper Command Line Tools
         run: |
           wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
