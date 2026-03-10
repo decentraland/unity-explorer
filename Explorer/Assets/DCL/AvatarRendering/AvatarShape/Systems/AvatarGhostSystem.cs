@@ -3,110 +3,61 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.Components;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using DCL.Profiles;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
     ///     Shows the ghost renderer on AvatarBase while the avatar is loading. Animates RevealPosition 0→2 (reveal),
     ///     then when wearables are ready starts RevealTransition: coordinated line-up (0→2) with wearables; when done, Phase is Hidden and ghost is disabled.
+    ///     Skips preview (backpack/passport) and SDK avatars entirely.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarLoaderSystem))]
+    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarGhostSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private float deltaTime;
+        private static readonly int REVEAL_POSITION_SHADER_ID = Shader.PropertyToID("_RevealPosition");
+        private static readonly int REVEAL_ENABLED_SHADER_ID = Shader.PropertyToID("_RevealEnabled");
+        private static readonly int COLOR_SHADER_ID = Shader.PropertyToID("_FresnelColor");
+        private static readonly int REVEAL_NORMAL_SHADER_ID = Shader.PropertyToID("_RevealNormal");
+        private static readonly Vector4 REVEAL_NORMAL_DEFAULT = new (0, 1, 0, 0);
+        private static readonly Vector4 REVEAL_NORMAL_FLIPPED = new (0, -1, 0, 0);
+        private const float REVEAL_TARGET = 3f;
+        private const float HIDE_TARGET = -0.05f;
+        private const float REVEAL_DURATION_SEC = 2f;
+        private const float HIDE_DURATION_SEC = 2f;
 
-        internal AvatarGhostSystem(World world, IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
+        /// <summary>Debug flag: keep ghost visible indefinitely, never transition to wearables.</summary>
+        public const bool DEBUG_FREEZE_GHOST = true;
+
+        internal AvatarGhostSystem(World world) : base(world)
         {
-            this.avatarPoolRegistry = avatarPoolRegistry;
         }
 
         protected override void Update(float t)
         {
-            deltaTime = t;
             EnsureGhostAvatarQuery(World);
-            UpdateGhostRevealAnimationQuery(World);
             CheckWearablesReadyStartRevealTransitionQuery(World);
-            UpdateRevealTransitionAnimationQuery(World);
+            UpdateGhostRevealAnimationQuery(World, t);
+            UpdateRevealTransitionAnimationQuery(World, t);
         }
 
         [Query]
-        [None(typeof(AvatarBase), typeof(DeleteEntityIntention))]
-        private void EnsureGhostAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(DeleteEntityIntention), typeof(AvatarGhostComponent))]
+        private void EnsureGhostAvatar(in Entity entity, ref AvatarBase avatarBase, Profile profile)
         {
-            AvatarBase avatarBase = avatarPoolRegistry.Get();
-            avatarBase.gameObject.name = $"Avatar Ghost {avatarShapeComponent.ID}";
-
-            Transform avatarTransform = avatarBase.transform;
-
-            if (transformComponent.Transform != null)
-            {
-                avatarTransform.SetParent(transformComponent.Transform, false);
-
-                using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-                for (var index = 0; index < children.Value.Count; index++)
-                {
-                    Transform child = children.Value[index];
-
-                    if (child != null)
-                        child.gameObject.layer = transformComponent.Transform.gameObject.layer;
-                }
-            }
-
-            avatarTransform.ResetLocalTRS();
-
-            if (avatarBase.GhostRenderer != null)
-            {
-                avatarBase.GhostRenderer.SetActive(true);
-                Renderer r = avatarBase.GhostRenderer.GetComponent<Renderer>();
-
-                if (r != null && r.material != null)
-                {
-                    r.material.SetVector(AvatarGhostComponent.REVEAL_POSITION_SHADER_ID, new Vector4(0, AvatarGhostComponent.HIDE_TARGET, 0, 0));
-
-                    Color nametagColor = World.TryGet(entity, out Profile? profile)
-                        ? profile!.UserNameColor
-                        : NameColorHelper.GetNameColor(avatarShapeComponent.Name);
-
-                    r.material.SetColor(AvatarGhostComponent.COLOR_SHADER_ID, nametagColor);
-                }
-            }
-
-            avatarBase.gameObject.SetActive(true);
-
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, new AvatarGhostComponent(avatarBase.GhostRenderer!));
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateGhostRevealAnimation(ref AvatarGhostComponent avatarGhostComponent)
-        {
-            if (avatarGhostComponent.Phase != AvatarGhostPhase.Revealing) return;
-
-            avatarGhostComponent.PhaseElapsed += deltaTime;
-            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / AvatarGhostComponent.REVEAL_DURATION_SEC);
-            avatarGhostComponent.RevealPosition = Mathf.Lerp(AvatarGhostComponent.HIDE_TARGET, AvatarGhostComponent.REVEAL_TARGET, progress);
-            avatarGhostComponent.ApplyRevealPositionToMaterial();
-
-            if (progress >= 1f)
-            {
-                avatarGhostComponent.RevealPosition = AvatarGhostComponent.REVEAL_TARGET;
-                avatarGhostComponent.Phase = AvatarGhostPhase.Visible;
-                avatarGhostComponent.PhaseElapsed = 0f;
-            }
+            avatarBase.GhostRenderer.SetActive(true);
+            Renderer ghostRenderer = avatarBase.GhostRenderer.GetComponent<Renderer>();
+            ghostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_TARGET, 0, 0));
+            ghostRenderer.material.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
+            ghostRenderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase, new AvatarGhostComponent(ghostRenderer));
         }
 
         [Query]
@@ -114,35 +65,75 @@ namespace DCL.AvatarRendering.AvatarShape
         private void CheckWearablesReadyStartRevealTransition(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
-
-            //if (AvatarGhostComponent.DEBUG_FREEZE_GHOST) return;
-
             if (!avatarShapeComponent.IsReady) return;
 
+            foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
+            {
+                foreach (Renderer renderer in cachedAttachment.Renderers)
+                {
+                    if (renderer == null || renderer.material == null) continue;
+                    renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_TARGET, 0, 0));
+                    renderer.material.SetFloat(REVEAL_ENABLED_SHADER_ID, 1f);
+                }
+            }
+
+            avatarGhostComponent.Ghost.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
             avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;
             avatarGhostComponent.PhaseElapsed = 0f;
-            avatarGhostComponent.RevealPosition = AvatarGhostComponent.HIDE_TARGET;
-            avatarGhostComponent.FlipRevealNormalForTransition();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateRevealTransitionAnimation(ref AvatarGhostComponent avatarGhostComponent)
+        private void UpdateGhostRevealAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent)
+        {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Revealing) return;
+
+            avatarGhostComponent.PhaseElapsed += deltaTime;
+            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / REVEAL_DURATION_SEC);
+            float revealPosition = Mathf.Lerp(HIDE_TARGET, REVEAL_TARGET, progress);
+            avatarGhostComponent.Ghost.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+
+            if (progress >= 1f)
+            {
+                avatarGhostComponent.Phase = AvatarGhostPhase.Visible;
+                avatarGhostComponent.PhaseElapsed = 0f;
+            }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateRevealTransitionAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.RevealTransition) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
-            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / AvatarGhostComponent.HIDE_DURATION_SEC);
-            avatarGhostComponent.RevealPosition = Mathf.Lerp(AvatarGhostComponent.HIDE_TARGET, AvatarGhostComponent.REVEAL_TARGET, progress);
-            avatarGhostComponent.ApplyRevealPositionToMaterial();
+            float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / HIDE_DURATION_SEC);
+            float revealPosition = Mathf.Lerp(HIDE_TARGET, REVEAL_TARGET, progress);
 
+            foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
+            {
+                foreach (Renderer renderer in cachedAttachment.Renderers)
+                {
+                    if (renderer == null || renderer.material == null) continue;
+                    renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+                }
+            }
+
+            avatarGhostComponent.Ghost.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
             if (progress >= 1f)
             {
-                avatarGhostComponent.RevealPosition = AvatarGhostComponent.REVEAL_TARGET;
+                foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
+                {
+                    foreach (Renderer renderer in cachedAttachment.Renderers)
+                    {
+                        if (renderer == null || renderer.material == null) continue;
+                        renderer.material.SetFloat(REVEAL_ENABLED_SHADER_ID, 0f);
+                    }
+                }
+
                 avatarGhostComponent.Phase = AvatarGhostPhase.Hidden;
                 avatarGhostComponent.PhaseElapsed = 0f;
-                avatarGhostComponent.ResetRevealNormal();
-                avatarGhostComponent.Disable();
+                avatarGhostComponent.Ghost.gameObject.SetActive(false);
             }
         }
     }

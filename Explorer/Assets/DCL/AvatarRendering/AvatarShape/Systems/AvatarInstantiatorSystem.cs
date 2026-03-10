@@ -28,12 +28,13 @@ using WearablesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLo
 namespace DCL.AvatarRendering.AvatarShape
 {
     [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarGhostSystem))]
+    [UpdateAfter(typeof(AvatarLoaderSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
         private static readonly HashSet<string> EMPTY_STRING_HASH_SET = new (0);
 
+        private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
@@ -50,7 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IWearableStorage wearableStorage,
@@ -58,6 +59,7 @@ namespace DCL.AvatarRendering.AvatarShape
             FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.avatarPoolRegistry = avatarPoolRegistry;
 
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
@@ -83,83 +85,79 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            InstantiateMainPlayerAvatarFromGhostQuery(World);
-            InstantiateNewAvatarFromGhostQuery(World);
-            ApplyRevealTransitionToWearablesQuery(World);
+            EnsureAvatarBaseQuery(World);
+            InstantiateMainPlayerAvatarQuery(World);
+            InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(AvatarGhostComponent))]
-        private void InstantiateNewAvatarFromGhost(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent,
-            ref AvatarBase avatarBase, ref AvatarGhostComponent avatarGhostComponent)
+        [None(typeof(AvatarBase))]
+        private void EnsureAvatarBase(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
-
+            AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
+
+            Transform avatarTransform = avatarBase.transform;
+            avatarTransform.SetParent(transformComponent.Transform, false);
+            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            for (var index = 0; index < children.Value.Count; index++)
+            {
+                Transform child = children.Value[index];
+
+                if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
+            }
+
+            avatarTransform.ResetLocalTRS();
+
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
+        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
+
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
 
             var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, skipDisableGhost: true);
 
-            World.Add(entity, avatarTransformMatrixComponent, skinningComponent);
+            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
+            // Only enable the rig if head-sync is enabled
+            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
             avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
+
+            // Hands / Feet IK components are not added to remote entities
+            // We still disable the rigs to ensure no cpu time is wasted
+            // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
             avatarBase.HandsIKRig.enabled = false;
             avatarBase.FeetIKRig.enabled = false;
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(AvatarGhostComponent), typeof(AvatarShapeComponent), typeof(AvatarTransformMatrixComponent))]
-        private void ApplyRevealTransitionToWearables(ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent)
-        {
-            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
-
-            int shaderId = AvatarGhostComponent.REVEAL_POSITION_SHADER_ID;
-
-            Vector4 targetVec;
-
-            if (avatarGhostComponent.Phase == AvatarGhostPhase.Hidden)
-                targetVec = new Vector4(0, AvatarGhostComponent.REVEAL_INACTIVE_Y, 0, 0);
-            else if (avatarGhostComponent.Phase == AvatarGhostPhase.RevealTransition)
-                targetVec = new Vector4(0, avatarGhostComponent.RevealPosition, 0, 0);
-            else
-                targetVec = new Vector4(0, AvatarGhostComponent.HIDE_TARGET, 0, 0);
-
-            foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
-            {
-                foreach (Renderer renderer in cachedAttachment.Renderers)
-                {
-                    if (renderer == null || renderer.material == null) continue;
-                    renderer.material.SetVector(shaderId, targetVec);
-                }
-            }
-        }
-
-        [Query]
-        [All(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarGhostComponent))]
-        [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        private void InstantiateMainPlayerAvatarFromGhost(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent,
-            ref AvatarBase avatarBase, ref AvatarGhostComponent avatarGhostComponent)
-        {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
-
-            avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
-
-            var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, skipDisableGhost: true);
 
             World.Add(entity, avatarTransformMatrixComponent, skinningComponent);
 
-            avatarBase.RigBuilder.enabled = true;
-            avatarBase.HandsIKRig.enabled = true;
-            avatarBase.FeetIKRig.enabled = true;
-            mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            return true;
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            if (!InstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
+
+            if (avatarBase != null)
+            {
+                // Re-enable rigs since by default we disable them when instantiating new avatars
+                avatarBase.RigBuilder.enabled = true;
+                avatarBase.HandsIKRig.enabled = true;
+                avatarBase.FeetIKRig.enabled = true;
+
+                mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+            }
         }
 
         [Query]
@@ -183,8 +181,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
             in WearablesLoadResult wearablesResult,
-            AvatarBase avatarBase,
-            bool skipDisableGhost = false)
+            AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
@@ -242,9 +239,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
             skinningComponent.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount));
             avatarBase.gameObject.SetActive(true);
-
-            if (!skipDisableGhost && avatarBase.GhostRenderer != null)
-                avatarBase.GhostRenderer.SetActive(false);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 
             avatarShapeComponent.CreateOutlineCompatibilityList();
@@ -253,22 +247,8 @@ namespace DCL.AvatarRendering.AvatarShape
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
 
-            avatarShapeComponent.IsDirty = false;
-
-            var inactiveVec = new Vector4(0, AvatarGhostComponent.REVEAL_INACTIVE_Y, 0, 0);
-            int shaderId = AvatarGhostComponent.REVEAL_POSITION_SHADER_ID;
-
-            foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
-            {
-                foreach (Renderer renderer in cachedAttachment.Renderers)
-                {
-                    if (renderer == null || renderer.material == null) continue;
-                    Material mat = renderer.material;
-                    mat.SetVector(shaderId, inactiveVec);
-                }
-            }
-
             avatarShapeComponent.IsReady = true;
+            avatarShapeComponent.IsDirty = false;
 
             return skinningComponent;
         }

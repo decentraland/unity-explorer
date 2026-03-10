@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -98,6 +98,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
+            avatarShapeComponent.IsReady = false;
             avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
         }
 
@@ -120,6 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
             avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
+            avatarShapeComponent.IsReady = false;
         }
 
         [Query]
