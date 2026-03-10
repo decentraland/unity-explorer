@@ -44,7 +44,9 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            if (!value)
+            if (value)
+                DiscardStaleImpulsesQuery(World!); // fix for impulse accumulation when scene is not current (see full query description)
+            else
                 ResetExternalForce();
         }
 
@@ -81,5 +83,17 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
                 pbPhysicsImpulse.IsDirty = false;
             }
         }
+
+        // The SDK scene keeps running while the player is outside the parcel.
+        // Buffered TriggerAreaResults may cause the scene to generate new impulse
+        // CRDT messages after IsCurrent becomes false. Since Update() early-returns
+        // when not current, these impulses accumulate with IsDirty=true and would
+        // fire the moment the player re-enters any parcel of this scene.
+        // Clearing dirty flags on re-activation prevents this stale impulse burst.
+        [Query]
+        [All(typeof(PBPhysicsCombinedImpulse))]
+        [None(typeof(DeleteEntityIntention))]
+        private void DiscardStaleImpulses(in PBPhysicsCombinedImpulse pbPhysicsImpulse) =>
+            pbPhysicsImpulse.IsDirty = false;
     }
 }
