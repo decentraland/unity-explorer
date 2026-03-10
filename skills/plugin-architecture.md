@@ -218,3 +218,11 @@ Assets/DCL/<Feature>/
 ├── <Feature>Plugin.cs
 └── <Feature>.asmdef
 ```
+
+### Test Assembly References (`.asmref`)
+
+Test projects use `.asmref` files to reference the parent test assembly instead of creating their own `.asmdef`. The `.asmref` file is a simple JSON file:
+
+```json
+{ "reference": "DCL.EditMode.Tests" }
+```

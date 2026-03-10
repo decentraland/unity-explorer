@@ -111,15 +111,9 @@ Assets/DCL/SDKComponents/<Feature>/
 |   +-- <Feature>ApplyPropertiesSystem.cs // Apply SDK data to Unity objects
 |   +-- CleanUp<Feature>System.cs        // Cleanup on removal/destruction
 |   +-- <Feature>Group.cs               // Custom SystemGroup for execution ordering
-|   +-- <Feature>.Systems.asmref         // Assembly reference (JSON with GUID)
 +-- Tests/
 |   +-- EditMode/
 |       +-- <Feature>SystemShould.cs
-```
-
-The `.asmref` file references the parent assembly by GUID:
-```json
-{ "reference": "GUID:fc4fd35fb877e904d8cedee73b2256f6" }
 ```
 
 ---
