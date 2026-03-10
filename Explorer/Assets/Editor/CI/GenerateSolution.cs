@@ -1,5 +1,6 @@
+using System;
+using System.Reflection;
 using UnityEditor;
-using UnityEditor.Compilation;
 
 namespace CI
 {
@@ -10,13 +11,21 @@ namespace CI
             AssetDatabase.Refresh();
 
             if (EditorUtility.scriptCompilationFailed)
-                throw new BuildFailedException("Script compilation failed before generating the solution.");
+                throw new Exception("Script compilation failed before generating the solution.");
 
-            SyncVS.SyncSolution();
+            var editorAssembly = typeof(Editor).Assembly;
+            var syncVsType = editorAssembly.GetType("UnityEditor.SyncVS");
+            var syncSolutionMethod = syncVsType?.GetMethod("SyncSolution", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (syncSolutionMethod == null)
+                throw new Exception("UnityEditor.SyncVS.SyncSolution was not found.");
+
+            syncSolutionMethod.Invoke(null, null);
+
             AssetDatabase.Refresh();
 
             if (EditorUtility.scriptCompilationFailed)
-                throw new BuildFailedException("Script compilation failed after generating the solution.");
+                throw new Exception("Script compilation failed after generating the solution.");
         }
     }
 }
