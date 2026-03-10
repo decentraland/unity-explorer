@@ -82,10 +82,13 @@ jobs:
           curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
           chmod 600 /home/runner/.ssh/known_hosts
 
-      - name: Fix SSH permissions for Unity
+      - name: Prepare SSH for Unity
         run: |
-          chmod 600 /home/runner/.ssh/*
-          rm -f /home/runner/.ssh/config
+          rm -rf /tmp/ssh-unity
+          mkdir -p -m 0700 /tmp/ssh-unity
+          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
+          cp /home/runner/.ssh/key-* /tmp/ssh-unity/ 2>/dev/null || true
+          chmod 600 /tmp/ssh-unity/*
 
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version-lint
@@ -137,7 +140,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
-            -v /home/runner/.ssh:/root/.ssh \
+            -v /tmp/ssh-unity:/root/.ssh:ro \
             -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
             -w /workspace \
             ${{ steps.img-lint.outputs.ghcr }} \
