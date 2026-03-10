@@ -247,7 +247,6 @@ namespace DCL.AvatarRendering.AvatarShape
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
 
-            avatarShapeComponent.IsReady = true;
             avatarShapeComponent.IsDirty = false;
 
             return skinningComponent;

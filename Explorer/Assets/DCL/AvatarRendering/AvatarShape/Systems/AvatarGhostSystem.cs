@@ -65,7 +65,9 @@ namespace DCL.AvatarRendering.AvatarShape
         private void CheckWearablesReadyStartRevealTransition(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
-            if (!avatarShapeComponent.IsReady) return;
+
+            //Means wearables have not been instantiated yet
+            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
 
             foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
             {
