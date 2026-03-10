@@ -920,7 +920,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OpenReportUserForm(ICommunityMemberData profile)
         {
             // TODO (Santi): Implement reporting user!
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUser));
+            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
         }
 
         private void ManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention)

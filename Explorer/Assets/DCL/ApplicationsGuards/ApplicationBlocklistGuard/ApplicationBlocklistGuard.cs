@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
@@ -12,30 +13,30 @@ namespace DCL.ApplicationBlocklistGuard
 {
     public static class ApplicationBlocklistGuard
     {
-        public static async UniTask<bool> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, CancellationToken ct)
+        public static async UniTask<bool> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, ModerationDataProvider moderationDataProvider, CancellationToken ct)
         {
             try
             {
                 if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
                 {
-                    // TODO (Santi): Call the new endpoint here!
-                    // ...
+                    var result = await moderationDataProvider.GetBanStatusAsync(userID, ct)
+                                                             .SuppressToResultAsync(ReportCategory.STARTUP);
+
+                    return result is { Success: true, Value: { data: { isBanned: true } } };
                 }
-                else
+
+                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                    urlsSource.Url(DecentralandUrl.Blocklist),
+                    new FlatFetchResponse<GenericGetRequest>(),
+                    ct,
+                    ReportCategory.STARTUP,
+                    new WebRequestHeadersInfo());
+
+                BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
+
+                foreach (var t in bd.users)
                 {
-                    FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                        urlsSource.Url(DecentralandUrl.Blocklist),
-                        new FlatFetchResponse<GenericGetRequest>(),
-                        ct,
-                        ReportCategory.STARTUP,
-                        new WebRequestHeadersInfo());
-
-                    BlocklistData bd = JsonUtility.FromJson<BlocklistData>(response.body);
-
-                    foreach (var t in bd.users)
-                    {
-                        if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
-                    }
+                    if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
                 }
 
                 return false;

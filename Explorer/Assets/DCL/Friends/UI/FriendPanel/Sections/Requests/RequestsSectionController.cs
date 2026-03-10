@@ -126,7 +126,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                     return;
 
                 // TODO (Santi): Implement reporting user!
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUser));
+                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
             }
         }
 
