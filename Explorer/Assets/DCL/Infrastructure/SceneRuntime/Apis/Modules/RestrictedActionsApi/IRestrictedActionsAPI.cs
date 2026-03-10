@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using System.Threading;
 using UnityEngine;
 
@@ -14,9 +15,9 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 
         bool TryChangeRealm(string message, string realm);
 
-        void TryTriggerEmote(string predefinedEmote);
+        void TryTriggerEmote(string predefinedEmote, AvatarEmoteMask mask);
 
-        UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct);
+        UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, AvatarEmoteMask mask, CancellationToken ct);
 
         bool TryOpenNftDialog(string urn);
 

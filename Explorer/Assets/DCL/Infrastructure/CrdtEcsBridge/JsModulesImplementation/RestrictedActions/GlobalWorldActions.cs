@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -9,6 +9,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
@@ -99,16 +100,16 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public void TriggerEmote(URN urn, bool isLooping)
+        public void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask)
         {
             if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE, Mask = mask });
             messageBus.Send(urn, isLooping);
         }
 
-        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
+        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
 
@@ -120,7 +121,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
                 if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
-                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, mask, ct);
                 else
                     ReportHub.LogError(ReportCategory.EMOTE, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
             }
@@ -129,13 +130,13 @@ namespace CrdtEcsBridge.RestrictedActions
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
-                    hash, loop, ct);
+                    hash, loop, mask, ct);
             }
 
             world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
         }
 
-        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -155,11 +156,11 @@ namespace CrdtEcsBridge.RestrictedActions
                 URN urn = value.GetUrn();
                 bool isLooping = value.IsLooping();
 
-                TriggerEmote(urn, isLooping);
+                TriggerEmote(urn, isLooping, mask);
             }
         }
 
-        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -177,7 +178,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 var value = consumed.Value[0]!;
                 URN urn = value.GetUrn();
 
-                TriggerEmote(urn, loop);
+                TriggerEmote(urn, loop, mask);
             }
         }
     }

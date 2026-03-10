@@ -34,54 +34,55 @@ namespace Decentraland.Kernel.Apis {
             "CghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFyZ2V0QhAKDl9h",
             "dmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9ydFRvUmVxdWVz",
             "dBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uVmVjdG9yMiIvChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
-            "ZmluZWRfZW1vdGUYASABKAkiRQoSQ2hhbmdlUmVhbG1SZXF1ZXN0Eg0KBXJl",
-            "YWxtGAEgASgJEhQKB21lc3NhZ2UYAiABKAlIAIgBAUIKCghfbWVzc2FnZSIl",
-            "ChZPcGVuRXh0ZXJuYWxVcmxSZXF1ZXN0EgsKA3VybBgBIAEoCSIjChRPcGVu",
-            "TmZ0RGlhbG9nUmVxdWVzdBILCgN1cm4YASABKAkiFwoVVW5ibG9ja1BvaW50",
-            "ZXJSZXF1ZXN0IjAKE0NvbW1zQWRhcHRlclJlcXVlc3QSGQoRY29ubmVjdGlv",
-            "bl9zdHJpbmcYASABKAkiQwoYVHJpZ2dlclNjZW5lRW1vdGVSZXF1ZXN0EgsK",
-            "A3NyYxgBIAEoCRIRCgRsb29wGAIgASgISACIAQFCBwoFX2xvb3AiIgoPU3Vj",
-            "Y2Vzc1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3Rl",
-            "UmVzcG9uc2UiJwoUTW92ZVBsYXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgB",
-            "IAEoCCIUChJUZWxlcG9ydFRvUmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJk",
-            "UmVxdWVzdBIMCgR0ZXh0GAEgASgJIg8KDUVtcHR5UmVzcG9uc2UyjwgKGFJl",
-            "c3RyaWN0ZWRBY3Rpb25zU2VydmljZRJvCgxNb3ZlUGxheWVyVG8SLS5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuTW92ZVBsYXllclRvUmVxdWVzdBouLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXNwb25zZSIA",
-            "EmkKClRlbGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
-            "ZXBvcnRUb1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
-            "ZXBvcnRUb1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVtb3RlEi0uZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJlcXVlc3QaLi5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVzcG9uc2UiABJoCgtD",
-            "aGFuZ2VSZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DaGFuZ2VS",
-            "ZWFsbVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vz",
-            "c1Jlc3BvbnNlIgAScAoPT3BlbkV4dGVybmFsVXJsEjAuZGVjZW50cmFsYW5k",
-            "Lmtlcm5lbC5hcGlzLk9wZW5FeHRlcm5hbFVybFJlcXVlc3QaKS5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbAoNT3Blbk5m",
-            "dERpYWxvZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuTmZ0RGlh",
-            "bG9nUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNz",
-            "UmVzcG9uc2UiABJ2ChhTZXRDb21tdW5pY2F0aW9uc0FkYXB0ZXISLS5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuQ29tbXNBZGFwdGVyUmVxdWVzdBopLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ0ChFU",
-            "cmlnZ2VyU2NlbmVFbW90ZRIyLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
-            "cmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVs",
-            "LmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbgoPQ29weVRvQ2xpcGJvYXJkEjAu",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNvcHlUb0NsaXBib2FyZFJlcXVl",
-            "c3QaJy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuRW1wdHlSZXNwb25zZSIA",
-            "YgZwcm90bzM="));
+            "b21tb24uVmVjdG9yMiJLChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
+            "ZmluZWRfZW1vdGUYASABKAkSEQoEbWFzaxgCIAEoDUgAiAEBQgcKBV9tYXNr",
+            "IkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgBIAEoCRIUCgdtZXNz",
+            "YWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3BlbkV4dGVybmFsVXJs",
+            "UmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERpYWxvZ1JlcXVlc3QS",
+            "CwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVxdWVzdCIwChNDb21t",
+            "c0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3RyaW5nGAEgASgJIl8K",
+            "GFRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBILCgNzcmMYASABKAkSEQoEbG9v",
+            "cBgCIAEoCEgAiAEBEhEKBG1hc2sYAyABKA1IAYgBAUIHCgVfbG9vcEIHCgVf",
+            "bWFzayIiCg9TdWNjZXNzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIWChRU",
+            "cmlnZ2VyRW1vdGVSZXNwb25zZSInChRNb3ZlUGxheWVyVG9SZXNwb25zZRIP",
+            "CgdzdWNjZXNzGAEgASgIIhQKElRlbGVwb3J0VG9SZXNwb25zZSImChZDb3B5",
+            "VG9DbGlwYm9hcmRSZXF1ZXN0EgwKBHRleHQYASABKAkiDwoNRW1wdHlSZXNw",
+            "b25zZTKPCAoYUmVzdHJpY3RlZEFjdGlvbnNTZXJ2aWNlEm8KDE1vdmVQbGF5",
+            "ZXJUbxItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9S",
+            "ZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1vdmVQbGF5ZXJU",
+            "b1Jlc3BvbnNlIgASaQoKVGVsZXBvcnRUbxIrLmRlY2VudHJhbGFuZC5rZXJu",
+            "ZWwuYXBpcy5UZWxlcG9ydFRvUmVxdWVzdBosLmRlY2VudHJhbGFuZC5rZXJu",
+            "ZWwuYXBpcy5UZWxlcG9ydFRvUmVzcG9uc2UiABJvCgxUcmlnZ2VyRW1vdGUS",
+            "LS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVxdWVz",
+            "dBouLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2VyRW1vdGVSZXNw",
+            "b25zZSIAEmgKC0NoYW5nZVJlYWxtEiwuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLkNoYW5nZVJlYWxtUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwu",
+            "YXBpcy5TdWNjZXNzUmVzcG9uc2UiABJwCg9PcGVuRXh0ZXJuYWxVcmwSMC5k",
+            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuT3BlbkV4dGVybmFsVXJsUmVxdWVz",
+            "dBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2Ui",
+            "ABJsCg1PcGVuTmZ0RGlhbG9nEi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
+            "Lk9wZW5OZnREaWFsb2dSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnYKGFNldENvbW11bmljYXRpb25zQWRh",
+            "cHRlchItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Db21tc0FkYXB0ZXJS",
+            "ZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNw",
+            "b25zZSIAEnQKEVRyaWdnZXJTY2VuZUVtb3RlEjIuZGVjZW50cmFsYW5kLmtl",
+            "cm5lbC5hcGlzLlRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBopLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJuCg9Db3B5VG9D",
+            "bGlwYm9hcmQSMC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ29weVRvQ2xp",
+            "cGJvYXJkUmVxdWVzdBonLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5FbXB0",
+            "eVJlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote", "Mask" }, new[]{ "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.ChangeRealmRequest), global::Decentraland.Kernel.Apis.ChangeRealmRequest.Parser, new[]{ "Realm", "Message" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExternalUrlRequest), global::Decentraland.Kernel.Apis.OpenExternalUrlRequest.Parser, new[]{ "Url" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenNftDialogRequest), global::Decentraland.Kernel.Apis.OpenNftDialogRequest.Parser, new[]{ "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.UnblockPointerRequest), global::Decentraland.Kernel.Apis.UnblockPointerRequest.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CommsAdapterRequest), global::Decentraland.Kernel.Apis.CommsAdapterRequest.Parser, new[]{ "ConnectionString" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest), global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest.Parser, new[]{ "Src", "Loop" }, new[]{ "Loop" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest), global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest.Parser, new[]{ "Src", "Loop", "Mask" }, new[]{ "Loop", "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SuccessResponse), global::Decentraland.Kernel.Apis.SuccessResponse.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteResponse), global::Decentraland.Kernel.Apis.TriggerEmoteResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToResponse), global::Decentraland.Kernel.Apis.MovePlayerToResponse.Parser, new[]{ "Success" }, null, null, null, null),
@@ -644,6 +645,7 @@ namespace Decentraland.Kernel.Apis {
   {
     private static readonly pb::MessageParser<TriggerEmoteRequest> _parser = new pb::MessageParser<TriggerEmoteRequest>(() => new TriggerEmoteRequest());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<TriggerEmoteRequest> Parser { get { return _parser; } }
@@ -671,7 +673,9 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TriggerEmoteRequest(TriggerEmoteRequest other) : this() {
+      _hasBits0 = other._hasBits0;
       predefinedEmote_ = other.predefinedEmote_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -693,6 +697,31 @@ namespace Decentraland.Kernel.Apis {
       }
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 2;
+    private uint mask_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Mask {
+      get { if ((_hasBits0 & 1) != 0) { return mask_; } else { return 0; } }
+      set {
+        _hasBits0 |= 1;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -709,6 +738,7 @@ namespace Decentraland.Kernel.Apis {
         return true;
       }
       if (PredefinedEmote != other.PredefinedEmote) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -717,6 +747,7 @@ namespace Decentraland.Kernel.Apis {
     public override int GetHashCode() {
       int hash = 1;
       if (PredefinedEmote.Length != 0) hash ^= PredefinedEmote.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -739,6 +770,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(10);
         output.WriteString(PredefinedEmote);
       }
+      if (HasMask) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -753,6 +788,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(10);
         output.WriteString(PredefinedEmote);
       }
+      if (HasMask) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -765,6 +804,9 @@ namespace Decentraland.Kernel.Apis {
       int size = 0;
       if (PredefinedEmote.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(PredefinedEmote);
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -780,6 +822,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.PredefinedEmote.Length != 0) {
         PredefinedEmote = other.PredefinedEmote;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -800,6 +845,10 @@ namespace Decentraland.Kernel.Apis {
             PredefinedEmote = input.ReadString();
             break;
           }
+          case 16: {
+            Mask = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -817,6 +866,10 @@ namespace Decentraland.Kernel.Apis {
             break;
           case 10: {
             PredefinedEmote = input.ReadString();
+            break;
+          }
+          case 16: {
+            Mask = input.ReadUInt32();
             break;
           }
         }
@@ -1821,6 +1874,7 @@ namespace Decentraland.Kernel.Apis {
       _hasBits0 = other._hasBits0;
       src_ = other.src_;
       loop_ = other.loop_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1867,6 +1921,31 @@ namespace Decentraland.Kernel.Apis {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 3;
+    private uint mask_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Mask {
+      get { if ((_hasBits0 & 2) != 0) { return mask_; } else { return 0; } }
+      set {
+        _hasBits0 |= 2;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1884,6 +1963,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (Src != other.Src) return false;
       if (Loop != other.Loop) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1893,6 +1973,7 @@ namespace Decentraland.Kernel.Apis {
       int hash = 1;
       if (Src.Length != 0) hash ^= Src.GetHashCode();
       if (HasLoop) hash ^= Loop.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1919,6 +2000,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(16);
         output.WriteBool(Loop);
       }
+      if (HasMask) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1937,6 +2022,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(16);
         output.WriteBool(Loop);
       }
+      if (HasMask) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1952,6 +2041,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasLoop) {
         size += 1 + 1;
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1970,6 +2062,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.HasLoop) {
         Loop = other.Loop;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1994,6 +2089,10 @@ namespace Decentraland.Kernel.Apis {
             Loop = input.ReadBool();
             break;
           }
+          case 24: {
+            Mask = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -2015,6 +2114,10 @@ namespace Decentraland.Kernel.Apis {
           }
           case 16: {
             Loop = input.ReadBool();
+            break;
+          }
+          case 24: {
+            Mask = input.ReadUInt32();
             break;
           }
         }

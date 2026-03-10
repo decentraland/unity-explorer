@@ -49,9 +49,9 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         protected static string GetUrl(Uri uri) =>
             (uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToString()) ?? string.Empty;
 
-        // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
+        // Request is used for fetching the GLTF file itself + some external textures. Whenever this
         // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
-        public async Task<IDownload> RequestAsync(Uri uri)
+        public async Task<IDownload> Request(Uri uri)
         {
             var downloadUri = GetDownloadUri(uri);
             var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(downloadUri)));
@@ -88,7 +88,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             return new GltfDownloadResult(data, text, error, success);
         }
 
-        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
+        public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable)
         {
             var downloadUri = GetDownloadUri(uri);
             var texturePromise = Promise.Create(world, new GetTextureIntention

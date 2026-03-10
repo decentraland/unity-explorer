@@ -179,6 +179,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.eulerAngles = angles;
         }
 
+        public void SetLayerWeight(string layerName, float weight)
+        {
+            int index = AvatarAnimator.GetLayerIndex(layerName);
+            AvatarAnimator.SetLayerWeight(index, weight);
+        }
+
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 
@@ -279,5 +285,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         void ResetAnimatorTrigger(int hash);
 
         void ResetArmatureInclination();
+
+        void SetLayerWeight(string layerName, float weight);
     }
 }

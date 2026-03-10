@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using ECS.StreamableLoading;
 
 namespace DCL.AvatarRendering.Emotes
@@ -16,8 +17,11 @@ namespace DCL.AvatarRendering.Emotes
         public URN EmoteId;
         public bool Spatial;
         public TriggerSource TriggerSource;
+        public AvatarEmoteMask Mask;
 
         private LoadTimeout? playTimeout;
+
+        // TODO (Maurizio) what to do with mask here?
 
         public void UpdateRemoteId(URN emoteId)
         {

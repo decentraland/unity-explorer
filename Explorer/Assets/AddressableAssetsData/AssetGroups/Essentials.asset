@@ -125,11 +125,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 56a9743f8d94f684190dc11bb521fb78
-    m_Address: Scene.shader
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 594ae6e7cd408424cb8433ddba60315d
     m_Address: Assets/DCL/Notifications/Assets/NotificationDefaultThumbnails.asset
     m_ReadOnly: 0

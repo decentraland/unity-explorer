@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
             var promise = GltfPromise.Create(world,
-                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: false),
+                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: true),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);

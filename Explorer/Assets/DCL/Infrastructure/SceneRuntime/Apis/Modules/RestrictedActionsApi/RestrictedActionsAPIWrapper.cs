@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using JetBrains.Annotations;
-using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -52,25 +52,29 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
-        public object TriggerEmote(string predefinedEmote)
+        public object TriggerEmote(string predefinedEmote, uint mask)
         {
             return TriggerEmoteAsync().ToDisconnectedPromise(this);
 
             async UniTask TriggerEmoteAsync()
             {
                 await UniTask.SwitchToMainThread();
-                api.TryTriggerEmote(predefinedEmote);
+                api.TryTriggerEmote(predefinedEmote, EnumUtils.FromInt<AvatarEmoteMask>((int)mask));
+
+                // api.TryTriggerEmote(predefinedEmote, mask);
             }
         }
 
         [UsedImplicitly]
-        public object TriggerSceneEmote(string src, bool loop)
+        public object TriggerSceneEmote(string src, bool loop, uint mask)
         {
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
-                await api.TryTriggerSceneEmoteAsync(src, loop, ct);
+                await api.TryTriggerSceneEmoteAsync(src, loop, EnumUtils.FromInt<AvatarEmoteMask>((int)mask), ct);
+
+            // await api.TryTriggerSceneEmoteAsync(src, loop, mask, ct);
         }
 
         [UsedImplicitly]

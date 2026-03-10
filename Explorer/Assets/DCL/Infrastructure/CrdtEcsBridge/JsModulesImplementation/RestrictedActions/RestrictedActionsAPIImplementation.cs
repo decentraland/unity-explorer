@@ -1,11 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
+using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
 using DCL.Utilities;
-using DCL.Clipboard;
 using MVC;
 using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
@@ -101,15 +102,15 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryTriggerEmote(string predefinedEmote)
+        public void TryTriggerEmote(string predefinedEmote, AvatarEmoteMask mask)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            globalWorldActions.TriggerEmote(predefinedEmote);
+            globalWorldActions.TriggerEmote(predefinedEmote, false, mask);
         }
 
-        public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
+        public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
@@ -121,7 +122,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await UniTask.SwitchToMainThread();
 
-                await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, ct);
+                await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct);
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)

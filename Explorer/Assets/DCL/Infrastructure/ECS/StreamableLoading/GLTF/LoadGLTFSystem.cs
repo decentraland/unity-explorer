@@ -78,6 +78,11 @@ namespace ECS.StreamableLoading.GLTF
 
             await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
+            // When GLTFast loads a GLB locally with Mecanim it may not create a RuntimeAnimatorController;
+            // in that case we build one from BaseAnimatorController and the imported clips.
+            if (intention.MecanimAnimationClips)
+                ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer);
+
             // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
             if (patchTexturesFormat)
                 PatchTexturesForWearable(gltfImport);
@@ -89,6 +94,59 @@ namespace ECS.StreamableLoading.GLTF
             gltfData.AddReference();
             return new StreamableLoadingResult<GLTFData>(gltfData);
 
+        }
+
+        /// <summary>
+        /// If the GLB has an Animator but no RuntimeAnimatorController (e.g. loaded locally by GLTFast),
+        /// builds an AnimatorOverrideController from Resources/BaseAnimatorController and the GLTF animation clips.
+        /// </summary>
+        private static void ApplyBaseAnimatorControllerWhenNeeded(GltfImport gltfImport, GameObject rootContainer)
+        {
+            Animator? animator = rootContainer.GetComponentInChildren<Animator>(true);
+            if (animator == null || animator.runtimeAnimatorController != null)
+                return;
+
+            RuntimeAnimatorController? baseController = Resources.Load<RuntimeAnimatorController>("BaseAnimatorController");
+            if (baseController == null)
+                return;
+
+            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
+            if (gltfClips == null || gltfClips.Length == 0)
+                return;
+
+            AnimationClip? avatarClip = null;
+            AnimationClip? propClip = null;
+
+            if (gltfClips.Length == 1)
+                avatarClip = gltfClips[0];
+            else if (gltfClips.Length > 1)
+                foreach (AnimationClip clip in gltfClips)
+                    if (clip != null && clip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
+                        avatarClip = clip;
+                    else if (clip != null && clip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                        propClip = clip;
+
+            var overrideController = new AnimatorOverrideController(baseController);
+            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(); //TODO (Maurizio) could be reused
+            overrideController.GetOverrides(overrides);
+
+            for (int i = 0; i < overrides.Count; i++)
+            {
+                KeyValuePair<AnimationClip, AnimationClip> kv = overrides[i];
+                AnimationClip original = kv.Key;
+                if (original == null) continue;
+
+                bool isAvatarSlot = original.name.Contains("AvatarAnimationPlaceholder", StringComparison.OrdinalIgnoreCase);
+                bool isPropSlot = original.name.Contains("PropAnimationPlaceholder", StringComparison.OrdinalIgnoreCase);
+
+                if (isAvatarSlot && avatarClip != null)
+                    overrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(original, avatarClip);
+                else if (isPropSlot && propClip != null)
+                    overrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(original, propClip);
+            }
+
+            overrideController.ApplyOverrides(overrides);
+            animator.runtimeAnimatorController = overrideController;
         }
 
         private void PatchTexturesForWearable(GltfImport gltfImport)

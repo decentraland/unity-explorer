@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.ECSComponents;
+using UnityEngine;
 
 namespace Utility.Animations
 {
@@ -21,6 +22,15 @@ namespace Utility.Animations
         public static readonly int STUNNED = Animator.StringToHash("IsStunned");
         public static readonly int SLIDE_BLEND = Animator.StringToHash("SlideBlend");
         public static readonly int JUMPING_TAG = Animator.StringToHash("Jumping");
+        public static readonly int PROP_ANIMATION_TRIGGER = Animator.StringToHash("PropAnimation");
+        public static readonly int EMOTE_UPPER_BODY = Animator.StringToHash("EmoteUpperBody");
 
+        public static int GetFromEmoteMask(AvatarEmoteMask mask) =>
+            mask switch
+            {
+                AvatarEmoteMask.AemFullBody => EMOTE,
+                AvatarEmoteMask.AemUpperBody => EMOTE_UPPER_BODY,
+                _ => EMOTE,
+            };
     }
 }

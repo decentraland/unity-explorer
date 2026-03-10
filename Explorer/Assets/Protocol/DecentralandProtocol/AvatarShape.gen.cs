@@ -39,16 +39,29 @@ namespace DCL.ECSComponents {
             "Qg0KC19za2luX2NvbG9yQg0KC19oYWlyX2NvbG9yQgwKCl9leWVfY29sb3JC",
             "GAoWX2V4cHJlc3Npb25fdHJpZ2dlcl9pZEIfCh1fZXhwcmVzc2lvbl90cmln",
             "Z2VyX3RpbWVzdGFtcEIKCghfdGFsa2luZ0IWChRfc2hvd19vbmx5X3dlYXJh",
-            "Ymxlc0IUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "Ymxlcyo4Cg9BdmF0YXJFbW90ZU1hc2sSEQoNQUVNX0ZVTExfQk9EWRAAEhIK",
+            "DkFFTV9VUFBFUl9CT0RZEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZwcm90",
+            "bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.AvatarEmoteMask), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "ShowOnlyWearables" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "ShowOnlyWearables" }, null, null, null)
           }));
     }
     #endregion
 
   }
+  #region Enums
+  /// <summary>
+  /// Mask for which bones an animation applies to.
+  /// </summary>
+  public enum AvatarEmoteMask {
+    [pbr::OriginalName("AEM_FULL_BODY")] AemFullBody = 0,
+    [pbr::OriginalName("AEM_UPPER_BODY")] AemUpperBody = 1,
+  }
+
+  #endregion
+
   #region Messages
   /// <summary>
   /// The AvatarShape component contains the information required to draw and animate avatar, acting as

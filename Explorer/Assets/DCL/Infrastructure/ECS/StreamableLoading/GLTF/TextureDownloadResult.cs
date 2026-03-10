@@ -17,18 +17,24 @@ namespace ECS.StreamableLoading.GLTF
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
-        private readonly DisposableTexture texture;
+
+        public Texture2D? Texture { get; }
 
         public TextureDownloadResult(Texture2D? texture)
         {
-            this.texture = new DisposableTexture { Texture = texture };
+            Texture = texture;
             Error = null!;
             Success = false;
         }
 
-        public IDisposableTexture GetTexture(bool forceSampleLinear) =>
-            texture;
+        public void Dispose()
+        {
+            // TODO (Maurizio) I just ported this message from deleted DisposableTexture.cs:
 
-        public void Dispose() => texture.Dispose();
+            // TODO: if we enable texture destruction on disposal, the external-fetched textures get destroyed before
+            // the GLTF finishes loading... investigate why...
+            // if (Texture != null)
+            //     Object.Destroy(Texture);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,9 @@ namespace DCL.AvatarRendering.Emotes.Play
     {
         // Emotes can have up to 2 clips (avatar + prop)
         private static readonly AnimationClip[] LEGACY_ANIMATION_CLIPS = new AnimationClip[2];
+
+        private const string AVATAR_ANIMATION_PLACEHOLDER_NAME = "AvatarAnimationPlaceholder";
+        private const string PROP_ANIMATION_PLACEHOLDER_NAME = "PropAnimationPlaceholder";
 
         private readonly GameObjectPool<AudioSource> audioSourcePool;
         private readonly Action<EmoteReferences> releaseEmoteReferences;
@@ -37,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             };
         }
 
-        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, AvatarEmoteMask mask, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
@@ -91,10 +95,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!legacyAnimationsEnabled)
                     return false;
 
-                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
+                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping, mask);
             }
             else
-                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
+                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping, mask);
 
             if (audioAsset != null)
             {
@@ -194,7 +198,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             return references;
         }
 
-        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
+        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop, AvatarEmoteMask mask)
         {
             Animation animationComp = avatarView.AddOrGetLegacyAnimation();
 
@@ -219,10 +223,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
+        private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping, AvatarEmoteMask mask)
         {
             if (emoteReferences.avatarClip != null)
             {
+                // When mask is AemUpperBody the animation could be applied to an upper-body-only layer; for now use full body
                 view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
                 emoteComponent.EmoteLoop = isLooping;
 
@@ -234,15 +239,48 @@ namespace DCL.AvatarRendering.Emotes.Play
             // Create a clean slate for the animator before setting the play trigger
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE);
+            view.ResetAnimatorTrigger(AnimationHashes.EMOTE_UPPER_BODY);
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
 
-            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
+            // Reset layer weights
+            foreach (string layer in AnimatorEmoteLayers.NON_BASE_LAYERS)
+                view.SetLayerWeight(layer, 0);
+
+            // Select and set masking layer based on mask
+            string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
+            view.SetLayerWeight(emoteLayer, 1);
+
+            // Set triggers
+            int emoteTriggerHash = AnimationHashes.GetFromEmoteMask(mask);
+
+            // TODO (Maurizio) remove after tests
+            Debug.Log($"(Maurizio) mask: {mask}, avatarClipName: {emoteReferences.avatarClip?.name}, layer: {emoteLayer}, emoteTriggerHash: {emoteTriggerHash}");
+
+            // TODO (Maurizio) probably we need to check all other layers as well here
+            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : emoteTriggerHash);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
             if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
             {
-                emoteReferences.animatorComp.SetTrigger(emoteReferences.propClipHash);
+                int propTriggerHash = IsAnimatorImportedLocally(emoteReferences.animatorComp) ? AnimationHashes.PROP_ANIMATION_TRIGGER : emoteReferences.propClipHash;
+
+                emoteReferences.animatorComp.SetTrigger(propTriggerHash);
                 emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+            }
+
+            return;
+
+            // If the animator has either of the 2 parameters named as AnimationHashes.PROP_ANIMATION_TRIGGER it means
+            // that it is the one loaded from resources, not the one packaged by the AB
+            bool IsAnimatorImportedLocally(Animator animator)
+            {
+                var parameters = animator.parameters;
+
+                for (int i = 0; i < parameters.Length; i++)
+                    if (parameters[i].nameHash == AnimationHashes.PROP_ANIMATION_TRIGGER)
+                        return true;
+
+                return false;
             }
         }
 
@@ -267,7 +305,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             propClipHash = 0;
 
             foreach (AnimationClip clip in animationClips)
-                if (clip != null && !uniqueClips.Contains(clip))
+                if (IsValidUniqueClip(clip))
                     uniqueClips.Add(clip);
 
             if (uniqueClips.Count == 1)
@@ -295,6 +333,14 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             legacy = avatarClip && avatarClip.legacy;
+
+            return;
+
+            bool IsValidUniqueClip(AnimationClip clip) =>
+                clip != null
+                && !uniqueClips.Contains(clip)
+                && clip.name != AVATAR_ANIMATION_PLACEHOLDER_NAME
+                && clip.name != PROP_ANIMATION_PLACEHOLDER_NAME;
         }
     }
 }
