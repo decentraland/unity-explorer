@@ -13,7 +13,7 @@ namespace DCL.ApplicationBlocklistGuard
 {
     public static class ApplicationBlocklistGuard
     {
-        public static async UniTask<bool> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, ModerationDataProvider moderationDataProvider, CancellationToken ct)
+        public static async UniTask<GetBanStatusData> IsUserBlocklistedAsync(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, string userID, ModerationDataProvider moderationDataProvider, CancellationToken ct)
         {
             try
             {
@@ -22,7 +22,7 @@ namespace DCL.ApplicationBlocklistGuard
                     var result = await moderationDataProvider.GetBanStatusAsync(userID, ct)
                                                              .SuppressToResultAsync(ReportCategory.STARTUP);
 
-                    return result is { Success: true, Value: { data: { isBanned: true } } };
+                    return result.Success ? result.Value.data : new GetBanStatusData { isBanned = false };
                 }
 
                 FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
@@ -36,15 +36,16 @@ namespace DCL.ApplicationBlocklistGuard
 
                 foreach (var t in bd.users)
                 {
-                    if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase)) return true;
+                    if (string.Equals(t.wallet, userID, StringComparison.OrdinalIgnoreCase))
+                        return new GetBanStatusData { isBanned = true };
                 }
 
-                return false;
+                return new GetBanStatusData { isBanned = false };
             }
             catch (Exception ex)
             {
                 ReportHub.LogError(ReportCategory.STARTUP, $"Failed to parse blocklist JSON: {ex.Message}. Skipping blocklist check.");
-                return false;
+                return new GetBanStatusData { isBanned = false };
             }
         }
     }

@@ -25,12 +25,20 @@ namespace DCL.UserInAppInitializationFlow
 
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            bool isBlocklisted = await ApplicationBlocklistGuard.ApplicationBlocklistGuard.IsUserBlocklistedAsync(webRequestController, urlsSource, identityCache.EnsuredIdentity().Address, moderationDataProvider, ct);
+            var banStatusData = await ApplicationBlocklistGuard.ApplicationBlocklistGuard.IsUserBlocklistedAsync(webRequestController, urlsSource, identityCache.EnsuredIdentity().Address, moderationDataProvider, ct);
 
-            if (isBlocklisted)
-                throw new UserBlockedException();
+            if (banStatusData.isBanned)
+                throw new UserBlockedException(banStatusData);
         }
     }
 
-    public class UserBlockedException : Exception { }
+    public class UserBlockedException : Exception
+    {
+        public GetBanStatusData BanStatusData;
+
+        public UserBlockedException(GetBanStatusData banStatusData)
+        {
+            BanStatusData = banStatusData;
+        }
+    }
 }
