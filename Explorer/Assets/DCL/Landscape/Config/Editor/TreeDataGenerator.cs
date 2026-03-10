@@ -42,11 +42,11 @@ namespace DCL.Landscape.Config.Editor
                 ownedParcels = new NativeHashSet<int2>(0, Allocator.TempJob);
 
                 TerrainGenerationUtils.ExtractEmptyParcels(minParcel, maxParcel, ref emptyParcels,
-                    ref ownedParcels);
+                     ownedParcels);
 
                 TerrainGenerationUtils.SetupEmptyParcelsJobs(ref emptyParcelsData,
                                            ref emptyParcelsNeighborData, emptyParcels.AsArray(),
-                                           ref ownedParcels, minParcel, maxParcel,
+                                           ownedParcels, minParcel, maxParcel,
                                            terrainData.heightScaleNerf)
                                       .Complete();
 

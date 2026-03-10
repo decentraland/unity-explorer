@@ -5,6 +5,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -14,8 +15,9 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<AttachmentRegularAsset>?[] AssetResults { get; } = new StreamableLoadingResult<AttachmentRegularAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
+        public StreamableLoadingResult<TrimmedEmoteDTO> TrimmedModel { get; set; }
         public StreamableLoadingResult<AudioClipData>?[] AudioAssetResults { get; } = new StreamableLoadingResult<AudioClipData>?[BodyShape.COUNT];
-
+        public int Amount { get; set; }
         public bool IsLoading { get; private set; }
 
         public Emote() { }
@@ -23,6 +25,7 @@ namespace DCL.AvatarRendering.Emotes
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
+            TrimmedModel = new StreamableLoadingResult<TrimmedEmoteDTO>(model.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
             IsLoading = isLoading;
         }
 
@@ -32,16 +35,25 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public bool IsOnChain() =>
-            IsOnChain(id: this.GetUrn().ToString());
+            IsOnChain(id: ((IAvatarAttachment)this).GetUrn().ToString());
 
         public static bool IsOnChain(string id) =>
             id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");
 
         public AvatarAttachmentDTO DTO =>
             Model.Asset!;
+        public TrimmedEmoteDTO TrimmedDTO =>
+            TrimmedModel.Asset!;
+
+        TrimmedAvatarAttachmentDTO? ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
+        }
 
         public override string ToString() =>
-            ((IAvatarAttachment<EmoteDTO>)this).ToString();
+            $"Emote({DTO.GetHash()} | {((IAvatarAttachment)this).GetUrn()})";
 
         public bool IsLooping() =>
             //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded

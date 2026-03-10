@@ -13,8 +13,6 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
     internal class GltFastSceneDownloadProvider : GltFastDownloadProviderBase
     {
-        private const int ATTEMPTS_COUNT = 6;
-
         private readonly string targetGltfOriginalPath;
         private readonly ISceneData sceneData;
 

@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.SceneBannedUsers
@@ -17,6 +18,9 @@ namespace DCL.SceneBannedUsers
         private readonly bool includeBannedUsersFromScene;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
+        private string roomMetadata = string.Empty;
+        private BannedUsersRoomMetadata bannedUsersRoomMetadata;
+        private HashSet<string> bannedAddressesSet;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
@@ -24,6 +28,18 @@ namespace DCL.SceneBannedUsers
         {
             this.roomHub = roomHub;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
+            roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
+        }
+
+        private void OnRoomMetadataChanged(string metadata)
+        {
+            roomMetadata = metadata;
+            bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
+
+            if (bannedUsersRoomMetadata.BannedAddresses is { Length: > 0 })
+                bannedAddressesSet = new HashSet<string>(bannedUsersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
+            else
+                bannedAddressesSet = null;
         }
 
         /// <summary>
@@ -39,45 +55,7 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
                 return false;
 
-            string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
-
-            if (string.IsNullOrEmpty(roomMetadata))
-                return false;
-
-            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
-
-            if (bannedUsersRoomMetadata.bannedAddresses == null)
-                return false;
-
-            foreach (string wallet in bannedUsersRoomMetadata.bannedAddresses)
-            {
-                if (string.Equals(wallet, userId, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Returns the number of banned users from the current scene.
-        /// </summary>
-        /// <returns>Number of banned users from the current scene.</returns>
-        public int BannedUsersCount()
-        {
-            if (!includeBannedUsersFromScene)
-                return 0;
-
-            if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
-                return 0;
-
-            string roomMetadata = roomHub.SceneRoom().Room().Info.Metadata;
-
-            if (string.IsNullOrEmpty(roomMetadata))
-                return 0;
-
-            BannedUsersRoomMetadata bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
-
-            return bannedUsersRoomMetadata.bannedAddresses?.Length ?? 0;
+            return bannedAddressesSet?.Contains(userId) ?? false;
         }
     }
 }

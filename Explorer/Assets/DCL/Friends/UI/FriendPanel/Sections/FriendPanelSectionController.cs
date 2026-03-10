@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using SuperScrollView;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
@@ -21,6 +22,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected override LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
             requestManager.GetLoopListItemByIndex(loopListView, index);
 
-        protected abstract void ElementClicked(FriendProfile profile);
+        protected abstract void ElementClicked(Profile.CompactInfo profile);
     }
 }

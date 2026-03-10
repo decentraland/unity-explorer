@@ -1,4 +1,4 @@
-﻿using DCL.Web3.Identities;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Global.Versioning;
@@ -26,7 +26,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             AnalyticsConfiguration configuration,
             LauncherTraits launcherTraits,
             BuildData buildData,
-            DCLVersion dclVersion)
+            DCLVersion dclVersion,
+            IWeb3Identity? identity)
         {
             analytics = analyticsService;
             Configuration = configuration;
@@ -34,9 +35,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
+
+            Initialize(identity);
         }
 
-        public void Initialize(IWeb3Identity? web3Identity)
+        private void Initialize(IWeb3Identity? web3Identity)
         {
             if (web3Identity != null && web3Identity.Address != null)
                 analytics.Identify(web3Identity?.Address);
@@ -63,19 +66,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Identify(IWeb3Identity? identity)
         {
-            if (identity != null)
+            analytics.Flush();
+
+            var address = identity?.Address;
+            var props = new JObject
             {
-                analytics.Flush();
+                ["dcl_eth_address"] = address?.ToString() ?? UNDEFINED,
+                ["auth_chain"] = identity?.AuthChain?.ToString() ?? UNDEFINED,
+            };
 
-                analytics.Identify(identity.Address, new JObject
-                    {
-                        ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
-                        ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,
-                    }
-                );
-
-                analytics.Flush();
-            }
+            analytics.Identify(address, props);
+            analytics.Flush();
         }
 
         private void TrackSystemInfo()
@@ -98,5 +99,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Flush() =>
             analytics.Flush();
+
+        public void Dispose() =>
+            (analytics as IDisposable)?.Dispose();
     }
 }

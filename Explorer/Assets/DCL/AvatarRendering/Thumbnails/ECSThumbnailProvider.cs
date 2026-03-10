@@ -1,44 +1,37 @@
 using Arch.Core;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
-using DCL.WebRequests;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
-using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables
 {
     public class ECSThumbnailProvider : IThumbnailProvider
     {
-        private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly World world;
 
-        public ECSThumbnailProvider(IRealmData realmData, World world)
+        public ECSThumbnailProvider(IDecentralandUrlsSource urlsSource, World world)
         {
-            this.realmData = realmData;
+            this.urlsSource = urlsSource;
             this.world = world;
         }
 
-        public async UniTask<Sprite> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
+        public async UniTask<Sprite> GetAsync(IThumbnailAttachment avatarAttachment, CancellationToken ct)
         {
             if (avatarAttachment.ThumbnailAssetResult is { IsInitialized: true })
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
-                    realmData,
-                    avatarAttachment,
-                    world,
-                    PartitionComponent.TOP_PRIORITY,
-                    CancellationTokenSource.CreateLinkedTokenSource(ct))
-                               .Forget();
+            LoadThumbnailsUtils.CreateThumbnailABPromise(
+                urlsSource,
+                avatarAttachment,
+                world,
+                PartitionComponent.TOP_PRIORITY,
+                CancellationTokenSource.CreateLinkedTokenSource(ct));
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment

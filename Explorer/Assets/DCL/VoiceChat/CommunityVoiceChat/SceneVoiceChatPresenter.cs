@@ -1,3 +1,4 @@
+using DCL.UI;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using System;
@@ -10,16 +11,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IDisposable currentSceneActiveCallSubscription;
         private readonly IDisposable currentCallStatusSubscription;
+        private readonly ImageController thumbnailController;
 
         public SceneVoiceChatPresenter(
             SceneVoiceChatPanelView view,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             currentSceneActiveCallSubscription = voiceChatOrchestrator.CurrentSceneSceneActiveCommunityVoiceChatData.Subscribe(OnActiveCommunityChanged);
             currentCallStatusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
             view.SceneVoiceChatActiveCallView.JoinStreamButton.onClick.AddListener(OnJoinStreamClicked);
+            thumbnailController = imageControllerProvider.Create(view.SceneVoiceChatActiveCallView.CommunityThumbnail);
         }
 
         private void OnJoinStreamClicked()
@@ -43,6 +47,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 view.VoiceChatContainer.gameObject.SetActive(true);
                 view.SceneVoiceChatActiveCallView.SetCommunityName(communityData.Value.communityName);
                 view.SceneVoiceChatActiveCallView.SetParticipantCount(communityData.Value.participantCount);
+
+                if (communityData.Value.communityImage != null)
+                    thumbnailController.RequestImage(communityData.Value.communityImage, useKtx: true, defaultSprite: view.SceneVoiceChatActiveCallView.DefaultCommunitySprite);
             }
         }
 
@@ -59,6 +66,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 view.VoiceChatContainer.gameObject.SetActive(true);
                 view.SceneVoiceChatActiveCallView.SetCommunityName(activeCommunityVoiceChat.Value.communityName);
                 view.SceneVoiceChatActiveCallView.SetParticipantCount(activeCommunityVoiceChat.Value.participantCount);
+
+                if (activeCommunityVoiceChat.Value.communityImage != null)
+                    thumbnailController.RequestImage(activeCommunityVoiceChat.Value.communityImage, useKtx: true, defaultSprite: view.SceneVoiceChatActiveCallView.DefaultCommunitySprite);
             }
             else
             {

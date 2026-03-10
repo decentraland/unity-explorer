@@ -35,21 +35,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             // We cannot use ArrayPool<byte>.Shared since some operations might not be thread safe (like the handshake)
             // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
-                new ArchipelagoSignedConnection(new WebSocketArchipelagoLiveConnection(memoryPool),
-                        multiPool, memoryPool, web3IdentityCache)
-                   .WithLog(),
-                memoryPool,
-                multiPool
-            ).WithLog(),
-            characterObject,
-            currentAdapterAddress
-        ) { }
+                new ArchipelagoSignedConnection(new WebSocketArchipelagoLiveConnection(memoryPool), multiPool, memoryPool, web3IdentityCache)
+                   .WithLog(), memoryPool, multiPool).WithLog(), characterObject, currentAdapterAddress) { }
 
         public ArchipelagoIslandRoom(
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress
-        )
+        ) : base()
         {
             this.signFlow = signFlow;
             this.characterObject = characterObject;

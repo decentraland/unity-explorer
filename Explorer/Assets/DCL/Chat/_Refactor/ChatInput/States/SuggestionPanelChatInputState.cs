@@ -1,19 +1,27 @@
-﻿using DCL.Audio;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
+using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.CustomInputField;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
 using UnityEngine.Pool;
 
 namespace DCL.Chat.ChatInput
 {
-    public class SuggestionPanelChatInputState : IndependentMVCState<ChatInputStateContext>, IDisposable
+    public class SuggestionPanelChatInputState : IndependentMVCState, IDisposable
     {
+        private readonly ChatInputView chatInputView;
+        private readonly EmojiMapping emojiMapping;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly GetParticipantProfilesCommand getParticipantProfilesCommand;
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
         private static readonly Regex PROFILE_PATTERN_REGEX = new (@"(?:^|\s)@([A-Za-z0-9]{1,15})(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex PRE_MATCH_PATTERN_REGEX = new (@"(?<=^|\s)([@:]\S+)$", RegexOptions.Compiled);
@@ -25,23 +33,28 @@ namespace DCL.Chat.ChatInput
         private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
         private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary;
 
-        private readonly List<Profile> participantProfiles = new (100);
+        private readonly List<Profile.CompactInfo> participantProfiles = new (100);
 
         private int wordMatchIndex;
         private Match lastMatch = Match.Empty;
 
-        public SuggestionPanelChatInputState(ChatInputStateContext context) : base(context)
+        public SuggestionPanelChatInputState(ChatInputView chatInputView, EmojiMapping emojiMapping, ProfileRepositoryWrapper profileRepositoryWrapper, GetParticipantProfilesCommand getParticipantProfilesCommand)
         {
-            suggestionPanelController = new InputSuggestionPanelController(context.ChatInputView.suggestionPanel);
-            clickDetectionHandler = new ChatClickDetectionHandler(context.ChatInputView.suggestionPanel.transform);
+            this.chatInputView = chatInputView;
+            this.emojiMapping = emojiMapping;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.getParticipantProfilesCommand = getParticipantProfilesCommand;
+
+            suggestionPanelController = new InputSuggestionPanelController(chatInputView.suggestionPanel);
+            clickDetectionHandler = new ChatClickDetectionHandler(chatInputView.suggestionPanel.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;
             clickDetectionHandler.Pause();
 
-            inputField = context.ChatInputView.inputField;
+            inputField = chatInputView.inputField;
 
-            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiMapping.NameMapping.Count);
+            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(emojiMapping.NameMapping.Count);
 
-            foreach (KeyValuePair<string, EmojiData> pair in context.EmojiMapping.NameMapping)
+            foreach (KeyValuePair<string, EmojiData> pair in emojiMapping.NameMapping)
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
         }
 
@@ -51,7 +64,7 @@ namespace DCL.Chat.ChatInput
             clickDetectionHandler.Dispose();
         }
 
-        internal bool TryFindMatch(string inputText)
+        internal async UniTask<bool> TryFindMatchAsync(string inputText, CancellationToken ct)
         {
             //With this we are detecting only the last word (where the current caret position is) and checking for matches there.
             //This regex already pre-matches the starting patterns for both Emoji ":" and Profile "@" patterns, and only sends the match further to validate other specific conditions
@@ -62,14 +75,14 @@ namespace DCL.Chat.ChatInput
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
 
                 //If we don't find any emoji pattern only then we look for username patterns
 
                 UpdateProfileNameMap();
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
+                lastMatch = await suggestionPanelController.HandleSuggestionsSearchAsync(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary, ct);
 
                 if (lastMatch.Success) return true;
             }
@@ -86,19 +99,19 @@ namespace DCL.Chat.ChatInput
             {
                 if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputView.emojiContainer.addEmojiAudio);
                 int replaceAmount = lastMatch.Groups[1].Length;
                 int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 
                 inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
-                context.ChatInputView.RefreshCharacterCount();
+                chatInputView.RefreshCharacterCount();
             }
 
             // TODO It's here because the input field needs to be focused again after losing focus
-            context.ChatInputView.SelectInputField();
+            chatInputView.SelectInputField();
         }
 
-        protected override void Activate(ControllerNoData input)
+        protected override void Activate()
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;
@@ -115,12 +128,12 @@ namespace DCL.Chat.ChatInput
 
         private void UpdateProfileNameMap()
         {
-            context.GetParticipantProfilesCommand.Execute(participantProfiles);
+            getParticipantProfilesCommand.Execute(participantProfiles);
 
             List<KeyValuePair<string, ProfileInputSuggestionData>>? profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
             profileSuggestions.AddRange(profileSuggestionsDictionary);
 
-            for (var index = 0; index < profileSuggestions.Count; index++)
+            for (int index = 0; index < profileSuggestions.Count; index++)
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
                 bool isThereProfileForSuggestion = participantProfiles.FindIndex(profile => profile.UserId == suggestion.Value.GetId()) > -1;
@@ -133,17 +146,14 @@ namespace DCL.Chat.ChatInput
             ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Release(profileSuggestions);
 
             //We add or update the remaining participants
-            foreach (Profile? profile in participantProfiles)
+            foreach (Profile.CompactInfo profile in participantProfiles)
             {
-                if (profile != null)
+                if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                 {
-                    if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
-                    {
-                        if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper);
-                    }
-                    else { profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, context.ProfileRepositoryWrapper)); }
+                    if (!profileSuggestionData.ProfileData.Equals(profile))
+                        profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
                 }
+                else profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profileRepositoryWrapper));
             }
         }
     }

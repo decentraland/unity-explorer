@@ -49,13 +49,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.gameObject.SetActive(true);
             view.CleanupEntry();
 
-            var nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name.Value);
-            view.SetupParticipantProfile(currentParticipantState.Name.Value, nameColor, profileRepositoryWrapper, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
+            Color nameColor = NameColorHelper.GetNameColor(currentParticipantState.Name);
+            view.SetupParticipantProfile(currentParticipantState.Name, nameColor, profileRepositoryWrapper, currentParticipantState.ProfilePictureUrl, currentParticipantState.WalletId, cts.Token);
 
             // We only show context menu button on top of the local participant if the local participant is a moderator.
             var showContextMenuButton = true;
 
-            if (currentParticipantState.Name.Value == localParticipantState.Name.Value)
+            if (currentParticipantState.Name == localParticipantState.Name)
                 showContextMenuButton = VoiceChatRoleHelper.IsModeratorOrOwner(localParticipantState.Role.Value);
 
             view.SetContextMenuButtonVisibility(showContextMenuButton);
@@ -138,7 +138,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.ParticipantRequestingToSpeakChanged(showApproveDenySection);
 
             if (isRequestingToSpeak)
-                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name.Value);
+                UserIsRequestingToSpeak?.Invoke(currentParticipantState.Name);
         }
 
         private void ParticipantIsMutedChanged(bool isMuted)

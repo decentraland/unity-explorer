@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine.Device;
 using UnityEngine.Pool;
@@ -46,7 +47,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
-            string path = System.IO.Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            string path = Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
             const int DEFAULT_LIMIT = 500;
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
@@ -59,6 +60,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             current = this;
         }
 
+        // must NOT have a destructor over native. Might cause the crash issue.
         public void Dispose()
         {
             current = null;
@@ -66,12 +68,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             if (result == false)
                 throw new Exception("Rust Segment dispose failed");
-        }
-
-        ~RustSegmentAnalyticsService()
-        {
-            if (current == this)
-                Dispose();
         }
 
         public void Identify(string? userId, JObject? traits = null)
@@ -181,26 +177,45 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void ErrorCallback(IntPtr msg)
         {
-            string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+            try
+            {
+                string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
-            ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+                // Required to avoid polluting Sentry with retry messages
+                string reportCategory = marshaled.Contains("(will retry)")
+                    ? ReportCategory.ANALYTICS_INTERNAL
+                    : ReportCategory.ANALYTICS;
+
+                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+            }
+            catch
+            {
+                // Ignore to avoid possibility of double exception
+            }
         }
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {
-            if (current == null) return;
-
-            lock (current.afterClean)
+            try
             {
-                var type = current.afterClean[operationId].Item1;
+                if (current == null) return;
 
-                ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
+                lock (current.afterClean)
+                {
+                    var type = current.afterClean[operationId].Item1;
 
-                if (response is not NativeMethods.Response.Success)
-                    ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+                    ReportHub.Log(ReportCategory.ANALYTICS, $"Segment Operation {operationId} {type} finished with: {response}");
 
-                current.CleanMemory(operationId);
+                    if (response is not NativeMethods.Response.Success)
+                        ReportHub.LogException(new Exception($"Segment operation {operationId} {type} failed with: {response}"), ReportCategory.ANALYTICS);
+
+                    current.CleanMemory(operationId);
+                }
+            }
+            catch
+            {
+                // Ignore to avoid possibility of double exception
             }
         }
 

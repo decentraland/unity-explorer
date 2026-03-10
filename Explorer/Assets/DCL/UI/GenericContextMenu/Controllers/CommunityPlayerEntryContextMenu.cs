@@ -9,6 +9,7 @@ using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -53,6 +54,7 @@ namespace DCL.UI
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -88,7 +90,8 @@ namespace DCL.UI
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
-            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider)
+            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -101,6 +104,7 @@ namespace DCL.UI
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked, null, false, false);
 
@@ -135,7 +139,7 @@ namespace DCL.UI
                           ;
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile targetProfile, Vector3 position, Vector2 offset,
+        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo targetProfile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
             bool targetIsSpeaker = false)
@@ -161,7 +165,7 @@ namespace DCL.UI
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
-            userProfileControlSettings.SetInitialData(targetProfile.ToUserData(), contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(targetProfile, contextMenuFriendshipStatus);
 
             openUserProfileButtonControlSettings.SetData(targetProfile.UserId);
             openConversationControlSettings.SetData(targetProfile.UserId);
@@ -202,21 +206,21 @@ namespace DCL.UI
                    };
         }
 
-        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userData.userAddress);
+                    SendFriendRequest(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userData.userAddress);
+                    RemoveFriend(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userData.userAddress);
+                    CancelFriendRequest(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userData.userAddress);
+                    AcceptFriendship(userData.UserId);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -302,7 +306,7 @@ namespace DCL.UI
         private void OnJumpInClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource, parcel => JumpToFriendClicked(userId, parcel));
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>
@@ -361,7 +365,7 @@ namespace DCL.UI
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          voiceChatContextMenuSettings.BanUserPopupSprite,
                                                                                          false, false,
-                                                                                         userInfo: new ConfirmationDialogParameter.UserData(walletId, participant.ProfilePictureUrl, NameColorHelper.GetNameColor(participant.Name))),
+                                                                                         userInfo: participant.Profile),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

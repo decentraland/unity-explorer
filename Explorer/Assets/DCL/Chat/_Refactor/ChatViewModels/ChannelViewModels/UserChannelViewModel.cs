@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatViewModels
         public bool IsOnline { get; set; }
         public bool HasClaimedName { get; set; }
         public bool IsOfficial { get; set; }
-        public IReactiveProperty<ProfileThumbnailViewModel.WithColor> ProfilePicture { get; } = ProfileThumbnailViewModel.WithColor.DefaultReactive();
+        public IReactiveProperty<ProfileThumbnailViewModel> ProfilePicture { get; } = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.Default());
 
         public UserChannelViewModel(ChatChannel.ChannelId id, int unreadMessagesCount, bool hasUnreadMentions)
             : base(id, ChatChannel.ChatChannelType.USER, unreadMessagesCount, hasUnreadMentions)

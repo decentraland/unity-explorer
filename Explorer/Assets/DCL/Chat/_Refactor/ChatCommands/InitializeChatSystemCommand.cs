@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -87,8 +87,14 @@ namespace DCL.Chat.ChatCommands
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
 
-            if (nearbyChannel.Messages.Count == 0)
-                chatHistory.AddMessage(nearbyChannel.Id, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("Type /help for available commands."));
+            const string SYSTEM_MESSAGE_TEXT = "Type /help for available commands.";
+
+            bool hasSystemMessage = nearbyChannel.Messages.Count > 0
+                                    && nearbyChannel.Messages[^1].IsSystemMessage
+                                    && nearbyChannel.Messages[^1].Message == SYSTEM_MESSAGE_TEXT;
+
+            if (!hasSystemMessage)
+                nearbyChannel.InsertAsOldestMessage(ChatMessage.NewFromSystem(SYSTEM_MESSAGE_TEXT));
 
             nearbyChannel.MarkAllMessagesAsRead();
 
@@ -116,7 +122,7 @@ namespace DCL.Chat.ChatCommands
 
             if (ct.IsCancellationRequested) return;
 
-            if (result.Success)
+            if (result.Success && result.Value?.data?.results != null)
             {
                 var openCommunities = new List<GetUserCommunitiesData.CommunityData>();
                 var response = result.Value;

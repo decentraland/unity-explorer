@@ -4,6 +4,6 @@ namespace DCL.Web3
     {
         public long id;
         public string jsonrpc;
-        public object result;
+        public object? result;
     }
 }

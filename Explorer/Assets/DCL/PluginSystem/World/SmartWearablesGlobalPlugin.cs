@@ -1,4 +1,5 @@
-﻿using Arch.SystemGroups;
+﻿using System;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
@@ -8,6 +9,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.SmartWearables;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;
 using MVC;
 using PortableExperiences.Controller;
@@ -29,6 +31,7 @@ namespace DCL.PluginSystem.SmartWearables
         private readonly ILoadingStatus loadingStatus;
         private readonly IMVCManager mvcManager;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private SmartWearableAuthorizationPopupController? popupController;
 
@@ -40,7 +43,8 @@ namespace DCL.PluginSystem.SmartWearables
             IAssetsProvisioner assetsProvisioner,
             ILoadingStatus loadingStatus,
             IMVCManager mvcManager,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -51,6 +55,7 @@ namespace DCL.PluginSystem.SmartWearables
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
             this.thumbnailProvider = thumbnailProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -87,9 +92,11 @@ namespace DCL.PluginSystem.SmartWearables
                 scenesCache,
                 loadingStatus,
                 mvcManager,
-                thumbnailProvider);
+                thumbnailProvider,
+                web3IdentityCache);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             public AssetReferenceGameObject AuthorizationPopup;

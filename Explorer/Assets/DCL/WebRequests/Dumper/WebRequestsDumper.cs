@@ -1,19 +1,27 @@
 ﻿using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests.GenericDelete;
+using DCL.WebRequests.Analytics;
+using DCL.WebRequests.Analytics.Metrics;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using NUnit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Scripting;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+
+[assembly: InternalsVisibleTo("DCL.Editor")]
 
 namespace DCL.WebRequests.Dumper
 {
@@ -31,11 +39,55 @@ namespace DCL.WebRequests.Dumper
             },
         };
 
+        internal readonly RequestMetricRecorder[] activeMetrics = new RequestMetricRecorder[MetricsRegistry.TYPES.Length];
+
         private readonly WebRequestDump dump = new ();
 
-        public bool Enabled { get; private set; }
+#if UNITY_EDITOR
+        /// <summary>
+        ///     Preserves the values across domain reload (edit mode => play mode)
+        /// </summary>
+        private bool IsEnabledFromEditorPrefs
+        {
+            get => EditorPrefs.GetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", false);
+            set => EditorPrefs.SetBool($"{nameof(WebRequestsDumper)}.{nameof(Enabled)}", value);
+        }
+#endif
+
+        private bool isEnabled;
+
+        public bool Enabled
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return IsEnabledFromEditorPrefs;
+#else
+                return isEnabled;
+#endif
+            }
+
+            set
+            {
+#if UNITY_EDITOR
+                IsEnabledFromEditorPrefs = value;
+#else
+                isEnabled = value;
+#endif
+            }
+        }
 
         public string Filter { get; set; } = string.Empty;
+
+        /// <summary>
+        ///     Whether the <see cref="Filter" /> is treated as Regex (C# format)
+        /// </summary>
+        public bool IsRegEx { get; set; }
+
+        public bool IsMatch(bool signed, string url) =>
+            Enabled && !signed && (string.IsNullOrEmpty(Filter) || (IsRegEx ? Regex.IsMatch(url, Filter) : url.Contains(Filter, StringComparison.OrdinalIgnoreCase)));
+
+        public WebRequestDumpAnalyticsHandler? AnalyticsHandler { get; set; }
 
         public int Count => dump.entries.Count;
 
@@ -68,27 +120,72 @@ namespace DCL.WebRequests.Dumper
 
         public IReadOnlyList<Envelope> Entries => entries;
 
+        public UniTask RecreateWithTiming(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken ct)
+        {
+            if (entries.Count == 0) return UniTask.CompletedTask;
+
+            DateTime startTime = entries[0].StartTime;
+
+            return UniTask.WhenAll(entries.Select(ScheduleRequestAsync));
+
+            async UniTask ScheduleRequestAsync(Envelope envelope)
+            {
+                await UniTask.Delay(envelope.StartTime - startTime, DelayType.Realtime, cancellationToken: ct);
+                await envelope.RecreateWithNoOp(webRequestController, assetBundleLoadingMutex, ct);
+            }
+        }
+
         [Serializable]
         [Preserve]
         public class Envelope
         {
+            public enum StatusKind
+            {
+                // Request is either not sent due to budgeting or is still processing
+                NOT_CONCLUDED = 0,
+                FAILURE = 1,
+                SUCCESS = 2,
+            }
+
             public readonly object Args;
             public readonly Type ArgsType;
             public readonly CommonArguments CommonArguments;
             public readonly WebRequestHeadersInfo? HeadersInfo;
 
             public readonly Type RequestType;
+            public readonly DateTime StartTime;
+
+            /// <summary>
+            ///     Url the request was actually executed with after all transformations
+            /// </summary>
+            public string? EffectiveUrl;
+            public StatusKind Status;
+            public DateTime EndTime;
+
+            [JsonIgnore]
+            public float Duration;
 
             // Sign is not supported
 
             [JsonConstructor]
-            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo)
+            internal Envelope(Type requestType, CommonArguments commonArguments, Type argsType, object args, WebRequestHeadersInfo? headersInfo,
+                DateTime startTime, /*is nullable for compatibility with previously serialized dumps*/ string? effectiveUrl = null)
             {
                 CommonArguments = commonArguments;
                 ArgsType = argsType;
                 Args = args;
                 HeadersInfo = headersInfo;
                 RequestType = requestType;
+                Status = StatusKind.NOT_CONCLUDED;
+                StartTime = startTime;
+                EffectiveUrl = effectiveUrl;
+            }
+
+            internal void Conclude(StatusKind status, DateTime time)
+            {
+                Status = status;
+                EndTime = time;
+                Duration = (float)time.Subtract(StartTime).TotalSeconds;
             }
 
             public UniTask RecreateWithNoOp(IWebRequestController webRequestController, AssetBundleLoadingMutex assetBundleLoadingMutex, CancellationToken token)
@@ -127,6 +224,9 @@ namespace DCL.WebRequests.Dumper
                         return webRequestController.DeleteAsync(envelope.CommonArguments, deleteArguments, token, ReportCategory.GENERIC_WEB_REQUEST, envelope.HeadersInfo)
                                                    .WithNoOpAsync();
 
+                    if (typeof(TWebRequest) == typeof(GenericHeadRequest) && envelope.Args is GenericHeadArguments)
+                        return webRequestController.HeadAsync(envelope.CommonArguments, token, ReportCategory.GENERIC_WEB_REQUEST, headersInfo: envelope.HeadersInfo).WithNoOpAsync();
+
                     if (typeof(TWebRequest) == typeof(GetTextureWebRequest) && envelope.Args is GetTextureArguments textureArguments)
                         return webRequestController.GetTextureAsync(envelope.CommonArguments, textureArguments,
                             GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear), token, ReportCategory.GENERIC_WEB_REQUEST);
@@ -134,6 +234,9 @@ namespace DCL.WebRequests.Dumper
                     if (typeof(TWebRequest) == typeof(GetAssetBundleWebRequest) && envelope.Args is GetAssetBundleArguments abArguments)
                         return webRequestController.GetAssetBundleAsync(envelope.CommonArguments, new GetAssetBundleArguments(assetBundleLoadingMutex, abArguments.CacheHash, abArguments.AutoLoadAssetBundle),
                             token, headersInfo: envelope.HeadersInfo);
+
+                    if (typeof(TWebRequest) == typeof(GetAudioClipWebRequest) && envelope.Args is GetAudioClipArguments audioClipArguments)
+                        return webRequestController.GetAudioClipAsync(envelope.CommonArguments, audioClipArguments, new GetAudioClipWebRequest.CreateAudioClipOp(), token, ReportCategory.GENERIC_WEB_REQUEST, headersInfo: envelope.HeadersInfo);
 
                     throw new NotSupportedException($"\"{typeof(TWebRequest).FullName} & {envelope.Args.GetType()}\" is not supported");
                 }

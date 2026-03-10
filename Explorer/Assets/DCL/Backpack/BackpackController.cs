@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -55,6 +56,7 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly BackpackSections currentSection = BackpackSections.Avatar;
+        private readonly IRealmData realmData;
 
         private BackpackSections lastShownSection;
         private CancellationTokenSource? animationCts;
@@ -118,7 +120,7 @@ namespace DCL.Backpack
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
-                realmData,
+                decentralandUrlsSource,
                 outfitsLogger);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
@@ -224,9 +226,7 @@ namespace DCL.Backpack
             animationCts.SafeCancelAndDispose();
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
-            backpackEmoteGridController.Dispose();
             emoteInfoPanelController.Dispose();
-
         }
 
         private void ToggleTipsContent()
@@ -243,27 +243,32 @@ namespace DCL.Backpack
 
             isAvatarLoaded = false;
 
-            world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
+            var avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
             backpackGridController.RequestPage(1, true);
-            backpackEmoteGridController.RequestAndFillEmotes(1, true);
-            backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.AVATAR_POSITION_1);
+            backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.BACKPACK_PREVIEW_POSITION);
 
-            if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);
+            while (!avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
+                await UniTask.Yield();
+            }
 
             if (ct.IsCancellationRequested) return;
 
-            backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearableCategories.Categories.HAIR));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearableCategories.Categories.EYES));
-            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearableCategories.Categories.BODY_SHAPE));
-            backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
-            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, false));
+            var wearables = new List<string>(avatar.Wearables.Count);
+            foreach (var w in avatar.Wearables) wearables.Add(w.Shorten());
 
-            foreach (URN w in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten(), false));
+            var command = new BackpackEquipOutfitCommand(
+                avatar.BodyShape.Value,
+                wearables,
+                avatar.EyesColor,
+                avatar.HairColor,
+                avatar.SkinColor,
+                avatar.ForceRender
+            );
+            backpackCommandBus.SendCommand(command);
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
             {

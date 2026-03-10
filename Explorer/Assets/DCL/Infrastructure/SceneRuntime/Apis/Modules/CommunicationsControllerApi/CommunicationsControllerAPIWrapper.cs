@@ -1,7 +1,7 @@
 using CrdtEcsBridge.PoolsProviders;
+using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8.FastProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
@@ -9,27 +9,13 @@ using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
-    public sealed class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>, IV8FastHostObject
+    public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly List<PoolableByteArray> lastInput = new (10);
-        private static readonly V8FastHostObjectOperations<CommunicationsControllerAPIWrapper> OPERATIONS = new();
-        IV8FastHostObjectOperations IV8FastHostObject.Operations => OPERATIONS;
-        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        static CommunicationsControllerAPIWrapper()
-        {
-            OPERATIONS.Configure(static configuration =>
-            {
-                configuration.AddMethodGetter(nameof(SendBinary),
-                    static (CommunicationsControllerAPIWrapper self, in V8FastArgs args, in V8FastResult result) =>
-                    {
-                        var broadcastData = args.Get<IList<object>>(0);
-                        var peerData = args.Count > 1 ? args.Get<IList<object>>(1) : null;
-                        result.Set(self.SendBinary(broadcastData, peerData));
-                    });
-            });
-        }
+        private readonly List<PoolableByteArray> lastInput = new (10);
+
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
         public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
@@ -53,7 +39,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         {
             try
             {
-                for (int i = 0; i < dataList.Count; i++)
+                for (var i = 0; i < dataList.Count; i++)
                 {
                     var message = (ITypedArray<byte>)dataList[i];
                     PoolableByteArray element = PoolableByteArray.EMPTY;
@@ -88,32 +74,41 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             }
         }
 
-        /// <param name="broadcastData">Uint8Array[]</param>
-        /// <param name="peerData">PeerMessageData[]</param>
-        /// <returns>Uint8Array[]</returns>
-        private ScriptObject SendBinary(IList<object> broadcastData, IList<object>? peerData)
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData) =>
+            SendBinary(broadcastData, null);
+
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
             SendBinaryToParticipants(broadcastData, null);
 
             if (peerData != null)
-            {
-                foreach (ScriptObject peerMessageData in peerData)
+                for (var i = 0; i < peerData.Count; i++)
                 {
-                    var data = (IList<object>)peerMessageData.GetProperty("data");
+                    object? obj = peerData[i];
 
-                    if (data.Count == 0)
-                        continue;
+                    if (obj is IScriptObject perRecipientStruct)
+                    {
+                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
 
-                    var address = (IList<object>)peerMessageData.GetProperty("address");
+                        if (data.Count is 0)
+                            continue;
 
-                    if (address.Count == 0)
-                        SendBinaryToParticipants(data, null);
-                    else
-                        foreach (string recipient in address)
-                            if (!string.IsNullOrEmpty(recipient))
-                                SendBinaryToParticipants(data, recipient);
+                        if (recipient.Count is 0)
+                            SendBinaryToParticipants(data, null);
+
+                        foreach (object? address in recipient)
+                            if (address != null)
+                            {
+                                var stringAddress = (string)address;
+
+                                if (!string.IsNullOrEmpty(stringAddress))
+                                    SendBinaryToParticipants(data, stringAddress);
+                            }
+                    }
                 }
-            }
 
             return api.GetResult();
         }

@@ -20,10 +20,6 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetAnimatorParameters(ref CharacterAnimationComponent animationComponent, IAvatarView view, bool isGrounded, int movementBlendId)
         {
-            // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
-            if (!isGrounded)
-                return;
-
             view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, movementBlendId);
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }
@@ -31,13 +27,17 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalculateBlendValue(float dt, float currentMovementBlend, MovementKind movementKind, float velocitySqrMagnitude, ICharacterControllerSettings settings)
         {
-            float maxVelocity = SpeedLimit.Get(settings, movementKind);
-            var targetBlend = 0f;
+            float animationBlendingSpeedLimit = MovementSpeedLimitHelper.GetAnimationBlendingSpeedLimit(settings, movementKind);
+            float targetBlend = 0f;
 
-            if (maxVelocity > 0)
-                targetBlend = Mathf.Sqrt(velocitySqrMagnitude) / maxVelocity * (int)movementKind;
+            if (animationBlendingSpeedLimit > 0)
+                targetBlend = Mathf.Clamp01(Mathf.Sqrt(velocitySqrMagnitude) / animationBlendingSpeedLimit) * (int)movementKind;
 
-            float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * settings.MovAnimBlendSpeed);
+            // Make blend speed proportional to current delta, similar to a lerp
+            // We do this because scenes can override the movement speed and blend speed must react to that
+            float blendSpeed = Mathf.Abs(currentMovementBlend - targetBlend) * settings.MoveAnimBlendSpeed;
+            blendSpeed = Mathf.Max(blendSpeed, settings.MoveAnimBlendSpeed);
+            float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * blendSpeed);
 
             return result.ClampSmallValuesToZero(BLEND_EPSILON);
         }

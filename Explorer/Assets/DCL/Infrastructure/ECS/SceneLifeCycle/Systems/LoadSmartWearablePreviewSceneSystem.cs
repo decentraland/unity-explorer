@@ -5,6 +5,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -23,11 +24,15 @@ namespace ECS.SceneLifeCycle.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadSmartWearablePreviewSceneSystem : BaseUnityLoopSystem
     {
-        private readonly IWebRequestController webRequestController;
+        private static readonly ISet<long> IGNORE_ERROR_CODES = new HashSet<long> { 404 };
 
-        public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController) : base(world)
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource) : base(world)
         {
             this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
         }
 
         protected override void Update(float t)
@@ -61,15 +66,11 @@ namespace ECS.SceneLifeCycle.Systems
             string url = URLBuilder.Combine(ipfs.CatalystBaseUrl, URLSubdirectory.FromString("preview-wearables")).Value;
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
-            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
+            var response = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE, ignoreErrorCodes: IGNORE_ERROR_CODES)
                                                      .CreateFromJson<PreviewWearablesResponse>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-            if (ct.IsCancellationRequested) return;
 
-            if (!response.ok)
-            {
-                ReportHub.LogError(GetReportCategory(), "The request to the /preview-wearables endpoint failed");
-                return;
-            }
+
+            if (ct.IsCancellationRequested || !response.ok) return;
 
             // If no wearables are returned, it just means we are not previewing a wearable, no need to log an error
             if (response.data.Count == 0)  return;
@@ -96,7 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
                                   .Select(PreviewWearablesResponse.WearableContent.ToContentDefinition)
                                   .ToArray(),
             };
-            var ipfsPath = new IpfsPath(definition.id!, URLDomain.EMPTY);
+            var ipfsPath = new IpfsPath(definition.id!, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
 
             // NOTICE that when creating the scene we do NOT mark it as a PX because we are running it as a normal scene
             SceneDefinitionComponent definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath);
@@ -104,7 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             Entity scene = World.Create(definitionComponent, PartitionComponent.TOP_PRIORITY);
-            CreateSceneFacadePromise.Execute(World, scene, ipfs, definitionComponent, PartitionComponent.TOP_PRIORITY);
+            CreateSceneFacadePromise.Execute(World, scene, definitionComponent, PartitionComponent.TOP_PRIORITY);
 
             World.Set(realm, new SmartWearablePreviewScene { Value = scene });
         }
@@ -123,18 +124,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             sceneJsonUrl = string.Empty;
             return false;
-        }
-
-        /// <summary>
-        ///     Attached to the realm entity.
-        ///     Signals to the system that scene loading has started and stores a reference to the loaded scene entity.
-        /// </summary>
-        private struct SmartWearablePreviewScene
-        {
-            /// <summary>
-            ///     The scene entity that was loaded.
-            /// </summary>
-            public Entity Value;
         }
 
         /// <summary>

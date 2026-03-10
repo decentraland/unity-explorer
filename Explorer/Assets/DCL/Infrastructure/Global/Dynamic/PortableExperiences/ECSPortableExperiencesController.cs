@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -19,7 +19,8 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using Global.Dynamic.LaunchModes;
+using ECS.SceneLifeCycle.Realm;
+using DCL.Utility;
 
 namespace PortableExperiences.Controller
 {
@@ -82,7 +83,7 @@ namespace PortableExperiences.Controller
             string worldUrl = string.Empty;
 
             if (ens.IsValid)
-                worldUrl = ens.ConvertEnsToWorldUrl();
+                worldUrl = ens.ConvertEnsToWorldUrl(urlsSources.Url(DecentralandUrl.WorldServer));
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
@@ -108,14 +109,15 @@ namespace PortableExperiences.Controller
             var realmData = new RealmData();
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
+                new IpfsRealm(portableExperiencePath,
                     result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                WorldManifest.Empty
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);

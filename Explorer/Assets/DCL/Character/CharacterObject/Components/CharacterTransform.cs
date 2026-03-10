@@ -11,13 +11,13 @@ namespace DCL.Character.Components
     public struct CharacterTransform : IPoolableComponentProvider<Transform>
     {
         private const float MINIMAL_DISTANCE_DIFFERENCE = 0.01f;
-        
+
         public readonly Transform Transform;
-        
+
         public bool IsDirty { get; private set; }
-        
+
         private Vector3 oldPosition;
-        
+
         public CharacterTransform(Transform transform)
         {
             Transform = transform;
@@ -43,19 +43,24 @@ namespace DCL.Character.Components
             TrySetDirty(position);
         }
 
+        public void SetRotation(Quaternion rotation)
+        {
+            Transform.rotation = rotation;
+        }
+
         public void ClearDirty()
         {
             IsDirty = false;
         }
-        
+
         private void TrySetDirty(Vector3 newPosition)
         {
             if (IsDirty) return;
-            
+
             float distance = CheapDistance(oldPosition, newPosition);
 
             if (distance < MINIMAL_DISTANCE_DIFFERENCE) return;
-            
+
             oldPosition = newPosition;
             IsDirty = true;
         }

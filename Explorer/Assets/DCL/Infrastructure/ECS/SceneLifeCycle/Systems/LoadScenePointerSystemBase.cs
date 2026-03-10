@@ -16,7 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
     public abstract class LoadScenePointerSystemBase : BaseUnityLoopSystem
     {
         private readonly HashSet<Vector2Int> roadCoordinates;
-        private readonly IRealmData realmData;
+        protected readonly IRealmData realmData;
 
         protected LoadScenePointerSystemBase(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world)
         {

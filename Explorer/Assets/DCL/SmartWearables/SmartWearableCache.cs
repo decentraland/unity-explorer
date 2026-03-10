@@ -27,6 +27,8 @@ namespace Runtime.Wearables
     {
         private const int MIN_SDK_VERSION = 7;
 
+        private const string NULL_DTO_WEARABLE_ID = "null-dto-wearable-id";
+
         private readonly IWebRequestController webRequestController;
 
         private readonly Dictionary<string, CacheItem> cache = new ();
@@ -56,11 +58,13 @@ namespace Runtime.Wearables
 
         /// <summary>
         ///     Gets the ID the cache uses to identify wearables.
-        /// </summary>
+        /// </summary>.
         public static string GetCacheId(IWearable wearable) =>
+
             // To avoid confusion, since the DTO itself has an ID that is different from the ID in the metadata
             // We want to always use this ID
-            wearable.DTO.Metadata.id;
+            // If the DTO is null (happens in some environments), we just return a predefined ID to avoid null refs
+            wearable.DTO?.Metadata.id ?? NULL_DTO_WEARABLE_ID;
 
         /// <summary>
         ///     Whether the wearable is a smart wearable.
@@ -101,6 +105,14 @@ namespace Runtime.Wearables
             return ct.IsCancellationRequested ? (null, null) : (item.SceneContent, item.SceneMetadata);
         }
 
+        public void Clear()
+        {
+            cache.Clear();
+            AuthorizedSmartWearables.Clear();
+            RunningSmartWearables.Clear();
+            KilledPortableExperiences.Clear();
+        }
+
         private async UniTask<CacheItem> CacheWearableInternalAsync(IWearable wearable, CancellationToken ct)
         {
             string id = GetCacheId(wearable);
@@ -108,6 +120,9 @@ namespace Runtime.Wearables
 
             item = new CacheItem();
             cache.Add(id, item);
+
+            // Null DTO wearable, just consider it non-smart
+            if (wearable.DTO == null) return item;
 
             item.IsSmart = IsSmart(wearable);
             if (!item.IsSmart) return item;
@@ -123,7 +138,7 @@ namespace Runtime.Wearables
 
             var args = new CommonLoadingArguments(URLAddress.FromString(url));
             item.SceneMetadata = await webRequestController.GetAsync(args, ct, ReportCategory.WEARABLE)
-                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                           .CreateFromJson<SceneMetadata>(WRJsonParser.Newtonsoft);
             if (ct.IsCancellationRequested) return null;
 
             item.IsSmart &= int.TryParse(item.SceneMetadata.runtimeVersion, out int version) && version >= MIN_SDK_VERSION;

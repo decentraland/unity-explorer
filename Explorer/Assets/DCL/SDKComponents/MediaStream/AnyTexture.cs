@@ -1,5 +1,4 @@
 ﻿using REnum;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -11,7 +10,7 @@ namespace ECS.StreamableLoading.Textures
     [REnum]
     [REnumField(typeof(VideoTextureData))]
     [REnumField(typeof(Texture2D))]
-    public partial struct AnyTexture : IEquatable<AnyTexture>
+    public partial struct AnyTexture
     {
         public long ByteSize => Match(static _ => 0L, tex2d => tex2d.GetRawTextureData<byte>().Length);
 

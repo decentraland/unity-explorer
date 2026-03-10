@@ -17,8 +17,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const string INVITES_RESULTS_TITLE = "Invites";
         private const string REQUESTS_RECEIVED_RESULTS_TITLE = "Requests Received";
-        private const string REQUESTS_RESULTS_TITLE_FOR_OWNERS = "Requests Sent";
-        private const string REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS = "Requests";
+        private const string REQUESTS_RESULTS_TITLE = "Requests Sent";
         private const int INVITES_AND_REQUESTS_COMMUNITY_CARDS_POOL_DEFAULT_CAPACITY = 5;
 
         public event Action? BackButtonClicked;
@@ -206,7 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         public void SetRequestsGridCounter(int count) =>
-            requestsTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} ({count})";
+            requestsTitleText.text = $"{REQUESTS_RESULTS_TITLE} ({count})";
 
         public void SetThumbnailLoader(ThumbnailLoader loader) =>
             thumbnailLoader = loader;
@@ -342,7 +341,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             requestsEmptyContainer.SetActive(isEmpty);
             requestsGridContainer.gameObject.SetActive(!isEmpty);
-            requestsEmptyTitleText.text = $"{(IsOwnerOrModerator() ? REQUESTS_RESULTS_TITLE_FOR_OWNERS : REQUESTS_RESULTS_TITLE_FOR_NON_OWNERS)} (0)";
+            requestsEmptyTitleText.text = $"{REQUESTS_RESULTS_TITLE} (0)";
         }
 
         private CommunityResultCardView InstantiateInvitedCommunityCardPrefab()

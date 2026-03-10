@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,16 +22,21 @@ namespace DCL.EventsApi
         private const string COMMUNITY_ID_PARAMETER = "community_id";
         private const string PAGINATION_LIMIT_PARAMETER = "limit";
         private const string PAGINATION_OFFSET_PARAMETER = "offset";
+        private const string FROM_DATE_PARAMETER = "from";
+        private const string TO_DATE_PARAMETER = "to";
+        private const string HIGHLIGHT_PARAMETER_VALUE = "highlight";
+        private const string WITH_CONNECTED_USERS_PARAMETER = "with_connected_users";
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
         private readonly StringBuilder placeIdsBuilder = new ();
 
-        public HttpEventsApiService(IWebRequestController webRequestController,
-            URLDomain baseUrl)
+        public HttpEventsApiService(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
             this.webRequestController = webRequestController;
-            this.baseUrl = baseUrl;
+            this.urlsSource = urlsSource;
+            baseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.ApiEvents));
         }
 
         public async UniTask<IReadOnlyList<EventDTO>> GetEventsAsync(CancellationToken ct, bool onlyLiveEvents = false)
@@ -72,6 +77,45 @@ namespace DCL.EventsApi
                 urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetEventsByDateRangeAsync(DateTime fromDate, DateTime? toDate, bool? withConnectedUsers, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            urlBuilder.AppendParameter(new URLParameter(FROM_DATE_PARAMETER, fromDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
+
+            if (toDate != null)
+                urlBuilder.AppendParameter(new URLParameter(TO_DATE_PARAMETER, toDate.Value.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(new URLParameter(WITH_CONNECTED_USERS_PARAMETER, withConnectedUsers.Value ? "true" : "false"));
+
+            EventDTOListResponse result = await webRequestController
+                                               .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
+                                               .CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity);
+
+            return result.data ?? Array.Empty<EventDTO>();
+        }
+
+        public async UniTask<IReadOnlyList<EventDTO>> GetHighlightedEventsAsync(int pageNumber, int elementsPerPage, bool? withConnectedUsers, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(baseUrl);
+
+            urlBuilder.AppendParameter(new URLParameter(PAGINATION_LIMIT_PARAMETER, elementsPerPage.ToString()));
+            urlBuilder.AppendParameter(new URLParameter(PAGINATION_OFFSET_PARAMETER, ((pageNumber - 1) * elementsPerPage).ToString()));
+            urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, HIGHLIGHT_PARAMETER_VALUE));
+
+            if (withConnectedUsers != null)
+                urlBuilder.AppendParameter(new URLParameter(WITH_CONNECTED_USERS_PARAMETER, withConnectedUsers.Value ? "true" : "false"));
+
+            EventDTOListResponse result = await webRequestController
+                                               .SignedFetchGetAsync(urlBuilder.Build(), string.Empty, ct)
+                                               .CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity);
+
+            return result.data ?? Array.Empty<EventDTO>();
         }
 
         public async UniTask<EventWithPlaceIdDTOListResponse> GetCommunityEventsByPlaceIdsAsync(string communityId, string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
@@ -128,7 +172,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(
                 url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
@@ -148,7 +192,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericPostArguments> result = webRequestController.DeleteAsync(
                 url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "delete"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
@@ -164,7 +208,7 @@ namespace DCL.EventsApi
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct, ReportCategory.EVENTS,
-                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
+                signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(url), timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             var response = await result.CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity,

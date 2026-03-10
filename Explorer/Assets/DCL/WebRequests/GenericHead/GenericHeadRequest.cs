@@ -14,7 +14,7 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
-        internal static GenericHeadRequest Initialize(in CommonArguments commonArguments, GenericHeadArguments arguments) =>
-            new (UnityWebRequest.Head(commonArguments.URL));
+        internal static GenericHeadRequest Initialize(string url, ref GenericHeadArguments arguments) =>
+            new (UnityWebRequest.Head(url));
     }
 }

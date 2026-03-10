@@ -38,36 +38,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
         }
 
-        public override void ComputeSkinning(NativeArray<float4x4> bonesResult, int indexInGlobalResultArray, ref AvatarCustomSkinningComponent skinning)
-        {
-            skinning.buffers.bones.SetData(bonesResult, indexInGlobalResultArray * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
-            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.VertCount / 64) + 1, 1, 1);
-
-            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
-            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
-            //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
-            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
-            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
-            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
-        }
-
-        private static ComputeSkinningBufferContainer CreateBufferContainer(int vertCount, int skinnedMeshRendererBoneCount)
-        {
-            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
-            //set up the buffers depending on the platform
-
-#if UNITY_STANDALONE_WIN
-            return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
-#else
-            return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
-#endif
-        }
-
         private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount)
         {
             Profiler.BeginSample(nameof(SetupComputeShader));
 
-            ComputeSkinningBufferContainer computeSkinningBufferContainer = CreateBufferContainer(vertCount, skinnedMeshRendererBoneCount);
+            ComputeSkinningBufferContainer computeSkinningBufferContainer = ComputeSkinningBufferContainer.New(vertCount, skinnedMeshRendererBoneCount);
 
             computeSkinningBufferContainer.StartWriting();
 
@@ -85,7 +60,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             }
 
             AvatarCustomSkinningComponent.Buffers buffers = SetupBuffers(computeSkinningBufferContainer, skinningShader, vertCount);
-            buffers.computeSkinningBufferContainer = computeSkinningBufferContainer;
+            buffers.AssignBuffer(computeSkinningBufferContainer);
 
             Profiler.EndSample();
 
@@ -226,16 +201,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
             AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures) =>
             AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures);
-
-        public override void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent)
-        {
-            skinningComponent.VertsOutRegion = region;
-
-            skinningComponent.computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
-
-            for (var i = 0; i < skinningComponent.materials.Count; i++)
-                skinningComponent.materials[i].usedMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
-        }
 
         /// <summary>
         /// Checks the bounds of a list of meshes and computes the bounding box that contains them all.

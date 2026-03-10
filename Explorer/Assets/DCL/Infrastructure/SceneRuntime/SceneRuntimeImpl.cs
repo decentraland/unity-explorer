@@ -41,7 +41,7 @@ namespace SceneRuntime
 
         public SceneRuntimeImpl(
             string sourceCode,
-            (string validateCode, string jsInitCode) initCode,
+            string initCode,
             IReadOnlyDictionary<string, string> jsModules,
             SceneShortInfo sceneShortInfo,
             V8EngineFactory engineFactory
@@ -65,7 +65,7 @@ namespace SceneRuntime
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
             // engine.Execute(initCode.validateCode!);
-            engine.Execute(initCode.jsInitCode!);
+            engine.Execute(initCode);
 
             // Set global SDK configuration flags
             engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");

@@ -19,11 +19,15 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -35,9 +39,11 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -57,6 +63,9 @@ namespace DCL.Communities.CommunitiesCard
         private const string ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error accepting community invitation. Please try again.";
         private const string REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE = "There was an error rejecting community invitation. Please try again.";
         private const string COMMUNITY_LINK_COPIED_NOTIFICATION_MESSAGE = "Link successfully copied!";
+        private const string CHECK_NOTIFICATIONS_OPT_OUT_STATUS_ERROR_MESSAGE = "There was an error checking the notifications opt-out status. Please try again.";
+        private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
+        private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -80,6 +89,10 @@ namespace DCL.Communities.CommunitiesCard
         private readonly GalleryEventBus galleryEventBus;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly IInputBlock inputBlock;
+        private readonly ISelfProfile selfProfile;
+        private readonly IAnalyticsController analytics;
+        private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -90,6 +103,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
+        private CancellationTokenSource communityNotificationsToggleCancellationTokenSource = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
@@ -118,10 +132,15 @@ namespace DCL.Communities.CommunitiesCard
             IProfileRepository profileRepository,
             GalleryEventBus galleryEventBus,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            ISelfProfile selfProfile,
+            IAnalyticsController analytics,
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
@@ -142,6 +161,9 @@ namespace DCL.Communities.CommunitiesCard
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.inputBlock = inputBlock;
             this.thumbnailLoader = new ThumbnailLoader(null);
+            this.selfProfile = selfProfile;
+            this.analytics = analytics;
+            this.homePlaceEventBus = homePlaceEventBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -155,6 +177,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_DEEP_LINK, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
@@ -176,6 +199,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.AcceptInvite -= AcceptCommunityInvitation;
                 viewInstance.RejectInvite -= RejectCommunityInvitation;
                 viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
+                viewInstance.NotificationsToggleChanged -= OnNotificationsToggleChanged;
                 viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
@@ -189,6 +213,7 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+            communityNotificationsToggleCancellationTokenSource.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
                 cameraReelGalleryController.ThumbnailClicked -= OnThumbnailClicked;
@@ -213,7 +238,8 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityEventCreatedNotification eventCreatedNotification => eventCreatedNotification.Metadata.CommunityId,
                                      CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
                                      CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
-                                     _ => string.Empty
+                                     CommunityDeepLinkNotification deepLinkNotification => deepLinkNotification.CommunityId,
+                                     _ => string.Empty,
                                  };
 
             if (communityId == string.Empty) return;
@@ -351,6 +377,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.AcceptInvite += AcceptCommunityInvitation;
             viewInstance.RejectInvite += RejectCommunityInvitation;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
+            viewInstance.NotificationsToggleChanged += OnNotificationsToggleChanged;
             viewInstance.CopyCommunityLinkRequested += OnCopyCommunityLinkRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
@@ -367,7 +394,8 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 sharedSpaceManager,
                 chatEventBus,
-                web3IdentityCache);
+                web3IdentityCache,
+                selfProfile);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
@@ -377,7 +405,10 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser,
-                profileRepository);
+                profileRepository,
+                decentralandUrlsSource,
+                homePlaceEventBus,
+                worldPermissionsService);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -417,6 +448,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             DisableShortcutsInput();
             SetDefaultsAndLoadData(inputData.CommunityId);
+
+            analytics.Track(AnalyticsEvents.Communities.OPEN_COMMUNITY_PROFILE, new JObject { { "community_id", inputData.CommunityId } });
         }
 
         private void SetDefaultsAndLoadData(string communityId)
@@ -451,8 +484,8 @@ namespace DCL.Communities.CommunitiesCard
                 var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
                                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested)
-                    return;
+                    if (ct.IsCancellationRequested)
+                        return;
 
                 if (!getCommunityResult.Success)
                 {
@@ -461,6 +494,9 @@ namespace DCL.Communities.CommunitiesCard
                 }
 
                 communityData = getCommunityResult.Value.data;
+
+                // Check notifications opt-out status
+                communityData.isSubscribedToNotifications = await IsSubscribedToCommunityNotificationsAsync(communityId, ct);
 
                 // Check if we have a pending invite to the community
                 bool existsInvitation = await CheckUserInviteOrRequestAsync(InviteRequestAction.invite, ct);
@@ -518,6 +554,23 @@ namespace DCL.Communities.CommunitiesCard
 
                 return false;
             }
+
+            async UniTask<bool> IsSubscribedToCommunityNotificationsAsync(string commId, CancellationToken ct)
+            {
+                var checkCommunityNotificationOptOutResult = await communitiesDataProvider.CheckCommunityNotificationOptOutAsync(commId, ct)
+                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return true;
+
+                if (!checkCommunityNotificationOptOutResult.Success)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CHECK_NOTIFICATIONS_OPT_OUT_STATUS_ERROR_MESSAGE));
+                    return true;
+                }
+
+                return !checkCommunityNotificationOptOutResult.Value.optedOut;
+            }
         }
 
         protected override void OnViewClose()
@@ -525,11 +578,13 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+            communityNotificationsToggleCancellationTokenSource.SafeCancelAndDispose();
             spriteCache = null;
 
             RestoreInput();
             ResetSubControllers();
             viewInstance!.ResetToggle(false);
+            viewInstance!.ClearCurrentSection();
         }
 
         private void ResetSubControllers()
@@ -741,6 +796,38 @@ namespace DCL.Communities.CommunitiesCard
                 }
 
                 CloseController();
+            }
+        }
+
+        private void OnNotificationsToggleChanged(bool isEnabled)
+        {
+            communityNotificationsToggleCancellationTokenSource = communityNotificationsToggleCancellationTokenSource.SafeRestart();
+            CreateOrDeleteCommunityNotificationsOptOutAsync(communityData.id, isEnabled, communityNotificationsToggleCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CreateOrDeleteCommunityNotificationsOptOutAsync(string communityId, bool isSubscribedToNotifications, CancellationToken ct)
+            {
+                Result<bool> response;
+
+                if (isSubscribedToNotifications)
+                    response = await communitiesDataProvider.DeleteCommunityNotificationOptOutAsync(communityId, ct)
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                else
+                    response = await communitiesDataProvider.CreateCommunityNotificationOptOutAsync(communityId, ct)
+                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (!response.Success || !response.Value)
+                {
+                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(
+                        isSubscribedToNotifications ? DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE : CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE));
+
+                    return;
+                }
+
+                viewInstance!.SetNotificationsToggleInitialValue(isSubscribedToNotifications);
             }
         }
 

@@ -7,6 +7,7 @@ using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -32,7 +33,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DCL.Clipboard;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -198,7 +198,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -227,7 +227,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, systemClipboard);
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

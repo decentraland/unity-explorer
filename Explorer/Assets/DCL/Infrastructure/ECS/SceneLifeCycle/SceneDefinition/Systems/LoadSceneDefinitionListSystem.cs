@@ -5,6 +5,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Groups;
@@ -24,7 +25,6 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
-using Utility;
 using UnityEngine.Scripting;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -37,6 +37,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isLocalSceneDevelopment;
 
         // cache
@@ -47,11 +48,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, EntitiesAnalytics entitiesAnalytics)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.entitiesAnalytics = entitiesAnalytics;
             deserializationSampler = new ProfilerMarker($"{nameof(LoadSceneDefinitionListSystem)}.Deserialize");
         }
 
@@ -77,10 +79,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
+            using EntitiesAnalytics.RequestEnvelope analytics = entitiesAnalytics.Track(AnalyticsEvents.Endpoints.SCENE_ENTITIES_RETRIEVED, intention.Pointers.Count);
+
             var adapter = webRequestController.PostAsync(intention.CommonArguments,
                 GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData());
 
             using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
+
             var nativeData = downloadHandler.nativeData;
 
             await UniTask.SwitchToThreadPool();
@@ -106,6 +111,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     serializer.Populate(jsonReader, intention.TargetCollection);
                 }
             }
+
+            analytics.OnRequestFinished(intention.TargetCollection.Count);
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
             {

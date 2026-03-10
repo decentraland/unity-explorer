@@ -1,13 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using DCL.Profiling;
+using DCL.Utilities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Profiling;
-using DCL.Utilities;
 using TerrainProto;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -15,7 +15,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 using static Unity.Mathematics.math;
-using JobHandle = Unity.Jobs.JobHandle;
 
 namespace DCL.Landscape
 {
@@ -43,11 +42,6 @@ namespace DCL.Landscape
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
         public TreeData? Trees { get; private set; }
-
-        private NativeList<int2> emptyParcels;
-        private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
-        private NativeParallelHashMap<int2, int> emptyParcelsData;
-        private NativeHashSet<int2> ownedParcels;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
@@ -78,11 +72,8 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, int[] treeRendererKeys,
-            ref NativeList<int2> emptyParcels, ref NativeHashSet<int2> ownedParcels,
             LandscapeData landscapeData)
         {
-            this.ownedParcels = ownedParcels;
-            this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
             Trees = new TreeData(treeRendererKeys, terrainGenData);
             this.landscapeData = landscapeData;
@@ -105,7 +96,7 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
+        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport, CancellationToken ct)
         {
             if (!isInitialized) return;
 
@@ -116,7 +107,16 @@ namespace DCL.Landscape
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             if (landscapeData.RenderTrees)
+            {
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/5873
+                // We need to re-upload the transforms because the
+                // buffer might have been overwritten by WorldTerrainGenerator
+                // Fixes: https://github.com/decentraland/unity-explorer/issues/7150
+                // The trees regeneration might be a very expensive operation with over than 100k iterations
+                // We need to throttle this process to avoid long main-thread stalls
+                await Trees!.InstantiateAsync(ct);
                 Trees!.Show();
+            }
 
             IsTerrainShown = true;
 
@@ -137,13 +137,14 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask GenerateGenesisTerrainAndShowAsync(AsyncLoadProcessReport? processReport = null,
+        public async UniTask GenerateGenesisTerrainAndShowAsync(
+            WorldManifest worldManifest,
+            AsyncLoadProcessReport? processReport = null,
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
 
-            var worldModel = new WorldModel(ownedParcels);
-            TerrainModel = new TerrainModel(ParcelSize, worldModel, terrainGenData.borderPadding);
+            TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -151,19 +152,11 @@ namespace DCL.Landscape
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"Terrain generation was done in {t / 1000f:F2} seconds")))
                 {
-                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
-                    {
-                        TerrainGenerationUtils.ExtractEmptyParcels(TerrainModel.MinParcel,
-                            TerrainModel.MaxParcel, ref emptyParcels, ref ownedParcels);
-
-                        await SetupEmptyParcelDataAsync(TerrainModel, cancellationToken);
-                    }
-
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
                     // The MinParcel, MaxParcel already has padding, so padding zero works here,
                     // but in reality we should remove integrated padding and utilise padding parameter as it would make things more scalable and less confusing
-                    OccupancyMap = CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
+                    OccupancyMap = CreateOccupancyMap(worldManifest.GetOccupiedParcels(), TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
                     (int floor, int maxSteps) distanceFieldData = WriteInteriorChamferOnWhite(OccupancyMap, TerrainModel.MinParcel, TerrainModel.MaxParcel, 0);
                     OccupancyFloor = distanceFieldData.floor;
                     MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
@@ -216,12 +209,8 @@ namespace DCL.Landscape
             finally
             {
                 float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-                FreeMemory();
 
                 IsTerrainGenerated = true;
-
-                emptyParcels.Dispose();
-                ownedParcels.Dispose();
 
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -231,24 +220,6 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-        }
-
-        private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
-        {
-            JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
-                ref emptyParcelsData, ref emptyParcelsNeighborData,
-                emptyParcels.AsArray(), ref ownedParcels,
-                terrainModel.MinParcel, terrainModel.MaxParcel,
-                terrainGenData.heightScaleNerf);
-
-            await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
-        }
-
-        // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
-        private void FreeMemory()
-        {
-            emptyParcelsNeighborData.Dispose();
-            emptyParcelsData.Dispose();
         }
 
         internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,

@@ -16,12 +16,15 @@ namespace DCL.RealmNavigation.TeleportOperations
         public AsyncLoadProcessReport Report { get; }
         public ILoadingStatus LoadingStatus { get; }
 
-        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus)
+        public bool AllowsWorldPositionOverride { get; private set; }
+
+        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus, bool allowsWorldPositionOverride)
         {
             CurrentDestinationRealm = currentDestinationRealm;
             CurrentDestinationParcel = currentDestinationParcel;
             Report = report;
             LoadingStatus = loadingStatus;
+            AllowsWorldPositionOverride = allowsWorldPositionOverride;
         }
 
         public void ChangeDestination(URLDomain newDestinationRealm, Vector2Int newDestinationParcel)

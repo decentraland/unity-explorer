@@ -2,6 +2,7 @@
 using System;
 using Unity.Profiling;
 using Utility.Multithreading;
+using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading
 {
@@ -83,7 +84,7 @@ namespace ECS.StreamableLoading
         public void Dereference()
         {
             referenceCount--;
-
+            
             if (referenceCount < 0)
                 ReportHub.LogError(reportCategory, $"Reference count of {typeof(TAsset).Name} should never be negative!");
 

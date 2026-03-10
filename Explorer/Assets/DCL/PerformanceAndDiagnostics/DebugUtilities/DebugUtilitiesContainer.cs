@@ -47,7 +47,7 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.REALM,
-                        IDebugContainerBuilder.Categories.PROFILES,
+                        IDebugContainerBuilder.Categories.ENTITY_REQUESTS,
                         IDebugContainerBuilder.Categories.ANALYTICS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
@@ -63,6 +63,7 @@ namespace DCL.DebugUtilities
                     () => viewsCatalog.ControlContainer.InstantiateForElement<DebugControl>(),
                     new Dictionary<Type, IDebugElementFactory>
                     {
+                        { typeof(DebugOngoingWebRequestDef), new DebugElementBase<DebugOngoingWebRequestWidget, DebugOngoingWebRequestDef>.Factory(viewsCatalog.OngoingRequestsWidget) },
                         { typeof(AverageFpsBannerDef), new DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>.Factory(viewsCatalog.AverageFpsBanner) },
                         { typeof(DebugButtonDef), new DebugElementBase<DebugButtonElement, DebugButtonDef>.Factory(viewsCatalog.Button) },
                         { typeof(DebugConstLabelDef), new DebugElementBase<DebugConstLabelElement, DebugConstLabelDef>.Factory(viewsCatalog.ConstLabel) },

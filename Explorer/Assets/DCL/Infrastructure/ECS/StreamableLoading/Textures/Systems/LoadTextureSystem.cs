@@ -47,14 +47,17 @@ namespace ECS.StreamableLoading.Textures
 
             if (intention.IsAvatarTexture)
             {
-                Profile? profile = await profileRepository.GetAsync(intention.AvatarTextureUserId!, ct);
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(intention.AvatarTextureUserId!, ct);
 
                 if (profile == null)
                     throw new Exception($"No profile found for {intention.AvatarTextureUserId}");
 
-                result = await TryResolveAvatarTextureAsync(profile.Avatar.FaceSnapshotUrl, intention, ct);
+                result = await TryResolveAvatarTextureAsync(profile.Value.FaceSnapshotUrl, intention, ct);
             }
             else
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, $"[TextureSystem] processing request for {intention.CommonArguments.URL}");
+
                 // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
                 result = await webRequestController.GetTextureAsync(
                     intention.CommonArguments,
@@ -63,6 +66,7 @@ namespace ECS.StreamableLoading.Textures
                     ct,
                     GetReportData()
                 );
+            }
 
             return new StreamableLoadingResult<TextureData>(new TextureData(AnyTexture.FromTexture2D(result.EnsureNotNull())));
         }

@@ -11,7 +11,6 @@ namespace DCL.Chat.History
         public event IChatHistory.ChannelClearedDelegate ChannelCleared;
         public event IChatHistory.MessageAddedDelegate MessageAdded;
         public event IChatHistory.ReadMessagesChangedDelegate ReadMessagesChanged;
-        public event IChatHistory.AllChannelsRemovedDelegate AllChannelsRemoved;
 
         public IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels => channels;
 

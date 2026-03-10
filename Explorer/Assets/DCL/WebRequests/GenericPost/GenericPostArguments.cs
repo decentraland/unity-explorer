@@ -1,17 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using JetBrains.Annotations;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPostArguments
+    public struct GenericPostArguments
     {
         public readonly List<IMultipartFormSection>? MultipartFormSections;
         public readonly WWWForm? WWWForm;
         public readonly string PostData;
         public readonly string? ContentType;
-        public readonly UploadHandler? UploadHandler;
+
+        public BufferedStringUploadHandler? UploadHandler;
 
         public const string JSON = "application/json";
         private const string JSON_UTF8 = "application/json; charset=utf-8";
@@ -34,7 +37,7 @@ namespace DCL.WebRequests
             WWWForm = form;
         }
 
-        private GenericPostArguments(UploadHandler uploadHandler, string contentType) : this()
+        private GenericPostArguments(BufferedStringUploadHandler uploadHandler, string contentType) : this()
         {
             UploadHandler = uploadHandler;
             ContentType = contentType;
@@ -43,7 +46,7 @@ namespace DCL.WebRequests
 
         public static GenericPostArguments Empty => new (string.Empty, JSON);
 
-        public static GenericPostArguments CreateUploadHandler(UploadHandler uploadHandler, string contentType) =>
+        public static GenericPostArguments CreateStringUploadHandler(BufferedStringUploadHandler uploadHandler, string contentType) =>
             new (uploadHandler, contentType);
 
         public static GenericPostArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
@@ -71,10 +74,27 @@ namespace DCL.WebRequests
             return new GenericPostArguments (JsonUtility.ToJson(payload), JSON_UTF8);
         }
 
+        public bool TryConsumeBufferedUploadHandler([MaybeNullWhen(false)] out UploadHandlerRaw uploadHandlerRaw)
+        {
+            // It's critical to reflect struct changes on the source, as creating an upload handler is a strictly one-time operation
+            if (UploadHandler == null)
+            {
+                uploadHandlerRaw = null;
+                return false;
+            }
+
+            BufferedStringUploadHandler value = UploadHandler.Value;
+            uploadHandlerRaw = value.CreateUploadHandler();
+            UploadHandler = value;
+
+            return true;
+        }
+
         public override string ToString() =>
             "GenericPostArguments:"
             + $"\nMultipartFormSections: {MultipartFormSections}"
             + $"\nWWWForm: {WebFormToString(WWWForm)}"
+            + $"\nUploadHandler: {UploadHandler?.ToString() ?? ""}"
             + $"\nPostData: {PostData}"
             + $"\nContentType: {ContentType}";
 

@@ -1,5 +1,6 @@
 using CodeLess.Interfaces;
 using System;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -19,6 +20,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackUnEquipAllWearablesCommand>? UnEquipAllWearablesMessageReceived;
         public event Action<BackpackPublishProfileCommand>? PublishProfileReceived;
         public event Action<BackpackChangeColorCommand>? ChangeColorMessageReceived;
+        public event Action<BackpackEquipOutfitCommand>? EquipOutfitMessageReceived;
 
         public void SendCommand(BackpackEquipWearableCommand command)
         {
@@ -83,6 +85,11 @@ namespace DCL.Backpack.BackpackBus
         public void SendCommand(BackpackEmoteSlotSelectCommand command)
         {
             EmoteSlotSelectMessageReceived?.Invoke(command);
+        }
+        
+        public void SendCommand(BackpackEquipOutfitCommand command)
+        {
+            EquipOutfitMessageReceived?.Invoke(command);
         }
     }
 }

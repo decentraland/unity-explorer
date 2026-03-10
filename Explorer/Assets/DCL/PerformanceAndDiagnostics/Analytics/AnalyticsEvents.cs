@@ -1,4 +1,4 @@
-﻿namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     /// <summary>
     ///     IMPORTANT!!
@@ -16,6 +16,7 @@
             public const string ERROR = "error";
             public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
+            public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
         }
 
         public static class World
@@ -84,10 +85,25 @@
 
         public static class Authentication
         {
-            public const string LOGGED_IN_CACHED = "logged_in_cached";
-            public const string LOGGED_IN = "logged_in";
+            public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
+
+            // 1. LOGIN SELECTION SCREEN
+            public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";
+
+            // 2. IDENTITY VERIFICATION SCREEN
             public const string VERIFICATION_REQUESTED = "verification_requested";
+            public const string OTP_VERIFICATION_SUCCESS = "otp_verification_success";
+            public const string OTP_VERIFICATION_FAILURE = "otp_verification_failure";
+            public const string OTP_RESEND = "otp_resend";
+
+            // 3. PROFILE FETCHING
+            public const string PROFILE_FETCHING = "profile_fetching";
+            public const string PROFILE_FETCHING_CACHED = "profile_fetching_cached";
+
+            // 4. LOBBY
+            public const string LOGGED_IN = "logged_in";
+            public const string LOGGED_IN_CACHED = "logged_in_cached";
         }
 
         public static class Friends
@@ -105,6 +121,56 @@
 
             public const string BLOCK_USER = "block_user";
             public const string UNBLOCK_USER = "unblock_user";
+        }
+
+        /// <summary>
+        ///     Events related to endpoint performance
+        /// </summary>
+        public static class Endpoints
+        {
+            /// <summary>
+            ///     The whole path to resolve an avatar:
+            ///     <list type="bullet">
+            ///         <item> wearables_count: total number of wearables equipped by the avatar </item>
+            ///         <item> visible_wearables_count: total number of not hidden wearables </item>
+            ///         <item> new_pointers: the pointers number to request (not cached yet) </item>
+            ///         <item> wearables_resolution_duration: time to load network objects</item>
+            ///         <item> instantiation_duration: time passed from the wearables resolution to the avatar instantiation</item>
+            ///         <item> total_duration: to aggregate in metabase</item>
+            ///     </list>
+            /// </summary>
+            public const string AVATAR_RESOLVED = "avatar_resolved";
+
+            /// <summary>
+            ///     Complemented with:
+            ///     user_id (needed for the further aggregation)
+            ///     duration
+            /// </summary>
+            public const string PROFILE_RETRIEVED = "profile_retrieved";
+
+            /// <summary>
+            ///     user_id
+            ///     duration
+            /// </summary>
+            public const string PROFILE_FAILED = "profile_retrieval_failed";
+
+            /// <summary>
+            ///     count
+            ///     failed_count
+            ///     duration
+            /// </summary>
+            public const string SCENE_ENTITIES_RETRIEVED = "scene_entities_retrieved";
+
+            /// <summary>
+            ///     <inheritdoc cref="SCENE_ENTITIES_RETRIEVED" />
+            /// </summary>
+            public const string AVATAR_ATTACHMENT_RETRIEVED = "avatar_attachment_retrieved";
+        }
+
+        public static class Donations
+        {
+            public const string DONATION_STARTED = "donation_started";
+            public const string DONATION_ENDED = "donation_ended";
         }
 
         public static class MarketplaceCredits
@@ -135,6 +201,49 @@
             public const string SAVE_OUTFIT = "save_outfit";
             public const string EQUIP_OUTFIT = "equip_outfit";
             public const string OUTFIT_CLICK_NAME = "outfit_click_name";
+        }
+
+        public static class Gifts
+        {
+            public const string SENT_GIFT = "sent_gift";
+            public const string SUCCESSFULL_GIFT = "successful_gift";
+            public const string FAILED_GIFT = "failed_gift";
+            public const string CANCELED_GIFT = "canceled_gift";
+        }
+
+        public static class Communities
+        {
+            public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
+            public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
+        }
+
+        public static class Events
+        {
+            public const string EVENTS_SECTION_OPENED = "events_section_opened";
+            public const string EVENTS_BY_DAY_OPENED = "events_by_day_opened";
+            public const string EVENT_CREATION_OPENED = "event_creation_opened";
+            public const string EVENT_CARD_CLICKED = "event_card_clicked";
+            public const string EVENT_SET_AS_INTERESTED = "event_set_as_interested";
+            public const string EVENT_ADDED_TO_CALENDAR = "event_added_to_calendar";
+            public const string EVENT_JUMPED_IN = "event_jumped_in";
+            public const string EVENT_SHARED = "event_shared";
+            public const string EVENT_LINK_COPIED = "event_link_copied";
+        }
+
+        public static class Places
+        {
+            public const string PLACES_SECTION_OPENED = "places_section_opened";
+            public const string PLACES_SEARCHED = "places_searched";
+            public const string PLACES_FILTERED = "places_filtered";
+            public const string PLACE_CARD_CLICKED = "place_card_clicked";
+            public const string PLACE_SET_AS_LIKED = "place_set_as_liked";
+            public const string PLACE_SET_AS_DISLIKED = "place_set_as_disliked";
+            public const string PLACE_SET_AS_FAVORITE = "place_set_as_favorite";
+            public const string PLACE_SET_AS_HOME = "place_set_as_home";
+            public const string PLACE_JUMPED_IN = "place_jumped_in";
+            public const string PLACE_SHARED = "place_shared";
+            public const string PLACE_LINK_COPIED = "place_link_copied";
+            public const string PLACE_NAVIGATION_STARTED = "place_navigation_started";
         }
     }
 }

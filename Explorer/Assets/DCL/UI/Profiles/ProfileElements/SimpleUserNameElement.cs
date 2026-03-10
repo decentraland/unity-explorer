@@ -10,7 +10,7 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField] private TMP_Text userNameHashtagText;
         [field: SerializeField] private GameObject verifiedMark;
 
-        public void Setup(Profile profile)
+        public void Setup(Profile.CompactInfo profile)
         {
             userNameText.text = profile.Name;
             userNameText.color = profile.UserNameColor;

@@ -26,6 +26,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<ICommunityMemberData>? BlockUserRequested;
         public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
+        public bool IsSearchBarFocused => searchBar.inputField.isFocused;
+
         public MyCommunitiesView MyCommunitiesView => myCommunitiesView;
         public CommunitiesBrowserRightSectionMainView RightSectionView => rightSectionView;
 

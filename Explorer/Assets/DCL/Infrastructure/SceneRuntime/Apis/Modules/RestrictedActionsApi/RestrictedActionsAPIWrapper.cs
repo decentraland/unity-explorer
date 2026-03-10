@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -23,16 +22,25 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         public bool OpenExternalUrl(string url) =>
             api.TryOpenExternalUrl(url);
 
+        private CancellationTokenSource? movePlayerToCancellationToken;
+
         [UsedImplicitly]
-        public void MovePlayerTo(
+        public object MovePlayerTo(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
             double? cameraTargetX, double? cameraTargetY, double? cameraTargetZ,
-            double? avatarTargetX, double? avatarTargetY, double? avatarTargetZ)
+            double? avatarTargetX, double? avatarTargetY, double? avatarTargetZ,
+            double? duration)
         {
-            api.TryMovePlayerTo(
-                new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                cameraTargetX.HasValue && cameraTargetY.HasValue && cameraTargetZ.HasValue ? new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ) : null,
-                avatarTargetX.HasValue && avatarTargetY.HasValue && avatarTargetZ.HasValue ? new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ) : null);
+            movePlayerToCancellationToken = movePlayerToCancellationToken.SafeRestart();
+            return MovePlayerToAsync(movePlayerToCancellationToken.Token).ToDisconnectedPromise(this);
+
+            async UniTask<bool> MovePlayerToAsync(CancellationToken ct) =>
+                await api.TryMovePlayerToAsync(
+                    new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
+                    cameraTargetX.HasValue && cameraTargetY.HasValue && cameraTargetZ.HasValue ? new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ) : null,
+                    avatarTargetX.HasValue && avatarTargetY.HasValue && avatarTargetZ.HasValue ? new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ) : null,
+                    duration.HasValue ? (float)duration.Value : 0f,
+                    ct);
         }
 
         [UsedImplicitly]
@@ -61,11 +69,8 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
-            async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct)
-            {
-                try { return await api.TryTriggerSceneEmoteAsync(src, loop, ct); }
-                catch (Exception) { return false; }
-            }
+            async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
+                await api.TryTriggerSceneEmoteAsync(src, loop, ct);
         }
 
         [UsedImplicitly]

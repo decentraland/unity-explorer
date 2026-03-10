@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DCL.Chat.History;
 using System.Collections.Generic;
 using System.Threading;
@@ -6,6 +6,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
@@ -29,6 +31,8 @@ namespace DCL.Communities
     {
         void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> communities);
         bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData);
+
+        void Clear();
         event Action<CommunityMetadataUpdatedEvent> CommunityMetadataUpdated;
     }
 
@@ -43,6 +47,7 @@ namespace DCL.Communities
 
         private CancellationTokenSource userAllowedToUseCommunityBusCts;
         private CancellationTokenSource communitiesServiceCts = new();
+        private CancellationTokenSource showCommunityDeepLinkNotificationCts;
         public event Action<CommunityMetadataUpdatedEvent>? CommunityMetadataUpdated;
 
         public CommunityDataService(
@@ -218,6 +223,13 @@ namespace DCL.Communities
             }
         }
 
+        public void Clear()
+        {
+            communities.Clear();
+            communitiesServiceCts.SafeCancelAndDispose();
+            communitiesServiceCts = new CancellationTokenSource();
+        }
+
         public bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData)
         {
             return communities.TryGetValue(channelId, out communityData);
@@ -235,6 +247,7 @@ namespace DCL.Communities
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
 
             userAllowedToUseCommunityBusCts.SafeCancelAndDispose();
+            showCommunityDeepLinkNotificationCts.SafeCancelAndDispose();
         }
 
         public void OpenCommunityCard(ChatChannel? currentChannel)
@@ -244,6 +257,25 @@ namespace DCL.Communities
                 mvcManager
                     .ShowAsync(CommunityCardController
                         .IssueCommand(new CommunityCardParameter(community.id)));
+            }
+        }
+
+        public void ShowCommunityDeepLinkNotification(string communityId)
+        {
+            showCommunityDeepLinkNotificationCts = showCommunityDeepLinkNotificationCts.SafeRestart();
+            ShowCommunityDeepLinkNotificationAsync(communityId, showCommunityDeepLinkNotificationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowCommunityDeepLinkNotificationAsync(string commId, CancellationToken ct)
+            {
+                var getCommunityResult = await communitiesDataProvider.GetCommunityAsync(communityId, ct)
+                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                if (getCommunityResult.Success)
+                    NotificationsBusController.Instance.AddNotification(new CommunityDeepLinkNotification(getCommunityResult.Value.data.name, getCommunityResult.Value.data.thumbnailUrl, commId));
             }
         }
     }

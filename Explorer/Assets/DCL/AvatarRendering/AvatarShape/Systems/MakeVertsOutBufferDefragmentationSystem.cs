@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void UpdateIndices([Data] IReadOnlyDictionary<int, FixedComputeBufferHandler.Slice> remapping, ref AvatarCustomSkinningComponent avatarCustomSkinningComponent)
         {
             if (remapping.TryGetValue(avatarCustomSkinningComponent.VertsOutRegion.StartIndex, out FixedComputeBufferHandler.Slice newRegion))
-                skinningStrategy.SetVertOutRegion(newRegion, ref avatarCustomSkinningComponent);
+                avatarCustomSkinningComponent.SetVertOutRegion(newRegion);
         }
     }
 }

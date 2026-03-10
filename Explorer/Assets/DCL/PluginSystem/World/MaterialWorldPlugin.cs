@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using DCL.FeatureFlags;
+using ECS.Unity.SceneBoundsChecker;
 using Utility;
 
 namespace DCL.PluginSystem.World
@@ -35,6 +37,8 @@ namespace DCL.PluginSystem.World
         {
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
+            ConfigureSceneMaterial.forceBackfaceCullingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+
             this.mediaFactory = mediaFactory;
         }
 

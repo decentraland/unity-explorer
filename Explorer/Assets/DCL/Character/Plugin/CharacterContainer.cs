@@ -112,6 +112,7 @@ namespace DCL.Character.Plugin
             private readonly IExposedTransform exposedTransform;
             private readonly IComponentPool<SDKTransform> sdkTransformPool;
             private readonly IComponentPool<PBMainCamera> mainCameraPool;
+            private readonly IComponentPool<PBPointerLock> pointerLockPool;
 
             public WorldPlugin(IExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
                 IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
@@ -121,6 +122,7 @@ namespace DCL.Character.Plugin
                 this.exposedCameraData = exposedCameraData;
                 sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
                 mainCameraPool = componentPoolsRegistry.GetReferenceTypePool<PBMainCamera>();
+                pointerLockPool = componentPoolsRegistry.GetReferenceTypePool<PBPointerLock>();
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -129,7 +131,7 @@ namespace DCL.Character.Plugin
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, persistentEntities.Camera);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, mainCameraPool, pointerLockPool, persistentEntities.Camera);
             }
         }
 

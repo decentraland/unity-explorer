@@ -38,7 +38,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerLookAtIntent), typeof(PBAvatarShape))]
+        [None(typeof(PlayerLookAtIntent), typeof(PBAvatarShape), typeof(PlayerMoveToWithDurationIntent))]
         private void LerpRotation(
             [Data] float dt,
             ref ICharacterControllerSettings settings,
@@ -61,7 +61,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PBAvatarShape))]
+        [None(typeof(PBAvatarShape), typeof(PlayerMoveToWithDurationIntent))]
         private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
         {
             // Rotate player to look at target

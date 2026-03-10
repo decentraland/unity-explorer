@@ -9,7 +9,9 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS;
+using Newtonsoft.Json;
 using Utility;
+using Utility.Json;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Repository
 {
@@ -21,13 +23,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
     /// </summary>
     public class OutfitsRepository
     {
-        private readonly IRealmData realm;
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
+            { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
+
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
 
-        public OutfitsRepository(IRealmData realm,
+        public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider)
         {
-            this.realm = realm;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.nftNamesProvider = nftNamesProvider;
         }
 
@@ -36,39 +41,34 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         /// </summary>
         public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct)
         {
-            if (realm is { Configured: false })
-                return;
-
             if (profile == null)
                 throw new ArgumentException("Cannot save outfits for a null profile");
 
             if (string.IsNullOrEmpty(profile?.UserId))
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
-            var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+            INftNamesProvider.PaginatedNamesResponse namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+
             var metadata = new OutfitsMetadata
             {
                 outfits = outfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
                     ? new List<string>
                     {
-                        namesForExtraSlots.Names[0]
+                        namesForExtraSlots.Names[0],
                     }
-                    : new List<string>()
+                    : new List<string>(),
             };
 
             var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
             {
                 version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
                 {
-                    $"{profile.UserId}:outfits"
+                    $"{profile.UserId}:outfits",
                 },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>()
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>(),
             };
 
-            try
-            {
-                await realm.Ipfs.PublishAsync(outfitsEntity, ct, new Dictionary<string, byte[]>());
-            }
+            try { await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, ct, SERIALIZER_SETTINGS); }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);

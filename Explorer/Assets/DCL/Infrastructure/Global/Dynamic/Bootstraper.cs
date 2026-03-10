@@ -1,7 +1,9 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -20,14 +22,15 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
@@ -35,6 +38,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -54,6 +58,7 @@ namespace Global.Dynamic
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly HttpFeatureFlagsProvider featureFlagsProvider;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -71,6 +76,7 @@ namespace Global.Dynamic
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
+            HttpFeatureFlagsProvider featureFlagsProvider,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -82,6 +88,7 @@ namespace Global.Dynamic
             this.diskCache = diskCache;
             this.partialsDiskCache = partialsDiskCache;
             this.world = world;
+            this.featureFlagsProvider = featureFlagsProvider;
         }
 
         public async UniTask PreInitializeSetupAsync(CancellationToken token)
@@ -100,13 +107,16 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             IAppArgs appArgs,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
+                bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
+                realmData,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
@@ -114,7 +124,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
-                bootstrapContainer.VerifiedEthereumApi,
+                bootstrapContainer.CompositeWeb3Provider,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
@@ -122,7 +132,6 @@ namespace Global.Dynamic
                 memoryCap,
                 bootstrapContainer.VolumeBus,
                 EnableAnalytics,
-                bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
                 bootstrapContainer.Environment,
@@ -152,7 +161,7 @@ namespace Global.Dynamic
                 staticContainer,
                 scenePluginSettingsContainer,
                 dynamicSettings,
-                bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.IdentityCache,
                 splashScreen,
                 worldInfoTool
@@ -205,9 +214,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
@@ -272,8 +281,32 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
+            string realm = await realmUrls.StartingRealmAsync(ct);
+            startingRealm = URLDomain.FromString(realm);
+
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
+
+            if (realmLaunchSettings.initialRealm is InitialRealm.World)
+            {
+                bool isAuthorized = await dynamicWorldContainer.RealmController
+                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
+
+                if (!isAuthorized)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+
+                    dynamicWorldContainer.ChatHistory.AddMessage(
+                        ChatChannel.NEARBY_CHANNEL_ID,
+                        ChatChannel.ChatChannelType.NEARBY,
+                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
+
+                    await dynamicWorldContainer.RealmController
+                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
+                    return;
+                }
+            }
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
@@ -290,9 +323,20 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct); }
-            // Exceptions on auto-login should not block the application bootstrap
-            catch (AutoLoginTokenNotFoundException) { }
+            try
+            {
+                IWeb3Identity identity = await new TokenFileAuthenticator(
+                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                          webRequestsContainer.WebRequestController,
+                          bootstrapContainer.Web3AccountFactory)
+                     .LoginAsync(new LoginPayload(), ct); // doesn't use payload
+
+                bootstrapContainer.IdentityCache!.Identity = identity;
+
+                if (EnableAnalytics)
+                    bootstrapContainer.Analytics.Controller.Identify(identity);
+            }
+            catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
@@ -306,6 +350,7 @@ namespace Global.Dynamic
                 ), ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+
             splashScreen.Hide();
         }
 

@@ -44,7 +44,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         {
             CreateController(concurrency, true);
 
-            await BenchmarkAsync(concurrency, entry => entry.RecreateWithNoOp(controller!, loadingMutex, CancellationToken.None), dump.Entries, 0, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations), UnloadABs);
+            await BenchmarkAsync(entry => entry.RecreateWithNoOp(controller!, loadingMutex, CancellationToken.None), dump.Entries, 0, totalRequests, iterations, TimeSpan.FromSeconds(delayBetweenIterations), UnloadABs);
         }
     }
 }

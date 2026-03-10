@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.PrivateWorlds;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using System;
@@ -72,8 +73,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IGateKeeperSceneRoom AsActivatable() =>
             new Activatable(this);
 
-        private bool IsSceneConnected(string? sceneId) =>
-            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase);
+        private bool IsSceneConnected(string? sceneId)
+        {
+            if (options.IsCommsOffline)
+                return false;
+
+            if (CurrentState() is not IConnectiveRoom.State.Running)
+                return false;
+
+            if (options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated
+                && !string.Equals(sceneId, currentMetaData?.sceneId, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
 
         public override async UniTask StopAsync()
         {
@@ -102,6 +115,13 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
+            if (options.IsCommsOffline)
+            {
+                if (AttemptToConnectState is not AttemptToConnectState.NO_CONNECTION_REQUIRED)
+                    SetNoConnectionRequired();
+                return;
+            }
+
             MetaData meta = default;
 
             try
@@ -181,15 +201,23 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
-            AdapterResponse response = await webRequests.SignedFetchPostAsync(
-                                                             url,
-                                                             meta.ToJson(),
-                                                             token)
-                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            string url = options.GetAdapterURL(meta.sceneId);
+            
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
 
-            string connectionString = response.adapter;
+            if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
+
+            AdapterResponse response = await webRequests
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret), token)
+                                            .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            
+            string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
+            
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
+            
             return connectionString;
         }
 
@@ -197,6 +225,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private struct AdapterResponse
         {
             public string adapter;
+            public string fixedAdapter;
         }
+
     }
 }

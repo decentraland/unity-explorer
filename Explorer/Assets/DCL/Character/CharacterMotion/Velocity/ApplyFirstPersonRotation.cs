@@ -1,5 +1,6 @@
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Utils;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -10,10 +11,12 @@ namespace DCL.Character.CharacterMotion.Velocity
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterRigidTransform rigidTransform, in CameraComponent cameraComponent)
         {
-            Vector3 flatLookAt = cameraComponent.Camera.transform.forward;
-            flatLookAt.y = 0;
+            Transform cameraTransform = cameraComponent.Camera.transform;
 
-            rigidTransform.LookDirection = flatLookAt.normalized;
+            Vector3 forward = cameraTransform.forward;
+            Vector3 up = cameraTransform.up;
+
+            rigidTransform.LookDirection = LookDirectionUtils.FlattenLookDirection(forward, up);
         }
     }
 }

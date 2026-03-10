@@ -1,0 +1,234 @@
+using System;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Backpack.Gifting.Views;
+using MVC;
+using System.Threading;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
+using DCL.Backpack.Gifting.Commands;
+using DCL.Backpack.Gifting.Factory;
+using DCL.Backpack.Gifting.Notifications;
+using DCL.Backpack.Gifting.Presenters;
+using DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands;
+using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.GiftingInventory;
+using DCL.Backpack.Gifting.Services.GiftItemLoaderService;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Backpack.Gifting.Styling;
+using DCL.Browser;
+using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.UI.SharedSpaceManager;
+using DCL.Utility;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using Utility;
+
+namespace DCL.PluginSystem.Global
+{
+    public class GiftingPlugin : IDCLGlobalPlugin<GiftingPlugin.GiftingSettings>
+    {
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IMVCManager mvcManager;
+        private readonly IPendingTransferService pendingTransferService;
+        private readonly IAvatarEquippedStatusProvider equippedStatusProvider;
+        private readonly IProfileRepository profileRepository;
+        private readonly IInputBlock inputBlock;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IWebRequestController webRequestController;
+        private readonly IEmoteProvider emoteProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly IEventBus eventBus;
+        private readonly IWebBrowser webBrowser;
+        private readonly ICompositeWeb3Provider web3Provider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IScreenModeController screenModeController;
+        private readonly ImageControllerProvider imageControllerProvider;
+        private GiftSelectionController? giftSelectionController;
+        private GiftTransferController? giftTransferStatusController;
+        private GiftTransferSuccessController? giftTransferSuccessController;
+        private GiftReceivedPopupController? giftReceivedPopupController;
+
+        public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            IPendingTransferService pendingTransferService,
+            IWebRequestController webRequestController,
+            IAvatarEquippedStatusProvider equippedStatusProvider,
+            IProfileRepository profileRepository,
+            IInputBlock inputBlock,
+            IWearablesProvider wearablesProvider,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage,
+            IEmoteProvider emoteProvider,
+            IWeb3IdentityCache web3IdentityCache,
+            IThumbnailProvider thumbnailProvider,
+            IEventBus eventBus,
+            IWebBrowser webBrowser,
+            ICompositeWeb3Provider web3Provider,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISharedSpaceManager sharedSpaceManager,
+            IScreenModeController screenModeController,
+            ImageControllerProvider imageControllerProvider)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.mvcManager = mvcManager;
+            this.pendingTransferService = pendingTransferService;
+            this.webRequestController = webRequestController;
+            this.equippedStatusProvider = equippedStatusProvider;
+            this.profileRepository = profileRepository;
+            this.inputBlock = inputBlock;
+            this.wearablesProvider = wearablesProvider;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
+            this.emoteProvider = emoteProvider;
+            this.web3IdentityCache = web3IdentityCache;
+            this.thumbnailProvider = thumbnailProvider;
+            this.eventBus = eventBus;
+            this.webBrowser = webBrowser;
+            this.web3Provider = web3Provider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.screenModeController = screenModeController;
+            this.imageControllerProvider = imageControllerProvider;
+        }
+
+        public void Dispose()
+        {
+            giftSelectionController?.Dispose();
+            giftReceivedPopupController?.Dispose();
+        }
+
+        public async UniTask InitializeAsync(GiftingSettings settings, CancellationToken ct)
+        {
+            var giftSelectionPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftSelectionPopupPrefab, ct))
+                .Value.GetComponent<GiftingView>();
+
+            var giftTransferPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftTransferPopupPrefab, ct))
+                .Value.GetComponent<GiftTransferStatusView>();
+
+            var giftTransferSuccessPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftTransferPopupSuccessPrefab, ct))
+                .Value.GetComponent<GiftTransferSuccessView>();
+
+            var giftReceivedView = (await assetsProvisioner.ProvideMainAssetAsync(settings.GiftReceivedPopupPrefab, ct))
+                .Value.GetComponent<GiftReceivedPopupView>();
+
+            var (rarityColors, categoryIcons, rarityBackgrounds, rarityInfoPanelBackgroundsMapping) = await UniTask
+                .WhenAll(assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityColorMappings, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.CategoryIconsMapping, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityBackgroundsMapping, ct),
+                    assetsProvisioner.ProvideMainAssetValueAsync(settings.BackpackSettings.RarityInfoPanelBackgroundsMapping, ct));
+
+            var giftTransferService = new Web3GiftTransferService(web3Provider);
+            var giftItemLoaderService = new GiftItemLoaderService(webRequestController);
+
+            var giftInventoryService = new GiftInventoryService(wearableStorage,
+                emoteStorage,
+                equippedStatusProvider,
+                pendingTransferService);
+
+            var wearableCatalog = new WearableStylingCatalog(rarityColors,
+                rarityBackgrounds,
+                categoryIcons);
+
+            var giftTransferRequestCommand = new GiftTransferRequestCommand(eventBus,
+                web3IdentityCache,
+                giftTransferService,
+                pendingTransferService,
+                web3Provider);
+
+            var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
+                eventBus);
+
+            giftReceivedPopupController = new GiftReceivedPopupController(
+                GiftReceivedPopupController.CreateLazily(giftReceivedView, null),
+                profileRepository,
+                giftItemLoaderService,
+                wearableCatalog,
+                imageControllerProvider,
+                sharedSpaceManager
+            );
+
+            var gridFactory = new GiftingGridPresenterFactory(eventBus,
+                wearablesProvider,
+                emoteProvider,
+                loadThumbnailCommand,
+                wearableCatalog,
+                pendingTransferService,
+                equippedStatusProvider,
+                wearableStorage,
+                emoteStorage);
+
+            var componentFactory = new GiftSelectionComponentFactory(profileRepository,
+                inputBlock,
+                gridFactory);
+
+            giftSelectionController = new GiftSelectionController(
+                GiftSelectionController
+                   .CreateLazily(giftSelectionPopupPrefab, null),
+                componentFactory,
+                giftInventoryService,
+                equippedStatusProvider,
+                profileRepository,
+                mvcManager
+            );
+
+            giftTransferStatusController = new GiftTransferController(
+                GiftTransferController
+                   .CreateLazily(giftTransferPopupPrefab, null),
+                webBrowser,
+                eventBus,
+                mvcManager,
+                decentralandUrlsSource,
+                giftTransferRequestCommand,
+                screenModeController
+            );
+
+            giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
+               .CreateLazily(giftTransferSuccessPopupPrefab,
+                    null));
+
+            mvcManager.RegisterController(giftSelectionController);
+            mvcManager.RegisterController(giftTransferStatusController);
+            mvcManager.RegisterController(giftTransferSuccessController);
+            mvcManager.RegisterController(giftReceivedPopupController);
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        [Serializable]
+        public class GiftingSettings : IDCLPluginSettings
+        {
+            [field: Header(nameof(GiftingPlugin) + "." + nameof(GiftingSettings))]
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftSelectionPopupPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftTransferPopupPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftTransferPopupSuccessPrefab;
+
+            [field: Header("Notifications")]
+            [field: SerializeField]
+            public AssetReferenceGameObject GiftReceivedPopupPrefab;
+
+            [field: SerializeField]
+            public BackpackSettings BackpackSettings { get; private set; }
+        }
+    }
+}

@@ -66,7 +66,9 @@ namespace DCL.Chat.ChatServices
 
         public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser, string? communityName = null)
         {
-            if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
+            if (!nametagsData.showNameTags
+                || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE
+                || (channel.ChannelType != ChatChannel.ChatChannelType.NEARBY && chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NEARBY_ONLY))
                 return;
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out var entry))
@@ -104,8 +106,7 @@ namespace DCL.Chat.ChatServices
                             }
                             else
                             {
-                                var nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : NameColorHelper.GetNameColor(profile.DisplayName);
-                                GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                                GenerateChatBubbleComponent(playerEntity, chatMessage, profile.UserNameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
                             }
                         }
 
@@ -116,6 +117,8 @@ namespace DCL.Chat.ChatServices
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null, bool isCommunityMessage = false, string? communityName = null)
         {
+            if (!world.Has<NametagHolder>(e)) return;
+
             world.AddOrSet(e, new ChatBubbleComponent(
                 chatMessage.Message,
                 chatMessage.SenderValidatedName,

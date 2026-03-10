@@ -50,7 +50,7 @@ namespace ECS.Unity.Materials.Systems
                     materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
                     ReleaseMaterial.TryReleaseDefault(ref meshRendererComponent);
-                    ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
+                    ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
                     meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
                     meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
@@ -76,7 +76,7 @@ namespace ECS.Unity.Materials.Systems
 
                     materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
-                    ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
+                    ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
                     // Apply material to all renderers in the list
                     foreach (var renderer in gltfNode.Renderers)

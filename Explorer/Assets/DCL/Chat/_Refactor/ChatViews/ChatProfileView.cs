@@ -22,7 +22,7 @@ namespace DCL.Chat.ChatViews
             if (model.ViewMode == TitlebarViewMode.DirectMessage)
             {
                 userOnlineStatusIndicator.SetActive(true);
-                userProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
+                userProfilePictureView.Bind(model.Thumbnail);
                 userProfilePictureView.gameObject.SetActive(true);
                 communityProfilePictureView.gameObject.SetActive(false);
 
@@ -31,13 +31,13 @@ namespace DCL.Chat.ChatViews
                     model.WalletId,
                     model.HasClaimedName,
                     model.IsOfficial,
-                    model.ProfileColor
+                    model.Color
                 );
             }
             else if (model.ViewMode == TitlebarViewMode.Community)
             {
                 userOnlineStatusIndicator.SetActive(false);
-                communityProfilePictureView.Bind(model.Thumbnail, model.ProfileColor);
+                communityProfilePictureView.Bind(model.Thumbnail);
                 userProfilePictureView.gameObject.SetActive(false);
                 communityProfilePictureView.gameObject.SetActive(true);
 

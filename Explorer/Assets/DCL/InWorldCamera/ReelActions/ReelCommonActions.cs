@@ -5,7 +5,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.IO;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.ReelActions
@@ -43,7 +42,7 @@ namespace DCL.InWorldCamera.ReelActions
         /// </summary>
         public static async UniTask DownloadReelToFileAsync(string reelUrl, CancellationToken ct)
         {
-            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))
+            using (UnityWebRequest webRequest = UnityWebRequest.Get(reelUrl))
             {
                 Uri uri = new Uri(reelUrl);
                 await webRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
@@ -51,8 +50,8 @@ namespace DCL.InWorldCamera.ReelActions
                 if (webRequest.result != UnityWebRequest.Result.Success)
                     throw new Exception($"Error while downloading reel: {webRequest.error}");
 
-                Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
-                byte[] imageBytes = texture.EncodeToPNG();
+                byte[] imageBytes = webRequest.downloadHandler.data;
+
                 string directoryPath = ReelsPath;
                 string absolutePath = Path.Combine(ReelsPath, Path.GetFileName(uri.LocalPath));
 

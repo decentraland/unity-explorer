@@ -132,42 +132,58 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
-                var requestIsNotFulfilled = true;
-
-                // if the request is cached wait for it
-                // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intentionId, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                while (true)
                 {
-                    // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
-                    state.AcquiredBudget?.Release();
-
-                    OngoingRequestResult<TAsset> ongoingRequestResult;
-
-                    // if the cached request is cancelled it does not mean failure for the new intent
-                    (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
-
-                    //Temporarly disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
-
-                    result = ongoingRequestResult.Result;
-
-                    if (requestIsNotFulfilled)
+                    // If there's an ongoing request for the same intention, piggyback on it
+                    if (cache.OngoingRequests.SyncTryGetValue(intentionId,
+                            out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                     {
-                        await FlowAsync(entity, source, intention, state, partition, intentionId, disposalCt);
+                        ReportHub.Log(ReportCategory.STREAMABLE_LOADING,
+                            $"[Cache] Hit (Ongoing Request) for: {intention.CommonArguments.URL}");
+
+                        // Release budget immediately - if we don't and many bundles with sequential
+                        // dependencies are loaded, it will deadlock
+                        state.AcquiredBudget?.Release();
+
+                        OngoingRequestResult<TAsset> ongoingRequestResult;
+                        bool isCancelled;
+
+                        (isCancelled, ongoingRequestResult) =
+                            await cachedSource.Task.SuppressCancellationThrow();
+
+                        //Temporarily disabled as we don't have partial loading integrated
+                        //SynchronizePartialData(state, ongoingRequestResult);
+
+                        result = ongoingRequestResult.Result;
+
+                        if (isCancelled)
+
+                            // The ongoing request was cancelled. Another waiter may have already
+                            // started a new CacheableFlowAsync for the same intention.
+                            // Re-check OngoingRequests to piggyback on it, or fall through
+                            // to start our own if none exists.
+                            continue;
+
+                        // Got a valid result from the ongoing request
+                        break;
+                    }
+
+                    // If the given URL failed irrecoverably just return the failure
+                    if (cache.IrrecoverableFailures.TryGetValue(intentionId,
+                            out StreamableLoadingResult<TAsset>? failure))
+                    {
+                        result = failure;
                         return;
                     }
-                }
 
-                // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intentionId, out StreamableLoadingResult<TAsset>? failure))
-                {
-                    result = failure;
-                    return;
-                }
+                    // No ongoing request - start our own cacheable flow
+                    result = await CacheableFlowAsync(intention, state, partition, intentionId,
+                        CancellationTokenSource.CreateLinkedTokenSource(
+                                                    intention.CommonArguments.CancellationToken, disposalCt)
+                                               .Token);
 
-                // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
-                if (requestIsNotFulfilled)
-                    result = await CacheableFlowAsync(intention, state, partition, intentionId, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    break;
+                }
 
                 if (!result.HasValue)
 
@@ -286,14 +302,23 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             cache.OngoingRequests.SyncTryAdd(intentionId, source);
-            var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                // Try load from cache first
-                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
+                result = await TryLoadFromCacheAsync(intention, ct);
+
+                if (result == null)
+                {
+                    // If result is null, it means we are about to start a fresh download loop
+                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Miss - Starting Download for: {intention.CommonArguments.URL}");
+
+                    result = await RepeatLoopAsync(intention, state, partition, intentionId, ct);
+                }
+
+                // // Try load from cache first
+                // result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, intentionId, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -303,15 +328,14 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result is { Succeeded: true })
                     genericCache
                        .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), ct)
-                       .Forget(
-                            static e =>
-                                ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
+                       .Forget(static e =>
+                            ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
                         );
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                TryRemoveOngoingRequest();
+                RemoveOngoingRequest();
 
                 source.TrySetResult(new OngoingRequestResult<TAsset>(state.PartialDownloadingData, result));
 
@@ -320,33 +344,26 @@ namespace ECS.StreamableLoading.Common.Systems
                 // (e.g. if in StreamingAssets the requested asset is not present, arguments to download from WEB source will be prepared separately)
                 return result;
             }
-            catch (OperationCanceledException operationCanceledException)
+            catch (Exception e) when (e is OperationCanceledException || e.InnerException is OperationCanceledException)
             {
                 if (result is { Succeeded: true })
                     DisposeAbandonedResult(result.Value.Asset!);
 
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                TryRemoveOngoingRequest();
+                RemoveOngoingRequest();
 
                 // Cancellation does not produce asset result
-                source.TrySetCanceled(operationCanceledException.CancellationToken);
+                source.TrySetCanceled(ct);
                 throw;
             }
-            finally
-            {
-                // We need to remove the request the same frame to prevent de-sync with new requests
-                TryRemoveOngoingRequest();
-            }
 
-            void TryRemoveOngoingRequest()
+            // Other exceptions are impossible according to the flow
+
+            void RemoveOngoingRequest()
             {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intentionId);
-                    ongoingRequestRemoved = true;
-                }
+                // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                cache.OngoingRequests.SyncRemove(intentionId);
             }
         }
 
@@ -359,7 +376,10 @@ namespace ECS.StreamableLoading.Common.Systems
                 Option<TAsset> option = cachedContent.Value;
 
                 if (option.Has)
+                {
+                    ReportHub.Log(ReportCategory.STREAMABLE_LOADING, $"[Cache] Hit (Memory/Disk) for: {intention.CommonArguments.URL}");
                     return new StreamableLoadingResult<TAsset>(option.Value);
+                }
             }
 
             return null;
@@ -374,7 +394,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             return result is { Succeeded: false, IsInitialized: true }
                 ? SetIrrecoverableFailure(intention,
-                intentionId, result.Value) : result;
+                    intentionId, result.Value)
+                : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention,

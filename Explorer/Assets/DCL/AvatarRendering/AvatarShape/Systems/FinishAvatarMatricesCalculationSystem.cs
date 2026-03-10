@@ -4,10 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using Unity.Collections;
 using Unity.Mathematics;
+using System;
+using RichTypes;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
@@ -35,10 +38,14 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(AvatarShapeComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            ref AvatarCustomSkinningComponent computeShaderSkinning)
+        private void Execute(
+            ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+            ref AvatarCustomSkinningComponent computeShaderSkinning
+        )
         {
-            skinningStrategy.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, ref computeShaderSkinning);
+            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+            if (result.Success == false)
+                ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
         }
     }
 }

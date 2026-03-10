@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -21,6 +22,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(PlayerMoveToWithDurationIntent), typeof(DisableAnimationTransitionOnTeleport))]
         private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,
@@ -28,7 +30,9 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput,
-            in StunComponent stunComponent
+            in StunComponent stunComponent,
+            in JumpState jumpState,
+            in GlideState glideState
         )
         {
             // Update the movement blend value, ranges from 0 to 3 (Idle = 0, Walk = 1, Jog = 2, Run = 3)
@@ -36,12 +40,12 @@ namespace DCL.CharacterMotion.Systems
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, rigidTransform.IsGrounded, (int)movementInput.Kind);
 
             // Update slide blend value, ranges from 0 to 1
-            animationComponent.IsSliding = AnimationSlideBlendLogic.IsSliding(in rigidTransform, in settings);
-            animationComponent.States.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(dt, animationComponent.States.SlideBlendValue, animationComponent.IsSliding, settings);
+            animationComponent.States.IsSliding = AnimationSlideBlendLogic.IsSliding(rigidTransform, settings);
+            animationComponent.States.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(dt, animationComponent.States.SlideBlendValue, animationComponent.States.IsSliding, settings);
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // Apply other states
-            AnimationStatesLogic.Execute(ref animationComponent, view, rigidTransform, in stunComponent, settings);
+            AnimationStatesLogic.Execute(dt, settings, ref animationComponent, view, rigidTransform, stunComponent, jumpState, glideState);
         }
     }
 }

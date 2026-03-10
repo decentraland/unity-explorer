@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Profiling;
+using static Unity.Mathematics.math;
 
 namespace DCL.Profiling
 {
@@ -45,7 +46,10 @@ namespace DCL.Profiling
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
 
         public ulong LastFrameTimeValueNs => (ulong)mainThreadTimeRecorder.LastValue;
-        public ulong LastGpuFrameTimeValueNs => (ulong)gpuFrameTimeRecorder.LastValue;
+
+        // On some hardware (low powered?), in some circumstances (high load?),
+        // the GPU frame time can be slightly negative. It happens very rarely.
+        public ulong LastGpuFrameTimeValueNs => (ulong)max(0L, gpuFrameTimeRecorder.LastValue);
 
         public ulong AllScenesTotalHeapSize { get; set; }
         public ulong AllScenesTotalHeapSizeExecutable { get; set; }

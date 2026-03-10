@@ -2,17 +2,24 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Diagnostics;
+using DCL.Events;
+using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Places;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -34,7 +41,9 @@ namespace DCL.ExplorePanel
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private bool includeCommunities;
+        private readonly bool includeDiscover;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly HttpEventsApiService eventsApiService;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -43,6 +52,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
+        private CancellationTokenSource checkForLiveEventsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -51,12 +61,17 @@ namespace DCL.ExplorePanel
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
+        public PlacesController PlacesController { get; }
+        public EventsController EventsController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
+        public event Action? PlacesOpenedFromStartMenu;
+        public event Action? EventsOpenedFromStartMenu;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -66,9 +81,12 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
+            PlacesController placesController,
+            EventsController eventsController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            HttpEventsApiService eventsApiService)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -82,8 +100,12 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
+            PlacesController = placesController;
+            EventsController = eventsController;
+            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
@@ -93,6 +115,7 @@ namespace DCL.ExplorePanel
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
@@ -114,6 +137,7 @@ namespace DCL.ExplorePanel
         {
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+            viewInstance!.SetLiveEventsCounter(0);
         }
 
         private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
@@ -125,11 +149,13 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
                 { ExploreSections.Communities, CommunitiesBrowserController },
+                { ExploreSections.Places, PlacesController },
+                { ExploreSections.Events, EventsController },
             };
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+            lastShownSection = includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -143,14 +169,31 @@ namespace DCL.ExplorePanel
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
                 if ((section == ExploreSections.CameraReel && !includeCameraReel) ||
-                    (section == ExploreSections.Communities && !includeCommunities))
+                    (section == ExploreSections.Communities && !includeCommunities) ||
+                    (section == ExploreSections.Places && !includeDiscover) ||
+                    (section == ExploreSections.Events && !includeDiscover))
                 {
                     tabSelector.gameObject.SetActive(false);
                     continue;
                 }
 
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(isOn =>
+                    {
+                        ToggleSection(isOn, tabSelector, section, true);
+
+                        if (!isOn) return;
+
+                        switch (section)
+                        {
+                            case ExploreSections.Places:
+                                PlacesOpenedFromStartMenu?.Invoke();
+                                break;
+                            case ExploreSections.Events:
+                                EventsOpenedFromStartMenu?.Invoke();
+                                break;
+                        }
+
+                    }
                 );
             }
 
@@ -189,6 +232,24 @@ namespace DCL.ExplorePanel
 
             BlockUnwantedInputs();
             RegisterHotkeys();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
+
+            if (inputData.IsSectionProvided)
+                return;
+
+            // Only triggers OpenedFromStartMenu events if IsSectionProvided is false.
+            // This means that the section has not opened by shortcut nor sidebar.
+            switch (sectionToShow)
+            {
+                case ExploreSections.Places:
+                    PlacesOpenedFromStartMenu?.Invoke();
+                    break;
+                case ExploreSections.Events:
+                    EventsOpenedFromStartMenu?.Invoke();
+                    break;
+            }
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
@@ -215,7 +276,9 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed += OnEventsHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
@@ -276,6 +339,32 @@ namespace DCL.ExplorePanel
                 isControlClosing = true;
         }
 
+        private void OnPlacesHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeDiscover) return;
+
+            if (lastShownSection != ExploreSections.Places)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                ShowSection(ExploreSections.Places);
+            }
+            else
+                isControlClosing = true;
+        }
+
+        private void OnEventsHotkeyPressed(InputAction.CallbackContext obj)
+        {
+            if (!includeDiscover) return;
+
+            if (lastShownSection != ExploreSections.Events)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                ShowSection(ExploreSections.Events);
+            }
+            else
+                isControlClosing = true;
+        }
+
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Backpack)
@@ -302,6 +391,7 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
 
             UnblockUnwantedInputs();
             UnRegisterHotkeys();
@@ -314,7 +404,9 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
+            dclInput.Shortcuts.Events.performed -= OnEventsHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()
@@ -351,6 +443,17 @@ namespace DCL.ExplorePanel
                     // Cancellations ignored
                 }
             }
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                     .SuppressToResultAsync(ReportCategory.EVENTS);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
         }
     }
 

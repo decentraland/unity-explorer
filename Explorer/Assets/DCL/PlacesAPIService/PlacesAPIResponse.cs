@@ -23,6 +23,8 @@ namespace DCL.PlacesAPIService
         [Serializable]
         public class PlaceInfo : ISerializationCallbackReceiver
         {
+            private const string EMPTY_PLACE_ID = "fake_id";
+
             public string id;
             public string title;
             public string description;
@@ -30,6 +32,8 @@ namespace DCL.PlacesAPIService
             public string owner;
             public string[] tags;
             public string world_name;
+            public bool is_private;
+            public string? creator_address;
 
             public Vector2Int[] Positions;
 
@@ -58,12 +62,16 @@ namespace DCL.PlacesAPIService
             public int user_visits;
             public Realm[] realms_detail;
             public string like_rate;
+            public bool live;
+            public string[] connected_addresses;
 
             [SerializeField] private string[] positions;
 
+            public bool IsEmptyPlace => id == EMPTY_PLACE_ID;
+
             public PlaceInfo(Vector2Int position)
             {
-                id = "fake_id";
+                id = EMPTY_PLACE_ID;
                 title = "Empty place";
                 description = "No description";
                 image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";

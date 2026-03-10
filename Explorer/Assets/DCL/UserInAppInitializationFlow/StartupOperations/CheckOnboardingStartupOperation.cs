@@ -78,7 +78,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             // It the app is open from any external way, we will ignore the onboarding flow
-            if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
+            if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE) || appParameters.HasFlag(AppArgsFlags.COMMUNITY))
                 return;
 
             isProfilePendingToBeUpdated = false;
@@ -94,7 +94,7 @@ namespace DCL.UserInAppInitializationFlow
                 if (!TrySolveRealmFromFeatureFlags(FeatureFlagsStrings.ONBOARDING, out realm))
                     return;
 
-            string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
+            string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldServer);
             var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
 
             if (await realmController.IsReachableAsync(realmURL, ct))

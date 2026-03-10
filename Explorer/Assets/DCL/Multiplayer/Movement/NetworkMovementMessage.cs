@@ -14,6 +14,10 @@ namespace DCL.Multiplayer.Movement
 
         public float rotationY;
 
+        public bool headIKYawEnabled;
+        public bool headIKPitchEnabled;
+        public Vector2 headYawAndPitch;
+
         public MovementKind movementKind;
         public bool isSliding;
         public bool isStunned;
@@ -42,6 +46,9 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(velocityTier);
             hashCode.Add(isInstant);
             hashCode.Add(isEmoting);
+            hashCode.Add(headIKYawEnabled);
+            hashCode.Add(headIKPitchEnabled);
+            hashCode.Add(headYawAndPitch);
             return hashCode.ToHashCode();
         }
 
@@ -57,7 +64,10 @@ namespace DCL.Multiplayer.Movement
             && animState.Equals(other.animState)
             && velocityTier == other.velocityTier
             && isInstant == other.isInstant
-            && isEmoting == other.isEmoting;
+            && isEmoting == other.isEmoting
+            && headIKYawEnabled == other.headIKYawEnabled
+            && headIKPitchEnabled == other.headIKPitchEnabled
+            && headYawAndPitch.Equals(other.headYawAndPitch);
 
         public override bool Equals(object obj) =>
             obj is NetworkMovementMessage other && Equals(other);

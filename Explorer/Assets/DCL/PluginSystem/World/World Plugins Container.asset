@@ -210,6 +210,9 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FontSansSerif>k__BackingField: {fileID: 12800000, guid: 05befaedcb2db4303a48d552554db836, type: 3}
+        <FontSerif>k__BackingField: {fileID: 12800000, guid: 7a0ca548bf4cd42fa9f1c58db4332466, type: 3}
+        <FontMonospace>k__BackingField: {fileID: 12800000, guid: 73ed2f04eda7b4677b5c6e9d73681b0e, type: 3}
     - rid: 4769369655026384898
       type: {class: MediaPlayerPlugin/MediaPlayerPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

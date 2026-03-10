@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Thumbnails.Utils;
+using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;
@@ -12,12 +11,11 @@ namespace DCL.Backpack.EmotesSection
 {
     public class BackpackEmoteSlotsController : IDisposable
     {
-        private const int MIN_WAIT_TIME = 500;
-
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly (EmoteSlotContainerView, CancellationTokenSource)[] avatarSlots;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private EmoteSlotContainerView? previousSlot;
 
@@ -25,11 +23,13 @@ namespace DCL.Backpack.EmotesSection
             EmoteSlotContainerView[] avatarSlotViews,
             IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
-            NftTypeIconSO rarityBackgrounds)
+            NftTypeIconSO rarityBackgrounds,
+            IThumbnailProvider thumbnailProvider)
         {
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
             this.rarityBackgrounds = rarityBackgrounds;
+            this.thumbnailProvider = thumbnailProvider;
 
             this.backpackEventBus.EquipEmoteEvent += EquipInSlot;
             this.backpackEventBus.UnEquipEmoteEvent += UnEquipInSlot;
@@ -102,7 +102,7 @@ namespace DCL.Backpack.EmotesSection
         {
             avatarSlotView.StartLoadingAnimation();
 
-            Sprite? sprite = await emote.WaitForThumbnailAsync(MIN_WAIT_TIME, ct);
+            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
 
             avatarSlotView.SlotWearableThumbnail.sprite = sprite;
             avatarSlotView.SlotWearableThumbnail.gameObject.SetActive(true);

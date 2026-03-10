@@ -27,6 +27,19 @@ namespace DCL.CharacterMotion.Settings
         float LongJumpTime { get; set; }
         float LongJumpGravityScale { get; set; }
         float JumpGravityFactor { get; }
+        int AirJumpCount { get; set; }
+        float AirJumpHeight { get; set; }
+        float AirJumpDelay { get; set; }
+        float AirJumpGravityDuringDelay { get; set; }
+        float CooldownBetweenJumps { get; set; }
+        float AirJumpDirectionChangeImpulse { get; set; }
+        public float GlideSpeed { get; }
+        public float GlideMinGroundDistance { get; }
+        public float GlideMaxGravity { get; }
+        public float JumpToGlideTimeInterval { get; }
+        public float GlideCooldown { get; }
+        public float GlideAnimMaxAngle { get; }
+        public float GlideAnimBlendSpeed { get; }
         float JumpGraceTime { get; }
         float JumpHeightStun { get; }
         float LongFallStunTime { get; }
@@ -34,7 +47,10 @@ namespace DCL.CharacterMotion.Settings
         float EdgeSlipSpeed { get; }
         float EdgeSlipSafeDistance { get; }
         float RotationSpeed { get; }
-        float MovAnimBlendSpeed { get; }
+        float MoveAnimBlendMaxWalkSpeed { get; }
+        float MoveAnimBlendMaxJogSpeed { get; }
+        float MoveAnimBlendMaxRunSpeed { get; }
+        float MoveAnimBlendSpeed { get; }
         float JumpPadForce { get; }
         float AnimationSpeed { get; }
         public AnimationCurve AccelerationCurve { get; }
@@ -67,6 +83,8 @@ namespace DCL.CharacterMotion.Settings
         float HeadIKHorizontalAngleLimit { get; set; }
         float HeadIKHorizontalAngleReset { get; set; }
         float HeadIKRotationSpeed { get; set; }
+        float HeadIKWeightChangeSpeed { get; set; }
+        float HeadIKRemotePlayersDistance { get; set; }
         AnimationCurve SlopeVelocityModifier { get; }
         float SlideAnimationBlendSpeed { get; }
         float MinSlopeAngle { get; }
@@ -76,6 +94,5 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
-        float HeadIKWeightChangeSpeed { get; }
     }
 }

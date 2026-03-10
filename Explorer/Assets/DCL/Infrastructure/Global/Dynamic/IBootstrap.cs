@@ -12,6 +12,7 @@ using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using ECS;
 using Global.Versioning;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -27,6 +28,7 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             IAppArgs appArgs,
@@ -51,7 +53,7 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct);
 
-        UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct);
+        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct);
 
         void InitializePlayerEntity(StaticContainer staticContainer, Entity playerEntity);
 

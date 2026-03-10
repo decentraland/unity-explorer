@@ -88,6 +88,9 @@ namespace DCL.Communities
             return result;
         }
 
+        public bool TryGetCommunityIdFromAppArgs(out string? communityId) =>
+            appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId);
+
         private void OnIdentityCacheChanged() =>
             storedResult = null;
     }

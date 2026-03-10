@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "DCLInput",
     "maps": [
         {
@@ -2225,6 +2226,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Places",
+                    "type": "Button",
+                    "id": "5a2cd426-7e96-4f96-93ad-0679ed95b588",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Events",
+                    "type": "Button",
+                    "id": "08706045-830e-441e-a5a2-c30b46feef15",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "CameraReel",
+                    "type": "Button",
+                    "id": "e85e2a3b-f3d0-4437-93ad-4d14f00a8972",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2412,6 +2440,39 @@
                     "processors": "",
                     "groups": "",
                     "action": "Communities",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a3339e67-4780-405e-972d-b7389939500b",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Places",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "92913669-52c7-4977-8826-3521a8c24a02",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Events",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d846ba0c-659b-4c85-90c2-3b950846dc8d",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -3179,15 +3240,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "CameraReel",
-                    "type": "Button",
-                    "id": "31bfeb99-05fb-4d03-8b5b-625b9a978aca",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "ShowHide",
                     "type": "Button",
                     "id": "cf1e68d1-cb76-496e-bcf9-7ebe352d5f9d",
@@ -3508,17 +3560,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleInWorldCamera",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "e5a2c668-2319-4423-b37b-7f32451dba2c",
-                    "path": "<Keyboard>/k",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

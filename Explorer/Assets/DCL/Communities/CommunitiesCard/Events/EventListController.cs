@@ -44,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly string createEventFormat;
 
         private CommunityData? communityData = null;
@@ -69,8 +70,9 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
-            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}";
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -109,7 +111,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData.Event));
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData.Event)}&utm_source=explorer&utm_campaign=communities");
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {
@@ -148,13 +150,18 @@ namespace DCL.Communities.CommunitiesCard.Events
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
             if (!string.IsNullOrWhiteSpace(eventData.Place.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
+                realmNavigator.TryChangeRealmAsync(
+                    URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer))),
+                    eventCardOperationsCts.Token,
+                    default,
+                    isWorld: true,
+                    allowsSpawnPointerOverride: true).Forget();
             else
                 realmNavigator.TeleportToParcelAsync(eventData.Place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
         }
 
         private void OnMainButtonClicked(PlaceAndEventDTO eventData) =>
-            mvcManager.ShowAndForget(EventInfoController.IssueCommand(new EventInfoParameter(eventData.Event, eventData.Place)), cancellationToken);
+            mvcManager.ShowAndForget(EventDetailPanelController.IssueCommand(new EventDetailPanelParameter(eventData.Event, eventData.Place)), cancellationToken);
 
         public override void Reset()
         {
@@ -197,8 +204,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var item in eventResponse.Value.data.events)
                 eventPlaceIds.Add(item.place_id);
 
-            Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
-                                                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
+                                                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return 0;
@@ -213,15 +220,20 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             placeInfoCache.Clear();
 
-            foreach (var place in placesResponse.Value.data)
+            foreach (var place in placesResponse.Value.Data)
                 placeInfoCache.Add(place.id, place);
 
             foreach (var item in eventResponse.Value.data.events)
+            {
+                if (!placeInfoCache.TryGetValue(item.place_id, out PlaceInfo? place))
+                    continue;
+
                 eventsFetchData.Items.Add(new PlaceAndEventDTO
                 {
-                    Place = placeInfoCache[item.place_id],
+                    Place = place,
                     Event = item
                 });
+            }
 
             return eventResponse.Value.data.total;
         }

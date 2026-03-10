@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Fields;
 using DCL.Passport.Modals;
@@ -244,7 +245,18 @@ namespace DCL.Passport.Modules
                     });
                 }
 
-                await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct);
+                try { await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct); }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    const string ERROR_MESSAGE = "There was an error while trying to save your profile links. Please try again!";
+                    ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+                }
+                finally
+                {
+                    SetLinksSectionAsSavingStatus(false);
+                    SetLinksSectionAsEditionMode(false);
+                }
             }
         }
 

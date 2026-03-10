@@ -10,13 +10,10 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.Web3;
 using ECS.Abstract;
 using MVC;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.Systems
 {
@@ -86,7 +83,7 @@ namespace DCL.Interaction.Systems
 
             currentPositionHovered = Mouse.current.position.ReadValue();
             currentProfileHovered = profile;
-            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true);
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 

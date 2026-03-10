@@ -9,6 +9,14 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
 {
     public class LRUDiskCleanUp : IDiskCleanUp
     {
+        private static readonly EnumerationOptions options =  
+            new EnumerationOptions
+            {
+                IgnoreInaccessible = true,
+                RecurseSubdirectories = false,
+                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
+            };
+
         private readonly CacheDirectory cacheDirectory;
         private readonly FilesLock filesLock;
         private readonly long maxCacheSizeBytes;
@@ -17,6 +25,7 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
         /// Use file system enumerable because default DirectoryInfo API allocates a lot of memory per each call
         /// </summary>
         private readonly FileSystemEnumerable<CacheFileInfo> files;
+        private readonly FileSystemEnumerable<long> fileSizes;
 
         public LRUDiskCleanUp(CacheDirectory cacheDirectory, FilesLock filesLock, long maxCacheSizeBytes = 1024 * 1024 * 1024) //1GB
         {
@@ -27,25 +36,31 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
             files = new FileSystemEnumerable<CacheFileInfo>(
                 cacheDirectory.Path,
                 (ref FileSystemEntry entry) => CacheFileInfo.FromFileSystemEntry(ref entry),
-                new EnumerationOptions
-                {
-                    IgnoreInaccessible = true,
-                    RecurseSubdirectories = false,
-                    AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
-                }
+                options
             )
             {
-                ShouldIncludePredicate = (ref FileSystemEntry entry) => entry.IsDirectory == false,
+                ShouldIncludePredicate = Predicate,
             };
+
+            fileSizes = new FileSystemEnumerable<long>(
+                cacheDirectory.Path,
+                (ref FileSystemEntry entry) => entry.Length,
+                options
+            )
+            {
+                ShouldIncludePredicate = Predicate,
+            };
+
+            static bool Predicate(ref FileSystemEntry entry) => entry.IsDirectory == false;
         }
 
         public void CleanUpIfNeeded()
         {
-            using var _ = CachedFiles(out var cachedFiles);
-            long directorySize = DirectorySize(cachedFiles);
+            long directorySize = DirectorySize(fileSizes);
 
             if (directorySize > maxCacheSizeBytes)
             {
+                using var _ = CachedFiles(out var cachedFiles);
                 cachedFiles.Sort(LRUComparer.INSTANCE);
 
                 for (int i = 0; i < cachedFiles.Count; i++)
@@ -68,10 +83,10 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
             File.SetLastAccessTimeUtc(Path.Combine(cacheDirectory.Path, fileName), DateTime.UtcNow);
         }
 
-        private static long DirectorySize(IReadOnlyCollection<CacheFileInfo> files)
+        private static long DirectorySize(FileSystemEnumerable<long> fileSizes)
         {
             long size = 0;
-            foreach (CacheFileInfo fi in files) size += fi.Size;
+            foreach (long fi in fileSizes) size += fi;
             return size;
         }
 

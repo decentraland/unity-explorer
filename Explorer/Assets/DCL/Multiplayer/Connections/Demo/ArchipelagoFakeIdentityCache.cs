@@ -20,14 +20,15 @@ namespace DCL.Multiplayer.Connections.Demo
                 new PlayerPrefsIdentityProvider(
                     new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                         web3AccountFactory
-                    )
+                    ),
+                    dclEnvironment
                 )
             );
 
             if (identityCache.Identity is null)
             {
                 IWeb3Identity? identity = await new DappWeb3Authenticator.Default(identityCache, decentralandUrlsSource, web3AccountFactory, dclEnvironment)
-                   .LoginAsync(CancellationToken.None);
+                   .LoginAsync(LoginPayload.ForDappFlow(LoginMethod.ANY), CancellationToken.None);
 
                 identityCache.Identity = identity;
             }

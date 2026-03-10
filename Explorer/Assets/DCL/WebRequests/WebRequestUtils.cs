@@ -15,6 +15,7 @@ namespace DCL.WebRequests
         public const string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
 
         public const int BAD_REQUEST = 400;
+        public const int UNAUTHORIZED_ACCESS = 401;
         public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
 
@@ -32,7 +33,7 @@ namespace DCL.WebRequests
             // Requests with a signature are not idempotent due to the possible signature expiration
             webRequest.Idempotent && !signInfo.HasValue;
 
-        public static (bool canBeRepeated, TimeSpan retryDelay) CanBeRepeated(int attemptNumber, RetryPolicy retryPolicy, bool idempotent, UnityWebRequestException webRequestException)
+        public static (bool canBeRepeated, TimeSpan retryDelay) CanBeRepeated(int attemptNumber, RetryPolicy retryPolicy, bool idempotent, UnityWebRequestException? webRequestException)
         {
             // Retries count are exhausted (attemptNumber is 1-based)
             if (attemptNumber > retryPolicy.maxRetriesCount)
@@ -43,7 +44,7 @@ namespace DCL.WebRequests
                 return (false, TimeSpan.Zero);
 
             // Handle "Retry-After" header. Applicable for 429 Too Many Requests and 503 Service Unavailable
-            if (webRequestException.ResponseCode is 429 or 503)
+            if (webRequestException?.ResponseCode is 429 or 503)
             {
                 // "Retry-After" header is not present or not parsable, don't repeat
                 if (!webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader) || retryAfterHeader is null)
@@ -90,10 +91,13 @@ namespace DCL.WebRequests
                 return (false, TimeSpan.Zero);
 
             // The default scheme
-            bool errorCodeIsExpected = retryPolicy.forceRecoverableCodes?.Contains(webRequestException.ResponseCode) ?? false;
+            if (webRequestException != null)
+            {
+                bool errorCodeIsExpected = retryPolicy.forceRecoverableCodes?.Contains(webRequestException.ResponseCode) ?? false;
 
-            if (!errorCodeIsExpected && webRequestException.IsIrrecoverableError())
-                return (false, TimeSpan.Zero);
+                if (!errorCodeIsExpected && webRequestException.IsIrrecoverableError())
+                    return (false, TimeSpan.Zero);
+            }
 
             return (true, GetRetryDelay());
 
@@ -178,6 +182,14 @@ namespace DCL.WebRequests
 
         public static string GetResponseContentEncoding(this UnityWebRequest unityWebRequest) =>
             unityWebRequest.GetResponseHeader("Content-Encoding");
+
+        public static bool IsLocalhost(string url) =>
+            url.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("http://[::1]", StringComparison.OrdinalIgnoreCase)
+            || url.StartsWith("https://[::1]", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Does nothing with the web request

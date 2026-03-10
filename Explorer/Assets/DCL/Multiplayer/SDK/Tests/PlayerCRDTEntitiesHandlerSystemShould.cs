@@ -31,6 +31,14 @@ namespace DCL.Multiplayer.SDK.Tests
         private ISceneFacade scene1Facade;
         private ISceneFacade scene2Facade;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [SetUp]
         public void Setup()
         {

@@ -1015,6 +1015,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3389732522336231031, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_Spacing
+      value: 26
+      objectReference: {fileID: 0}
     - target: {fileID: 4309115723449902765, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Name
       value: CreateOrEditCommunityPanel
@@ -1230,6 +1234,10 @@ PrefabInstance:
     - target: {fileID: 6970276788350834772, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7891702222690418044, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+      propertyPath: m_Size
+      value: 0.5309718
       objectReference: {fileID: 0}
     - target: {fileID: 8005017528414718735, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_SizeDelta.y

@@ -9,48 +9,35 @@ namespace ECS.Unity.Textures.Components
     {
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
-        /// <summary>
-        /// Gets the current world position of the maximum corner of the bounding box that contains all the mesh renderers used by video consumers of one texture.
-        /// </summary>
-        public Vector3 BoundsMax
-        {
-            get
-            {
-                Vector3 boundsMax = Vector3.one * float.MinValue;
-
-                for (int i = 0; i < renderers.Count; ++i)
-                {
-                    Vector3 inputBoundsMax = renderers[i].bounds.max;
-                    boundsMax = new Vector3(Mathf.Max(inputBoundsMax.x, boundsMax.x), Mathf.Max(inputBoundsMax.y, boundsMax.y), Mathf.Max(inputBoundsMax.z, boundsMax.z));
-                }
-
-                return boundsMax;
-            }
-        }
-
-        /// <summary>
-        /// Gets the current world position of the minimum corner of the bounding box that contains all the mesh renderers used by video consumers of one texture.
-        /// </summary>
-        public Vector3 BoundsMin
-        {
-            get
-            {
-                Vector3 boundsMin = Vector3.one * float.MaxValue;
-
-                for (int i = 0; i < renderers.Count; ++i)
-                {
-                    Vector3 inputBoundsMin = renderers[i].bounds.min;
-                    boundsMin = new Vector3(Mathf.Min(inputBoundsMin.x, boundsMin.x), Mathf.Min(inputBoundsMin.y, boundsMin.y), Mathf.Min(inputBoundsMin.z, boundsMin.z));
-                }
-
-                return boundsMin;
-            }
-        }
-
         // All the renderers that use the video texture
         private readonly List<Renderer> renderers;
 
         public RenderTexture Texture { get; }
+
+        public (Vector3 min, Vector3 max) GetBounds()
+        {
+            Vector3 boundsMin = Vector3.one * float.MaxValue;
+            Vector3 boundsMax = Vector3.one * float.MinValue;
+
+            for (int i = 0; i < renderers.Count; ++i)
+            {
+                Bounds bounds = renderers[i].bounds;
+                Vector3 min = bounds.min;
+                Vector3 max = bounds.max;
+
+                boundsMin = new Vector3(
+                    Mathf.Min(min.x, boundsMin.x),
+                    Mathf.Min(min.y, boundsMin.y),
+                    Mathf.Min(min.z, boundsMin.z));
+
+                boundsMax = new Vector3(
+                    Mathf.Max(max.x, boundsMax.x),
+                    Mathf.Max(max.y, boundsMax.y),
+                    Mathf.Max(max.z, boundsMax.z));
+            }
+
+            return (boundsMin, boundsMax);
+        }
 
         /// <summary>
         ///     The single copy kept for the single Entity with VideoPlayer,

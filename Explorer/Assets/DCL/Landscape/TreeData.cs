@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -48,20 +49,34 @@ namespace DCL.Landscape
                 treeInstances.Dispose();
         }
 
-        public ReadOnlySpan<TreeInstanceData> GetTreeInstances(int2 parcel)
+        public ReadOnlySpan<TreeInstanceData> GetTreeInstancesAsSpan(int2 parcel) =>
+            TrySolveTreeInstancesSlice(parcel, out int start, out int end)
+                ? treeInstances.AsReadOnlySpan().Slice(start, end - start)
+                : ReadOnlySpan<TreeInstanceData>.Empty;
+
+        private NativeSlice<TreeInstanceData> GetTreeInstancesAsNativeArray(int2 parcel) =>
+            TrySolveTreeInstancesSlice(parcel, out int start, out int end)
+                ? treeInstances.Slice(start, end - start)
+                : default(NativeSlice<TreeInstanceData>);
+
+        private bool TrySolveTreeInstancesSlice(int2 parcel, out int start, out int end)
         {
             // If tree data has not been loaded, minParcel == maxParcel, and so this is false, and we
             // don't need to check if treeInstances is empty or anything like that.
             if (parcel.x < treeMinParcel.x || parcel.x >= treeMaxParcel.x
                                            || parcel.y < treeMinParcel.y || parcel.y >= treeMaxParcel.y)
-                return ReadOnlySpan<TreeInstanceData>.Empty;
+            {
+                start = -1;
+                end = -1;
+                return false;
+            }
 
             int index = ((parcel.y - treeMinParcel.y) * (treeMaxParcel.x - treeMinParcel.x))
                 + parcel.x - treeMinParcel.x;
 
-            int start = treeIndices[index++];
-            int end = index < treeIndices.Length ? treeIndices[index] : treeInstances.Length;
-            return treeInstances.AsReadOnlySpan().Slice(start, end - start);
+            start = treeIndices[index++];
+            end = index < treeIndices.Length ? treeIndices[index] : treeInstances.Length;
+            return true;
         }
 
         public bool GetTreeTransform(int2 parcel, TreeInstanceData instance, out Vector3 position,
@@ -115,7 +130,7 @@ namespace DCL.Landscape
             for (int i = 0; i < treeIndices.Length; i++)
             {
                 int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
-                ReadOnlySpan<TreeInstanceData> instances = GetTreeInstances(parcel);
+                ReadOnlySpan<TreeInstanceData> instances = GetTreeInstancesAsSpan(parcel);
 
                 foreach (TreeInstanceData instance in instances)
                 {
@@ -133,7 +148,53 @@ namespace DCL.Landscape
             {
                 List<Matrix4x4> matrices = transforms[prototypeIndex];
                 instanceCounts[prototypeIndex] = matrices.Count;
+                GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
+                    matrices, 0, 0, matrices.Count);
+            }
+        }
 
+        public async UniTask InstantiateAsync(CancellationToken ct)
+        {
+            const int THROTTLE_ITERATIONS = 1000;
+
+            int stride = treeMaxParcel.x - treeMinParcel.x;
+            var transforms = new List<Matrix4x4>[terrainData.treeAssets.Length];
+
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                if (i > 0 && i % THROTTLE_ITERATIONS == 0)
+                    await UniTask.NextFrame(ct);
+
+                transforms[i] = new List<Matrix4x4>();
+            }
+
+            for (var i = 0; i < treeIndices.Length; i++)
+            {
+                if (i > 0 && i % THROTTLE_ITERATIONS == 0)
+                    await UniTask.NextFrame(ct);
+
+                int2 parcel = int2(i % stride, i / stride) + treeMinParcel;
+                NativeSlice<TreeInstanceData> instances = GetTreeInstancesAsNativeArray(parcel);
+
+                foreach (TreeInstanceData instance in instances)
+                {
+                    if (GetTreeTransform(parcel, instance, out Vector3 position,
+                            out Quaternion rotation, out Vector3 scale))
+                    {
+                        transforms[instance.PrototypeIndex]
+                           .Add(Matrix4x4.TRS(position, rotation, scale));
+                    }
+                }
+            }
+
+            for (int prototypeIndex = 0; prototypeIndex < terrainData.treeAssets.Length;
+                 prototypeIndex++)
+            {
+                if (prototypeIndex > 0 && prototypeIndex % THROTTLE_ITERATIONS == 0)
+                    await UniTask.NextFrame(ct);
+
+                List<Matrix4x4> matrices = transforms[prototypeIndex];
+                instanceCounts[prototypeIndex] = matrices.Count;
                 GPUICoreAPI.SetTransformBufferData(rendererKeys[prototypeIndex],
                     matrices, 0, 0, matrices.Count);
             }

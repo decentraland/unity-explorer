@@ -19,7 +19,7 @@ namespace DCL.Web3.Authenticators
 
         public void Dispose() { }
 
-        public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
+        public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
             var signer = accountFactory.CreateRandomAccount();
             var ephemeralAccount = accountFactory.CreateRandomAccount();
@@ -44,11 +44,17 @@ namespace DCL.Web3.Authenticators
                 new Web3Address(signer),
                 ephemeralAccount,
                 expiration,
-                authChain
+                authChain,
+                IWeb3Identity.Web3IdentitySource.None
             ).AsUniTaskResult<IWeb3Identity>();
         }
 
-        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public UniTask LogoutAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
+
+        public UniTask<string> RequestTransferAsync(string giftUrn, string recipientAddress, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

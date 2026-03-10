@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Runtime.Wearables;
@@ -24,11 +25,31 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
+        public int Amount { get; set; }
+
+        public void SetAmount(int amount)
+        {
+            Amount = amount;
+        }
+
+        public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
+
         public WearableAssets[] WearableAssetResults { get; } = new WearableAssets[BodyShape.COUNT];
 
+        StreamableLoadingResult<WearableDTO> IAvatarAttachment<WearableDTO>.Model
+        {
+            get => Model;
+            set => Model = value;
+        }
+
         public StreamableLoadingResult<WearableDTO> Model { get; set; }
+        public StreamableLoadingResult<TrimmedWearableDTO> TrimmedModel { get; set; }
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ThumbnailAssetResult { get; set; }
+
+        public AvatarAttachmentDTO DTO => Model.Asset!;
+        public TrimmedWearableDTO TrimmedDTO => TrimmedModel.Asset!;
+        TrimmedAvatarAttachmentDTO? ITrimmedAvatarAttachment.TrimmedDTO => TrimmedDTO;
 
         public WearableType Type { get; private set; }
 
@@ -49,12 +70,11 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            var id = this.GetUrn().ToString();
+            var id = ((IAvatarAttachment)this).GetUrn().ToString();
             bool startsWith = id.StartsWith("urn:decentraland:off-chain:base-avatars:", StringComparison.Ordinal);
             return startsWith == false;
         }
 
-        public AvatarAttachmentDTO DTO => Model.Asset!;
 
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;
@@ -74,6 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Model = result;
+            TrimmedModel = new StreamableLoadingResult<TrimmedWearableDTO>(result.Asset!.Convert(((IAvatarAttachment)this).GetThumbnail().Value));
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;

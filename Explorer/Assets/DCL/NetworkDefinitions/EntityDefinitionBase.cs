@@ -1,0 +1,45 @@
+using DCL.Platforms;
+using Newtonsoft.Json;
+using System;
+
+namespace DCL.Ipfs
+{
+    /// <summary>
+    /// Base class for entity definitions that provides common properties and asset bundle manifest functionality
+    /// </summary>
+    [Serializable]
+    public abstract class EntityDefinitionBase : TrimmedEntityDefinitionBase
+    {
+        public string type;
+        public long timestamp;
+        public string version;
+        public string[] pointers;
+        public ContentDefinition[] content;
+
+        protected EntityDefinitionBase() { }
+
+        protected EntityDefinitionBase(string id)
+        {
+            this.id = id;
+        }
+
+        public override string ToString()
+        {
+            return id ?? string.Empty;
+        }
+    }
+
+    [Serializable]
+    public class TrimmedEntityDefinitionBase
+    {
+        public string? id;
+        public string thumbnail;
+
+        // Asset bundle manifest properties
+        [JsonProperty("versions")]
+        public AssetBundleManifestVersion? assetBundleManifestVersion;
+
+        [JsonProperty("status")]
+        public AssetBundleRegistryEnum assetBundleRegistryEnum;
+    }
+}

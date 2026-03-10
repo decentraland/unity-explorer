@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace DCL.FeatureFlags
 {
@@ -24,6 +24,7 @@ namespace DCL.FeatureFlags
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
+        public const string USE_GATEWAY = "use-gateway";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
         public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
@@ -40,6 +41,7 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
+        public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";
@@ -47,7 +49,30 @@ namespace DCL.FeatureFlags
         public const string MINIMUM_REQUIREMENTS = "alfa-minimum-requirements";
         public const string CHAT_TRANSLATION_ENABLED = "alfa-chat-translation";
         public const string OUTFITS_ENABLED = "alfa-outfits";
+        public const string GIFTING_ENABLED = "alfa-gifting";
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
+        public const string CHAT_MESSAGE_BUFFER_CONFIG = "alfa-chat-message-buffer-config";
+        public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
+        public const string CONFIG_VARIANT = "config";
+        public const string HEAD_SYNC = "alfa-head-sync";
+        public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
+        public const string DISCOVER = "alfa-discover";
+        public const string STOP_ON_DUPLICATE_IDENTITY = "alfa-stop-on-duplicate-identity";
+        public const string DONATIONS = "alfa-donations";
+        public const string RECOMMENDED_DONATION_AMOUNT = "alfa-recommended-donation-amount";
+        public const string FORCE_BACKFACE_CULLING = "alfa-force-backface-culling";
+        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
+        public const string SKYBOX_SETTINGS_VARIANT = "settings";
+        public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
+        public const string CHECK_DISK_SPACE = "alfa-check-disk-space";
+        public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
+        public const string DOUBLE_JUMP = "alfa-double-jump";
+        public const string GLIDING = "alfa-gliding";
+
+        public static class Endpoints
+        {
+            public const string USE_CENTRALIZED_PROFILES = "use-centralized-profiles";
+        }
     }
 
     public enum FeatureFlag
@@ -86,7 +111,10 @@ namespace DCL.FeatureFlags
         AuthCodeValidation,
         GpuiEnabled,
         ChatTranslation,
-        OutfitsEnabled
+        OutfitsEnabled,
+        GiftingEnabled,
+        SkyboxSettings,
+        SkyboxSettingsVariant
     }
 
     public static class FeatureFlagExtensions
@@ -129,6 +157,9 @@ namespace DCL.FeatureFlags
                 FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
                 FeatureFlag.ChatTranslation => FeatureFlagsStrings.CHAT_TRANSLATION_ENABLED,
                 FeatureFlag.OutfitsEnabled => FeatureFlagsStrings.OUTFITS_ENABLED,
+                FeatureFlag.GiftingEnabled => FeatureFlagsStrings.GIFTING_ENABLED,
+                FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
+                FeatureFlag.SkyboxSettingsVariant  => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
                 _ => string.Empty
             };
         }

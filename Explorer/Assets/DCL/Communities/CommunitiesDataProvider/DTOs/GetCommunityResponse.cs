@@ -32,6 +32,8 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string pendingInviteOrRequestId;
             public InviteRequestAction pendingActionType;
 
+            public bool isSubscribedToNotifications;
+
             public void DecreaseMembersCount()
             {
                 if (membersCount > 0)

@@ -1,9 +1,9 @@
-﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+﻿using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using NSubstitute;
 
@@ -16,8 +16,7 @@ namespace ECS.TestSuite
         public static readonly IWebRequestController INSTANCE = new WebRequestController(
             Substitute.For<IWebRequestsAnalyticsContainer>(),
             Substitute.For<IWeb3IdentityCache>(),
-            new RequestHub(Substitute.For<IDecentralandUrlsSource>()),
-            ChromeDevtoolProtocolClient.NewForTest(),
+            new RequestHub(DecentralandUrlsSource.CreateForTest()),
             new WebRequestBudget(TOTAL_BUDGET,
                 new ElementBinding<ulong>(TOTAL_BUDGET))
         );

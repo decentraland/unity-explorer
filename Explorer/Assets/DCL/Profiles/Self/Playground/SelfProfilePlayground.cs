@@ -7,9 +7,13 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -36,25 +40,27 @@ namespace DCL.Profiles.Self.Playground
             var world = World.Create();
             var playerEntity = world.Create();
 
+            var realmData = new RealmData(
+                new LogIpfsRealm(
+                    new IpfsRealm(URLDomain.FromString(url),
+                        new ServerAbout(
+                            lambdas: new ContentEndpoint(url)
+                        )
+                    )
+                )
+            );
+
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY);
+
             SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
-                        IWebRequestController.DEFAULT,
-                        new RealmData(
-                            new LogIpfsRealm(
-                                new IpfsRealm(
-                                    web3IdentityCache,
-                                    IWebRequestController.DEFAULT,
-                                    URLDomain.FromString(url),
-                                    URLDomain.EMPTY,
-                                    new ServerAbout(
-                                        lambdas: new ContentEndpoint(url)
-                                    )
-                                )
-                            )
-                        ),
+                        IWebRequestController.TEST,
+                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
+                        urlsSource,
                         new DefaultProfileCache(),
-                        ProfilesDebug.Create(new NullDebugContainerBuilder()))
+                        new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null),
+                        false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

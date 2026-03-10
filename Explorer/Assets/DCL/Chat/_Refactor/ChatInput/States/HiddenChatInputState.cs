@@ -1,10 +1,19 @@
-﻿namespace DCL.Chat.ChatInput
+﻿using MVC;
+
+namespace DCL.Chat.ChatInput
 {
-    public class HiddenChatInputState : ChatInputState
+    public class HiddenChatInputState : ChatInputState, IState
     {
-        public override void Begin()
+        private readonly ChatInputView view;
+
+        public HiddenChatInputState(ChatInputView view)
         {
-            context.ChatInputView.Hide();
+            this.view = view;
+        }
+
+        public void Enter()
+        {
+            view.Hide();
         }
     }
 }

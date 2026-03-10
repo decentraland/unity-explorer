@@ -37,7 +37,6 @@ namespace DCL.Backpack
         {
             view.gameObject.SetActive(true);
             backpackGridController.Activate();
-            backpackGridController.RequestPage(1, true);
         }
 
         public void Deactivate()
@@ -49,6 +48,7 @@ namespace DCL.Backpack
 
             backpackGridController.Deactivate();
             view.gameObject.SetActive(false);
+            backpackSearchController.Clear();
         }
 
         #region ISection

@@ -16,6 +16,8 @@ namespace DCL.SocialService
         private readonly byte[] receiveBuffer;
         private readonly ClientWebSocket webSocket;
 
+        private bool isDisposed;
+
         private bool isConnected => State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
@@ -43,6 +45,8 @@ namespace DCL.SocialService
                 webSocket.Dispose();
             }
             catch (ObjectDisposedException) { }
+
+            isDisposed = true;
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
@@ -105,25 +109,18 @@ namespace DCL.SocialService
             }
         }
 
-        public void SendMessage(byte[] data)
+        public virtual async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
         {
-            CancellationToken ct;
+            if (isDisposed) return;
 
-            // The cancellation source could be disposed before the token is obtained.
-            try { ct = lifeCycleCancellationToken.Token; }
-            catch (ObjectDisposedException) { return; }
-
-            SendMessageAsync(data, ct).Forget();
-        }
-
-        public async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
-        {
             try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
             catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
         }
 
-        public async UniTask SendMessageAsync(string data, CancellationToken ct)
+        public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
         {
+            if (isDisposed) return;
+
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
             catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
         }
@@ -133,6 +130,8 @@ namespace DCL.SocialService
 
         public async UniTask CloseAsync(CancellationToken ct)
         {
+            if (isDisposed) return;
+
             if (State is WebSocketState.Open or WebSocketState.CloseReceived)
             {
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);

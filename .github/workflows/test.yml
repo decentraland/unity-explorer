@@ -179,9 +179,19 @@ jobs:
 
 
   test:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
-    name: Test
+    # Skip when PR has 'perf_test' label (performance tests run in separate workflow)
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event.pull_request.draft == false) ||
+        (github.event.label.name == 'force-build') ||
+        (github.event.label.name == 'clean-build')
+      )
+    name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        testMode: [playmode, editmode]
     steps:
 
       - name: Move Docker data-root to /mnt/docker
@@ -192,6 +202,18 @@ jobs:
           sudo systemctl start docker
           docker info | sed -n '1,40p'
           df -h /mnt /mnt/docker
+
+      - name: Free disk space (runner)
+        run: |
+          set -euxo pipefail
+          df -h
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/hostedtoolcache || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          df -h
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -231,7 +253,7 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
-      
+
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
@@ -304,7 +326,7 @@ jobs:
           SHELL: /bin/bash
         with:
           projectPath: Explorer
-          testMode: all
+          testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
@@ -314,7 +336,7 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v2.1.1
         with:
-          name: Unity Tests
+          name: Unity Tests (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-nunit
           fail-on-error: true
@@ -325,7 +347,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Test results (play mode & edit mode)
+          name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
 
