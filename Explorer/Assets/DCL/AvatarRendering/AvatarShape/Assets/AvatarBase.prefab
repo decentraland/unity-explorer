@@ -3530,6 +3530,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RandomID: 0
   <AvatarAnimator>k__BackingField: {fileID: 6654053651110562472}
+  <AudioPlaybackController>k__BackingField: {fileID: 1956365971855606590}
   <RigBuilder>k__BackingField: {fileID: 2952854576378652397}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}

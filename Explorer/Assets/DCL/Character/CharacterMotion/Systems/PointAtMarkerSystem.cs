@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Audio.Avatar;
 using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
@@ -69,8 +70,9 @@ namespace DCL.Character.CharacterMotion.Systems
             in Profile profile,
             in AvatarBase avatarBase)
         {
+            bool isLocalPlayer = profile.UserId == web3IdentityCache.Identity?.Address;
             // User must be pointing and either be the local player or a friend to show the marker
-            if (!pointAt.IsPointing || (profile.UserId != web3IdentityCache.Identity?.Address && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
+            if (!pointAt.IsPointing || (!isLocalPlayer && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
                 return;
 
             float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;
@@ -82,6 +84,10 @@ namespace DCL.Character.CharacterMotion.Systems
             Sprite sprite = profile.ProfilePicture?.Asset is { } spriteData
                 ? spriteData.Sprite
                 : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
+
+            if (!isLocalPlayer)
+                avatarBase.AudioPlaybackController?.PlayAudioForType(
+                    AvatarAudioSettings.AvatarAudioClipType.PointAt);
 
             marker.Setup(sprite, profile.UserNameColor, profile.UserId, distanceSqr);
             marker.transform.position = pointAt.WorldHitPoint;

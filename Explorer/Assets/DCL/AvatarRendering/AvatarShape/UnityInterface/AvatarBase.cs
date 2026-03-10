@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using System;
@@ -22,6 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; }
 
         public Animation? LegacyAnimation { get; private set; }
 
