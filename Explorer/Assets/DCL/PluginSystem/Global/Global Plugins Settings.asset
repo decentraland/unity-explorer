@@ -963,6 +963,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        EyesBlinkTexture:
+          m_AssetGUID: 6efa1304115c46d478df19d1e8fd5f80
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        MinBlinkInterval: 0.5
+        MaxBlinkInterval: 5
+        BlinkDuration: 0.2
     - rid: 5526985638232195369
       type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

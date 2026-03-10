@@ -35,6 +35,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Utility.UIToolkit;
+using AvatarBlinkSystem = DCL.AvatarRendering.AvatarShape.AvatarBlinkSystem;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -91,6 +92,10 @@ namespace DCL.PluginSystem.Global
         private ReadOnlyAvatarHighlightData highlightData;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
+        private Texture2DArray? blinkTextureArray;
+        private float minBlinkInterval;
+        private float maxBlinkInterval;
+        private float blinkDuration;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -133,6 +138,9 @@ namespace DCL.PluginSystem.Global
             attachmentsAssetsCache.Dispose();
             avatarTransformMatrixJobWrapper.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
+
+            if (blinkTextureArray != null)
+                Object.Destroy(blinkTextureArray);
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -146,6 +154,10 @@ namespace DCL.PluginSystem.Global
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
+            blinkTextureArray = await CreateBlinkTextureArrayAsync(settings, ct);
+            minBlinkInterval = settings.MinBlinkInterval;
+            maxBlinkInterval = settings.MaxBlinkInterval;
+            blinkDuration = settings.BlinkDuration;
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
@@ -179,6 +191,9 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
+
+            if (blinkTextureArray != null)
+                AvatarBlinkSystem.InjectToWorld(ref builder, blinkTextureArray, minBlinkInterval, maxBlinkInterval, blinkDuration);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -287,6 +302,19 @@ namespace DCL.PluginSystem.Global
             };
         }
 
+        private async UniTask<Texture2DArray?> CreateBlinkTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            if (settings.EyesBlinkTexture == null || string.IsNullOrEmpty(settings.EyesBlinkTexture.AssetGUID))
+                return null;
+
+            var blinkTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.EyesBlinkTexture, ct: ct)).Value;
+
+            var array = new Texture2DArray(blinkTex.width, blinkTex.height, 1, blinkTex.format, false, false);
+            Graphics.CopyTexture(blinkTex, 0, 0, array, 0, 0);
+            array.Apply(false, true);
+            return array;
+        }
+
         [Serializable]
         public class AvatarShapeSettings : IDCLPluginSettings
         {
@@ -336,6 +364,12 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture> DefaultFemaleMouthTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
+
+            [Header("Blink")]
+            public AssetReferenceT<Texture2D> EyesBlinkTexture;
+            public float MinBlinkInterval = 2.0f;
+            public float MaxBlinkInterval = 8.0f;
+            public float BlinkDuration = 0.15f;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

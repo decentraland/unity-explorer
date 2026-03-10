@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6efa1304115c46d478df19d1e8fd5f80
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Image_8.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
     m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
     m_ReadOnly: 0
