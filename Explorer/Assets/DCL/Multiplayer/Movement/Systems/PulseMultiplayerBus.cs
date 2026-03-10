@@ -35,6 +35,9 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Send(NetworkMovementMessage message)
         {
+            // TODO Don't push any messages if connection is not active
+            // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
+
             var clientMessage = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
             WritePlayerStateInput(message, clientMessage.Message.Input);
 
@@ -221,7 +224,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private static void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
         {
-            PlayerState? state = input.State;
+            PlayerState state = input.State ??= new PlayerState();
 
             state.Position = message.position.ToProtoVector();
             state.Velocity = message.velocity.ToProtoVector();
