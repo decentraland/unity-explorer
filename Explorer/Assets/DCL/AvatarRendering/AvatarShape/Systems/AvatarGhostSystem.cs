@@ -30,8 +30,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private static readonly Vector4 REVEAL_NORMAL_FLIPPED = new (0, -1, 0, 0);
         private const float REVEAL_TARGET = 3f;
         private const float HIDE_TARGET = -0.05f;
-        private const float REVEAL_DURATION_SEC = 2f;
-        private const float HIDE_DURATION_SEC = 2f;
+        public const float REVEAL_DURATION_SEC = 0.2f;
+        public const float HIDE_DURATION_SEC = 0.4f;
 
         /// <summary>Debug flag: keep ghost visible indefinitely, never transition to wearables.</summary>
         public const bool DEBUG_FREEZE_GHOST = true;
@@ -43,6 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape
         protected override void Update(float t)
         {
             EnsureGhostAvatarQuery(World);
+            HideNewlyInstantiatedWearablesQuery(World);
             CheckWearablesReadyStartRevealTransitionQuery(World);
             UpdateGhostRevealAnimationQuery(World, t);
             UpdateRevealTransitionAnimationQuery(World, t);
@@ -62,11 +63,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CheckWearablesReadyStartRevealTransition(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
+        private void HideNewlyInstantiatedWearables(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
-            if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
-
-            //Means wearables have not been instantiated yet
+            if (avatarGhostComponent.WearablesHidden) return;
             if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
 
             foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -78,6 +77,16 @@ namespace DCL.AvatarRendering.AvatarShape
                     renderer.material.SetFloat(REVEAL_ENABLED_SHADER_ID, 1f);
                 }
             }
+
+            avatarGhostComponent.WearablesHidden = true;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void CheckWearablesReadyStartRevealTransition(ref AvatarGhostComponent avatarGhostComponent)
+        {
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
+            if (!avatarGhostComponent.WearablesHidden) return;
 
             avatarGhostComponent.Ghost.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
             avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;

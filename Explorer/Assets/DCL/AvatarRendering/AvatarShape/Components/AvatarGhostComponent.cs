@@ -12,9 +12,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
     public struct AvatarGhostComponent
     {
-
         public AvatarGhostPhase Phase;
         public float PhaseElapsed;
+        public bool WearablesHidden;
         public readonly Renderer Ghost;
 
         public AvatarGhostComponent(Renderer ghost)
@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Ghost = ghost;
             Phase = AvatarGhostPhase.Revealing;
             PhaseElapsed = 0f;
+            WearablesHidden = false;
         }
-
     }
 }
