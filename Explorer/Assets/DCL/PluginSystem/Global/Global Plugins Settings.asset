@@ -972,6 +972,13 @@ MonoBehaviour:
         MinBlinkInterval: 0.5
         MaxBlinkInterval: 5
         BlinkDuration: 0.2
+        MouthAtlasTexture:
+          m_AssetGUID: 1554270bcc86e5e44aad60a36104ecc7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        PhonemeDuration: 0.1
     - rid: 5526985638232195369
       type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

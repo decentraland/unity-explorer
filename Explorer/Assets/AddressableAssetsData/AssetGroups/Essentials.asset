@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1554270bcc86e5e44aad60a36104ecc7
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Mouth_Atlas.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 17775668c745d4edfae3bff500f95f32
     m_Address: F_Eyes_00
     m_ReadOnly: 0

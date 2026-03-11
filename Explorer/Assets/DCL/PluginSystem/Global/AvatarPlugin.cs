@@ -36,6 +36,7 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.UIToolkit;
 using AvatarBlinkSystem = DCL.AvatarRendering.AvatarShape.AvatarBlinkSystem;
+using AvatarMouthAnimationSystem = DCL.AvatarRendering.AvatarShape.AvatarMouthAnimationSystem;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -97,6 +98,9 @@ namespace DCL.PluginSystem.Global
         private float maxBlinkInterval;
         private float blinkDuration;
 
+        private Texture2DArray? mouthPhonemeTextureArray;
+        private float phonemeDuration;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -141,6 +145,9 @@ namespace DCL.PluginSystem.Global
 
             if (blinkTextureArray != null)
                 Object.Destroy(blinkTextureArray);
+
+            if (mouthPhonemeTextureArray != null)
+                Object.Destroy(mouthPhonemeTextureArray);
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -158,6 +165,9 @@ namespace DCL.PluginSystem.Global
             minBlinkInterval = settings.MinBlinkInterval;
             maxBlinkInterval = settings.MaxBlinkInterval;
             blinkDuration = settings.BlinkDuration;
+
+            mouthPhonemeTextureArray = await CreateMouthPhonemeTextureArrayAsync(settings, ct);
+            phonemeDuration = settings.PhonemeDuration;
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
@@ -194,6 +204,9 @@ namespace DCL.PluginSystem.Global
 
             if (blinkTextureArray != null)
                 AvatarBlinkSystem.InjectToWorld(ref builder, blinkTextureArray, minBlinkInterval, maxBlinkInterval, blinkDuration);
+
+            if (mouthPhonemeTextureArray != null)
+                AvatarMouthAnimationSystem.InjectToWorld(ref builder, mouthPhonemeTextureArray, phonemeDuration);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -315,6 +328,61 @@ namespace DCL.PluginSystem.Global
             return array;
         }
 
+        /// <summary>
+        ///     Slices the 1024×1024 mouth atlas into 16 individual 256×256 Texture2DArray slices,
+        ///     one per phoneme. Uses Graphics.Blit + ReadPixels so it works regardless of whether
+        ///     the atlas is compressed (Graphics.CopyTexture sub-region fails for compressed formats).
+        /// </summary>
+        private async UniTask<Texture2DArray?> CreateMouthPhonemeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            if (settings.MouthAtlasTexture == null || string.IsNullOrEmpty(settings.MouthAtlasTexture.AssetGUID))
+                return null;
+
+            var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.MouthAtlasTexture, ct: ct)).Value;
+
+            const int cellSize = 256;
+            const int cols = 4;
+            const int rows = 4;
+            const int phonemeCount = rows * cols; // 16
+
+            var array = new Texture2DArray(cellSize, cellSize, phonemeCount, TextureFormat.RGBA32, false, false);
+            RenderTexture rt = RenderTexture.GetTemporary(cellSize, cellSize, 0, RenderTextureFormat.ARGB32);
+            var readback = new Texture2D(cellSize, cellSize, TextureFormat.RGBA32, false);
+            RenderTexture previousActive = RenderTexture.active;
+
+            try
+            {
+                for (var i = 0; i < phonemeCount; i++)
+                {
+                    int row = i / cols; // visual row: 0 = top of atlas image
+                    int col = i % cols;
+
+                    // UV bottom-left of this cell (Unity UV origin is bottom-left).
+                    var scale  = new Vector2(1f / cols, 1f / rows);
+                    var offset = new Vector2(col / (float)cols, (rows - 1 - row) / (float)rows);
+
+                    Graphics.Blit(atlasTex, rt, scale, offset);
+
+                    RenderTexture.active = rt;
+                    readback.ReadPixels(new Rect(0, 0, cellSize, cellSize), 0, 0, false);
+                    readback.Apply(false);
+                    RenderTexture.active = previousActive;
+
+                    Graphics.CopyTexture(readback, 0, 0, array, i, 0);
+                }
+
+                array.Apply(false, true);
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(rt);
+                Object.Destroy(readback);
+            }
+
+            return array;
+        }
+
         [Serializable]
         public class AvatarShapeSettings : IDCLPluginSettings
         {
@@ -370,6 +438,10 @@ namespace DCL.PluginSystem.Global
             public float MinBlinkInterval = 2.0f;
             public float MaxBlinkInterval = 8.0f;
             public float BlinkDuration = 0.15f;
+
+            [Header("Mouth Phoneme Animation")]
+            public AssetReferenceT<Texture2D> MouthAtlasTexture;
+            public float PhonemeDuration = 0.08f;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

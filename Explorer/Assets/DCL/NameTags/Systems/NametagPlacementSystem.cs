@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
+using Utility.Arch;
 
 namespace DCL.Nametags
 {
@@ -115,14 +116,19 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void ProcessChatBubbleComponents(in NametagHolder nametagHolder, ref ChatBubbleComponent chatBubbleComponent)
+        private void ProcessChatBubbleComponents(Entity entity, in NametagHolder nametagHolder, ref ChatBubbleComponent chatBubbleComponent)
         {
             if (!chatBubbleComponent.IsDirty)
                 return;
 
             nametagHolder.Nametag.DisplayMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor, chatBubbleComponent.IsCommunityMessage, chatBubbleComponent.CommunityName);
 
+            string message = chatBubbleComponent.ChatMessage;
             chatBubbleComponent.IsDirty = false;
+
+            // Trigger mouth phoneme animation. All ref accesses to chatBubbleComponent are
+            // complete before this structural change (AddOrSet).
+            World.AddOrSet(entity, new AvatarMouthTalkingComponent { Message = message, IsDirty = true });
         }
 
         [Query]
