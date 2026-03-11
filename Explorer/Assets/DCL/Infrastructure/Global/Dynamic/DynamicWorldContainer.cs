@@ -142,6 +142,7 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
+        private readonly BannedNotificationHandler bannedNotificationHandler;
 
         public IMVCManager MvcManager { get; }
 
@@ -183,7 +184,8 @@ namespace Global.Dynamic
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            BannedNotificationHandler bannedNotificationHandler)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -201,10 +203,12 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
+            this.bannedNotificationHandler = bannedNotificationHandler;
         }
 
         public override void Dispose()
         {
+            bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
@@ -489,6 +493,12 @@ namespace Global.Dynamic
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
             var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var bannedNotificationHandler = new BannedNotificationHandler(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.IdentityCache!,
+                moderationDataProvider,
+                mvcManager);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -1301,7 +1311,8 @@ namespace Global.Dynamic
                 roomHub,
                 socialServiceContainer,
                 selfProfile,
-                clipboard
+                clipboard,
+                bannedNotificationHandler
             );
 
             // Init itself
