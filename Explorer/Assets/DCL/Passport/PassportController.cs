@@ -421,16 +421,6 @@ namespace DCL.Passport
                             viewInstance.GiftSprite,
                             GiftUserClicked));
 
-            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
-                    viewInstance.BlockSprite,
-                    BlockUserClicked),
-                false));
-
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
-                    viewInstance.ReportSprite,
-                    ReportUserClicked));
-
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider,
@@ -441,6 +431,26 @@ namespace DCL.Passport
                     viewInstance.InviteToCommunityText,
                     viewInstance.InviteToCommunitySprite);
             }
+
+            contextMenu.AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
+                false));
+
+            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
+                    viewInstance.BlockSprite,
+                    BlockUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor),
+                false));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
+                    viewInstance.ReportSprite,
+                    ReportUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor));
         }
 
         private void OnStartCallButtonClicked()

@@ -138,13 +138,15 @@ namespace DCL.UI
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.contextMenuSettings = contextMenuSettings;
 
+            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
             mentionUserButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.MentionButtonConfig.Text, contextMenuSettings.MentionButtonConfig.Sprite, new StringDelegate(OnMentionUserClicked));
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             giftButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.GiftInButtonConfig.Text, contextMenuSettings.GiftInButtonConfig.Sprite, new StringDelegate(OnGiftUserClicked));
-            blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
-            reportButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.ReportButtonConfig.Text, contextMenuSettings.ReportButtonConfig.Sprite, new StringDelegate(OnReportUserClicked));
+            blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked), textColor: redColor, iconColor: redColor);
+            reportButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.ReportButtonConfig.Text, contextMenuSettings.ReportButtonConfig.Sprite, new StringDelegate(OnReportUserClicked), textColor: redColor, iconColor: redColor);
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
             startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
 
@@ -164,17 +166,19 @@ namespace DCL.UI
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
 
-            contextMenu.AddControl(contextMenuJumpInButton)
-                       .AddControl(contextMenuBlockUserButton);
-
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
-                contextMenu.AddControl(reportButtonControlSettings);
+            contextMenu.AddControl(contextMenuJumpInButton);
 
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
                 invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
+
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
+                       .AddControl(contextMenuBlockUserButton);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(reportButtonControlSettings);
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
