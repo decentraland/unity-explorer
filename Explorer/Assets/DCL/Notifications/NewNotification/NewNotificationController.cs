@@ -149,6 +149,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.TIP_RECEIVED:
                         await ProcessTipReceivedNotificationAsync(notification);
                         break;
+                    case NotificationType.BAN_WARNING:
+                        await ProcessPersistentNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -265,6 +268,26 @@ namespace DCL.Notifications.NewNotification
             await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 
+        private async UniTask ProcessPersistentNotificationAsync(INotification notification)
+        {
+            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.NotificationView.NotificationType = notification.Type;
+            viewInstance.NotificationView.Notification = notification;
+            viewInstance.NotificationView.CloseButton.gameObject.SetActive(true);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimatePersistentNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
+        }
+
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)
         {
             viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
@@ -366,6 +389,24 @@ namespace DCL.Notifications.NewNotification
                 notificationCanvasGroup.blocksRaycasts = true;
                 await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
                 await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                notificationCanvasGroup.interactable = false;
+                notificationCanvasGroup.blocksRaycasts = false;
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+            }
+        }
+
+        private async UniTask AnimatePersistentNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
+        {
+            try
+            {
+                notificationCanvasGroup.interactable = true;
+                notificationCanvasGroup.blocksRaycasts = true;
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.WaitUntilCanceled(cts.Token);
             }
             catch (OperationCanceledException) { }
             finally
