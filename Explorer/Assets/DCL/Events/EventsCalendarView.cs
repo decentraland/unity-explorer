@@ -307,7 +307,7 @@ namespace DCL.Events
             float targetPos = Mathf.Clamp01(scrollRect.verticalNormalizedPosition + normalizedStep);
 
             if (activeScrollTweens.TryGetValue(eventsListIndex, out Tweener existingTween))
-                existingTween?.Kill();
+                existingTween.Kill();
 
             activeScrollTweens[eventsListIndex] = scrollRect
                                                  .DOVerticalNormalizedPos(targetPos, SCROLL_ANIMATION_DURATION)
