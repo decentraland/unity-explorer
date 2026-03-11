@@ -15,7 +15,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using System;
 using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -161,24 +160,38 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 directionToTarget
         )
         {
-            Vector3 cross = Vector3.Cross(avatarBase.transform.forward, directionToTarget);
-            float dot = Vector3.Dot(avatarBase.transform.forward, directionToTarget);
+            Vector3 dirHorizontal = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
+            float horizontalMag = dirHorizontal.magnitude;
 
-            // cross.y > 0 rotate right, else rotate left
-            bool needToRotate = cross.y > settings.PointAtRotationHorizontalRightThreshold
-                                || cross.y < -settings.PointAtRotationHorizontalLeftThreshold
-                                || dot < 0;
+            float crossY, dotH;
+
+            if (horizontalMag > 1e-6f)
+            {
+                Vector3 dirHNorm = dirHorizontal / horizontalMag;
+                crossY = Vector3.Cross(avatarBase.transform.forward, dirHNorm).y;
+                dotH = Vector3.Dot(avatarBase.transform.forward, dirHNorm);
+            }
+            else
+            {
+                crossY = 0f;
+                dotH = 1f;
+            }
+
+            // crossY > 0 rotate right, else rotate left
+            bool needToRotate = crossY > settings.PointAtRotationHorizontalRightThreshold
+                                || crossY < -settings.PointAtRotationHorizontalLeftThreshold
+                                || dotH < 0;
 
             if (needToRotate)
             {
                 float targetCrossY = 0f;
 
-                if (cross.y > settings.PointAtRotationHorizontalRightThreshold)
+                if (crossY > settings.PointAtRotationHorizontalRightThreshold)
                     targetCrossY = settings.PointAtRotationHorizontalRightThreshold;
-                else if (cross.y < -settings.PointAtRotationHorizontalLeftThreshold)
+                else if (crossY < -settings.PointAtRotationHorizontalLeftThreshold)
                     targetCrossY = -settings.PointAtRotationHorizontalLeftThreshold;
-                else if (dot < 0)
-                    targetCrossY = cross.y >= 0
+                else if (dotH < 0)
+                    targetCrossY = crossY >= 0
                         ? settings.PointAtRotationHorizontalRightThreshold
                         : -settings.PointAtRotationHorizontalLeftThreshold;
 
@@ -236,11 +249,6 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 shoulderPos,
             (float dot, bool needToRotate) rotationInfo)
         {
-            directionToTarget = ClampElevation(
-                directionToTarget,
-                settings.PointAtRotationVerticalUpThreshold,
-                settings.PointAtRotationVerticalDownThreshold);
-
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
             pointAt.RotationCompleted = Mathf.Abs(rotationInfo.dot) > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
@@ -279,7 +287,11 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!pointAt.IsPointing) return;
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
-            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            Vector3 directionToTarget = ClampElevation(
+                (pointAt.WorldHitPoint - shoulderPos).normalized,
+                settings.PointAtRotationVerticalUpThreshold,
+                settings.PointAtRotationVerticalDownThreshold);
 
             var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
 
@@ -303,7 +315,11 @@ namespace DCL.Character.CharacterMotion.Systems
                 return;
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
-            Vector3 directionToTarget = (pointAt.WorldHitPoint - shoulderPos).normalized;
+
+            Vector3 directionToTarget = ClampElevation(
+                (pointAt.WorldHitPoint - shoulderPos).normalized,
+                localSettings.PointAtRotationVerticalUpThreshold,
+                localSettings.PointAtRotationVerticalDownThreshold);
 
             ApplyHandIK(ref pointAt, ref avatarBase, in localSettings, dt, directionToTarget, shoulderPos, (1f, false));
         }
