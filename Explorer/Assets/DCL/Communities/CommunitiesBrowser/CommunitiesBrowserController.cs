@@ -930,7 +930,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     ownProfile != null ? ownProfile.UserId : string.Empty,
                     reportedProfile.Address));
 
-                webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm));
+            }
             }
         }
 
