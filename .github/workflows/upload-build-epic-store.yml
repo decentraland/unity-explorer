@@ -17,9 +17,10 @@ jobs:
   upload-to-epic-store:
     runs-on: windows-latest
 
+
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set platform flags
       id: platforms
@@ -94,14 +95,33 @@ jobs:
       id: bpt_version
       run: |
         $response = Invoke-WebRequest -Method HEAD -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -UseBasicParsing
+        $cacheKey = $null
+
         $contentDisposition = $response.Headers['Content-Disposition']
-        if ($contentDisposition -match 'filename=(.+\.zip)') {
-          $filename = $matches[1] -replace '[^a-zA-Z0-9\-\.]', ''
-          echo "cache_key=buildpatchtool-$filename" >> $env:GITHUB_OUTPUT
-        } else {
-          $etag = ($response.Headers['ETag'] -replace '[^a-zA-Z0-9]', '')
-          echo "cache_key=buildpatchtool-etag-$etag" >> $env:GITHUB_OUTPUT
+        if ($contentDisposition -and $contentDisposition -match 'filename=([^\s;]+\.zip)') {
+          $cacheKey = "buildpatchtool-" + ($Matches[1] -replace '[^a-zA-Z0-9\-\.]', '')
         }
+
+        if (-not $cacheKey) {
+          $etag = $response.Headers['ETag']
+          if ($etag) {
+            $cacheKey = "buildpatchtool-etag-" + ($etag -replace '[^a-zA-Z0-9]', '')
+          }
+        }
+
+        if (-not $cacheKey) {
+          $lastModified = $response.Headers['Last-Modified']
+          if ($lastModified) {
+            $cacheKey = "buildpatchtool-lm-" + ($lastModified -replace '[^a-zA-Z0-9]', '')
+          }
+        }
+
+        if (-not $cacheKey) {
+          $cacheKey = "buildpatchtool-week-" + (Get-Date).ToString("yyyy-WW")
+        }
+
+        Write-Host "Cache key: $cacheKey"
+        echo "cache_key=$cacheKey" >> $env:GITHUB_OUTPUT
 
     - name: Cache BuildPatchTool
       id: bpt_cache
