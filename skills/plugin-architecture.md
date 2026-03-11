@@ -200,37 +200,67 @@ Registers SDK component types for CRDT deserialization. Each SDK component must 
 
 ## Assembly Structure
 
-- **One assembly per feature** by default at `Assets/DCL/<Feature>`
-- Control exposure via `public` / `internal` access levels
-- Use Assembly Definition References to merge cross-dependent features
-- All unit tests connect to single `DCL.Tests` assembly
-- `DCL.Plugins` is the only global assembly — can reference any assembly but should not be referenced (except by tests)
-- Plugins produce systems without knowledge about unrelated assemblies
+### Core principles
 
-### Feature folder structure:
+- **Strive for large assemblies instead of splitting into small ones.** Avoid creating new `.asmdef` or `.asmref` files unless necessary — the folder or a parent folder may already be covered by an existing assembly definition.
+- When a new assembly reference **is** needed, prefer `.asmref` to fold code into an existing large assembly rather than introducing a new `.asmdef`.
+- Only create a dedicated `.asmdef` when the feature **must be referenced by other assemblies** or requires strict dependency isolation.
+- Control exposure via `public` / `internal` access levels — this is the primary encapsulation tool, not assembly boundaries.
+- `DCL.Plugins` is the only "global" assembly: it can reference any assembly but should not be referenced itself (except by tests).
+- Plugins produce systems without knowledge about unrelated assemblies.
 
-```
-Assets/DCL/<Feature>/
-├── Components/
-├── Systems/
-├── Tests/
-│   └── EditMode/
-├── <Feature>Plugin.cs
-└── <Feature>.asmref   ← prefer asmref over asmdef (see below)
-```
+### Assembly rules for ECS Systems
 
-### Assembly Definition References (`.asmref`)
-
-Implemented systems should ideally use an `.asmref` pointing to `DCL.Plugins.asmdef` instead of creating their own `.asmdef`. This keeps the feature compiled into the shared `DCL.Plugins` assembly and avoids unnecessary assembly proliferation.
+ECS Systems **must always** use an `.asmref` pointing to `DCL.Plugins`:
 
 ```json
 { "reference": "DCL.Plugins" }
 ```
 
-Only create a dedicated `.asmdef` when the feature needs to be referenced by other assemblies directly, or when it has strict dependency isolation requirements.
+### Assembly rules for Tests
 
-Test projects similarly use an `.asmref` to reference the parent test assembly:
+Tests use an `.asmref` pointing to the shared test assembly:
 
 ```json
 { "reference": "DCL.EditMode.Tests" }
 ```
+
+For PlayMode tests use `DCL.PlayMode.Tests` instead.
+
+### Naming convention for `.asmdef` and `.asmref`
+
+- File names **must start with `DCL.`** followed by the feature name: `DCL.<Feature>`.
+- Use **dot-separated suffixes** when subdividing: `DCL.<Feature>.<SubFeature>`.
+- `.asmref` files inside an ECS `Systems/` folder **must use the `.Systems` suffix**: `DCL.<Feature>.Systems.asmref`.
+- Test `.asmref` files use corresponding suffixes: `DCL.<Feature>.EditMode.Tests.asmref`.
+
+Examples from the project:
+
+| File | Location |
+|------|----------|
+| `DCL.Multiplayer.Movement.Systems.asmref` | `Multiplayer/Movement/Systems/` |
+| `DCL.Landscape.Systems.asmref` | `Landscape/Systems/` |
+| `DCL.Input.Systems.asmref` | `Input/Systems/` |
+
+### Feature folder structure
+
+```
+Assets/DCL/<Feature>/
+├── Components/
+├── Systems/
+│   ├── DCL.<Feature>.Systems.asmref  ← { "reference": "DCL.Plugins" }
+│   ├── <Feature>Plugin.cs            ← plugin lives WITH the systems it injects
+│   ├── <Feature>LifecycleSystem.cs
+│   └── <Feature>ApplyPropertiesSystem.cs
+├── Tests/
+│   ├── EditMode/
+│   │   └── <Feature>SystemShould.cs
+│   └── EditMode.asmref               ← { "reference": "DCL.EditMode.Tests" }
+```
+
+### Plugin file placement
+
+- `<Feature>Plugin.cs` **must be in the `Systems/` folder** alongside the ECS systems it injects.
+- If the plugin has **no ECS systems**, do not create a `Systems/` folder. Place the plugin directly in:
+  - `Assets/DCL/PluginSystem/Global/` — for global plugins (`IDCLGlobalPlugin`)
+  - `Assets/DCL/PluginSystem/World/` — for world plugins (`IDCLWorldPlugin`)

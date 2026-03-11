@@ -36,7 +36,7 @@ In `unity-explorer`:
 2. Add partial class to `IDirtyMarker.cs`
 3. Register in `ComponentsContainer.cs` using `SDKComponentBuilder<T>`
 4. Create feature folder under `Explorer/Assets/DCL/SDKComponents/<Feature>/`
-5. Create plugin at `Explorer/Assets/DCL/PluginSystem/World/<Feature>Plugin.cs`
+5. Create plugin at `Explorer/Assets/DCL/SDKComponents/<Feature>/Systems/<Feature>Plugin.cs`
 6. Instantiate plugin in `StaticContainer.cs` (in the `ECSWorldPlugins` array)
 7. Implement systems (lifecycle, properties, cleanup)
 
@@ -104,25 +104,27 @@ Real example from `Explorer/Assets/DCL/SDKComponents/LightSource/`:
 ```
 Assets/DCL/SDKComponents/<Feature>/
 +-- Components/
-|   +-- <Feature>Component.cs           // Internal ECS struct component
-+-- Prefab/                              // Optional: Unity prefabs for pooled objects
+|   +-- <Feature>Component.cs              // Internal ECS struct component
++-- Prefab/                                 // Optional: Unity prefabs for pooled objects
 +-- Systems/
-|   +-- <Feature>LifecycleSystem.cs      // Create/destroy internal components
-|   +-- <Feature>ApplyPropertiesSystem.cs // Apply SDK data to Unity objects
-|   +-- CleanUp<Feature>System.cs        // Cleanup on removal/destruction
-|   +-- <Feature>Group.cs               // Custom SystemGroup for execution ordering
+|   +-- DCL.<Feature>.Systems.asmref       // { "reference": "DCL.Plugins" }
+|   +-- <Feature>Plugin.cs                 // Plugin lives WITH the systems it injects
+|   +-- <Feature>LifecycleSystem.cs         // Create/destroy internal components
+|   +-- <Feature>ApplyPropertiesSystem.cs   // Apply SDK data to Unity objects
+|   +-- CleanUp<Feature>System.cs           // Cleanup on removal/destruction
+|   +-- <Feature>Group.cs                  // Custom SystemGroup for execution ordering
 +-- Tests/
 |   +-- EditMode/
 |   |   +-- <Feature>SystemShould.cs
-|   +-- EditMode.asmref                 // Points to DCL.EditMode.Tests — prefer asmref over asmdef
-+-- <Feature>.asmref                    // Points to DCL.Plugins — prefer asmref over asmdef
+|   +-- EditMode.asmref                    // { "reference": "DCL.EditMode.Tests" }
 ```
 
-**Assembly notes:**
-- Feature code: use an `.asmref` pointing to `DCL.Plugins` instead of a standalone `.asmdef` unless the feature needs to be referenced by other assemblies or requires strict dependency isolation.
-- Tests: use an `.asmref` pointing to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests` for PlayMode) instead of a standalone `.asmdef`.
+**Assembly & naming notes:**
+- The `.asmref` for `DCL.Plugins` goes **inside `Systems/`**, named `DCL.<Feature>.Systems.asmref`.
+- Tests: `.asmref` pointing to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests` for PlayMode).
+- Do not create a standalone `.asmdef` for ECS systems.
 
-See `plugin-architecture.md` for details.
+See `plugin-architecture.md` § "Assembly Structure" for full assembly, naming, and plugin placement rules.
 
 ---
 
@@ -130,7 +132,9 @@ See `plugin-architecture.md` for details.
 
 Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` and `TweenPlugin.cs` for examples of each.
 
-**File:** `Explorer/Assets/DCL/PluginSystem/World/<Feature>Plugin.cs`
+**File:** `Explorer/Assets/DCL/SDKComponents/<Feature>/Systems/<Feature>Plugin.cs`
+
+> Plugins with ECS systems live in the `Systems/` folder alongside those systems. Only plugins **without** ECS systems go into `PluginSystem/Global/` or `PluginSystem/World/`. See `plugin-architecture.md` § "Plugin file placement".
 
 ```csharp
 // With settings (LightSourcePlugin pattern)
@@ -312,7 +316,7 @@ Prefer **EditMode** tests -- they are faster and sufficient for most system logi
 - [ ] **IDirtyMarker** -- add partial class in `IDirtyMarker.cs`
 - [ ] **ComponentsContainer** -- register with `SDKComponentBuilder<T>` in `ComponentsContainer.cs`
 - [ ] **StaticContainer** -- instantiate plugin in `ECSWorldPlugins` array in `StaticContainer.cs`
-- [ ] **Plugin** -- create at `DCL/PluginSystem/World/<Feature>Plugin.cs`
+- [ ] **Plugin** -- create at `DCL/SDKComponents/<Feature>/Systems/<Feature>Plugin.cs`
 - [ ] **ResetDirtyFlagSystem** -- inject `ResetDirtyFlagSystem<PBComponent>.InjectToWorld(ref builder)` in plugin
 - [ ] **Lifecycle system** -- `[None(typeof(InternalComponent))]` for first-occurrence detection
 - [ ] **Properties system** -- `IsDirty` guard on expensive updates
