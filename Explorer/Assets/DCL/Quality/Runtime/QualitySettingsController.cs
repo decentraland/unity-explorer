@@ -1,4 +1,5 @@
 using DCL.Landscape.Settings;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using System;
 using DCL.Prefs;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
@@ -6,6 +7,7 @@ using DCL.Settings.Utils;
 using DCL.Utilities;
 using ECS.Prioritization;
 using Global.AppArgs;
+using Newtonsoft.Json.Linq;
 using System.Linq;
 using UnityEngine;
 using Utility;
@@ -43,6 +45,7 @@ namespace DCL.Quality.Runtime
         private readonly LandscapeData landscapeData;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IAppArgs appArgs;
+        private readonly IAnalyticsController analytics;
         private QualityPresetData presetData;
 
         public QualitySettingsController(
@@ -51,7 +54,8 @@ namespace DCL.Quality.Runtime
             RealmPartitionSettingsAsset realmPartitionAsset,
             LandscapeData landscapeData,
             IRendererFeaturesCache rendererFeaturesCache,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            IAnalyticsController analytics)
         {
             this.presetsAsset = presetsAsset;
             this.upscalingController = upscalingController;
@@ -59,6 +63,7 @@ namespace DCL.Quality.Runtime
             this.landscapeData = landscapeData;
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.appArgs = appArgs;
+            this.analytics = analytics;
 
             QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
@@ -131,6 +136,7 @@ namespace DCL.Quality.Runtime
             URPSettingsApplier.ApplySceneLightsShadows(SceneLightShadows);
             URPSettingsApplier.ApplyShadowQuality(presetsAsset.GetShadowConfig(SceneShadowQuality));
             URPSettingsApplier.ApplyShadowDistance(ShadowDistance);
+            TrackQualitySettingsReport();
         }
 
         public void SetFpsLimit(int fps)
@@ -139,6 +145,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_FPS_LIMIT, fps);
             SwitchToCustom();
             URPSettingsApplier.ApplyVSync(VSync, fps);
+            TrackQualitySettingsReport();
         }
 
         public void SetVSync(bool enabled)
@@ -147,6 +154,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_VSYNC, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplyVSync(enabled, FpsLimit);
+            TrackQualitySettingsReport();
         }
 
         public void SetResolutionScale(float scale)
@@ -155,6 +163,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.PS_RESOLUTION_SCALE, scale);
             SwitchToCustom();
             upscalingController.UpdateUpscaling(ResolutionScale);
+            TrackQualitySettingsReport();
         }
 
         public void SetResolution(int width, int height, RefreshRate refreshRate)
@@ -184,6 +193,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_MSAA, EnumUtils.ToInt(level));
             SwitchToCustom();
             URPSettingsApplier.ApplyMsaa(level);
+            TrackQualitySettingsReport();
         }
 
         public void SetHdr(bool enabled)
@@ -192,6 +202,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_HDR_NEW, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplyHdr(enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetBloom(bool enabled)
@@ -200,6 +211,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_BLOOM, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplyBloom(enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetAvatarOutline(bool enabled)
@@ -208,6 +220,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_AVATAR_OUTLINE, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplyRendererFeature<RendererFeature_AvatarOutline>(rendererFeaturesCache, enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetSceneDistance(int distance)
@@ -216,6 +229,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SCENE_DISTANCE, distance);
             SwitchToCustom();
             realmPartitionAsset.MaxLoadingDistanceInParcels = distance;
+            TrackQualitySettingsReport();
         }
 
         public void SetLandscapeDistance(float distance)
@@ -224,6 +238,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.PS_LANDSCAPE_DISTANCE, distance);
             SwitchToCustom();
             landscapeData.DetailDistance = distance;
+            TrackQualitySettingsReport();
         }
 
         public void SetSunShadows(bool enabled)
@@ -232,6 +247,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_SHADOWS, enabled);
             SwitchToCustom();
             URPSettingsApplier.ApplySunShadows(enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetSceneLights(bool enabled)
@@ -240,6 +256,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SCENE_LIGHTS, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplySceneLight(enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetMaxSceneLights(int max)
@@ -248,6 +265,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, max);
             SwitchToCustom();
             URPSettingsApplier.ApplyMaxObjectsPerLight(max);
+            TrackQualitySettingsReport();
         }
 
         public void SetSceneLightShadows(bool enabled)
@@ -256,6 +274,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS, enabled ? 1 : 0);
             SwitchToCustom();
             URPSettingsApplier.ApplySceneLightsShadows(enabled);
+            TrackQualitySettingsReport();
         }
 
         public void SetShadowQuality(ShadowQualityLevel level)
@@ -264,6 +283,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(level));
             SwitchToCustom();
             URPSettingsApplier.ApplyShadowQuality(presetsAsset.GetShadowConfig(level));
+            TrackQualitySettingsReport();
         }
 
         public void SetShadowDistance(int distance)
@@ -272,6 +292,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, distance);
             SwitchToCustom();
             URPSettingsApplier.ApplyShadowDistance(distance);
+            TrackQualitySettingsReport();
         }
 
         private void LoadSavedWindowMode()
@@ -345,6 +366,40 @@ namespace DCL.Quality.Runtime
         private static void DeleteCustomSettings()
         {
             SavedQualitySettingsApplier.DeleteCustomSettings();
+        }
+
+        private void TrackQualitySettingsReport()
+        {
+            var properties = new JObject
+            {
+                ["preset"] = CurrentPreset.ToString(),
+            };
+
+            if (CurrentPreset == QualityPresetLevel.Custom)
+            {
+                var basePreset = EnumUtils.FromInt<QualityPresetLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_CUSTOM_BASE_PRESET, EnumUtils.ToInt(QualityPresetLevel.Medium)));
+                properties["custom_baseline"] = basePreset.ToString();
+
+                QualityPresetData b = presetData;
+
+                if (FpsLimit != b.FpsLimit) properties["fps_limit"] = FpsLimit;
+                if (VSync != b.VSyncEnabled) properties["vsync"] = VSync;
+                if (!Mathf.Approximately(ResolutionScale, b.ResolutionScale)) properties["resolution_scale"] = ResolutionScale;
+                if (Msaa != b.MsaaLevel) properties["msaa"] = Msaa.ToString();
+                if (Hdr != b.HdrEnabled) properties["hdr"] = Hdr;
+                if (Bloom != b.BloomEnabled) properties["bloom"] = Bloom;
+                if (AvatarOutline != b.AvatarOutlineEnabled) properties["avatar_outline"] = AvatarOutline;
+                if (SceneDistance != b.SceneDistance) properties["scene_distance"] = SceneDistance;
+                if (!Mathf.Approximately(LandscapeDistance, b.LandscapeDistance)) properties["landscape_distance"] = LandscapeDistance;
+                if (SunShadows != b.SunShadows) properties["sun_shadows"] = SunShadows;
+                if (SceneLights != b.SceneLightsEnabled) properties["scene_lights"] = SceneLights;
+                if (SceneLightShadows != b.SceneLightShadowsEnabled) properties["scene_light_shadows"] = SceneLightShadows;
+                if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
+                if (SceneShadowQuality != b.ShadowsQualityLevel) properties["shadow_quality"] = SceneShadowQuality.ToString();
+                if (ShadowDistance != b.ShadowDistance) properties["shadow_distance"] = ShadowDistance;
+            }
+
+            analytics.Track(AnalyticsEvents.Settings.QUALITY_SETTINGS_REPORT, properties);
         }
 
         public void Dispose() { }

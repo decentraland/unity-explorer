@@ -62,7 +62,6 @@ namespace DCL.Prefs
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
         public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
         public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
-        public const string SETTINGS_GRAPHICS_QUALITY = "Settings_GraphicsQuality";
         public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
@@ -72,7 +71,6 @@ namespace DCL.Prefs
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
-        public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
         public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";

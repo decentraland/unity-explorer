@@ -181,6 +181,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public static class Settings
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
+            public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
         }
 
         public static class FeatureFlags

@@ -453,7 +453,8 @@ namespace DCL.PluginSystem.Global
                 settings.RealmPartitionSettings,
                 landscapeData.Value,
                 rendererFeaturesCache,
-                appArgs);
+                appArgs,
+                analytics);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
