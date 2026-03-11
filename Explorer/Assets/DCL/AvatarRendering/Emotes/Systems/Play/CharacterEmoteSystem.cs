@@ -54,6 +54,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly URN[] loadEmoteBuffer = new URN[1];
         private readonly bool localSceneDevelopment;
 
+        private ReadOnlySpan<char> sceneEmotePrefixWithColon =>
+            GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
+
         public CharacterEmoteSystem(
             World world,
             IEmoteStorage emoteStorage,
@@ -393,12 +396,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             resolvedScene = null;
 
             ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
-            ReadOnlySpan<char> prefixWithColon = "urn:decentraland:off-chain:scene-emote:".AsSpan();
 
-            if (urnStr.IsEmpty || !urnStr.StartsWith(prefixWithColon, StringComparison.OrdinalIgnoreCase))
+            if (urnStr.IsEmpty || !urnStr.StartsWith(sceneEmotePrefixWithColon, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            ReadOnlySpan<char> payload = urnStr.Slice(prefixWithColon.Length);
+            ReadOnlySpan<char> payload = urnStr.Slice(sceneEmotePrefixWithColon.Length);
 
             // Parse loop from the right-most "-{bool}" segment
             int lastDash = payload.LastIndexOf('-');
@@ -413,7 +415,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReadOnlySpan<char> payloadWithoutLoop = payload.Slice(0, lastDash);
 
-            // Robust split: sceneIdOrName and emoteHash can contain '-' in local preview (e.g. "b64-..."),
+            // sceneId and emoteHash can contain '-' in local preview,
             // so we can't just split by "last two dashes". Instead, match against loaded scenes by prefix.
             foreach (ISceneFacade facade in scenesCache.Scenes)
             {

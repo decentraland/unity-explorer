@@ -14,8 +14,6 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetSceneEmoteFromLocalSceneIntention : IEquatable<GetSceneEmoteFromLocalSceneIntention>, IEmoteAssetIntention
     {
-        private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
-
         public ISceneData SceneData { get; }
         public string EmotePath { get; }
         public string EmoteHash { get; }
@@ -45,7 +43,7 @@ namespace DCL.AvatarRendering.Emotes
             EmoteHash.Equals(other.EmoteHash) && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
 
         public readonly URN NewSceneEmoteURN() =>
-            $"{SCENE_EMOTE_PREFIX}:{SceneData.SceneShortInfo.Name}-{EmoteHash}-{Loop.ToString().ToLower()}";
+            $"{GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX}:{SceneData.SceneShortInfo.Name}-{EmoteHash}-{Loop.ToString().ToLower()}";
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
