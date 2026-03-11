@@ -66,6 +66,8 @@ namespace DCL.FeatureFlags
         public const string NAME_COLOR_CHANGE = "alfa-name-color-change";
         public const string CHECK_DISK_SPACE = "alfa-check-disk-space";
         public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
+        public const string DOUBLE_JUMP = "alfa-double-jump";
+        public const string GLIDING = "alfa-gliding";
 
         public static class Endpoints
         {

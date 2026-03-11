@@ -271,14 +271,14 @@ namespace DCL.ExplorePanel
 
         private void RegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
+            dclInput.Shortcuts.MainMenu.canceled += OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
             dclInput.Shortcuts.Events.performed += OnEventsHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
@@ -399,14 +399,14 @@ namespace DCL.ExplorePanel
 
         private void UnRegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
+            dclInput.Shortcuts.MainMenu.canceled -= OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
             dclInput.Shortcuts.Events.performed -= OnEventsHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()

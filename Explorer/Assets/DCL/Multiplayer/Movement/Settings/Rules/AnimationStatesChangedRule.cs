@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement.Settings
             (bool stateMismatch, string reason)[] checks =
             {
                 (Stun && lastNetworkMovementMessage.isStunned != playerStunComponent.IsStunned, "STUN"),
-                (Jump && lastNetworkMovementMessage.animState.IsJumping != playerAnimationComponent.States.IsJumping, "JUMP"),
+                (Jump && lastNetworkMovementMessage.animState.JumpCount != playerAnimationComponent.States.JumpCount, "JUMP"),
                 (Ground && lastNetworkMovementMessage.animState.IsGrounded != playerAnimationComponent.States.IsGrounded, "GROUND"),
                 (Fall && lastNetworkMovementMessage.animState.IsFalling != playerAnimationComponent.States.IsFalling, "FALL"),
                 (LongFall && lastNetworkMovementMessage.animState.IsLongFall != playerAnimationComponent.States.IsLongFall, "LONG FALL"),
