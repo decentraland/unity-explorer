@@ -116,7 +116,7 @@ Assets/DCL/SDKComponents/<Feature>/
 +-- Tests/
 |   +-- EditMode/
 |   |   +-- <Feature>SystemShould.cs
-|   +-- EditMode.asmref                    // { "reference": "DCL.EditMode.Tests" }
+|   |   +-- EditMode.asmref                // { "reference": "DCL.EditMode.Tests" }
 ```
 
 **Assembly & naming notes:**

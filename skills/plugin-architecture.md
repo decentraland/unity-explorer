@@ -253,9 +253,9 @@ Assets/DCL/<Feature>/
 │   ├── <Feature>LifecycleSystem.cs
 │   └── <Feature>ApplyPropertiesSystem.cs
 ├── Tests/
-│   ├── EditMode/
-│   │   └── <Feature>SystemShould.cs
-│   └── EditMode.asmref               ← { "reference": "DCL.EditMode.Tests" }
+│   └── EditMode/
+│       ├── <Feature>SystemShould.cs
+│       └── EditMode.asmref               ← { "reference": "DCL.EditMode.Tests" }
 ```
 
 ### Plugin file placement
