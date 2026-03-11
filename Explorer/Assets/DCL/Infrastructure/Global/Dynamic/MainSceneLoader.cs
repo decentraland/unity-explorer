@@ -391,7 +391,7 @@ namespace Global.Dynamic
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
-            ControllerBase<BlockedScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+            ControllerBase<BlockedScreenView, BlockedScreenParameters>.ViewFactoryMethod viewFactory =
                 BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
