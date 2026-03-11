@@ -49,7 +49,6 @@ namespace DCL.Browser.DecentralandUrls
             {
                 // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
-                // Content and lambdas url are hardcoded to a particular catalyst
                 // Adapter info (both scene and room) also have to responde to the `.today` environment
                 // Archipelago status as well, to have a clear minimap
                 // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
@@ -227,10 +226,8 @@ namespace DCL.Browser.DecentralandUrls
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
-                DecentralandUrl.Lambdas => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
-                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
-                DecentralandUrl.Content => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/content/" :
-                    realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
+                DecentralandUrl.Lambdas => UrlData.RealmDependen(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 
