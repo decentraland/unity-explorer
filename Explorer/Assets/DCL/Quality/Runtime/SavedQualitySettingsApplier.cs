@@ -1,13 +1,12 @@
-using System;
 using DCL.Prefs;
 using Utility;
 
 namespace DCL.Quality.Runtime
 {
     /// <summary>
-    ///     Reads saved Custom quality settings from DCLPlayerPrefs.
+    ///     Reads and writes saved quality settings from DCLPlayerPrefs.
     /// </summary>
-    internal static class SavedQualitySettingsApplier
+    public static class SavedQualitySettingsApplier
     {
         public struct SavedValues
         {
@@ -20,12 +19,12 @@ namespace DCL.Quality.Runtime
             public bool AvatarOutline;
             public int SceneDistance;
             public float LandscapeDistance;
-            public GrassPreset Grass;
+            public bool SunShadows;
             public bool SceneLights;
             public bool SceneLightShadows;
             public int MaxSceneLights;
-            public ShadowQualityLevel ShadowQuality;
-            public ShadowDistanceLevel ShadowDistance;
+            public ShadowQualityLevel SceneShadowQuality;
+            public int ShadowDistance;
         }
 
         public static QualityPresetLevel ReadSavedPreset() =>
@@ -49,15 +48,49 @@ namespace DCL.Quality.Runtime
                 Hdr = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_HDR_NEW, basePresetData.HdrEnabled ? 1 : 0) == 1,
                 Bloom = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_BLOOM, basePresetData.BloomEnabled ? 1 : 0) == 1,
                 AvatarOutline = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_AVATAR_OUTLINE, basePresetData.AvatarOutlineEnabled ? 1 : 0) == 1,
-                SceneDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_DISTANCE_NEW, basePresetData.SceneDistance),
+                SceneDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_DISTANCE, basePresetData.SceneDistance),
                 LandscapeDistance = DCLPlayerPrefs.GetFloat(DCLPrefKeys.PS_LANDSCAPE_DISTANCE, basePresetData.LandscapeDistance),
-                Grass = EnumUtils.FromInt<GrassPreset>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_GRASS_PRESET, EnumUtils.ToInt(basePresetData.GrassPreset))),
+                SunShadows = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_SHADOWS, basePresetData.SunShadows),
                 SceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHTS, basePresetData.SceneLightsEnabled ? 1 : 0) == 1,
                 SceneLightShadows = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS, basePresetData.SceneLightShadowsEnabled ? 1 : 0) == 1,
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
-                ShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowQuality))),
-                ShadowDistance = EnumUtils.FromInt<ShadowDistanceLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, EnumUtils.ToInt(basePresetData.ShadowDistance))),
+                SceneShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowsQualityLevel))),
+                ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.shadowDistance),
             };
+        }
+
+        /// <summary>
+        ///     Deletes all persisted Custom quality override keys from player prefs.
+        /// </summary>
+        public static void DeleteCustomSettings()
+        {
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_CUSTOM_BASE_PRESET);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_FPS_LIMIT);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_VSYNC);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_RESOLUTION_SCALE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_MSAA);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_HDR_NEW);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_BLOOM);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_AVATAR_OUTLINE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_DISTANCE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_LANDSCAPE_DISTANCE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_GRASS_PRESET);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SUN_SHADOWS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHTS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_MAX_SCENE_LIGHTS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_QUALITY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_DISTANCE);
+        }
+
+        /// <summary>
+        ///     Forces the Low preset by clearing any custom overrides and saving the Low preset level.
+        ///     Called before QualitySettingsController is created (e.g. when minimum specs are not met).
+        /// </summary>
+        public static void EnforceLowPreset()
+        {
+            DeleteCustomSettings();
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(QualityPresetLevel.Low), save: true);
         }
     }
 }

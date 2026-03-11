@@ -15,3 +15,30 @@ MonoBehaviour:
   lowPreset: {fileID: 11400000, guid: dd11fd2bbc2846e41988f530054585ef, type: 2}
   mediumPreset: {fileID: 11400000, guid: 9844470005c15614489c7670f4eada84, type: 2}
   highPreset: {fileID: 11400000, guid: cdb6cf7cd53bf254380eb09cb9f0fc52, type: 2}
+  lowShadowQualityConfig:
+    MainShadowResolution: 512
+    ShadowResolutionTier0: 128
+    ShadowResolutionTier1: 128
+    ShadowResolutionTier2: 128
+    CascadeCount: 1
+    DepthBias: 2
+    NormalBias: 0
+    SoftShadows: 0
+  mediumShadowQualityConfig:
+    MainShadowResolution: 1024
+    ShadowResolutionTier0: 256
+    ShadowResolutionTier1: 256
+    ShadowResolutionTier2: 512
+    CascadeCount: 1
+    DepthBias: 1.75
+    NormalBias: 0
+    SoftShadows: 1
+  highShadowQualityConfig:
+    MainShadowResolution: 1024
+    ShadowResolutionTier0: 512
+    ShadowResolutionTier1: 1024
+    ShadowResolutionTier2: 1024
+    CascadeCount: 4
+    DepthBias: 1.56
+    NormalBias: 0
+    SoftShadows: 1

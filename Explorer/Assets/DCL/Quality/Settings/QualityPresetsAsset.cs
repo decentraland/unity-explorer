@@ -10,9 +10,9 @@ namespace DCL.Quality
         [SerializeField] internal QualityPresetData mediumPreset;
         [SerializeField] internal QualityPresetData highPreset;
 
-        public QualityPresetData LowPreset => lowPreset;
-        public QualityPresetData MediumPreset => mediumPreset;
-        public QualityPresetData HighPreset => highPreset;
+        [SerializeField] internal ShadowQualityConfig lowShadowQualityConfig;
+        [SerializeField] internal ShadowQualityConfig mediumShadowQualityConfig;
+        [SerializeField] internal ShadowQualityConfig highShadowQualityConfig;
 
         public QualityPresetData GetPreset(QualityPresetLevel level) =>
             level switch
@@ -20,8 +20,16 @@ namespace DCL.Quality
                 QualityPresetLevel.Low => lowPreset,
                 QualityPresetLevel.Medium => mediumPreset,
                 QualityPresetLevel.High => highPreset,
-                QualityPresetLevel.Custom => null,
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
+            };
+
+        public ShadowQualityConfig GetShadowConfig(ShadowQualityLevel level) =>
+            level switch
+            {
+                ShadowQualityLevel.Low => lowShadowQualityConfig,
+                ShadowQualityLevel.Medium => mediumShadowQualityConfig,
+                ShadowQualityLevel.High => highShadowQualityConfig,
+                _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
             };
     }
 }

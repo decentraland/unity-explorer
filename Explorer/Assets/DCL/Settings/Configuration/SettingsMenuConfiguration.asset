@@ -35,6 +35,7 @@ MonoBehaviour:
       - rid: 2404945502817747041
       - rid: 2404945502817747108
       - rid: 2404945435829993579
+      - rid: 2404945524685013098
     - <GroupTitle>k__BackingField: Post Processing
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
@@ -43,6 +44,30 @@ MonoBehaviour:
       - rid: 2404945502817747082
       - rid: 2404945502817747083
       - rid: 2404945502817747084
+    - <GroupTitle>k__BackingField: Landscape and Foilage
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 2404945524685013102
+      - rid: 2404945524685013105
+    - <GroupTitle>k__BackingField: Sun
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 2404945524685013116
+    - <GroupTitle>k__BackingField: Scene Lighting
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 2404945524685013139
+      - rid: 2404945524685013118
+      - rid: 2404945524685013120
+    - <GroupTitle>k__BackingField: Shadows
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 2404945524685013121
+      - rid: 2404945524685013122
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -134,7 +159,10 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: FPS Limit
-          <Description>k__BackingField: 
+          <Description>k__BackingField: Caps the maximum number of frames rendered
+            per second. Lower values reduce GPU and CPU load, helping keep your device
+            cool and quiet. Higher values deliver smoother motion if your hardware
+            can keep up.
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options:
@@ -157,7 +185,9 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Resolution Scale
-          <Description>k__BackingField: Rendering Upscaler
+          <Description>k__BackingField: Renders the scene at a lower or higher percentage
+            of your display resolution, then scales the image to fit. Lowering this
+            value significantly improves performance at the cost of sharpness.
           <IsEnabled>k__BackingField: 1
           sliderType: 3
           minValue: 5
@@ -272,12 +302,196 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Resolution
-          <Description>k__BackingField: 
+          <Description>k__BackingField: Sets the output resolution of the application.
+            Higher resolutions produce a sharper image but require more GPU power.
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
           options: []
           defaultOptionIndex: 0
         <Feature>k__BackingField: 3
+    - rid: 2404945524685013098
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Windows Mode
+          <Description>k__BackingField: Choose how the application is displayed.
+            Fullscreen Borderless lets you switch between apps quickly while keeping
+            full-screen visuals. Exclusive Fullscreen may offer slightly better performance
+            on some systems.
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Windowed
+          - Fullscreen Borderless
+          - Fullscreen
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 4
+    - rid: 2404945524685013102
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Scene Distance
+          <Description>k__BackingField: Controls how many parcels away scenes are
+            loaded and rendered. Higher values let you see more of the world at once
+            but increase memory usage and reduce frame rate.
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 5
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 40
+        <Feature>k__BackingField: 0
+    - rid: 2404945524685013105
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Landscape Distance
+          <Description>k__BackingField: Controls how far away trees, foliage, and
+            other landscape details remain visible. Reducing this value can noticeably
+            improve performance and is recommended for lower-end devices.
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 500
+          maxValue: 7000
+          wholeNumbers: 0
+          defaultValue: 0
+        <Feature>k__BackingField: 1
+    - rid: 2404945524685013116
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Sun Shadows
+          <Description>k__BackingField: Enables shadows cast by the main directional
+            sun light. Disabling this removes all sun-driven shadows and can noticeably
+            improve performance.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 7
+    - rid: 2404945524685013118
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Max Lights in a Scene
+          <Description>k__BackingField: Limits how many additional scene lights can
+            be active at once. Fewer lights means less GPU work.
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 0
+          maxValue: 10
+          wholeNumbers: 1
+          defaultValue: 6
+        <Feature>k__BackingField: 12
+    - rid: 2404945524685013120
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Scene Shadows
+          <Description>k__BackingField: Enable or disable shadows for scene lights.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 8
+    - rid: 2404945524685013121
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Quality
+          <Description>k__BackingField: Controls the resolution and filtering of
+            shadow maps. Higher quality produces sharper, more accurate shadows but
+            increases GPU memory and processing cost.
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 14
+    - rid: 2404945524685013122
+      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Shadows Distance
+          <Description>k__BackingField: Sets the maximum distance from the camera
+            at which shadows are rendered. Shorter distances free up shadow map resolution
+            for nearby objects, improving close-up shadow detail and performance.
+          <IsEnabled>k__BackingField: 1
+          sliderType: 0
+          minValue: 30
+          maxValue: 100
+          wholeNumbers: 1
+          defaultValue: 60
+        <Feature>k__BackingField: 13
+    - rid: 2404945524685013139
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Enable Scene Lights
+          <Description>k__BackingField: Allows scenes to add their own point, spot,
+            and area lights. Disabling this turns off all scene-placed lighting and
+            can significantly improve performance in light-heavy scenes.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 9
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

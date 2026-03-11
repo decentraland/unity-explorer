@@ -4,29 +4,29 @@ using DCL.Settings.ModuleViews;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class EnvironmentDistanceSettingsController : SettingsFeatureController
+    public class ShadowDistanceSettingsController : SettingsFeatureController
     {
         private readonly SettingsSliderModuleView view;
         private readonly IQualitySettingsController qualitySettingsController;
 
-        public EnvironmentDistanceSettingsController(SettingsSliderModuleView view, IQualitySettingsController qualitySettingsController)
+        public ShadowDistanceSettingsController(SettingsSliderModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
             this.qualitySettingsController = qualitySettingsController;
 
             qualitySettingsController.OnPresetChanged += OnPresetChanged;
             view.SliderView.Slider.onValueChanged.AddListener(OnSliderValueChanged);
-            view.ConfigureWithoutNotify(qualitySettingsController.LandscapeDistance);
+            view.ConfigureWithoutNotify(qualitySettingsController.ShadowDistance);
         }
 
         private void OnPresetChanged(QualityPresetLevel _)
         {
-            view.ConfigureWithoutNotify(qualitySettingsController.LandscapeDistance);
+            view.ConfigureWithoutNotify(qualitySettingsController.ShadowDistance);
         }
 
-        private void OnSliderValueChanged(float distance)
+        private void OnSliderValueChanged(float value)
         {
-            qualitySettingsController.SetLandscapeDistance(distance);
+            qualitySettingsController.SetShadowDistance((int)value);
         }
 
         public override void Dispose()

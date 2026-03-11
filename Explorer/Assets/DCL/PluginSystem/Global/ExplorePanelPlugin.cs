@@ -76,6 +76,7 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Realm;
+using Global;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -122,6 +123,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IRealmData realmData;
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly IInputBlock inputBlock;
@@ -244,7 +246,9 @@ namespace DCL.PluginSystem.Global
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            PublishIpfsEntityCommand publishIpfsEntityCommand)
+            PublishIpfsEntityCommand publishIpfsEntityCommand,
+            IRendererFeaturesCache rendererFeaturesCache
+            )
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -314,6 +318,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.friendServiceProxy = friendServiceProxy;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
+            this.rendererFeaturesCache = rendererFeaturesCache;
         }
 
         public void Dispose()
@@ -438,7 +443,13 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
-            QualitySettingsController qualitySettingsController = new QualitySettingsController(settings.QualityPresets, upscalingController, settings.RealmPartitionSettings, appArgs);
+            QualitySettingsController qualitySettingsController = new QualitySettingsController(
+                settings.QualityPresets,
+                upscalingController,
+                settings.RealmPartitionSettings,
+                landscapeData.Value,
+                rendererFeaturesCache,
+                appArgs);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),

@@ -44,7 +44,7 @@ namespace DCL.Prefs
         public const string PS_HDR_NEW = "QS_HDR";
         public const string PS_BLOOM = "QS_Bloom";
         public const string PS_AVATAR_OUTLINE = "QS_AvatarOutline";
-        public const string PS_SCENE_DISTANCE_NEW = "QS_SceneDistance";
+        public const string PS_SCENE_DISTANCE = "QS_SceneDistance";
         public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
         public const string PS_GRASS_PRESET = "QS_GrassPreset";
         public const string PS_SUN_SHADOWS = "QS_SunShadows";
@@ -58,20 +58,16 @@ namespace DCL.Prefs
         public const string PS_RESOLUTION_REFRESH_NUM = "QS_ResolutionRefreshNum";
         public const string PS_RESOLUTION_REFRESH_DEN = "QS_ResolutionRefreshDen";
 
-        public const string SETTINGS_VSYNC_ENABLED = "Settings_VSync";
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
         public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
         public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
-        public const string SETTINGS_ENVIRONMENT_DISTANCE = "Settings_EnvironmentDistance";
-        public const string SETTINGS_FPS_LIMIT = "Settings_FpsLimit";
         public const string SETTINGS_GRAPHICS_QUALITY = "Settings_GraphicsQuality";
         public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
 
-        public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";

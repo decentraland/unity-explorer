@@ -26,7 +26,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.ModuleControllers;
+using DCL.Quality.Runtime;
 using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -365,8 +365,7 @@ namespace Global.Dynamic
 
             if (!hasMinimumSpecs)
             {
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsPresetSettingsController_OLD.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
+                SavedQualitySettingsApplier.EnforceLowPreset();
             }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);

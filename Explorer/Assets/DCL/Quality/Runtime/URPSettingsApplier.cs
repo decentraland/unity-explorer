@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -34,9 +35,10 @@ namespace DCL.Quality.Runtime
 
         public static void ApplyBloom(bool enabled)
         {
-            if(profile == null)
+            if (profile == null)
                 return;
-            if(profile.TryGet(out Bloom bloom))
+
+            if (profile.TryGet(out Bloom bloom))
                 bloom.active = enabled;
         }
 
@@ -65,23 +67,78 @@ namespace DCL.Quality.Runtime
             }
         }
 
-        public static void ApplyShadows(QualityPresetData.ShadowPresetConfig config, ShadowDistanceLevel distanceLevel)
+        private static FieldInfo? MainLightRenderingMode;
+        private static FieldInfo? SupportsSoftShadows;
+        private static FieldInfo? AdditionalLightsRenderingMode;
+        private static FieldInfo? AdditionalLightShadowsSupported;
+        private static FieldInfo? AdditionalLightsShadowResolutionTierLow;
+        private static FieldInfo? AdditionalLightsShadowResolutionTierMedium;
+        private static FieldInfo? AdditionalLightsShadowResolutionTierHigh;
+
+        private static void EnsureReflectionProperties() // Disgusting, but Unity doesn't provide setters for some properties -_-: https://discussions.unity.com/t/change-shadow-resolution-from-script/767158/70
         {
-            ApplyShadows(GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset, config, distanceLevel);
+            if (MainLightRenderingMode == null)
+                MainLightRenderingMode = typeof(UniversalRenderPipelineAsset).GetField("m_MainLightRenderingMode", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (SupportsSoftShadows == null)
+                SupportsSoftShadows = typeof(UniversalRenderPipelineAsset).GetField("m_SoftShadowsSupported", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (AdditionalLightShadowsSupported == null)
+                AdditionalLightShadowsSupported = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightShadowsSupported", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (AdditionalLightsShadowResolutionTierLow == null)
+                AdditionalLightsShadowResolutionTierLow = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightsShadowResolutionTierLow", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (AdditionalLightsShadowResolutionTierMedium == null)
+                AdditionalLightsShadowResolutionTierMedium = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightsShadowResolutionTierMedium", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (AdditionalLightsShadowResolutionTierHigh == null)
+                AdditionalLightsShadowResolutionTierHigh = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightsShadowResolutionTierHigh", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (AdditionalLightsRenderingMode == null)
+                AdditionalLightsRenderingMode = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightsRenderingMode", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        public static void ApplyShadows(UniversalRenderPipelineAsset urpAsset, QualityPresetData.ShadowPresetConfig config, ShadowDistanceLevel distanceLevel)
+        public static void ApplySunShadows(bool enabled)
         {
-            urpAsset.mainLightShadowmapResolution = config.mainShadowResolution;
-            urpAsset.shadowCascadeCount = config.cascadeCount;
-            urpAsset.shadowDistance = GetShadowDistance(distanceLevel);
-            urpAsset.maxAdditionalLightsCount = config.perObjectLightLimit;
+            EnsureReflectionProperties();
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            MainLightRenderingMode.SetValue(renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled);
         }
 
-        public static void ApplyShadowsToAll(QualityPresetData.ShadowPresetConfig config, ShadowDistanceLevel distanceLevel)
+        public static void ApplySceneLight(bool enabled)
         {
-            foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ApplyShadows((UniversalRenderPipelineAsset)pipeline, config, distanceLevel);
+            EnsureReflectionProperties();
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            AdditionalLightsRenderingMode.SetValue(renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled);
+        }
+
+        public static void ApplyMaxObjectsPerLight(int maxLights)
+        {
+            EnsureReflectionProperties();
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            renderPipelineAsset.maxAdditionalLightsCount = maxLights;
+        }
+
+        public static void ApplySceneLightsShadows(bool enabled)
+        {
+            EnsureReflectionProperties();
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            AdditionalLightShadowsSupported.SetValue(renderPipelineAsset, enabled);
+        }
+
+        public static void ApplyShadowQuality(ShadowQualityConfig shadowQualityConfig)
+        {
+            EnsureReflectionProperties();
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            renderPipelineAsset.mainLightShadowmapResolution = shadowQualityConfig.MainShadowResolution;
+            AdditionalLightsShadowResolutionTierLow.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier0);
+            AdditionalLightsShadowResolutionTierMedium.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier1);
+            AdditionalLightsShadowResolutionTierHigh.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier2);
+            renderPipelineAsset.shadowCascadeCount = shadowQualityConfig.CascadeCount;
+            renderPipelineAsset.shadowDepthBias = shadowQualityConfig.DepthBias;
+            renderPipelineAsset.shadowNormalBias = shadowQualityConfig.NormalBias;
+            SupportsSoftShadows.SetValue(renderPipelineAsset, shadowQualityConfig.SoftShadows);
+        }
+
+        public static void ApplyShadowDistance(float distance)
+        {
+            var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
+            renderPipelineAsset.shadowDistance = distance;
         }
 
         public static void ApplyResolution(int width, int height, FullScreenMode screenMode, RefreshRate refreshRate)
@@ -89,24 +146,14 @@ namespace DCL.Quality.Runtime
             Screen.SetResolution(width, height, screenMode, refreshRate);
         }
 
-        public static void ApplySceneLights(bool sceneLightsEnabled, int maxSceneLights) { }
-
-        public static void ApplyRendererFeature<T>(IRendererFeaturesCache cache, bool enabled) where T : ScriptableRendererFeature
+        public static void ApplyRendererFeature<T>(IRendererFeaturesCache cache, bool enabled) where T: ScriptableRendererFeature
         {
             T feature = cache.GetRendererFeature<T>();
             feature?.SetActive(enabled);
         }
 
-        private static float GetShadowDistance(ShadowDistanceLevel level) =>
-            level switch
-            {
-                ShadowDistanceLevel.Short => 30f,
-                ShadowDistanceLevel.Medium => 60f,
-                ShadowDistanceLevel.Far => 100f,
-                _ => 60f,
-            };
-
         private static VolumeProfile profile;
+
         public static void InjectVolume(VolumeProfile profile)
         {
             URPSettingsApplier.profile = profile;

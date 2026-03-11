@@ -22,13 +22,13 @@ namespace DCL.Settings.ModuleControllers
             qualitySettingsController.OnPresetChanged += OnPresetChanged;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
-            viewInstance.SliderView.Slider.SetValueWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
+            viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
             UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
         }
 
         private void OnPresetChanged(QualityPresetLevel _)
         {
-            viewInstance.SliderView.Slider.SetValueWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
+            viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
             UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
         }
 

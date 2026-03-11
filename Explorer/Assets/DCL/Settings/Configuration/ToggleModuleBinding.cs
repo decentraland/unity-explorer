@@ -34,6 +34,9 @@ namespace DCL.Settings.Configuration
             HDR_FEATURE,
             BLOOM_FEATURE,
             AVATAR_OUTLINE_FEATURE,
+            SUN_SHADOWS_FEATURE,
+            SCENE_SHADOWS_FEATURE,
+            SCENE_LIGHTS_FEATURE,
             // add other features...
         }
 
@@ -70,6 +73,9 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.HDR_FEATURE => new HdrSettingsController(viewInstance, qualitySettingsController),
                 ToggleFeatures.BLOOM_FEATURE => new BloomSettingsController(viewInstance, qualitySettingsController),
                 ToggleFeatures.AVATAR_OUTLINE_FEATURE => new AvatarOutlineSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.SUN_SHADOWS_FEATURE => new SunShadowsSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.SCENE_SHADOWS_FEATURE => new SceneShadowsSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.SCENE_LIGHTS_FEATURE => new SceneLightsSettingsController(viewInstance, qualitySettingsController),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

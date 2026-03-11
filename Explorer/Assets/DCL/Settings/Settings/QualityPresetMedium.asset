@@ -12,64 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c834fc85f66fdbf4b9c012dc7f250d93, type: 3}
   m_Name: QualityPresetMedium
   m_EditorClassIdentifier: Settings::DCL.Quality.QualityPresetData
-  fpsLimit: 120
-  vSyncEnabled: 0
+  fpsLimit: 60
+  vSyncEnabled: 1
   resolutionScale: 1
-  msaaEnabled: 0
+  msaaLevel: 1
   hdrEnabled: 0
-  bloomEnabled: 0
-  avatarOutlineEnabled: 0
+  bloomEnabled: 1
+  avatarOutlineEnabled: 1
   sceneDistance: 20
   landscapeDistance: 1000
-  grassPreset: 0
-  grassLow:
-    distance: 0
-    density: 0
-  grassMedium:
-    distance: 0
-    density: 0
-  grassHigh:
-    distance: 0
-    density: 0
-  sunShadows: 0
-  sceneLightsEnabled: 0
-  sceneLightShadowsEnabled: 0
+  sunShadows: 1
+  sceneLightsEnabled: 1
+  sceneLightShadowsEnabled: 1
   maxSceneLights: 6
-  shadowQuality: 0
-  shadowDistance: 0
-  shadowLowConfig:
-    mainShadowResolution: 0
-    shadowResolutionTier0: 0
-    shadowResolutionTier1: 0
-    shadowResolutionTier2: 0
-    maxDistance: 0
-    cascadeCount: 0
-    depthBias: 0
-    normalBias: 0
-    softShadows: 0
-    perObjectLightLimit: 0
-    transparentReceiveShadows: 0
-  shadowMediumConfig:
-    mainShadowResolution: 0
-    shadowResolutionTier0: 0
-    shadowResolutionTier1: 0
-    shadowResolutionTier2: 0
-    maxDistance: 0
-    cascadeCount: 0
-    depthBias: 0
-    normalBias: 0
-    softShadows: 0
-    perObjectLightLimit: 0
-    transparentReceiveShadows: 0
-  shadowHighConfig:
-    mainShadowResolution: 0
-    shadowResolutionTier0: 0
-    shadowResolutionTier1: 0
-    shadowResolutionTier2: 0
-    maxDistance: 0
-    cascadeCount: 0
-    depthBias: 0
-    normalBias: 0
-    softShadows: 0
-    perObjectLightLimit: 0
-    transparentReceiveShadows: 0
+  shadowsQualityLevel: 1
+  shadowDistance: 60

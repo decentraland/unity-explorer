@@ -896,7 +896,8 @@ namespace Global.Dynamic
                     donationsService,
                     realmNavigator,
                     friendServiceProxy,
-                    staticContainer.PublishIpfsEntityCommand
+                    staticContainer.PublishIpfsEntityCommand,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
