@@ -156,6 +156,32 @@ public struct ProximityAudioSourceComponent
 - `InjectToWorld()` передаёт его в `ProximityAudioPositionSystem` (вместе с `entityParticipantTable`)
 - `InitializeAsync()` передаёт его в `ProximityVoiceChatManager`
 
+### Моно-сигнал и стерео-буфер
+
+**Голосовой трафик LiveKit — моно.** Полный путь аудио:
+
+```
+Микрофон (1-2 ch) → WebRTC APM (моно) → Opus VOIP (моно) → сеть → Opus decoder (моно)
+```
+
+- WebRTC Audio Processing Module (AGC, шумоподавление, эхоподавление) работает в моно
+- Opus кодек в режиме `OPUS_APPLICATION_VOIP` кодирует голос в моно независимо от входа
+- На принимающей стороне декодированный поток — всегда 1 канал
+
+**`AudioStream` запрашивает 2 канала** (`currentChannels = 2` в конструкторе), потому что Unity
+вызывает `OnAudioFilterRead(float[] data, int channels)` со стерео-буфером (`channels = 2`,
+определяется `AudioSettings.speakerMode`). Буфер интерлейсный: `[L0, R0, L1, R1, ...]`.
+Если бы мы запросили моно, нативный слой вернул бы 1 сэмпл на фрейм, а Unity ожидает 2 —
+данные бы не совпали по размеру и формату.
+
+Нативный слой LiveKit при upmix моно → стерео **дублирует** единственный канал в оба:
+`channel[0] == channel[1]` для каждого сэмпла. Поэтому `ApplySpatializationPipeline` корректно
+берёт только `data[i * channels]` (канал 0) как моно-источник — он идентичен каналу 1.
+
+Затем spatialization (ILD, ITD, Head Shadow, HRTF) создаёт из этого моно настоящее стерео
+с пространственной информацией. Это акустически правильно: 3D-точечный источник (голова
+другого игрока) по определению моно.
+
 ### Нормализация аудио
 
 Кастомной нормализации нет. Используется:

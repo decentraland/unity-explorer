@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 0
   HoldThresholdInSeconds: 0.5
-  MicrophoneVolume: 15
   MicrophoneReinitDelayMs: 500
   MaxFreshDataWaitTimeMs: 1000
   FreshDataCheckDelayMs: 50
@@ -23,3 +22,9 @@ MonoBehaviour:
   AudioMixerGroup: {fileID: 4705557717073340048, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
   microphonePlaybackToSpeakers: 0
   ChatAudioMixerGroup: {fileID: -2191859670193011288, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+  ProximitySpatialBlend: 1
+  ProximityDopplerLevel: 0
+  ProximityMinDistance: 0.8
+  ProximityMaxDistance: 13
+  ProximitySpread: 0
+  ProximityRolloffMode: 0

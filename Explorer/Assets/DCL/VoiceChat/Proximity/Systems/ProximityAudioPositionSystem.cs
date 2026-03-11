@@ -2,7 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Profiles.Systems;
@@ -27,10 +30,15 @@ namespace DCL.VoiceChat
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     public partial class ProximityAudioPositionSystem : BaseUnityLoopSystem
     {
+        private const float FALLBACK_HEAD_HEIGHT = 1.75f;
+
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ProximityConfigHolder configHolder;
         private readonly List<Entity> entitiesToCleanUp = new ();
+
+        private SingleInstanceEntity cameraEntity;
+        private SingleInstanceEntity playerEntity;
 
         internal ProximityAudioPositionSystem(
             World world,
@@ -71,12 +79,26 @@ namespace DCL.VoiceChat
                         .AddControl(new DebugDropdownDef(rolloffBinding, "Rolloff Mode"), null);
         }
 
+        public override void Initialize()
+        {
+            cameraEntity = World.CacheCamera();
+            playerEntity = World.CachePlayer();
+        }
+
         protected override void Update(float t)
         {
             if (configHolder.Config == null) return;
 
             AssignPendingSources();
-            SyncPositionsQuery(World);
+
+            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
+            Vector3 cameraPos = cam.Camera.transform.position;
+            Vector3 localHeadPos = cameraPos;
+
+            if (World.TryGet(playerEntity, out PlayerComponent playerComp) && playerComp.CameraFocus != null)
+                localHeadPos = playerComp.CameraFocus.position;
+
+            SyncPositionsQuery(World, cameraPos, localHeadPos);
             ApplySettingsQuery(World);
             ProcessCleanUp();
         }
@@ -103,7 +125,12 @@ namespace DCL.VoiceChat
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositions(Entity entity, in CharacterTransform characterTransform, ref ProximityAudioSourceComponent proximityAudio)
+        private void SyncPositions(
+            [Data] Vector3 cameraPos,
+            [Data] Vector3 localHeadPos,
+            Entity entity,
+            in CharacterTransform characterTransform,
+            ref ProximityAudioSourceComponent proximityAudio)
         {
             if (proximityAudio.AudioSourceTransform == null)
             {
@@ -111,7 +138,15 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            proximityAudio.AudioSourceTransform.position = characterTransform.Position;
+            Vector3 remoteHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
+                                    && avatarBase != null
+                                    && avatarBase.HeadAnchorPoint != null
+                ? avatarBase.HeadAnchorPoint.position
+                : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);
+
+            // Place AudioSource on the camera→remote ray at head-to-head distance.
+            // Preserves direction from camera for pan while giving Unity the correct distance for rolloff.
+            proximityAudio.AudioSourceTransform.position = cameraPos + (remoteHeadPos - localHeadPos);
         }
 
         [Query]
