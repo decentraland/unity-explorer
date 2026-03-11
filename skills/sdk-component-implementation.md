@@ -113,8 +113,16 @@ Assets/DCL/SDKComponents/<Feature>/
 |   +-- <Feature>Group.cs               // Custom SystemGroup for execution ordering
 +-- Tests/
 |   +-- EditMode/
-|       +-- <Feature>SystemShould.cs
+|   |   +-- <Feature>SystemShould.cs
+|   +-- EditMode.asmref                 // Points to DCL.EditMode.Tests — prefer asmref over asmdef
++-- <Feature>.asmref                    // Points to DCL.Plugins — prefer asmref over asmdef
 ```
+
+**Assembly notes:**
+- Feature code: use an `.asmref` pointing to `DCL.Plugins` instead of a standalone `.asmdef` unless the feature needs to be referenced by other assemblies or requires strict dependency isolation.
+- Tests: use an `.asmref` pointing to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests` for PlayMode) instead of a standalone `.asmdef`.
+
+See `plugin-architecture.md` for details.
 
 ---
 

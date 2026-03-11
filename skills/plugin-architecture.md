@@ -216,12 +216,20 @@ Assets/DCL/<Feature>/
 ├── Tests/
 │   └── EditMode/
 ├── <Feature>Plugin.cs
-└── <Feature>.asmdef
+└── <Feature>.asmref   ← prefer asmref over asmdef (see below)
 ```
 
-### Test Assembly References (`.asmref`)
+### Assembly Definition References (`.asmref`)
 
-Test projects use `.asmref` files to reference the parent test assembly instead of creating their own `.asmdef`. The `.asmref` file is a simple JSON file:
+Implemented systems should ideally use an `.asmref` pointing to `DCL.Plugins.asmdef` instead of creating their own `.asmdef`. This keeps the feature compiled into the shared `DCL.Plugins` assembly and avoids unnecessary assembly proliferation.
+
+```json
+{ "reference": "DCL.Plugins" }
+```
+
+Only create a dedicated `.asmdef` when the feature needs to be referenced by other assemblies directly, or when it has strict dependency isolation requirements.
+
+Test projects similarly use an `.asmref` to reference the parent test assembly:
 
 ```json
 { "reference": "DCL.EditMode.Tests" }
