@@ -37,7 +37,7 @@ namespace DCL.ApplicationBlocklistGuard
         {
             infoTextBuilder.Clear();
 
-            if (inputData.BannedUserData != null)
+            if (inputData.BannedUserData != null && !string.IsNullOrEmpty(inputData.BannedUserData.expiresAt))
             {
                 infoTextBuilder.Append("Ban period: ");
                 infoTextBuilder.Append(FormatRemainingBanTime(inputData.BannedUserData.expiresAt));
