@@ -226,7 +226,7 @@ namespace DCL.Browser.DecentralandUrls
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
-                DecentralandUrl.Lambdas => UrlData.RealmDependen(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
                 DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
