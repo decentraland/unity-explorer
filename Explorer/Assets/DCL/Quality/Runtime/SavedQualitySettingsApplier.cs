@@ -55,7 +55,7 @@ namespace DCL.Quality.Runtime
                 SceneLightShadows = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS, basePresetData.SceneLightShadowsEnabled ? 1 : 0) == 1,
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
                 SceneShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowsQualityLevel))),
-                ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.shadowDistance),
+                ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.ShadowDistance),
             };
         }
 

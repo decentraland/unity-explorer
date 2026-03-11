@@ -72,12 +72,6 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                // DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController_OLD(viewInstance,
-                //     realmPartitionSettingsAsset,
-                //     landscapeData,
-                //     qualitySettingsAsset,
-                //     skyboxSettingsAsset),
-
                 DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
