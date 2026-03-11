@@ -458,9 +458,6 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: EmoteUpperBody
     m_EventTreshold: 0
-  - m_ConditionMode: 4
-    m_ConditionEvent: MovementBlend
-    m_EventTreshold: 0.2
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -1564847556210820725}
   m_Solo: 0
@@ -1680,9 +1677,6 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: EmoteUpperBody
     m_EventTreshold: 0
-  - m_ConditionMode: 4
-    m_ConditionEvent: MovementBlend
-    m_EventTreshold: 0.2
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -1564847556210820725}
   m_Solo: 0

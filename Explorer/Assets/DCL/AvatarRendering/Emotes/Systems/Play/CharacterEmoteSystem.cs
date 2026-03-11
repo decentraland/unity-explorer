@@ -15,6 +15,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -54,8 +55,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly URN[] loadEmoteBuffer = new URN[1];
         private readonly bool localSceneDevelopment;
 
-        private ReadOnlySpan<char> sceneEmotePrefixWithColon =>
-            GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
+        private ReadOnlySpan<char> sceneEmotePrefixWithColon => GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
 
         public CharacterEmoteSystem(
             World world,
@@ -228,8 +228,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
-                if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
-                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
+                if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
+                    (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) || avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
