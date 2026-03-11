@@ -150,6 +150,7 @@ namespace DCL.Notifications.NewNotification
                         await ProcessTipReceivedNotificationAsync(notification);
                         break;
                     case NotificationType.BAN_WARNING:
+                    case NotificationType.BANNED:
                         await ProcessPersistentNotificationAsync(notification);
                         break;
                     default:

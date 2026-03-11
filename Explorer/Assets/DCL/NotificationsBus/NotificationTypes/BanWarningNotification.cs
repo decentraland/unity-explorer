@@ -2,8 +2,8 @@ namespace DCL.NotificationsBus.NotificationTypes
 {
     public class BanWarningNotification : NotificationBase
     {
-        private const string NOTIFICATION_HEADER = "This is a warning";
-        private const string NOTIFICATION_TITLE = "Your account has been flagged for a policy violation. Further violations will lead to a ban. Please contact support for more information.";
+        private const string NOTIFICATION_HEADER = "Your account has been flagged";
+        private const string NOTIFICATION_TITLE = "Further violations will lead to a ban.";
 
         public override string GetHeader() =>
             NOTIFICATION_HEADER;

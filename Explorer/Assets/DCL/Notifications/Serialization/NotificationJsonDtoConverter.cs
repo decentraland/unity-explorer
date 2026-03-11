@@ -43,6 +43,7 @@ namespace DCL.Notifications.Serialization
         private const string COMMUNITY_VOICE_CHAT_STARTED_TYPE = "community_voice_chat_started";
         private const string TIP_RECEIVED_TYPE = "tip_received";
         private const string BAN_WARNING_TYPE = "ban_warning";
+        private const string BANNED_TYPE = "banned";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -120,6 +121,7 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_VOICE_CHAT_STARTED_TYPE => new CommunityVoiceChatStartedNotification(),
                     TIP_RECEIVED_TYPE => new TipReceivedNotification(),
                     BAN_WARNING_TYPE => new BanWarningNotification(),
+                    BANNED_TYPE => new BannedNotification(),
                     _ => null,
                 };
 
