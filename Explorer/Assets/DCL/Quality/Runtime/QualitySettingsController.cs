@@ -65,15 +65,8 @@ namespace DCL.Quality.Runtime
             this.appArgs = appArgs;
             this.analytics = analytics;
 
-            QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
-            if (savedPreset == QualityPresetLevel.Custom)
-            {
-                CurrentPreset = QualityPresetLevel.Custom;
-                ApplySavedValues(SavedQualitySettingsApplier.ReadCustomSettings(presetsAsset, out presetData));
-                ApplyAllSettings();
-            }
-            else { SetPreset(savedPreset); }
+            SetPreset(QualityPresetLevel.Low);
 
             // Window mode and resolution are set aside from other saved values because they're not tied to presets.
             LoadSavedWindowMode();
