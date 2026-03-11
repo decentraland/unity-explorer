@@ -94,29 +94,12 @@ jobs:
     - name: Get BuildPatchTool cache key
       id: bpt_version
       run: |
-        $response = Invoke-WebRequest -Method HEAD -Uri "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip" -UseBasicParsing
-        $cacheKey = $null
+        $headers = curl -sI --max-redirs 0 "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/BuildPatchTool.zip"
+        $location = ($headers | Select-String "^location:").ToString().Trim()
 
-        $contentDisposition = $response.Headers['Content-Disposition']
-        if ($contentDisposition -and $contentDisposition -match 'filename=([^\s;]+\.zip)') {
-          $cacheKey = "buildpatchtool-" + ($Matches[1] -replace '[^a-zA-Z0-9\-\.]', '')
-        }
-
-        if (-not $cacheKey) {
-          $etag = $response.Headers['ETag']
-          if ($etag) {
-            $cacheKey = "buildpatchtool-etag-" + ($etag -replace '[^a-zA-Z0-9]', '')
-          }
-        }
-
-        if (-not $cacheKey) {
-          $lastModified = $response.Headers['Last-Modified']
-          if ($lastModified) {
-            $cacheKey = "buildpatchtool-lm-" + ($lastModified -replace '[^a-zA-Z0-9]', '')
-          }
-        }
-
-        if (-not $cacheKey) {
+        if ($location -match '/(BuildPatchTool[^?]+\.zip)') {
+          $cacheKey = "buildpatchtool-" + $Matches[1]
+        } else {
           $cacheKey = "buildpatchtool-week-" + (Get-Date).ToString("yyyy-WW")
         }
 
