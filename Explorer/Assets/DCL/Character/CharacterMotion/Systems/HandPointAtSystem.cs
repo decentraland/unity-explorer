@@ -177,6 +177,10 @@ namespace DCL.Character.CharacterMotion.Systems
                     targetCrossY = settings.PointAtRotationHorizontalRightThreshold;
                 else if (cross.y < -settings.PointAtRotationHorizontalLeftThreshold)
                     targetCrossY = -settings.PointAtRotationHorizontalLeftThreshold;
+                else if (dot < 0)
+                    targetCrossY = cross.y >= 0
+                        ? settings.PointAtRotationHorizontalRightThreshold
+                        : -settings.PointAtRotationHorizontalLeftThreshold;
 
                 Vector3 dirH = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
                 Vector3 perpH = Vector3.Cross(directionToTarget, Vector3.up);
