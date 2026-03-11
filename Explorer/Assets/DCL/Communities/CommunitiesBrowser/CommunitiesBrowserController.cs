@@ -931,7 +931,6 @@ namespace DCL.Communities.CommunitiesBrowser
                     reportedProfile.Address));
 
             }
-            }
         }
 
         private void ManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention)
