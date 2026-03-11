@@ -8,6 +8,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -26,10 +27,12 @@ namespace DCL.SDKComponents.MediaStream
             });
 
         private readonly IRoom room;
-        private readonly LivekitAudioSource audioSource;
-        private (Weak<IVideoStream> video, Weak<AudioStream> audio)? currentStream;
+        private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
+        private readonly List<StreamKey> tempStreamKeys = new ();
+        private Weak<IVideoStream>? currentVideoStream;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
+        private Vector3 audioPosition;
 
         private bool disposed;
 
@@ -41,14 +44,14 @@ namespace DCL.SDKComponents.MediaStream
 
         public PlayerState State => playerState;
 
-        public bool IsVideoOpened => currentStream != null && currentStream.Value.video.Resource.Has;
+        public bool IsVideoOpened => currentVideoStream != null && currentVideoStream.Value.Resource.Has;
 
-        private bool isAudioOpened => currentStream != null && currentStream.Value.audio.Resource.Has;
+        private bool isAudioOpened => audioSources.Count > 0
+            && audioSources.Exists(static a => a.stream.Resource.Has);
 
         public LivekitPlayer(IRoom streamingRoom)
         {
             room = streamingRoom;
-            audioSource = OBJECT_POOL.Get();
         }
 
         public void EnsureVideoIsPlaying()
@@ -71,70 +74,91 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
-            if (isAudioOpened) return;
 
-            // If a specific user stream died, fallback to current-stream (first available track)
-            if (playingAddress.Value.IsUserStream(out _))
+            // Check if any audio stream died — if so, refresh all audio
+            bool anyDied = false;
+
+            foreach (var (_, stream) in audioSources)
             {
-                OpenMedia(LivekitAddress.CurrentStream());
-                return;
+                if (!stream.Resource.Has)
+                {
+                    anyDied = true;
+                    break;
+                }
             }
 
-            OpenMedia(playingAddress.Value);
+            if (!anyDied && audioSources.Count > 0) return;
+
+            // Release dead sources and re-collect all audio
+            ReleaseAllAudioSources();
+            OpenAllAudioStreams();
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
         {
             CloseCurrentStream();
 
-            currentStream = livekitAddress.Match(
+            currentVideoStream = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) =>
-                {
-                    var video = self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
-                    var audio = self.FindPairedAudio(userStream.Identity, userStream.Sid);
-
-                    if (audio.Resource.Has)
-                    {
-                        self.audioSource.Construct(audio);
-                        self.audioSource.Play();
-                    }
-
-                    return (video, audio);
-                },
-                onCurrentStream: static self =>
-                {
-                    var videoTrack = self.FirstVideo();
-                    var audioTrack = self.FirstAudio();
-
-                    if (audioTrack.Resource.Has)
-                    {
-                        self.audioSource.Construct(audioTrack);
-                        self.audioSource.Play();
-                    }
-
-                    return (videoTrack, audioTrack);
-                }
+                    self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid)),
+                onCurrentStream: static self => self.FirstVideo()
             );
+
+            OpenAllAudioStreams();
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
         }
 
+        private void OpenAllAudioStreams()
+        {
+            CollectAllAudioTracks(tempStreamKeys);
+
+            foreach (StreamKey key in tempStreamKeys)
+            {
+                Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
+
+                if (!audioStream.Resource.Has)
+                    continue;
+
+                LivekitAudioSource source = OBJECT_POOL.Get();
+                source.Construct(audioStream);
+                source.SetVolume(Volume);
+                source.transform.position = audioPosition;
+                source.Play();
+                audioSources.Add((source, audioStream));
+            }
+        }
+
+        private void CollectAllAudioTracks(List<StreamKey> output)
+        {
+            output.Clear();
+
+            lock (room.Participants)
+            {
+                foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
+                {
+                    var participant = room.Participants.RemoteParticipant(identity);
+
+                    if (participant == null)
+                        continue;
+
+                    foreach ((string sid, TrackPublication track) in participant.Tracks)
+                        if (track.Kind == TrackKind.KindAudio)
+                            output.Add(new StreamKey(identity, sid));
+                }
+            }
+        }
+
         private Weak<IVideoStream> FirstVideo()
         {
             var result = FirstAvailableTrackSid(TrackKind.KindVideo);
-            if (result.HasValue == false) return Weak<IVideoStream>.Null;
-            var value = result.Value;
-            return room.VideoStreams.ActiveStream(value);
-        }
 
-        private Weak<AudioStream> FirstAudio()
-        {
-            var result = FirstAvailableTrackSid(TrackKind.KindAudio);
-            if (result.HasValue == false) return Weak<AudioStream>.Null;
-            var value = result.Value;
-            return room.AudioStreams.ActiveStream(value);
+            if (result.HasValue == false)
+                return Weak<IVideoStream>.Null;
+
+            return room.VideoStreams.ActiveStream(result.Value);
         }
 
         private StreamKey? FirstAvailableTrackSid(TrackKind kind)
@@ -158,6 +182,10 @@ namespace DCL.SDKComponents.MediaStream
             return null;
         }
 
+        /// <summary>
+        /// Finds the audio track paired to a specific video track from the same participant.
+        /// Available for future targeted audio scenarios.
+        /// </summary>
         private Weak<AudioStream> FindPairedAudio(string identity, string videoSid)
         {
             lock (room.Participants)
@@ -197,19 +225,24 @@ namespace DCL.SDKComponents.MediaStream
             return Weak<AudioStream>.Null;
         }
 
+        private void ReleaseAllAudioSources()
+        {
+            foreach (var (source, _) in audioSources)
+            {
+                // Source might already be destroyed when closing the game with a running livekit stream.
+                if (source != null)
+                    OBJECT_POOL.Release(source);
+            }
+
+            audioSources.Clear();
+        }
+
         public void CloseCurrentStream()
         {
-            // doesn't need to dispose the stream, because it's responsibility of the owning room
-            currentStream = null;
+            // Doesn't need to dispose the stream, because it's responsibility of the owning room.
+            currentVideoStream = null;
             playerState = PlayerState.STOPPED;
-
-            //audioSource is never null during regular execution, but the check is required as when closing the game in a scene
-            //with a running livekit stream, the audioSource (being a monobehaviour) might be already destroyed when disposing the player
-            if (audioSource != null)
-            {
-                audioSource.Stop();
-                audioSource.Free();
-            }
+            ReleaseAllAudioSources();
         }
 
         public Texture? LastTexture()
@@ -217,8 +250,8 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.PLAYING)
                 return null;
 
-            return currentStream?.video.Resource.Has ?? false
-                ? currentStream?.video.Resource.Value.DecodeLastFrame()
+            return currentVideoStream != null && currentVideoStream.Value.Resource.Has
+                ? currentVideoStream.Value.Resource.Value.DecodeLastFrame()
                 : null;
         }
 
@@ -231,35 +264,40 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             disposed = true;
-
             CloseCurrentStream();
-            OBJECT_POOL.Release(audioSource);
         }
 
         public void Play()
         {
             playerState = PlayerState.PLAYING;
-            audioSource.Play();
+
+            foreach (var (source, _) in audioSources)
+                source.Play();
         }
 
         public void Pause()
         {
             playerState = PlayerState.PAUSED;
 
-            //it's actually no "pause" for a streaming source
-            audioSource.Stop();
+            // There is no "pause" for a streaming source.
+            foreach (var (source, _) in audioSources)
+                source.Stop();
         }
 
         public void Stop()
         {
             playerState = PlayerState.STOPPED;
-            audioSource.Stop();
+
+            foreach (var (source, _) in audioSources)
+                source.Stop();
         }
 
         public void SetVolume(float target)
         {
             Volume = target;
-            audioSource.SetVolume(target);
+
+            foreach (var (source, _) in audioSources)
+                source.SetVolume(target);
         }
 
         public void CrossfadeVolume(float targetVolume, float volumeDelta)
@@ -271,18 +309,22 @@ namespace DCL.SDKComponents.MediaStream
 
         public void PlaceAudioAt(Vector3 position)
         {
-            audioSource.transform.position = position;
+            audioPosition = position;
+
+            foreach (var (source, _) in audioSources)
+                source.transform.position = position;
         }
 
         /// <summary>
-        /// MUST be used in place, caller doesn't take ownership of the referene.
+        /// MUST be used in place, caller doesn't take ownership of the reference.
+        /// Returns the first available audio source for audio visualization purposes.
         /// </summary>
         public AudioSource? ExposedAudioSource()
         {
-            // Could be cached in LivekitAudioSource in future 
-            // Strongly NOT RECOMMENDED to cache it here (LivekitPlayer.cs)
-            // to avoid implementation coupling and possiblity of caching bugs
-            return audioSource.gameObject.GetComponent<AudioSource>();
+            if (audioSources.Count == 0)
+                return null;
+
+            return audioSources[0].source.gameObject.GetComponent<AudioSource>();
         }
     }
 }
