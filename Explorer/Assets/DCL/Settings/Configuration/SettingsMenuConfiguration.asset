@@ -74,6 +74,7 @@ MonoBehaviour:
       - rid: 1708279571579404288
       - rid: 1708279571579404289
       - rid: 2659808844961546333
+      - rid: 4223195832360370271
   references:
     version: 2
     RefIds:
@@ -224,6 +225,22 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 100
         <Feature>k__BackingField: 9
+    - rid: 4223195832360370271
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Reactions
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 4
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

@@ -14,6 +14,8 @@ namespace DCL.Chat.ChatReactions
         private readonly Func<Vector3?>? cachedLocalHeadGetter;
         private readonly IReactionMessageBus? reactionBus;
 
+        public bool Enabled { get; set; } = true;
+
 #if UNITY_EDITOR || DEBUG
         private readonly Func<List<Vector3>>? cachedNearbyGetter;
         private bool debugActive;
@@ -70,8 +72,11 @@ namespace DCL.Chat.ChatReactions
             worldReactionSimulation.Draw(cam);
         }
 
-        public void TriggerWorldReaction(Vector3 worldPos, int emojiIndex, int count) =>
+        public void TriggerWorldReaction(Vector3 worldPos, int emojiIndex, int count)
+        {
+            if (!Enabled) return;
             worldReactionSimulation.TriggerWorldReaction(worldPos, emojiIndex, count);
+        }
 
         /// <summary>
         /// Spawns a burst above the avatar identified by <paramref name="walletId"/>.
@@ -79,6 +84,7 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public void TriggerWorldReactionForAvatar(string walletId, int emojiIndex, int count)
         {
+            if (!Enabled) return;
             if (avatarPosition == null) return;
 
             Vector3? headPos = avatarPosition.GetHeadPosition(walletId);
@@ -88,30 +94,35 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
+            if (!Enabled) return;
             chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
             TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
+            if (!Enabled) return;
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, count);
             TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void TriggerDefaultUIReaction()
         {
+            if (!Enabled) return;
             chatReactionSimulation.TriggerDefaultUIReaction();
             TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
         {
+            if (!Enabled) return;
             chatReactionSimulation.TriggerDefaultUIReactionFromRect(sourceRect);
             TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
         }
 
         public void BeginUIStream(RectTransform sourceRect)
         {
+            if (!Enabled) return;
             chatReactionSimulation.BeginUIStream(sourceRect);
 
             if (cachedLocalHeadGetter != null)
@@ -126,6 +137,7 @@ namespace DCL.Chat.ChatReactions
 
         public void ToggleUIStream(RectTransform sourceRect)
         {
+            if (!Enabled) return;
             chatReactionSimulation.ToggleUIStream(sourceRect);
 
             if (cachedLocalHeadGetter != null)
@@ -188,10 +200,13 @@ namespace DCL.Chat.ChatReactions
         public int NearbyAvatarCount => avatarPosition?.LastNearbyCount ?? 0;
 #endif
 
+        
         private int StreamEmojiIndex => config.UILane.RandomEmoji ? -1 : config.UILane.DefaultEmojiIndex;
 
         private void OnRemoteReaction(ReactionReceivedArgs args)
         {
+            if (!Enabled) return;
+
             if (args.Type == ReactionType.Situational)
             {
                 TriggerWorldReactionForAvatar(args.WalletId, args.EmojiIndex, args.Count);

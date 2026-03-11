@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Emoji;
+using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
 using UnityEngine;
@@ -41,6 +42,8 @@ namespace DCL.Chat
         private readonly ChatStateMachine chatStateMachine;
         private readonly EventSubscriptionScope uiScope;
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
+        private readonly ChatSettingsAsset chatSettingsAsset;
+        private readonly ChatReactionsPresenter reactionsPresenter;
 
         private CancellationTokenSource initCts = new ();
         private bool isVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
@@ -66,12 +69,14 @@ namespace DCL.Chat
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
             SituationalReactionService situationalReactionService,
-            ChatReactionsConfig reactionsConfig)
+            ChatReactionsConfig reactionsConfig,
+            ChatSettingsAsset chatSettingsAsset)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.commandRegistry = commandRegistry;
+            this.chatSettingsAsset = chatSettingsAsset;
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
@@ -163,7 +168,7 @@ namespace DCL.Chat
             var favoritesService = new ChatReactionFavoritesService(
                 reactionsConfig.MessageReactions.DefaultFavoriteEmojiIndices);
 
-            var reactionsPresenter = new ChatReactionsPresenter(
+            reactionsPresenter = new ChatReactionsPresenter(
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
@@ -171,6 +176,9 @@ namespace DCL.Chat
                 favoritesService,
                 view.EmojiPanelView,
                 emojiPanelPresenter);
+
+            chatSettingsAsset.ChatReactionsEnabledChanged += OnChatReactionsEnabledChanged;
+            reactionsPresenter.SetReactionsEnabled(chatSettingsAsset.chatReactionsEnabled);
 
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,
@@ -231,6 +239,8 @@ namespace DCL.Chat
 
         public void Dispose()
         {
+            chatSettingsAsset.ChatReactionsEnabledChanged -= OnChatReactionsEnabledChanged;
+
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
@@ -242,6 +252,11 @@ namespace DCL.Chat
             communityVoiceChatSubTitleButtonPresenter.Dispose();
 
             chatAreaEventBusScope.Dispose();
+        }
+
+        private void OnChatReactionsEnabledChanged(bool enabled)
+        {
+            reactionsPresenter.SetReactionsEnabled(enabled);
         }
 
         private void OnViewShow(ChatSharedAreaEvents.ChatPanelViewShowEvent evt)

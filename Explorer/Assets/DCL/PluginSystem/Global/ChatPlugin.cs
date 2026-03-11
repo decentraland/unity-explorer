@@ -104,6 +104,8 @@ namespace DCL.PluginSystem.Global
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
+        private ChatSettingsAsset? chatSettingsAsset;
+        private ChatSettingsAsset.ChatReactionsEnabledDelegate? onReactionsEnabledChanged;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -188,6 +190,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            if (chatSettingsAsset != null && onReactionsEnabledChanged != null)
+                chatSettingsAsset.ChatReactionsEnabledChanged -= onReactionsEnabledChanged;
+
             chatStorage?.Dispose();
             pluginScope.Dispose();
             pluginCts.SafeCancelAndDispose();
@@ -226,6 +231,11 @@ namespace DCL.PluginSystem.Global
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
                 reactionBus);
+
+            situationalReactionService.Enabled = settings.ChatSettingsAsset.chatReactionsEnabled;
+            chatSettingsAsset = settings.ChatSettingsAsset;
+            onReactionsEnabledChanged = enabled => situationalReactionService.Enabled = enabled;
+            chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
 
             pluginScope.Add(situationalReactionService);
 
@@ -374,7 +384,8 @@ namespace DCL.PluginSystem.Global
                 translationMemory,
                 translationCache,
                 situationalReactionService,
-                settings.ReactionsConfig
+                settings.ReactionsConfig,
+                settings.ChatSettingsAsset
             );
 
             pluginScope.Add(chatPanelPresenter);
