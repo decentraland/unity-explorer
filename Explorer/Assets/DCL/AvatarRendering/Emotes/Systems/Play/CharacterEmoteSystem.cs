@@ -32,6 +32,7 @@ using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -51,6 +52,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
+        private readonly bool localSceneDevelopment;
 
         public CharacterEmoteSystem(
             World world,
@@ -66,6 +68,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
+            this.localSceneDevelopment = localSceneDevelopment;
             emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
@@ -133,6 +136,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!emoteReference) return;
 
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
+
             if (shouldCancelEmote)
             {
                 StopEmote(ref emoteComponent, avatarView);
@@ -196,6 +200,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
             avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
             avatarView.ResetArmatureInclination();
@@ -287,7 +292,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
                     CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
                 }
-
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -330,20 +334,136 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void CreateEmotePromise(URN urn, BodyShape bodyShape)
         {
+            Debug.Log($"(Maurizio) CreateEmotePromise called with URN: {urn}, bodyShape: {bodyShape}");
+
             loadEmoteBuffer[0] = urn;
 
-            if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
+            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene))
             {
-                if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
+                Debug.Log($"(Maurizio) Parsed scene emote URN. sceneKey='{sceneId}', emoteHash='{emoteHash}', loop='{loop}', localSceneDevelopment='{localSceneDevelopment}'");
+
+                if (scene == null)
+                {
+                    Debug.Log($"(Maurizio) Failed to resolve sceneFacade for key '{sceneId}'");
+                    return;
+                }
+
+                Debug.Log($"(Maurizio) Resolved sceneFacade for key '{sceneId}'. SceneEntityDefinition.id='{scene.SceneData.SceneEntityDefinition.id}' SceneShortInfo.Name='{scene.SceneData.SceneShortInfo.Name}'");
+
+                // Local scene preview path, this is needed if a remote client plays a scene emote this client has not yet played
+                if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
+                {
+                    Debug.Log($"(Maurizio) Using local-scene emote load for hash '{emoteHash}' with path '{emotePath}'");
+
+                    SceneEmoteFromLocalPromise.Create(World,
+                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop),
+                        PartitionComponent.TOP_PRIORITY);
+
+                    return;
+                }
+
+                // Deployed scenes path (asset bundles)
+                if (scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion == null)
+                {
+                    Debug.Log($"(Maurizio) Scene '{scene.SceneData.SceneEntityDefinition.id}' has no assetBundleManifestVersion, skipping realm emote load");
+                    return;
+                }
+
+                Debug.Log($"(Maurizio) Using realm emote load for sceneKey='{sceneId}', hash='{emoteHash}'");
 
                 SceneEmoteFromRealmPromise.Create(World,
-                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
+                    new GetSceneEmoteFromRealmIntention(sceneId, scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
                     PartitionComponent.TOP_PRIORITY);
             }
             else
+            {
+                Debug.Log($"(Maurizio) URN '{urn}' is not a scene-emote URN, falling back to pointer-based emote load");
+
                 EmotePromise.Create(World,
                     EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
                     PartitionComponent.TOP_PRIORITY);
+            }
+        }
+
+        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene)
+        {
+            sceneId = string.Empty;
+            parsedEmoteHash = string.Empty;
+            parsedLoop = false;
+            resolvedScene = null;
+
+            ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
+            ReadOnlySpan<char> prefixWithColon = "urn:decentraland:off-chain:scene-emote:".AsSpan();
+
+            if (urnStr.IsEmpty || !urnStr.StartsWith(prefixWithColon, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            ReadOnlySpan<char> payload = urnStr.Slice(prefixWithColon.Length);
+
+            // Parse loop from the right-most "-{bool}" segment
+            int lastDash = payload.LastIndexOf('-');
+
+            if (lastDash <= 0 || lastDash == payload.Length - 1)
+                return false;
+
+            ReadOnlySpan<char> loopSpan = payload.Slice(lastDash + 1);
+
+            if (!bool.TryParse(loopSpan, out parsedLoop))
+                return false;
+
+            ReadOnlySpan<char> payloadWithoutLoop = payload.Slice(0, lastDash);
+
+            // Robust split: sceneIdOrName and emoteHash can contain '-' in local preview (e.g. "b64-..."),
+            // so we can't just split by "last two dashes". Instead, match against loaded scenes by prefix.
+            foreach (ISceneFacade facade in scenesCache.Scenes)
+            {
+                string candidateName = facade.SceneData.SceneShortInfo.Name;
+
+                if (candidateName.Length == 0)
+                    continue;
+
+                ReadOnlySpan<char> candidatePrefix = (candidateName + "-").AsSpan();
+
+                if (payloadWithoutLoop.StartsWith(candidatePrefix, StringComparison.Ordinal))
+                {
+                    sceneId = candidateName;
+                    parsedEmoteHash = payloadWithoutLoop.Slice(candidatePrefix.Length).ToString();
+                    resolvedScene = facade;
+                    return true;
+                }
+            }
+
+            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
+            // This is primarily for deployed realm format where scene id has no '-'.
+            int firstDash = payloadWithoutLoop.IndexOf('-');
+
+            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
+            {
+                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
+                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
+                scenesCache.TryGetBySceneId(sceneId, out resolvedScene);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryResolveLocalSceneEmotePath(ISceneFacade sceneFacade, string hash, out string emotePath)
+        {
+            var content = sceneFacade.SceneData.SceneEntityDefinition.content;
+
+            for (var i = 0; i < content.Length; i++)
+            {
+                if (content[i].hash.Equals(hash, StringComparison.Ordinal))
+                {
+                    emotePath = content[i].file;
+                    return true;
+                }
+            }
+
+            emotePath = string.Empty;
+            Debug.Log($"(Maurizio) TryResolveLocalSceneEmotePath: failed to find hash '{hash}' in SceneEntityDefinition.content (len={content.Length})");
+            return false;
         }
     }
 }
