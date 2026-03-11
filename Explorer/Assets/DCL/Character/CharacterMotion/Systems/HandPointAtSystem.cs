@@ -26,6 +26,7 @@ namespace DCL.Character.CharacterMotion.Systems
     public partial class HandPointAtSystem : BaseUnityLoopSystem
     {
         private const float DRAG_THRESHOLD_SQR = 25f;
+        private static readonly int RAYCAST_LAYER_MASK = PhysicsLayers.CHARACTER_ONLY_MASK | (1 << PhysicsLayers.OTHER_AVATARS_LAYER);
 
         private readonly DCLInput dclInput;
         private readonly ICharacterControllerSettings localSettings;
@@ -131,7 +132,7 @@ namespace DCL.Character.CharacterMotion.Systems
             Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
             Vector3 hitPoint = Vector3.zero;
 
-            if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
+            if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
                 hitPoint = hit.point;
             else
             {
