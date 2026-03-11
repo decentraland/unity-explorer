@@ -23,7 +23,7 @@ MonoBehaviour:
   landscapeDistance: 500
   sunShadows: 0
   sceneLightsEnabled: 0
-  sceneLightShadowsEnabled: 0
+  sceneLightShadowsEnabled: 1
   maxSceneLights: 0
   shadowsQualityLevel: 0
   shadowDistance: 30

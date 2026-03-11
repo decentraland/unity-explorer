@@ -61,7 +61,6 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 2404945524685013139
       - rid: 2404945524685013118
-      - rid: 2404945524685013120
     - <GroupTitle>k__BackingField: Shadows
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
@@ -416,22 +415,6 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 6
         <Feature>k__BackingField: 12
-    - rid: 2404945524685013120
-      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <FeatureId>k__BackingField: 0
-        <View>k__BackingField:
-          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Scene Shadows
-          <Description>k__BackingField: Enable or disable shadows for scene lights.
-          <IsEnabled>k__BackingField: 1
-          defaultIsOn: 0
-        <Feature>k__BackingField: 8
     - rid: 2404945524685013121
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
