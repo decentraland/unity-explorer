@@ -48,41 +48,52 @@ namespace DCL.Chat.ChatReactions
             {
                 try
                 {
-                    float delay = config.MockIntervalMin + (float)(rng.NextDouble() * (config.MockIntervalMax - config.MockIntervalMin));
+                    float delay = ResolveRandomInterval();
                     await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: ct);
                     await UniTask.SwitchToMainThread(ct);
 
                     if (!config.MockEnabled)
                         continue;
 
-                    IReadOnlyCollection<string> wallets = entityParticipantTable.Wallets();
-
-                    if (wallets.Count == 0)
-                        continue;
-
-                    int walletIndex = rng.Next(0, wallets.Count);
-
-                    string? walletId = null;
-                    int idx = 0;
-
-                    foreach (string w in wallets)
-                    {
-                        if (idx++ == walletIndex) { walletId = w; break; }
-                    }
-
+                    string? walletId = PickRandomNearbyWallet();
                     if (walletId == null) continue;
 
-                    int emojiIndex = rng.Next(0, atlasTotalTiles);
-                    int minBurst = config.MockMinEmojisPerBurst;
-                    int maxBurst = config.MockMaxEmojisPerBurst;
-                    int count = rng.Next(Math.Min(minBurst, maxBurst), Math.Max(minBurst, maxBurst) + 1);
-
-                    ReactionReceived?.Invoke(new ReactionReceivedArgs(
-                        walletId, emojiIndex, count, ReactionType.Situational, string.Empty));
+                    EmitMockReaction(walletId);
                 }
                 catch (OperationCanceledException) { break; }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
             }
+        }
+
+        private float ResolveRandomInterval() =>
+            config.MockIntervalMin + (float)(rng.NextDouble() * (config.MockIntervalMax - config.MockIntervalMin));
+
+        private string? PickRandomNearbyWallet()
+        {
+            IReadOnlyCollection<string> wallets = entityParticipantTable.Wallets();
+            if (wallets.Count == 0) return null;
+
+            int walletIndex = rng.Next(0, wallets.Count);
+            int idx = 0;
+
+            foreach (string w in wallets)
+            {
+                if (idx++ == walletIndex)
+                    return w;
+            }
+
+            return null;
+        }
+
+        private void EmitMockReaction(string walletId)
+        {
+            int emojiIndex = rng.Next(0, atlasTotalTiles);
+            int minBurst = config.MockMinEmojisPerBurst;
+            int maxBurst = config.MockMaxEmojisPerBurst;
+            int count = rng.Next(Math.Min(minBurst, maxBurst), Math.Max(minBurst, maxBurst) + 1);
+
+            ReactionReceived?.Invoke(new ReactionReceivedArgs(
+                walletId, emojiIndex, count, ReactionType.Situational, string.Empty));
         }
     }
 }
