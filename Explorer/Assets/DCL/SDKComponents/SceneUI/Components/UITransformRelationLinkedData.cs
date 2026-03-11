@@ -15,6 +15,7 @@ namespace DCL.SDKComponents.SceneUI.Components
                 defaultCapacity: PoolConstants.SCENES_COUNT * 100, maxSize: PoolConstants.SCENES_MAX_CAPACITY * 100);
 
             public CRDTEntity EntityId { get; private set; }
+            public CRDTEntity RightOf { get; set; }
             public Node? Next { get; set; }
             public Node? Previous { get; set; }
 
@@ -25,6 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             private void Reset()
             {
                 EntityId = 0;
+                RightOf = 0;
                 Next = null;
                 Previous = null;
             }
@@ -43,6 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal Node? head;
         private Dictionary<CRDTEntity, Node> nodes;
         private Dictionary<CRDTEntity, Node> pendingRightOf; // key is the left entity
+        private Dictionary<CRDTEntity, Node> reverseRightOf; // key is the rightOf target, used for O(n) rebuild
 
         internal Entity parent;
 
@@ -60,6 +63,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             Node newNode = Node.POOL.Get();
             newNode.Setup(childEntity);
+            newNode.RightOf = childComponent.rightOf;
 
             nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
             pendingRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
@@ -167,6 +171,53 @@ namespace DCL.SDKComponents.SceneUI.Components
             AddChild(thisEntity, newChildEntity, ref newChildData);
         }
 
+        internal void UpdateNodeRightOf(CRDTEntity childEntity, CRDTEntity newRightOf)
+        {
+            if (nodes != null && nodes.TryGetValue(childEntity, out var node))
+                node.RightOf = newRightOf;
+
+            layoutIsDirty = true;
+        }
+
+        internal void RebuildLinkedList()
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                head = null;
+                return;
+            }
+
+            reverseRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+            reverseRightOf.Clear();
+
+            // Single pass: reset pointers, find head, build reverse map (rightOf target → node)
+            head = null;
+
+            foreach (var kvp in nodes)
+            {
+                kvp.Value.Next = null;
+                kvp.Value.Previous = null;
+
+                if (kvp.Value.RightOf.Id == 0)
+                    head = kvp.Value;
+                else
+                    reverseRightOf[kvp.Value.RightOf] = kvp.Value;
+            }
+
+            if (head == null)
+                return;
+
+            // Follow the chain using O(1) lookups
+            var current = head;
+
+            while (reverseRightOf.TryGetValue(current.EntityId, out var next))
+            {
+                current.Next = next;
+                next.Previous = current;
+                current = next;
+            }
+        }
+
         public void Dispose()
         {
             // Release all nodes
@@ -179,6 +230,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             nodes?.Clear();
             pendingRightOf?.Clear();
+            reverseRightOf?.Clear();
             head = null;
         }
     }

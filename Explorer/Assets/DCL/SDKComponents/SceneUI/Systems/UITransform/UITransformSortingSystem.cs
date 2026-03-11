@@ -47,24 +47,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             if (!newRightOf.Equals(uiTransformComponent.RelationData.rightOf))
             {
+                uiTransformComponent.RelationData.rightOf = newRightOf;
+
                 Entity parentEntity = uiTransformComponent.RelationData.parent;
 
                 if (parentEntity != Entity.Null)
                 {
                     ref var parent = ref World.Get<UITransformComponent>(parentEntity);
-
-                    // Remove this child from its current position in the parent's linked list
-                    parent.RelationData.RemoveChild(sdkEntity, ref uiTransformComponent.RelationData);
-
-                    // Update rightOf to the new value so AddChild positions correctly
-                    uiTransformComponent.RelationData.rightOf = newRightOf;
-
-                    // Re-add this child at the new position determined by the updated rightOf
-                    parent.RelationData.AddChild(parentEntity, sdkEntity, ref uiTransformComponent.RelationData);
-                }
-                else
-                {
-                    uiTransformComponent.RelationData.rightOf = newRightOf;
+                    parent.RelationData.UpdateNodeRightOf(sdkEntity, newRightOf);
                 }
             }
         }
