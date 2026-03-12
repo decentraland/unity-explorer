@@ -206,7 +206,7 @@ jobs:
           projectPath: Explorer
           customImage: ${{ steps.img-lint.outputs.ghcr }}
           targetPlatform: StandaloneLinux64
-          buildMethod: CI.GenerateSolution.Run
+          buildMethod: Packages.Rider.Editor.RiderScriptEditor.SyncSolution
 
       - name: Debug generated solution state
         run: |
