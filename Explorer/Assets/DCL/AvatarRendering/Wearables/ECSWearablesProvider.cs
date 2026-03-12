@@ -6,11 +6,13 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Runtime.Wearables;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -97,9 +99,24 @@ namespace DCL.AvatarRendering.Wearables
 
             ct.ThrowIfCancellationRequested();
 
-            if (wearablesPromise.Result == null) return (results, 0);
-            if (!wearablesPromise.Result.HasValue) return (results, 0);
-            if (!wearablesPromise.Result!.Value.Succeeded) return (results, 0);
+            if (wearablesPromise.Result == null)
+            {
+                ReportHub.LogWarning(ReportCategory.WEARABLE, "Wearable fetch returned null result");
+                return (results, 0);
+            }
+
+            if (!wearablesPromise.Result.HasValue)
+            {
+                ReportHub.LogWarning(ReportCategory.WEARABLE, "Wearable fetch returned no value");
+                return (results, 0);
+            }
+
+            if (!wearablesPromise.Result!.Value.Succeeded)
+            {
+                string errorMessage = $"Wearable fetch failed: {wearablesPromise.Result.Value.Exception?.Message}";
+                ReportHub.LogWarning(ReportCategory.WEARABLE, errorMessage);
+                throw new WearableFetchException(errorMessage, wearablesPromise.Result.Value.Exception);
+            }
 
             // Should be the same assigned in the intention as `results`
             return (wearablesPromise.Result.Value.Asset.Wearables,
@@ -145,5 +162,14 @@ namespace DCL.AvatarRendering.Wearables
             }
         }
 
+    }
+
+    /// <summary>
+    /// Thrown when a wearable fetch request fails at the ECS promise level.
+    /// </summary>
+    public class WearableFetchException : Exception
+    {
+        public WearableFetchException(string message, Exception? innerException = null)
+            : base(message, innerException) { }
     }
 }
