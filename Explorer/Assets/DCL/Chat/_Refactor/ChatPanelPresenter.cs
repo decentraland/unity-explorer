@@ -172,7 +172,7 @@ namespace DCL.Chat
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
-                reactionsConfig.SituationalReactions.Atlas,
+                reactionsConfig.Atlas,
                 favoritesService,
                 view.EmojiPanelView,
                 emojiPanelPresenter);
@@ -182,7 +182,7 @@ namespace DCL.Chat
 
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,
-                reactionsConfig.SituationalReactions.DebugConfig,
+                reactionsConfig,
                 view.ChatReactionButton.ReactionButton);
             
             uiScope.Add(titleBarPresenter);

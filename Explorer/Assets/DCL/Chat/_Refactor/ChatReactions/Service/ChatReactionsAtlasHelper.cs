@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatReactions
         private static readonly int AtlasRowsId = Shader.PropertyToID("_AtlasRows");
         private static readonly int FlipYId     = Shader.PropertyToID("_FlipY");
 
-        public static void ApplyAtlasToMaterial(Material mat, ChatReactionsSituationalConfig config)
+        public static void ApplyAtlasToMaterial(Material mat, ChatReactionsConfig config)
         {
             if (mat == null || config.Atlas == null) return;
 

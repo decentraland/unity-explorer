@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions
         private const float SPAWN_SIZE_MIN_RATIO = 0.2f;
         private const float SPAWN_SIZE_MAX_RATIO = 0.5f;
 
-        private readonly ChatReactionsSituationalConfig config;
+        private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
         private readonly ChatReactionsUiParticlePool uiPool;
         private readonly ChatReactionsParticleRenderer renderer;
@@ -39,7 +39,7 @@ namespace DCL.Chat.ChatReactions
 
         public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
 
-        public ChatReactionSimulation(ChatReactionsSituationalConfig config, RectTransform laneRect)
+        public ChatReactionSimulation(ChatReactionsConfig config, RectTransform laneRect)
         {
             this.config = config;
             rng = new System.Random();
@@ -50,12 +50,12 @@ namespace DCL.Chat.ChatReactions
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
 
-            if (config.UILane.FlightPath != null)
-                flightController = new ChatReactionFlightController(config.UILane.FlightPath, rng);
+            if (config.UILane.UseFlightPath)
+                flightController = new ChatReactionFlightController(config.UILane, rng);
 
             renderer = new ChatReactionsParticleRenderer(
                 runtimeMaterial,
-                config.UILane.FlightPath?.SizeOverLifetime);
+                config.UILane.UseFlightPath ? config.UILane.SizeOverLifetime : null);
         }
 
         public void Dispose()
@@ -205,7 +205,7 @@ namespace DCL.Chat.ChatReactions
                 ? rng.Next(0, atlasTotalTiles)
                 : config.UILane.DefaultEmojiIndex;
 
-        private static Material CreateRuntimeMaterial(ChatReactionsSituationalConfig config)
+        private static Material CreateRuntimeMaterial(ChatReactionsConfig config)
         {
             var mat = new Material(config.EmojiMaterial) { name = config.EmojiMaterial.name + " (Runtime)" };
             ChatReactionsAtlasHelper.ApplyAtlasToMaterial(mat, config);

@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatReactions
     public sealed class SituationalReactionPresenter : IDisposable
     {
         private readonly SituationalReactionService service;
-        private readonly ChatReactionsDebugConfig? debugConfig;
+        private readonly ChatReactionsConfig config;
         private readonly RectTransform? debugButtonRect;
         private readonly CancellationTokenSource cts = new ();
 
@@ -25,11 +25,11 @@ namespace DCL.Chat.ChatReactions
 #endif
 
         public SituationalReactionPresenter(SituationalReactionService service,
-            ChatReactionsDebugConfig? debugConfig = null,
+            ChatReactionsConfig config,
             Button? debugButtonRect = null)
         {
             this.service = service;
-            this.debugConfig = debugConfig;
+            this.config = config;
             this.debugButtonRect = debugButtonRect != null ? debugButtonRect.GetComponent<RectTransform>() : null;
 
             if (this.debugButtonRect != null)
@@ -58,11 +58,11 @@ namespace DCL.Chat.ChatReactions
                     Profiler.EndSample();
 
 #if UNITY_EDITOR || DEBUG
-                    if (debugConfig != null)
+                    if (config.DebugEnabled)
                     {
                         ApplyDebugToggles();
                         Profiler.BeginSample("ChatReactions.DebugStats");
-                        debugConfig.UpdateStats(
+                        config.UpdateStats(
                             service.UIAliveCount,
                             service.UIPoolCapacity,
                             service.WorldAliveCount,
@@ -85,29 +85,27 @@ namespace DCL.Chat.ChatReactions
 #if UNITY_EDITOR || DEBUG
         private void ApplyDebugToggles()
         {
-            if (debugConfig == null) return;
-
-            if (debugConfig.StreamUILane != prevStreamUI)
+            if (config.StreamUILane != prevStreamUI)
             {
-                prevStreamUI = debugConfig.StreamUILane;
+                prevStreamUI = config.StreamUILane;
                 if (prevStreamUI)
                     service.BeginDebugUIStream(debugButtonRect);
                 else
                     service.EndDebugUIStream();
             }
 
-            if (debugConfig.StreamLocalPlayer != prevStreamLocal)
+            if (config.StreamLocalPlayer != prevStreamLocal)
             {
-                prevStreamLocal = debugConfig.StreamLocalPlayer;
+                prevStreamLocal = config.StreamLocalPlayer;
                 if (prevStreamLocal)
                     service.BeginDebugLocalStream();
                 else
                     service.EndDebugLocalStream();
             }
 
-            if (debugConfig.StreamRemotePlayers != prevStreamRemote)
+            if (config.StreamRemotePlayers != prevStreamRemote)
             {
-                prevStreamRemote = debugConfig.StreamRemotePlayers;
+                prevStreamRemote = config.StreamRemotePlayers;
                 if (prevStreamRemote)
                     service.BeginDebugNearby();
                 else

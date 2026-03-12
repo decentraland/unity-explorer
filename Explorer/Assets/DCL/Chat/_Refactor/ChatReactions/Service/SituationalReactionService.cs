@@ -7,7 +7,7 @@ namespace DCL.Chat.ChatReactions
 {
     public sealed class SituationalReactionService : ISituationalReactionService, IDisposable
     {
-        private readonly ChatReactionsSituationalConfig config;
+        private readonly ChatReactionsConfig config;
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly ChatReactionSimulation chatReactionSimulation;
         private readonly ChatReactionWorldSimulation worldReactionSimulation;
@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatReactions
         private bool debugActive;
 #endif
 
-        public SituationalReactionService(ChatReactionsSituationalConfig config, RectTransform laneRect,
+        public SituationalReactionService(ChatReactionsConfig config, RectTransform laneRect,
             IAvatarReactionPosition? avatarPosition = null, IReactionMessageBus? reactionBus = null)
         {
             this.config = config;

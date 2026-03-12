@@ -19,7 +19,7 @@ namespace DCL.Chat.ChatReactions
         private const float JITTER_Y  = 0.02f;
         private const float TWO_PI = Mathf.PI * 2f;
 
-        private readonly ChatReactionsSituationalConfig config;
+        private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
         private readonly ChatReactionsParticlePool worldPool;
         private readonly ChatReactionsParticleRenderer renderer;
@@ -42,7 +42,7 @@ namespace DCL.Chat.ChatReactions
         public bool IsStreaming => isStreaming;
         public bool IsDebugNearbyActive => debugActive;
 
-        public ChatReactionWorldSimulation(ChatReactionsSituationalConfig config)
+        public ChatReactionWorldSimulation(ChatReactionsConfig config)
         {
             this.config = config;
             rng = new System.Random();
@@ -231,7 +231,7 @@ namespace DCL.Chat.ChatReactions
         private int ResolveStreamEmojiIndex() =>
             streamEmojiIndex >= 0 ? streamEmojiIndex : rng.Next(0, atlasTotalTiles);
 
-        private static Material CreateRuntimeMaterial(ChatReactionsSituationalConfig config)
+        private static Material CreateRuntimeMaterial(ChatReactionsConfig config)
         {
             var mat = new Material(config.EmojiMaterial) { name = config.EmojiMaterial.name + " (World Runtime)" };
             ChatReactionsAtlasHelper.ApplyAtlasToMaterial(mat, config);

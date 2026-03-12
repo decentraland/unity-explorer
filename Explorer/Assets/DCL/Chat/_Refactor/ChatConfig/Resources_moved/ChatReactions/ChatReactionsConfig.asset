@@ -12,5 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 321b6555b5324884aab1e17130c61243, type: 3}
   m_Name: ChatReactionsConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsConfig
-  <SituationalReactions>k__BackingField: {fileID: 11400000, guid: 4aa2a5614fc443a409ef8f9888cdd9be, type: 2}
+  <Atlas>k__BackingField: {fileID: 11400000, guid: 2ac437a8a17d1de46a3f4f57ce647fed, type: 2}
+  <EmojiMaterial>k__BackingField: {fileID: 2100000, guid: 3bb1569857e0416438c8f05f427cc4ba, type: 2}
+  <UILane>k__BackingField: {fileID: 11400000, guid: 63cac0f6e35666c49b5e0b9bd0fa0a22, type: 2}
+  <WorldLane>k__BackingField: {fileID: 11400000, guid: 44ddfb8a933575544857300ca6cca86c, type: 2}
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
+  DebugEnabled: 0
+  StreamUILane: 0
+  StreamLocalPlayer: 0
+  StreamRemotePlayers: 0
+  uiAliveCount: 0
+  uiPoolCapacity: 0
+  worldAliveCount: 0
+  worldPoolCapacity: 0
+  nearbyAvatarCount: 0
+  isUIStreaming: 0
+  isWorldStreaming: 0
+  isDebugNearbyActive: 0

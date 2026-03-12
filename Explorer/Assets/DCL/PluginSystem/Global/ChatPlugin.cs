@@ -216,16 +216,16 @@ namespace DCL.PluginSystem.Global
 
             var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
 
-            var situationalConfig = settings.ReactionsConfig.SituationalReactions;
+            var reactionsConfig = settings.ReactionsConfig;
 
             IReactionMessageBus reactionBus;
 
-            if (situationalConfig.WorldLane.MockEnabled)
+            if (reactionsConfig.WorldLane.MockEnabled)
             {
                 reactionBus = new MockReactionMessageBus(
                     entityParticipantTable,
-                    situationalConfig.WorldLane,
-                    situationalConfig.Atlas != null ? situationalConfig.Atlas.TotalTiles : 1);
+                    reactionsConfig.WorldLane,
+                    reactionsConfig.Atlas != null ? reactionsConfig.Atlas.TotalTiles : 1);
             }
             else
             {
@@ -233,13 +233,13 @@ namespace DCL.PluginSystem.Global
                     messagePipesHub,
                     userBlockingCacheProxy,
                     web3IdentityCache,
-                    situationalConfig.WorldLane.SelfSendEnabled);
+                    reactionsConfig.WorldLane.SelfSendEnabled);
             }
 
             pluginScope.Add(reactionBus);
 
             var situationalReactionService = new SituationalReactionService(
-                situationalConfig,
+                reactionsConfig,
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
                 reactionBus);

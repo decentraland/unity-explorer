@@ -61,9 +61,37 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public int RenderLayer { get; private set; } = 0;
 
         [field: Header("Flight Path")]
-        [field: Tooltip("Controls how particles exit the chat panel and float upward. " +
-                        "Assign a ChatReactionFlightPathConfig asset to enable the exit kick and pop effect. " +
-                        "Leave null to use the legacy straight-upward behaviour.")]
-        [field: SerializeField] public ChatReactionFlightPathConfig? FlightPath { get; private set; } = null;
+        [field: Tooltip("Enable balloon-style flight path with horizontal kick and zig-zag oscillation. " +
+                        "When disabled, particles float straight upward using SpeedRange.")]
+        [field: SerializeField] public bool UseFlightPath { get; private set; }
+
+        [field: Tooltip("Horizontal kick speed range at spawn (px/sec). Only used when UseFlightPath is true.")]
+        [field: SerializeField] public Vector2 KickSpeedRange { get; private set; } = new(120f, 220f);
+
+        [field: Tooltip("Initial upward speed range at spawn (px/sec). Overrides SpeedRange when UseFlightPath is true.")]
+        [field: SerializeField] public Vector2 InitialUpRange { get; private set; } = new(10f, 40f);
+
+        [field: Tooltip("Upward acceleration in px/sec² applied every frame for sustained buoyancy.")]
+        [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 60f;
+
+        [field: Tooltip("Peak lateral acceleration in px/sec² for sinusoidal zig-zag oscillation.")]
+        [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 50f;
+
+        [field: Min(0.1f)]
+        [field: Tooltip("Zig-zag oscillation frequency in Hz.")]
+        [field: SerializeField] public float ZigZagFrequency { get; private set; } = 1.2f;
+
+        [field: Tooltip("Size multiplier curve over normalised lifetime [0,1]. " +
+                        "Used when UseFlightPath is true for pop/shrink effects.")]
+        [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; } = DefaultFlightSizeCurve();
+
+        private static AnimationCurve DefaultFlightSizeCurve() =>
+            new AnimationCurve(
+                new Keyframe(0.00f, 0.20f),
+                new Keyframe(0.12f, 1.00f),
+                new Keyframe(0.72f, 1.00f),
+                new Keyframe(0.88f, 1.35f),
+                new Keyframe(1.00f, 0.00f)
+            );
     }
 }

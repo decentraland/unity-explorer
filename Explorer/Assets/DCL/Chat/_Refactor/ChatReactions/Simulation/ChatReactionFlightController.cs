@@ -12,10 +12,10 @@ namespace DCL.Chat.ChatReactions
     {
         private const float TWO_PI = Mathf.PI * 2f;
 
-        private readonly ChatReactionFlightPathConfig config;
+        private readonly ChatReactionsUILaneConfig config;
         private readonly System.Random rng;
 
-        public ChatReactionFlightController(ChatReactionFlightPathConfig config, System.Random rng)
+        public ChatReactionFlightController(ChatReactionsUILaneConfig config, System.Random rng)
         {
             this.config = config;
             this.rng = rng;
