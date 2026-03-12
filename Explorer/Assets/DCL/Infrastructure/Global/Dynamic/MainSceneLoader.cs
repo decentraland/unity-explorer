@@ -106,12 +106,8 @@ namespace Global.Dynamic
 
             if (dynamicWorldContainer != null)
             {
-                try
-                {
-                    foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
-                        plugin.SafeDispose(ReportCategory.ENGINE);
-                }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
+                foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                    plugin.SafeDispose(ReportCategory.ENGINE);
 
                 try
                 {
@@ -120,45 +116,36 @@ namespace Global.Dynamic
                 }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
-                try { dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
+                dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
             if (staticContainer != null)
             {
-                try
+                // Exclude SharedPlugins as they were already disposed as GlobalPlugins
+                var sharedPlugins = staticContainer.SharedPlugins;
+
+                foreach (IDCLWorldPlugin worldPlugin in staticContainer.ECSWorldPlugins)
                 {
-                    // Exclude SharedPlugins as they were already disposed as GlobalPlugins
-                    var sharedPlugins = staticContainer.SharedPlugins;
+                    bool isShared = false;
 
-                    foreach (IDCLWorldPlugin worldPlugin in staticContainer.ECSWorldPlugins)
+                    for (int i = 0; i < sharedPlugins.Count; i++)
                     {
-                        bool isShared = false;
-
-                        for (int i = 0; i < sharedPlugins.Count; i++)
+                        if (ReferenceEquals(worldPlugin, sharedPlugins[i]))
                         {
-                            if (ReferenceEquals(worldPlugin, sharedPlugins[i]))
-                            {
-                                isShared = true;
-                                break;
-                            }
+                            isShared = true;
+                            break;
                         }
-
-                        if (!isShared)
-                            worldPlugin.SafeDispose(ReportCategory.ENGINE);
                     }
-                }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
-                try { staticContainer.SafeDispose(ReportCategory.ENGINE); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
+                    if (!isShared)
+                        worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                }
+
+                staticContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
-            try { bootstrapContainer?.Dispose(); }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
-
-            try { splashScreen.Dispose(); }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
+            bootstrapContainer?.SafeDispose(ReportCategory.ENGINE);
+            splashScreen.SafeDispose(ReportCategory.ENGINE);
 
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
