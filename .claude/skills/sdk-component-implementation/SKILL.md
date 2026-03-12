@@ -132,7 +132,7 @@ See the **plugin-architecture** skill for full assembly, naming, and plugin plac
 
 ## Plugin Creation
 
-Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` and `TweenPlugin.cs` for examples of each.
+Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` (in `PluginSystem/World/` — predates the current convention) and `TweenPlugin.cs` for examples of each pattern.
 
 **File:** `Explorer/Assets/DCL/SDKComponents/<Feature>/Systems/<Feature>Plugin.cs`
 

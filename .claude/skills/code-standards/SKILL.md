@@ -69,8 +69,8 @@ public partial class BillboardSystem : BaseUnityLoopSystem
     // 2. Readonly fields
     private readonly IExposedCameraData exposedCameraData;
 
-    // 3. Constructor
-    public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
+    // 3. Constructor (internal visibility — see CLAUDE.md §1)
+    internal BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
     {
         this.exposedCameraData = exposedCameraData;
     }

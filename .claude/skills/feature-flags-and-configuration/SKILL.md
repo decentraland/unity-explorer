@@ -14,6 +14,17 @@ user-invocable: false
 
 ---
 
+## When to Use Each Mechanism
+
+| Need | Mechanism |
+|------|-----------|
+| Simple remote flag | `FeatureFlagsConfiguration.IsEnabled()` |
+| Flag + app args combined | `FeaturesRegistry` |
+| Runtime-dependent check | `IFeatureProvider` + `FeaturesRegistry` |
+| Launch-time configuration only | `AppArgs.HasFlag()` / `TryGetValue()` |
+
+---
+
 ## Feature Flags (Remote)
 
 ### Fetching

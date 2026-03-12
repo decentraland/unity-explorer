@@ -113,6 +113,8 @@ public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourcePl
 }
 ```
 
+> **Note:** `LightSourcePlugin.cs` actually lives in `PluginSystem/World/` because it predates the current convention. New SDK component plugins should follow the `SDKComponents/<Feature>/Systems/` pattern described in the **sdk-component-implementation** skill.
+
 ### IDCLGlobalPlugin — Application-Scoped
 
 Created once for the application lifetime. Injects systems into the global world only.

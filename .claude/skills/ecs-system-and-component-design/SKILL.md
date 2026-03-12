@@ -31,8 +31,8 @@ public partial class BillboardSystem : BaseUnityLoopSystem
     private const float MINIMUM_DISTANCE_TO_ROTATE_SQR = 0.25f * 0.25f;
     private readonly IExposedCameraData exposedCameraData;
 
-    // Internal constructor with shared dependencies only
-    public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
+    // Internal constructor with shared dependencies only (see CLAUDE.md §1)
+    internal BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
     {
         this.exposedCameraData = exposedCameraData;
     }
@@ -74,6 +74,8 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 
 ## Querying Best Practices
 
+> See CLAUDE.md §3 for core query rules. This section adds the preference ranking not covered there.
+
 Ranked from most preferred to least:
 
 1. **Source-generated queries** (preferred) — Use `[Query]` attribute with `[Data]` parameters
@@ -81,15 +83,9 @@ Ranked from most preferred to least:
 3. **`World.InlineQuery`** — Outside systems or generic cases; uses `IForEach<T>` struct
 4. **`World.Query`** — Last resort due to delegate/closure overhead
 
-**Rules:**
-- Always filter out `DeleteEntityIntention` in queries that should not process dying entities
-- No nested queries
-- Use `TryGet` for known entities over queries
-- Consolidate queries sharing the same filters
-
 ## Safe Component Mutation
 
-This is critical — incorrect mutation causes silent data loss:
+> See CLAUDE.md §5 for the full mutation rules. This section adds the code example and component design guidance.
 
 ```csharp
 // CORRECT — ref var modifies the component in-place
@@ -100,8 +96,6 @@ component.Value = 42;
 var component = world.Get<MyComponent>(entity);
 component.Value = 42; // This modification is lost!
 ```
-
-> See CLAUDE.md §4–5 for the full performance and mutation rules. Key additions here:
 
 - Components should be data-only (no logic); may have pool, static factory, or non-empty constructor
 - Prefer `struct` for components; use `class` for MonoBehaviors, existing class lifecycle, or cross-world references
@@ -203,14 +197,30 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
 }
 ```
 
+## Intention Components (Request-Response Pattern)
+
+The codebase uses "intention" struct components to model async ECS requests. A system creates an entity with an intention; a loading system processes it and adds `StreamableLoadingResult<T>`.
+
+**Base interfaces:**
+- `IAssetIntention` — has `CancellationTokenSource`
+- `ILoadingIntention : IAssetIntention` — adds `CommonLoadingArguments` (URL, source, attempts, etc.)
+
+**Common intention types:** `GetTextureIntention`, `GetAudioClipIntention`, `GetSceneFacadeIntention`, `DeleteEntityIntention`, `GetProfilesBatchIntent`, and 15+ others.
+
+**4-step pattern:**
+1. **Create** — Build an `AssetPromise` entity with the intention component
+2. **Load** — A `LoadSystemBase<TAsset, TIntention>` picks it up, loads the asset, adds `StreamableLoadingResult<T>`
+3. **Consume** — The requesting system calls `TryConsume` / `TryGetResult` to retrieve the result
+4. **Cleanup** — Dereference via `TryDereference`, destroy via `ForgetLoading` or `Consume`
+
+See the **asset-promise-lifecycle** skill for full creation, polling, error handling, and cleanup patterns.
+
 ## ECS Singletons
 
-Single-instance entities for `Player`, `Input`, `Camera`, `Time`, etc.
+> See CLAUDE.md §8 for core singleton rules. This section adds caching details.
 
 - Cache via `WorldExtensions` (`world.CacheCamera()`, `world.CachePlayer()`)
-- Use `TryGet` for mutation, `Has` for presence checks
-- **`TryGet` is 2x faster than `Query` for single entities** — prefer `TryGet`
-- Use `SingleInstanceEntity` struct; cache once, store in system
+- Use `SingleInstanceEntity` struct; cache once, store in system field
 
 ## Testing Systems
 
