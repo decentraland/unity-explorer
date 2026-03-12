@@ -67,22 +67,6 @@ namespace DCL.Profiles
                    && SkinColor.Equals(other.SkinColor);
         }
 
-        public void Clear()
-        {
-            wearables.Clear();
-            forceRender.Clear();
-
-            for (var i = 0; i < emotes.Length; i++)
-                emotes[i] = "";
-
-            BodyShape = default(BodyShape);
-            EyesColor = default(Color);
-            HairColor = default(Color);
-            SkinColor = default(Color);
-            SkinColor = default(Color);
-            BodySnapshotUrl = default(URLAddress);
-        }
-
 #if UNITY_EDITOR
 
         /// <summary>

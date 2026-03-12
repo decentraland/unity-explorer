@@ -42,12 +42,12 @@ namespace DCL.Profiles
         public string? Hobbies { get; set; }
         public DateTime? Birthdate { get; set; }
         public int Version { get; set; }
-        public Avatar? Avatar { get; set; }
+        public Avatar Avatar { get; set; }
 
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
         /// </summary>
-        public bool IsDirty { get; set; } = true;
+        public bool IsDirty { get; set; }
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
@@ -65,6 +65,7 @@ namespace DCL.Profiles
         public Profile()
         {
             compact = new CompactInfo();
+            Avatar = new Avatar();
         }
 
         public Profile(string userId, string name, Avatar avatar)
@@ -101,7 +102,10 @@ namespace DCL.Profiles
             interests = null;
             links = null;
             Birthdate = null;
-            Avatar = null;
+
+            // Avatars on the pool should always have an empty avatar for reusage.
+            // We cannot just clear its values because Profile may not be the original avatar owner
+            Avatar = new Avatar();
             Country = null;
             Email = null;
             Gender = null;
@@ -117,7 +121,7 @@ namespace DCL.Profiles
             SexualOrientation = null;
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
-            IsDirty = true;
+            IsDirty = false;
         }
 
         public static Profile NewRandomProfile(string? userId)
@@ -154,8 +158,7 @@ namespace DCL.Profiles
 
         public bool IsSameProfile(Profile profile)
         {
-            bool sameAvatar = Avatar == null ? profile.Avatar == null : Avatar.IsSameAvatar(profile.Avatar);
-            if (!sameAvatar) return false;
+            if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
 
             return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
