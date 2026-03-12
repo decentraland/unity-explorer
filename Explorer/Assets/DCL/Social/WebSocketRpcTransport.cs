@@ -96,7 +96,6 @@ namespace DCL.SocialService
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
                     {
-                        webSocket.Abort();
                         OnErrorEvent?.Invoke(e);
                         break;
                     }
@@ -118,7 +117,6 @@ namespace DCL.SocialService
             try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
             catch (WebSocketException e)
             {
-                webSocket.Abort();
                 OnErrorEvent?.Invoke(e);
             }
         }
@@ -130,7 +128,6 @@ namespace DCL.SocialService
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
             catch (WebSocketException e)
             {
-                webSocket.Abort();
                 OnErrorEvent?.Invoke(e);
             }
         }
