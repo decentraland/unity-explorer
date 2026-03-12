@@ -92,50 +92,43 @@ Proximity voice chat работает: игроки слышат друг дру
 
 ---
 
-## Decision 4: ECS-архитектура — shared dictionary pattern
+## Decision 4: ECS-архитектура — queries в ProximityAudioPositionSystem
 
 ### Рассмотренные варианты
 
 | Вариант | Описание | Плюсы | Минусы |
 |---------|----------|-------|--------|
-| Расширить `ProximityAudioPositionSystem` | Добавить lip sync логику в существующую систему | Один system, shared deps | Нарушает single responsibility |
-| Новая `ProximityLipSyncSystem` | Отдельная система, тот же group | Чистое разделение | Нужны те же зависимости |
+| Расширить `ProximityAudioPositionSystem` | Добавить lip sync queries в существующую систему | Один system, shared deps, те же словари | Нарушает single responsibility |
+| Новая `ProximityLipSyncSystem` | Отдельная система, тот же group | Чистое разделение | Нужны те же зависимости, лишний DI |
 | Bridge component | Компонент пишется VoiceChat, читается AvatarRendering | Развязка assemblies | Лишняя индирекция |
 
-### Выбрано: новая ProximityLipSyncSystem с shared dictionary
+### Выбрано: расширить ProximityAudioPositionSystem
 
-`PresentationSystemGroup`, `UpdateAfter(ProximityAudioPositionSystem)`. Тот же паттерн что и для аудио-позиций: итерация shared dictionary → resolve identity → entity через `entityParticipantTable` → add/update компонент.
+Реализовано в Шаге 1. Lip sync добавлен в существующую систему двумя элементами:
 
-**Компонент:**
+1. **`SetupPendingLipSync()`** — ручной метод (паттерн `AssignPendingSources`), итерирует `activeAudioSources` dict, добавляет `ProximityLipSyncComponent` с `ParticipantIdentity` из ключа словаря.
+2. **`[Query] UpdateLipSync(...)`** — source-generated ECS query по образцу `AvatarBlinkSystem.UpdateBlink` из PR #7452. Принимает `ref ProximityLipSyncComponent` + `ref AvatarShapeComponent`. Фильтр `[None(typeof(DeleteEntityIntention))]`.
+
+**Компонент (реализован):**
 ```csharp
 public struct ProximityLipSyncComponent
 {
-    public Renderer MouthRenderer;          // Mask_Mouth renderer
-    public int CurrentPoseIndex;            // -1 = no override (default material)
-    public float PoseHoldTimer;             // minimum hold per pose
-    public float SmoothedAmplitude;         // for Steps 2+
-    public float RandomSeed;               // per-avatar randomization
-    public bool IsSpeaking;                // cached state
+    public string ParticipantIdentity;   // identity из activeAudioSources dict
+    public Renderer MouthRenderer;       // Mask_Mouth renderer
+    public int CurrentPoseIndex;         // текущая поза в Texture2DArray
+    public float PoseHoldTimer;          // minimum hold per pose
 }
 ```
 
-**Data flow:**
-```
-IActiveSpeakers / LivekitAudioSource._amplitude
-    ↓
-ProximityLipSyncSystem.Update()
-    ↓
-foreach participant in data source:
-    entityParticipantTable.TryGet(identity) → Entity
-    if no ProximityLipSyncComponent → find Mask_Mouth, World.Add
-    update SmoothedAmplitude, select pose, apply MaterialPropertyBlock
-    ↓
-Cleanup: remove component when participant leaves or renderer null
+**Общее состояние (в ProximityConfigHolder):**
+```csharp
+public Texture2DArray? MouthTextureArray;               // слайсы из атласа
+public readonly HashSet<string> SpeakingParticipants;   // кто говорит (из ActiveSpeakers)
 ```
 
 ### Обоснование
 
-Зеркалит доказанную архитектуру `ProximityAudioPositionSystem`. `ConcurrentDictionary` bridging избегает race conditions. Retry каждый кадр обрабатывает случай когда Entity ещё не создан на момент subscribe.
+Система уже имеет доступ к `activeAudioSources`, `entityParticipantTable`, `ProximityConfigHolder`. Создание отдельной системы дублировало бы эти зависимости. Setup через ручной метод — установившийся паттерн (`AssignPendingSources`). Update через `[Query]` — правильный ECS-подход, аналогичный PR #7452.
 
 ---
 
@@ -238,6 +231,26 @@ Idle (закрытый):      index 2
 | Entity resolution | ~0.001ms | ~0.005ms | ~0.05ms (все в словаре) |
 | **Total (Step 2)** | — | **~0.1ms** | **~0.1ms** |
 | **Total (Step 4 OVR)** | — | **~0.6-1.6ms** | **~0.6-1.6ms** |
+
+---
+
+## Step 1 Findings (post-implementation)
+
+### LiveKit server-side VAD не отпускает speaking
+
+`ActiveSpeakersChanged` приходит от LiveKit server, который использует WebRTC VAD. VAD имеет holdover period (~1–2с) и чувствительность к фоновому шуму. Если микрофон участника ловит ambient noise (кулер, дыхание), VAD **непрерывно** рапортует его как speaking. Рот аватара не переходит в idle.
+
+**Вывод:** Бинарный `IActiveSpeakers` (P1) недостаточен для reliable idle detection. Переход на P2 (amplitude из `OnAudioFilterRead`) критически важен — амплитуда даёт float threshold, позволяя различать тишину от шума.
+
+### Threading issue: FFICallback на native thread
+
+`FFICallback` (`[MonoPInvokeCallback]`) вызывается из native Rust thread. Цепочка: native thread → `FFICallback` → `RoomEventReceived` → `Room.OnEventReceived` → `ActiveSpeakers.Updated` → наш handler пишет в `HashSet<string>`. ECS система читает `HashSet` с main thread.
+
+Формально это data race. На практике не вызывает видимых сбоев из-за малого размера данных. При переходе к Шагу 2 нужно использовать thread-safe структуры (`ConcurrentDictionary`, `volatile`, `Interlocked`).
+
+### Atlas slicing работает корректно
+
+`Graphics.Blit` → `ReadPixels` → `CopyTexture` → `Texture2DArray` — работает с `isReadable: 0` на исходной текстуре (GPU-only Blit). `alphaIsTransparency: 1` совпадает с PR #7452.
 
 ---
 

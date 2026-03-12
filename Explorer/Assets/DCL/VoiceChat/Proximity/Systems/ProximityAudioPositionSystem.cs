@@ -106,7 +106,12 @@ namespace DCL.VoiceChat
 
             SyncPositionsQuery(World, cameraPos, localHeadPos);
             ApplySettingsQuery(World);
-            SetupAndUpdateLipSync(t);
+
+            SetupPendingLipSync();
+
+            if (configHolder.MouthTextureArray != null)
+                UpdateLipSyncQuery(World, t);
+
             ProcessCleanUp();
         }
 
@@ -164,16 +169,17 @@ namespace DCL.VoiceChat
                 configHolder.Config!.ApplyProximitySettingsTo(proximityAudio.AudioSource);
         }
 
-        private void SetupAndUpdateLipSync(float dt)
+        /// <summary>
+        /// Iterates <see cref="activeAudioSources"/> and adds <see cref="ProximityLipSyncComponent"/>
+        /// to entities that have a proximity audio source and a visible mouth renderer but no lip sync yet.
+        /// Manual loop (like <see cref="AssignPendingSources"/>) because the participant identity
+        /// is only available from the dictionary key.
+        /// </summary>
+        private void SetupPendingLipSync()
         {
-            Texture2DArray mouthTextures = configHolder.MouthTextureArray;
-            if (mouthTextures == null) return;
+            if (configHolder.MouthTextureArray == null) return;
 
-            VoiceChatConfiguration config = configHolder.Config!;
-            int idlePose = config.LipSyncIdlePoseIndex;
-            int numPoses = mouthTextures.depth;
-            float holdDuration = config.LipSyncPoseHoldDuration;
-            HashSet<string> speakingSet = configHolder.SpeakingParticipants;
+            int idlePose = configHolder.Config!.LipSyncIdlePoseIndex;
 
             foreach (KeyValuePair<string, AudioSource> kvp in activeAudioSources)
             {
@@ -182,60 +188,73 @@ namespace DCL.VoiceChat
 
                 Entity entity = entry.Entity;
 
-                if (World.Has<DeleteEntityIntention>(entity))
-                    continue;
+                if (World.Has<DeleteEntityIntention>(entity)) continue;
+                if (World.Has<ProximityLipSyncComponent>(entity)) continue;
 
-                if (!World.Has<ProximityLipSyncComponent>(entity))
+                Renderer mouthRenderer = FindMouthRendererForEntity(entity);
+                if (mouthRenderer == null) continue;
+
+                World.Add(entity, new ProximityLipSyncComponent
                 {
-                    TrySetupLipSync(entity, idlePose);
-                    continue;
-                }
-
-                ref ProximityLipSyncComponent lipSync = ref World.Get<ProximityLipSyncComponent>(entity);
-
-                if (lipSync.MouthRenderer == null)
-                {
-                    entitiesToCleanUp.Add(entity);
-                    continue;
-                }
-
-                bool isSpeaking = speakingSet.Contains(kvp.Key);
-
-                if (isSpeaking)
-                {
-                    lipSync.PoseHoldTimer -= dt;
-
-                    if (lipSync.PoseHoldTimer <= 0f)
-                    {
-                        lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + Random.Range(1, numPoses)) % numPoses;
-
-                        if (lipSync.CurrentPoseIndex == idlePose)
-                            lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + 1) % numPoses;
-
-                        lipSync.PoseHoldTimer = holdDuration;
-                    }
-                }
-                else
-                {
-                    lipSync.CurrentPoseIndex = idlePose;
-                    lipSync.PoseHoldTimer = 0f;
-                }
-
-                ApplyMouthPose(ref lipSync, mouthTextures);
+                    ParticipantIdentity = kvp.Key,
+                    MouthRenderer = mouthRenderer,
+                    CurrentPoseIndex = idlePose,
+                    PoseHoldTimer = 0f,
+                });
             }
         }
 
-        private void TrySetupLipSync(Entity entity, int idlePose)
+        /// <summary>
+        /// Source-generated query that updates lip sync animation for all entities
+        /// with a <see cref="ProximityLipSyncComponent"/>. Re-initialises the mouth
+        /// renderer when the avatar is re-instantiated (same pattern as AvatarBlinkSystem).
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateLipSync(
+            [Data] float dt,
+            ref ProximityLipSyncComponent lipSync,
+            ref AvatarShapeComponent avatarShape)
         {
-            Renderer mouthRenderer = FindMouthRendererForEntity(entity);
-            if (mouthRenderer == null) return;
-
-            World.Add(entity, new ProximityLipSyncComponent
+            if (lipSync.MouthRenderer == null)
             {
-                MouthRenderer = mouthRenderer,
-                CurrentPoseIndex = idlePose,
-                PoseHoldTimer = 0f,
-            });
+                Renderer mouthRenderer = FindMouthRenderer(in avatarShape);
+                if (mouthRenderer == null) return;
+
+                lipSync.MouthRenderer = mouthRenderer;
+                lipSync.PoseHoldTimer = 0f;
+            }
+
+            Texture2DArray mouthTextures = configHolder.MouthTextureArray!;
+            VoiceChatConfiguration config = configHolder.Config!;
+            bool isSpeaking = configHolder.SpeakingParticipants.Contains(lipSync.ParticipantIdentity);
+
+            if (isSpeaking)
+            {
+                lipSync.PoseHoldTimer -= dt;
+
+                if (lipSync.PoseHoldTimer <= 0f)
+                {
+                    int numPoses = mouthTextures.depth;
+                    int idlePose = config.LipSyncIdlePoseIndex;
+
+                    lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + Random.Range(1, numPoses)) % numPoses;
+
+                    if (lipSync.CurrentPoseIndex == idlePose)
+                        lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + 1) % numPoses;
+
+                    lipSync.PoseHoldTimer = config.LipSyncPoseHoldDuration;
+                }
+            }
+            else
+            {
+                lipSync.CurrentPoseIndex = config.LipSyncIdlePoseIndex;
+                lipSync.PoseHoldTimer = 0f;
+            }
+
+            lipSyncPropertyBlock.SetFloat(MOUTH_TEX_ARR_ID, lipSync.CurrentPoseIndex);
+            lipSyncPropertyBlock.SetTexture(MOUTH_TEX_ARR, mouthTextures);
+            lipSync.MouthRenderer.SetPropertyBlock(lipSyncPropertyBlock);
         }
 
         private Renderer FindMouthRendererForEntity(Entity entity)
@@ -245,6 +264,11 @@ namespace DCL.VoiceChat
 
             if (!hasAvatar) return null;
 
+            return FindMouthRenderer(in avatarShape);
+        }
+
+        private static Renderer FindMouthRenderer(in AvatarShapeComponent avatarShape)
+        {
             for (int i = 0; i < avatarShape.InstantiatedWearables.Count; i++)
             {
                 List<Renderer> renderers = avatarShape.InstantiatedWearables[i].Renderers;
@@ -257,13 +281,6 @@ namespace DCL.VoiceChat
             }
 
             return null;
-        }
-
-        private void ApplyMouthPose(ref ProximityLipSyncComponent lipSync, Texture2DArray mouthTextures)
-        {
-            lipSyncPropertyBlock.SetFloat(MOUTH_TEX_ARR_ID, lipSync.CurrentPoseIndex);
-            lipSyncPropertyBlock.SetTexture(MOUTH_TEX_ARR, mouthTextures);
-            lipSync.MouthRenderer.SetPropertyBlock(lipSyncPropertyBlock);
         }
 
         private void ProcessCleanUp()

@@ -302,6 +302,60 @@ public void UpdateCurrentActives(IEnumerable<string> sids)
 
 ---
 
+## Этап 6: Реализация Шага 1 (A2 + P1)
+
+### Что реализовано
+
+Шаг 1 "Random animation при IActiveSpeakers" — полностью реализован и работает. Рты аватаров двигаются при speaking.
+
+### Архитектурное решение: интеграция в ProximityAudioPositionSystem
+
+Вместо отдельной `ProximityLipSyncSystem` — lip sync добавлен **в существующую** `ProximityAudioPositionSystem`:
+- **Setup** — ручной метод `SetupPendingLipSync()`, итерирует `activeAudioSources` dict (нужен identity из ключа). Паттерн аналогичен `AssignPendingSources()`.
+- **Update** — полноценный `[Query] UpdateLipSync(...)` с `ref ProximityLipSyncComponent` + `ref AvatarShapeComponent`. Source-generated, с `[None(typeof(DeleteEntityIntention))]`.
+- **Re-init** — при `MouthRenderer == null` (avatar re-instantiation) повторный поиск через `FindMouthRenderer(in avatarShape)`, аналогично `AvatarBlinkSystem.UpdateBlink` из PR #7452.
+
+### Созданные файлы
+
+| Файл | Назначение |
+|------|-----------|
+| `VoiceChat/Proximity/ProximityLipSyncComponent.cs` | ECS компонент: `ParticipantIdentity`, `MouthRenderer`, `CurrentPoseIndex`, `PoseHoldTimer` |
+
+### Модифицированные файлы
+
+| Файл | Изменения |
+|------|-----------|
+| `VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` | Добавлены: `SetupPendingLipSync()`, `[Query] UpdateLipSync(...)`, `FindMouthRenderer()`, shader property IDs, `MaterialPropertyBlock` |
+| `VoiceChat/VoiceChatConfiguration.cs` | Секция `[Header("Lip Sync")]`: `MouthAtlasTexture`, `LipSyncPoseHoldDuration`, `LipSyncIdlePoseIndex` |
+| `VoiceChat/Proximity/ProximityAudioSettings.cs` | `ProximityConfigHolder` расширен: `MouthTextureArray`, `SpeakingParticipants` (HashSet) |
+| `PluginSystem/Global/VoiceChatPlugin.cs` | Atlas slicing (`SliceMouthAtlas`), подписка на `ActiveSpeakers.Updated`, заполнение `SpeakingParticipants` |
+| `VoiceChat/Proximity/Mouth_Atlas.png.meta` | `alphaIsTransparency: 1` (match PR #7452) |
+
+### Находка: LiveKit VAD не отпускает speaking state
+
+**Проблема:** Рот продолжает двигаться даже когда участник молчит.
+
+**Причина:** Серверный VAD LiveKit (WebRTC Voice Activity Detection):
+- Holdover period ~1–2с после окончания речи
+- Чувствительность к фоновому шуму (кулер, дыхание)
+- Если микрофон ловит ambient noise → participant остаётся в `ActiveSpeakersChanged.ParticipantIdentities` постоянно
+- Это **бинарное** ограничение P1 — именно поэтому в плане Шаг 2 переходит на амплитуду
+
+**Подтверждение что наш код корректен:**
+- Identity формат совпадает: Rust FFI `p.identity().to_string()` → C# `ParticipantIdentities`
+- Логика idle: `SpeakingParticipants.Contains()` → false → `CurrentPoseIndex = IdlePoseIndex`
+- Проблема строго на стороне LiveKit server VAD
+
+### Находка: Threading issue в FFICallback
+
+**Проблема:** `FFICallback` (нативный callback из Rust SDK, `[MonoPInvokeCallback]`) вызывается на **фоновом потоке**. Цепочка: `FFICallback` → `RoomEventReceived` → `Room.OnEventReceived` → `ActiveSpeakers.Updated` → наш handler (пишет в `HashSet<string>`). ECS система читает `HashSet` с main thread.
+
+**Риск:** Data race на `HashSet<string>` (не thread-safe). На практике не вызывает видимых проблем (малый набор данных, быстрые операции), но формально UB.
+
+**Решение для Шага 2:** Перейти на `ConcurrentDictionary` или `volatile` / `Interlocked` паттерн при добавлении amplitude-based detection.
+
+---
+
 ## Ключевые файлы
 
 ### Unity Explorer (`unity-explorer`)

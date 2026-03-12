@@ -36,7 +36,7 @@ graph TD
     end
 
     subgraph "ECS System"
-        Sys["ProximityLipSyncSystem<br/>(PresentationSystemGroup)"]
+        Sys["ProximityAudioPositionSystem<br/>(SetupPendingLipSync + [Query] UpdateLipSync)"]
         EPT["entityParticipantTable"]
         Comp["ProximityLipSyncComponent<br/>(on avatar Entity)"]
     end
@@ -61,10 +61,10 @@ graph TD
 
 ---
 
-## Шаг 1: Random Animation при IActiveSpeakers (A2 + P1)
+## Шаг 1: Random Animation при IActiveSpeakers (A2 + P1) — ВЫПОЛНЕН
 
 > **Цель:** Рты аватаров двигаются когда они говорят. Максимально простая реализация.  
-> **Effort:** ~1 день  
+> **Статус:** DONE  
 > **LiveKit changes:** Ноль  
 > **Качество:** "Аниме-стиль" — рандомные формы рта во время речи, убедительно на расстоянии
 
@@ -227,34 +227,55 @@ public AssetReferenceT<Texture2D> MouthAtlasTexture;
 - Entity destroyed (`DeleteEntityIntention`) → компонент уходит с entity
 - System dispose / world finalize → revert все PropertyBlock в null
 
-### 1.9 Файлы
+### 1.9 Файлы (фактические)
 
 | Действие | Файл |
 |----------|------|
-| **Create** | `Explorer/Assets/DCL/VoiceChat/Proximity/LipSync/ProximityLipSyncComponent.cs` |
-| **Create** | `Explorer/Assets/DCL/VoiceChat/Proximity/LipSync/ProximityLipSyncSystem.cs` |
-| **Modify** | `Explorer/Assets/DCL/VoiceChat/VoiceChatConfiguration.cs` — добавить lip sync settings |
-| **Modify** | VoiceChatPlugin (DI) — передать `IActiveSpeakers`, `Texture2DArray`, настройки в систему |
-| **Modify** | Addressables config — добавить `Mouth_Atlas.png` |
-| **Already exists** | `Explorer/Assets/DCL/VoiceChat/Proximity/Mouth_Atlas.png` |
+| **Created** | `VoiceChat/Proximity/ProximityLipSyncComponent.cs` — ECS компонент |
+| **Modified** | `VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` — SetupPendingLipSync, [Query] UpdateLipSync, FindMouthRenderer |
+| **Modified** | `VoiceChat/VoiceChatConfiguration.cs` — lip sync settings (atlas, hold duration, idle index) |
+| **Modified** | `VoiceChat/Proximity/ProximityAudioSettings.cs` — ProximityConfigHolder: MouthTextureArray, SpeakingParticipants |
+| **Modified** | `PluginSystem/Global/VoiceChatPlugin.cs` — SliceMouthAtlas, ActiveSpeakers.Updated subscription |
+| **Modified** | `VoiceChat/Proximity/Mouth_Atlas.png.meta` — alphaIsTransparency: 1 |
+| **Already existed** | `VoiceChat/Proximity/Mouth_Atlas.png` |
 
 ### 1.10 Acceptance Criteria
 
-- [ ] Когда participant proximity chat говорит, рот его аватара анимируется рандомными позами
-- [ ] Когда прекращает говорить, рот возвращается в idle в течение ~200ms
-- [ ] Множественные аватары анимируются независимо (не синхронно)
-- [ ] Re-instantiation аватара (смена wearable) не ломает lip sync
-- [ ] Невидимые аватары пропускают обработку
-- [ ] Feature flag включает/выключает lip sync
-- [ ] Ноль аллокаций per frame (reuse MaterialPropertyBlock, no LINQ, no closures)
+- [x] Когда participant proximity chat говорит, рот его аватара анимируется рандомными позами
+- [ ] ~~Когда прекращает говорить, рот возвращается в idle в течение ~200ms~~ **BLOCKED:** LiveKit server-side VAD не отпускает speaking state при ambient noise (см. Findings ниже)
+- [x] Множественные аватары анимируются независимо (не синхронно)
+- [x] Re-instantiation аватара (смена wearable) не ломает lip sync (re-init через `[Query] UpdateLipSync`)
+- [ ] Невидимые аватары пропускают обработку — отложено (оптимизация)
+- [ ] Feature flag включает/выключает lip sync — отложено (не заморачиваемся)
+- [x] Ноль аллокаций per frame (reuse MaterialPropertyBlock, no LINQ, no closures)
+
+### 1.11 Findings (post-implementation)
+
+**LiveKit VAD не отпускает speaking state:**
+- Серверный WebRTC VAD имеет holdover ~1–2с и чувствительность к фоновому шуму
+- Если микрофон ловит ambient noise → participant остаётся в `ActiveSpeakersChanged` постоянно
+- Рот не переходит в idle → **Шаг 2 (amplitude) критически важен** для reliable idle detection
+
+**Threading issue:**
+- `FFICallback` (`[MonoPInvokeCallback]`) вызывается на native thread
+- `ActiveSpeakers.Updated` handler пишет в `HashSet<string>` с native thread
+- ECS система читает с main thread → data race (формально UB, на практике не наблюдается)
+- Нужно починить при Шаге 2: `ConcurrentDictionary` или `volatile`
+
+**Архитектура отличается от плана:**
+- Вместо отдельной `ProximityLipSyncSystem` → lip sync добавлен в `ProximityAudioPositionSystem`
+- Setup: ручной `SetupPendingLipSync()` (identity из dict, как `AssignPendingSources`)
+- Update: `[Query] UpdateLipSync(ref ProximityLipSyncComponent, ref AvatarShapeComponent)` (ECS pattern из PR #7452)
+- Компонент хранит `ParticipantIdentity` для проверки speaking status в query
 
 ---
 
-## Шаг 2: Amplitude + Weighted Random (A4 + P2)
+## Шаг 2: Amplitude + Weighted Random (A4 + P2) — СЛЕДУЮЩИЙ
 
-> **Цель:** Реактивность рта на громкость речи — тихо = чуть приоткрыт, громко = широко открыт.  
+> **Цель:** Реактивность рта на громкость речи — тихо = чуть приоткрыт, громко = широко открыт. **Критически важен: решает проблему LiveKit VAD, который не отпускает speaking state.**  
 > **Effort:** ~0.5–1 день (поверх Шага 1)  
-> **LiveKit changes:** ~5 строк в `LivekitAudioSource`
+> **LiveKit changes:** ~5 строк в `LivekitAudioSource`  
+> **Bonus:** Также исправить threading issue (HashSet → thread-safe структура)
 
 ### 2.1 Изменение в LiveKit SDK
 
@@ -357,9 +378,11 @@ public float CloseThreshold = 0.08f;           // hysteresis: close below this
 | Действие | Файл |
 |----------|------|
 | **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — добавить `LipSyncAmplitude` + RMS |
-| **Modify** | `ProximityLipSyncSystem.cs` — читать amplitude, weighted selection |
-| **Modify** | `ProximityLipSyncComponent.cs` — добавить SmoothedAmplitude |
-| **Modify** | `VoiceChatConfiguration.cs` — amplitude settings |
+| **Modify** | `VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` — читать amplitude, weighted selection в `UpdateLipSync` query |
+| **Modify** | `VoiceChat/Proximity/ProximityLipSyncComponent.cs` — добавить `SmoothedAmplitude` |
+| **Modify** | `VoiceChat/VoiceChatConfiguration.cs` — amplitude settings |
+| **Modify** | `VoiceChat/Proximity/ProximityAudioSettings.cs` — threading fix: `HashSet` → thread-safe structure |
+| **Modify** | `PluginSystem/Global/VoiceChatPlugin.cs` — threading fix: `ActiveSpeakers.Updated` handler |
 
 ### 2.7 Acceptance Criteria (в дополнение к Шагу 1)
 
@@ -670,9 +693,9 @@ public class LipSyncSettings
 ## Rollout Sequence
 
 ```
-Шаг 1 (A2+P1)  →  Ship за feature flag  →  Собрать feedback
+Шаг 1 (A2+P1)  →  ✅ DONE. Рот двигается. Ограничение: LiveKit VAD не отпускает idle.
     ↓
-Шаг 2 (A4+P2)  →  Ship, A/B test vs Шаг 1  →  Оценить дельту качества
+Шаг 2 (A4+P2)  →  NEXT. Амплитуда решит проблему idle + даст weighted poses.
     ↓
 Шаг 3 (A5+P3)  →  [Только если OVR недоступен]  →  Ship за flag
     ↓
@@ -687,12 +710,14 @@ public class LipSyncSettings
 
 | Зависимость | Нужна для | Статус |
 |-------------|-----------|--------|
-| `Mouth_Atlas.png` в VoiceChat/Proximity | Все шаги | Готово (скачан) |
-| `Texture2DArray` slicing код | Все шаги | Адаптировать из PR #7452 |
-| `IActiveSpeakers` на Island Room | Шаг 1 | Уже доступен |
-| `entityParticipantTable` доступ | Все шаги | Уже доступен через DI |
-| AvatarRendering assembly reference | FindMouthRenderer | Проверить assembly deps |
+| `Mouth_Atlas.png` в VoiceChat/Proximity | Все шаги | **DONE** (скачан, meta исправлен: `alphaIsTransparency: 1`) |
+| `Texture2DArray` slicing код | Все шаги | **DONE** (`SliceMouthAtlas` в `VoiceChatPlugin`) |
+| `IActiveSpeakers` на Island Room | Шаг 1 | **DONE** (подписка в `VoiceChatPlugin.InitializeAsync`) |
+| `ProximityLipSyncComponent` + `[Query]` | Шаг 1 | **DONE** (в `ProximityAudioPositionSystem`) |
+| `entityParticipantTable` доступ | Все шаги | **DONE** (уже доступен через DI) |
+| AvatarRendering assembly reference | FindMouthRenderer | **DONE** (using добавлены) |
 | LiveKit SDK `OnAudioFilterRead` change | Шаг 2+ | ~5 строк, тривиально |
+| Threading fix (HashSet → thread-safe) | Шаг 2 | Pending (data race из-за FFICallback на native thread) |
 | OVRLipSync Unity package | Шаг 4 | Не добавлен; проверить лицензию |
-| Feature flag registration | Все шаги | Создать новый flag |
+| Feature flag registration | Все шаги | Отложено |
 | Координация PR #7452 | Avoid MaterialPropertyBlock conflict | Обсудить с @olavra |
