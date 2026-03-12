@@ -105,6 +105,7 @@ namespace DCL.Profiles
 
             // Avatars on the pool should always have an empty avatar for reusage.
             // We cannot just clear its values because Profile may not be the original avatar owner
+            // To be fully safe to clear it, the scope should be tighter
             Avatar = new Avatar();
             Country = null;
             Email = null;
