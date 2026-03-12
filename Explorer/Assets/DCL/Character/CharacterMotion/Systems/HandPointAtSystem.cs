@@ -279,7 +279,7 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
 
-            pointAt.RotationCompleted = Mathf.Abs(rotationInfo.dot) > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
+            pointAt.RotationCompleted = rotationInfo.dot > 0.9f || pointAt.IsDragging || !rotationInfo.needToRotate;
             avatarBase.RightHandIK.weight = Mathf.MoveTowards(
                 avatarBase.RightHandIK.weight, pointAt.RotationCompleted ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
