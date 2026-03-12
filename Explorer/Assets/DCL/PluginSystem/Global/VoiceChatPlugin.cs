@@ -8,6 +8,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using LiveKit.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
@@ -145,8 +146,62 @@ namespace DCL.PluginSystem.Global
 
             proximityConfigHolder.Config = voiceChatConfiguration;
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration, proximityAudioSources);
+            if (voiceChatConfiguration.MouthAtlasTexture != null)
+                proximityConfigHolder.MouthTextureArray = SliceMouthAtlas(voiceChatConfiguration.MouthAtlasTexture, 4, 4);
+
+            IRoom islandRoom = roomHub.IslandRoom();
+
+            var activeSpeakers = islandRoom.ActiveSpeakers;
+            activeSpeakers.Updated += () =>
+            {
+                proximityConfigHolder.SpeakingParticipants.Clear();
+
+                foreach (string identity in activeSpeakers)
+                    proximityConfigHolder.SpeakingParticipants.Add(identity);
+            };
+
+            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources);
             pluginScope.Add(proximityVoiceChatManager);
+        }
+
+        private static Texture2DArray SliceMouthAtlas(Texture2D atlas, int cols, int rows)
+        {
+            int cellSize = atlas.width / cols;
+            int count = cols * rows;
+
+            var array = new Texture2DArray(cellSize, cellSize, count, TextureFormat.RGBA32, false, false);
+            RenderTexture rt = RenderTexture.GetTemporary(cellSize, cellSize, 0, RenderTextureFormat.ARGB32);
+            var readback = new Texture2D(cellSize, cellSize, TextureFormat.RGBA32, false);
+            RenderTexture previousActive = RenderTexture.active;
+
+            try
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    int row = i / cols;
+                    int col = i % cols;
+                    var scale = new Vector2(1f / cols, 1f / rows);
+                    var offset = new Vector2(col / (float)cols, (rows - 1 - row) / (float)rows);
+
+                    Graphics.Blit(atlas, rt, scale, offset);
+                    RenderTexture.active = rt;
+                    readback.ReadPixels(new Rect(0, 0, cellSize, cellSize), 0, 0, false);
+                    readback.Apply(false);
+                    RenderTexture.active = previousActive;
+
+                    Graphics.CopyTexture(readback, 0, 0, array, i, 0);
+                }
+
+                array.Apply(false, true);
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(rt);
+                GameObject.Destroy(readback);
+            }
+
+            return array;
         }
 
         [Serializable]

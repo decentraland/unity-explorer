@@ -71,6 +71,17 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
+        [Header("Lip Sync")]
+        [Tooltip("Mouth sprite atlas (1024x1024, 4x4 grid of 256px cells, 16 poses)")]
+        public Texture2D MouthAtlasTexture;
+
+        [Tooltip("Seconds each mouth pose is held before switching to the next")]
+        [Range(0.05f, 0.3f)]
+        public float LipSyncPoseHoldDuration = 0.1f;
+
+        [Tooltip("Closed-mouth pose index in the atlas (used when not speaking)")]
+        public int LipSyncIdlePoseIndex = 2;
+
         public void ApplyProximitySettingsTo(AudioSource source)
         {
             source.spatialBlend = ProximitySpatialBlend;

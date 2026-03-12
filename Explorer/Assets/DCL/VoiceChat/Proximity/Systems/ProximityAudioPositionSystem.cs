@@ -2,7 +2,9 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -32,10 +34,14 @@ namespace DCL.VoiceChat
     {
         private const float FALLBACK_HEAD_HEIGHT = 1.75f;
 
+        private static readonly int MOUTH_TEX_ARR = Shader.PropertyToID("_MainTexArr");
+        private static readonly int MOUTH_TEX_ARR_ID = Shader.PropertyToID("_MainTexArr_ID");
+
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ProximityConfigHolder configHolder;
         private readonly List<Entity> entitiesToCleanUp = new ();
+        private readonly MaterialPropertyBlock lipSyncPropertyBlock = new ();
 
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
@@ -100,6 +106,7 @@ namespace DCL.VoiceChat
 
             SyncPositionsQuery(World, cameraPos, localHeadPos);
             ApplySettingsQuery(World);
+            SetupAndUpdateLipSync(t);
             ProcessCleanUp();
         }
 
@@ -157,12 +164,127 @@ namespace DCL.VoiceChat
                 configHolder.Config!.ApplyProximitySettingsTo(proximityAudio.AudioSource);
         }
 
+        private void SetupAndUpdateLipSync(float dt)
+        {
+            Texture2DArray mouthTextures = configHolder.MouthTextureArray;
+            if (mouthTextures == null) return;
+
+            VoiceChatConfiguration config = configHolder.Config!;
+            int idlePose = config.LipSyncIdlePoseIndex;
+            int numPoses = mouthTextures.depth;
+            float holdDuration = config.LipSyncPoseHoldDuration;
+            HashSet<string> speakingSet = configHolder.SpeakingParticipants;
+
+            foreach (KeyValuePair<string, AudioSource> kvp in activeAudioSources)
+            {
+                if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry))
+                    continue;
+
+                Entity entity = entry.Entity;
+
+                if (World.Has<DeleteEntityIntention>(entity))
+                    continue;
+
+                if (!World.Has<ProximityLipSyncComponent>(entity))
+                {
+                    TrySetupLipSync(entity, idlePose);
+                    continue;
+                }
+
+                ref ProximityLipSyncComponent lipSync = ref World.Get<ProximityLipSyncComponent>(entity);
+
+                if (lipSync.MouthRenderer == null)
+                {
+                    entitiesToCleanUp.Add(entity);
+                    continue;
+                }
+
+                bool isSpeaking = speakingSet.Contains(kvp.Key);
+
+                if (isSpeaking)
+                {
+                    lipSync.PoseHoldTimer -= dt;
+
+                    if (lipSync.PoseHoldTimer <= 0f)
+                    {
+                        lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + Random.Range(1, numPoses)) % numPoses;
+
+                        if (lipSync.CurrentPoseIndex == idlePose)
+                            lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + 1) % numPoses;
+
+                        lipSync.PoseHoldTimer = holdDuration;
+                    }
+                }
+                else
+                {
+                    lipSync.CurrentPoseIndex = idlePose;
+                    lipSync.PoseHoldTimer = 0f;
+                }
+
+                ApplyMouthPose(ref lipSync, mouthTextures);
+            }
+        }
+
+        private void TrySetupLipSync(Entity entity, int idlePose)
+        {
+            Renderer mouthRenderer = FindMouthRendererForEntity(entity);
+            if (mouthRenderer == null) return;
+
+            World.Add(entity, new ProximityLipSyncComponent
+            {
+                MouthRenderer = mouthRenderer,
+                CurrentPoseIndex = idlePose,
+                PoseHoldTimer = 0f,
+            });
+        }
+
+        private Renderer FindMouthRendererForEntity(Entity entity)
+        {
+            ref readonly AvatarShapeComponent avatarShape =
+                ref World.TryGetRef<AvatarShapeComponent>(entity, out bool hasAvatar);
+
+            if (!hasAvatar) return null;
+
+            for (int i = 0; i < avatarShape.InstantiatedWearables.Count; i++)
+            {
+                List<Renderer> renderers = avatarShape.InstantiatedWearables[i].Renderers;
+
+                for (int j = 0; j < renderers.Count; j++)
+                {
+                    if (renderers[j] != null && renderers[j].name.EndsWith("Mask_Mouth"))
+                        return renderers[j];
+                }
+            }
+
+            return null;
+        }
+
+        private void ApplyMouthPose(ref ProximityLipSyncComponent lipSync, Texture2DArray mouthTextures)
+        {
+            lipSyncPropertyBlock.SetFloat(MOUTH_TEX_ARR_ID, lipSync.CurrentPoseIndex);
+            lipSyncPropertyBlock.SetTexture(MOUTH_TEX_ARR, mouthTextures);
+            lipSync.MouthRenderer.SetPropertyBlock(lipSyncPropertyBlock);
+        }
+
         private void ProcessCleanUp()
         {
             foreach (Entity entity in entitiesToCleanUp)
             {
+                Renderer mouthRenderer = World.Has<ProximityLipSyncComponent>(entity)
+                    ? World.Get<ProximityLipSyncComponent>(entity).MouthRenderer
+                    : null;
+
                 if (World.Has<ProximityAudioSourceComponent>(entity))
                     World.Remove<ProximityAudioSourceComponent>(entity);
+
+                if (World.Has<ProximityLipSyncComponent>(entity))
+                    World.Remove<ProximityLipSyncComponent>(entity);
+
+                if (mouthRenderer != null)
+                {
+                    lipSyncPropertyBlock.Clear();
+                    mouthRenderer.SetPropertyBlock(lipSyncPropertyBlock);
+                }
             }
 
             entitiesToCleanUp.Clear();
