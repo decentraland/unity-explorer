@@ -38,5 +38,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         ///     Last applied eye atlas slice index. -1 means no MaterialPropertyBlock override is active (default material).
         /// </summary>
         public int CurrentEyeIndex;
+
+        /// <summary>
+        ///     Base eye atlas slice index from the current face expression.
+        ///     Applied when the blink animation ends to restore the expression resting state.
+        ///     -1 means revert to the material's default texture (open eyes).
+        /// </summary>
+        public int EyesExpressionIndex;
     }
 }

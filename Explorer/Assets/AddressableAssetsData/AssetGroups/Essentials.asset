@@ -255,6 +255,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e829d698cff53741ad9b166893b2f56
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Eyebrows_Atlas.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ace53bd2bc5e2b8439785bb3122b12e3
     m_Address: Assets/DCL/InWorldCamera/InWorldCamera/Prefabs/InWorldCamera.FollowTarget.prefab
     m_ReadOnly: 0
@@ -337,6 +342,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eae766b15f997414794bfd4f17de5949
     m_Address: F_Eyebrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f13fd0befee6d48479806b957b3ca94f
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceExpressionConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

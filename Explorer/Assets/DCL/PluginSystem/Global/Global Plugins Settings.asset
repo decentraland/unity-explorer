@@ -963,6 +963,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        EyebrowsAtlasTexture:
+          m_AssetGUID: 9e829d698cff53741ad9b166893b2f56
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         EyesAtlasTexture:
           m_AssetGUID: fdde4a8fe27c97c448b609ddc755484b
           m_SubObjectName: 
@@ -979,6 +985,12 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         PhonemeDuration: 0.1
+        ExpressionConfig:
+          m_AssetGUID: f13fd0befee6d48479806b957b3ca94f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5526985638232195369
       type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

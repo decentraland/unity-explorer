@@ -33,5 +33,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         ///     -1 means no MaterialPropertyBlock override is active (default material).
         /// </summary>
         public int CurrentPhonemeIndex;
+
+        /// <summary>
+        ///     Base mouth atlas slice index from the current face expression.
+        ///     Applied when phoneme animation ends to restore the expression resting state.
+        ///     -1 means revert to the material's default texture (idle mouth).
+        /// </summary>
+        public int MouthExpressionIndex;
     }
 }

@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.FeatureFlags;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
@@ -92,6 +93,7 @@ namespace DCL.PluginSystem.Global
         private ReadOnlyAvatarHighlightData highlightData;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
+        private Texture2DArray? eyebrowsTextureArray;
         private Texture2DArray? eyeTextureArray;
         private float minBlinkInterval;
         private float maxBlinkInterval;
@@ -99,6 +101,9 @@ namespace DCL.PluginSystem.Global
 
         private Texture2DArray? mouthPhonemeTextureArray;
         private float phonemeDuration;
+
+        private AvatarFaceExpressionDefinition[] faceExpressions = System.Array.Empty<AvatarFaceExpressionDefinition>();
+        private readonly AvatarFaceDebugData avatarFaceDebugData = new ();
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -142,6 +147,9 @@ namespace DCL.PluginSystem.Global
             avatarTransformMatrixJobWrapper.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
 
+            if (eyebrowsTextureArray != null)
+                Object.Destroy(eyebrowsTextureArray);
+
             if (eyeTextureArray != null)
                 Object.Destroy(eyeTextureArray);
 
@@ -160,6 +168,7 @@ namespace DCL.PluginSystem.Global
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
+            eyebrowsTextureArray = await CreateEyebrowsTextureArrayAsync(settings, ct);
             eyeTextureArray = await CreateEyeTextureArrayAsync(settings, ct);
             minBlinkInterval = settings.MinBlinkInterval;
             maxBlinkInterval = settings.MaxBlinkInterval;
@@ -168,11 +177,15 @@ namespace DCL.PluginSystem.Global
             mouthPhonemeTextureArray = await CreateMouthPhonemeTextureArrayAsync(settings, ct);
             phonemeDuration = settings.PhonemeDuration;
 
+            faceExpressions = await LoadFaceExpressionsAsync(settings, ct);
+
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
             debugContainerBuilder.TryAddWidget("Nametags")
                                 ?.AddToggleField("ShowNametags", _ => nametagsData.showNameTags = !nametagsData.showNameTags, nametagsData.showNameTags);
+
+            BuildAvatarFaceDebugWidget();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -201,7 +214,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialAnimationSystem.InjectToWorld(ref builder, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration);
+            AvatarFacialAnimationSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration, avatarFaceDebugData);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -311,9 +324,103 @@ namespace DCL.PluginSystem.Global
         }
 
         /// <summary>
+        ///     Loads the face expression definitions from the configured ScriptableObject asset.
+        ///     Returns an empty array when no asset is configured.
+        /// </summary>
+        private async UniTask<AvatarFaceExpressionDefinition[]> LoadFaceExpressionsAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            if (settings.ExpressionConfig == null || string.IsNullOrEmpty(settings.ExpressionConfig.AssetGUID))
+                return System.Array.Empty<AvatarFaceExpressionDefinition>();
+
+            var config = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExpressionConfig, ct)).Value;
+            return config.Expressions ?? System.Array.Empty<AvatarFaceExpressionDefinition>();
+        }
+
+        /// <summary>
+        ///     Builds the "Avatar Face" debug widget that lets developers transition between
+        ///     named expressions and manually override individual eyebrows, eyes, and mouth indices.
+        /// </summary>
+        private void BuildAvatarFaceDebugWidget()
+        {
+            DebugWidgetBuilder? widget = debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.AVATAR_FACE);
+
+            if (widget == null)
+                return;
+
+            bool updatingFromExpression = false;
+
+            // Individual-override bindings (sliders 0-15).
+            var eyebrowsBinding = new ElementBinding<int>(0, evt =>
+            {
+                if (updatingFromExpression) return;
+                avatarFaceDebugData.EyebrowsIndex = evt.newValue;
+                avatarFaceDebugData.IsDirty = true;
+            });
+
+            var eyesBinding = new ElementBinding<int>(0, evt =>
+            {
+                if (updatingFromExpression) return;
+                avatarFaceDebugData.EyesIndex = evt.newValue;
+                avatarFaceDebugData.IsDirty = true;
+            });
+
+            var mouthBinding = new ElementBinding<int>(0, evt =>
+            {
+                if (updatingFromExpression) return;
+                avatarFaceDebugData.MouthIndex = evt.newValue;
+                avatarFaceDebugData.IsDirty = true;
+            });
+
+            // Named expression selector — cycles through faceExpressions and updates the sliders.
+            if (faceExpressions.Length > 0)
+            {
+                var expressionNameBinding = new ElementBinding<string>(faceExpressions[0].Name);
+                int expressionCount = faceExpressions.Length;
+
+                var expressionIndexBinding = new ElementBinding<int>(0, evt =>
+                {
+                    int idx = Mathf.Clamp(evt.newValue, 0, expressionCount - 1);
+                    AvatarFaceExpressionDefinition def = faceExpressions[idx];
+
+                    updatingFromExpression = true;
+                    expressionNameBinding.SetAndUpdate(def.Name);
+                    eyebrowsBinding.SetAndUpdate(def.EyebrowsIndex);
+                    eyesBinding.SetAndUpdate(def.EyesIndex);
+                    mouthBinding.SetAndUpdate(def.MouthIndex);
+                    updatingFromExpression = false;
+
+                    avatarFaceDebugData.EyebrowsIndex = def.EyebrowsIndex;
+                    avatarFaceDebugData.EyesIndex = def.EyesIndex;
+                    avatarFaceDebugData.MouthIndex = def.MouthIndex;
+                    avatarFaceDebugData.IsDirty = true;
+                });
+
+                widget.AddCustomMarker(expressionNameBinding)
+                      .AddIntSliderField("Expression", expressionIndexBinding, 0, expressionCount - 1);
+            }
+
+            widget.AddIntSliderField("Eyebrows", eyebrowsBinding, 0, 15)
+                  .AddIntSliderField("Eyes", eyesBinding, 0, 15)
+                  .AddIntSliderField("Mouth", mouthBinding, 0, 15);
+        }
+
+        /// <summary>
+        ///     Slices the 1024×1024 eyebrows atlas into 16 individual 256×256 Texture2DArray slices.
+        ///     Uses Graphics.Blit + ReadPixels so it works regardless of whether the atlas is compressed.
+        /// </summary>
+        private async UniTask<Texture2DArray?> CreateEyebrowsTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            if (settings.EyebrowsAtlasTexture == null || string.IsNullOrEmpty(settings.EyebrowsAtlasTexture.AssetGUID))
+                return null;
+
+            var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.EyebrowsAtlasTexture, ct: ct)).Value;
+
+            return SliceAtlasIntoTextureArray(atlasTex);
+        }
+
+        /// <summary>
         ///     Slices the 1024×1024 eye atlas into 16 individual 256×256 Texture2DArray slices,
-        ///     one per eye state. Uses Graphics.Blit + ReadPixels so it works regardless of whether
-        ///     the atlas is compressed (Graphics.CopyTexture sub-region fails for compressed formats).
+        ///     one per eye state.
         /// </summary>
         private async UniTask<Texture2DArray?> CreateEyeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
@@ -321,7 +428,29 @@ namespace DCL.PluginSystem.Global
                 return null;
 
             var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.EyesAtlasTexture, ct: ct)).Value;
+            return SliceAtlasIntoTextureArray(atlasTex);
+        }
 
+        /// <summary>
+        ///     Slices the 1024×1024 mouth atlas into 16 individual 256×256 Texture2DArray slices,
+        ///     one per phoneme / expression entry.
+        /// </summary>
+        private async UniTask<Texture2DArray?> CreateMouthPhonemeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            if (settings.MouthAtlasTexture == null || string.IsNullOrEmpty(settings.MouthAtlasTexture.AssetGUID))
+                return null;
+
+            var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.MouthAtlasTexture, ct: ct)).Value;
+            return SliceAtlasIntoTextureArray(atlasTex);
+        }
+
+        /// <summary>
+        ///     Slices a 1024×1024 atlas into 16 individual 256×256 Texture2DArray slices (4×4 grid).
+        ///     Uses Graphics.Blit + ReadPixels so it works regardless of whether the atlas is compressed
+        ///     (Graphics.CopyTexture sub-region fails for compressed formats).
+        /// </summary>
+        private static Texture2DArray SliceAtlasIntoTextureArray(Texture2D atlasTex)
+        {
             const int cellSize = 256;
             const int cols = 4;
             const int rows = 4;
@@ -335,61 +464,6 @@ namespace DCL.PluginSystem.Global
             try
             {
                 for (var i = 0; i < sliceCount; i++)
-                {
-                    int row = i / cols; // visual row: 0 = top of atlas image
-                    int col = i % cols;
-
-                    // UV bottom-left of this cell (Unity UV origin is bottom-left).
-                    var scale  = new Vector2(1f / cols, 1f / rows);
-                    var offset = new Vector2(col / (float)cols, (rows - 1 - row) / (float)rows);
-
-                    Graphics.Blit(atlasTex, rt, scale, offset);
-
-                    RenderTexture.active = rt;
-                    readback.ReadPixels(new Rect(0, 0, cellSize, cellSize), 0, 0, false);
-                    readback.Apply(false);
-                    RenderTexture.active = previousActive;
-
-                    Graphics.CopyTexture(readback, 0, 0, array, i, 0);
-                }
-
-                array.Apply(false, true);
-            }
-            finally
-            {
-                RenderTexture.active = previousActive;
-                RenderTexture.ReleaseTemporary(rt);
-                Object.Destroy(readback);
-            }
-
-            return array;
-        }
-
-        /// <summary>
-        ///     Slices the 1024×1024 mouth atlas into 16 individual 256×256 Texture2DArray slices,
-        ///     one per phoneme. Uses Graphics.Blit + ReadPixels so it works regardless of whether
-        ///     the atlas is compressed (Graphics.CopyTexture sub-region fails for compressed formats).
-        /// </summary>
-        private async UniTask<Texture2DArray?> CreateMouthPhonemeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
-        {
-            if (settings.MouthAtlasTexture == null || string.IsNullOrEmpty(settings.MouthAtlasTexture.AssetGUID))
-                return null;
-
-            var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.MouthAtlasTexture, ct: ct)).Value;
-
-            const int cellSize = 256;
-            const int cols = 4;
-            const int rows = 4;
-            const int phonemeCount = rows * cols; // 16
-
-            var array = new Texture2DArray(cellSize, cellSize, phonemeCount, TextureFormat.RGBA32, false, false);
-            RenderTexture rt = RenderTexture.GetTemporary(cellSize, cellSize, 0, RenderTextureFormat.ARGB32);
-            var readback = new Texture2D(cellSize, cellSize, TextureFormat.RGBA32, false);
-            RenderTexture previousActive = RenderTexture.active;
-
-            try
-            {
-                for (var i = 0; i < phonemeCount; i++)
                 {
                     int row = i / cols; // visual row: 0 = top of atlas image
                     int col = i % cols;
@@ -470,6 +544,9 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
 
+            [Header("Eyebrows Atlas")]
+            public AssetReferenceT<Texture2D> EyebrowsAtlasTexture;
+
             [Header("Blink")]
             public AssetReferenceT<Texture2D> EyesAtlasTexture;
             public float MinBlinkInterval = 2.0f;
@@ -479,6 +556,9 @@ namespace DCL.PluginSystem.Global
             [Header("Mouth Phoneme Animation")]
             public AssetReferenceT<Texture2D> MouthAtlasTexture;
             public float PhonemeDuration = 0.08f;
+
+            [Header("Face Expressions")]
+            public AssetReferenceT<AvatarFaceExpressionConfig> ExpressionConfig;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

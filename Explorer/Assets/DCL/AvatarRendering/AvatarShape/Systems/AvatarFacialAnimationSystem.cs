@@ -11,22 +11,28 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
-    ///     Drives all 2D facial animations for instantiated avatars: eye blinking and mouth phoneme animation.
-    ///     This system is the single entry point for facial animation and is designed to be extended
-    ///     with facial expressions and voice interpretation in the future.
+    ///     Drives all 2D facial animations for instantiated avatars: eyebrow expressions,
+    ///     eye blinking, and mouth phoneme animation.
+    ///     Expressions act as the base (resting) layer. Blink and phoneme systems temporarily
+    ///     override the eyes and mouth respectively, then restore the expression when they end.
     ///     Uses MaterialPropertyBlock overrides per-renderer to avoid modifying shared pool materials.
     /// </summary>
     /// <remarks>
+    ///     Eyebrows atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
+    ///     Row 0: Idle(0),     Up(1),        Down(2),      Angry(3)
+    ///     Row 1: Sad(4),      Surprised(5), Unused(6),    Unused(7)
+    ///     Row 2-3: Unused(8..15)
+    ///
     ///     Eye atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
     ///     Row 0: Idle(0),    HalfClosed(1), Closed(2), WideOpen(3)
     ///     Row 1: LookUp(4),  LookDown(5),   LookLeft(6), LookRight(7)
     ///     Row 2-3: Unused(8..15)
     ///
-    ///     Phoneme atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
+    ///     Mouth atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
     ///     Row 0: Idle(0), a/e/i(1), b/m/p(2), f/v(3)
     ///     Row 1: d/th(4),  u(5),     c/g/h/k/n/s/t/x/y/z(6), o(7)
     ///     Row 2: l(8),   r(9),     ch/j/sh(10),               w/q(11)
-    ///     Row 3: empty(12..15)
+    ///     Row 3: Sad(12), Happy(13), Smile(14), Worried(15)
     /// </remarks>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
@@ -38,13 +44,16 @@ namespace DCL.AvatarRendering.AvatarShape
         /// <summary>Sentinel value: no phoneme MaterialPropertyBlock override is active.</summary>
         private const int NO_PHONEME_OVERRIDE = -1;
 
+        /// <summary>Sentinel value: no eyebrows MaterialPropertyBlock override is active.</summary>
+        private const int NO_EYEBROWS_OVERRIDE = -1;
+
         // Eye atlas slice indices.
         private const int EYE_HALF_CLOSED = 1;
         private const int EYE_CLOSED = 2;
 
         /// <summary>
         ///     Atlas slice sequence played during a blink: closing (HalfClosed → Closed) then opening (Closed → HalfClosed).
-        ///     The final return to fully open clears the override, reverting to the material's default texture.
+        ///     The final return to fully open clears the override (or restores expression eye index).
         /// </summary>
         private static readonly int[] BLINK_SEQUENCE = { EYE_HALF_CLOSED, EYE_CLOSED, EYE_HALF_CLOSED };
 
@@ -54,44 +63,87 @@ namespace DCL.AvatarRendering.AvatarShape
         // Reused every frame to avoid per-call allocation.
         private static readonly MaterialPropertyBlock s_Mpb = new MaterialPropertyBlock();
 
+        private readonly Texture2DArray? eyebrowsTextureArray;
         private readonly Texture2DArray? eyeTextureArray;
         private readonly float minBlinkInterval;
         private readonly float maxBlinkInterval;
         private readonly float blinkFrameDuration;
-
         private readonly Texture2DArray? phonemeTextureArray;
         private readonly float phonemeDuration;
+        private readonly AvatarFaceDebugData? debugData;
 
         internal AvatarFacialAnimationSystem(
             World world,
+            Texture2DArray? eyebrowsTextureArray,
             Texture2DArray? eyeTextureArray,
             float minBlinkInterval,
             float maxBlinkInterval,
             float blinkFrameDuration,
             Texture2DArray? phonemeTextureArray,
-            float phonemeDuration) : base(world)
+            float phonemeDuration,
+            AvatarFaceDebugData? debugData = null) : base(world)
         {
+            this.eyebrowsTextureArray = eyebrowsTextureArray;
             this.eyeTextureArray = eyeTextureArray;
             this.minBlinkInterval = minBlinkInterval;
             this.maxBlinkInterval = maxBlinkInterval;
             this.blinkFrameDuration = blinkFrameDuration;
             this.phonemeTextureArray = phonemeTextureArray;
             this.phonemeDuration = phonemeDuration;
+            this.debugData = debugData;
         }
 
         protected override void Update(float t)
         {
+            // Setup pass — adds per-avatar face components to newly instantiated avatars.
+            SetupExpressionComponentQuery(World);
+
             if (eyeTextureArray != null)
-            {
                 SetupBlinkComponentQuery(World);
-                UpdateBlinkQuery(World, t);
-            }
 
             if (phonemeTextureArray != null)
-            {
                 SetupMouthComponentQuery(World);
-                UpdateMouthAnimationQuery(World, t);
+
+            // When the debug widget changed the expression, propagate it to all avatar expression components.
+            if (debugData != null && debugData.IsDirty)
+            {
+                ApplyDebugExpressionQuery(World);
+                debugData.IsDirty = false;
             }
+
+            // Expression layer — applies eyebrows and syncs base indices into blink/mouth components.
+            UpdateFaceExpressionQuery(World);
+
+            // Blink overrides eyes temporarily.
+            if (eyeTextureArray != null)
+                UpdateBlinkQuery(World, t);
+
+            // Phoneme animation overrides mouth temporarily.
+            if (phonemeTextureArray != null)
+                UpdateMouthAnimationQuery(World, t);
+        }
+
+        // ─── Setup queries ────────────────────────────────────────────────────
+
+        /// <summary>
+        ///     Adds AvatarFaceExpressionComponent to newly instantiated avatars.
+        /// </summary>
+        [Query]
+        [All(typeof(AvatarCustomSkinningComponent))]
+        [None(typeof(AvatarFaceExpressionComponent), typeof(DeleteEntityIntention))]
+        private void SetupExpressionComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
+        {
+            Renderer? eyebrowsRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Eyebrows");
+
+            World.Add(entity, new AvatarFaceExpressionComponent
+            {
+                EyebrowsRenderer = eyebrowsRenderer,
+                EyebrowsExpressionIndex = 0,
+                EyesExpressionIndex = NO_EYE_OVERRIDE,
+                MouthExpressionIndex = NO_PHONEME_OVERRIDE,
+                CurrentEyebrowsIndex = NO_EYEBROWS_OVERRIDE,
+                IsDirty = false,
+            });
         }
 
         /// <summary>
@@ -112,6 +164,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 EyeRenderer = eyeRenderer,
                 NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval),
                 CurrentEyeIndex = NO_EYE_OVERRIDE,
+                EyesExpressionIndex = NO_EYE_OVERRIDE,
             });
         }
 
@@ -132,8 +185,80 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 MouthRenderer = mouthRenderer,
                 CurrentPhonemeIndex = NO_PHONEME_OVERRIDE,
+                MouthExpressionIndex = NO_PHONEME_OVERRIDE,
             });
         }
+
+        // ─── Debug expression propagation ─────────────────────────────────────
+
+        /// <summary>
+        ///     When the debug widget is dirty, overwrites the expression on every avatar and marks it dirty.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplyDebugExpression(ref AvatarFaceExpressionComponent expression)
+        {
+            expression.EyebrowsExpressionIndex = debugData!.EyebrowsIndex;
+            expression.EyesExpressionIndex = debugData.EyesIndex;
+            expression.MouthExpressionIndex = debugData.MouthIndex;
+            expression.IsDirty = true;
+        }
+
+        // ─── Expression layer ─────────────────────────────────────────────────
+
+        /// <summary>
+        ///     Applies a dirty expression to the eyebrows renderer and propagates the eye/mouth
+        ///     base indices into the blink and mouth components so they restore correctly after
+        ///     their temporary overrides finish.
+        ///     Also handles re-initialisation of the eyebrows renderer after avatar re-instantiation.
+        /// </summary>
+        [Query]
+        [All(typeof(AvatarBlinkComponent), typeof(AvatarMouthAnimationComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateFaceExpression(
+            ref AvatarFaceExpressionComponent expression,
+            ref AvatarBlinkComponent blink,
+            ref AvatarMouthAnimationComponent mouth,
+            ref AvatarShapeComponent avatarShape)
+        {
+            // Re-initialise eyebrows renderer if it was destroyed during avatar re-instantiation.
+            if (expression.EyebrowsRenderer == null)
+            {
+                Renderer? eyebrowsRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Eyebrows");
+
+                if (eyebrowsRenderer != null)
+                {
+                    expression.EyebrowsRenderer = eyebrowsRenderer;
+                    expression.CurrentEyebrowsIndex = NO_EYEBROWS_OVERRIDE;
+                    expression.IsDirty = true;
+                }
+            }
+
+            if (!expression.IsDirty)
+                return;
+
+            expression.IsDirty = false;
+
+            // Apply eyebrows base layer directly (nothing else overrides eyebrows).
+            if (expression.EyebrowsRenderer != null && eyebrowsTextureArray != null)
+                ApplyEyebrowsFrame(ref expression, expression.EyebrowsExpressionIndex);
+
+            // Sync the resting eye state into the blink component so EndBlink restores it.
+            blink.EyesExpressionIndex = expression.EyesExpressionIndex;
+
+            // If not currently blinking, apply the expression eye immediately.
+            if (!blink.IsBlinking)
+                ApplyEyeFrame(ref blink, expression.EyesExpressionIndex);
+
+            // Sync the resting mouth state into the mouth component so StopMouth restores it.
+            mouth.MouthExpressionIndex = expression.MouthExpressionIndex;
+
+            // If not currently animating phonemes, apply the expression mouth immediately.
+            if (mouth.AnimatingText == null)
+                ApplyPhoneme(ref mouth, expression.MouthExpressionIndex);
+        }
+
+        // ─── Blink ────────────────────────────────────────────────────────────
 
         /// <summary>
         ///     Advances the blink animation sequence for each avatar.
@@ -193,6 +318,8 @@ namespace DCL.AvatarRendering.AvatarShape
                     StartBlink(ref blink);
             }
         }
+
+        // ─── Mouth phoneme animation ──────────────────────────────────────────
 
         /// <summary>
         ///     Advances the phoneme animation for each avatar.
@@ -259,6 +386,8 @@ namespace DCL.AvatarRendering.AvatarShape
             }
         }
 
+        // ─── Blink helpers ────────────────────────────────────────────────────
+
         private void StartBlink(ref AvatarBlinkComponent blink)
         {
             blink.IsBlinking = true;
@@ -273,9 +402,8 @@ namespace DCL.AvatarRendering.AvatarShape
             blink.TimeSinceLastBlink = 0f;
             blink.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
 
-            // Clearing the property block reverts the renderer to its material's original values (open eyes).
-            blink.CurrentEyeIndex = NO_EYE_OVERRIDE;
-            blink.EyeRenderer.SetPropertyBlock(null);
+            // Restore the expression resting eye state (or clear to material default if no expression).
+            ApplyEyeFrame(ref blink, blink.EyesExpressionIndex);
         }
 
         private void ApplyEyeFrame(ref AvatarBlinkComponent blink, int eyeIndex)
@@ -285,19 +413,27 @@ namespace DCL.AvatarRendering.AvatarShape
 
             blink.CurrentEyeIndex = eyeIndex;
 
-            // Use a MaterialPropertyBlock so only this renderer is overridden.
-            // The underlying shared pool material is never modified, preventing
-            // texture bleed-through onto mouth/eyebrow renderers.
+            if (eyeIndex == NO_EYE_OVERRIDE)
+            {
+                // Revert to the renderer's default material texture (open eyes).
+                blink.EyeRenderer.SetPropertyBlock(null);
+                return;
+            }
+
             s_Mpb.Clear();
             s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, eyeTextureArray);
             s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, eyeIndex);
             blink.EyeRenderer.SetPropertyBlock(s_Mpb);
         }
 
+        // ─── Mouth helpers ────────────────────────────────────────────────────
+
         private void StopMouthAnimation(ref AvatarMouthAnimationComponent mouth)
         {
             mouth.AnimatingText = null;
-            ApplyPhoneme(ref mouth, NO_PHONEME_OVERRIDE);
+
+            // Restore the expression resting mouth state (or clear to material default if no expression).
+            ApplyPhoneme(ref mouth, mouth.MouthExpressionIndex);
         }
 
         private void ApplyPhoneme(ref AvatarMouthAnimationComponent mouth, int phonemeIndex)
@@ -319,6 +455,23 @@ namespace DCL.AvatarRendering.AvatarShape
             s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, phonemeIndex);
             mouth.MouthRenderer.SetPropertyBlock(s_Mpb);
         }
+
+        // ─── Eyebrows helpers ─────────────────────────────────────────────────
+
+        private void ApplyEyebrowsFrame(ref AvatarFaceExpressionComponent expression, int eyebrowsIndex)
+        {
+            if (expression.CurrentEyebrowsIndex == eyebrowsIndex)
+                return;
+
+            expression.CurrentEyebrowsIndex = eyebrowsIndex;
+
+            s_Mpb.Clear();
+            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, eyebrowsTextureArray);
+            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, eyebrowsIndex);
+            expression.EyebrowsRenderer.SetPropertyBlock(s_Mpb);
+        }
+
+        // ─── Phoneme mapping ──────────────────────────────────────────────────
 
         /// <summary>
         ///     Maps a character at <paramref name="index"/> in <paramref name="text"/> to a phoneme
@@ -350,6 +503,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 default:                       return 0; // Idle: spaces, punctuation, digits, etc.
             }
         }
+
+        // ─── Renderer lookup ──────────────────────────────────────────────────
 
         /// <summary>
         ///     Searches the avatar's instantiated wearable renderers for one whose name ends with <paramref name="suffix"/>.

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fc70577efb0ebd4fb2f7ed9436f8213, type: 3}
+  m_Name: AvatarFaceExpressionConfig
+  m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.AvatarFaceExpressionConfig
+  Expressions:
+  - Name: Idle
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: Happy
+    EyebrowsIndex: 1
+    EyesIndex: 0
+    MouthIndex: 13
+  - Name: Suspicius
+    EyebrowsIndex: 4
+    EyesIndex: 7
+    MouthIndex: 15
+  - Name: Scared
+    EyebrowsIndex: 1
+    EyesIndex: 3
+    MouthIndex: 7
+  - Name: Stoned
+    EyebrowsIndex: 3
+    EyesIndex: 1
+    MouthIndex: 3
