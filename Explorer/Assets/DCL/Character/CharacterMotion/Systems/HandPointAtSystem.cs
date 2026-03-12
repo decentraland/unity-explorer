@@ -314,7 +314,8 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (!pointAt.IsPointing)
             {
-                SetLocalPlayerRotationAnimation(ref avatarBase, 0f, false, false);
+                pointAt.RotationAnimationWeight = 0f;
+                SetLocalPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, false, false);
                 return;
             }
 

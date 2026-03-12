@@ -8,6 +8,7 @@ namespace DCL.CharacterMotion.Components
         public FeetComponent Right;
         public bool Initialized;
         public bool IsDisabled;
+        public bool HipsFrozen;
 
         public struct FeetComponent
         {
