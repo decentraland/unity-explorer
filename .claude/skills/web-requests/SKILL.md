@@ -1,6 +1,6 @@
 ---
 name: web-requests
-description: "Web request framework for HTTP operations. Use when making GET/POST requests via IWebRequestController, parsing responses, building URLs with URLBuilder, signing requests with Web3 auth chains, or configuring retry policies."
+description: "Web request framework for HTTP operations. Use when making API calls, HTTP/REST requests, fetching data from server, downloading content via IWebRequestController, parsing responses, building URLs with URLBuilder, signing requests with Web3 auth chains, or configuring retry policies."
 user-invocable: false
 ---
 
@@ -180,5 +180,8 @@ URLAddress url = builder.Build();
 ## Design Notes
 
 - The framework is designed to be **allocation-free** — value types throughout
+  - **Why:** HTTP requests happen frequently in hot paths; GC pressure from request objects would cause frame hitches in the Unity game loop.
 - `WebRequestHeadersInfo` uses pooling for header storage
 - `IWebRequestsAnalyticsContainer` tracks ongoing requests for analytics
+- Signed requests are **not retried** by default
+  - **Why:** Auth chains are time-sensitive — replaying a signed request after delay would fail validation, so retrying is wasteful and potentially confusing for error handling.

@@ -1,6 +1,6 @@
 ---
 name: asset-promise-lifecycle
-description: "AssetPromise lifecycle for async ECS asset loading — textures, models, audio, wearables. Use when creating, polling, consuming, or cleaning up asset promises, or when working with memory budgeting and cache dereferencing."
+description: "AssetPromise lifecycle for async ECS asset loading — textures, models, audio, wearables. Use when creating, polling, consuming, or cleaning up asset promises, working with memory budgeting and cache dereferencing, or implementing async loading, texture loading, model loading, streaming, or loading pipeline logic."
 user-invocable: false
 ---
 

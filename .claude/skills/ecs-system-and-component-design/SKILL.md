@@ -17,13 +17,7 @@ user-invocable: false
 
 ## System Design Rules
 
-1. **Systems are the sole logic entry point for entities.** Entity manipulation outside systems is strictly forbidden.
-2. Systems **must not hold persistent entity/component collections.** Temporary collections for per-frame aggregation are allowed.
-3. Systems **must not contain state** — all state goes into ECS components.
-4. Systems must inherit from `BaseUnityLoopSystem`.
-5. Constructors must be **`internal`** and accept only shared dependencies (settings, pools, utilities, factories).
-6. **Single responsibility** — split systems >200 lines into static counterparts.
-7. Assign each system to a `SystemGroup` based on purpose (e.g., `PhysicsSystemGroup`, `PresentationSystemGroup`, `CleanUpGroup`).
+> Condensed rules are in CLAUDE.md §1–7. This skill provides expanded examples and patterns not covered there.
 
 ### Code Example — Clean System
 
@@ -93,12 +87,6 @@ Ranked from most preferred to least:
 - Use `TryGet` for known entities over queries
 - Consolidate queries sharing the same filters
 
-## Performance Constraints
-
-- System `Update()` must be **allocation-free**
-- Keep logic minimal — systems execute multiple times per frame (one per world)
-- Use centralized throttling via `[ThrottlingEnabled]` attribute and `SystemGroupsUpdateGate`
-
 ## Safe Component Mutation
 
 This is critical — incorrect mutation causes silent data loss:
@@ -113,18 +101,8 @@ var component = world.Get<MyComponent>(entity);
 component.Value = 42; // This modification is lost!
 ```
 
-**Rules:**
-- Use `ref var` to modify components, **never `var` alone**
-- Apply structural changes (`World.Add`, `World.Remove`) **after all `ref` mutations** — structural changes invalidate existing refs
-- Pass `Entity` by value if making structural changes (not `in Entity`)
-- Use `ref` for mutation, `in` for read-only, `ref readonly` for immutable refs
+> See CLAUDE.md §4–5 for the full performance and mutation rules. Key additions here:
 
-## Component Design Principles
-
-- SDK and custom components are treated equally in ECS
-- Add extra data using **separate components** — do not modify SDK component definitions
-- Prefer stateful components over frequent structural changes (adding/removing)
-- Use `AssetPromise<T>` for async-loaded assets; always operate via `ref`
 - Components should be data-only (no logic); may have pool, static factory, or non-empty constructor
 - Prefer `struct` for components; use `class` for MonoBehaviors, existing class lifecycle, or cross-world references
 
@@ -177,7 +155,7 @@ Prefer `ReleasePoolableComponentSystem<T, TProvider>` for pooled disposals.
 
 ### Code Example — Full Cleanup Lifecycle
 
-From `CleanUpAudioSourceSystem.cs`:
+From `CleanUpAudioSourceSystem.cs` — shows all three triggers + `IForEach<T>` struct pattern:
 
 ```csharp
 [UpdateInGroup(typeof(CleanUpGroup))]
@@ -187,12 +165,6 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
 {
     private ReleaseAudioSourceComponent releaseAudioSourceComponent;
 
-    private CleanUpAudioSourceSystem(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry)
-        : base(world)
-    {
-        releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, poolsRegistry);
-    }
-
     protected override void Update(float t)
     {
         HandleEntityDestructionQuery(World);
@@ -200,19 +172,13 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
         World.Remove<AudioSourceComponent>(in HandleComponentRemoval_QueryDescription);
     }
 
-    [Query]
-    [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
+    [Query] [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
     private void HandleComponentRemoval(ref AudioSourceComponent component)
-    {
-        releaseAudioSourceComponent.Update(ref component);
-    }
+        => releaseAudioSourceComponent.Update(ref component);
 
-    [Query]
-    [All(typeof(DeleteEntityIntention))]
+    [Query] [All(typeof(DeleteEntityIntention))]
     private void HandleEntityDestruction(ref AudioSourceComponent component)
-    {
-        releaseAudioSourceComponent.Update(ref component);
-    }
+        => releaseAudioSourceComponent.Update(ref component);
 
     public void FinalizeComponents(in Query query)
     {
@@ -221,23 +187,16 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
             ref releaseAudioSourceComponent);
     }
 
-    // IForEach<T> struct pattern for allocation-free inline queries
+    // IForEach<T> struct — allocation-free callback for InlineQuery
     private readonly struct ReleaseAudioSourceComponent : IForEach<AudioSourceComponent>
     {
         private readonly World world;
         private readonly IComponentPool componentPool;
 
-        public ReleaseAudioSourceComponent(World world, IComponentPoolsRegistry poolsRegistry)
-        {
-            this.world = world;
-            poolsRegistry.TryGetPool(typeof(AudioSource), out componentPool);
-        }
-
         public void Update(ref AudioSourceComponent component)
         {
             component.CleanUp(world);
-            if (component.AudioSource != null)
-                componentPool.Release(component.AudioSource);
+            if (component.AudioSource != null) componentPool.Release(component.AudioSource);
             component.Dispose();
         }
     }

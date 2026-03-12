@@ -1,6 +1,6 @@
 ---
 name: plugin-architecture
-description: "Plugin and dependency injection architecture. Use when adding or modifying plugins (IDCLWorldPlugin, IDCLGlobalPlugin), plugin settings, containers (StaticContainer, DynamicWorldContainer), assembly structure, or Addressables asset provisioning."
+description: "Plugin and dependency injection architecture. Use when adding or modifying plugins (IDCLWorldPlugin, IDCLGlobalPlugin), InjectToWorld, system registration, dependency injection, plugin settings, containers (StaticContainer, DynamicWorldContainer), assembly structure (asmdef, asmref, assembly definition), or Addressables asset provisioning."
 user-invocable: false
 ---
 
@@ -205,11 +205,12 @@ Registers SDK component types for CRDT deserialization. Each SDK component must 
 ### Core principles
 
 - **Strive for large assemblies instead of splitting into small ones.** Avoid creating new `.asmdef` or `.asmref` files unless necessary — the folder or a parent folder may already be covered by an existing assembly definition.
+  - **Why:** Fewer assemblies reduces compilation time and simplifies dependency resolution. Each new `.asmdef` adds build overhead and creates another node in the dependency graph.
 - When a new assembly reference **is** needed, prefer `.asmref` to fold code into an existing large assembly rather than introducing a new `.asmdef`.
 - Only create a dedicated `.asmdef` when the feature **must be referenced by other assemblies** or requires strict dependency isolation.
 - Control exposure via `public` / `internal` access levels — this is the primary encapsulation tool, not assembly boundaries.
 - `DCL.Plugins` is the only "global" assembly: it can reference any assembly but should not be referenced itself (except by tests).
-- Plugins produce systems without knowledge about unrelated assemblies.
+  - **Why:** This prevents circular references and keeps plugin isolation intact — plugins produce systems without knowledge about unrelated assemblies.
 
 ### Assembly rules for ECS Systems
 

@@ -12,6 +12,8 @@ Before writing or modifying any code, follow the code-standards skill for naming
 
 ---
 
+> For expanded patterns and code examples, see the **ecs-system-and-component-design** skill. For async patterns, see the **async-programming** skill. For component cleanup lifecycle, see both the ECS and **sdk-component-implementation** skills.
+
 ### 1. **ECS System Rules**
 
 * **Systems are the sole logic entry point for entities.**
