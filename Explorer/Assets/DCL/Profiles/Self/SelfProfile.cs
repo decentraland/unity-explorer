@@ -188,7 +188,7 @@ namespace DCL.Profiles.Self
         /// <summary>
         ///     The own profile resolved from the cache. Can be null if the profile hasn't been fetched yet.
         /// </summary>
-        private Profile? OwnProfile
+        public Profile? OwnProfile
         {
             get
             {

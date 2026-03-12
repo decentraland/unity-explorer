@@ -6,14 +6,13 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Profiles
 {
     public partial class Profile : IDirtyMarker, IDisposable
     {
-        private static readonly ThreadSafeObjectPool<Profile> POOL = new (
+        internal static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());
 
@@ -43,7 +42,7 @@ namespace DCL.Profiles
         public string? Hobbies { get; set; }
         public DateTime? Birthdate { get; set; }
         public int Version { get; set; }
-        public Avatar Avatar { get; set; }
+        public Avatar? Avatar { get; set; }
 
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
@@ -94,31 +93,36 @@ namespace DCL.Profiles
 
         public void Clear()
         {
-            Compact.Clear();
-            blocked?.Clear();
-            interests?.Clear();
-            links?.Clear();
+            // Replace the struct instead of calling Compact.Clear() which operates on a copy
+            GetCompact().Dispose();
+            compact = new CompactInfo();
+
+            blocked = null;
+            interests = null;
+            links = null;
             Birthdate = null;
-            Avatar.Clear();
+            Avatar = null;
             Country = null;
             Email = null;
             Gender = null;
             Description = null;
             Hobbies = null;
-            Language = default(string?);
-            Profession = default(string?);
-            Pronouns = default(string?);
+            Language = null;
+            Profession = null;
+            Pronouns = null;
             Version = default(int);
-            EmploymentStatus = default(string?);
+            EmploymentStatus = null;
+            RealName = null;
+            RelationshipStatus = null;
+            SexualOrientation = null;
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
-            ProfilePicture = null;
-            IsDirty = false;
+            IsDirty = true;
         }
 
         public static Profile NewRandomProfile(string? userId)
         {
-            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             return new Profile(
                 userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
@@ -150,7 +154,8 @@ namespace DCL.Profiles
 
         public bool IsSameProfile(Profile profile)
         {
-            if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
+            bool sameAvatar = Avatar == null ? profile.Avatar == null : Avatar.IsSameAvatar(profile.Avatar);
+            if (!sameAvatar) return false;
 
             return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
