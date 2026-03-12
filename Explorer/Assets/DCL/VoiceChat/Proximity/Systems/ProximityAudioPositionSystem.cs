@@ -60,14 +60,14 @@ namespace DCL.VoiceChat
             var minDistanceBinding = new ElementBinding<float>(2f,
                 evt => { if (configHolder.Config != null) configHolder.Config.ProximityMinDistance = evt.newValue; });
 
-            var maxDistanceBinding = new ElementBinding<float>(50f,
+            var maxDistanceBinding = new ElementBinding<float>(16f,
                 evt => { if (configHolder.Config != null) configHolder.Config.ProximityMaxDistance = evt.newValue; });
 
             var spreadBinding = new ElementBinding<float>(0f,
                 evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpread = evt.newValue; });
 
             var rolloffBinding = new EnumElementBinding<AudioRolloffMode>(
-                AudioRolloffMode.Logarithmic,
+                AudioRolloffMode.Custom,
                 onValueChange: mode => { if (configHolder.Config != null) configHolder.Config.ProximityRolloffMode = mode; });
 
             debugBuilder.TryAddWidget("Proximity Audio")
