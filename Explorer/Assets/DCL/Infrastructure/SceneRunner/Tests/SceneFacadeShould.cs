@@ -30,7 +30,6 @@ using DCL.WebRequests;
 using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.WebGL;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
@@ -59,6 +58,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
+
+#if UNITY_WEBGL
+using ECS.SceneLifeCycle.WebGL;
+#endif
 
 namespace SceneRunner.Tests
 {
