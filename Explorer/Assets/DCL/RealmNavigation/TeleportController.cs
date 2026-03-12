@@ -62,9 +62,7 @@ namespace DCL.RealmNavigation
 
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false)
         {
-            // #region agent log
             WebGLDebugLog.Log("TeleportController.TeleportAsync", "entry", $"parcel=({parcel.x},{parcel.y})", "H3");
-            // #endregion
             if (retrieveScene == null)
             {
                 world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport));
@@ -74,9 +72,7 @@ namespace DCL.RealmNavigation
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            // #region agent log
             WebGLDebugLog.Log("TeleportController.TeleportAsync", "ByParcelAsync result", $"sceneDef={(sceneDef != null ? "ok" : "null")} parcel=({parcel.x},{parcel.y})", "H3");
-            // #endregion
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
@@ -95,9 +91,7 @@ namespace DCL.RealmNavigation
                 return null;
             }
 
-            // #region agent log
             WebGLDebugLog.Log("TeleportController.TeleportAsync", "return WaitForSceneReadiness", $"parcel=({parcel.x},{parcel.y})", "H3");
-            // #endregion
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
     }

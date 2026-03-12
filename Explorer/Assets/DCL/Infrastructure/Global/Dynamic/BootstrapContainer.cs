@@ -21,7 +21,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Temp.Helper.WebClient;
-#if !UNITY_WEBGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
 using Global.Dynamic.LaunchModes;

@@ -70,14 +70,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 #endif
         }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         [DllImport("__Internal", EntryPoint = "GetDevicePixelRatio")]
         private static extern double GetDevicePixelRatioNative();
 #endif
 
         private static float GetDevicePixelRatio()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             return (float)GetDevicePixelRatioNative();
 #elif UNITY_WEBGL
             return 1f;

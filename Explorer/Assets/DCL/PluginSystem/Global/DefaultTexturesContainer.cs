@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using Global.AppArgs;
@@ -81,7 +81,13 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
 
-                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables: appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
+#if UNITY_WEBGL
+                var enableRawGltfWearables = false;
+#else
+                bool enableRawGltfWearables = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
+#endif
+
+                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables);
             });
         }
     }

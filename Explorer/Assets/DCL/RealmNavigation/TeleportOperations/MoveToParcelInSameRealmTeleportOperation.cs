@@ -3,8 +3,8 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using DCL.Utility.Exceptions;
+using SceneRunner.Scene.ExceptionsHandling;
 using System.Threading;
-using SceneRuntime;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {

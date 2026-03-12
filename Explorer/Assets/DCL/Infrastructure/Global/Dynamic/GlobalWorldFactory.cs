@@ -37,13 +37,15 @@ using System.Threading;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Roads.Systems;
-using DCL.SkyBox;
 using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using OwnAvatarLoaderFromDebugMenuSystem = DCL.AvatarRendering.AvatarShape.OwnAvatarLoaderFromDebugMenuSystem;
 using Temp.Helper.WebClient;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 
 namespace Global.Dynamic
 {
@@ -138,9 +140,15 @@ namespace Global.Dynamic
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+           ,
+            WebGLSceneUpdateQueue webglSceneUpdateQueue
+#endif
+        )
         {
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: start");
+
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
@@ -177,19 +185,19 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder, realmData);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder, realmData);
 
-#if !UNITY_WEBGL
-            // are replace by increasing radius
+            // Increasing radius: loads scenes by distance from camera. Required for Genesis (ScenesAreFixed=false).
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
-            // LoadPointersByIncreasingRadiusSystem depends on TerrainSystem/Plugin, thus it's disabled the system cannot operate properly // TODO
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, roadCoordinates, realmData, landscapeParcelData);
-#endif
 
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            ProcessWebGLSceneUpdatesSystem.InjectToWorld(ref builder, webglSceneUpdateQueue);
+#endif
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before partition pool");
@@ -221,6 +229,7 @@ namespace Global.Dynamic
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before pluginArgs");
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before foreach plugins");
+
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
             {
                 if (plugin == null)
@@ -228,10 +237,12 @@ namespace Global.Dynamic
                     WebGLDebugLog.LogError("GlobalWorldFactory.cs", "null plugin in globalPlugins list");
                     continue;
                 }
+
                 string pluginName = plugin.GetType().Name;
                 WebGLDebugLog.Log("GlobalWorldFactory.cs", "InjectToWorld", pluginName);
                 plugin.InjectToWorld(ref builder, pluginArgs);
             }
+
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before finalizeWorldSystems");
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
@@ -242,6 +253,7 @@ namespace Global.Dynamic
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), realmData, sceneLoadingLimit),
             };
+
             WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after finalizeWorldSystems array");
 
             SystemGroupWorld worldSystems = builder.Finish();

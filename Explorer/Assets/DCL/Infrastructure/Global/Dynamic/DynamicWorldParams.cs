@@ -1,4 +1,4 @@
-﻿using DCL.AssetsProvision;
+using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;

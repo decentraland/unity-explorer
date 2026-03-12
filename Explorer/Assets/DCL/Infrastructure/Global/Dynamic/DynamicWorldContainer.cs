@@ -296,7 +296,7 @@ namespace Global.Dynamic
 #if UNITY_WEBGL
                 lodCache = new NoOpLODCache();
                 roadCoordinates = new HashSet<Vector2Int>();
-                lodSettings = new LODSettingsStub();
+                lodSettings = new WebGLLODSettingsStub();
                 roadAssetsPool = new RoadAssetsPool(staticContainer.RealmData, new List<GameObject>(), null);
 #else
                 lodContainer = await LODContainer
@@ -506,13 +506,10 @@ namespace Global.Dynamic
             );
 #endif
 
-#if UNITY_WEBGL
-            RealmNavigationContainer? realmNavigatorContainer = null;
-#else
             var realmNavigatorContainer = RealmNavigationContainer.Create(
                     staticContainer,
                     bootstrapContainer,
-                    lodContainer,
+                    roadAssetsPool,
                     realmContainer,
 #if !NO_LIVEKIT_MODE
                     remoteEntities,
@@ -523,7 +520,6 @@ namespace Global.Dynamic
                     exposedGlobalDataContainer,
                     loadingScreen
                     );
-#endif
 
 
 #if !NO_LIVEKIT_MODE
@@ -839,9 +835,9 @@ namespace Global.Dynamic
             {
 #if !UNITY_WEBGL
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
-                new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
 #endif
+                new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
 
 #if !NO_LIVEKIT_MODE
                 new MultiplayerPlugin(

@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using SceneRuntime;
+using SceneRunner.Scene.ExceptionsHandling;
 
 namespace SceneRuntime.Apis
 {

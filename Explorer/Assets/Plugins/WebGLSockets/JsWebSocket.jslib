@@ -87,10 +87,13 @@ var dcl_ws_library = {
 
       ws.onmessage = (e) => {
         const q = LIB_GLOBAL.ws_queues[id];
+        if (!q) return; // socket may have been disposed
         if (typeof e.data === "string") {
           q.push({ t: 1, s: e.data });
+          console.log("[JsWebSocket] onmessage id=" + id + " text len=" + e.data.length);
         } else {
           q.push({ t: 0, b: new Uint8Array(e.data) });
+          console.log("[JsWebSocket] onmessage id=" + id + " binary len=" + e.data.byteLength);
         }
       };
     } catch (e) {
@@ -140,9 +143,12 @@ var dcl_ws_library = {
   WS_NextAvailableToReceive: function (id) {
     const q = LIB_GLOBAL.ws_queues[id];
     if (!q || q.length === 0) return -1;
-    return q[0].t;
+    const msgType = q[0].t;
+    console.log("[JsWebSocket] NextAvailableToReceive id=" + id + " queueLen=" + q.length + " type=" + (msgType === 0 ? "binary" : "text"));
+    return msgType;
   },
 
+  // bufferPtr/bufferLen: C# receive buffer (must be in Module heap for HEAPU8.set). Returns byte count, or -1 if buffer too small.
   WS_TryConsumeNextReceived: function (id, bufferPtr, bufferLen) {
     const q = LIB_GLOBAL.ws_queues[id];
     if (!q || q.length === 0) return 0;

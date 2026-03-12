@@ -17,7 +17,7 @@ using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 
 // ReSharper disable once RedundantUsingDirective
 using SceneRuntime.WebClient;
@@ -105,7 +105,7 @@ namespace SceneRuntime.Factory
 #endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // WebClient JavaScript engine uses native interop which requires the main thread
             await UniTask.SwitchToMainThread();
             return new WebClientSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
@@ -143,7 +143,7 @@ namespace SceneRuntime.Factory
             string streamingPath = Application.streamingAssetsPath;
             string url;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // In WebGL, Application.streamingAssetsPath already returns a full HTTP URL
             // e.g., "http://localhost:8800/StreamingAssets" or "http://localhost:8800/StreamingAssets/"
             // Normalize to ensure we have a trailing slash
@@ -163,7 +163,7 @@ namespace SceneRuntime.Factory
             string streamingPath = Application.streamingAssetsPath;
             string url;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // In WebGL, Application.streamingAssetsPath already returns a full HTTP URL
             // e.g., "http://localhost:8800/StreamingAssets" or "http://localhost:8800/StreamingAssets/"
             // Normalize to ensure we have a trailing slash

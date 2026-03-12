@@ -1,22 +1,13 @@
-﻿#if !UNITY_WEBGL
-
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
-using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.ResourcesUnloading;
 using DCL.SDKComponents.MediaStream.Settings;
-using DCL.WebRequests;
 using ECS.LifeCycle;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Audio;
 using DCL.SDKComponents.MediaStream;
 using UnityEngine;
 
@@ -62,12 +53,8 @@ namespace DCL.PluginSystem.World
         public class MediaPlayerPluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
-
             [field: SerializeField] public Material FlipMaterial { get; private set; }
-
             public VideoPrioritizationSettings VideoPrioritizationSettings;
         }
     }
 }
-
-#endif

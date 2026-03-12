@@ -1,7 +1,7 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.LOD.Systems;
+using DCL.LOD;
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
@@ -35,7 +35,7 @@ namespace DCL.RealmNavigation
         public static RealmNavigationContainer Create(
             StaticContainer staticContainer,
             BootstrapContainer bootstrapContainer,
-            LODContainer lodContainer,
+            RoadAssetsPool roadAssetsPool,
             RealmContainer realmContainer,
 
 #if !NO_LIVEKIT_MODE
@@ -48,9 +48,7 @@ namespace DCL.RealmNavigation
             IRoomHub roomHub,
 #endif
 
-#if !UNITY_WEBGL
             ILandscape landscape,
-#endif
 
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen)
@@ -71,12 +69,8 @@ namespace DCL.RealmNavigation
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
-
-#if !UNITY_WEBGL
                 new LoadLandscapeTeleportOperation(landscape),
-#endif
-
-                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
+                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
 
@@ -110,13 +104,9 @@ namespace DCL.RealmNavigation
                         bootstrapContainer.DecentralandUrlsSource, 
                         globalWorld, 
                         exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, 
-                        exposedGlobalDataContainer.CameraSamplingData, 
-                        staticContainer.LoadingStatus, 
-
-#if !UNITY_WEBGL
-                        landscape, 
-#endif
-
+                        exposedGlobalDataContainer.CameraSamplingData,
+                        staticContainer.LoadingStatus,
+                        landscape,
                         bootstrapContainer.Analytics!,
                         realmChangeOperations, 
                         teleportInSameRealmOperation

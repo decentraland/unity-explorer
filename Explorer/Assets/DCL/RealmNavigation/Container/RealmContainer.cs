@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens.LoadingScreen;

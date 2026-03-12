@@ -12,7 +12,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "85c179e410bbc7741e10b9a2799fa0ac9d0e6c7e"
+      "hash": "b716fb630f9ba13af4956ebb66bea35e17548cad"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -86,11 +86,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/webgpu-shader-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "55a640291aaa8430ac0c917d96e974b1b39bcb1e"
+      "hash": "8ec9ea2c5325c7ef6ca5afada5f2b9b7271b60e3"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",
@@ -110,7 +110,7 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
+      "hash": "a46452ddbbdad24be9044e282b0f0ba0dff99744"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -152,7 +152,7 @@
       "dependencies": {}
     },
     "com.unity.addressables": {
-      "version": "2.7.4",
+      "version": "2.8.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -162,13 +162,13 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "2.4.3",
+        "com.unity.scriptablebuildpipeline": "2.5.2",
         "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.animation.rigging": {
-      "version": "1.4.0",
+      "version": "1.4.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -179,7 +179,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.26",
+      "version": "1.8.28",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -239,7 +239,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.38",
+      "version": "3.0.39",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -248,16 +248,16 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.25",
+      "version": "2.0.26",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.31"
+        "com.unity.test-framework": "1.1.33"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.inputsystem": {
-      "version": "1.17.0",
+      "version": "1.18.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -283,7 +283,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.memoryprofiler": {
-      "version": "1.1.9",
+      "version": "1.1.11",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -319,7 +319,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.performance.profile-analyzer": {
-      "version": "1.2.4",
+      "version": "1.3.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -365,7 +365,7 @@
       }
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "2.4.3",
+      "version": "2.5.2",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -432,7 +432,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.8.9",
+      "version": "1.8.10",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -473,11 +473,10 @@
       "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "version": "file:decentraland.renderfeatures",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "dd23d7ffc0deb432c8442979b60e40c1e2d3f007"
+      "source": "embedded",
+      "dependencies": {}
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",

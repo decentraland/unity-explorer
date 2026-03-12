@@ -1,4 +1,4 @@
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
@@ -31,6 +31,8 @@ namespace SceneRuntime.WebClient
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
         private int nextUint8Array;
         private EngineApiWrapper? engineApi;
+        private readonly string initCode;
+        private bool initCodeExecuted;
 
         public IRuntimeHeapInfo? RuntimeHeapInfo { get; private set; }
 
@@ -46,12 +48,12 @@ namespace SceneRuntime.WebClient
         {
             resetableSource = new JSTaskResolverResetable();
             engine = engineFactory.Create(sceneShortInfo);
-            
+
             // Cast to WebClientJavaScriptEngine to access RegisterModule
             var webClientEngine = engine as WebClientJavaScriptEngine;
             if (webClientEngine == null)
                 throw new InvalidOperationException("WebClientSceneRuntimeImpl requires a WebClientJavaScriptEngine");
-            
+
             var typedArrayConverter = new WebClientTypedArrayConverter();
             jsApiBunch = new JsApiBunch(engine, typedArrayConverter);
 
@@ -62,7 +64,7 @@ namespace SceneRuntime.WebClient
 
             // Compile and register the scene script
             ICompiledScript sceneScript = engine.Compile(sourceCode).EnsureNotNull();
-            
+
             // Register the scene script so JavaScript can look it up via require('~scene.js')
             if (sceneScript is WebGLCompiledScript webglSceneScript)
                 webClientEngine.RegisterModule("~scene.js", webglSceneScript.ScriptId);
@@ -71,10 +73,10 @@ namespace SceneRuntime.WebClient
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            // Execute init code - this is where require() will be called
-            engine.Execute(initCode);
-
-            engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+            // Defer init code until ExecuteSceneJson(), which runs after RegisterAll().
+            // Init and required modules (e.g. WebSocketApi) expect UnityWebSocketApi and other host APIs to be already registered.
+            this.initCode = initCode;
+            initCodeExecuted = false;
 
             engine.AddHostObject("__resetableSource", resetableSource);
 
@@ -141,6 +143,13 @@ namespace SceneRuntime.WebClient
 
         public void ExecuteSceneJson()
         {
+            if (!initCodeExecuted)
+            {
+                engine.Execute(initCode);
+                engine.Execute("globalThis.ENABLE_SDK_TWEEN_SEQUENCE = false;");
+                initCodeExecuted = true;
+            }
+
             // Use globalThis assignments instead of const so variables are accessible in later Evaluate calls
             engine.Execute(@"
             globalThis.__internalScene = require('~scene.js')
@@ -152,12 +161,12 @@ namespace SceneRuntime.WebClient
                     __resetableSource.Reject(e.stack)
                 }
             }
-            globalThis.__internalOnUpdate = async function (dt) {
+            globalThis.__internalOnUpdate = function (dt) {
                 try {
-                    await globalThis.__internalScene.onUpdate(dt)
+                    globalThis.__internalScene.onUpdate(dt)
                     __resetableSource.Completed()
                 } catch(e) {
-                    __resetableSource.Reject(e.stack)
+                    __resetableSource.Reject(e.stack || String(e))
                 }
             }
         ");
@@ -189,6 +198,9 @@ namespace SceneRuntime.WebClient
 
         public UniTask StartScene()
         {
+            if (isDisposingTokenSource.IsCancellationRequested)
+                return UniTask.CompletedTask;
+
             resetableSource.Reset();
             startFunc.InvokeAsFunction();
             return resetableSource.Task;
@@ -196,6 +208,9 @@ namespace SceneRuntime.WebClient
 
         public UniTask UpdateScene(float dt)
         {
+            if (isDisposingTokenSource.IsCancellationRequested)
+                return UniTask.CompletedTask;
+
             nextUint8Array = 0;
             IRuntimeHeapInfo? heapInfo = engine.GetRuntimeHeapInfo();
             RuntimeHeapInfo = heapInfo;
