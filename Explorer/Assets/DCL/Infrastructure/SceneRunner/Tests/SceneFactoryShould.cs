@@ -16,6 +16,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.WebGL;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
@@ -75,7 +76,11 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<DCL.Clipboard.ISystemClipboard>());
+                Substitute.For<DCL.Clipboard.ISystemClipboard>()
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                , new WebGLSceneUpdateQueue()
+#endif
+                );
         }
 
         [TearDown]

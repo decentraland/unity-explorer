@@ -62,7 +62,7 @@ namespace DCL.Web3.Authenticators
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
         private VerificationWeb3Delegate? signatureVerificationCallback;
 
-        //private 
+        //private
         public    DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
@@ -241,7 +241,7 @@ namespace DCL.Web3.Authenticators
             // Also cancel code verification if that's what was hanging (during Login)
             codeVerificationTask?.TrySetCanceled();
         }
-        
+
         private void AddVerificationListener(VerificationWeb3Delegate callback) =>
             signatureVerificationCallback = callback;
 
@@ -354,7 +354,7 @@ namespace DCL.Web3.Authenticators
         private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
 #if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG  
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
             try
@@ -504,7 +504,6 @@ namespace DCL.Web3.Authenticators
                 });
 
                 authApiWebSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
-
                 authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
                 authApiWebSocket.On("request-validation-status", ProcessCodeVerificationStatus);
                 authApiWebSocket.OnDisconnected += OnWebSocketDisconnected;

@@ -46,6 +46,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using SceneRunner.Mapping;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
@@ -98,9 +99,7 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
 
-#if !UNITY_WEBGL
-        public MediaPlayerContainer MediaContainer { get; private set; }
-#endif
+        public MediaPlayerContainer? MediaContainer { get; private set; }
 
         public ProfilesContainer ProfilesContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
@@ -231,10 +230,12 @@ namespace Global
 
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
-#if !UNITY_WEBGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            if (!BrowserUtils.IsSafari())
+                container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
+#else
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
 #endif
-
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -293,7 +294,7 @@ namespace Global
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
-            container.ECSWorldPlugins = new IDCLWorldPlugin[]
+            container.ECSWorldPlugins = new IDCLWorldPlugin?[]
             {
 #if UNITY_WEBGL
                 new GltfContainerPluginWebGL(sharedDependencies.FrameTimeBudget, sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneReadinessReportQueue, container.LoadingStatus, container.GltfContainerAssetsCache),
@@ -306,15 +307,15 @@ namespace Global
 
 #if !UNITY_WEBGL
                 new NFTShapePlugin(
-                        decentralandUrlsSource, 
-                        container.assetsProvisioner, 
-                        sharedDependencies.FrameTimeBudget, 
-                        componentsContainer.ComponentPoolsRegistry, 
-                        container.WebRequestsContainer.WebRequestController, 
+                        decentralandUrlsSource,
+                        container.assetsProvisioner,
+                        sharedDependencies.FrameTimeBudget,
+                        componentsContainer.ComponentPoolsRegistry,
+                        container.WebRequestsContainer.WebRequestController,
                         container.CacheCleaner
 
 #if !NO_LIVEKIT_MODE
-                        , container.MediaContainer.mediaFactoryBuilder
+                        , container.MediaContainer?.mediaFactoryBuilder
 #endif
 
                         ),
@@ -322,13 +323,8 @@ namespace Global
 
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry, assetsProvisioner),
                 new MaterialsPlugin(
-                        sharedDependencies
-
-#if !UNITY_WEBGL
-                        , container.MediaContainer.mediaFactoryBuilder
-#endif
-
-                        ),
+                        sharedDependencies,
+                        container.MediaContainer?.mediaFactoryBuilder),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
@@ -346,9 +342,7 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
 
-#if !UNITY_WEBGL
-                container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
-#endif
+                container.MediaContainer?.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
@@ -370,7 +364,7 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
-            };
+            }.OfType<IDCLWorldPlugin>().ToArray();
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
 
@@ -392,26 +386,20 @@ namespace Global
         }
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
-#if !UNITY_WEBGL
         {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success)) results = await UniTask.WhenAll(
-                settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct),
-                settings.InitializePluginAsync(target.MediaContainer, ct)
-            );
+            var staticTask    = settings.InitializePluginAsync(target, ct);
+            var characterTask = settings.InitializePluginAsync(target.CharacterContainer, ct);
 
-            return results.Item1.success && results.Item2.success && results.Item3.success;
-        }
-#else
-        {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
-                settings.InitializePluginAsync(target, ct),
-                settings.InitializePluginAsync(target.CharacterContainer, ct)
-            );
+            if (target.MediaContainer != null)
+            {
+                var mediaTask = settings.InitializePluginAsync(target.MediaContainer, ct);
+                var results   = await UniTask.WhenAll(staticTask, characterTask, mediaTask);
+                return results.Item1.success && results.Item2.success && results.Item3.success;
+            }
 
-            return results.Item1.success && results.Item2.success;
+            var baseResults = await UniTask.WhenAll(staticTask, characterTask);
+            return baseResults.Item1.success && baseResults.Item2.success;
         }
-#endif
 
     }
 }

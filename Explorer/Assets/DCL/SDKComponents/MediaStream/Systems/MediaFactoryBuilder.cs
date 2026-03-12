@@ -1,6 +1,4 @@
-﻿#if !UNITY_WEBGL
-
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
@@ -31,13 +29,13 @@ namespace DCL.SDKComponents.MediaStream
         public MediaFactoryBuilder(
 
 #if !NO_LIVEKIT_MODE
-                ObjectProxy<IRoomHub> roomHub, 
+                ObjectProxy<IRoomHub> roomHub,
 #endif
 
-                IWebRequestController webRequestController, 
+                IWebRequestController webRequestController,
                 MediaVolume volumeBus,
-                IPerformanceBudget performanceBudget, 
-                MediaPlayer mediaPlayerPrefab, 
+                IPerformanceBudget performanceBudget,
+                MediaPlayer mediaPlayerPrefab,
                 IObjectPool<RenderTexture> videoTexturesPool)
         {
 
@@ -55,21 +53,18 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
             new (
-                    sceneDeps.SceneData, 
+                    sceneDeps.SceneData,
 
 #if !NO_LIVEKIT_MODE
-                    roomHub.StrictObject.StreamingRoom(), 
+                    roomHub.StrictObject.StreamingRoom(),
 #endif
-
-                    mediaPlayerCustomPool, 
+                    mediaPlayerCustomPool,
                     sceneDeps.SceneStateProvider,
-                    volumeBus, 
-                    videoTexturesPool, 
+                    volumeBus,
+                    videoTexturesPool,
                     sceneDeps.EntitiesMap,
-                    world, 
-                    webRequestController, 
+                    world,
+                    webRequestController,
                     performanceBudget);
     }
 }
-
-#endif

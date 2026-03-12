@@ -8,7 +8,7 @@ module.exports.sendBinary = async function(message) {
     
     const resultData = UnityCommunicationsControllerApi.SendBinary(message.data, peerData)
     return {
-        data: resultData
+        data: resultData != null ? resultData : []
     };
 }
 

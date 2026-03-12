@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
 
         private void AddOrUpdateHighlight(in Entity entity, bool isAtDistance)
         {
-            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
+            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 
@@ -93,7 +93,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
+                RenderFeature_ObjectHighlight.HIGHLIGHTED_OBJECTS.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
             }
         }
 
@@ -102,7 +102,7 @@ namespace DCL.Interaction.Systems
 
         private void RemoveHighlight(in Entity entity)
         {
-            using var scope = ListPool<Renderer>.Get(out var renderers)!;
+            using var scope = ListPool<Renderer>.Get(out var renderers);
 
             AddRenderersFromEntity(entity, renderers!);
 
@@ -112,7 +112,7 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                RenderFeature_ObjectHighlight.HighlightedObjects.Disparage(renderers);
+                RenderFeature_ObjectHighlight.HIGHLIGHTED_OBJECTS.Disparage(renderers);
             }
         }
 

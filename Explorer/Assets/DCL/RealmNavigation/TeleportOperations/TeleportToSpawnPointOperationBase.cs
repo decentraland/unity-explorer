@@ -11,7 +11,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using SceneRuntime;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Linq;
 using System.Threading;
@@ -43,14 +43,11 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct)
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
-            float worldX = (parcel.x * 16f) + 8f;
-            float worldZ = (parcel.y * 16f) + 8f;
-            WebGLDebugLog.Log("TeleportStartupOperation", "TeleportToSpawnPoint", $"parcel=({parcel.x},{parcel.y}) worldPos=({worldX:F1},{worldZ:F1})");
-#endif
+            WebGLDebugLog.Log("TeleportToSpawnPointOperationBase.InternalExecuteAsync", "start", $"parcel=({parcel.x},{parcel.y})", "H2");
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
             EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel);
+            WebGLDebugLog.Log("TeleportToSpawnPointOperationBase.InternalExecuteAsync", "done", $"parcel=({parcel.x},{parcel.y}) result={res.Success}", "H2");
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
@@ -96,7 +93,10 @@ namespace DCL.RealmNavigation.TeleportOperations
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
-            return await waitForSceneReadiness.ToUniTask();
+            WebGLDebugLog.Log("TeleportToSpawnPointOperationBase.InitializeTeleportToSpawnPointAsync", "await WaitForSceneReadiness", $"parcel=({parcelToTeleport.x},{parcelToTeleport.y})", "H2");
+            var result = await waitForSceneReadiness.ToUniTask();
+            WebGLDebugLog.Log("TeleportToSpawnPointOperationBase.InitializeTeleportToSpawnPointAsync", "WaitForSceneReadiness done", $"parcel=({parcelToTeleport.x},{parcelToTeleport.y}) success={result.Success}", "H2");
+            return result;
         }
 
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(

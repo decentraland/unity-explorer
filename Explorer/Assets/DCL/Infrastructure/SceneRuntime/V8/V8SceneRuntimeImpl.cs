@@ -5,6 +5,7 @@ using DCL.Utilities.Extensions;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules.EngineApi;

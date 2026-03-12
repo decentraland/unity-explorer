@@ -1,6 +1,4 @@
-﻿#if !UNITY_WEBGL
-
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.CharacterCamera;
@@ -103,5 +101,3 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
-
-#endif

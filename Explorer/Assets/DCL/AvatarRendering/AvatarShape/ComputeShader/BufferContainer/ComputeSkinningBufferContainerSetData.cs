@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         // Constant buffer works on Mac but not on Windows. WebGPU expects Storage (Structured), not Uniform (Constant).
         static ComputeBufferType InputBufferType()
         {
-#if UNITY_WEBGL && !UNITY_EDITOR
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             return ComputeBufferType.Structured;
 #else
             return ComputeBufferType.Constant;

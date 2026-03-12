@@ -237,7 +237,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.Model is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
+                        //TODO WEBGL -> DISABLED FOR NOW as it can spam the console until ABs are properly built
+                        //ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading \n the DTO");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -245,7 +246,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     // emote failed to load? remove intent
                     if (emote.DTO.assetBundleManifestVersion is { assetBundleManifestRequestFailed: true } and { IsLSDAsset: false })
                     {
-                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
+                        //TODO WEBGL -> DISABLED FOR NOW as it can spam the console until ABs are properly built
+                        //ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} since it failed loading the manifest");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -270,8 +272,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
+
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    {
+                        // TODO WEBGL: DISABLED FOR NOW -> without the ABs many emotes cannot be played which generates a lot of SPAM
+                        // Until we have working AB converter this is necessary to keep the console clean
+                        //ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    }
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

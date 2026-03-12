@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
 using REnum;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
@@ -13,7 +14,7 @@ namespace DCL.SDKComponents.MediaStream
         STOPPED,
     }
 
-    public readonly struct AvProPlayer
+    public readonly struct AvProPlayer : IEquatable<AvProPlayer>
     {
         public readonly MediaPlayer AvProMediaPlayer;
         public readonly MediaPlayerCustomPool MediaPlayerCustomPool;
@@ -26,6 +27,15 @@ namespace DCL.SDKComponents.MediaStream
             if (AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
                 AvProMediaPlayer.SetAudioSource(audioSource);
         }
+
+        public bool Equals(AvProPlayer other) =>
+            AvProMediaPlayer.Equals(other.AvProMediaPlayer) && MediaPlayerCustomPool.Equals(other.MediaPlayerCustomPool);
+
+        public override bool Equals(object? obj) =>
+            obj is AvProPlayer other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(AvProMediaPlayer, MediaPlayerCustomPool);
     }
 
     [REnum]
@@ -120,7 +130,7 @@ namespace DCL.SDKComponents.MediaStream
                 );
 
         public float SpatialMaxDistance => Match(
-            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance 
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance
             ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE
 #if !NO_LIVEKIT_MODE && !UNITY_WEBGL
             , static _ => 0f

@@ -253,6 +253,9 @@ ShaderVariantCollection:
   - first: {fileID: -6465566751694194690, guid: 9920c1f1781549a46ba081a2a15a16ec, type: 3}
     second:
       variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _CLUSTER_LIGHT_LOOP
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+        passType: 0
       - keywords: BACKFACE_NORMAL_MODE_MIRROR EFFECT_BILLBOARD INSTANCING_ON LOD_FADE_CROSSFADE
           _WINDQUALITY_FASTEST
         passType: 8

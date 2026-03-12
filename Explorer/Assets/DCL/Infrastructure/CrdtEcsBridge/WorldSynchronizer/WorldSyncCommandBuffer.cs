@@ -123,8 +123,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         return CRDTReconciliationEffect.NoChanges;
                     }
 
-                    if (message.ComponentId == 1081)
-                        UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
+                    //TODO WEBGL: Disabled for now, we can use this to find when we receive specific Components Ids to debug scene issues on WebGL
+                    //if (message.ComponentId == 1081)
+                        //UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
 
                     // Store the first and the last result
                     bool componentBatchExists;
@@ -236,7 +237,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     if (isNewEntity)
                     {
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
-                        UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
+                        //UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
                     }
 
                     foreach (BatchState batchState in componentsBatch.Values)
@@ -244,10 +245,11 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
 
-                        // Skip logging for Transform (componentId=1) to reduce spam
-                        if (batchState.crdtMessage.ComponentId != 1)
-                            UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
-                        
+                        // Skip logging for Transform (1)
+                        //if (batchState.crdtMessage.ComponentId != 1)
+                        // Commented log for now, we might need it to debug scene issues in the future.
+                            //UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
+
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
                     }

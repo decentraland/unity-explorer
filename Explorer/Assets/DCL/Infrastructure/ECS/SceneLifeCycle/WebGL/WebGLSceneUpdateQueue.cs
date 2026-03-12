@@ -1,0 +1,57 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+
+using DCL.Diagnostics;
+using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
+using System;
+using System.Collections.Generic;
+
+namespace ECS.SceneLifeCycle.WebGL
+{
+    /// <summary>
+    ///     Queue for WebGL scene updates. Scenes enqueue ticks; main loop drains before scene ECS runs.
+    /// </summary>
+    public class WebGLSceneUpdateQueue
+    {
+        private const int QUEUE_CAPACITY = 32;
+        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> pending = new (QUEUE_CAPACITY);
+        private readonly List<(ISceneFacade Scene, float Dt, ISceneExceptionsHandler ExceptionHandler)> processing = new (QUEUE_CAPACITY);
+
+        public void Enqueue(ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler)
+        {
+            pending.Add((scene, dt, exceptionHandler));
+        }
+
+        public void ProcessPendingUpdates()
+        {
+            if (pending.Count == 0)
+                return;
+
+            processing.Clear();
+            processing.AddRange(pending);
+            pending.Clear();
+
+            for (var i = 0; i < processing.Count; i++)
+            {
+                (ISceneFacade scene, float dt, ISceneExceptionsHandler exceptionHandler) = processing[i];
+
+                try
+                {
+                    scene.Tick(dt).GetAwaiter().GetResult();
+                    scene.OpenEcsGate(); // ensure gate is open for scene-world ECS this frame
+                    scene.SceneStateProvider.TickNumber++;
+                }
+                catch (JavaScriptExecutionException e) { exceptionHandler.OnJavaScriptException(e); }
+                catch (InvalidOperationException e)
+                {
+                    // Scene was disposed before this queued tick could run; skip it silently
+                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Skipped tick on disposed scene '{scene.Info}': {e.Message}");
+                }
+            }
+
+            processing.Clear();
+        }
+    }
+}
+
+#endif

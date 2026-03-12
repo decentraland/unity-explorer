@@ -429,17 +429,16 @@ mergeInto(LibraryManager.library, {
             // Create require function FIRST and add it to global
             // so that globalAssignments will include it
             var requireFunc = function(moduleName) {
-                // console.log('[require] Loading module:', moduleName);
                 
                 var scriptId = context.modules[moduleName];
                 if (!scriptId) {
-                    console.warn('[require] Module not found:', moduleName, 'Available:', Object.keys(context.modules));
+                    console.error('[require] Module not found:', moduleName, 'Available:', Object.keys(context.modules));
                     return {};
                 }
                 
                 var compiledData = context.compiledScripts[scriptId];
                 if (!compiledData || !compiledData.source) {
-                    console.warn('[require] Compiled script not found for:', moduleName);
+                    console.error('[require] Compiled script not found for:', moduleName);
                     return {};
                 }
                 
@@ -487,7 +486,6 @@ mergeInto(LibraryManager.library, {
                         return {};
                     }
                 } else {
-                    // console.log('[require] No CommonJS wrapper detected, executing directly');
                     var moduleGlobalAssignments = getGlobalAssignments();
                     var moduleCode = moduleGlobalAssignments + '\n' + source;
                     
@@ -662,23 +660,25 @@ mergeInto(LibraryManager.library, {
         const contextIdStr = UTF8ToString(contextId);
         const nameStr = UTF8ToString(name);
         const objectIdStr = UTF8ToString(objectId);
-        // console.log('[JSContext_AddHostObject] contextId:', contextIdStr, 'name:', nameStr);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_AddHostObject] Context not found!');
             return 0;
         }
-        // console.log('[JSContext_AddHostObject] context.global before add, has name?:', nameStr in context.global);
         
         context.hostObjects[objectIdStr] = nameStr;
         
         // Helper function to call the registered C# callback for host object method invocation (void return)
         const invokeHostObjectCallback = function(methodName, args) {
             if (!hostObjectCallback) {
-                console.warn('[JSContext] No host object callback registered');
+                console.error('[JSContext] No host object callback registered');
                 return;
             }
-            
+            // Guard: context was disposed while a JS microtask was still pending
+            if (!window.__dclJSContexts || !window.__dclJSContexts[contextIdStr]) {
+                return;
+            }
+
             // Allocate strings on the heap for the callback
             const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
             const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
@@ -738,10 +738,14 @@ mergeInto(LibraryManager.library, {
         // Helper function to call C# and get a return value
         const invokeHostObjectCallbackWithReturn = function(methodName, args) {
             if (!hostObjectCallbackWithReturn) {
-                console.warn('[JSContext] No host object callback with return registered');
+                console.error('[JSContext] No host object callback with return registered');
                 return null;
             }
-            
+            // Guard: context was disposed while a JS microtask was still pending
+            if (!window.__dclJSContexts || !window.__dclJSContexts[contextIdStr]) {
+                return null;
+            }
+
             // Allocate strings on the heap for the callback
             const contextIdLen = lengthBytesUTF8(contextIdStr) + 1;
             const objectIdLen = lengthBytesUTF8(objectIdStr) + 1;
@@ -749,8 +753,8 @@ mergeInto(LibraryManager.library, {
             const argsJson = serializeArgs(args);
             const argsJsonLen = lengthBytesUTF8(argsJson) + 1;
             
-            // Allocate result buffer (start with 128KB to handle large CRDT state responses)
-            const resultBufferSize = 131072;
+            // Allocate result buffer (2MB to handle large CRDT state responses)
+            const resultBufferSize = 2097152;
             
             const contextIdPtr = _malloc(contextIdLen);
             const objectIdPtr = _malloc(objectIdLen);
@@ -772,14 +776,14 @@ mergeInto(LibraryManager.library, {
                     console.warn('[JSContext] Result buffer too small, needed:', -resultLen);
                     return null;
                 }
-                
+
                 if (resultLen === 0) {
                     return null;
                 }
-                
+
                 // Read the result string from the buffer
                 const resultStr = UTF8ToString(resultBufferPtr, resultLen);
-                
+
                 // Parse and deserialize the result
                 return deserializeResult(resultStr, context);
             } finally {
@@ -794,23 +798,18 @@ mergeInto(LibraryManager.library, {
         // Helper function to deserialize C# result with special type handling
         // Note: contextIdStr is captured from outer closure in JSContext_AddHostObject
         const deserializeResult = function(resultStr, context) {
-            // console.log('[deserializeResult] contextId:', contextIdStr, 'Input resultStr:', typeof resultStr, resultStr ? resultStr.substring(0, 200) : resultStr);
-            // console.log('[deserializeResult] Context objectInstances keys:', Object.keys(context.objectInstances));
             
             if (!resultStr || resultStr === 'null') {
-                // console.log('[deserializeResult] Returning null (empty or null string)');
                 return null;
             }
             
             try {
                 const parsed = JSON.parse(resultStr);
-                // console.log('[deserializeResult] Parsed type:', typeof parsed, Array.isArray(parsed) ? 'array' : '');
-                
+                                
                 // Handle special types (objects with markers)
                 if (parsed && typeof parsed === 'object') {
                     // ByteArray type - convert Base64 to Uint8Array
                     if (parsed.__type === 'ByteArray') {
-                        // console.log('[deserializeResult] Returning ByteArray');
                         if (parsed.isEmpty) {
                             return new Uint8Array(0);
                         }
@@ -826,34 +825,35 @@ mergeInto(LibraryManager.library, {
                     // Object reference - look up in context
                     if (parsed.__objectRef) {
                         const obj = context.objectInstances[parsed.__objectRef];
-                        // console.log('[deserializeResult] Returning objectRef:', parsed.__objectRef, 'found:', !!obj);
                         return obj || parsed;
                     }
                     
                     // Error response
                     if (parsed.error) {
-                        console.warn('[JSContext] C# method returned error:', parsed.error);
+                        console.error('[JSContext] C# method returned error:', parsed.error);
                         return null;
                     }
                     
-                    // Plain object without special markers - return unparsed string
-                    // so the caller (SDK) can parse it if needed
-                    // console.log('[deserializeResult] Plain object, returning unparsed string');
-                    return resultStr;
+                    // Return the parsed object so callers can access properties directly (e.g. response.data, data.text)
+                    return parsed;
                 }
                 
                 // Primitives (string, number, boolean) - return parsed value
-                // console.log('[deserializeResult] Returning primitive:', typeof parsed);
+                // Empty strings from C# cannot be valid JSON - return null so callers get JSON.parse(null)=null rather than crashing
+                if (typeof parsed === 'string' && parsed.length === 0) {
+                    console.warn('[deserializeResult] Bridge method returned empty string, returning null');
+                    return null;
+                }
                 return parsed;
             } catch (e) {
                 // If JSON parse fails, return the raw string
-                // console.log('[deserializeResult] JSON parse failed, returning raw string:', e.message);
+                console.error('[deserializeResult] JSON parse failed, returning raw string:', e.message);
                 return resultStr;
             }
         };
         
-        // Create a proxy that handles host object methods
-        // Different objects get different stub implementations
+        // Create a proxy that dispatches host object method calls to C# via the registered callback.
+        // Special objects (UnityOpsApi, __resetableSource) have JS-side handling for specific methods.
         const hostObjectName = nameStr;
         const hostObjectProxy = new Proxy({}, {
             get: function(target, prop, receiver) {
@@ -869,12 +869,12 @@ mergeInto(LibraryManager.library, {
                                 const moduleName = args[0];
                                 const scriptId = context.modules[moduleName];
                                 if (!scriptId) {
-                                    console.warn('Module not found:', moduleName);
+                                    console.error('Module not found:', moduleName);
                                     return null;
                                 }
                                 const compiledData = context.compiledScripts[scriptId];
                                 if (!compiledData) {
-                                    console.warn('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
+                                    console.error('Compiled script not found for module:', moduleName, 'scriptId:', scriptId);
                                     return null;
                                 }
                                 
@@ -899,19 +899,14 @@ mergeInto(LibraryManager.library, {
                                 
                                 return evalFunc(globalObj, internalRequire);
                             }
-                            if (methodName === 'Log') { console.log('[Scene]', args[0]); return null; }
-                            if (methodName === 'Warning') { console.warn('[Scene]', args[0]); return null; }
-                            if (methodName === 'Error') { console.error('[Scene]', args[0]); return null; }
-                        }
+                            }
                         
                         // === Generic handler for all other registered host objects ===
                         // This calls the actual C# method via the callback mechanism
                         // Skip for __resetableSource which has special void-return handling below
                         if (hostObjectName !== '__resetableSource') {
                             // Call the C# method and get the return value
-                            // console.log('[HostObject] Calling:', hostObjectName + '.' + methodName);
                             const result = invokeHostObjectCallbackWithReturn(methodName, args);
-                            // console.log('[HostObject] Result:', typeof result, result);
                             return result;
                         }
                         
@@ -935,9 +930,6 @@ mergeInto(LibraryManager.library, {
                             }
                         }
                         
-                        // === Default: log and return null ===
-                        console.warn('[STUB] Unknown method called:', hostObjectName + '.' + methodName, 'args:', args);
-                        return null;
                     } catch (e) {
                         console.error('Error in host object method call:', hostObjectName + '.' + methodName, e);
                         throw e;
@@ -951,7 +943,6 @@ mergeInto(LibraryManager.library, {
         });
         
         context.global[nameStr] = hostObjectProxy;
-        // console.log('[JSContext_AddHostObject] Added to context.global, verify:', nameStr in context.global, typeof context.global[nameStr]);
         return 1;
     },
     
@@ -985,9 +976,22 @@ mergeInto(LibraryManager.library, {
         try {
             const func = context.global[funcNameStr];
             if (typeof func !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = func.apply(context.global, args);
-            const resultStr = JSON.stringify(result);
+            // JSON.stringify(undefined) returns undefined (not a string), handle void functions
+            const serialized = JSON.stringify(result);
+            const resultStr = serialized !== undefined ? serialized : 'null';
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1026,8 +1030,6 @@ mergeInto(LibraryManager.library, {
     JSContext_StoreObject: function(contextId, expression, objectIdPtr, objectIdSize) {
         const contextIdStr = UTF8ToString(contextId);
         const exprStr = UTF8ToString(expression);
-        // console.log('[JSContext_StoreObject] contextId:', contextIdStr);
-        // console.log('[JSContext_StoreObject] expression (first 500 chars):', exprStr.substring(0, 500));
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) {
             console.error('[JSContext_StoreObject] Context not found for:', contextIdStr);
@@ -1046,25 +1048,11 @@ mergeInto(LibraryManager.library, {
             }).filter(d => d.length > 0).join('\n');
             
             const wrappedExpr = objectInstanceDeclarations + '\nreturn ' + exprStr;
-            // console.log('[JSContext_StoreObject] wrappedExpr (first 600 chars):', wrappedExpr.substring(0, 600));
-            
-            // Check for promise resolvers specifically
-            // const allKeys = Object.keys(context.global);
-            // const resolverKeys = allKeys.filter(k => k.startsWith('__promiseResolver'));
-            // console.log('[JSContext_StoreObject] context.global total keys:', allKeys.length);
-            // console.log('[JSContext_StoreObject] Resolver keys found:', resolverKeys);
-            
-            // Also check if any Unity APIs are registered
-            // const unityKeys = allKeys.filter(k => k.startsWith('Unity') || k.startsWith('__'));
-            // console.log('[JSContext_StoreObject] Unity/internal keys:', unityKeys);
             
             const func = new Function('globalThis', '__objectInstances', 'console', wrappedExpr);
-            // console.log('[JSContext_StoreObject] Function created successfully');
             const obj = func(context.global, context.objectInstances, console);
-            // console.log('[JSContext_StoreObject] Function executed, result:', obj, 'type:', typeof obj);
             const objectId = '__obj_' + (++context.objectIdCounter);
             context.objectInstances[objectId] = obj;
-            // console.log('[JSContext_StoreObject] Stored object:', objectId, 'type:', typeof obj, 'isPromise:', obj instanceof Promise);
             const len = lengthBytesUTF8(objectId) + 1;
             if (objectIdSize < len) {
                 return -len;
@@ -1084,12 +1072,20 @@ mergeInto(LibraryManager.library, {
         const nameStr = UTF8ToString(name);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             const value = obj[nameStr];
-            const valueStr = JSON.stringify(value);
+            let valueStr;
+            if (value !== null && value !== undefined && typeof value === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = value;
+                valueStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(value);
+                valueStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(valueStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1108,11 +1104,28 @@ mergeInto(LibraryManager.library, {
         const valueJsonStr = UTF8ToString(valueJson);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
-            const value = JSON.parse(valueJsonStr);
+            let value = JSON.parse(valueJsonStr);
+            // Resolve special value markers back to JS objects
+            if (value && typeof value === 'object') {
+                if (value.__objectRef) {
+                    value = context.objectInstances[value.__objectRef];
+                } else if (value.__type === 'ByteArray') {
+                    if (value.isEmpty) {
+                        value = new Uint8Array(0);
+                    } else {
+                        const binaryStr = atob(value.data);
+                        const bytes = new Uint8Array(binaryStr.length);
+                        for (let i = 0; i < binaryStr.length; i++) {
+                            bytes[i] = binaryStr.charCodeAt(i);
+                        }
+                        value = bytes;
+                    }
+                }
+            }
             obj[nameStr] = value;
             return 1;
         } catch (e) {
@@ -1128,15 +1141,34 @@ mergeInto(LibraryManager.library, {
         const argsJsonStr = UTF8ToString(argsJson);
         const context = window.__dclJSContexts[contextIdStr];
         if (!context) return 0;
-        
+
         try {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             const method = obj[methodNameStr];
             if (typeof method !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = method.apply(obj, args);
-            const resultStr = JSON.stringify(result);
+            let resultStr;
+            if (result !== null && result !== undefined && typeof result === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = result;
+                resultStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(result);
+                resultStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1160,9 +1192,28 @@ mergeInto(LibraryManager.library, {
             const obj = context.objectInstances[objectIdStr];
             if (!obj) return 0;
             if (typeof obj !== 'function') return 0;
-            const args = JSON.parse(argsJsonStr);
+            const args = JSON.parse(argsJsonStr).map(function(a) {
+                if (a && typeof a === 'object') {
+                    if (a.__objectRef) return context.objectInstances[a.__objectRef];
+                    if (a.__type === 'ByteArray') {
+                        if (a.isEmpty) return new Uint8Array(0);
+                        const bstr = atob(a.data); const b = new Uint8Array(bstr.length);
+                        for (let i = 0; i < bstr.length; i++) b[i] = bstr.charCodeAt(i);
+                        return b;
+                    }
+                }
+                return a;
+            });
             const result = obj.apply(null, args);
-            const resultStr = JSON.stringify(result);
+            let resultStr;
+            if (result !== null && result !== undefined && typeof result === 'object') {
+                const newObjectId = '__obj_' + (++context.objectIdCounter);
+                context.objectInstances[newObjectId] = result;
+                resultStr = JSON.stringify(newObjectId);
+            } else {
+                const serialized = JSON.stringify(result);
+                resultStr = serialized !== undefined ? serialized : 'null';
+            }
             const len = lengthBytesUTF8(resultStr) + 1;
             if (resultSize < len) {
                 return -len;
@@ -1175,6 +1226,40 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    // Bulk-copies 'count' bytes from wasm memory at srcPtr into a Uint8Array stored object,
+    // starting at dstOffset in the target array. Uses HEAPU8.subarray + TypedArray.set for O(1) JS work.
+    JSContext_WriteObjectBytesFromBuffer: function(contextId, objectId, srcPtr, count, dstOffset) {
+        const contextIdStr = UTF8ToString(contextId);
+        const objectIdStr = UTF8ToString(objectId);
+        const context = window.__dclJSContexts[contextIdStr];
+        if (!context) return 0;
+        const obj = context.objectInstances[objectIdStr];
+        if (!obj || !(obj instanceof Uint8Array)) return 0;
+        obj.set(HEAPU8.subarray(srcPtr, srcPtr + count), dstOffset);
+        return 1;
+    },
+
+    // Bulk-copies 'count' bytes from a stored JS Uint8Array or ArrayBuffer into wasm memory at dstPtr,
+    // starting at srcOffset in the source object. Uses HEAPU8.set + TypedArray.subarray for O(1) JS work.
+    JSContext_ReadObjectBytesIntoBuffer: function(contextId, objectId, srcOffset, count, dstPtr) {
+        const contextIdStr = UTF8ToString(contextId);
+        const objectIdStr = UTF8ToString(objectId);
+        const context = window.__dclJSContexts[contextIdStr];
+        if (!context) return 0;
+        const obj = context.objectInstances[objectIdStr];
+        if (!obj) return 0;
+        let srcBytes;
+        if (obj instanceof Uint8Array) {
+            srcBytes = obj.subarray(srcOffset, srcOffset + count);
+        } else if (obj instanceof ArrayBuffer) {
+            srcBytes = new Uint8Array(obj, srcOffset, count);
+        } else {
+            return 0;
+        }
+        HEAPU8.set(srcBytes, dstPtr);
+        return count;
+    },
+
     OpenUrlInNewTab: function(url) {
         if (typeof window !== 'undefined' && window.open) {
             var urlStr = url ? UTF8ToString(url) : '';
@@ -1184,6 +1269,31 @@ mergeInto(LibraryManager.library, {
 
     GetDevicePixelRatio: function() {
         return (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+    },
+
+    // Persists the DCLPlayerPrefs JSON blob to browser localStorage.
+    DCLPrefs_Save: function(jsonPtr) {
+        try {
+            localStorage.setItem('dcl_prefs', UTF8ToString(jsonPtr));
+        } catch(e) {
+            console.warn('[DCLPrefs] localStorage.setItem failed:', e);
+        }
+    },
+
+    // Loads the DCLPlayerPrefs JSON blob from browser localStorage into the result buffer.
+    // Returns the number of bytes written, or the negative required size if the buffer is too small.
+    // Returns 0 if no data is stored or an error occurs.
+    DCLPrefs_Load: function(resultPtr, resultSize) {
+        try {
+            const json = localStorage.getItem('dcl_prefs') || 'null';
+            const len = lengthBytesUTF8(json) + 1;
+            if (resultSize < len) return -len;
+            stringToUTF8(json, resultPtr, resultSize);
+            return len - 1;
+        } catch(e) {
+            console.warn('[DCLPrefs] localStorage.getItem failed:', e);
+            return 0;
+        }
     }
 
 });
