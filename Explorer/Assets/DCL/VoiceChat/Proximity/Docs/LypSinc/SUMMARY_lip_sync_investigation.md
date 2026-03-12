@@ -1,112 +1,43 @@
 # Lip Sync Investigation Summary
 
-> Voice-driven mouth animation for proximity voice chat avatars.
+> Хронология и результаты исследования: анимация рта аватаров при голосовом общении через proximity voice chat.
 
 ---
 
-## 1. Problem Statement
+## Исходная задача
 
-Avatars in Decentraland proximity voice chat are visually static while players speak. There is no visual feedback that an avatar is talking — no mouth movement, no facial animation. This significantly reduces social presence and non-verbal communication in the virtual world.
+Аватары в Decentraland proximity voice chat визуально статичны во время речи. Нет визуальной обратной связи, что аватар говорит — никакого движения рта, никакой лицевой анимации. Это критически снижает социальное присутствие и невербальную коммуникацию.
 
-**Goal:** Animate avatar mouth sprites in response to voice chat audio, selecting from a 16-pose sprite atlas (1024×1024, 4×4 grid of 256px cells).
-
----
-
-## 2. Existing Infrastructure
-
-### 2.1 Voice Chat Audio Pipeline
-
-```
-LiveKit Server
-    ↓ (WebRTC)
-FFI → AudioStreamEvent (FrameReceived) → NativeAudioBufferResampleTee
-    ↓
-LivekitAudioSource.OnAudioFilterRead()
-    ↓
-AudioStream.ReadAudio(data, channels, sampleRate)   ← raw PCM mono here
-    ↓
-[Spatialization Pipeline: ITD → ILD → HeadShadow → HRTF]
-    ↓
-Unity AudioSource output (speakers)
-```
-
-**Key file:** `client-sdk-unity/Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs`
-
-The `OnAudioFilterRead` callback runs on the **audio thread** (~46 calls/sec at 48kHz/1024 samples). After `ReadAudio()` the buffer contains clean mono PCM data. Spatialization is applied afterwards and modifies amplitude per-ear — unsuitable for lip sync analysis.
-
-### 2.2 Participant Speaking Status
-
-LiveKit provides binary speaking detection via `IActiveSpeakers`:
-
-```
-Room.ActiveSpeakersChanged event
-    ↓
-DefaultActiveSpeakers.UpdateCurrentActives(IEnumerable<string> identities)
-    ↓
-VoiceChatParticipantsStateService.OnActiveSpeakersUpdated()
-    ↓
-participantState.IsSpeaking.Value = true/false
-```
-
-**Key finding:** `Participant.AudioLevel` (float) exists in the LiveKit SDK but is **dead code** — the property has `private set` and is never assigned anywhere. The `ActiveSpeakersChanged` event only carries participant identity strings, not audio level values.
-
-**What's available without LiveKit SDK changes:**
-- `IActiveSpeakers` — `IReadOnlyCollection<string>` of currently speaking participant identities
-- `Participant.Speaking` — bool, also dead code (never set)
-- Binary only: who is speaking, not how loud
-
-### 2.3 Entity–Participant Mapping
-
-`ProximityAudioPositionSystem` already establishes the mapping chain:
-
-```
-activeAudioSources[identity] → entityParticipantTable.TryGet(identity) → Entity
-    → World.Add(entity, ProximityAudioSourceComponent)
-    → SyncPositions: AudioSource.position = AvatarBase.HeadAnchorPoint
-```
-
-The same pattern can be reused for lip sync: iterate a shared dictionary, resolve identity to entity, update/add a lip sync ECS component.
-
-### 2.4 Avatar Mouth Renderer
-
-Mouth is rendered via a `Renderer` named `"Mask_Mouth"` found in `AvatarShapeComponent.InstantiatedWearables`. The PR #7452 prototype uses `MaterialPropertyBlock` to override the texture array index on this renderer without touching the shared pool material:
-
-```csharp
-static readonly MaterialPropertyBlock s_Mpb = new MaterialPropertyBlock();
-s_Mpb.Clear();
-s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, phonemeTextureArray);
-s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, phonemeIndex);
-mouthRenderer.SetPropertyBlock(s_Mpb);
-```
-
-Clearing the property block (`SetPropertyBlock(null)`) reverts to the default material texture.
-
-### 2.5 Sprite Atlas Layout
-
-`Mouth_Atlas.png` — 1024×1024, 4×4 grid, 16 poses (256×256 each):
-
-```
-Row 0: [0]  Idle/teeth    [1]  O-round      [2]  Closed flat   [3]  Teeth show
-Row 1: [4]  Open+tongue   [5]  Small O      [6]  Smile+tongue  [7]  Round O
-Row 2: [8]  Oval open     [9]  Oval+tongue   [10] Teeth grid    [11] Small open
-Row 3: [12] Wide smile    [13] Teeth+tongue  [14] Round         [15] Side
-```
-
-For voice-driven animation, poses can be grouped by "openness":
-- **Idle (closed):** index 2
-- **Slightly open (quiet speech):** indices 5, 8, 11
-- **Medium open (normal speech):** indices 1, 3, 4, 6, 9, 10
-- **Wide open (loud speech):** indices 0, 7
-
-The atlas must be sliced into a `Texture2DArray` at load time (same approach as PR #7452: `Graphics.Blit` per cell → `ReadPixels` → `CopyTexture`).
+**Цель:** Анимировать спрайты рта аватара в ответ на голосовой чат, выбирая из 16-позного спрайт-атласа (1024×1024, 4×4 сетка из 256px ячеек).
 
 ---
 
-## 3. Approaches to Audio Analysis
+## Контекст продакта
 
-### 3.1 Amplitude (RMS)
+Цитата @olavra из PR #7452 (`feat/avatar-blink`):
 
-**How it works:** Compute root-mean-square of the PCM buffer. Map the resulting 0..1 value to mouth openness via thresholds.
+> "I'm just going to leave this note here so we can remember it later. It seems that this project is well on track and we may have time to experiment with a few things. One of them could be moving the avatars' mouths depending on the phoneme they are reproducing (or at least creating a pseudo-random sequence of sprites to make it look like they are speaking). this is a 1024x1024 sprite atlas, we can fit 16 mouth poses there. Theoretically we can create this texture for all the base mouths and eyes and have different mouth movements. something like this is what I was talking about to recognize phonemes with the voice chat. In this case its a 1-1 character to mouth pose. In the other we will need to recognize frequencies or just randomize the mouth sequence."
+
+> "My idea is to use the same system to have a texture sheet for mouth gestures (phonemes + expressions: sad, smile, surprise, etc) and eyebrows (frown, up, worried etc)."
+
+> "I also think it may be fun communicate this over the network, so clicking over your avatar will force blink, and you can morse code or eye flirt with others... non-verbal communication!"
+
+Ключевые тезисы продакта:
+- Это **примитивный 2D facial rig** перед переходом к 3D
+- 1024×1024 атлас, 16 поз рта
+- Можно распознавать фонемы по голосу, или хотя бы рандомизировать последовательность ртов
+- Система расширяема на брови и эмоции
+- Идея морзе-кода глазами для невербальной коммуникации
+
+---
+
+## Этап 1: Обзор подходов к анализу речи
+
+Три уровня сложности от простого к сложному:
+
+### 1.1 Amplitude (громкость) — тривиально
+
+Берём PCM-буфер, считаем RMS, по порогам переключаем рот между "закрыт / приоткрыт / открыт".
 
 ```csharp
 float sum = 0f;
@@ -115,236 +46,291 @@ float rms = Mathf.Sqrt(sum / data.Length);
 float amplitude = Mathf.Clamp01(rms * sensitivity);
 ```
 
-| Pros | Cons |
-|------|------|
-| Trivial to implement (~5 lines) | Cannot distinguish vowels from consonants |
-| Zero allocations | "AAAAAA" and "SSSSSS" look the same if same volume |
-| Works on any audio | Mouth just "flaps" open/closed |
-| Negligible CPU cost | No phoneme/viseme information |
+| Плюсы | Минусы |
+|-------|--------|
+| Тривиально (~5 строк) | Не различает гласные/согласные |
+| Ноль аллокаций | "АААА" и "ШШШШ" выглядят одинаково при одной громкости |
+| Работает на любом аудио | Рот просто "хлопает" |
+| Ничтожная нагрузка (~0.01ms) | Нет информации о фонемах |
 
-**Performance:** ~0.01ms per buffer (2048 floats). Negligible even for 50+ sources.
+### 1.2 FFT Frequency Band Analysis — средняя сложность
 
-**Best suited for:** MVP, quick visual feedback, stylized art where precision doesn't matter.
+Разложение аудио в частотные полосы. Низкие частоты (200–800 Hz) → открытые гласные (А, О). Средние (800–2500 Hz) → закрытые гласные (Е, И). Высокие (2500–8000 Hz) → свистящие (С, Ш, Ф).
 
-### 3.2 FFT Frequency Band Analysis
+| Плюсы | Минусы |
+|-------|--------|
+| Приблизительно различает гласные/согласные | Требует ручной настройки порогов |
+| Нет внешних зависимостей | Результаты плывут между разными голосами |
+| Лучше чистой амплитуды | Формантные частоты перекрываются |
+| Средняя сложность | Потолок качества ниже OVRLipSync |
 
-**How it works:** Apply FFT (or `AudioSource.GetSpectrumData`) to decompose audio into frequency bands. Map energy distribution to approximate mouth shapes:
-- Low frequencies (200–800 Hz) dominant → open vowels (A, O)
-- Mid frequencies (800–2500 Hz) dominant → closed vowels (E, I, U)
-- High frequencies (2500–8000 Hz) dominant → sibilants (S, SH, F)
+CPU: ~0.05–0.1ms на источник (FFT 1024 сэмплов или Goertzel на 3-4 частотах).
 
-| Pros | Cons |
-|------|------|
-| Can approximate vowel vs consonant | Requires manual threshold tuning per voice |
-| No external dependencies | Results vary significantly between speakers |
-| Better than pure amplitude | Formant frequencies overlap between phonemes |
-| Moderate implementation effort | Not robust enough for accurate visemes |
+### 1.3 Viseme Detection (OVRLipSync) — наилучший результат
 
-**Performance:** FFT on 1024 samples ≈ 0.05–0.1ms. Manageable for 10+ sources but not free.
+Скармливаем PCM-буфер в Meta Oculus Lipsync SDK. Возвращает массив весов 15 визем (Sil, PP, FF, TH, DD, KK, CH, SS, NN, RR, AA, E, I, O, U).
 
-**Implementation notes:**
-- `AudioSource.GetSpectrumData` runs on main thread but reads post-spatialization data (wrong for lip sync)
-- Manual FFT in `OnAudioFilterRead` reads pre-spatialization data (correct) but needs a scratch buffer
-- Divide spectrum into 3–5 bands, compute energy per band, use ratios to select pose
-- Significant tuning effort; quality plateau is lower than OVRLipSync
+| Плюсы | Минусы |
+|-------|--------|
+| Лучшее качество — сделано для этой задачи | Внешний нативный плагин |
+| Real-time оптимизированный DSP | Один "контекст" на источник (~память) |
+| 15 визем → чистый маппинг на 12-16 поз | Лицензия Meta/Oculus SDK |
+| Языко-независимый | Нужен пул контекстов для 50+ аватаров |
 
-**Best suited for:** Intermediate step if OVRLipSync cannot be used (licensing, platform constraints). Provides better visual variety than amplitude alone at moderate engineering cost.
+CPU: ~0.1–0.3ms на `ProcessFrame`.
 
-### 3.3 Viseme Detection (OVRLipSync)
+### 1.4 Сравнительная таблица
 
-**How it works:** Feed PCM buffer to Meta's Oculus Lipsync SDK. It returns an array of 15 viseme weights corresponding to standard mouth poses (Sil, PP, FF, TH, DD, KK, CH, SS, NN, RR, AA, E, I, O, U).
+| Критерий | Amplitude | FFT Bands | OVRLipSync |
+|----------|-----------|-----------|------------|
+| Сложность реализации | Часы | Дни | 1–2 дня |
+| Точность | Низкая | Средняя | Высокая |
+| CPU на источник / кадр | ~0.01ms | ~0.05–0.1ms | ~0.1–0.3ms |
+| 50 источников одновременно | Тривиально | Нужен throttling | Нужен пул |
+| Внешние зависимости | Нет | Нет | OVRLipSync native |
+| Различает A/O/E? | Нет | Грубо | Да |
+| Различает гласные/согласные? | Нет | Грубо | Да |
+| Потолок качества | "Хлопает" | "Нормально" | "Хорошо-отлично" |
 
-```csharp
-OVRLipSync.ProcessFrame(context, buffer, frame);
-float[] visemes = frame.Visemes; // 15 weights, sum to ~1.0
-```
-
-| Pros | Cons |
-|------|------|
-| Best quality — purpose-built for this task | External native plugin dependency |
-| Real-time, optimized DSP (not heavy ML) | One "context" per audio source (~memory) |
-| 15 visemes map cleanly to 12–16 sprite poses | Licensing: free but Meta/Oculus SDK |
-| Language-independent | Need to pool contexts for 50+ avatars |
-
-**Performance per context:** ~0.1–0.3ms per `ProcessFrame` call.
-
-**Scaling strategy:**
-- Pool of N contexts (recommended N=8)
-- Assign contexts only to actively speaking avatars
-- Silent avatars get viseme Sil (idle) for free
-- Typical scenario: 2–5 simultaneous speakers → well within budget
-
-**Best suited for:** Final production quality. Maximum visual fidelity with reasonable CPU cost.
-
-### 3.4 Comparison Matrix
-
-| Criterion | Amplitude | FFT Bands | OVRLipSync |
-|-----------|-----------|-----------|------------|
-| Implementation effort | Hours | Days | 1–2 days |
-| Accuracy | Low | Medium | High |
-| CPU per source per frame | ~0.01ms | ~0.05–0.1ms | ~0.1–0.3ms |
-| 50 sources simultaneously | Trivial | Manageable | Need pooling |
-| External dependencies | None | None | OVRLipSync native plugin |
-| Distinguishes A/O/E? | No | Roughly | Yes |
-| Distinguishes vowel/consonant? | No | Roughly | Yes |
-| Quality ceiling | "Flapping" | "Okay" | "Good to great" |
+**Рекомендация:** начать с амплитуды (работает за час), потом подключить OVRLipSync для визем. FFT — промежуточный вариант если OVR недоступен.
 
 ---
 
-## 4. Data Source Options
+## Этап 2: Анализ PR #7452
 
-### 4.1 IActiveSpeakers (Binary — No LiveKit Changes)
+PR: https://github.com/decentraland/unity-explorer/pull/7452  
+Автор: @olavra  
+Статус: Draft  
+Ветка: `feat/avatar-blink`
 
-- **What:** List of participant identities currently speaking
-- **Granularity:** ~4–5 updates/sec (LiveKit server-side VAD interval)
-- **Latency:** Signaling channel, ~200–500ms from actual speech
-- **Thread safety:** Already on main thread via `OnActiveSpeakersUpdated`
-- **Usable for:** Binary open/close, random animation trigger
+### Что реализовано
 
-### 4.2 RMS in OnAudioFilterRead (Float — Minimal LiveKit Change)
+**AvatarBlinkSystem** — рандомное моргание глаз:
+- Интервал 0.5–5 секунд (настраивается)
+- `MaterialPropertyBlock` переключает текстуру глаз на blink-текстуру
+- Статический `s_Mpb` переиспользуется для избежания аллокаций
+- `SetPropertyBlock(null)` возвращает к дефолтной текстуре
 
-- **What:** Pre-spatialization amplitude as `volatile float` on `LivekitAudioSource`
-- **Granularity:** Every audio buffer (~21ms at 48kHz/1024 samples)
-- **Latency:** Real-time (audio thread)
-- **Thread safety:** `Interlocked.Exchange` for write, `Interlocked.CompareExchange` or `volatile` for read
-- **Change scope:** ~5 lines in `LivekitAudioSource.OnAudioFilterRead`, after `ReadAudio`, before spatialization:
+**AvatarMouthAnimationSystem** — **текстовый** lip sync:
+- Триггер: `AvatarMouthTalkingComponent` заполняется из `NametagPlacementSystem` при получении chat bubble
+- `MapCharToPhoneme` маппит каждый символ текста → индекс визем в Texture2DArray:
+  ```
+  'a','e','i' → 1;  'b','m','p' → 2;  'f','v' → 3;
+  'd' → 4;  'u' → 5;  'c','g','h','k','n','s','t','x','y','z' → 6;
+  'o' → 7;  'l' → 8;  'r' → 9;  'ch','j','sh' → 10;  'w','q' → 11;
+  default (пробелы, пунктуация) → 0 (idle)
+  ```
+- Поддержка диграфов (th, ch, sh) через peek на следующий символ
+- `PhonemeDuration = 0.1f` (100ms на символ, ~10 fps анимации)
+- Визуализация: `MaterialPropertyBlock` + `Texture2DArray` на `Mask_Mouth` рендерере
+
+**Компоненты:**
+- `AvatarBlinkComponent` — состояние моргания (таймер, интервал, isBlinking)
+- `AvatarMouthAnimationComponent` — состояние рта (текст, индекс символа, таймер, текущий индекс позы)
+- `AvatarMouthTalkingComponent` — bridge: текст сообщения + IsDirty флаг
+
+### Ключевой вывод
+
+**PR работает на тексте, не на аудио.** `AvatarMouthAnimationSystem` анимирует рот по chat messages, а не по голосовому чату. Для voice lip sync нужен принципиально другой входной канал — PCM-данные из аудио-потока вместо строки текста.
+
+### Что переиспользуемо из PR
+
+- `FindMouthRenderer` — поиск `Mask_Mouth` в `avatarShape.InstantiatedWearables`
+- `MaterialPropertyBlock` паттерн — статический `s_Mpb`, Clear/Set/Apply
+- Слайсинг атласа в `Texture2DArray` — `CreateMouthPhonemeTextureArrayAsync`
+- Обработка re-instantiation — `MouthRenderer == null` → повторный поиск
+- Visibility suppression — `avatarShape.IsVisible` check
+
+---
+
+## Этап 3: Анализ аудио-пайплайна
+
+### Поток аудио от LiveKit до колонок
+
+```
+LiveKit Server (WebRTC)
+    ↓
+FFI → AudioStreamEvent (FrameReceived) → NativeAudioBufferResampleTee
+    ↓
+LivekitAudioSource.OnAudioFilterRead(float[] data, int channels)
+    ↓
+AudioStream.ReadAudio(data, channels, sampleRate)   ← чистый моно PCM ЗДЕСЬ
+    ↓
+[Spatialization Pipeline: ITD → ILD → HeadShadow → HRTF]
+    ↓
+Unity AudioSource output → колонки
+```
+
+**Ключевой файл:** `client-sdk-unity/Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs`
+
+### OnAudioFilterRead — единственная точка доступа к PCM
+
+`OnAudioFilterRead` вызывается на **аудио-потоке Unity** (~46 раз/сек при 48kHz/1024 samples). После `ReadAudio()` буфер содержит чистые моно PCM-данные. Спатиализация (ITD, ILD, HeadShadow, HRTF) применяется после и модифицирует амплитуду per-ear — непригодно для lip sync анализа.
+
+### Потокобезопасность
+
+`OnAudioFilterRead` выполняется на аудио-потоке, ECS-системы — на main thread. Для передачи данных:
+- `volatile float` или `Interlocked.Exchange` — для простой амплитуды
+- `ConcurrentDictionary<string, float>` — маппинг identity → amplitude
+- Lock + array copy — для визем-весов (OVRLipSync)
+
+### Точка врезки для lip sync
+
+Идеальная позиция — **после `ReadAudio`, до проверки spatialization**:
 
 ```csharp
-// Ideal insertion point in OnAudioFilterRead:
+// В OnAudioFilterRead:
 resource.Value.ReadAudio(data.AsSpan(), channels, sampleRate);
 
-// >>> LIP SYNC: compute pre-spatialization amplitude
-float sum = 0f;
-for (int i = 0; i < data.Length; i++) sum += data[i] * data[i];
-Interlocked.Exchange(ref _amplitude, Mathf.Sqrt(sum / data.Length));
+// >>> LIP SYNC: здесь данные чистые, до всех фильтров <<<
+// float rms = ComputeRMS(data);
+// Interlocked.Exchange(ref _amplitude, rms);
 
-bool spatialized = !bypassSpatialization && ...
+bool spatialized = !bypassSpatialization && (ildMode != ILDMode.None || enableITD || enableHRTF);
+if (spatialized && channels >= 2)
+    ApplySpatializationPipeline(data, channels);
 ```
 
-- **Usable for:** Amplitude-driven animation, weighted random, FFT (if extended)
-
-### 4.3 PCM Buffer for OVRLipSync
-
-- **What:** Same PCM buffer from `OnAudioFilterRead`, passed to `OVRLipSync.ProcessFrame`
-- **Additional concern:** OVRLipSync's `ProcessFrame` can be called from any thread, but the context is not thread-safe — one context per source, no sharing
-- **Usable for:** Full viseme detection
+После спатиализации амплитуда зависит от положения слушателя относительно говорящего — некорректно для lip sync (далёкий говорящий будет с закрытым ртом).
 
 ---
 
-## 5. Threading Model
+## Этап 4: Критическая находка — мёртвый код в LiveKit SDK
 
-```
-AUDIO THREAD                          MAIN THREAD (ECS)
-─────────────                         ─────────────────
-OnAudioFilterRead()
-  │
-  ├─ ReadAudio(data)                  ProximityLipSyncSystem.Update(dt)
-  │                                     │
-  ├─ Compute RMS                        ├─ Read amplitude from LivekitAudioSource
-  │   Interlocked.Exchange(             │   (volatile float, thread-safe)
-  │     ref _amplitude, rms)            │
-  │                                     ├─ entityParticipantTable.TryGet(identity)
-  ├─ [Optional: OVRLipSync              │   → resolve Entity
-  │   ProcessFrame(context, data)]      │
-  │                                     ├─ Smooth amplitude (Lerp with deltaTime)
-  ├─ Spatialization pipeline            │
-  │   (ITD → ILD → HeadShadow → HRTF)  ├─ Select sprite index by algorithm
-  │                                     │
-  └─ Output to speakers                └─ Apply MaterialPropertyBlock
+### Participant.AudioLevel и Participant.Speaking
+
+В `Participant.cs`:
+```csharp
+public bool Speaking { get; private set; }
+public float AudioLevel { get; private set; }
 ```
 
-**Critical rule:** No ECS structural changes (Add/Remove) from the audio thread. All ECS writes happen in the system on the main thread.
+**Оба свойства объявлены с `private set` и нигде не устанавливаются** — ни в C# слое, ни из FFI. Это мёртвый код из оригинального LiveKit Unity SDK.
 
----
+### ActiveSpeakersChanged — только identity, не amplitude
 
-## 6. Visual Quality Considerations
-
-### 6.1 Smoothing
-
-Raw amplitude fluctuates rapidly. Without smoothing, the mouth will jitter. Apply exponential smoothing on the main thread:
+Событие `ActiveSpeakersChanged` несёт только **список identity строк**, не значения громкости:
 
 ```csharp
-smoothed = Mathf.Lerp(smoothed, target, smoothingFactor * deltaTime * 60f);
+// Room.cs:
+case RoomEvent.MessageOneofCase.ActiveSpeakersChanged:
+{
+    activeSpeakers.UpdateCurrentActives(e.ActiveSpeakersChanged!.ParticipantIdentities!);
+}
 ```
 
-Recommended `smoothingFactor`: 0.15–0.25 for natural feel.
+`DefaultActiveSpeakers` — просто `List<string>`:
 
-### 6.2 Hysteresis
-
-Without hysteresis, the mouth flickers between two poses at the threshold boundary. Solution: different thresholds for "opening" and "closing":
-
+```csharp
+public void UpdateCurrentActives(IEnumerable<string> sids)
+{
+    actives.Clear();
+    actives.AddRange(sids);
+    Updated?.Invoke();
+}
 ```
-Open threshold:  0.15  (mouth opens when amplitude rises above this)
-Close threshold: 0.08  (mouth closes when amplitude drops below this)
-```
 
-### 6.3 Hold Time
+### Вывод
 
-Each pose should be held for a minimum duration to prevent sub-frame flickering. PR #7452 uses `PhonemeDuration = 0.1f` (100ms) — a good starting point for 10 fps visual update rate.
+**От LiveKit signaling получаем только бинарный bool "говорит/молчит"**, а не float амплитуду. Для амплитуды нужно либо считать RMS в `OnAudioFilterRead` (~5 строк), либо чинить мёртвый код `Participant.AudioLevel` на уровне FFI (значительно сложнее).
 
-### 6.4 Distance Culling
-
-Skip lip sync processing for avatars that are:
-- Not visible (`AvatarShapeComponent.IsVisible == false`)
-- Beyond a configurable distance (e.g., > 15m — at this distance, mouth detail is invisible)
-- Mouth renderer is disabled
+`IActiveSpeakers` обновляется ~4–5 раз/сек через signaling канал с задержкой ~200–500ms.
 
 ---
 
-## 7. Relationship with PR #7452
+## Этап 5: Перформанс-анализ
 
-PR #7452 (`feat/avatar-blink`) by @olavra introduces:
-- `AvatarBlinkSystem` — random eye blink animation
-- `AvatarMouthAnimationSystem` — **text-based** mouth animation (chat messages → character-to-phoneme mapping)
-- `AvatarMouthTalkingComponent` — bridge from `NametagPlacementSystem` (chat bubble) to mouth animation
+### Amplitude (RMS)
 
-**Key difference:** PR #7452 animates mouth from **text** (chat messages). Our feature animates mouth from **voice audio**. These are fundamentally different input channels driving the same visual output.
+- **CPU на источник:** ~0.01ms (одна итерация по 2048 float = ~2K multiply-add)
+- **50 источников одновременно:** ~0.5ms суммарно — тривиально
+- **Аллокации:** ноль (in-place на существующем буфере)
+- **Ограничения:** нет — можно считать для всех источников всегда
 
-**Conflict potential:** Both systems write `MaterialPropertyBlock` to the `Mask_Mouth` renderer. If both are active simultaneously, the last writer wins. Need to establish priority:
-- **Voice lip sync takes priority** (real-time, more responsive)
-- Text-based animation only runs when `IActiveSpeakers` does not include the participant
-- Alternatively, unify into a single system with multiple input sources
+### FFT Frequency Bands
 
-**Reusable from PR #7452:**
-- `FindMouthRenderer` pattern (searching `InstantiatedWearables` for `"Mask_Mouth"`)
-- `MaterialPropertyBlock` application pattern (static `s_Mpb`, Clear/Set/Apply)
-- Atlas slicing into `Texture2DArray` (`CreateMouthPhonemeTextureArrayAsync`)
-- Wearable re-instantiation handling (`MouthRenderer == null` → re-find)
-- Visibility suppression (`avatarShape.IsVisible` check)
+- **CPU на источник:** ~0.05–0.1ms (Goertzel на 3-4 частотах или мини-DFT)
+- **10 одновременных говорящих:** ~0.5–1.0ms — допустимо
+- **50 одновременных:** ~2.5–5ms — нужен throttling (считать каждый 2-й буфер)
+- **Аллокации:** нужен scratch buffer, можно переиспользовать
 
----
+### OVRLipSync
 
-## 8. Assembly Dependency Concern
+- **CPU на контекст:** ~0.1–0.3ms на `ProcessFrame`
+- **Стратегия:** пул из 8 контекстов — выдавать только говорящим аватарам
+- **Типичный сценарий:** 2–5 одновременно говорят → 0.5–1.5ms
+- **Пул исчерпан:** fallback на amplitude-based animation
+- **Память:** каждый контекст ~несколько KB — не проблема даже для 8 шт
 
-The lip sync system needs access to:
-- `AvatarShapeComponent`, `AvatarBase`, `InstantiatedWearables` → `DCL.AvatarRendering` assembly
-- `ProximityAudioSourceComponent`, `IActiveSpeakers` access → `DCL.VoiceChat` / `LiveKit` assemblies
-- `IReadOnlyEntityParticipantTable` → `DCL.Multiplayer` assembly
-- `CharacterTransform` → `DCL.Character` assembly
+### MaterialPropertyBlock
 
-The system may need to live in an assembly that references both `AvatarRendering` and `VoiceChat`, or use a bridge component pattern (like `AvatarMouthTalkingComponent` in PR #7452) to decouple them.
+- `SetPropertyBlock` — ~0.01ms на рендерер
+- При 5–10 одновременно говорящих — ничтожная нагрузка
 
----
+### Только говорящие аватары нуждаются в анализе
 
-## 9. Key Decisions Made
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Local avatar lip sync | Not needed | Camera perspective doesn't show own mouth |
-| Text-based mouth animation | Out of scope | Separate feature (PR #7452), not related to voice |
-| Starting data source | `IActiveSpeakers` (binary) | Zero LiveKit changes, immediate visual feedback |
-| Iterative progression | Binary → Amplitude → OVR | Each step builds on the previous, can ship at any point |
-| OVRLipSync | Last iteration | External dependency, evaluate after simpler approaches work |
-| FFT analysis | Optional intermediate | Higher effort than amplitude, lower quality than OVR; keep as fallback if OVR is not viable |
-| Feature flag | Required | Toggle lip sync independently from voice chat |
-| Sprite atlas | Reuse `Mouth_Atlas.png` (1024×1024, 4×4) | Already created, matches PR #7452 approach |
+- Молчащие аватары = idle спрайт, ноль обработки
+- В типичном proximity chat одновременно говорят 2–5 из 50+ аватаров
+- Distance culling: пропускать аватары дальше ~15м (рот невидим на таком расстоянии)
+- Visibility culling: пропускать `IsVisible == false`
 
 ---
 
-## 10. Open Questions
+## Принятые решения
 
-1. **Assembly placement:** Where should the lip sync ECS system live? Options: extend `ProximityAudioPositionSystem`, new system in VoiceChat assembly (needs AvatarRendering reference), or bridge component approach.
-2. **PR #7452 coordination:** Will blink and text-based mouth merge before or after voice lip sync? Need to avoid conflicting `MaterialPropertyBlock` writes.
-3. **Atlas pose mapping refinement:** Current grouping (idle/slight/medium/wide) is a first pass. May need adjustment after visual testing.
-4. **OVRLipSync licensing:** Confirm Meta SDK license allows distribution in non-Oculus builds of Decentraland.
-5. **`Participant.AudioLevel` revival:** Should we fix the dead code in the LiveKit SDK to populate `AudioLevel` from the Rust FFI layer? This would give amplitude without needing to compute RMS in `OnAudioFilterRead`, but requires deeper FFI work.
+| Решение | Выбор | Обоснование |
+|---------|-------|-------------|
+| Стартовый источник данных | `IActiveSpeakers` (binary) | Ноль изменений в LiveKit, мгновенный визуальный результат |
+| Стартовый алгоритм | Random animation при speaking=true | "Аниме-стиль", мозг дорисовывает соответствие, проверенный приём |
+| Итеративная прогрессия | Binary → Amplitude → FFT (optional) → OVR | Каждый шаг independent, можно шипнуть на любом |
+| Текстовый lip sync (PR #7452) | Вне scope | Отдельная фича, не связана с голосом |
+| Локальный аватар | Не нужен | Камера не показывает свой рот |
+| OVRLipSync | Последняя стадия | Внешняя зависимость, оценить после работы простых подходов |
+| Feature flag | Обязателен | Независимый toggle от voice chat |
+| Спрайт-атлас | `Mouth_Atlas.png` (1024×1024, 4×4) | Уже создан, совпадает с подходом PR #7452 |
+
+---
+
+## Открытые вопросы
+
+1. **Конфликт с PR #7452 при мерже.** Обе системы пишут `MaterialPropertyBlock` на `Mask_Mouth` рендерер. Нужна приоритизация (голос > текст) или объединение в одну систему.
+2. **Assembly-зависимости.** Lip sync система нуждается в доступе к `AvatarShapeComponent` (DCL.AvatarRendering) и `IActiveSpeakers` (LiveKit). Может потребоваться bridge-компонент или общая assembly.
+3. **Feature flag.** Создать в `FeaturesRegistry`, определить имя и дефолтное состояние.
+4. **Маппинг спрайтов.** Текущая группировка (idle/slight/medium/wide) — первый проход, нужна коррекция после визуального тестирования.
+5. **Оживление `Participant.AudioLevel`.** Стоит ли починить мёртвый код на уровне FFI для получения амплитуды без `OnAudioFilterRead`? Потенциально даёт амплитуду без изменений в аудио-пайплайне, но требует работы с Rust FFI.
+6. **Лицензия OVRLipSync.** Подтвердить что Meta SDK лицензия разрешает дистрибуцию в non-Oculus билдах Decentraland.
+
+---
+
+## Ключевые файлы
+
+### Unity Explorer (`unity-explorer`)
+
+| Файл | Роль |
+|------|------|
+| `Explorer/Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs` | Менеджер proximity voice chat, создаёт LivekitAudioSource per participant |
+| `Explorer/Assets/DCL/VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` | ECS: маппинг identity → entity, позиция AudioSource = HeadAnchorPoint |
+| `Explorer/Assets/DCL/VoiceChat/Proximity/ProximityAudioSourceComponent.cs` | ECS компонент: AudioSource + Transform |
+| `Explorer/Assets/DCL/VoiceChat/Proximity/Mouth_Atlas.png` | Спрайт-атлас 16 поз рта (1024×1024, 4×4) |
+| `Explorer/Assets/DCL/VoiceChat/VoiceChatParticipantsStateService.cs` | Сервис состояния участников, подписка на ActiveSpeakers.Updated |
+| `Explorer/Assets/DCL/VoiceChat/VoiceChatConfiguration.cs` | Конфигурация voice chat (proximity spatial settings) |
+| `Explorer/Assets/DCL/Multiplayer/Profiles/Tables/EntityParticipantTable.cs` | walletId → Entity маппинг |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Systems/AvatarMouthAnimationSystem.cs` | **PR #7452**: текстовый lip sync |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Systems/AvatarBlinkSystem.cs` | **PR #7452**: моргание глаз |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Components/AvatarMouthAnimationComponent.cs` | **PR #7452**: компонент анимации рта |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Components/AvatarMouthTalkingComponent.cs` | **PR #7452**: bridge от chat к mouth |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Components/AvatarBlinkComponent.cs` | **PR #7452**: компонент моргания |
+| `Explorer/Assets/DCL/AvatarRendering/AvatarShape/Rendering/TextureArray/TextureArrayConstants.cs` | Shader property IDs для текстур-массивов |
+| `Explorer/Assets/DCL/AvatarRendering/Loading/Assets/CachedAttachment.cs` | Wearable attachment с рендерерами |
+| `Explorer/Assets/DCL/PluginSystem/Global/AvatarPlugin.cs` | Plugin: инициализация avatar систем, слайсинг атласа |
+
+### LiveKit Client SDK (`client-sdk-unity`)
+
+| Файл | Роль |
+|------|------|
+| `Runtime/Scripts/Rooms/Streaming/Audio/LivekitAudioSource.cs` | Основной источник: OnAudioFilterRead, spatialization pipeline |
+| `Runtime/Scripts/Rooms/Participants/Participant.cs` | Speaking (dead), AudioLevel (dead), Identity, Tracks |
+| `Runtime/Scripts/Rooms/ActiveSpeakers/DefaultActiveSpeakers.cs` | `List<string>` активных говорящих, event Updated |
+| `Runtime/Scripts/Rooms/ActiveSpeakers/IActiveSpeakers.cs` | Интерфейс: `IReadOnlyCollection<string>` + event |
+| `Runtime/Scripts/Rooms/Room.cs` | Обработка RoomEvents, ActiveSpeakersChanged dispatch |
+| `Runtime/Scripts/Rooms/IRoom.cs` | IRoom интерфейс: ActiveSpeakers, Participants, DataPipe |

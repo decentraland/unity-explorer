@@ -1,6 +1,22 @@
 # Implementation Plan: Voice-Driven Lip Sync
 
-> Iterative plan from binary speaking detection to full viseme-based lip sync.
+> Итеративный план от бинарного детектирования речи до полноценных визем.
+
+---
+
+## Рекомендуемый путь итераций
+
+```
+Шаг 1:  A2 + P1   "Random animation при IActiveSpeakers"
+    ↓
+Шаг 2:  A4 + P2   "Amplitude + weighted random из OnAudioFilterRead"
+    ↓
+Шаг 3:  A5 + P3   "FFT frequency bands → approximate visemes"
+    ↓
+Шаг 4:  A6 + P4   "OVRLipSync визем → sprite mapping"
+```
+
+Каждый шаг independently shippable. Шаг 3 — промежуточный; можно пропустить если OVRLipSync доступен.
 
 ---
 
@@ -9,14 +25,14 @@
 ```mermaid
 graph TD
     subgraph "Data Sources (progressive)"
-        AS["IActiveSpeakers<br/>(binary: who is speaking)"]
-        RMS["LivekitAudioSource._amplitude<br/>(float 0..1, pre-spatialization RMS)"]
-        FFT["Frequency Band Energy<br/>(float[] band ratios)"]
-        OVR["OVRLipSync.ProcessFrame<br/>(float[15] viseme weights)"]
+        AS["IActiveSpeakers<br/>(P1: binary speaking list)"]
+        RMS["LivekitAudioSource._amplitude<br/>(P2: float 0..1 RMS)"]
+        FFT["FrequencyBands struct<br/>(P3: float low/mid/high)"]
+        OVR["OVRLipSync.ProcessFrame<br/>(P4: float[15] viseme weights)"]
     end
 
     subgraph "Shared State"
-        Dict["ConcurrentDictionary&lt;string, LipSyncData&gt;<br/>(identity → amplitude/visemes)"]
+        Dict["ConcurrentDictionary / direct reference<br/>(identity → amplitude/visemes)"]
     end
 
     subgraph "ECS System"
@@ -45,63 +61,65 @@ graph TD
 
 ---
 
-## Step 1: Binary Speaking + Random Animation (A2 + P1)
+## Шаг 1: Random Animation при IActiveSpeakers (A2 + P1)
 
-> **Goal:** Avatars' mouths move when they speak. Simplest possible implementation.  
-> **Effort:** ~1 day  
-> **LiveKit changes:** None  
-> **Quality:** "Anime-style" — random mouth shapes while speaking, convincing at distance
+> **Цель:** Рты аватаров двигаются когда они говорят. Максимально простая реализация.  
+> **Effort:** ~1 день  
+> **LiveKit changes:** Ноль  
+> **Качество:** "Аниме-стиль" — рандомные формы рта во время речи, убедительно на расстоянии
 
-### 1.1 Prerequisites
+### 1.1 Пререквизиты
 
-- [ ] Slice `Mouth_Atlas.png` into `Texture2DArray` (16 slices, 256×256 each)
-  - Reuse `AvatarPlugin.CreateMouthPhonemeTextureArrayAsync` pattern from PR #7452
-  - `Graphics.Blit` per cell → `RenderTexture` → `ReadPixels` → `CopyTexture` into array
-  - Create at plugin initialization, destroy on dispose
+- [ ] Слайсинг `Mouth_Atlas.png` в `Texture2DArray` (16 слайсов, 256×256 каждый)
+  - Переиспользовать паттерн `AvatarPlugin.CreateMouthPhonemeTextureArrayAsync` из PR #7452
+  - `Graphics.Blit` per cell → `RenderTexture` → `ReadPixels` → `CopyTexture` в массив
+  - Создать при инициализации plugin, уничтожить при dispose
 
-- [ ] Create feature flag for lip sync in `FeaturesRegistry`
+- [ ] Создать feature flag для lip sync в `FeaturesRegistry`
 
-### 1.2 Data Source: IActiveSpeakers
+### 1.2 Источник данных: IActiveSpeakers
 
-Access `islandRoom.ActiveSpeakers` — already available in `ProximityVoiceChatManager`.
+Доступ к `islandRoom.ActiveSpeakers` — уже доступен в `ProximityVoiceChatManager`.
 
-**Bridge to ECS:** New shared dictionary `ConcurrentDictionary<string, bool>` (identity → isSpeaking). Updated by subscribing to `islandRoom.ActiveSpeakers.Updated`:
+**Bridge в ECS:** Передать ссылку `IActiveSpeakers` напрямую в конструктор ECS-системы (read-only, итерируется на main thread). Простейший вариант, без extra dictionary.
+
+Альтернатива: новый shared `ConcurrentDictionary<string, bool>` (identity → isSpeaking), обновляемый через подписку на `islandRoom.ActiveSpeakers.Updated`:
 
 ```csharp
-// In ProximityVoiceChatManager or a dedicated service:
 islandRoom.ActiveSpeakers.Updated += () =>
 {
-    speakingStates.Clear(); // or diff-update
+    speakingStates.Clear();
     foreach (string identity in islandRoom.ActiveSpeakers)
         speakingStates[identity] = true;
 };
 ```
 
-Alternative: pass `IActiveSpeakers` reference directly to the ECS system constructor (read-only, iterated on main thread). Simpler, avoids extra dictionary.
-
-### 1.3 ECS Component
+### 1.3 ECS Компонент: ProximityLipSyncComponent
 
 ```csharp
 public struct ProximityLipSyncComponent
 {
-    /// Mask_Mouth renderer. Null when pending setup or avatar re-instantiated.
+    /// Mask_Mouth renderer. Null когда setup pending или аватар re-instantiated.
     public Renderer MouthRenderer;
 
-    /// Current sprite pose index in the Texture2DArray. -1 = no override (default material).
+    /// Текущий индекс позы в Texture2DArray. -1 = нет override (дефолтный material).
     public int CurrentPoseIndex;
 
-    /// Timer for minimum hold duration per pose.
+    /// Таймер минимального hold на каждой позе.
     public float PoseHoldTimer;
 
-    /// Per-avatar random seed for animation variety (avoids all mouths moving in sync).
+    /// Per-avatar random seed для разнообразия анимации (чтобы рты не двигались синхронно).
     public float RandomSeed;
 
-    /// True while the avatar is currently speaking.
+    /// Кэшированное состояние: аватар сейчас говорит.
     public bool IsSpeaking;
+
+    /// Smoothed amplitude 0..1 (для Шагов 2+).
+    public float SmoothedAmplitude;
 }
 ```
 
-### 1.4 ECS System: ProximityLipSyncSystem
+### 1.4 ECS Система: ProximityLipSyncSystem
 
 ```
 [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -109,9 +127,9 @@ public struct ProximityLipSyncComponent
 public partial class ProximityLipSyncSystem : BaseUnityLoopSystem
 ```
 
-**Constructor dependencies:**
+**Зависимости конструктора:**
 - `IReadOnlyEntityParticipantTable entityParticipantTable`
-- `IActiveSpeakers activeSpeakers` (from Island Room)
+- `IActiveSpeakers activeSpeakers` (от Island Room)
 - `Texture2DArray phonemeTextureArray` (sliced atlas)
 - Configuration: `poseHoldDuration` (0.08–0.12s), `idlePoseIndex` (2)
 
@@ -120,52 +138,55 @@ public partial class ProximityLipSyncSystem : BaseUnityLoopSystem
 ```
 Update(float dt):
     1. AssignPendingLipSync()
-       - foreach identity in activeSpeakers:
+       - foreach identity in activeSpeakers (или activeAudioSources dict):
          - entityParticipantTable.TryGet(identity) → Entity
          - if entity has AvatarShapeComponent but no ProximityLipSyncComponent:
            - FindMouthRenderer(ref avatarShape) → Renderer
            - if found: World.Add(entity, new ProximityLipSyncComponent { ... })
-    
+
     2. UpdateLipSyncQuery(World, dt)
        - foreach entity with ProximityLipSyncComponent + AvatarShapeComponent:
          - if MouthRenderer == null → re-find (wearable re-instantiation)
-         - if not visible → reset to idle, skip
+         - if not visible (avatarShape.IsVisible) → reset to idle, skip
          - determine isSpeaking from activeSpeakers.Contains(identity)
          - if speaking:
            - PoseHoldTimer += dt
            - if PoseHoldTimer >= poseHoldDuration:
-             - select random pose from speech subset (indices 1-11)
+             - select random pose from speech subset (indices 0-1, 3-15)
              - apply MaterialPropertyBlock
              - reset timer
-         - if not speaking:
-           - if CurrentPoseIndex != idle:
-             - clear MaterialPropertyBlock (revert to default)
-             - CurrentPoseIndex = -1
-    
+         - if not speaking AND was speaking:
+           - brief hold (IdleTransitionDelay ~0.2s) before clearing
+           - clear MaterialPropertyBlock → revert to default
+           - CurrentPoseIndex = -1
+
     3. CleanupQuery(World)
-       - remove ProximityLipSyncComponent when MouthRenderer == null and can't re-find
+       - remove ProximityLipSyncComponent when MouthRenderer null and can't re-find
+       - remove when entity has DeleteEntityIntention
 ```
 
 ### 1.5 Sprite Selection (Random)
 
-When speaking, select from "speech" pose subset. Use per-avatar `RandomSeed` to offset timing:
+При speaking=true — выбираем из "речевых" поз. Per-avatar `RandomSeed` даёт разнообразие:
 
 ```csharp
-// Speech pose indices (all non-idle poses from the atlas)
+// Речевые позы (все кроме idle index 2)
 static readonly int[] SPEECH_POSES = { 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-const int IDLE_POSE = 2; // closed mouth
+const int IDLE_POSE = 2;
 
-int index = (int)((Time.time + component.RandomSeed) * 10f) % SPEECH_POSES.Length;
-// or: hash-based selection for more apparent randomness
-int index = Mathf.Abs((int)(component.RandomSeed * 1000 + poseChangeCounter)) % SPEECH_POSES.Length;
+// Выбор: hash-based для видимой рандомности
+int poseChangeCounter = (int)(totalTime / poseHoldDuration);
+int hash = (int)(component.RandomSeed * 1000f) + poseChangeCounter;
+int index = Mathf.Abs(hash) % SPEECH_POSES.Length;
+int poseIndex = SPEECH_POSES[index];
 ```
 
 ### 1.6 MaterialPropertyBlock Application
 
 ```csharp
 static readonly MaterialPropertyBlock s_Mpb = new MaterialPropertyBlock();
-static readonly int MAINTEX_ARR_SHADER_INDEX = Shader.PropertyToID("_MainTexArr_Index");
-static readonly int MAINTEX_ARR_TEX_SHADER = Shader.PropertyToID("_MainTexArr");
+static readonly int MAINTEX_ARR_SHADER_INDEX = TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX;
+static readonly int MAINTEX_ARR_TEX_SHADER = TextureArrayConstants.MAINTEX_ARR_TEX_SHADER;
 
 void ApplyPose(ref ProximityLipSyncComponent lip, int poseIndex, Texture2DArray texArray)
 {
@@ -185,53 +206,65 @@ void ApplyPose(ref ProximityLipSyncComponent lip, int poseIndex, Texture2DArray 
 }
 ```
 
-### 1.7 Cleanup
+### 1.7 Настройки
 
-- When participant leaves (`ActiveSpeakers` no longer contains identity): set idle pose
-- When `MouthRenderer` is null (wearable re-instantiation): re-find via `FindMouthRenderer`
-- When entity is destroyed (`DeleteEntityIntention`): nothing to clean — component goes with entity
-- On system dispose / world finalize: revert all property blocks to null
+В `VoiceChatConfiguration` или отдельный `LipSyncSettings`:
 
-### 1.8 File Structure
-
-```
-Explorer/Assets/DCL/VoiceChat/Proximity/
-├── LipSync/
-│   ├── ProximityLipSyncComponent.cs
-│   ├── ProximityLipSyncSystem.cs
-│   └── LipSyncConfiguration.cs          (ScriptableObject or settings class)
-├── Mouth_Atlas.png
-├── Mouth_Atlas.png.meta
-└── ...existing files...
+```csharp
+[Header("Lip Sync")]
+public bool LipSyncEnabled = true;
+public float PoseHoldDuration = 0.1f;          // seconds per pose (~10 fps)
+public float IdleTransitionDelay = 0.2f;        // hold last pose briefly after speech ends
+public int IdlePoseIndex = 2;                   // closed mouth pose
+public float MaxLipSyncDistance = 15f;           // skip beyond this distance
+public AssetReferenceT<Texture2D> MouthAtlasTexture;
 ```
 
-### 1.9 Acceptance Criteria
+### 1.8 Cleanup
 
-- [ ] When a proximity chat participant speaks, their avatar's mouth animates with random poses
-- [ ] When they stop speaking, mouth returns to idle within ~200ms
-- [ ] Multiple avatars animate independently (not in sync)
-- [ ] Avatar re-instantiation (wearable change) doesn't break lip sync
-- [ ] Invisible avatars skip processing
-- [ ] Feature flag toggles lip sync on/off
-- [ ] No allocations per frame (reuse MaterialPropertyBlock, no LINQ, no closures)
+- Participant уходит (`IActiveSpeakers` больше не содержит identity) → idle поза → clear PropertyBlock
+- `MouthRenderer` == null (wearable re-instantiation) → повторный `FindMouthRenderer`
+- Entity destroyed (`DeleteEntityIntention`) → компонент уходит с entity
+- System dispose / world finalize → revert все PropertyBlock в null
+
+### 1.9 Файлы
+
+| Действие | Файл |
+|----------|------|
+| **Create** | `Explorer/Assets/DCL/VoiceChat/Proximity/LipSync/ProximityLipSyncComponent.cs` |
+| **Create** | `Explorer/Assets/DCL/VoiceChat/Proximity/LipSync/ProximityLipSyncSystem.cs` |
+| **Modify** | `Explorer/Assets/DCL/VoiceChat/VoiceChatConfiguration.cs` — добавить lip sync settings |
+| **Modify** | VoiceChatPlugin (DI) — передать `IActiveSpeakers`, `Texture2DArray`, настройки в систему |
+| **Modify** | Addressables config — добавить `Mouth_Atlas.png` |
+| **Already exists** | `Explorer/Assets/DCL/VoiceChat/Proximity/Mouth_Atlas.png` |
+
+### 1.10 Acceptance Criteria
+
+- [ ] Когда participant proximity chat говорит, рот его аватара анимируется рандомными позами
+- [ ] Когда прекращает говорить, рот возвращается в idle в течение ~200ms
+- [ ] Множественные аватары анимируются независимо (не синхронно)
+- [ ] Re-instantiation аватара (смена wearable) не ломает lip sync
+- [ ] Невидимые аватары пропускают обработку
+- [ ] Feature flag включает/выключает lip sync
+- [ ] Ноль аллокаций per frame (reuse MaterialPropertyBlock, no LINQ, no closures)
 
 ---
 
-## Step 2: Amplitude-Weighted Random (A4 + P2)
+## Шаг 2: Amplitude + Weighted Random (A4 + P2)
 
-> **Goal:** Mouth responsiveness reflects actual speech dynamics (loud = open, quiet = small).  
-> **Effort:** ~0.5–1 day (on top of Step 1)  
-> **LiveKit changes:** ~5 lines in `LivekitAudioSource`
+> **Цель:** Реактивность рта на громкость речи — тихо = чуть приоткрыт, громко = широко открыт.  
+> **Effort:** ~0.5–1 день (поверх Шага 1)  
+> **LiveKit changes:** ~5 строк в `LivekitAudioSource`
 
-### 2.1 LiveKit SDK Change
+### 2.1 Изменение в LiveKit SDK
 
-In `LivekitAudioSource.cs`, add a public amplitude field and compute it in `OnAudioFilterRead`:
+В `LivekitAudioSource.cs` — добавить public поле амплитуды и вычисление в `OnAudioFilterRead`:
 
 ```csharp
-// New field (thread-safe, read from main thread):
+// Новое поле (thread-safe, читается с main thread):
 internal volatile float LipSyncAmplitude;
 
-// In OnAudioFilterRead, after ReadAudio, before spatialization check:
+// В OnAudioFilterRead, после ReadAudio, до проверки spatialization:
 private void OnAudioFilterRead(float[] data, int channels)
 {
     Option<AudioStream> resource = stream.Resource;
@@ -239,50 +272,46 @@ private void OnAudioFilterRead(float[] data, int channels)
     {
         resource.Value.ReadAudio(data.AsSpan(), channels, sampleRate);
 
-        // Lip sync: pre-spatialization RMS amplitude
+        // Lip sync: pre-spatialization RMS
         float sum = 0f;
         for (int i = 0; i < data.Length; i++) sum += data[i] * data[i];
         LipSyncAmplitude = Mathf.Sqrt(sum / data.Length);
 
-        bool spatialized = ...
+        bool spatialized = !bypassSpatialization && ...
     }
 }
 ```
 
-### 2.2 Data Bridge Update
+### 2.2 Доступ к амплитуде из ECS
 
-Change shared dictionary from `ConcurrentDictionary<string, bool>` to `ConcurrentDictionary<string, float>` (identity → amplitude). In `ProximityVoiceChatManager`, update amplitude each frame from `LivekitAudioSource.LipSyncAmplitude`:
-
-Alternative: ECS system reads amplitude directly from `LivekitAudioSource` component referenced via `ProximityAudioSourceComponent`. This avoids the extra dictionary entirely — the amplitude is already on the `LivekitAudioSource` MonoBehaviour attached to the same AudioSource.
-
-### 2.3 Component Extension
+**Preferred:** `ProximityAudioSourceComponent` уже хранит ссылку на `AudioSource`. Получаем `LivekitAudioSource` с того же GameObject:
 
 ```csharp
-public struct ProximityLipSyncComponent
-{
-    // ...existing fields from Step 1...
-    
-    /// Smoothed amplitude 0..1 for visual continuity.
-    public float SmoothedAmplitude;
-}
+// В ECS системе, когда ProximityAudioSourceComponent доступен:
+LivekitAudioSource lka = proximityAudio.AudioSource.GetComponent<LivekitAudioSource>();
+float amplitude = lka != null ? lka.LipSyncAmplitude : 0f;
 ```
 
-### 2.4 Algorithm: Amplitude-Weighted Pose Selection
+Это избегает дополнительных словарей — амплитуда уже на `LivekitAudioSource` MonoBehaviour.
 
-Group poses by "openness tier":
+**Alternative:** `ProximityVoiceChatManager` хранит `remoteSources` (`ConcurrentDictionary<StreamKey, LivekitAudioSource>`). Можно сделать public accessor для чтения амплитуды по identity.
+
+### 2.3 Алгоритм: Amplitude-Weighted Pose Selection
+
+Группировка поз по "открытости":
 
 ```csharp
-static readonly int[] IDLE = { 2 };
-static readonly int[] SLIGHT = { 5, 8, 11 };          // quiet speech
-static readonly int[] MEDIUM = { 1, 3, 4, 6, 9, 10 }; // normal speech
-static readonly int[] WIDE = { 0, 7, 12, 13, 14, 15 }; // loud speech
+static readonly int[] IDLE   = { 2 };
+static readonly int[] SLIGHT = { 5, 8, 11 };              // тихая речь
+static readonly int[] MEDIUM = { 1, 3, 4, 6, 9, 10 };     // нормальная речь
+static readonly int[] WIDE   = { 0, 7, 12, 13, 14, 15 };  // громкая речь
 
 const float THRESHOLD_SLIGHT = 0.05f;
 const float THRESHOLD_MEDIUM = 0.15f;
-const float THRESHOLD_WIDE = 0.35f;
+const float THRESHOLD_WIDE   = 0.35f;
 ```
 
-Selection logic:
+Логика выбора:
 
 ```
 smoothed = Lerp(smoothed, rawAmplitude * sensitivity, smoothingFactor * dt * 60)
@@ -290,163 +319,207 @@ smoothed = Lerp(smoothed, rawAmplitude * sensitivity, smoothingFactor * dt * 60)
 if smoothed < THRESHOLD_SLIGHT:
     → IDLE[0]
 else if smoothed < THRESHOLD_MEDIUM:
-    → random from SLIGHT (seeded by avatar + time)
+    → random from SLIGHT (seeded по avatar + time)
 else if smoothed < THRESHOLD_WIDE:
     → random from MEDIUM
 else:
     → random from WIDE
 ```
 
-### 2.5 Smoothing and Hysteresis
+### 2.4 Smoothing и Hysteresis
 
 ```csharp
-// Exponential smoothing (main thread, deltaTime-corrected):
+// Exponential smoothing (main thread, deltaTime-корректированное):
 float target = lipSyncAmplitude * sensitivity;
 component.SmoothedAmplitude = Mathf.Lerp(
     component.SmoothedAmplitude,
     target,
-    smoothingFactor * dt * 60f  // 60f normalizes to 60fps baseline
+    smoothingFactor * dt * 60f  // нормализация к 60fps baseline
 );
 
-// Hysteresis: use different thresholds for "opening" vs "closing"
-float threshold = currentlyOpen ? closeThreshold : openThreshold;
-// closeThreshold < openThreshold (e.g., 0.08 vs 0.15)
+// Hysteresis: разные пороги для "открытия" vs "закрытия"
+// Close threshold < Open threshold (e.g., 0.08 vs 0.15)
+// Prevents flickering at boundary
 ```
 
-### 2.6 Accessing Amplitude from ECS
-
-Option A (preferred): `ProximityAudioSourceComponent` already holds a reference to `AudioSource`. Get the `LivekitAudioSource` from the same GameObject:
+### 2.5 Настройки (дополнение к Шагу 1)
 
 ```csharp
-// In the ECS system, when ProximityAudioSourceComponent is available:
-LivekitAudioSource lka = proximityAudio.AudioSource.GetComponent<LivekitAudioSource>();
-float amplitude = lka != null ? lka.LipSyncAmplitude : 0f;
+[Header("Amplitude (Step 2+)")]
+public float AmplitudeSensitivity = 3.0f;     // multiplier for raw RMS
+public float SmoothingFactor = 0.2f;           // exponential smoothing speed
+public float OpenThreshold = 0.15f;            // hysteresis: open above this
+public float CloseThreshold = 0.08f;           // hysteresis: close below this
 ```
 
-Option B: Separate `ConcurrentDictionary<string, float>` bridging amplitude data.
+### 2.6 Файлы
 
-Option A avoids extra dictionaries and leverages existing component references.
+| Действие | Файл |
+|----------|------|
+| **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — добавить `LipSyncAmplitude` + RMS |
+| **Modify** | `ProximityLipSyncSystem.cs` — читать amplitude, weighted selection |
+| **Modify** | `ProximityLipSyncComponent.cs` — добавить SmoothedAmplitude |
+| **Modify** | `VoiceChatConfiguration.cs` — amplitude settings |
 
-### 2.7 Acceptance Criteria (in addition to Step 1)
+### 2.7 Acceptance Criteria (в дополнение к Шагу 1)
 
-- [ ] Mouth openness visually corresponds to speech volume
-- [ ] Quiet speech → slightly open poses; loud speech → wide open poses
-- [ ] Smooth transitions (no jittering between poses)
-- [ ] Amplitude reads from pre-spatialization data (not affected by listener position)
-- [ ] No audible audio artifacts from the RMS computation
+- [ ] Открытость рта визуально соответствует громкости речи
+- [ ] Тихая речь → слегка приоткрытые позы; громкая → широко открытые
+- [ ] Плавные переходы (без дёргания между позами)
+- [ ] Амплитуда из pre-spatialization данных (не зависит от позиции слушателя)
+- [ ] Нет аудио-артефактов от RMS вычисления
 
 ---
 
-## Step 3: FFT Frequency Band Analysis (Optional — A3/C + P2)
+## Шаг 3: FFT Frequency Band Analysis (A5 + P3)
 
-> **Goal:** Distinguish vowels from consonants for more varied mouth shapes.  
-> **Effort:** ~2–3 days  
-> **LiveKit changes:** Extended `OnAudioFilterRead` processing  
-> **Skip if:** Going directly to OVRLipSync (Step 4)
+> **Цель:** Различать гласные от согласных для более разнообразных форм рта.  
+> **Effort:** ~2–3 дня  
+> **LiveKit changes:** Расширенная обработка в `OnAudioFilterRead`  
+> **Промежуточный:** пропустить если идём прямо в OVRLipSync (Шаг 4)
 
-### 3.1 Frequency Band Design
+### 3.1 Дизайн частотных полос
 
-Divide the spectrum into 3–5 bands based on speech characteristics:
+Разделение спектра на 3-4 полосы по характеристикам речи:
 
-| Band | Frequency Range | Speech Content | Mouth Association |
-|------|----------------|----------------|-------------------|
-| Low | 200–800 Hz | Fundamental + first formant (A, O) | Wide open |
-| Mid-Low | 800–1800 Hz | Second formant (E, I) | Medium rounded |
-| Mid-High | 1800–3500 Hz | Consonant transitions, nasals | Slightly open |
-| High | 3500–8000 Hz | Sibilants (S, SH, F), fricatives | Teeth visible / narrow |
+| Полоса | Диапазон частот | Содержание речи | Ассоциация со ртом |
+|--------|----------------|-----------------|---------------------|
+| Low | 200–800 Hz | Фундаментальная + первая форманта (А, О) | Широко открыт |
+| Mid-Low | 800–1800 Hz | Вторая форманта (Е, И) | Средне, округлён |
+| Mid-High | 1800–3500 Hz | Переходы согласных, носовые | Слегка открыт |
+| High | 3500–8000 Hz | Свистящие (С, Ш, Ф), фрикативные | Зубы видны / узкий |
 
-### 3.2 Implementation in OnAudioFilterRead
+### 3.2 Реализация в OnAudioFilterRead
 
 ```csharp
-// After ReadAudio, before spatialization:
-// 1. Compute RMS (same as Step 2)
-// 2. Simple band energy via Goertzel algorithm or DFT on key frequencies
-//    (avoid full FFT allocation — Goertzel is O(N) per frequency, no scratch buffer)
-// 3. Store band energies in a struct (volatile or Interlocked)
+// После ReadAudio, до spatialization:
+// 1. RMS (тот же что в Шаге 2)
+// 2. Энергия по полосам через алгоритм Goertzel (O(N) per частоту, без scratch buffer)
 
 internal volatile float LipSyncAmplitude;
-internal volatile float LipSyncBandLow;
-internal volatile float LipSyncBandMid;
-internal volatile float LipSyncBandHigh;
+internal volatile float LipSyncBandLow;    // 200-800 Hz
+internal volatile float LipSyncBandMid;    // 800-2500 Hz
+internal volatile float LipSyncBandHigh;   // 2500-8000 Hz
 ```
 
-### 3.3 Pose Mapping
+Goertzel — вычисляет энергию на конкретной частоте без полного FFT:
 
-Map band energy ratios to pose categories:
+```csharp
+static float GoertzelEnergy(float[] data, float targetFreq, int sampleRate)
+{
+    float k = 0.5f + (data.Length * targetFreq / sampleRate);
+    float w = 2f * Mathf.PI * k / data.Length;
+    float coeff = 2f * Mathf.Cos(w);
+    float s0 = 0f, s1 = 0f, s2 = 0f;
+
+    for (int i = 0; i < data.Length; i++)
+    {
+        s0 = data[i] + coeff * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+    }
+
+    return s0 * s0 + s1 * s1 - coeff * s0 * s1;
+}
+```
+
+Вычисляем энергию на 3-4 "представительных" частотах каждой полосы (500 Hz, 1200 Hz, 2800 Hz, 5000 Hz) и используем как proxy для энергии всей полосы.
+
+### 3.3 Маппинг частотных полос → позы
 
 ```
-if (bandLow > bandMid && bandLow > bandHigh):
-    → "open vowel" poses (wide open: A, O)
-else if (bandMid > bandLow && bandMid > bandHigh):
-    → "closed vowel" poses (medium: E, I, U)
-else if (bandHigh dominant):
-    → "sibilant" poses (teeth visible, narrow)
+if (bandLow > bandMid * 1.5 && bandLow > bandHigh * 2):
+    → "открытые гласные" позы: indices 0, 7 (A, O — широко открыт)
+else if (bandMid > bandLow && bandMid > bandHigh * 1.5):
+    → "закрытые гласные" позы: indices 1, 5, 14 (E, I, U — округлён)
+else if (bandHigh > bandLow && bandHigh > bandMid):
+    → "свистящие" позы: indices 3, 10 (S, SH — зубы видны)
 else:
-    → amplitude-weighted random (fallback)
+    → amplitude-weighted random (fallback на Шаг 2)
 ```
 
-### 3.4 Performance Notes
+Пороги — первый проход, нужна калибровка на реальных голосах.
 
-- Goertzel algorithm: O(N) per target frequency, ~4 frequencies × 1024 samples = ~4096 multiply-adds
-- Estimated cost: ~0.03–0.05ms per source per audio buffer
-- For 10 simultaneous speakers: ~0.3–0.5ms total — acceptable
-- For 50: ~1.5–2.5ms — may need throttling (process every 2nd buffer)
+### 3.4 Сравнение с OVRLipSync
 
-### 3.5 Why This Step is Optional
+| Критерий | FFT Bands (Шаг 3) | OVRLipSync (Шаг 4) |
+|----------|-------------------|---------------------|
+| Различает A/O/E/I? | Грубо (по полосам) | Да (отдельные виземы) |
+| Различает B/M/P от S/SH? | Нет | Да |
+| CPU per source | ~0.05-0.1ms | ~0.1-0.3ms |
+| Настройка порогов | Ручная, per голос | Автоматическая |
+| Внешние зависимости | Нет | OVRLipSync native plugin |
+| Качество потолка | Средне | Высоко |
 
-FFT band analysis requires significant tuning per voice type and provides moderate quality improvement over pure amplitude. OVRLipSync (Step 4) achieves much better quality with less custom engineering. **Recommend skipping this step unless OVRLipSync cannot be used** due to licensing or platform constraints.
+**Ожидаемый результат:** лучше чем чистая амплитуда (Шаг 2), заметно хуже чем OVRLipSync (Шаг 4). Полезен как fallback если OVR недоступен по лицензионным или платформенным причинам.
+
+### 3.5 Performance
+
+- Goertzel на 4 частотах × 1024 сэмпла = ~4096 multiply-add операций
+- **CPU:** ~0.03–0.05ms per source per audio buffer
+- **10 одновременных говорящих:** ~0.3–0.5ms — допустимо
+- **50 одновременных:** ~1.5–2.5ms — нужен throttling (каждый 2-й буфер)
+- Аллокации: ноль (in-place arithmetic)
+
+### 3.6 Файлы
+
+| Действие | Файл |
+|----------|------|
+| **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — добавить band energy fields + Goertzel |
+| **Modify** | `ProximityLipSyncSystem.cs` — читать band energies, маппинг → позы |
+| **Modify** | `VoiceChatConfiguration.cs` — band threshold settings |
 
 ---
 
-## Step 4: OVRLipSync Viseme Detection (A5 + P3)
+## Шаг 4: OVRLipSync Viseme Detection (A6 + P4)
 
-> **Goal:** Best possible lip sync quality — 15 visemes mapped to sprite poses.  
-> **Effort:** ~1–2 days (on top of Step 2)  
-> **Dependencies:** Oculus Lipsync SDK (free, native plugin)
+> **Цель:** Наилучшее качество lip sync — 15 визем, прямой маппинг на спрайтовые позы.  
+> **Effort:** ~1–2 дня (поверх Шага 2)  
+> **Dependencies:** Oculus Lipsync SDK (бесплатный, нативный плагин)
 
-### 4.1 OVRLipSync Integration
+### 4.1 Интеграция OVRLipSync
 
-Add OVRLipSync Unity package to the project. Create a per-source context and feed PCM data:
+Добавить OVRLipSync Unity package в проект. Создать per-source контекст и скормить PCM:
 
 ```csharp
-// One-time setup per audio source:
+// Одноразовый setup per audio source:
 OVRLipSync.CreateContext(ref context, OVRLipSync.ContextProviders.Enhanced, 48000, 1024, true);
 
-// In OnAudioFilterRead, after ReadAudio:
-OVRLipSync.ProcessFrame(context, data, OVRLipSync.Frame frame);
+// В OnAudioFilterRead, после ReadAudio:
+OVRLipSync.ProcessFrame(context, data, frame);
 // frame.Visemes = float[15]: Sil, PP, FF, TH, DD, KK, CH, SS, NN, RR, AA, E, I, O, U
 
-// Thread-safe transfer of viseme weights:
+// Thread-safe передача визем-весов:
 lock (_visemeLock) { Array.Copy(frame.Visemes, _visemeWeights, 15); }
 ```
 
-### 4.2 Viseme → Sprite Mapping
+### 4.2 Маппинг визем → спрайтовые позы
 
-Map 15 standard visemes to the 16 atlas poses. Multiple visemes can map to the same pose:
+15 стандартных визем → 16 поз атласа. Несколько визем маппятся на одну позу:
 
-| Viseme | Description | Atlas Index (suggested) |
-|--------|-------------|------------------------|
-| Sil | Silence/idle | 2 (closed) |
-| PP | B, M, P (lips pressed) | 2 or dedicated "closed tight" |
-| FF | F, V (teeth on lip) | 3 (teeth show) |
-| TH | Th (tongue between teeth) | 4 (open + tongue) |
-| DD | D, T, N, L (tongue on ridge) | 8 (oval open) |
-| KK | K, G (back of tongue) | 11 (small open) |
-| CH | Ch, J, Sh | 10 (teeth grid) |
-| SS | S, Z (sibilant) | 3 (teeth show) |
-| NN | N (nasal) | 5 (small O) |
-| RR | R | 9 (oval + tongue) |
-| AA | A (wide open) | 0 (idle/teeth = wide) or 7 (round O wide) |
-| E | E (spread lips) | 6 (smile + tongue) |
-| I | I (narrow spread) | 11 (small open) |
-| O | O (rounded) | 1 (O-round) or 14 (round) |
-| U | U (tight round) | 5 (small O) |
+| Визема | Описание | Предложенный индекс атласа |
+|--------|----------|----------------------------|
+| Sil | Тишина/idle | 2 (закрыт) |
+| PP | B, M, P (губы сжаты) | 2 или dedicated "tight closed" |
+| FF | F, V (зубы на губе) | 3 (зубы видны) |
+| TH | Th (язык между зубов) | 4 (открыт + язык) |
+| DD | D, T, N, L (язык к альвеолам) | 8 (овал открыт) |
+| KK | K, G (задняя часть языка) | 11 (малый открыт) |
+| CH | Ch, J, Sh | 10 (зубная решётка) |
+| SS | S, Z (свистящий) | 3 (зубы видны) |
+| NN | N (носовой) | 5 (малый O) |
+| RR | R | 9 (овал + язык) |
+| AA | A (широко открыт) | 0 или 7 (wide) |
+| E | E (растянутые губы) | 6 (улыбка + язык) |
+| I | I (узкий растянут) | 11 (малый открыт) |
+| O | O (округлён) | 1 (O-round) или 14 (round) |
+| U | U (плотно округлён) | 5 (малый O) |
 
-**Note:** This mapping is a first pass and needs visual testing with the actual atlas poses. Adjust after seeing results in-game.
+**Важно:** Маппинг — первый проход. Нужна коррекция после визуального тестирования с реальным атласом.
 
-### 4.3 Blending Strategy
+### 4.3 Стратегия выбора (нет блендинга)
 
-OVRLipSync returns weights (0..1) for all 15 visemes. For sprite-based rendering (no blending between sprites), select the viseme with the highest weight:
+OVRLipSync возвращает weights (0..1) для всех 15 визем. Для спрайтов (без blend) — выбираем доминантную:
 
 ```csharp
 int dominantViseme = 0;
@@ -462,41 +535,55 @@ for (int i = 0; i < 15; i++)
 int poseIndex = VISEME_TO_POSE[dominantViseme];
 ```
 
-For smoother transitions, apply a minimum hold time (same as Steps 1–2) and only switch when the new dominant viseme has been dominant for at least 2 consecutive frames.
+Для плавности: minimum hold time (как в Шагах 1-2), переключать только когда новая доминантная визема держится 2+ consecutive frames.
 
-### 4.4 Context Pooling (Performance)
+### 4.4 Пул контекстов (Performance)
 
-For 50+ avatars with typically 2–5 simultaneous speakers:
+Для 50+ аватаров с типичными 2-5 одновременно говорящими:
 
 ```csharp
 class LipSyncContextPool
 {
     const int POOL_SIZE = 8;
-    OVRLipSyncContext[] contexts;
-    Dictionary<string, int> activeAssignments; // identity → pool index
+    IntPtr[] contexts;
+    Dictionary<string, int> activeAssignments;  // identity → pool index
 
-    // Assign: when participant starts speaking, give them a context
-    // Release: when participant stops speaking, return context to pool
-    // If pool exhausted: skip lip sync for this participant (fall back to amplitude)
+    // Assign: когда participant начинает говорить → выдать контекст
+    // Release: когда прекращает → вернуть в пул
+    // Пул исчерпан → fallback на amplitude (Шаг 2)
 }
 ```
 
 ### 4.5 Performance Budget
 
-| Speakers | OVR cost | RMS cost | Total |
-|----------|----------|----------|-------|
+| Говорящих | OVR cost | RMS cost | Total |
+|-----------|----------|----------|-------|
 | 1 | 0.2ms | 0.01ms | 0.21ms |
 | 5 | 1.0ms | 0.05ms | 1.05ms |
 | 8 (pool max) | 1.6ms | 0.08ms | 1.68ms |
 | 50 (no OVR, amplitude fallback) | 0ms | 0.5ms | 0.5ms |
 
-Budget is within acceptable limits. Participants beyond pool size gracefully degrade to amplitude-based animation.
+Бюджет в допустимых рамках. Participants сверх пула gracefully деградируют к amplitude-based.
+
+### 4.6 Лицензионные ограничения
+
+- OVRLipSync SDK бесплатный, но принадлежит Meta
+- Нативный плагин (DLL/SO) — нужно проверить дистрибуцию в non-Oculus билдах
+- Альтернатива при лицензионных проблемах: Шаг 3 (FFT) как fallback
+
+### 4.7 Файлы
+
+| Действие | Файл |
+|----------|------|
+| **Add** | OVRLipSync Unity package (или .unitypackage) |
+| **Create** | `LipSyncContextPool.cs` — пул OVR контекстов |
+| **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — feed PCM to OVR, store viseme weights |
+| **Modify** | `ProximityLipSyncSystem.cs` — read viseme weights, map to poses |
+| **Modify** | `VoiceChatConfiguration.cs` — pool size, OVR settings |
 
 ---
 
-## Configuration (All Steps)
-
-Create `LipSyncSettings` as a serializable class or ScriptableObject:
+## Configuration (все шаги)
 
 ```csharp
 [Serializable]
@@ -504,20 +591,20 @@ public class LipSyncSettings
 {
     [Header("General")]
     public bool Enabled = true;
-    public float MaxDistance = 15f;                    // skip beyond this distance
+    public float MaxDistance = 15f;                      // skip beyond this distance
+    public int IdlePoseIndex = 2;                        // closed mouth pose
 
     [Header("Pose Timing")]
-    public float PoseHoldDuration = 0.1f;             // seconds per pose (10 fps)
-    public float IdleTransitionDelay = 0.2f;           // hold last pose briefly after speech ends
+    public float PoseHoldDuration = 0.1f;               // seconds per pose (~10 fps)
+    public float IdleTransitionDelay = 0.2f;             // hold last pose briefly after speech ends
 
     [Header("Amplitude (Step 2+)")]
-    public float AmplitudeSensitivity = 3.0f;          // multiplier for raw RMS
-    public float SmoothingFactor = 0.2f;               // exponential smoothing speed
-    public float OpenThreshold = 0.15f;                // hysteresis: open mouth above this
-    public float CloseThreshold = 0.08f;               // hysteresis: close mouth below this
+    public float AmplitudeSensitivity = 3.0f;            // multiplier for raw RMS
+    public float SmoothingFactor = 0.2f;                 // exponential smoothing speed
+    public float OpenThreshold = 0.15f;                  // hysteresis: open mouth above this
+    public float CloseThreshold = 0.08f;                 // hysteresis: close mouth below this
 
     [Header("Atlas")]
-    public int IdlePoseIndex = 2;                      // closed mouth pose
     public AssetReferenceT<Texture2D> MouthAtlasTexture;
 
     [Header("OVRLipSync (Step 4)")]
@@ -527,52 +614,85 @@ public class LipSyncSettings
 
 ---
 
+## Чеклист "не забыть"
+
+### Визуальное качество
+- [ ] **Smoothing** — exponential Lerp на main thread, deltaTime-corrected, `smoothingFactor * dt * 60f`
+- [ ] **Hysteresis** — разные пороги для открытия (0.15) и закрытия (0.08), предотвращает мерцание
+- [ ] **Hold time** — минимальная длительность каждой позы (~100ms), предотвращает sub-frame flickering
+- [ ] **Idle transition delay** — brief hold (~200ms) последней позы после окончания речи
+
+### Cleanup и устойчивость
+- [ ] **Cleanup при disconnect** — participant уходит → idle поза → clear PropertyBlock
+- [ ] **FindMouthRenderer** — поиск `Mask_Mouth` в `avatarShape.InstantiatedWearables`
+- [ ] **Wearable re-instantiation** — `MouthRenderer == null` → повторный FindMouthRenderer
+- [ ] **DeleteEntityIntention** — пропускать в queries, компонент уходит с entity
+- [ ] **World finalize** — revert все PropertyBlock в null через `IFinalizeWorldSystem`
+
+### Performance и culling
+- [ ] **LOD / Distance culling** — пропускать аватары дальше `MaxDistance` (~15m)
+- [ ] **Visibility culling** — пропускать `avatarShape.IsVisible == false`
+- [ ] **Mouth renderer disabled** — пропускать `MouthRenderer.enabled == false`
+- [ ] **Zero allocations** — reuse MaterialPropertyBlock, no LINQ, no closures, no delegate captures
+
+### Инфраструктура
+- [ ] **Feature flag** — в `FeaturesRegistry`, независимый toggle от voice chat
+- [ ] **Assembly dependencies** — VoiceChat → AvatarRendering (для AvatarShapeComponent, FindMouthRenderer)
+- [ ] **Группировка спрайтов** — idle / slight / medium / wide — коррекция после визуального тестирования
+
+### Координация
+- [ ] **Конфликт с PR #7452** — обе системы пишут MaterialPropertyBlock на Mask_Mouth; нужна приоритизация (голос > текст) или объединение
+- [ ] **Согласование с @olavra** — обсудить scope и порядок merge
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests (NUnit + NSubstitute)
 
-- `ProximityLipSyncSystem` with mocked `IActiveSpeakers`, `entityParticipantTable`
-- Verify: component added when speaking detected, removed on cleanup
-- Verify: pose index changes on update, returns to idle when not speaking
-- Verify: `DeleteEntityIntention` entities are skipped
+- `ProximityLipSyncSystem` с mock `IActiveSpeakers`, `entityParticipantTable`
+- Verify: компонент добавляется при обнаружении speaking
+- Verify: компонент cleanup при disconnect/destroy
+- Verify: pose index меняется на update, возвращается в idle при not speaking
+- Verify: `DeleteEntityIntention` entities пропускаются
 
 ### Manual Testing
 
-- [ ] Connect 2+ clients, speak → verify mouth animation on remote avatars
-- [ ] Verify no animation on local avatar
-- [ ] Change wearables during speech → verify re-initialization
-- [ ] Walk away beyond MaxDistance → verify animation stops
-- [ ] Toggle feature flag → verify on/off works
-- [ ] Profile with 10+ bots speaking simultaneously → verify frame budget
+- [ ] Подключить 2+ клиента, говорить → рот анимируется на удалённых аватарах
+- [ ] Нет анимации на локальном аватаре
+- [ ] Сменить wearable во время речи → re-initialization
+- [ ] Уйти за пределы MaxDistance → анимация прекращается
+- [ ] Toggle feature flag → on/off
+- [ ] Профилирование с 10+ ботами одновременно → frame budget
 
 ---
 
 ## Rollout Sequence
 
 ```
-Step 1 (A2+P1)  →  Ship behind feature flag  →  Gather feedback
+Шаг 1 (A2+P1)  →  Ship за feature flag  →  Собрать feedback
     ↓
-Step 2 (A4+P2)  →  Ship, A/B test vs Step 1  →  Evaluate quality delta
+Шаг 2 (A4+P2)  →  Ship, A/B test vs Шаг 1  →  Оценить дельту качества
     ↓
-[Step 3 optional — only if OVR not viable]
+Шаг 3 (A5+P3)  →  [Только если OVR недоступен]  →  Ship за flag
     ↓
-Step 4 (A5+P3)  →  Ship behind separate flag  →  Compare quality
+Шаг 4 (A6+P4)  →  Ship за отдельным flag  →  Сравнить качество
     ↓
-Remove flags, ship as default
+Убрать флаги, ship как default
 ```
 
 ---
 
-## Dependencies and Blockers
+## Dependencies и Blockers
 
-| Dependency | Required For | Status |
-|------------|-------------|--------|
-| `Mouth_Atlas.png` in VoiceChat/Proximity | All steps | Done (downloaded) |
-| `Texture2DArray` slicing code | All steps | Adapt from PR #7452 |
-| `IActiveSpeakers` on Island Room | Step 1 | Already available |
-| `entityParticipantTable` access | All steps | Already available via DI |
-| AvatarRendering assembly reference | FindMouthRenderer | Needs assembly dependency check |
-| LiveKit SDK `OnAudioFilterRead` change | Step 2+ | ~5 lines, trivial |
-| OVRLipSync Unity package | Step 4 | Not yet added; evaluate licensing |
-| Feature flag registration | All steps | Create new flag |
-| PR #7452 coordination | Avoid MaterialPropertyBlock conflict | Discuss with @olavra |
+| Зависимость | Нужна для | Статус |
+|-------------|-----------|--------|
+| `Mouth_Atlas.png` в VoiceChat/Proximity | Все шаги | Готово (скачан) |
+| `Texture2DArray` slicing код | Все шаги | Адаптировать из PR #7452 |
+| `IActiveSpeakers` на Island Room | Шаг 1 | Уже доступен |
+| `entityParticipantTable` доступ | Все шаги | Уже доступен через DI |
+| AvatarRendering assembly reference | FindMouthRenderer | Проверить assembly deps |
+| LiveKit SDK `OnAudioFilterRead` change | Шаг 2+ | ~5 строк, тривиально |
+| OVRLipSync Unity package | Шаг 4 | Не добавлен; проверить лицензию |
+| Feature flag registration | Все шаги | Создать новый flag |
+| Координация PR #7452 | Avoid MaterialPropertyBlock conflict | Обсудить с @olavra |
