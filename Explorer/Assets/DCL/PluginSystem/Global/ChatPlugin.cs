@@ -14,6 +14,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -99,6 +100,7 @@ namespace DCL.PluginSystem.Global
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMessagePipesHub messagePipesHub;
         private readonly CurrentChannelService? externalCurrentChannelService;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
@@ -144,6 +146,7 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
+            IMessagePipesHub messagePipesHub,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -182,6 +185,7 @@ namespace DCL.PluginSystem.Global
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.messagePipesHub = messagePipesHub;
             this.externalCurrentChannelService = externalCurrentChannelService;
 
             pluginCts = new CancellationTokenSource();
@@ -214,17 +218,25 @@ namespace DCL.PluginSystem.Global
 
             var situationalConfig = settings.ReactionsConfig.SituationalReactions;
 
-            IReactionMessageBus? reactionBus = null;
+            IReactionMessageBus reactionBus;
 
-#if UNITY_EDITOR || DEBUG
-            var mockBus = new MockReactionMessageBus(
-                entityParticipantTable,
-                situationalConfig.WorldLane,
-                situationalConfig.Atlas != null ? situationalConfig.Atlas.TotalTiles : 1);
+            if (situationalConfig.WorldLane.MockEnabled)
+            {
+                reactionBus = new MockReactionMessageBus(
+                    entityParticipantTable,
+                    situationalConfig.WorldLane,
+                    situationalConfig.Atlas != null ? situationalConfig.Atlas.TotalTiles : 1);
+            }
+            else
+            {
+                reactionBus = new MultiplayerReactionMessageBus(
+                    messagePipesHub,
+                    userBlockingCacheProxy,
+                    web3IdentityCache,
+                    situationalConfig.WorldLane.SelfSendEnabled);
+            }
 
-            pluginScope.Add(mockBus);
-            reactionBus = mockBus;
-#endif
+            pluginScope.Add(reactionBus);
 
             var situationalReactionService = new SituationalReactionService(
                 situationalConfig,

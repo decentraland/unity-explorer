@@ -84,7 +84,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  <MockEnabled>k__BackingField: 1
+  <SelfSendEnabled>k__BackingField: 0
+  <MockEnabled>k__BackingField: 0
   <MockIntervalMin>k__BackingField: 0.5
   <MockIntervalMax>k__BackingField: 0.5
   <MockMinEmojisPerBurst>k__BackingField: 1

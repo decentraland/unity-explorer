@@ -859,6 +859,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     chatSharedAreaEventBus,
+                    messagePipesHub,
                     currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,
