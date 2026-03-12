@@ -189,11 +189,15 @@ namespace DCL.Character.CharacterMotion.Systems
 
             float crossY, dotH;
 
-            if (horizontalMag > 1e-6f)
+            Vector3 lookH = new Vector3(rigidTransform.LookDirection.x, 0f, rigidTransform.LookDirection.z);
+            float lookHMag = lookH.magnitude;
+
+            if (horizontalMag > 1e-6f && lookHMag > 1e-6f)
             {
                 Vector3 dirHNorm = dirHorizontal / horizontalMag;
-                crossY = Vector3.Cross(avatarBase.transform.forward, dirHNorm).y;
-                dotH = Vector3.Dot(avatarBase.transform.forward, dirHNorm);
+                Vector3 lookHNorm = lookH / lookHMag;
+                crossY = Vector3.Cross(lookHNorm, dirHNorm).y;
+                dotH = Vector3.Dot(lookHNorm, dirHNorm);
             }
             else
             {
@@ -223,7 +227,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 Vector3 perpH = Vector3.Cross(directionToTarget, Vector3.up);
                 float m = perpH.magnitude;
 
-                float s = Mathf.Clamp(targetCrossY / m, -1f, 1f);
+                float s = Mathf.Clamp(targetCrossY, -1f, 1f);
                 float c = Mathf.Sqrt(1f - (s * s));
 
                 rigidTransform.LookDirection = ((c * dirH) + (s * perpH)) / m;
