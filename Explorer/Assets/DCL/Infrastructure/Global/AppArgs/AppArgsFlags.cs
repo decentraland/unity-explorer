@@ -86,6 +86,8 @@ namespace Global.AppArgs
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
 
+        public const string REPORT_USER = "report-user";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
