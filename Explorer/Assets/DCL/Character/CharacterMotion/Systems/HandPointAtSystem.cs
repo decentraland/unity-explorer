@@ -16,6 +16,7 @@ using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using Utility.Animations;
 
 namespace DCL.Character.CharacterMotion.Systems
 {
@@ -153,6 +154,29 @@ namespace DCL.Character.CharacterMotion.Systems
             handPointAtComponent.IsPointing = true;
         }
 
+        private void LocalPlayerRotationAnimation(
+            in CharacterRigidTransform rigidTransform,
+            ref AvatarBase avatarBase,
+            ref HandPointAtComponent pointAt,
+            bool needToRotate,
+            float dt)
+        {
+            Vector3 lookDirectionNormalized = rigidTransform.LookDirection.normalized;
+            Vector3 cross = Vector3.Cross(avatarBase.transform.forward, lookDirectionNormalized);
+
+            pointAt.RotationAnimationWeight = Mathf.MoveTowards(
+                pointAt.RotationAnimationWeight, needToRotate ? 1f : 0f, localSettings.HandsIKWeightSpeed * dt);
+
+            SetLocalPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && cross.y <= 0, needToRotate && cross.y > 0);
+        }
+
+        private void SetLocalPlayerRotationAnimation(ref AvatarBase avatarBase, float weight, bool left, bool right)
+        {
+            avatarBase.SetRotationLayerWeight(weight);
+            avatarBase.SetAnimatorBool(AnimationHashes.ROTATING_LEFT, left);
+            avatarBase.SetAnimatorBool(AnimationHashes.ROTATING_RIGHT, right);
+        }
+
         private (float dot, bool needToRotate) HandleAvatarRotation(
             in AvatarBase avatarBase,
             in ICharacterControllerSettings settings,
@@ -284,7 +308,11 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             ApplyAnimationWeight(ref pointAt, ref avatarBase, in settings, dt);
 
-            if (!pointAt.IsPointing) return;
+            if (!pointAt.IsPointing)
+            {
+                SetLocalPlayerRotationAnimation(ref avatarBase, 0f, false, false);
+                return;
+            }
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
 
@@ -294,6 +322,9 @@ namespace DCL.Character.CharacterMotion.Systems
                 settings.PointAtRotationVerticalDownThreshold);
 
             var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
+
+            bool isActuallyRotating = rotationInfo.needToRotate && !Mathf.Approximately(rotationInfo.dot, 1f);
+            LocalPlayerRotationAnimation(rigidTransform, ref avatarBase, ref pointAt, isActuallyRotating, dt);
 
             ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, rotationInfo);
         }
