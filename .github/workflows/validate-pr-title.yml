@@ -1,0 +1,8 @@
+name: Validate PR Title
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+jobs:
+  semantic:
+    uses: decentraland/source-repo/.github/workflows/validate-pr-title.yml@main
+    secrets: inherit
