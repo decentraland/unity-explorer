@@ -66,14 +66,7 @@ namespace DCL.Chat.ChatReactions.Configs
                         "Enables pop/shrink effects on world particles. Leave null to use raw start→end interpolation.")]
         [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; }
 
-        [field: Header("LiveKit")]
-        [field: Tooltip("Echo your own reactions back to yourself for testing without a second client.")]
-        [field: SerializeField] public bool SelfSendEnabled { get; private set; } = false;
-
         [field: Header("Mock Simulation")]
-        [field: Tooltip("Enable the mock reaction simulation instead of LiveKit. Nearby avatars will appear to send random reactions.")]
-        [field: SerializeField] public bool MockEnabled { get; private set; } = false;
-
         [field: Min(0.5f)]
         [field: Tooltip("Minimum seconds between simulated incoming reactions.")]
         [field: SerializeField] public float MockIntervalMin { get; private set; } = 1f;

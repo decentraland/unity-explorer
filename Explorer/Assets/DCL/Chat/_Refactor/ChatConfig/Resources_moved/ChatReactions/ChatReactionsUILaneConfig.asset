@@ -19,7 +19,7 @@ MonoBehaviour:
   <SizeRange>k__BackingField: {x: 30, y: 40}
   <Drag>k__BackingField: 1.2
   <Gravity>k__BackingField: {x: 1, y: 1}
-  <StreamRatePerSecond>k__BackingField: 500
+  <StreamRatePerSecond>k__BackingField: 10
   <StreamBurst>k__BackingField: 1
   <DefaultEmojiIndex>k__BackingField: 500
   <RandomEmoji>k__BackingField: 1

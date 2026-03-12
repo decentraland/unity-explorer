@@ -220,11 +220,11 @@ namespace DCL.PluginSystem.Global
 
             IReactionMessageBus reactionBus;
 
-            if (reactionsConfig.WorldLane.MockEnabled)
+            if (reactionsConfig.MockEnabled)
             {
                 reactionBus = new MockReactionMessageBus(
                     entityParticipantTable,
-                    reactionsConfig.WorldLane,
+                    reactionsConfig,
                     reactionsConfig.Atlas != null ? reactionsConfig.Atlas.TotalTiles : 1);
             }
             else
@@ -233,7 +233,7 @@ namespace DCL.PluginSystem.Global
                     messagePipesHub,
                     userBlockingCacheProxy,
                     web3IdentityCache,
-                    reactionsConfig.WorldLane.SelfSendEnabled);
+                    reactionsConfig.SelfSendEnabled);
             }
 
             pluginScope.Add(reactionBus);

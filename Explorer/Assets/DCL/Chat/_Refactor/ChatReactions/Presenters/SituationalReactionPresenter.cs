@@ -18,11 +18,9 @@ namespace DCL.Chat.ChatReactions
         private readonly RectTransform? debugButtonRect;
         private readonly CancellationTokenSource cts = new ();
 
-#if UNITY_EDITOR || DEBUG
         private bool prevStreamUI;
         private bool prevStreamLocal;
         private bool prevStreamRemote;
-#endif
 
         public SituationalReactionPresenter(SituationalReactionService service,
             ChatReactionsConfig config,
@@ -57,7 +55,6 @@ namespace DCL.Chat.ChatReactions
                     service.Tick(dt);
                     Profiler.EndSample();
 
-#if UNITY_EDITOR || DEBUG
                     if (config.DebugEnabled)
                     {
                         ApplyDebugToggles();
@@ -73,7 +70,6 @@ namespace DCL.Chat.ChatReactions
                             service.IsDebugNearbyActive);
                         Profiler.EndSample();
                     }
-#endif
 
                     await UniTask.Yield(ct);
                 }
@@ -82,7 +78,6 @@ namespace DCL.Chat.ChatReactions
             }
         }
 
-#if UNITY_EDITOR || DEBUG
         private void ApplyDebugToggles()
         {
             if (config.StreamUILane != prevStreamUI)
@@ -112,7 +107,6 @@ namespace DCL.Chat.ChatReactions
                     service.EndDebugNearby();
             }
         }
-#endif
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
         {

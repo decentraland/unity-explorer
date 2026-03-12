@@ -27,7 +27,15 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Header("Message Reactions")]
         [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; private set; }
 
-        [Header("Debug")]
+        [Header("Debug — Networking")]
+        [Tooltip("Use mock reaction simulation instead of LiveKit. " +
+                 "Nearby avatars will appear to send random reactions without a real connection.")]
+        public bool MockEnabled;
+
+        [Tooltip("Echo your own reactions back to yourself for testing without a second client.")]
+        public bool SelfSendEnabled;
+
+        [Header("Debug — Streaming")]
         [Tooltip("Enable Inspector-driven debug toggles and live stats. Disable in production.")]
         public bool DebugEnabled;
 

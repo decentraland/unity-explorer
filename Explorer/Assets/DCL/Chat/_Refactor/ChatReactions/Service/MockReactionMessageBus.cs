@@ -12,7 +12,7 @@ namespace DCL.Chat.ChatReactions
     public sealed class MockReactionMessageBus : IReactionMessageBus
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly ChatReactionsWorldLaneConfig config;
+        private readonly ChatReactionsConfig config;
         private readonly int atlasTotalTiles;
         private readonly System.Random rng;
         private readonly CancellationTokenSource cts;
@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatReactions
 
         public MockReactionMessageBus(
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            ChatReactionsWorldLaneConfig config,
+            ChatReactionsConfig config,
             int atlasTotalTiles)
         {
             this.entityParticipantTable = entityParticipantTable;
@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatReactions
         }
 
         private float ResolveRandomInterval() =>
-            config.MockIntervalMin + (float)(rng.NextDouble() * (config.MockIntervalMax - config.MockIntervalMin));
+            config.WorldLane.MockIntervalMin + (float)(rng.NextDouble() * (config.WorldLane.MockIntervalMax - config.WorldLane.MockIntervalMin));
 
         private string? PickRandomNearbyWallet()
         {
@@ -88,8 +88,8 @@ namespace DCL.Chat.ChatReactions
         private void EmitMockReaction(string walletId)
         {
             int emojiIndex = rng.Next(0, atlasTotalTiles);
-            int minBurst = config.MockMinEmojisPerBurst;
-            int maxBurst = config.MockMaxEmojisPerBurst;
+            int minBurst = config.WorldLane.MockMinEmojisPerBurst;
+            int maxBurst = config.WorldLane.MockMaxEmojisPerBurst;
             int count = rng.Next(Math.Min(minBurst, maxBurst), Math.Max(minBurst, maxBurst) + 1);
 
             ReactionReceived?.Invoke(new ReactionReceivedArgs(

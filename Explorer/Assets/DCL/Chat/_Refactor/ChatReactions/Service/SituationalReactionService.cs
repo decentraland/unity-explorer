@@ -16,10 +16,8 @@ namespace DCL.Chat.ChatReactions
 
         public bool Enabled { get; set; } = true;
 
-#if UNITY_EDITOR || DEBUG
         private readonly Func<List<Vector3>>? cachedNearbyGetter;
         private bool debugActive;
-#endif
 
         public SituationalReactionService(ChatReactionsConfig config, RectTransform laneRect,
             IAvatarReactionPosition? avatarPosition = null, IReactionMessageBus? reactionBus = null)
@@ -34,9 +32,7 @@ namespace DCL.Chat.ChatReactions
             if (avatarPosition != null)
             {
                 cachedLocalHeadGetter = avatarPosition.GetLocalPlayerHeadPosition;
-#if UNITY_EDITOR || DEBUG
                 cachedNearbyGetter = avatarPosition.GetAllNearbyHeadPositions;
-#endif
             }
 
             if (reactionBus != null)
@@ -49,10 +45,8 @@ namespace DCL.Chat.ChatReactions
                 reactionBus.ReactionReceived -= OnRemoteReaction;
 
             worldReactionSimulation.EndStream();
-#if UNITY_EDITOR || DEBUG
             chatReactionSimulation.EndDebugUIStream();
             worldReactionSimulation.EndDebugNearby();
-#endif
             chatReactionSimulation.Dispose();
             worldReactionSimulation.Dispose();
         }
@@ -149,7 +143,6 @@ namespace DCL.Chat.ChatReactions
             }
         }
 
-#if UNITY_EDITOR || DEBUG
         public void BeginDebugUIStream(RectTransform? sourceRect = null)
         {
             chatReactionSimulation.BeginDebugUIStream(sourceRect);
@@ -198,9 +191,7 @@ namespace DCL.Chat.ChatReactions
         public bool IsWorldStreaming => worldReactionSimulation.IsStreaming;
         public bool IsDebugNearbyActive => debugActive;
         public int NearbyAvatarCount => avatarPosition?.LastNearbyCount ?? 0;
-#endif
 
-        
         private int StreamEmojiIndex => config.UILane.RandomEmoji ? -1 : config.UILane.DefaultEmojiIndex;
 
         private void OnRemoteReaction(ReactionReceivedArgs args)

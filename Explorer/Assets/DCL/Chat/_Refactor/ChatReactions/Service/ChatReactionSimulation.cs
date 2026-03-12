@@ -111,10 +111,8 @@ namespace DCL.Chat.ChatReactions
         public void ToggleUIStream(RectTransform sourceRect) =>
             streamEmitter.Toggle(sourceRect);
 
-#if UNITY_EDITOR || DEBUG
         public void BeginDebugUIStream(RectTransform? sourceRect = null) => streamEmitter.Begin(sourceRect);
         public void EndDebugUIStream() => streamEmitter.End();
-#endif
 
         private void SimulateParticlePhysics(float dt)
         {

@@ -17,15 +17,17 @@ MonoBehaviour:
   <UILane>k__BackingField: {fileID: 11400000, guid: 63cac0f6e35666c49b5e0b9bd0fa0a22, type: 2}
   <WorldLane>k__BackingField: {fileID: 11400000, guid: 44ddfb8a933575544857300ca6cca86c, type: 2}
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
-  DebugEnabled: 0
-  StreamUILane: 0
-  StreamLocalPlayer: 0
-  StreamRemotePlayers: 0
+  MockEnabled: 0
+  SelfSendEnabled: 0
+  DebugEnabled: 1
+  StreamUILane: 1
+  StreamLocalPlayer: 1
+  StreamRemotePlayers: 1
   uiAliveCount: 0
-  uiPoolCapacity: 0
+  uiPoolCapacity: 1023
   worldAliveCount: 0
-  worldPoolCapacity: 0
-  nearbyAvatarCount: 0
+  worldPoolCapacity: 1023
+  nearbyAvatarCount: 9
   isUIStreaming: 0
   isWorldStreaming: 0
-  isDebugNearbyActive: 0
+  isDebugNearbyActive: 1

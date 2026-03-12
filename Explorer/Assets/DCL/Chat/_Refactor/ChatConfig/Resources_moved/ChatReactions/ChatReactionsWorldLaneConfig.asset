@@ -19,8 +19,8 @@ MonoBehaviour:
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
   <BurstCount>k__BackingField: 1
-  <StreamRatePerSecond>k__BackingField: 1
-  <DebugRatePerSecond>k__BackingField: 0
+  <StreamRatePerSecond>k__BackingField: 10
+  <DebugRatePerSecond>k__BackingField: 3
   <ZigZagAmplitude>k__BackingField: 0.5
   <ZigZagFrequency>k__BackingField: 0.8
   <RenderLayer>k__BackingField: 0
@@ -84,8 +84,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  <SelfSendEnabled>k__BackingField: 0
-  <MockEnabled>k__BackingField: 1
   <MockIntervalMin>k__BackingField: 0.5
   <MockIntervalMax>k__BackingField: 0.5
   <MockMinEmojisPerBurst>k__BackingField: 1
