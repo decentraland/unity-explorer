@@ -171,8 +171,8 @@ MonoBehaviour:
   <HeadIKWeightChangeSpeed>k__BackingField: 2
   <HeadIKRemotePlayersDistance>k__BackingField: 10
   <PointAtMaxDistance>k__BackingField: 100
-  <PointAtDuration>k__BackingField: 10
-  <PointAtArmReach>k__BackingField: 1.525
+  <PointAtDuration>k__BackingField: 1000
+  <PointAtArmReach>k__BackingField: 0.587
   <PointAtRotationHorizontalRightThreshold>k__BackingField: 0.8
   <PointAtRotationHorizontalLeftThreshold>k__BackingField: 0.3
   <PointAtRotationVerticalUpThreshold>k__BackingField: 0.75
