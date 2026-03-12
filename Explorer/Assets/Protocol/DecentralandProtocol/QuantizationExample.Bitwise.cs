@@ -10,6 +10,7 @@ namespace Decentraland.Common
     public partial class PositionDelta
     {
         private float? _dx;
+        /// <summary>Float accessor for <see cref="Dx"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DxQuantized
         {
             get => _dx ??= Quantize.Decode(Dx, -100.0f, 100.0f, 16);
@@ -17,6 +18,7 @@ namespace Decentraland.Common
         }
 
         private float? _dy;
+        /// <summary>Float accessor for <see cref="Dy"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DyQuantized
         {
             get => _dy ??= Quantize.Decode(Dy, -100.0f, 100.0f, 16);
@@ -24,6 +26,7 @@ namespace Decentraland.Common
         }
 
         private float? _dz;
+        /// <summary>Float accessor for <see cref="Dz"/>. Range [-100.0f, 100.0f], 16 bits, step ≈ 0.0030518.</summary>
         public float DzQuantized
         {
             get => _dz ??= Quantize.Decode(Dz, -100.0f, 100.0f, 16);
@@ -42,6 +45,7 @@ namespace Decentraland.Common
     public partial class PlayerInput
     {
         private float? _moveX;
+        /// <summary>Float accessor for <see cref="MoveX"/>. Range [-1.0f, 1.0f], 8 bits, step ≈ 0.00784314.</summary>
         public float MoveXQuantized
         {
             get => _moveX ??= Quantize.Decode(MoveX, -1.0f, 1.0f, 8);
@@ -49,6 +53,7 @@ namespace Decentraland.Common
         }
 
         private float? _moveZ;
+        /// <summary>Float accessor for <see cref="MoveZ"/>. Range [-1.0f, 1.0f], 8 bits, step ≈ 0.00784314.</summary>
         public float MoveZQuantized
         {
             get => _moveZ ??= Quantize.Decode(MoveZ, -1.0f, 1.0f, 8);
@@ -56,6 +61,7 @@ namespace Decentraland.Common
         }
 
         private float? _yaw;
+        /// <summary>Float accessor for <see cref="Yaw"/>. Range [-180.0f, 180.0f], 12 bits, step ≈ 0.0879121.</summary>
         public float YawQuantized
         {
             get => _yaw ??= Quantize.Decode(Yaw, -180.0f, 180.0f, 12);
@@ -74,6 +80,7 @@ namespace Decentraland.Common
     public partial class AvatarStateSnapshot
     {
         private float? _x;
+        /// <summary>Float accessor for <see cref="X"/>. Range [-4096.0f, 4096.0f], 16 bits, step ≈ 0.125002.</summary>
         public float XQuantized
         {
             get => _x ??= Quantize.Decode(X, -4096.0f, 4096.0f, 16);
@@ -81,6 +88,7 @@ namespace Decentraland.Common
         }
 
         private float? _y;
+        /// <summary>Float accessor for <see cref="Y"/>. Range [-256.0f, 256.0f], 14 bits, step ≈ 0.0312519.</summary>
         public float YQuantized
         {
             get => _y ??= Quantize.Decode(Y, -256.0f, 256.0f, 14);
@@ -88,6 +96,7 @@ namespace Decentraland.Common
         }
 
         private float? _z;
+        /// <summary>Float accessor for <see cref="Z"/>. Range [-4096.0f, 4096.0f], 16 bits, step ≈ 0.125002.</summary>
         public float ZQuantized
         {
             get => _z ??= Quantize.Decode(Z, -4096.0f, 4096.0f, 16);
@@ -95,6 +104,7 @@ namespace Decentraland.Common
         }
 
         private float? _pitch;
+        /// <summary>Float accessor for <see cref="Pitch"/>. Range [-90.0f, 90.0f], 10 bits, step ≈ 0.175953.</summary>
         public float PitchQuantized
         {
             get => _pitch ??= Quantize.Decode(Pitch, -90.0f, 90.0f, 10);
@@ -102,6 +112,7 @@ namespace Decentraland.Common
         }
 
         private float? _yaw;
+        /// <summary>Float accessor for <see cref="Yaw"/>. Range [-180.0f, 180.0f], 12 bits, step ≈ 0.0879121.</summary>
         public float YawQuantized
         {
             get => _yaw ??= Quantize.Decode(Yaw, -180.0f, 180.0f, 12);

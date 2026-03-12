@@ -1,5 +1,4 @@
-﻿using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Conversion;
+﻿using CrdtEcsBridge.Components.Conversion;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -21,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly PulseMultiplayerService pulseService;
         private readonly PeerIdCache peerIdCache;
         private readonly MovementInbox movementInbox;
-
+        private readonly HashSet<uint> pendingResyncs = new ();
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
 
         private bool isDisposed;
@@ -103,6 +102,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                 else
                     lastMovementMessages[playerStateFull.SubjectId] = (playerStateFull.Sequence, movementMessage);
 
+                pendingResyncs.Remove(playerStateFull.SubjectId);
+
                 Inbox(movementMessage, wallet);
             }
         }
@@ -125,16 +126,52 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 if (!lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
                 {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {playerState.SubjectId}");
+                    if (TryRequestResync(playerState.SubjectId, 0))
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {playerState.SubjectId}");
+
+                    continue;
+                }
+
+                if (playerState.NewSeq > lastMovement.sequence)
+                {
+                    if (playerState.NewSeq - lastMovement.sequence > 1)
+                    {
+                        if (TryRequestResync(playerState.SubjectId, lastMovement.sequence))
+                            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {playerState.SubjectId}. Received seq: {playerState.NewSeq}, prev seq: {lastMovement.sequence}");
+
+                        continue;
+                    }
+                }
+                else
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {playerState.SubjectId}. Received seq: {playerState.NewSeq}, last seq: {lastMovement.sequence}");
                     continue;
                 }
 
                 NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, playerState);
-
-                if (lastMovement.sequence < playerState.NewSeq)
-                    lastMovementMessages[playerState.SubjectId] = (playerState.NewSeq, movementMessage);
+                lastMovementMessages[playerState.SubjectId] = (playerState.NewSeq, movementMessage);
 
                 Inbox(movementMessage, wallet);
+            }
+
+            return;
+
+            bool TryRequestResync(uint subjectId, uint knownSequence)
+            {
+                if (!pendingResyncs.Add(subjectId)) return false;
+
+                MessagePipe.OutgoingMessage resyncMessage = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE,
+                    ClientMessage.MessageOneofCase.Resync);
+
+                resyncMessage.Message.Resync = new ResyncRequest
+                {
+                    SubjectId = subjectId,
+                    KnownSeq = knownSequence,
+                };
+
+                pulseService.Send(resyncMessage);
+
+                return true;
             }
         }
 
@@ -150,27 +187,27 @@ namespace DCL.Multiplayer.Connections.Pulse
             var velocityChanged = false;
             var movementBlendChanged = false;
 
-            if (delta.HasPositionX) last.position.x = delta.PositionX;
-            if (delta.HasPositionY) last.position.y = delta.PositionY;
-            if (delta.HasPositionZ) last.position.z = delta.PositionZ;
+            if (delta.HasPositionX) last.position.x = delta.PositionXQuantized;
+            if (delta.HasPositionY) last.position.y = delta.PositionYQuantized;
+            if (delta.HasPositionZ) last.position.z = delta.PositionZQuantized;
 
-            if (delta.HasRotationY) last.rotationY = delta.RotationY;
+            if (delta.HasRotationY) last.rotationY = delta.RotationYQuantized;
 
             if (delta.HasVelocityX)
             {
-                last.velocity.x = delta.VelocityX;
+                last.velocity.x = delta.VelocityXQuantized;
                 velocityChanged = true;
             }
 
             if (delta.HasVelocityY)
             {
-                last.velocity.y = delta.VelocityY;
+                last.velocity.y = delta.VelocityYQuantized;
                 velocityChanged = true;
             }
 
             if (delta.HasVelocityZ)
             {
-                last.velocity.z = delta.VelocityZ;
+                last.velocity.z = delta.VelocityZQuantized;
                 velocityChanged = true;
             }
 
@@ -179,23 +216,23 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (delta.HasMovementBlend)
             {
-                float movementBlend = Mathf.Clamp(delta.MovementBlend, 0, 3);
+                float movementBlend = Mathf.Clamp(delta.MovementBlendQuantized, 0, 3);
                 last.animState.MovementBlendValue = movementBlend;
                 movementBlendChanged = true;
             }
 
             if (delta.HasSlideBlend)
-                last.animState.SlideBlendValue = delta.SlideBlend;
+                last.animState.SlideBlendValue = delta.SlideBlendQuantized;
 
             if (delta.HasHeadYaw)
             {
-                last.headYawAndPitch.x = delta.HeadYaw;
+                last.headYawAndPitch.x = delta.HeadYawQuantized;
                 last.headIKYawEnabled = true;
             }
 
             if (delta.HasHeadPitch)
             {
-                last.headYawAndPitch.y = delta.HeadPitch;
+                last.headYawAndPitch.y = delta.HeadPitchQuantized;
                 last.headIKPitchEnabled = true;
             }
 

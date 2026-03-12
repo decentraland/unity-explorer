@@ -20,16 +20,16 @@ namespace Decentraland.Networking.Bitwise
         /// </summary>
         public static uint Encode(float value, float min, float max, int bits)
         {
-            uint steps = (1u << bits) - 1;
-            float t = Math.Clamp((value - min) / (max - min), 0f, 1f);
+            var steps = (1u << bits) - 1;
+            var t = Math.Clamp((value - min) / (max - min), 0f, 1f);
             return (uint)MathF.Round(t * steps);
         }
 
         /// <summary>Decodes a quantized <see cref="uint" /> back to a float.</summary>
         public static float Decode(uint encoded, float min, float max, int bits)
         {
-            uint steps = (1u << bits) - 1;
-            return ((float)encoded / steps * (max - min)) + min;
+            var steps = (1u << bits) - 1;
+            return (float)encoded / steps * (max - min) + min;
         }
     }
 }
