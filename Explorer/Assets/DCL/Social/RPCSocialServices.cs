@@ -106,6 +106,7 @@ namespace DCL.SocialService
                 {
                     await transport.CloseAsync(ct);
                     transport.OnCloseEvent -= OnTransportClosed;
+                    transport.OnErrorEvent -= OnTransportError;
                     transport.Dispose();
                     transport = null;
                 }
@@ -216,6 +217,7 @@ namespace DCL.SocialService
 
             transport = new WebSocketRpcTransport(apiUrl);
             transport.OnCloseEvent += OnTransportClosed;
+            transport.OnErrorEvent += OnTransportError;
             Client = new RpcClient(transport);
 
             await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
@@ -254,6 +256,9 @@ namespace DCL.SocialService
         }
 
         private void OnTransportClosed() =>
+            socialServiceEventBus.SendTransportClosedNotification();
+
+        private void OnTransportError(Exception _) =>
             socialServiceEventBus.SendTransportClosedNotification();
     }
 }

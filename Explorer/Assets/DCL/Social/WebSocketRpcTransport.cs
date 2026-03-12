@@ -96,12 +96,14 @@ namespace DCL.SocialService
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
                     {
+                        webSocket.Abort();
                         OnErrorEvent?.Invoke(e);
                         break;
                     }
                     catch (Exception e)
                     {
                         ReportHub.LogException(e, ReportCategory.SOCIAL);
+                        webSocket.Abort();
                         OnErrorEvent?.Invoke(e);
                         break;
                     }
@@ -114,7 +116,11 @@ namespace DCL.SocialService
             if (isDisposed) return;
 
             try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
+            catch (WebSocketException e)
+            {
+                webSocket.Abort();
+                OnErrorEvent?.Invoke(e);
+            }
         }
 
         public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
@@ -122,7 +128,11 @@ namespace DCL.SocialService
             if (isDisposed) return;
 
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
+            catch (WebSocketException e)
+            {
+                webSocket.Abort();
+                OnErrorEvent?.Invoke(e);
+            }
         }
 
         public void Close() =>
