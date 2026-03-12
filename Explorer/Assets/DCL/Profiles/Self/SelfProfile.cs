@@ -25,9 +25,6 @@ namespace DCL.Profiles.Self
         private readonly ProfileBuilder profileBuilder = new ();
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
-        private Profile? copyOfOwnProfile;
-
-        public Profile? OwnProfile { get; private set; }
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -58,7 +55,6 @@ namespace DCL.Profiles.Self
 
         public void Dispose()
         {
-            copyOfOwnProfile?.Dispose();
             web3IdentityCache.OnIdentityCleared -= InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged -= InvalidateOwnProfile;
         }
@@ -83,15 +79,6 @@ namespace DCL.Profiles.Self
             if (profile.Avatar.IsEmotesWheelEmpty())
                 for (var slot = 0; slot < emoteStorage.BaseEmotesUrns.Count && slot < profile.Avatar.Emotes.Count; slot++)
                     profile.Avatar.emotes[slot] = emoteStorage.BaseEmotesUrns[slot];
-
-            if (OwnProfile == null || profile.Version > OwnProfile.Version)
-                OwnProfile = profile;
-
-            if (copyOfOwnProfile == null || profile.Version > copyOfOwnProfile.Version)
-            {
-                copyOfOwnProfile?.Dispose();
-                copyOfOwnProfile = profileBuilder.From(profile).Build();
-            }
 
             return profile;
         }
@@ -126,69 +113,86 @@ namespace DCL.Profiles.Self
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
-            // Skip publishing the same profile
-            // We need to keep a copy of the last fetched/updated profile, since many update operations modify the original profile
-            // outside of this class, and so this check fails
-            if (copyOfOwnProfile != null)
-                if (newProfile.IsSameProfile(copyOfOwnProfile))
-                    throw new IdenticalProfileUpdateException();
+            string address = web3IdentityCache.Identity.Address;
 
-            newProfile.UserId = web3IdentityCache.Identity.Address;
-            newProfile.Version++;
-
-            OwnProfile = newProfile;
-
-            if (!updateAvatarInWorld)
-            {
-                await profileRepository.SetAsync(newProfile, ct);
-
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
-                    // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
-
-                if (savedProfile != null)
-                {
-                    profileCache.Set(savedProfile.UserId, savedProfile);
-                    copyOfOwnProfile?.Dispose();
-                    copyOfOwnProfile = profileBuilder.From(savedProfile).Build();
-                }
-
-                return savedProfile;
-            }
-
-            // Update profile immediately to prevent UI inconsistencies
-            // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
-            // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
-            profileCache.Set(newProfile.UserId, newProfile);
-            UpdateAvatarInWorld(newProfile);
+            // Take a snapshot of the current profile from cache before any mutations
+            // This serves as the baseline for duplicate detection and revert on failure
+            profileCache.TryGet(address, out Profile? cachedProfile);
+            Profile? previousProfile = cachedProfile != null ? profileBuilder.From(cachedProfile).Build() : null;
 
             try
             {
-                await profileRepository.SetAsync(newProfile, ct);
-                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
-                    // force to fetch the profile: there are some fields that might change, like the profile picture url
-                    false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                // Skip publishing the same profile
+                if (previousProfile != null && newProfile.IsSameProfile(previousProfile))
+                    throw new IdenticalProfileUpdateException();
 
-                // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
-                // breaking the avatar and the backpack
-                profileCache.Set(savedProfile!.UserId, savedProfile);
-                UpdateAvatarInWorld(savedProfile!);
-                copyOfOwnProfile?.Dispose();
-                copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
-                return savedProfile;
+                newProfile.UserId = address;
+                newProfile.Version++;
+
+                if (!updateAvatarInWorld)
+                {
+                    await profileRepository.SetAsync(newProfile, ct);
+
+                    Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+
+                        // force to fetch the profile: there are some fields that might change, like the profile picture url
+                        false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+
+                    if (savedProfile != null)
+                        profileCache.Set(savedProfile.UserId, savedProfile);
+
+                    return savedProfile;
+                }
+
+                // Update profile immediately to prevent UI inconsistencies
+                // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
+                // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
+                profileCache.Set(newProfile.UserId, newProfile);
+                UpdateAvatarInWorld(newProfile);
+
+                try
+                {
+                    await profileRepository.SetAsync(newProfile, ct);
+
+                    Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
+
+                        // force to fetch the profile: there are some fields that might change, like the profile picture url
+                        false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+
+                    // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
+                    // breaking the avatar and the backpack
+                    profileCache.Set(savedProfile!.UserId, savedProfile);
+                    UpdateAvatarInWorld(savedProfile!);
+                    return savedProfile;
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // If we cleared the identity while waiting for the profile to be saved, just propagate without reverting
+                    if (web3IdentityCache.Identity == null) throw;
+
+                    // Revert to the previous profile so we are aligned to the catalyst's version
+                    if (previousProfile != null)
+                    {
+                        Profile revertProfile = profileBuilder.From(previousProfile).Build();
+                        profileCache.Set(revertProfile.UserId, revertProfile);
+                        UpdateAvatarInWorld(revertProfile);
+                    }
+
+                    throw;
+                }
             }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                // If we cleared the identity while waiting for the profile to be saved, we just propagate the exception without overwriting the own profile with the old session one
-                if (OwnProfile == null) throw;
+            finally { previousProfile?.Dispose(); }
+        }
 
-                // Revert to the old profile so we are aligned to the catalyst's version
-                // copyOfOwnProfile should never be null at this point
-                Profile oldProfile = profileBuilder.From(copyOfOwnProfile!).Build();
-                profileCache.Set(oldProfile.UserId, oldProfile);
-                UpdateAvatarInWorld(oldProfile);
-                OwnProfile = oldProfile;
-                throw;
+        /// <summary>
+        ///     The own profile resolved from the cache. Can be null if the profile hasn't been fetched yet.
+        /// </summary>
+        private Profile? OwnProfile
+        {
+            get
+            {
+                if (web3IdentityCache.Identity == null) return null;
+                return profileCache.TryGet(web3IdentityCache.Identity.Address, out Profile? profile) ? profile : null;
             }
         }
 
@@ -201,8 +205,6 @@ namespace DCL.Profiles.Self
 
         private void InvalidateOwnProfile()
         {
-            copyOfOwnProfile = null;
-            OwnProfile = null;
             // We also need to clear the owned nfts since they need to be re-initialized, otherwise we might end up with wrong nftIds (last part of the urn chunks)
             wearableStorage.ClearOwnedNftRegistry();
             emoteStorage.ClearOwnedNftRegistry();
