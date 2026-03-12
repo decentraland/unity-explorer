@@ -71,13 +71,14 @@
       "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "file:../../../LiveKit/client-sdk-unity",
+      "version": "git@github.com:decentraland/client-sdk-unity.git#feat/mono-spatial-audio",
       "depth": 0,
-      "source": "local",
+      "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
-      }
+      },
+      "hash": "60fa3b2b8bef39d00c2cb656eba6f24d40896b79"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
