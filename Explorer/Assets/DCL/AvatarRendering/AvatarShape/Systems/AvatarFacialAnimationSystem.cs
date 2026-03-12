@@ -11,11 +11,10 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
-    ///     Drives mouth phoneme animation for all instantiated avatars.
-    ///     When an AvatarMouthTalkingComponent is present and dirty, cycles through phoneme
-    ///     frames matching each character of the message for a configurable duration.
-    ///     Uses a MaterialPropertyBlock to select the phoneme slice from a Texture2DArray
-    ///     built from the mouth atlas, without touching the shared pool material.
+    ///     Drives all 2D facial animations for instantiated avatars: eye blinking and mouth phoneme animation.
+    ///     This system is the single entry point for facial animation and is designed to be extended
+    ///     with facial expressions and voice interpretation in the future.
+    ///     Uses MaterialPropertyBlock overrides per-renderer to avoid modifying shared pool materials.
     /// </summary>
     /// <remarks>
     ///     Phoneme atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
@@ -26,44 +25,86 @@ namespace DCL.AvatarRendering.AvatarShape
     /// </remarks>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
-    public partial class AvatarMouthAnimationSystem : BaseUnityLoopSystem
+    public partial class AvatarFacialAnimationSystem : BaseUnityLoopSystem
     {
+        /// <summary>Sentinel value: no phoneme MaterialPropertyBlock override is active.</summary>
+        private const int NO_PHONEME_OVERRIDE = -1;
+
         private static readonly int MAINTEX_ARR_SHADER_INDEX = TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX;
         private static readonly int MAINTEX_ARR_TEX_SHADER = TextureArrayConstants.MAINTEX_ARR_TEX_SHADER;
-
-        /// <summary>Sentinel value: no MaterialPropertyBlock override is active.</summary>
-        private const int NO_OVERRIDE = -1;
 
         // Reused every frame to avoid per-call allocation.
         private static readonly MaterialPropertyBlock s_Mpb = new MaterialPropertyBlock();
 
-        private readonly Texture2DArray phonemeTextureArray;
+        private readonly Texture2DArray? blinkTextureArray;
+        private readonly float minBlinkInterval;
+        private readonly float maxBlinkInterval;
+        private readonly float blinkDuration;
+
+        private readonly Texture2DArray? phonemeTextureArray;
         private readonly float phonemeDuration;
 
-        internal AvatarMouthAnimationSystem(
+        internal AvatarFacialAnimationSystem(
             World world,
-            Texture2DArray phonemeTextureArray,
+            Texture2DArray? blinkTextureArray,
+            float minBlinkInterval,
+            float maxBlinkInterval,
+            float blinkDuration,
+            Texture2DArray? phonemeTextureArray,
             float phonemeDuration) : base(world)
         {
+            this.blinkTextureArray = blinkTextureArray;
+            this.minBlinkInterval = minBlinkInterval;
+            this.maxBlinkInterval = maxBlinkInterval;
+            this.blinkDuration = blinkDuration;
             this.phonemeTextureArray = phonemeTextureArray;
             this.phonemeDuration = phonemeDuration;
         }
 
         protected override void Update(float t)
         {
-            SetupMouthComponentQuery(World);
-            UpdateMouthAnimationQuery(World, t);
+            if (blinkTextureArray != null)
+            {
+                SetupBlinkComponentQuery(World);
+                UpdateBlinkQuery(World, t);
+            }
+
+            if (phonemeTextureArray != null)
+            {
+                SetupMouthComponentQuery(World);
+                UpdateMouthAnimationQuery(World, t);
+            }
         }
 
         /// <summary>
-        ///     Adds AvatarMouthAnimationComponent to fully instantiated avatars that do not yet have one.
+        ///     Adds AvatarBlinkComponent to newly instantiated avatars that do not yet have one.
+        /// </summary>
+        [Query]
+        [All(typeof(AvatarCustomSkinningComponent))]
+        [None(typeof(AvatarBlinkComponent), typeof(DeleteEntityIntention))]
+        private void SetupBlinkComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
+        {
+            Renderer? eyeRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Eyes");
+
+            if (eyeRenderer == null)
+                return;
+
+            World.Add(entity, new AvatarBlinkComponent
+            {
+                EyeRenderer = eyeRenderer,
+                NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval),
+            });
+        }
+
+        /// <summary>
+        ///     Adds AvatarMouthAnimationComponent to newly instantiated avatars that do not yet have one.
         /// </summary>
         [Query]
         [All(typeof(AvatarCustomSkinningComponent))]
         [None(typeof(AvatarMouthAnimationComponent), typeof(DeleteEntityIntention))]
         private void SetupMouthComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
         {
-            Renderer? mouthRenderer = FindMouthRenderer(ref avatarShape);
+            Renderer? mouthRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Mouth");
 
             if (mouthRenderer == null)
                 return;
@@ -71,8 +112,57 @@ namespace DCL.AvatarRendering.AvatarShape
             World.Add(entity, new AvatarMouthAnimationComponent
             {
                 MouthRenderer = mouthRenderer,
-                CurrentPhonemeIndex = NO_OVERRIDE,
+                CurrentPhonemeIndex = NO_PHONEME_OVERRIDE,
             });
+        }
+
+        /// <summary>
+        ///     Updates the blink timer and swaps the eye texture when a blink is due.
+        ///     Also handles re-initialisation when the eye renderer has been replaced
+        ///     (e.g. after a wearable change triggers avatar re-instantiation).
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateBlink([Data] float t, ref AvatarBlinkComponent blink, ref AvatarShapeComponent avatarShape)
+        {
+            // Re-initialise when the renderer was destroyed by a re-instantiation.
+            if (blink.EyeRenderer == null)
+            {
+                Renderer? eyeRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Eyes");
+
+                if (eyeRenderer == null)
+                    return;
+
+                blink.EyeRenderer = eyeRenderer;
+                blink.IsBlinking = false;
+                blink.BlinkTimer = 0f;
+                blink.TimeSinceLastBlink = 0f;
+                blink.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
+            }
+
+            // Suppress blinking when the avatar or its eye renderer is invisible.
+            if (!avatarShape.IsVisible || !blink.EyeRenderer.enabled)
+            {
+                if (blink.IsBlinking)
+                    EndBlink(ref blink);
+
+                return;
+            }
+
+            if (blink.IsBlinking)
+            {
+                blink.BlinkTimer += t;
+
+                if (blink.BlinkTimer >= blinkDuration)
+                    EndBlink(ref blink);
+            }
+            else
+            {
+                blink.TimeSinceLastBlink += t;
+
+                if (blink.TimeSinceLastBlink >= blink.NextBlinkTime)
+                    StartBlink(ref blink);
+            }
         }
 
         /// <summary>
@@ -87,7 +177,7 @@ namespace DCL.AvatarRendering.AvatarShape
             // Re-init when the renderer was destroyed by a re-instantiation.
             if (mouth.MouthRenderer == null)
             {
-                Renderer? mouthRenderer = FindMouthRenderer(ref avatarShape);
+                Renderer? mouthRenderer = FindRendererWithSuffix(ref avatarShape, "Mask_Mouth");
 
                 if (mouthRenderer == null)
                     return;
@@ -96,13 +186,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 mouth.AnimatingText = null;
                 mouth.CharacterIndex = 0;
                 mouth.CharacterTimer = 0f;
-                mouth.CurrentPhonemeIndex = NO_OVERRIDE;
+                mouth.CurrentPhonemeIndex = NO_PHONEME_OVERRIDE;
             }
 
             // Suppress animation when the avatar or its mouth renderer is invisible.
             if (!avatarShape.IsVisible || !mouth.MouthRenderer.enabled)
             {
-                StopAnimation(ref mouth);
+                StopMouthAnimation(ref mouth);
                 return;
             }
 
@@ -136,14 +226,38 @@ namespace DCL.AvatarRendering.AvatarShape
             }
             else
             {
-                StopAnimation(ref mouth);
+                StopMouthAnimation(ref mouth);
             }
         }
 
-        private void StopAnimation(ref AvatarMouthAnimationComponent mouth)
+        private void StartBlink(ref AvatarBlinkComponent blink)
+        {
+            blink.IsBlinking = true;
+            blink.BlinkTimer = 0f;
+
+            // Use a MaterialPropertyBlock so only this renderer is overridden.
+            // The underlying shared pool material is never modified, preventing
+            // texture bleed-through onto mouth/eyebrow renderers.
+            s_Mpb.Clear();
+            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, blinkTextureArray);
+            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, 0);
+            blink.EyeRenderer.SetPropertyBlock(s_Mpb);
+        }
+
+        private void EndBlink(ref AvatarBlinkComponent blink)
+        {
+            blink.IsBlinking = false;
+            blink.TimeSinceLastBlink = 0f;
+            blink.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
+
+            // Clearing the property block reverts the renderer to its material's original values.
+            blink.EyeRenderer.SetPropertyBlock(null);
+        }
+
+        private void StopMouthAnimation(ref AvatarMouthAnimationComponent mouth)
         {
             mouth.AnimatingText = null;
-            ApplyPhoneme(ref mouth, NO_OVERRIDE);
+            ApplyPhoneme(ref mouth, NO_PHONEME_OVERRIDE);
         }
 
         private void ApplyPhoneme(ref AvatarMouthAnimationComponent mouth, int phonemeIndex)
@@ -153,7 +267,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             mouth.CurrentPhonemeIndex = phonemeIndex;
 
-            if (phonemeIndex == NO_OVERRIDE)
+            if (phonemeIndex == NO_PHONEME_OVERRIDE)
             {
                 // Revert to the renderer's default material texture.
                 mouth.MouthRenderer.SetPropertyBlock(null);
@@ -197,7 +311,10 @@ namespace DCL.AvatarRendering.AvatarShape
             }
         }
 
-        private static Renderer? FindMouthRenderer(ref AvatarShapeComponent avatarShape)
+        /// <summary>
+        ///     Searches the avatar's instantiated wearable renderers for one whose name ends with <paramref name="suffix"/>.
+        /// </summary>
+        private static Renderer? FindRendererWithSuffix(ref AvatarShapeComponent avatarShape, string suffix)
         {
             for (var i = 0; i < avatarShape.InstantiatedWearables.Count; i++)
             {
@@ -207,7 +324,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 {
                     Renderer renderer = wearable.Renderers[j];
 
-                    if (renderer.name.EndsWith("Mask_Mouth"))
+                    if (renderer.name.EndsWith(suffix))
                         return renderer;
                 }
             }

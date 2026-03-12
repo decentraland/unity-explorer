@@ -35,8 +35,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Utility.UIToolkit;
-using AvatarBlinkSystem = DCL.AvatarRendering.AvatarShape.AvatarBlinkSystem;
-using AvatarMouthAnimationSystem = DCL.AvatarRendering.AvatarShape.AvatarMouthAnimationSystem;
+using AvatarFacialAnimationSystem = DCL.AvatarRendering.AvatarShape.AvatarFacialAnimationSystem;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -202,11 +201,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            if (blinkTextureArray != null)
-                AvatarBlinkSystem.InjectToWorld(ref builder, blinkTextureArray, minBlinkInterval, maxBlinkInterval, blinkDuration);
-
-            if (mouthPhonemeTextureArray != null)
-                AvatarMouthAnimationSystem.InjectToWorld(ref builder, mouthPhonemeTextureArray, phonemeDuration);
+            AvatarFacialAnimationSystem.InjectToWorld(ref builder, blinkTextureArray, minBlinkInterval, maxBlinkInterval, blinkDuration, mouthPhonemeTextureArray, phonemeDuration);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);

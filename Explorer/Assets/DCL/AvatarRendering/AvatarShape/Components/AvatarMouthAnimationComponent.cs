@@ -4,7 +4,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     /// <summary>
     ///     Holds per-avatar state for mouth phoneme animation.
-    ///     Added by AvatarMouthAnimationSystem to fully instantiated avatars.
+    ///     Added by AvatarFacialAnimationSystem to fully instantiated avatars.
     /// </summary>
     public struct AvatarMouthAnimationComponent
     {
