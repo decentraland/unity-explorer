@@ -1,8 +1,10 @@
+---
+name: diagnostics-and-logging
+description: "Diagnostics, logging, and error reporting via ReportHub. Use when adding log statements, configuring severity matrices, tagging systems with LogCategory, integrating with Sentry, or overriding log levels at runtime."
+user-invocable: false
+---
+
 # Diagnostics & Logging
-
-## Activation
-
-Use this skill when adding logging, error reporting, configuring severity matrices, or integrating with Sentry.
 
 ## Sources
 

@@ -1,8 +1,10 @@
+---
+name: async-programming
+description: "Async programming patterns with UniTask, cancellation tokens, and exception handling. Use when writing async code, handling CancellationTokenSource lifecycle, using SuppressToResultAsync, or implementing detached UniTask/UniTaskVoid flows."
+user-invocable: false
+---
+
 # Async Programming Patterns
-
-## Activation
-
-Use this skill when writing async code with UniTask, handling cancellation, managing detached flows, or implementing exception-safe async pipelines.
 
 ## Sources
 

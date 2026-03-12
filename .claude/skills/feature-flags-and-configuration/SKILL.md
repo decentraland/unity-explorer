@@ -1,8 +1,10 @@
+---
+name: feature-flags-and-configuration
+description: "Feature flags, features registry, and app arguments. Use when gating features behind remote flags (FeatureFlagsConfiguration), registering features in FeaturesRegistry, checking or adding app arguments (AppArgs), or implementing feature providers."
+user-invocable: false
+---
+
 # Feature Flags & Configuration
-
-## Activation
-
-Use this skill when gating features behind flags, checking runtime configuration, using the features registry, or working with app arguments.
 
 ## Sources
 

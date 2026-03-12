@@ -1,8 +1,10 @@
+---
+name: mvc-and-ui-architecture
+description: "MVC UI architecture — controllers, views, window stacking, and shared space. Use when building UI controllers (ControllerBase), showing views via MVCManager, connecting UI to ECS via bridge systems, implementing context menus, settings panels, or coordinating panel visibility."
+user-invocable: false
+---
+
 # MVC & UI Architecture
-
-## Activation
-
-Use this skill when building UI controllers, views, window stacking, shared space panels, context menus, settings panels, or connecting UI to ECS.
 
 ## Sources
 

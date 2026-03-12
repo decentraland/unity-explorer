@@ -1,8 +1,10 @@
+---
+name: ecs-system-and-component-design
+description: "ECS system and component design patterns using Arch ECS. Use when creating or modifying systems, components, queries, cleanup logic, singletons, or system tests — also when reviewing code that manipulates World, Entity, or component references, even if the user doesn't mention 'ECS' explicitly."
+user-invocable: false
+---
+
 # ECS System & Component Design
-
-## Activation
-
-Use this skill when creating or modifying ECS systems, components, queries, cleanup logic, singletons, or system tests.
 
 ## Sources
 

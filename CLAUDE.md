@@ -2,9 +2,9 @@
 
 ## Startup
 
-At the start of every conversation, read [`skills/README.md`](skills/README.md) and [`docs/SKILL.md`](docs/SKILL.md) to load the project knowledge map. These are lightweight index files (~170 lines total) that enable navigation to any detailed skill or documentation file as needed during the task.
+At the start of every conversation, read [`docs/SKILL.md`](docs/SKILL.md) to load the project documentation map. Skills are automatically loaded by Claude Code from `.claude/skills/` — do not manually read them.
 
-Before writing or modifying any code, read and follow [`skills/code-standards.md`](skills/code-standards.md) for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
+Before writing or modifying any code, follow the code-standards skill for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
 
 ---
 

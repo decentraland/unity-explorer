@@ -1,8 +1,10 @@
+---
+name: plugin-architecture
+description: "Plugin and dependency injection architecture. Use when adding or modifying plugins (IDCLWorldPlugin, IDCLGlobalPlugin), plugin settings, containers (StaticContainer, DynamicWorldContainer), assembly structure, or Addressables asset provisioning."
+user-invocable: false
+---
+
 # Plugin & Dependency Architecture
-
-## Activation
-
-Use this skill when adding or modifying plugins, plugin settings, containers, assembly structure, or dependency injection patterns.
 
 ## Sources
 

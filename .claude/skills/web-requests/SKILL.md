@@ -1,8 +1,10 @@
+---
+name: web-requests
+description: "Web request framework for HTTP operations. Use when making GET/POST requests via IWebRequestController, parsing responses, building URLs with URLBuilder, signing requests with Web3 auth chains, or configuring retry policies."
+user-invocable: false
+---
+
 # Web Requests
-
-## Activation
-
-Use this skill when making HTTP requests, parsing responses, signing requests with Web3 authentication, or configuring retry policies.
 
 ## Sources
 

@@ -1,8 +1,10 @@
+---
+name: code-standards
+description: "C# naming conventions, member ordering, formatting rules, memory/GC rules, test patterns, and PR standards. Use when writing, reviewing, or modifying any C# code in this Unity project — applies to all files including ECS systems, controllers, tests, utilities, and plugins."
+user-invocable: false
+---
+
 # Code Standards & Conventions
-
-## Activation
-
-Use this skill when writing, reviewing, or modifying any C# code in the project. Applies to all files — ECS systems, controllers, tests, utilities, plugins.
 
 ## Sources
 
@@ -102,7 +104,7 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 - **String interpolation:** Use `$""` not `+` concatenation
 - **Expression-bodied properties:** Same line. Expression-bodied methods: new line.
 - **Unity callbacks:** Always use braces (even single-line)
-- Follow [`.editorconfig`](../Explorer/.editorconfig) and enable "Format On Save"
+- Follow [`.editorconfig`](../../Explorer/.editorconfig) and enable "Format On Save"
 
 ## Memory & GC Rules
 

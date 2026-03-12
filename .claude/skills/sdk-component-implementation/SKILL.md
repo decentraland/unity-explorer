@@ -1,8 +1,10 @@
+---
+name: sdk-component-implementation
+description: "End-to-end SDK7 component implementation from protocol definition to C# systems. Use when implementing a new SDK component, modifying existing SDK component systems, adding result components for scene-to-explorer communication, or registering components in ComponentsContainer."
+user-invocable: false
+---
+
 # SDK Component Implementation
-
-## Activation
-
-Use this skill when implementing a new SDK7 component end-to-end, modifying an existing SDK component's systems, or adding result components for scene-to-explorer communication.
 
 ## Sources
 

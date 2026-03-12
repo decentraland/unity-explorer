@@ -14,20 +14,20 @@ Comprehensive reference documentation for the Decentraland Unity Explorer client
 
 ## Implementation Skills
 
-For focused implementation procedures with activation rules, behavioral constraints, and real code examples, see the **[`/skills/`](../skills/README.md)** directory:
+Skills are automatically loaded by Claude Code from `.claude/skills/`. Each skill contains focused implementation procedures with behavioral constraints and real code examples:
 
 | Skill | Domain |
 |-------|--------|
-| [code-standards](../skills/code-standards.md) | Naming, formatting, ordering, tests, PRs |
-| [ecs-system-and-component-design](../skills/ecs-system-and-component-design.md) | Systems, components, queries, cleanup, singletons |
-| [plugin-architecture](../skills/plugin-architecture.md) | Plugins, settings, containers, assemblies |
-| [sdk-component-implementation](../skills/sdk-component-implementation.md) | New SDK7 components end-to-end |
-| [asset-promise-lifecycle](../skills/asset-promise-lifecycle.md) | Async ECS asset loading pipeline |
-| [async-programming](../skills/async-programming.md) | UniTask, cancellation, exception handling |
-| [mvc-and-ui-architecture](../skills/mvc-and-ui-architecture.md) | Controllers, views, window stacking, context menus |
-| [web-requests](../skills/web-requests.md) | HTTP requests, response parsing, signing, retries |
-| [diagnostics-and-logging](../skills/diagnostics-and-logging.md) | ReportHub, severity matrix, Sentry |
-| [feature-flags-and-configuration](../skills/feature-flags-and-configuration.md) | Feature flags, features registry, app arguments |
+| [code-standards](../.claude/skills/code-standards/SKILL.md) | Naming, formatting, ordering, tests, PRs |
+| [ecs-system-and-component-design](../.claude/skills/ecs-system-and-component-design/SKILL.md) | Systems, components, queries, cleanup, singletons |
+| [plugin-architecture](../.claude/skills/plugin-architecture/SKILL.md) | Plugins, settings, containers, assemblies |
+| [sdk-component-implementation](../.claude/skills/sdk-component-implementation/SKILL.md) | New SDK7 components end-to-end |
+| [asset-promise-lifecycle](../.claude/skills/asset-promise-lifecycle/SKILL.md) | Async ECS asset loading pipeline |
+| [async-programming](../.claude/skills/async-programming/SKILL.md) | UniTask, cancellation, exception handling |
+| [mvc-and-ui-architecture](../.claude/skills/mvc-and-ui-architecture/SKILL.md) | Controllers, views, window stacking, context menus |
+| [web-requests](../.claude/skills/web-requests/SKILL.md) | HTTP requests, response parsing, signing, retries |
+| [diagnostics-and-logging](../.claude/skills/diagnostics-and-logging/SKILL.md) | ReportHub, severity matrix, Sentry |
+| [feature-flags-and-configuration](../.claude/skills/feature-flags-and-configuration/SKILL.md) | Feature flags, features registry, app arguments |
 
 ## When to Use This Document
 
