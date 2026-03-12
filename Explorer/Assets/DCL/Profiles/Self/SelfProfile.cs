@@ -136,7 +136,7 @@ namespace DCL.Profiles.Self
                     Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
 
                         // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                        false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                     if (savedProfile != null)
                         profileCache.Set(savedProfile.UserId, savedProfile);
@@ -157,8 +157,9 @@ namespace DCL.Profiles.Self
                     Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct,
 
                         // force to fetch the profile: there are some fields that might change, like the profile picture url
-                        false, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                        false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
+                    //TODO (JUANI): Why? Why do we need to do it?
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
                     profileCache.Set(savedProfile!.UserId, savedProfile);
