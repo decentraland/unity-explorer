@@ -23,7 +23,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public event Action<Profile.CompactInfo>? JumpInClicked;
         public event Action<Profile.CompactInfo>? ChatClicked;
 
-        public FriendListRequestManager(IFriendsService friendsService,
+        public FriendListRequestManager(
+            IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
             LoopListView2 loopListView,

@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.PrivateWorlds;
-using DCL.UI.SharedSpaceManager;
 using MVC;
 using System;
 using System.Threading;
@@ -14,10 +13,10 @@ namespace DCL.PrivateWorlds.UI
     /// <summary>
     /// Controller for the private world access popup.
     /// Supports two modes: PasswordRequired and AccessDenied. Only manages view lifecycle; result is set on inputData.
-    /// Implements IBlocksChat so the MVC system automatically minimizes the chat when the popup opens,
+    /// The popup should mimize the chat automatically when open,
     /// preventing the chat input field from fighting for focus with the password input.
     /// </summary>
-    public class PrivateWorldPopupController : ControllerBase<PrivateWorldPopupView, PrivateWorldPopupParams>, IBlocksChat
+    public class PrivateWorldPopupController : ControllerBase<PrivateWorldPopupView, PrivateWorldPopupParams>
     {
         private readonly IInputBlock inputBlock;
         private readonly IWorldPermissionsService worldPermissionsService;
@@ -25,7 +24,7 @@ namespace DCL.PrivateWorlds.UI
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource? validateCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public PrivateWorldPopupController(ViewFactoryMethod viewFactory, IInputBlock inputBlock,
             IWorldPermissionsService worldPermissionsService) : base(viewFactory)

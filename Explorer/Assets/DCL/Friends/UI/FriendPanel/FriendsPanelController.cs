@@ -67,7 +67,8 @@ namespace DCL.Friends.UI.FriendPanel
             bool isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
             if (isConnectivityStatusEnabled)
             {
-                friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
+                friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(
+                    instantiatedView.FriendsSection,
                     friendsService,
                     friendEventBus,
                     mvcManager,
@@ -75,6 +76,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
+                    decentralandUrlsSource,
                     friendsConnectivityStatusTracker);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
@@ -82,8 +84,10 @@ namespace DCL.Friends.UI.FriendPanel
                 friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
             }
             else
-                friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                    new FriendListRequestManager(friendsService,
+                friendSectionController = new FriendSectionController(
+                    instantiatedView.FriendsSection,
+                    new FriendListRequestManager(
+                        friendsService,
                         friendEventBus,
                         profileRepository,
                         instantiatedView.FriendsSection.LoopList,
@@ -92,7 +96,6 @@ namespace DCL.Friends.UI.FriendPanel
                         FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
-                    realmNavigator,
                     decentralandUrlsSource,
                     realmNavigator);
 

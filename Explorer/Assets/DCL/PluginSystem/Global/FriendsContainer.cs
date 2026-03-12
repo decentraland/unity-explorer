@@ -131,8 +131,6 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 profileRepositoryWrapper,
-                isConnectivityStatusEnabled,
-                profileRepositoryWrapper,
                 decentralandUrlsSource
             );
 
