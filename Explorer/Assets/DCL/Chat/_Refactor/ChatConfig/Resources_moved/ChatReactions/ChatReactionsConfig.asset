@@ -19,15 +19,15 @@ MonoBehaviour:
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
   MockEnabled: 0
   SelfSendEnabled: 0
-  DebugEnabled: 1
-  StreamUILane: 1
-  StreamLocalPlayer: 1
-  StreamRemotePlayers: 1
-  uiAliveCount: 0
+  DebugEnabled: 0
+  StreamUILane: 0
+  StreamLocalPlayer: 0
+  StreamRemotePlayers: 0
+  uiAliveCount: 24
   uiPoolCapacity: 1023
   worldAliveCount: 0
   worldPoolCapacity: 1023
-  nearbyAvatarCount: 9
+  nearbyAvatarCount: 8
   isUIStreaming: 0
   isWorldStreaming: 0
-  isDebugNearbyActive: 1
+  isDebugNearbyActive: 0
