@@ -228,7 +228,7 @@ namespace Global.Dynamic
 
             if (applicationParametersParser.TryGetValue(AppArgsFlags.USE_LOG_MATRIX, out string? logMatrixFileName) && !string.IsNullOrEmpty(logMatrixFileName))
             {
-                var jsonOverride = LogMatrixJsonLoader.LoadFromApplicationRoot(logMatrixFileName);
+                var jsonOverride = LogMatrixJsonLoader.Load(logMatrixFileName);
 
                 if (jsonOverride != null)
                 {
