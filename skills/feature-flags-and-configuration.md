@@ -77,15 +77,15 @@ Feature flags can carry payload data in three formats:
 
 ```csharp
 // String payload
-if (config.TryGetTextPayload("alfa-feature", out string text))
+if (config.TryGetTextPayload("alfa-feature", "variantId", out string? text))
     UseText(text);
 
-// CSV payload
-if (config.TryGetCsvPayload("alfa-feature", out string[] values))
-    UseValues(values);
+// CSV payload (returns rows × columns)
+if (config.TryGetCsvPayload("alfa-feature", "variantId", out List<List<string>>? csv))
+    UseValues(csv);
 
 // JSON payload (deserializes to DTO type)
-if (config.TryGetCsvPayload<MyConfigDto>("alfa-feature", out MyConfigDto dto))
+if (config.TryGetJsonPayload<MyConfigDto>("alfa-feature", "variantId", out MyConfigDto? dto))
     UseConfig(dto);
 ```
 
@@ -201,5 +201,6 @@ if (appArgs.HasFlag(AppArgsFlags.DEBUG))
     EnableDebugMode();
 
 // Get flag value
-string realm = appArgs.GetValue(AppArgsFlags.REALM);
+if (appArgs.TryGetValue(AppArgsFlags.REALM, out var realm))
+    UseRealm(realm);
 ```
