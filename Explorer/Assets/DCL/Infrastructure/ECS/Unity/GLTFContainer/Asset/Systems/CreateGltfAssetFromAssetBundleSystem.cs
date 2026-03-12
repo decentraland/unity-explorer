@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.RenderSystem;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -21,11 +22,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
+        private readonly MaterialManager materialManager;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget, MaterialManager materialManager) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
+            this.materialManager = materialManager;
         }
 
         protected override void Update(float t)
@@ -58,7 +61,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
             // Create a new container root. It will be cached and pooled
-            if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
+            if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, materialManager, out GltfContainerAsset result))
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
             else
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to load {assetIntention.Hash} from AB")));

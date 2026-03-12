@@ -91,7 +91,7 @@ namespace Utility
                 return;
             }
 #endif
-            renderer.GetMaterials(targetList);
+            renderer.GetSharedMaterials(targetList);
         }
     }
 }
