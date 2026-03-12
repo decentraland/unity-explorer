@@ -77,13 +77,14 @@ namespace DCL.ApplicationBlocklistGuard
             if (remaining.TotalSeconds <= 0)
                 return "expired";
 
-            if (remaining.TotalDays >= 1)
+            var hours = (int)Math.Ceiling(remaining.TotalHours);
+
+            if (hours >= 24)
             {
-                var days = (int)remaining.TotalDays;
+                var days = (int)Math.Ceiling(remaining.TotalDays);
                 return days == 1 ? "1 day" : $"{days} days";
             }
 
-            var hours = (int)Math.Ceiling(remaining.TotalHours);
             return hours <= 1 ? "1h" : $"{hours}h";
         }
 
