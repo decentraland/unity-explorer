@@ -34,6 +34,10 @@ namespace DCL.SDKComponents.MediaStream
         private LivekitAddress? playingAddress;
         private Vector3 audioPosition;
 
+        private string? currentVideoIdentity;
+        private float videoSwitchedAtTime;
+        private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
+
         private bool disposed;
 
         public bool MediaOpened =>
@@ -58,16 +62,22 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
-            if (IsVideoOpened) return;
 
-            // If a specific user stream died, fallback to current-stream (first available track)
-            if (playingAddress.Value.IsUserStream(out _))
+            if (!IsVideoOpened)
             {
-                OpenMedia(LivekitAddress.CurrentStream());
+                // If a specific user stream died, fallback to current-stream (first available track)
+                if (playingAddress.Value.IsUserStream(out _))
+                {
+                    OpenMedia(LivekitAddress.CurrentStream());
+                    return;
+                }
+
+                OpenMedia(playingAddress.Value);
                 return;
             }
 
-            OpenMedia(playingAddress.Value);
+            // Video is alive — try to follow the active speaker (CurrentStream only)
+            TryFollowActiveSpeaker();
         }
 
         public void EnsureAudioIsPlaying()
@@ -98,17 +108,23 @@ namespace DCL.SDKComponents.MediaStream
         {
             CloseCurrentStream();
 
+            currentVideoIdentity = null;
+
             currentVideoStream = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) =>
-                    self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid)),
-                onCurrentStream: static self => self.FirstVideo()
+                {
+                    self.currentVideoIdentity = userStream.Identity;
+                    return self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
+                },
+                onCurrentStream: static self => self.FirstVideoTrackingIdentity()
             );
 
             OpenAllAudioStreams();
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
+            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
         private void OpenAllAudioStreams()
@@ -151,14 +167,64 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private Weak<IVideoStream> FirstVideo()
+        private Weak<IVideoStream> FirstVideoTrackingIdentity()
         {
-            var result = FirstAvailableTrackSid(TrackKind.KindVideo);
+            StreamKey? result = FirstAvailableTrackSid(TrackKind.KindVideo);
 
             if (result.HasValue == false)
+            {
+                currentVideoIdentity = null;
                 return Weak<IVideoStream>.Null;
+            }
 
+            currentVideoIdentity = result.Value.identity;
             return room.VideoStreams.ActiveStream(result.Value);
+        }
+
+        private void TryFollowActiveSpeaker()
+        {
+            if (playingAddress!.Value.IsUserStream(out _)) return;
+
+            if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
+
+            if (room.ActiveSpeakers.Count == 0) return;
+
+            string? dominantSpeaker = null;
+
+            foreach (string speakerIdentity in room.ActiveSpeakers)
+            {
+                dominantSpeaker = speakerIdentity;
+                break;
+            }
+
+            if (dominantSpeaker == null) return;
+            if (dominantSpeaker == currentVideoIdentity) return;
+
+            StreamKey? videoTrack = FindVideoTrackForParticipant(dominantSpeaker);
+
+            if (videoTrack == null) return;
+
+            currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
+            currentVideoIdentity = dominantSpeaker;
+            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
+        }
+
+        private StreamKey? FindVideoTrackForParticipant(string identity)
+        {
+            lock (room.Participants)
+            {
+                var participant = room.Participants.RemoteParticipant(identity);
+
+                if (participant == null) return null;
+
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
+                {
+                    if (track.Kind == TrackKind.KindVideo)
+                        return new StreamKey(identity, sid);
+                }
+            }
+
+            return null;
         }
 
         private StreamKey? FirstAvailableTrackSid(TrackKind kind)
@@ -241,6 +307,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
             currentVideoStream = null;
+            currentVideoIdentity = null;
             playerState = PlayerState.STOPPED;
             ReleaseAllAudioSources();
         }
