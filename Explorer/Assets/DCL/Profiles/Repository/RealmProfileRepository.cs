@@ -106,6 +106,7 @@ namespace DCL.Profiles
             catch (Exception e)
             {
                 currentProfileResolutionTask.TrySetException(e);
+                throw;
             }
             finally
             {
