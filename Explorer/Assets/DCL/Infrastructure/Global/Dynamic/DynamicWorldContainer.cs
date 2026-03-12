@@ -498,7 +498,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.IdentityCache!,
                 moderationDataProvider,
-                mvcManager);
+                mvcManager,
+                bootstrapContainer.WebBrowser);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,

@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -19,6 +19,7 @@ namespace DCL.ApplicationBlocklistGuard
         private readonly IWeb3IdentityCache identityCache;
         private readonly ModerationDataProvider moderationDataProvider;
         private readonly IMVCManager mvcManager;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource cts = new ();
 
@@ -27,19 +28,25 @@ namespace DCL.ApplicationBlocklistGuard
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache identityCache,
             ModerationDataProvider moderationDataProvider,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IWebBrowser webBrowser)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.identityCache = identityCache;
             this.moderationDataProvider = moderationDataProvider;
             this.mvcManager = mvcManager;
+            this.webBrowser = webBrowser;
 
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BAN_WARNING, OnBanWarningNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.BANNED, OnBannedNotificationClicked);
         }
 
         public void Dispose() =>
             cts.SafeCancelAndDispose();
+
+        private void OnBanWarningNotificationClicked(object[] parameters) =>
+            webBrowser.OpenUrl(urlsSource.Url(DecentralandUrl.SupportLink));
 
         private void OnBannedNotificationClicked(object[] parameters)
         {
