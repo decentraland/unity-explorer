@@ -148,13 +148,6 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                string walletId = receivedMessage.Payload.HasForwardedFrom
-                    ? receivedMessage.Payload.ForwardedFrom
-                    : receivedMessage.FromWalletId;
-
-                // If the user that sends the message is banned from the current scene, we ignore it
-                if (BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId)) return;
-
                 if (string.IsNullOrEmpty(receivedMessage.Topic)) return;
 
                 ChatChannel.ChannelId parsedChannelId;
