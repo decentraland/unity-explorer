@@ -82,6 +82,19 @@ namespace DCL.VoiceChat
         [Tooltip("Closed-mouth pose index in the atlas (used when not speaking)")]
         public int LipSyncIdlePoseIndex = 2;
 
+        [Header("Lip Sync — Amplitude")]
+        [Tooltip("Multiplier applied to raw RMS amplitude before smoothing")]
+        [Range(0.5f, 20f)]
+        public float LipSyncAmplitudeSensitivity = 8f;
+
+        [Tooltip("Smoothing speed (higher = more reactive, lower = smoother). Applied as Lerp(smoothed, target, factor * dt * 60)")]
+        [Range(0.05f, 1f)]
+        public float LipSyncSmoothingFactor = 0.3f;
+
+        [Tooltip("Smoothed amplitude below this value snaps to idle pose (silence gate)")]
+        [Range(0f, 0.15f)]
+        public float LipSyncSilenceThreshold = 0.01f;
+
         public void ApplyProximitySettingsTo(AudioSource source)
         {
             source.spatialBlend = ProximitySpatialBlend;

@@ -270,12 +270,12 @@ public AssetReferenceT<Texture2D> MouthAtlasTexture;
 
 ---
 
-## Шаг 2: Amplitude + Weighted Random (A4 + P2) — СЛЕДУЮЩИЙ
+## Шаг 2: Amplitude + Weighted Random (A4 + P2) — ВЫПОЛНЕН
 
-> **Цель:** Реактивность рта на громкость речи — тихо = чуть приоткрыт, громко = широко открыт. **Критически важен: решает проблему LiveKit VAD, который не отпускает speaking state.**  
-> **Effort:** ~0.5–1 день (поверх Шага 1)  
-> **LiveKit changes:** ~5 строк в `LivekitAudioSource`  
-> **Bonus:** Также исправить threading issue (HashSet → thread-safe структура)
+> **Цель:** Реактивность рта на громкость речи — тихо = чуть приоткрыт, громко = широко открыт. **Решает проблему LiveKit VAD.**  
+> **Статус:** DONE  
+> **LiveKit changes:** ~8 строк в `LivekitAudioSource` (RMS + Interlocked)  
+> **manifest.json:** Переключен на локальный путь `file:../../../LiveKit/client-sdk-unity` для быстрой итерации
 
 ### 2.1 Изменение в LiveKit SDK
 
@@ -373,24 +373,48 @@ public float OpenThreshold = 0.15f;            // hysteresis: open above this
 public float CloseThreshold = 0.08f;           // hysteresis: close below this
 ```
 
-### 2.6 Файлы
+### 2.6 Файлы (фактические)
 
 | Действие | Файл |
 |----------|------|
-| **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — добавить `LipSyncAmplitude` + RMS |
-| **Modify** | `VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` — читать amplitude, weighted selection в `UpdateLipSync` query |
-| **Modify** | `VoiceChat/Proximity/ProximityLipSyncComponent.cs` — добавить `SmoothedAmplitude` |
-| **Modify** | `VoiceChat/VoiceChatConfiguration.cs` — amplitude settings |
-| **Modify** | `VoiceChat/Proximity/ProximityAudioSettings.cs` — threading fix: `HashSet` → thread-safe structure |
-| **Modify** | `PluginSystem/Global/VoiceChatPlugin.cs` — threading fix: `ActiveSpeakers.Updated` handler |
+| **Modified** | `client-sdk-unity/.../LivekitAudioSource.cs` — `lipSyncAmplitude` field + RMS в OnAudioFilterRead + `Interlocked` read/write |
+| **Modified** | `VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` — amplitude-weighted UpdateLipSync query, pose groups (SLIGHT/MEDIUM/WIDE), LivekitAudioSource caching |
+| **Modified** | `VoiceChat/Proximity/ProximityLipSyncComponent.cs` — добавлены `LivekitAudioSource LivekitSource`, `float SmoothedAmplitude` |
+| **Modified** | `VoiceChat/VoiceChatConfiguration.cs` — `LipSyncAmplitudeSensitivity`, `LipSyncSmoothingFactor`, `LipSyncSilenceThreshold` |
+| **Modified** | `Explorer/Packages/manifest.json` — LiveKit SDK → `file:../../../LiveKit/client-sdk-unity` |
 
-### 2.7 Acceptance Criteria (в дополнение к Шагу 1)
+**Не потребовались (отменены):**
+- `ProximityAudioSettings.cs` — threading issue обойдён: вместо HashSet из события, читаем `Interlocked` float прямо из `LivekitAudioSource`
+- `VoiceChatPlugin.cs` — не нужно: amplitude доступна через cached `LivekitSource` в компоненте
 
-- [ ] Открытость рта визуально соответствует громкости речи
-- [ ] Тихая речь → слегка приоткрытые позы; громкая → широко открытые
-- [ ] Плавные переходы (без дёргания между позами)
-- [ ] Амплитуда из pre-spatialization данных (не зависит от позиции слушателя)
-- [ ] Нет аудио-артефактов от RMS вычисления
+### 2.7 Acceptance Criteria
+
+- [x] Открытость рта визуально соответствует громкости речи — **подтверждено**
+- [x] Тихая речь → слегка приоткрытые позы; громкая → широко открытые — **подтверждено**
+- [x] Плавные переходы (без дёргания между позами) — **подтверждено**
+- [x] Амплитуда из pre-spatialization данных (не зависит от позиции слушателя)
+- [x] Нет аудио-артефактов от RMS вычисления — **подтверждено**
+- [x] Рот переходит в idle при тишине (решена проблема LiveKit VAD из Шага 1) — **подтверждено**
+
+> **Результат тестирования:** "Это хорошо работает" — amplitude + weighted random (A4 + P2) даёт убедительный визуальный результат.
+
+### 2.8 Архитектурные решения (post-implementation)
+
+**Thread safety — Interlocked вместо volatile:**
+- План предполагал `volatile float`. Реализовано через `Interlocked.Exchange` (write) + `Interlocked.CompareExchange` (read), что гарантирует атомарность на всех платформах.
+
+**Кэширование LivekitAudioSource в компоненте:**
+- Вместо per-frame `GetComponent<LivekitAudioSource>()` или дополнительного словаря, ссылка `LivekitSource` кэшируется в `ProximityLipSyncComponent` при setup. Одноразовый `GetComponent` в `SetupPendingLipSync`.
+
+**Threading issue обойдён:**
+- Шаг 1 использовал `HashSet<string>` (заполняемый с native thread, читаемый с main thread — data race). Шаг 2 полностью обходит эту проблему: amplitude читается через `Interlocked` прямо из `LivekitAudioSource`, без промежуточных коллекций. `SpeakingParticipants` HashSet в `ProximityConfigHolder` остаётся, но lip sync его больше не использует.
+
+**Pose group thresholds:**
+- `< SilenceThreshold (0.01)` → idle (index 2)
+- `< 0.15` (smoothed) → SLIGHT {5, 8, 11}
+- `< 0.45` (smoothed) → MEDIUM {1, 3, 4, 6, 9, 10}
+- `≥ 0.45` → WIDE {0, 7, 12, 13, 14, 15}
+- Пороги в коде, sensitivity/smoothing/silence — в ScriptableObject для runtime тюнинга
 
 ---
 
@@ -695,7 +719,7 @@ public class LipSyncSettings
 ```
 Шаг 1 (A2+P1)  →  ✅ DONE. Рот двигается. Ограничение: LiveKit VAD не отпускает idle.
     ↓
-Шаг 2 (A4+P2)  →  NEXT. Амплитуда решит проблему idle + даст weighted poses.
+Шаг 2 (A4+P2)  →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
     ↓
 Шаг 3 (A5+P3)  →  [Только если OVR недоступен]  →  Ship за flag
     ↓

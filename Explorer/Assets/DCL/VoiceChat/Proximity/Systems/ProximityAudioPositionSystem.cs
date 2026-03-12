@@ -14,6 +14,7 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using LiveKit.Rooms.Streaming.Audio;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,6 +37,10 @@ namespace DCL.VoiceChat
 
         private static readonly int MOUTH_TEX_ARR = Shader.PropertyToID("_MainTexArr");
         private static readonly int MOUTH_TEX_ARR_ID = Shader.PropertyToID("_MainTexArr_ID");
+
+        private static readonly int[] POSES_SLIGHT = { 5, 8, 11 };
+        private static readonly int[] POSES_MEDIUM = { 1, 3, 4, 6, 9, 10 };
+        private static readonly int[] POSES_WIDE = { 0, 7, 12, 13, 14, 15 };
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
@@ -194,20 +199,25 @@ namespace DCL.VoiceChat
                 Renderer mouthRenderer = FindMouthRendererForEntity(entity);
                 if (mouthRenderer == null) continue;
 
+                LivekitAudioSource lka = kvp.Value != null ? kvp.Value.GetComponent<LivekitAudioSource>() : null;
+
                 World.Add(entity, new ProximityLipSyncComponent
                 {
                     ParticipantIdentity = kvp.Key,
                     MouthRenderer = mouthRenderer,
+                    LivekitSource = lka,
                     CurrentPoseIndex = idlePose,
                     PoseHoldTimer = 0f,
+                    SmoothedAmplitude = 0f,
                 });
             }
         }
 
         /// <summary>
-        /// Source-generated query that updates lip sync animation for all entities
-        /// with a <see cref="ProximityLipSyncComponent"/>. Re-initialises the mouth
-        /// renderer when the avatar is re-instantiated (same pattern as AvatarBlinkSystem).
+        /// Source-generated query: amplitude-weighted lip sync animation.
+        /// Reads pre-spatialization RMS from <see cref="LivekitAudioSource.LipSyncAmplitude"/>,
+        /// smooths it, and selects a mouth pose group (idle / slight / medium / wide).
+        /// Re-initialises the mouth renderer when the avatar is re-instantiated.
         /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -227,29 +237,29 @@ namespace DCL.VoiceChat
 
             Texture2DArray mouthTextures = configHolder.MouthTextureArray!;
             VoiceChatConfiguration config = configHolder.Config!;
-            bool isSpeaking = configHolder.SpeakingParticipants.Contains(lipSync.ParticipantIdentity);
 
-            if (isSpeaking)
+            float rawAmplitude = lipSync.LivekitSource != null ? lipSync.LivekitSource.LipSyncAmplitude : 0f;
+            float target = rawAmplitude * config.LipSyncAmplitudeSensitivity;
+            lipSync.SmoothedAmplitude = Mathf.Lerp(lipSync.SmoothedAmplitude, target, config.LipSyncSmoothingFactor * dt * 60f);
+
+            if (lipSync.SmoothedAmplitude < config.LipSyncSilenceThreshold)
+            {
+                lipSync.CurrentPoseIndex = config.LipSyncIdlePoseIndex;
+                lipSync.PoseHoldTimer = 0f;
+            }
+            else
             {
                 lipSync.PoseHoldTimer -= dt;
 
                 if (lipSync.PoseHoldTimer <= 0f)
                 {
-                    int numPoses = mouthTextures.depth;
-                    int idlePose = config.LipSyncIdlePoseIndex;
+                    int[] poseGroup = lipSync.SmoothedAmplitude < 0.15f ? POSES_SLIGHT
+                                    : lipSync.SmoothedAmplitude < 0.45f ? POSES_MEDIUM
+                                    : POSES_WIDE;
 
-                    lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + Random.Range(1, numPoses)) % numPoses;
-
-                    if (lipSync.CurrentPoseIndex == idlePose)
-                        lipSync.CurrentPoseIndex = (lipSync.CurrentPoseIndex + 1) % numPoses;
-
+                    lipSync.CurrentPoseIndex = poseGroup[Random.Range(0, poseGroup.Length)];
                     lipSync.PoseHoldTimer = config.LipSyncPoseHoldDuration;
                 }
-            }
-            else
-            {
-                lipSync.CurrentPoseIndex = config.LipSyncIdlePoseIndex;
-                lipSync.PoseHoldTimer = 0f;
             }
 
             lipSyncPropertyBlock.SetFloat(MOUTH_TEX_ARR_ID, lipSync.CurrentPoseIndex);

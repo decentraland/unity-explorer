@@ -1,3 +1,4 @@
+using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 
 namespace DCL.VoiceChat
@@ -11,7 +12,9 @@ namespace DCL.VoiceChat
     {
         public string ParticipantIdentity;
         public Renderer MouthRenderer;
+        public LivekitAudioSource LivekitSource;
         public int CurrentPoseIndex;
         public float PoseHoldTimer;
+        public float SmoothedAmplitude;
     }
 }

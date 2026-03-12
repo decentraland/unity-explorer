@@ -252,6 +252,26 @@ Idle (закрытый):      index 2
 
 `Graphics.Blit` → `ReadPixels` → `CopyTexture` → `Texture2DArray` — работает с `isReadable: 0` на исходной текстуре (GPU-only Blit). `alphaIsTransparency: 1` совпадает с PR #7452.
 
+## Step 2 Findings (post-implementation)
+
+### Amplitude-based detection устраняет проблему VAD
+
+Вместо бинарного `SpeakingParticipants.Contains()` (Шаг 1, зависел от серверного VAD) — прямое чтение RMS из `LivekitAudioSource.LipSyncAmplitude`. Silence threshold (0.01) надёжно определяет тишину, даже если LiveKit VAD ошибочно считает участника speaking.
+
+### Threading issue решена архитектурно, не исправлением
+
+Шаг 1 имел data race: `HashSet<string>` писался из native thread, читался из main thread. Шаг 2 **обходит** проблему: каждый `LivekitAudioSource` содержит свой `float lipSyncAmplitude`, записываемый через `Interlocked.Exchange` на аудио-потоке и читаемый через `Interlocked.CompareExchange` на main thread. Нет shared mutable collections.
+
+`SpeakingParticipants` HashSet остаётся в `ProximityConfigHolder` (может использоваться другими фичами), но lip sync его больше не читает.
+
+### Локальный manifest для быстрой итерации
+
+`manifest.json` переключен с `git@github.com:decentraland/client-sdk-unity.git#feat/mono-spatial-audio` на `file:../../../LiveKit/client-sdk-unity`. Это позволяет менять `LivekitAudioSource.cs` и видеть результат без push/commit в LiveKit repo. Нужно вернуть на git reference перед merge.
+
+### Стратегия подтверждена: A4 (Amplitude + Weighted Random)
+
+Реализованная стратегия — A4 из Decision 2: амплитуда определяет группу поз, `Random.Range` выбирает конкретную. Тестирование подтвердило: визуально убедительно, рот реактивен к громкости, idle при тишине работает надёжно. Проблема серверного VAD из Шага 1 полностью решена.
+
 ---
 
 ## Consequences

@@ -356,6 +356,51 @@ public void UpdateCurrentActives(IEnumerable<string> sids)
 
 ---
 
+## Этап 7: Реализация Шага 2 (A4 + P2) — Amplitude + Weighted Random
+
+### Что реализовано
+
+Шаг 2 полностью заменяет бинарный `IActiveSpeakers` на amplitude-based detection. Алгоритм — **amplitude + weighted random** (A4 из ADR):
+1. RMS amplitude сглаживается через exponential Lerp
+2. Smoothed amplitude определяет **группу** поз (SLIGHT / MEDIUM / WIDE)
+3. `Random.Range` выбирает **конкретную позу** внутри группы
+4. При тишине (`< SilenceThreshold`) — idle
+
+**Результат тестирования:** "Это хорошо работает" — рот реагирует на громкость, при тишине — idle, визуально убедительно.
+
+### Изменения в LiveKit SDK
+
+**`LivekitAudioSource.cs`:**
+- Добавлено private поле `float lipSyncAmplitude` + public property `LipSyncAmplitude` через `Interlocked.CompareExchange` (thread-safe read)
+- В `OnAudioFilterRead()` **перед** спатиализацией (`spatialDsp.Process`): RMS вычисление + `Interlocked.Exchange` для записи
+- Pre-spatialization = амплитуда не зависит от позиции слушателя
+
+**`manifest.json`:**
+- LiveKit SDK переключен на локальный путь `file:../../../LiveKit/client-sdk-unity` для быстрой итерации без push в remote
+
+### Изменения в Unity Explorer
+
+**`ProximityLipSyncComponent.cs`:**
+- Добавлены `LivekitAudioSource LivekitSource` (кэшированная ссылка) и `float SmoothedAmplitude`
+
+**`VoiceChatConfiguration.cs`:**
+- Новая секция `[Header("Lip Sync — Amplitude")]`:
+  - `LipSyncAmplitudeSensitivity` (default 8) — множитель raw RMS
+  - `LipSyncSmoothingFactor` (default 0.3) — скорость сглаживания
+  - `LipSyncSilenceThreshold` (default 0.01) — порог тишины
+
+**`ProximityAudioPositionSystem.cs`:**
+- Добавлены static массивы pose groups: `POSES_SLIGHT`, `POSES_MEDIUM`, `POSES_WIDE`
+- `SetupPendingLipSync()` — добавлено кэширование `LivekitAudioSource` через `GetComponent` (одноразовый вызов)
+- `UpdateLipSync` query переписан: читает `LivekitSource.LipSyncAmplitude`, сглаживает, выбирает pose group по smoothed amplitude
+
+### Threading issue — решён архитектурно
+
+Шаг 1 использовал `HashSet<string> SpeakingParticipants` (запись из native thread, чтение из main thread = data race).  
+Шаг 2 **обходит проблему**: amplitude читается через `Interlocked` прямо из `LivekitAudioSource`, без промежуточных коллекций. Каждый `LivekitAudioSource` — свой атомарный float, никаких shared mutable collections.
+
+---
+
 ## Ключевые файлы
 
 ### Unity Explorer (`unity-explorer`)
