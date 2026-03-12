@@ -418,6 +418,29 @@ public float CloseThreshold = 0.08f;           // hysteresis: close below this
 
 ---
 
+## Шаг 2.5: Speech Band Filter — ВЫПОЛНЕН
+
+> **Цель:** Игнорировать фоновую музыку — считать амплитуду только в диапазоне речи.  
+> **Статус:** DONE
+
+### Реализация
+
+- **Bandpass filter** (one-pole IIR high-pass + low-pass) в `LivekitAudioSource.ComputeLipSyncAmplitudes()`
+- Оба RMS (full-spectrum + speech-band) вычисляются параллельно в одном проходе
+- Дизайнер переключает через `LipSyncUseSpeechBandFilter` bool
+- Частотный диапазон настраивается: `LipSyncSpeechBandLowHz` (default 300) / `LipSyncSpeechBandHighHz` (default 3000)
+- Band params синхронизируются в `UpdateLipSync` query каждый кадр
+
+### Настройки дизайнера (VoiceChatConfiguration)
+
+| Параметр | Default | Range | Описание |
+|----------|---------|-------|----------|
+| `LipSyncUseSpeechBandFilter` | false | bool | Переключатель full-spectrum ↔ speech-band |
+| `LipSyncSpeechBandLowHz` | 300 | 80–1000 | Нижний срез (убирает бас, музыку) |
+| `LipSyncSpeechBandHighHz` | 3000 | 1000–8000 | Верхний срез (убирает высокочастотные инструменты) |
+
+---
+
 ## Шаг 3: FFT Frequency Band Analysis (A5 + P3)
 
 > **Цель:** Различать гласные от согласных для более разнообразных форм рта.  
@@ -719,9 +742,11 @@ public class LipSyncSettings
 ```
 Шаг 1 (A2+P1)  →  ✅ DONE. Рот двигается. Ограничение: LiveKit VAD не отпускает idle.
     ↓
-Шаг 2 (A4+P2)  →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
+Шаг 2 (A4+P2)    →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
     ↓
-Шаг 3 (A5+P3)  →  [Только если OVR недоступен]  →  Ship за flag
+Шаг 2.5 (filter)  →  ✅ DONE. Speech band filter (300-3000 Hz). Дизайнер переключает.
+    ↓
+Шаг 3 (A5+P3)     →  [Только если OVR недоступен]  →  Ship за flag
     ↓
 Шаг 4 (A6+P4)  →  Ship за отдельным flag  →  Сравнить качество
     ↓

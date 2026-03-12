@@ -95,6 +95,18 @@ namespace DCL.VoiceChat
         [Range(0f, 0.15f)]
         public float LipSyncSilenceThreshold = 0.01f;
 
+        [Header("Lip Sync — Speech Band Filter")]
+        [Tooltip("When enabled, compute RMS only in the speech frequency range to reject background music and environmental noise")]
+        public bool LipSyncUseSpeechBandFilter;
+
+        [Tooltip("Low cutoff of the speech band (Hz). Voice fundamentals start ~85 Hz (male) / ~165 Hz (female), formants from ~300 Hz")]
+        [Range(80f, 1000f)]
+        public float LipSyncSpeechBandLowHz = 300f;
+
+        [Tooltip("High cutoff of the speech band (Hz). Speech intelligibility mostly below ~3000 Hz, sibilants up to ~8000 Hz")]
+        [Range(1000f, 8000f)]
+        public float LipSyncSpeechBandHighHz = 3000f;
+
         public void ApplyProximitySettingsTo(AudioSource source)
         {
             source.spatialBlend = ProximitySpatialBlend;

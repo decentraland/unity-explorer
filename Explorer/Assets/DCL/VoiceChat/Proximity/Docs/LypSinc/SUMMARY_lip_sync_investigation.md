@@ -401,6 +401,38 @@ public void UpdateCurrentActives(IEnumerable<string> sids)
 
 ---
 
+## Этап 8: Speech Band Filter (Step 2.5)
+
+### Проблема
+
+При включённой фоновой музыке рот аватара реагирует на музыку, а не только на речь. Full-spectrum RMS не различает голос от других звуковых источников.
+
+### Решение
+
+Добавлен bandpass filter (high-pass + low-pass, one-pole IIR) в `LivekitAudioSource.OnAudioFilterRead`. Оба RMS вычисляются параллельно в одном проходе:
+- **Full-spectrum** — как раньше, все частоты
+- **Speech-band** — только channel 0, после bandpass filter
+
+Дизайнер переключает через `LipSyncUseSpeechBandFilter` bool и подстраивает `SpeechBandLowHz` / `SpeechBandHighHz`.
+
+### Файлы
+
+| Файл | Изменения |
+|------|-----------|
+| `LivekitAudioSource.cs` | `ComputeLipSyncAmplitudes()` — bandpass filter + оба RMS; filter state fields; `speechBandLowHz`/`speechBandHighHz` internal fields; `LipSyncSpeechAmplitude` property |
+| `VoiceChatConfiguration.cs` | `LipSyncUseSpeechBandFilter`, `LipSyncSpeechBandLowHz` (300), `LipSyncSpeechBandHighHz` (3000) |
+| `ProximityAudioPositionSystem.cs` | Sync band params → LivekitAudioSource per frame; pick amplitude by filter toggle |
+
+### Технические детали
+
+- **High-pass**: `y[n] = α * (y[n-1] + x[n] - x[n-1])`, α = RC/(RC+dt), removes below `speechBandLowHz`
+- **Low-pass**: `y[n] = y[n-1] + α * (x[n] - y[n-1])`, α = dt/(RC+dt), removes above `speechBandHighHz`
+- Mono processing (channel 0 only, `i % channels == 0`) — корректный filter state без интерливинга
+- Filter state persistent across `OnAudioFilterRead` calls (полные `hpState`, `hpPrevInput`, `lpState`)
+- Band params синхронизируются из `VoiceChatConfiguration` → `LivekitAudioSource` каждый кадр в `UpdateLipSync` query
+
+---
+
 ## Ключевые файлы
 
 ### Unity Explorer (`unity-explorer`)

@@ -238,7 +238,17 @@ namespace DCL.VoiceChat
             Texture2DArray mouthTextures = configHolder.MouthTextureArray!;
             VoiceChatConfiguration config = configHolder.Config!;
 
-            float rawAmplitude = lipSync.LivekitSource != null ? lipSync.LivekitSource.LipSyncAmplitude : 0f;
+            if (lipSync.LivekitSource != null)
+            {
+                lipSync.LivekitSource.speechBandLowHz = config.LipSyncSpeechBandLowHz;
+                lipSync.LivekitSource.speechBandHighHz = config.LipSyncSpeechBandHighHz;
+            }
+
+            float rawAmplitude = lipSync.LivekitSource != null
+                ? (config.LipSyncUseSpeechBandFilter
+                    ? lipSync.LivekitSource.LipSyncSpeechAmplitude
+                    : lipSync.LivekitSource.LipSyncAmplitude)
+                : 0f;
             float target = rawAmplitude * config.LipSyncAmplitudeSensitivity;
             lipSync.SmoothedAmplitude = Mathf.Lerp(lipSync.SmoothedAmplitude, target, config.LipSyncSmoothingFactor * dt * 60f);
 
