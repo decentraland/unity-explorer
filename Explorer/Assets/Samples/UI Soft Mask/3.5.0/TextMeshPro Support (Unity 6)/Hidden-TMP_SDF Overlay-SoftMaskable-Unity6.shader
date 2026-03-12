@@ -1,4 +1,4 @@
-Shader "Soft Mask/TextMeshPro/Distance Field" {
+Shader "Hidden/TextMeshPro/Distance Field Overlay (SoftMaskable)" {
 
 Properties {
 	_FaceTex			("Face Texture", 2D) = "white" {}
@@ -82,15 +82,13 @@ Properties {
 
 	_CullMode			("Cull Mode", Float) = 0
 	_ColorMask			("Color Mask", Float) = 15
-
-	_SoftMask("Mask", 2D) = "white" {} // Soft Mask
 }
 
 SubShader {
 
 	Tags
-	{
-		"Queue"="Transparent"
+  {
+		"Queue"="Overlay"
 		"IgnoreProjector"="True"
 		"RenderType"="Transparent"
 	}
@@ -108,7 +106,7 @@ SubShader {
 	ZWrite Off
 	Lighting Off
 	Fog { Mode Off }
-	ZTest [unity_GUIZTestMode]
+	ZTest Always
 	Blend One OneMinusSrcAlpha
 	ColorMask [_ColorMask]
 
@@ -124,15 +122,18 @@ SubShader {
 		#pragma multi_compile __ UNITY_UI_CLIP_RECT
 		#pragma multi_compile __ UNITY_UI_ALPHACLIP
 
-		// Soft Mask
-		#pragma multi_compile __ SOFTMASK_SIMPLE SOFTMASK_SLICED SOFTMASK_TILED
-
+        // ==== SOFTMASKABLE START ====
+        #pragma shader_feature _ SOFTMASK_EDITOR
+        #pragma shader_feature_local_fragment _ SOFTMASKABLE
+        #if SOFTMASKABLE
+        #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
+        #endif
+        // ==== SOFTMASKABLE END ====
 
 		#include "UnityCG.cginc"
 		#include "UnityUI.cginc"
 		#include "Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc"
 		#include "Assets/TextMesh Pro/Shaders/TMPro.cginc"
-		#include "Packages/com.olegknyazev.softmask/Assets/Shaders/Resources/SoftMask.cginc" // Soft Mask
 
 		struct vertex_t
 		{
@@ -160,17 +161,20 @@ SubShader {
 			fixed4	underlayColor	: COLOR1;
 		    #endif
 
-		    float4 textures			: TEXCOORD5;
-
-			SOFTMASK_COORDS(6) // Soft Mask
+			float4 textures			: TEXCOORD5;
+			// ==== SOFTMASKABLE START ====
+			#if SOFTMASK_EDITOR
+			float4 worldPosition : TEXCOORD6;
+			#endif
+			// ==== SOFTMASKABLE END ====
 		};
 
 		// Used by Unity internally to handle Texture Tiling and Offset.
-		float4 _FaceTex_ST;
-		float4 _OutlineTex_ST;
-		float _UIMaskSoftnessX;
-        float _UIMaskSoftnessY;
-        int _UIVertexColorAlwaysGammaSpace;
+		uniform float4	_FaceTex_ST;
+		uniform float4	_OutlineTex_ST;
+		uniform float	_UIMaskSoftnessX;
+        uniform float	_UIMaskSoftnessY;
+        uniform int     _UIVertexColorAlwaysGammaSpace;
 
 		pixel_t VertShader(vertex_t input)
 		{
@@ -200,7 +204,7 @@ SubShader {
 
 			float bias =(.5 - weight) + (.5 / scale);
 
-			float alphaClip = (1.0 - _OutlineWidth * _ScaleRatioA - _OutlineSoftness * _ScaleRatioA);
+			float alphaClip = (1.0 - _OutlineWidth*_ScaleRatioA - _OutlineSoftness*_ScaleRatioA);
 
 		    #if GLOW_ON
 			alphaClip = min(alphaClip, 1.0 - _GlowOffset * _ScaleRatioB - _GlowOuter * _ScaleRatioB);
@@ -247,11 +251,13 @@ SubShader {
 			output.underlayColor =	underlayColor;
 			#endif
 			output.textures = float4(faceUV, outlineUV);
+			// ==== SOFTMASKABLE START ====
+			#if SOFTMASK_EDITOR
+			output.worldPosition = input.position;
+			#endif
+			// ==== SOFTMASKABLE END ====
 
-			// Soft Mask
-			pixel_t result_SoftMask = output;
-			SOFTMASK_CALCULATE_COORDS(result_SoftMask, input.position)
-			return result_SoftMask;
+			return output;
 		}
 
 
@@ -317,20 +323,23 @@ SubShader {
 			faceColor.rgb += glowColor.rgb * glowColor.a;
 		    #endif
 
-		// Alternative implementation to UnityGet2DClipping with support for softness.
+		    // Alternative implementation to UnityGet2DClipping with support for softness.
 		    #if UNITY_UI_CLIP_RECT
 			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
 			faceColor *= m.x * m.y;
 		    #endif
 
+            // ==== SOFTMASKABLE START ====
+            #if SOFTMASKABLE
+            faceColor *= SoftMask(input.position, input.worldPosition, faceColor.a);
+            #endif
+            // ==== SOFTMASKABLE END ====
+
 		    #if UNITY_UI_ALPHACLIP
 			clip(faceColor.a - 0.001);
 		    #endif
 
-  		    // Soft Mask
-  		    fixed4 result_SoftMask = faceColor * input.color.a;
-  		    result_SoftMask *= SOFTMASK_GET_MASK(input);
-  		    return result_SoftMask;
+			return faceColor * input.color.a;
 		}
 		ENDCG
 	}
