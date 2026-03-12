@@ -20,13 +20,23 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public float NextBlinkTime;
 
         /// <summary>
-        ///     Accumulated time the current blink has been open (closed-eyes state).
-        /// </summary>
-        public float BlinkTimer;
-
-        /// <summary>
-        ///     True while the avatar is in the closed-eyes state.
+        ///     True while the avatar is animating through the blink sequence.
         /// </summary>
         public bool IsBlinking;
+
+        /// <summary>
+        ///     Current index within the blink animation sequence (see AvatarFacialAnimationSystem.BLINK_SEQUENCE).
+        /// </summary>
+        public int FrameIndex;
+
+        /// <summary>
+        ///     Accumulated time the current blink frame has been displayed.
+        /// </summary>
+        public float FrameTimer;
+
+        /// <summary>
+        ///     Last applied eye atlas slice index. -1 means no MaterialPropertyBlock override is active (default material).
+        /// </summary>
+        public int CurrentEyeIndex;
     }
 }

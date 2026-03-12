@@ -17,6 +17,11 @@ namespace DCL.AvatarRendering.AvatarShape
     ///     Uses MaterialPropertyBlock overrides per-renderer to avoid modifying shared pool materials.
     /// </summary>
     /// <remarks>
+    ///     Eye atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
+    ///     Row 0: Idle(0),    HalfClosed(1), Closed(2), WideOpen(3)
+    ///     Row 1: LookUp(4),  LookDown(5),   LookLeft(6), LookRight(7)
+    ///     Row 2-3: Unused(8..15)
+    ///
     ///     Phoneme atlas layout (1024×1024, 4×4 grid of 256px cells, top-to-bottom):
     ///     Row 0: Idle(0), a/e/i(1), b/m/p(2), f/v(3)
     ///     Row 1: d/th(4),  u(5),     c/g/h/k/n/s/t/x/y/z(6), o(7)
@@ -27,8 +32,21 @@ namespace DCL.AvatarRendering.AvatarShape
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
     public partial class AvatarFacialAnimationSystem : BaseUnityLoopSystem
     {
+        /// <summary>Sentinel value: no eye MaterialPropertyBlock override is active (material default = open eyes).</summary>
+        private const int NO_EYE_OVERRIDE = -1;
+
         /// <summary>Sentinel value: no phoneme MaterialPropertyBlock override is active.</summary>
         private const int NO_PHONEME_OVERRIDE = -1;
+
+        // Eye atlas slice indices.
+        private const int EYE_HALF_CLOSED = 1;
+        private const int EYE_CLOSED = 2;
+
+        /// <summary>
+        ///     Atlas slice sequence played during a blink: closing (HalfClosed → Closed) then opening (Closed → HalfClosed).
+        ///     The final return to fully open clears the override, reverting to the material's default texture.
+        /// </summary>
+        private static readonly int[] BLINK_SEQUENCE = { EYE_HALF_CLOSED, EYE_CLOSED, EYE_HALF_CLOSED };
 
         private static readonly int MAINTEX_ARR_SHADER_INDEX = TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX;
         private static readonly int MAINTEX_ARR_TEX_SHADER = TextureArrayConstants.MAINTEX_ARR_TEX_SHADER;
@@ -36,34 +54,34 @@ namespace DCL.AvatarRendering.AvatarShape
         // Reused every frame to avoid per-call allocation.
         private static readonly MaterialPropertyBlock s_Mpb = new MaterialPropertyBlock();
 
-        private readonly Texture2DArray? blinkTextureArray;
+        private readonly Texture2DArray? eyeTextureArray;
         private readonly float minBlinkInterval;
         private readonly float maxBlinkInterval;
-        private readonly float blinkDuration;
+        private readonly float blinkFrameDuration;
 
         private readonly Texture2DArray? phonemeTextureArray;
         private readonly float phonemeDuration;
 
         internal AvatarFacialAnimationSystem(
             World world,
-            Texture2DArray? blinkTextureArray,
+            Texture2DArray? eyeTextureArray,
             float minBlinkInterval,
             float maxBlinkInterval,
-            float blinkDuration,
+            float blinkFrameDuration,
             Texture2DArray? phonemeTextureArray,
             float phonemeDuration) : base(world)
         {
-            this.blinkTextureArray = blinkTextureArray;
+            this.eyeTextureArray = eyeTextureArray;
             this.minBlinkInterval = minBlinkInterval;
             this.maxBlinkInterval = maxBlinkInterval;
-            this.blinkDuration = blinkDuration;
+            this.blinkFrameDuration = blinkFrameDuration;
             this.phonemeTextureArray = phonemeTextureArray;
             this.phonemeDuration = phonemeDuration;
         }
 
         protected override void Update(float t)
         {
-            if (blinkTextureArray != null)
+            if (eyeTextureArray != null)
             {
                 SetupBlinkComponentQuery(World);
                 UpdateBlinkQuery(World, t);
@@ -93,6 +111,7 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 EyeRenderer = eyeRenderer,
                 NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval),
+                CurrentEyeIndex = NO_EYE_OVERRIDE,
             });
         }
 
@@ -117,7 +136,7 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         /// <summary>
-        ///     Updates the blink timer and swaps the eye texture when a blink is due.
+        ///     Advances the blink animation sequence for each avatar.
         ///     Also handles re-initialisation when the eye renderer has been replaced
         ///     (e.g. after a wearable change triggers avatar re-instantiation).
         /// </summary>
@@ -135,8 +154,10 @@ namespace DCL.AvatarRendering.AvatarShape
 
                 blink.EyeRenderer = eyeRenderer;
                 blink.IsBlinking = false;
-                blink.BlinkTimer = 0f;
+                blink.FrameIndex = 0;
+                blink.FrameTimer = 0f;
                 blink.TimeSinceLastBlink = 0f;
+                blink.CurrentEyeIndex = NO_EYE_OVERRIDE;
                 blink.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
             }
 
@@ -151,10 +172,18 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (blink.IsBlinking)
             {
-                blink.BlinkTimer += t;
+                blink.FrameTimer += t;
 
-                if (blink.BlinkTimer >= blinkDuration)
-                    EndBlink(ref blink);
+                if (blink.FrameTimer >= blinkFrameDuration)
+                {
+                    blink.FrameTimer = 0f;
+                    blink.FrameIndex++;
+
+                    if (blink.FrameIndex >= BLINK_SEQUENCE.Length)
+                        EndBlink(ref blink);
+                    else
+                        ApplyEyeFrame(ref blink, BLINK_SEQUENCE[blink.FrameIndex]);
+                }
             }
             else
             {
@@ -233,15 +262,9 @@ namespace DCL.AvatarRendering.AvatarShape
         private void StartBlink(ref AvatarBlinkComponent blink)
         {
             blink.IsBlinking = true;
-            blink.BlinkTimer = 0f;
-
-            // Use a MaterialPropertyBlock so only this renderer is overridden.
-            // The underlying shared pool material is never modified, preventing
-            // texture bleed-through onto mouth/eyebrow renderers.
-            s_Mpb.Clear();
-            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, blinkTextureArray);
-            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, 0);
-            blink.EyeRenderer.SetPropertyBlock(s_Mpb);
+            blink.FrameIndex = 0;
+            blink.FrameTimer = 0f;
+            ApplyEyeFrame(ref blink, BLINK_SEQUENCE[0]);
         }
 
         private void EndBlink(ref AvatarBlinkComponent blink)
@@ -250,8 +273,25 @@ namespace DCL.AvatarRendering.AvatarShape
             blink.TimeSinceLastBlink = 0f;
             blink.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
 
-            // Clearing the property block reverts the renderer to its material's original values.
+            // Clearing the property block reverts the renderer to its material's original values (open eyes).
+            blink.CurrentEyeIndex = NO_EYE_OVERRIDE;
             blink.EyeRenderer.SetPropertyBlock(null);
+        }
+
+        private void ApplyEyeFrame(ref AvatarBlinkComponent blink, int eyeIndex)
+        {
+            if (blink.CurrentEyeIndex == eyeIndex)
+                return;
+
+            blink.CurrentEyeIndex = eyeIndex;
+
+            // Use a MaterialPropertyBlock so only this renderer is overridden.
+            // The underlying shared pool material is never modified, preventing
+            // texture bleed-through onto mouth/eyebrow renderers.
+            s_Mpb.Clear();
+            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, eyeTextureArray);
+            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, eyeIndex);
+            blink.EyeRenderer.SetPropertyBlock(s_Mpb);
         }
 
         private void StopMouthAnimation(ref AvatarMouthAnimationComponent mouth)

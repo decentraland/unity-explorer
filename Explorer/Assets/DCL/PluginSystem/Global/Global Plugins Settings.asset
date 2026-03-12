@@ -963,15 +963,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        EyesBlinkTexture:
-          m_AssetGUID: 6efa1304115c46d478df19d1e8fd5f80
+        EyesAtlasTexture:
+          m_AssetGUID: fdde4a8fe27c97c448b609ddc755484b
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         MinBlinkInterval: 0.5
         MaxBlinkInterval: 5
-        BlinkDuration: 0.2
+        BlinkFrameDuration: 0.05
         MouthAtlasTexture:
           m_AssetGUID: 1554270bcc86e5e44aad60a36104ecc7
           m_SubObjectName: 

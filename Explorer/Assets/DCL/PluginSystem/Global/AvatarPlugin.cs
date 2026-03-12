@@ -92,10 +92,10 @@ namespace DCL.PluginSystem.Global
         private ReadOnlyAvatarHighlightData highlightData;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
-        private Texture2DArray? blinkTextureArray;
+        private Texture2DArray? eyeTextureArray;
         private float minBlinkInterval;
         private float maxBlinkInterval;
-        private float blinkDuration;
+        private float blinkFrameDuration;
 
         private Texture2DArray? mouthPhonemeTextureArray;
         private float phonemeDuration;
@@ -142,8 +142,8 @@ namespace DCL.PluginSystem.Global
             avatarTransformMatrixJobWrapper.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
 
-            if (blinkTextureArray != null)
-                Object.Destroy(blinkTextureArray);
+            if (eyeTextureArray != null)
+                Object.Destroy(eyeTextureArray);
 
             if (mouthPhonemeTextureArray != null)
                 Object.Destroy(mouthPhonemeTextureArray);
@@ -160,10 +160,10 @@ namespace DCL.PluginSystem.Global
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
-            blinkTextureArray = await CreateBlinkTextureArrayAsync(settings, ct);
+            eyeTextureArray = await CreateEyeTextureArrayAsync(settings, ct);
             minBlinkInterval = settings.MinBlinkInterval;
             maxBlinkInterval = settings.MaxBlinkInterval;
-            blinkDuration = settings.BlinkDuration;
+            blinkFrameDuration = settings.BlinkFrameDuration;
 
             mouthPhonemeTextureArray = await CreateMouthPhonemeTextureArrayAsync(settings, ct);
             phonemeDuration = settings.PhonemeDuration;
@@ -201,7 +201,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialAnimationSystem.InjectToWorld(ref builder, blinkTextureArray, minBlinkInterval, maxBlinkInterval, blinkDuration, mouthPhonemeTextureArray, phonemeDuration);
+            AvatarFacialAnimationSystem.InjectToWorld(ref builder, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -310,16 +310,58 @@ namespace DCL.PluginSystem.Global
             };
         }
 
-        private async UniTask<Texture2DArray?> CreateBlinkTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        /// <summary>
+        ///     Slices the 1024×1024 eye atlas into 16 individual 256×256 Texture2DArray slices,
+        ///     one per eye state. Uses Graphics.Blit + ReadPixels so it works regardless of whether
+        ///     the atlas is compressed (Graphics.CopyTexture sub-region fails for compressed formats).
+        /// </summary>
+        private async UniTask<Texture2DArray?> CreateEyeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            if (settings.EyesBlinkTexture == null || string.IsNullOrEmpty(settings.EyesBlinkTexture.AssetGUID))
+            if (settings.EyesAtlasTexture == null || string.IsNullOrEmpty(settings.EyesAtlasTexture.AssetGUID))
                 return null;
 
-            var blinkTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.EyesBlinkTexture, ct: ct)).Value;
+            var atlasTex = (Texture2D)(await assetsProvisioner.ProvideMainAssetAsync(settings.EyesAtlasTexture, ct: ct)).Value;
 
-            var array = new Texture2DArray(blinkTex.width, blinkTex.height, 1, blinkTex.format, false, false);
-            Graphics.CopyTexture(blinkTex, 0, 0, array, 0, 0);
-            array.Apply(false, true);
+            const int cellSize = 256;
+            const int cols = 4;
+            const int rows = 4;
+            const int sliceCount = rows * cols; // 16
+
+            var array = new Texture2DArray(cellSize, cellSize, sliceCount, TextureFormat.RGBA32, false, false);
+            RenderTexture rt = RenderTexture.GetTemporary(cellSize, cellSize, 0, RenderTextureFormat.ARGB32);
+            var readback = new Texture2D(cellSize, cellSize, TextureFormat.RGBA32, false);
+            RenderTexture previousActive = RenderTexture.active;
+
+            try
+            {
+                for (var i = 0; i < sliceCount; i++)
+                {
+                    int row = i / cols; // visual row: 0 = top of atlas image
+                    int col = i % cols;
+
+                    // UV bottom-left of this cell (Unity UV origin is bottom-left).
+                    var scale  = new Vector2(1f / cols, 1f / rows);
+                    var offset = new Vector2(col / (float)cols, (rows - 1 - row) / (float)rows);
+
+                    Graphics.Blit(atlasTex, rt, scale, offset);
+
+                    RenderTexture.active = rt;
+                    readback.ReadPixels(new Rect(0, 0, cellSize, cellSize), 0, 0, false);
+                    readback.Apply(false);
+                    RenderTexture.active = previousActive;
+
+                    Graphics.CopyTexture(readback, 0, 0, array, i, 0);
+                }
+
+                array.Apply(false, true);
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(rt);
+                Object.Destroy(readback);
+            }
+
             return array;
         }
 
@@ -429,10 +471,10 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
 
             [Header("Blink")]
-            public AssetReferenceT<Texture2D> EyesBlinkTexture;
+            public AssetReferenceT<Texture2D> EyesAtlasTexture;
             public float MinBlinkInterval = 2.0f;
             public float MaxBlinkInterval = 8.0f;
-            public float BlinkDuration = 0.15f;
+            public float BlinkFrameDuration = 0.05f;
 
             [Header("Mouth Phoneme Animation")]
             public AssetReferenceT<Texture2D> MouthAtlasTexture;
