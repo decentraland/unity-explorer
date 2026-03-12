@@ -321,7 +321,7 @@ namespace DCL.VoiceChat
 
         private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
         {
-            LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, mono: spatial);
+            LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, spatial: spatial);
 
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
