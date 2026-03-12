@@ -441,12 +441,11 @@ public float CloseThreshold = 0.08f;           // hysteresis: close below this
 
 ---
 
-## Шаг 3: FFT Frequency Band Analysis (A5 + P3)
+## Шаг 3: Frequency Band Analysis (A5 + P3) — ВЫПОЛНЕН
 
 > **Цель:** Различать гласные от согласных для более разнообразных форм рта.  
-> **Effort:** ~2–3 дня  
-> **LiveKit changes:** Расширенная обработка в `OnAudioFilterRead`  
-> **Промежуточный:** пропустить если идём прямо в OVRLipSync (Шаг 4)
+> **Статус:** DONE  
+> **LiveKit changes:** Goertzel accumulators в `ComputeLipSyncAmplitudes`
 
 ### 3.1 Дизайн частотных полос
 
@@ -531,13 +530,35 @@ else:
 - **50 одновременных:** ~1.5–2.5ms — нужен throttling (каждый 2-й буфер)
 - Аллокации: ноль (in-place arithmetic)
 
-### 3.6 Файлы
+### 3.6 Файлы (фактические)
 
 | Действие | Файл |
 |----------|------|
-| **Modify** | `client-sdk-unity/.../LivekitAudioSource.cs` — добавить band energy fields + Goertzel |
-| **Modify** | `ProximityLipSyncSystem.cs` — читать band energies, маппинг → позы |
-| **Modify** | `VoiceChatConfiguration.cs` — band threshold settings |
+| **Modified** | `LivekitAudioSource.cs` — Goertzel accumulators (500/1500/4000 Hz) в `ComputeLipSyncAmplitudes`, `LipSyncBandLow/Mid/High` properties |
+| **Modified** | `ProximityAudioPositionSystem.cs` — `SelectPoseByBands()`, pose groups `POSES_OPEN_VOWEL/CLOSED_VOWEL/SIBILANT`, mode switching в `UpdateLipSync` |
+| **Modified** | `VoiceChatConfiguration.cs` — `LipSyncMode` enum (AmplitudeWeighted/SpeechBandAmplitude/FrequencyBands), `LipSyncBandSensitivity` |
+
+### 3.7 Архитектурные решения
+
+**LipSyncMode enum заменил bool:**
+- `LipSyncUseSpeechBandFilter` bool → `LipSyncMode` enum с 3 значениями
+- Дизайнер переключает в Inspector, результат мгновенный
+
+**Goertzel на 3 представительных частотах (не 4):**
+- 500 Hz (Low — открытые гласные А, О)
+- 1500 Hz (Mid — закрытые гласные Е, И)
+- 4000 Hz (High — свистящие С, Ш, Ф)
+- Одна частота per band = proxy для всей полосы. Дешевле чем 3-4 per band.
+
+**Band-to-pose маппинг:**
+- `high > low && high > mid` → SIBILANT {3, 6, 10, 11}
+- `low > mid * 1.3` → OPEN_VOWEL {0, 7, 12, 15}
+- else → CLOSED_VOWEL {1, 5, 9, 14}
+- Все пороги первый проход — нужна калибровка после тестирования
+
+**Silence gate — общая для всех режимов:**
+- Amplitude smoothing + `SilenceThreshold` работает одинаково для всех трёх режимов
+- В FrequencyBands режиме: amplitude = full-spectrum, band energies только для pose selection
 
 ---
 
@@ -744,9 +765,9 @@ public class LipSyncSettings
     ↓
 Шаг 2 (A4+P2)    →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
     ↓
-Шаг 2.5 (filter)  →  ✅ DONE. Speech band filter (300-3000 Hz). Дизайнер переключает.
+Шаг 2.5 (filter)  →  ✅ DONE. Speech band filter — слабо отработало, заменено enum.
     ↓
-Шаг 3 (A5+P3)     →  [Только если OVR недоступен]  →  Ship за flag
+Шаг 3 (A5+P3)     →  ✅ DONE. Goertzel bands → vowel/consonant/sibilant. Тестируем.
     ↓
 Шаг 4 (A6+P4)  →  Ship за отдельным flag  →  Сравнить качество
     ↓

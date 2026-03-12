@@ -3,6 +3,18 @@ using UnityEngine.Audio;
 
 namespace DCL.VoiceChat
 {
+    public enum LipSyncMode
+    {
+        /// <summary>Full-spectrum RMS → pose group by loudness (SLIGHT/MEDIUM/WIDE).</summary>
+        AmplitudeWeighted,
+
+        /// <summary>Bandpass-filtered RMS (speech range only) → pose group by loudness.</summary>
+        SpeechBandAmplitude,
+
+        /// <summary>Goertzel band energies → vowel / consonant / sibilant poses.</summary>
+        FrequencyBands,
+    }
+
     //[CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
     public class VoiceChatConfiguration : ScriptableObject
     {
@@ -77,35 +89,49 @@ namespace DCL.VoiceChat
 
         [Tooltip("Seconds each mouth pose is held before switching to the next")]
         [Range(0.05f, 0.3f)]
-        public float LipSyncPoseHoldDuration = 0.1f;
+        public float LipSyncPoseHoldDuration = 0.08f;
 
         [Tooltip("Closed-mouth pose index in the atlas (used when not speaking)")]
         public int LipSyncIdlePoseIndex = 2;
 
-        [Header("Lip Sync — Amplitude")]
+        [Tooltip("AmplitudeWeighted: pose group by loudness (SLIGHT/MEDIUM/WIDE). " +
+                 "SpeechBandAmplitude: same but bandpass-filtered to speech range. " +
+                 "FrequencyBands: Goertzel band energies → vowel/consonant/sibilant poses.")]
+        public LipSyncMode LipSyncMode = LipSyncMode.FrequencyBands;
+
+        [Header("Lip Sync — Amplitude (all modes)")]
         [Tooltip("Multiplier applied to raw RMS amplitude before smoothing")]
         [Range(0.5f, 20f)]
-        public float LipSyncAmplitudeSensitivity = 8f;
+        public float LipSyncAmplitudeSensitivity = 5f;
 
         [Tooltip("Smoothing speed (higher = more reactive, lower = smoother). Applied as Lerp(smoothed, target, factor * dt * 60)")]
         [Range(0.05f, 1f)]
-        public float LipSyncSmoothingFactor = 0.3f;
+        public float LipSyncSmoothingFactor = 0.25f;
 
         [Tooltip("Smoothed amplitude below this value snaps to idle pose (silence gate)")]
-        [Range(0f, 0.15f)]
-        public float LipSyncSilenceThreshold = 0.01f;
+        [Range(0f, 0.3f)]
+        public float LipSyncSilenceThreshold = 0.06f;
 
-        [Header("Lip Sync — Speech Band Filter")]
-        [Tooltip("When enabled, compute RMS only in the speech frequency range to reject background music and environmental noise")]
-        public bool LipSyncUseSpeechBandFilter;
-
+        [Header("Lip Sync — Speech Band (SpeechBandAmplitude mode)")]
         [Tooltip("Low cutoff of the speech band (Hz). Voice fundamentals start ~85 Hz (male) / ~165 Hz (female), formants from ~300 Hz")]
         [Range(80f, 1000f)]
-        public float LipSyncSpeechBandLowHz = 300f;
+        public float LipSyncSpeechBandLowHz = 200f;
 
         [Tooltip("High cutoff of the speech band (Hz). Speech intelligibility mostly below ~3000 Hz, sibilants up to ~8000 Hz")]
         [Range(1000f, 8000f)]
-        public float LipSyncSpeechBandHighHz = 3000f;
+        public float LipSyncSpeechBandHighHz = 3500f;
+
+        [Header("Lip Sync — Frequency Bands (FrequencyBands mode)")]
+        [Tooltip("Sensitivity multiplier for Goertzel band energies")]
+        [Range(1f, 100f)]
+        public float LipSyncBandSensitivity = 30f;
+
+        [Tooltip("Minimum ratio of the dominant band to total energy (0..1). " +
+                 "Speech concentrates energy in 1-2 bands (ratio ~0.6-0.9). " +
+                 "Music spreads energy evenly (ratio ~0.33). " +
+                 "Lower = more permissive, higher = stricter music rejection.")]
+        [Range(0.35f, 0.7f)]
+        public float LipSyncSpectralPeakedness = 0.50f;
 
         public void ApplyProximitySettingsTo(AudioSource source)
         {

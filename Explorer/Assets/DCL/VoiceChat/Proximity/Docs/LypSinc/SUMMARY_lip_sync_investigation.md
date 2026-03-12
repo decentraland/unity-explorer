@@ -433,6 +433,39 @@ public void UpdateCurrentActives(IEnumerable<string> sids)
 
 ---
 
+## Этап 9: Реализация Шага 3 (A5 + P3) — Frequency Bands
+
+### Проблема из Шага 2.5
+
+One-pole bandpass filter "так себе отработал" — даже при сужении до 1000-1000 Hz. One-pole слишком пологий (6 dB/octave), не отфильтровывает музыку в том же диапазоне что и речь.
+
+### Решение: Goertzel + LipSyncMode enum
+
+Добавлены 3 режима lip sync через `LipSyncMode` enum:
+
+| Режим | Источник данных | Pose selection |
+|-------|----------------|----------------|
+| `AmplitudeWeighted` | Full-spectrum RMS | По громкости: SLIGHT/MEDIUM/WIDE |
+| `SpeechBandAmplitude` | Bandpass-filtered RMS | По громкости: SLIGHT/MEDIUM/WIDE |
+| `FrequencyBands` | Goertzel band energies | По типу звука: vowel/consonant/sibilant |
+
+**Goertzel algorithm** вычисляет энергию на 3 представительных частотах:
+- 500 Hz (Low) — открытые гласные А, О
+- 1500 Hz (Mid) — закрытые гласные Е, И
+- 4000 Hz (High) — свистящие С, Ш, Ф
+
+Всё считается параллельно в одном `ComputeLipSyncAmplitudes()` — ~6 multiply-add на mono-сэмпл сверх existing.
+
+### Файлы
+
+| Файл | Изменения |
+|------|-----------|
+| `LivekitAudioSource.cs` | Goertzel accumulators, `LipSyncBandLow/Mid/High` properties, нормализация `invN²` |
+| `VoiceChatConfiguration.cs` | `LipSyncMode` enum, `LipSyncBandSensitivity`, убран `LipSyncUseSpeechBandFilter` bool |
+| `ProximityAudioPositionSystem.cs` | `SelectPoseByBands()`, `SelectPoseByAmplitude()`, pose groups `OPEN_VOWEL/CLOSED_VOWEL/SIBILANT`, mode switch в query |
+
+---
+
 ## Ключевые файлы
 
 ### Unity Explorer (`unity-explorer`)

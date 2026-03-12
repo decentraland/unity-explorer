@@ -38,9 +38,21 @@ namespace DCL.VoiceChat
         private static readonly int MOUTH_TEX_ARR = Shader.PropertyToID("_MainTexArr");
         private static readonly int MOUTH_TEX_ARR_ID = Shader.PropertyToID("_MainTexArr_ID");
 
-        private static readonly int[] POSES_SLIGHT = { 5, 8, 11 };
-        private static readonly int[] POSES_MEDIUM = { 1, 3, 4, 6, 9, 10 };
-        private static readonly int[] POSES_WIDE = { 0, 7, 12, 13, 14, 15 };
+        // Amplitude-weighted groups (Step 2)
+        //   SLIGHT: barely open (5=small oo, 7=small o, 11=tiny oval, 15=narrow smirk)
+        //   MEDIUM: mid-open  (1=round O, 3=teeth+tongue, 8=oval+tongue, 9=oval+tongue, 14=round O)
+        //   WIDE:   wide open (0=teeth grimace, 4=AH+tongue, 6=smile+tongue, 10=teeth grid, 12=grin, 13=big open)
+        private static readonly int[] POSES_SLIGHT = { 5, 7, 11, 15 };
+        private static readonly int[] POSES_MEDIUM = { 1, 3, 8, 9, 14 };
+        private static readonly int[] POSES_WIDE = { 0, 4, 6, 10, 12, 13 };
+
+        // Frequency-band groups (Step 3) — matched to actual Mouth_Atlas.png sprites
+        //   OPEN_VOWEL:   mouth wide, tongue visible — A, O sounds  (4, 6, 8, 9, 13)
+        //   CLOSED_VOWEL: rounded/small — O, OO, E sounds           (1, 5, 7, 11, 14)
+        //   SIBILANT:     teeth visible, narrow/grit — S, SH, F     (0, 3, 10, 12, 15)
+        private static readonly int[] POSES_OPEN_VOWEL = { 4, 6, 8, 9, 13 };
+        private static readonly int[] POSES_CLOSED_VOWEL = { 1, 5, 7, 11, 14 };
+        private static readonly int[] POSES_SIBILANT = { 0, 3, 10, 12, 15 };
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
@@ -214,10 +226,10 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        /// Source-generated query: amplitude-weighted lip sync animation.
-        /// Reads pre-spatialization RMS from <see cref="LivekitAudioSource.LipSyncAmplitude"/>,
-        /// smooths it, and selects a mouth pose group (idle / slight / medium / wide).
-        /// Re-initialises the mouth renderer when the avatar is re-instantiated.
+        /// Source-generated query: lip sync animation with switchable modes.
+        /// <see cref="LipSyncMode.AmplitudeWeighted"/>: full-spectrum RMS → pose group by loudness.
+        /// <see cref="LipSyncMode.SpeechBandAmplitude"/>: bandpass-filtered RMS → same grouping.
+        /// <see cref="LipSyncMode.FrequencyBands"/>: Goertzel band energies → vowel/consonant/sibilant.
         /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -237,24 +249,29 @@ namespace DCL.VoiceChat
 
             Texture2DArray mouthTextures = configHolder.MouthTextureArray!;
             VoiceChatConfiguration config = configHolder.Config!;
+            LivekitAudioSource src = lipSync.LivekitSource;
 
-            if (lipSync.LivekitSource != null)
+            if (src != null)
             {
-                lipSync.LivekitSource.speechBandLowHz = config.LipSyncSpeechBandLowHz;
-                lipSync.LivekitSource.speechBandHighHz = config.LipSyncSpeechBandHighHz;
+                src.speechBandLowHz = config.LipSyncSpeechBandLowHz;
+                src.speechBandHighHz = config.LipSyncSpeechBandHighHz;
             }
 
-            float rawAmplitude = lipSync.LivekitSource != null
-                ? (config.LipSyncUseSpeechBandFilter
-                    ? lipSync.LivekitSource.LipSyncSpeechAmplitude
-                    : lipSync.LivekitSource.LipSyncAmplitude)
+            float rawAmplitude = src != null
+                ? config.LipSyncMode == LipSyncMode.SpeechBandAmplitude
+                    ? src.LipSyncSpeechAmplitude
+                    : src.LipSyncAmplitude
                 : 0f;
+
+            float smoothLerp = config.LipSyncSmoothingFactor * dt * 60f;
             float target = rawAmplitude * config.LipSyncAmplitudeSensitivity;
-            lipSync.SmoothedAmplitude = Mathf.Lerp(lipSync.SmoothedAmplitude, target, config.LipSyncSmoothingFactor * dt * 60f);
+            lipSync.SmoothedAmplitude = Mathf.Lerp(lipSync.SmoothedAmplitude, target, smoothLerp);
+
+            int idlePose = config.LipSyncIdlePoseIndex;
 
             if (lipSync.SmoothedAmplitude < config.LipSyncSilenceThreshold)
             {
-                lipSync.CurrentPoseIndex = config.LipSyncIdlePoseIndex;
+                lipSync.CurrentPoseIndex = idlePose;
                 lipSync.PoseHoldTimer = 0f;
             }
             else
@@ -263,11 +280,19 @@ namespace DCL.VoiceChat
 
                 if (lipSync.PoseHoldTimer <= 0f)
                 {
-                    int[] poseGroup = lipSync.SmoothedAmplitude < 0.15f ? POSES_SLIGHT
-                                    : lipSync.SmoothedAmplitude < 0.45f ? POSES_MEDIUM
-                                    : POSES_WIDE;
+                    int pose;
 
-                    lipSync.CurrentPoseIndex = poseGroup[Random.Range(0, poseGroup.Length)];
+                    if (config.LipSyncMode == LipSyncMode.FrequencyBands && src != null)
+                    {
+                        pose = SelectPoseByBands(src, config.LipSyncBandSensitivity,
+                            config.LipSyncSpectralPeakedness, idlePose);
+                    }
+                    else
+                    {
+                        pose = SelectPoseByAmplitude(lipSync.SmoothedAmplitude);
+                    }
+
+                    lipSync.CurrentPoseIndex = pose;
                     lipSync.PoseHoldTimer = config.LipSyncPoseHoldDuration;
                 }
             }
@@ -275,6 +300,46 @@ namespace DCL.VoiceChat
             lipSyncPropertyBlock.SetFloat(MOUTH_TEX_ARR_ID, lipSync.CurrentPoseIndex);
             lipSyncPropertyBlock.SetTexture(MOUTH_TEX_ARR, mouthTextures);
             lipSync.MouthRenderer.SetPropertyBlock(lipSyncPropertyBlock);
+        }
+
+        private static int SelectPoseByAmplitude(float smoothed)
+        {
+            int[] group = smoothed < 0.15f ? POSES_SLIGHT
+                        : smoothed < 0.45f ? POSES_MEDIUM
+                        : POSES_WIDE;
+            return group[Random.Range(0, group.Length)];
+        }
+
+        /// <summary>
+        /// Selects a pose based on Goertzel band energies.
+        /// Returns <paramref name="idlePose"/> if the signal looks like music
+        /// (energy too evenly spread across bands) rather than speech
+        /// (energy concentrated in 1-2 bands).
+        /// </summary>
+        private static int SelectPoseByBands(
+            LivekitAudioSource src, float sensitivity, float peakednessThreshold, int idlePose)
+        {
+            float low = src.LipSyncBandLow * sensitivity;
+            float mid = src.LipSyncBandMid * sensitivity;
+            float high = src.LipSyncBandHigh * sensitivity;
+
+            float total = low + mid + high;
+            if (total < 0.001f) return idlePose;
+
+            float maxBand = Mathf.Max(low, Mathf.Max(mid, high));
+
+            if (maxBand / total < peakednessThreshold) return idlePose;
+
+            int[] group;
+
+            if (high > low && high > mid)
+                group = POSES_SIBILANT;
+            else if (low > mid * 1.3f)
+                group = POSES_OPEN_VOWEL;
+            else
+                group = POSES_CLOSED_VOWEL;
+
+            return group[Random.Range(0, group.Length)];
         }
 
         private Renderer FindMouthRendererForEntity(Entity entity)
