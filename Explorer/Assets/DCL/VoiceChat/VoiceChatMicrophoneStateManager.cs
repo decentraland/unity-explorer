@@ -14,6 +14,7 @@ namespace DCL.VoiceChat
         private VoiceChatStatus currentCallStatus;
         private bool isRoomConnected;
         private bool disposed;
+        private bool microphoneEnabledForCurrentSession;
 
         public VoiceChatMicrophoneStateManager(
             VoiceChatMicrophoneHandler microphoneHandler,
@@ -61,8 +62,19 @@ namespace DCL.VoiceChat
                                            (!isRoomConnected && currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTING_CALL &&
                                             currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
-            if (shouldEnableMicrophone) { microphoneHandler.EnableMicrophoneForCall(); }
-            else if (shouldDisableMicrophone) { microphoneHandler.DisableMicrophoneForCall(); }
+            // Only auto-enable the mic once per call session. This prevents re-enabling
+            // the mic when a listener is promoted to speaker — promoted users should
+            // join muted and explicitly unmute themselves.
+            if (shouldEnableMicrophone && !microphoneEnabledForCurrentSession)
+            {
+                microphoneEnabledForCurrentSession = true;
+                microphoneHandler.EnableMicrophoneForCall();
+            }
+            else if (shouldDisableMicrophone)
+            {
+                microphoneEnabledForCurrentSession = false;
+                microphoneHandler.DisableMicrophoneForCall();
+            }
         }
     }
 }
