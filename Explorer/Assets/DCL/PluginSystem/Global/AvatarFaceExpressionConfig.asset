@@ -21,11 +21,15 @@ MonoBehaviour:
     EyebrowsIndex: 1
     EyesIndex: 0
     MouthIndex: 13
-  - Name: Suspicius
+  - Name: Suspicius Left
     EyebrowsIndex: 4
     EyesIndex: 7
     MouthIndex: 15
-  - Name: Scared
+  - Name: Suspicius Right
+    EyebrowsIndex: 5
+    EyesIndex: 6
+    MouthIndex: 15
+  - Name: Surprised
     EyebrowsIndex: 1
     EyesIndex: 3
     MouthIndex: 7
@@ -33,3 +37,7 @@ MonoBehaviour:
     EyebrowsIndex: 3
     EyesIndex: 1
     MouthIndex: 3
+  - Name: Surprised
+    EyebrowsIndex: 3
+    EyesIndex: 3
+    MouthIndex: 11

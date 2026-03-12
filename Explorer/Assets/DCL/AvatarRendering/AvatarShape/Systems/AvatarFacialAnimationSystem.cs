@@ -111,6 +111,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 debugData.IsDirty = false;
             }
 
+            // When the debug widget requested a manual blink, start one on all avatars.
+            if (debugData != null && debugData.TriggerBlink)
+            {
+                TriggerBlinkDebugQuery(World);
+                debugData.TriggerBlink = false;
+            }
+
             // Expression layer — applies eyebrows and syncs base indices into blink/mouth components.
             UpdateFaceExpressionQuery(World);
 
@@ -202,6 +209,17 @@ namespace DCL.AvatarRendering.AvatarShape
             expression.EyesExpressionIndex = debugData.EyesIndex;
             expression.MouthExpressionIndex = debugData.MouthIndex;
             expression.IsDirty = true;
+        }
+
+        /// <summary>
+        ///     Starts a blink on every avatar that is not already blinking.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void TriggerBlinkDebug(ref AvatarBlinkComponent blink)
+        {
+            if (!blink.IsBlinking)
+                StartBlink(ref blink);
         }
 
         // ─── Expression layer ─────────────────────────────────────────────────

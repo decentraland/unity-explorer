@@ -11,5 +11,10 @@ namespace DCL.AvatarRendering.AvatarShape
         public int EyesIndex;
         public int MouthIndex;
         public bool IsDirty;
+
+        /// <summary>
+        ///     When true, <c>AvatarFacialAnimationSystem</c> will start a blink on all avatars this frame.
+        /// </summary>
+        public bool TriggerBlink;
     }
 }

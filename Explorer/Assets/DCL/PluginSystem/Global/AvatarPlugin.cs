@@ -37,6 +37,7 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.UIToolkit;
 using AvatarFacialAnimationSystem = DCL.AvatarRendering.AvatarShape.AvatarFacialAnimationSystem;
+using UpdateFaceExpressionInputSystem = DCL.AvatarRendering.AvatarShape.UpdateFaceExpressionInputSystem;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
 using AvatarLoaderSystem = DCL.AvatarRendering.AvatarShape.AvatarLoaderSystem;
@@ -215,6 +216,7 @@ namespace DCL.PluginSystem.Global
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
             AvatarFacialAnimationSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration, avatarFaceDebugData);
+            UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -401,7 +403,8 @@ namespace DCL.PluginSystem.Global
 
             widget.AddIntSliderField("Eyebrows", eyebrowsBinding, 0, 15)
                   .AddIntSliderField("Eyes", eyesBinding, 0, 15)
-                  .AddIntSliderField("Mouth", mouthBinding, 0, 15);
+                  .AddIntSliderField("Mouth", mouthBinding, 0, 15)
+                  .AddSingleButton("Trigger Blink", () => avatarFaceDebugData.TriggerBlink = true);
         }
 
         /// <summary>
