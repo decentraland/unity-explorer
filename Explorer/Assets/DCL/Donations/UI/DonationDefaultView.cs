@@ -168,7 +168,7 @@ namespace DCL.Donations.UI
 
             donationErrorTip.gameObject.SetActive(number < 1);
 
-            if (number >= currentViewModel.CurrentBalance)
+            if (number > currentViewModel.CurrentBalance)
             {
                 balanceWarningIcon.SetActive(true);
                 balanceManaIcon.SetActive(false);

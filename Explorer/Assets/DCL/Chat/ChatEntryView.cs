@@ -18,7 +18,7 @@ namespace DCL.Chat
         private const float PROFILE_BUTTON_Y_OFFSET = -18;
         private const float USERNAME_Y_OFFSET = -13f;
         private const string DATE_DIVIDER_TODAY = "Today";
-        private const string DATE_DIVIDER_YESTERDAY = "Today";
+        private const string DATE_DIVIDER_YESTERDAY = "Yesterday";
 
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 

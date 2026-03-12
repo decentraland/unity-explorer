@@ -6,11 +6,11 @@ namespace DCL.Diagnostics
 {
     public static class LogMatrixJsonLoader
     {
-        public static CategorySeverityMatrixDto? LoadFromApplicationRoot(string fileName)
+        public static CategorySeverityMatrixDto? Load(string fileName)
         {
             try
             {
-                string filePath = GetApplicationRootPath(fileName);
+                var filePath = Path.IsPathRooted(fileName) ? fileName : GetApplicationRootPath(fileName);
 
                 if (!File.Exists(filePath))
                 {

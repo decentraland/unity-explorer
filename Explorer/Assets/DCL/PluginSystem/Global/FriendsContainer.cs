@@ -11,6 +11,7 @@ using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -86,7 +87,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ProfileRepositoryWrapper profileDataProvider)
+            ProfileRepositoryWrapper profileDataProvider,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -128,7 +130,10 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                isConnectivityStatusEnabled,
+                profileRepositoryWrapper,
+                decentralandUrlsSource
             );
 
             mvcManager.RegisterController(friendsPanelController);

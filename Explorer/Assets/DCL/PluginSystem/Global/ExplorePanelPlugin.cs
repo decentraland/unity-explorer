@@ -60,6 +60,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -148,14 +149,13 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
-        private readonly bool isVoiceChatFeatureEnabled;
-        private readonly bool isChatTranslationFeatureEnabled;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
-        private readonly bool isVoiceChatEnabled;
-        private readonly bool isTranslationChatEnabled;
+        private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly bool isVoiceChatFeatureEnabled;
+        private readonly bool isChatTranslationFeatureEnabled;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -236,7 +236,8 @@ namespace DCL.PluginSystem.Global
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            PublishIpfsEntityCommand publishIpfsEntityCommand)
+            PublishIpfsEntityCommand publishIpfsEntityCommand,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.eventBus = eventBus;
             this.assetsProvisioner = assetsProvisioner;
@@ -302,6 +303,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.friendServiceProxy = friendServiceProxy;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public void Dispose()
@@ -525,15 +527,15 @@ namespace DCL.PluginSystem.Global
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, worldPermissionsService, eventsApiService);
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
             placeDetailPanelController = new PlaceDetailPanelController(placeDetailPanelViewFactory, placesThumbnailLoader, profileRepository,
-                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, mvcManager);
+                placesCardSocialActionsController, navmapBus, mapPathEventBus, homePlaceEventBus, mvcManager, worldPermissionsService);
             mvcManager.RegisterController(placeDetailPanelController);
 
-            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard);
+            EventCardActionsController eventCardActionsController = new EventCardActionsController(eventsApiService, webBrowser, realmNavigator, clipboard, decentralandUrlsSource);
             var eventsThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
@@ -542,6 +544,10 @@ namespace DCL.PluginSystem.Global
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
             eventDetailPanelController = new EventDetailPanelController(eventInfoViewFactory,
+                webRequestController,
+                clipboard,
+                webBrowser,
+                eventsApiService,
                 eventsThumbnailLoader,
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
