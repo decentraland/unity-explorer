@@ -213,8 +213,16 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.enabled = true;
         }
 
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
         public Vector3 GetAdaptiveNametagPosition()
         {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
             Vector3 headPos = headAramatureBone.position;
 
             float maxY = headPos.y;

@@ -54,14 +54,14 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention), typeof(AvatarGhostComponent))]
         private void EnsureGhostAvatar(in Entity entity, ref AvatarBase avatarBase, Profile profile)
         {
-            avatarBase.GhostGameObject.SetActive(true);
-
             foreach (Renderer renderer in avatarBase.GhostRenderers)
             {
                 renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_TARGET, 0, 0));
                 renderer.material.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
                 renderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
             }
+
+            avatarBase.GhostGameObject.SetActive(true);
 
             World.Add(entity, new AvatarGhostComponent(avatarBase.GhostRenderers));
         }
@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateRevealTransitionAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent)
+        private void UpdateRevealTransitionAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
             if (avatarGhostComponent.Phase != AvatarGhostPhase.RevealTransition) return;
 
@@ -155,8 +155,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarGhostComponent.Phase = AvatarGhostPhase.Hidden;
                 avatarGhostComponent.PhaseElapsed = 0f;
 
-                foreach (Renderer ghostRenderer in avatarGhostComponent.GhostRenderers)
-                    ghostRenderer.gameObject.SetActive(false);
+                avatarBase.GhostGameObject.SetActive(false);
             }
         }
     }
