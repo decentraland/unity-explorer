@@ -108,7 +108,7 @@ jobs:
 
     - name: Cache BuildPatchTool
       id: bpt_cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ runner.temp }}\BuildPatchTool\Engine
         key: ${{ steps.bpt_version.outputs.cache_key }}
@@ -162,12 +162,17 @@ jobs:
     - name: Post-upload instructions
       if: steps.platforms.outputs.build_windows == 'True' || steps.platforms.outputs.build_mac == 'True'
       run: |
-        Write-Host "Upload complete. Next manual steps required in the Developer Portal:"
-        Write-Host "  1. Go to: https://dev.epicgames.com/portal"
-        Write-Host "  2. Navigate to: Your Product > Epic Games Store > Artifacts and Binaries"
-        Write-Host "  3. Set the uploaded binary as Active"
-        Write-Host "  4. Add a label: Bugfix / Minor Update / Major Update"
-        Write-Host "  5. Add patch notes (mandatory for Major Update)"
+        $summary = @"
+        ## Upload Complete: ${{ steps.get_release.outputs.version }}
+
+        Next manual steps required in the [Developer Portal](https://dev.epicgames.com/portal):
+
+        1. Navigate to **Your Product > Epic Games Store > Artifacts and Binaries**
+        2. Set the uploaded binary as **Active**
+        3. Add a label: **Bugfix** / **Minor Update** / **Major Update**
+        4. Add patch notes *(mandatory for Major Update)*
+        "@
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary
 
     - name: Log BuildPatchTool log if upload fails
       if: failure()
