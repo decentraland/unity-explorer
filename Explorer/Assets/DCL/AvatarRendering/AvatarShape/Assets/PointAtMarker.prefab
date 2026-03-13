@@ -107,7 +107,7 @@ MonoBehaviour:
   <SpriteRenderer>k__BackingField: {fileID: 2910063314006034652}
   <MinData>k__BackingField:
     Size: 0.1
-    DistanceUnit: 5
+    DistanceUnit: 10
   <MaxData>k__BackingField:
     Size: 0.5
     DistanceUnit: 80
