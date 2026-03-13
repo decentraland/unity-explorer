@@ -150,9 +150,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private static string GetPlatformString() =>
             Application.platform switch
             {
-                RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsServer => "desktop",
-                RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer or RuntimePlatform.OSXServer => "desktop",
-                RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxServer => "desktop",
                 _ => "desktop",
             };
     }
