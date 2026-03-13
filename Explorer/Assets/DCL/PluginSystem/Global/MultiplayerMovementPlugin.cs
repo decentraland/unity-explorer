@@ -3,13 +3,17 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Platforms;
+using DCL.Utilities.Extensions;
 using ECS;
 using Global.AppArgs;
 using System.Threading;
@@ -23,6 +27,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly PulseMultiplayerBus pulseMultiplayerBus;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -31,17 +36,18 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly ParcelEncoder parcelEncoder;
 
         private MultiplayerMovementSettings settings;
-
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, ParcelEncoder parcelEncoder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
+            this.pulseMultiplayerBus = pulseMultiplayerBus;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
@@ -50,6 +56,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.realmData = realmData;
             this.remoteMetadata = remoteMetadata;
+            this.parcelEncoder = parcelEncoder;
         }
 
         public void Dispose()
@@ -57,13 +64,14 @@ namespace DCL.PluginSystem.Global
             messageBus.Dispose();
         }
 
-        public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = settings.MovementSettings;
 
             ConfigureCompressionUsage();
 
-            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, (await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct)).Value);
+            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, parcelEncoder);
+            return UniTask.CompletedTask;
         }
 
         private void ConfigureCompressionUsage()
@@ -82,7 +90,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings, debugSettings);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, pulseMultiplayerBus, settings, debugSettings);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);

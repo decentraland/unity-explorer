@@ -30,9 +30,16 @@ MonoBehaviour:
   - rid: 3414978285727645698
   - rid: 3414978285727645699
   - rid: 6144113899072913497
+  - rid: 250124815058075745
   references:
     version: 2
     RefIds:
+    - rid: 250124815058075745
+      type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Connections.Pulse, asm: DCL.Plugins}
+      data:
+        <ENetTransportOptions>k__BackingField:
+          <ServiceTimeoutMs>k__BackingField: 1
+          <BufferSize>k__BackingField: 4096
     - rid: 634089542387236867
       type: {class: MapRendererContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:

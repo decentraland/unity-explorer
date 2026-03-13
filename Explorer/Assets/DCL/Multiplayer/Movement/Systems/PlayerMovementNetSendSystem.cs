@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Prefs;
 using ECS.Abstract;
@@ -26,17 +27,19 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float HEAD_IK_EPSILON = 1; // 1 deg
 
         private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly PulseMultiplayerBus pulseMultiplayerBus;
         private readonly MultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, MultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings) : base(world)
+        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus,
+            MultiplayerMovementSettings settings, MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
+            this.pulseMultiplayerBus = pulseMultiplayerBus;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -180,6 +183,9 @@ namespace DCL.Multiplayer.Movement.Systems
             };
 
             messageBus.Send(playerMovement.LastSentMessage);
+
+            // TODO make branching properly based on the server mode
+            pulseMultiplayerBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending

@@ -1,5 +1,4 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
 using Unity.Mathematics;
 using UnityEngine;
@@ -7,17 +6,20 @@ using Utility;
 
 namespace DCL.Multiplayer.Movement
 {
+    /// <summary>
+    ///     Encoder for compressed LiveKit movement
+    /// </summary>
     public class NetworkMessageEncoder
     {
         private readonly MessageEncodingSettings encodingSettings;
         private readonly TimestampEncoder timestampEncoder;
         private readonly ParcelEncoder parcelEncoder;
 
-        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, LandscapeData landscapeData)
+        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, ParcelEncoder parcelEncoder)
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
-            parcelEncoder = new ParcelEncoder(landscapeData.terrainData);
+            this.parcelEncoder = parcelEncoder;
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>

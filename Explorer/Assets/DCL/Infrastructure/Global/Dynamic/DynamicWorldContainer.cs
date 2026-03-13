@@ -113,6 +113,8 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.NotificationsBus;
 using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
@@ -246,6 +248,7 @@ namespace Global.Dynamic
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
+            PulseContainer pulseContainer = null!;
 
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
@@ -256,6 +259,8 @@ namespace Global.Dynamic
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
             var screenModeController = new ScreenModeController(appArgs);
+            var entityParticipantTable = new EntityParticipantTable();
+            var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -284,6 +289,15 @@ namespace Global.Dynamic
                               ct
                           )
                          .ThrowOnFail();
+
+                pulseContainer =
+                    await PulseContainer.CreateAsync(
+                        settingsContainer,
+                        identityCache,
+                        movementInbox,
+                        staticContainer.QualityContainer.LandscapeData,
+                        ct
+                    );
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -396,7 +410,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 
@@ -418,12 +432,14 @@ namespace Global.Dynamic
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
-            IRoomHub roomHub = new RoomHub(
-                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                gateKeeperSceneRoom,
-                chatRoom,
-                voiceChatRoom
-            );
+            // IRoomHub roomHub = new RoomHub(
+            //     localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+            //     gateKeeperSceneRoom,
+            //     chatRoom,
+            //     voiceChatRoom
+            // );
+
+            IRoomHub roomHub = new NullRoomHub();
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -442,7 +458,6 @@ namespace Global.Dynamic
                     : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
             );
 
-            var entityParticipantTable = new EntityParticipantTable();
             staticContainer.EntityParticipantTableProxy.SetObject(entityParticipantTable);
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
@@ -502,7 +517,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                pulseContainer.pulseMultiplayerService);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -629,7 +645,7 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
-            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
+            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, movementInbox);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -977,6 +993,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
+                    pulseContainer.pulseMultiplayerBus!,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
@@ -984,7 +1001,8 @@ namespace Global.Dynamic
                     appArgs,
                     entityParticipantTable,
                     staticContainer.RealmData,
-                    remoteMetadata),
+                    remoteMetadata,
+                    pulseContainer.parcelEncoder),
                 new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(

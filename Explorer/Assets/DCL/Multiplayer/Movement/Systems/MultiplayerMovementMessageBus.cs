@@ -1,17 +1,15 @@
-﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -23,28 +21,25 @@ namespace DCL.Multiplayer.Movement.Systems
             Compressed,
         }
 
+        internal const float WALK_EPSILON = 0.05f;
+
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly MovementInbox movementInbox;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        private readonly World globalWorld;
-
-        private NetworkMessageEncoder messageEncoder;
-
+        private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
-        private IMultiplayerMovementSettings settingsValue;
+        private IMultiplayerMovementSettings? settingsValue;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, MovementInbox movementInbox)
         {
             this.messagePipesHub = messagePipesHub;
-            this.entityParticipantTable = entityParticipantTable;
-            this.globalWorld = globalWorld;
+            this.movementInbox = movementInbox;
 
-            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
-
-            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
         }
 
         public void Dispose()
@@ -54,10 +49,16 @@ namespace DCL.Multiplayer.Movement.Systems
             cancellationTokenSource.Dispose();
         }
 
-        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, LandscapeData landscapeData)
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, ParcelEncoder parcelEncoder)
         {
             this.settingsValue = settingsValue;
-            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, landscapeData);
+            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, parcelEncoder);
+        }
+
+        public void Send(NetworkMovementMessage message)
+        {
+            WriteAndSend(message, messagePipesHub.IslandPipe());
+            WriteAndSend(message, messagePipesHub.ScenePipe());
         }
 
         private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
@@ -73,8 +74,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                NetworkMovementMessage message = UncompressedMovementMessage(receivedMessage.Payload);
-                Inbox(message, receivedMessage.FromWalletId);
+                Inbox(UncompressedMovementMessage(receivedMessage.Payload), receivedMessage.FromWalletId);
             }
         }
 
@@ -102,17 +102,10 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        public void Send(NetworkMovementMessage message)
-        {
-            WriteAndSend(message, messagePipesHub.IslandPipe());
-            WriteAndSend(message, messagePipesHub.ScenePipe());
-        }
-
         private static NetworkMovementMessage UncompressedMovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto)
         {
             var vel = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ);
 
-            const float WALK_EPSILON = 0.05f;
             float movementBlend = Mathf.Clamp(proto.MovementBlendValue, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > WALK_EPSILON ? 1 : 0);
 
@@ -217,22 +210,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            TryEnqueue(@for, fullMovementMessage);
-            ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
-        }
-
-        private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
-        {
-            if (entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry) == false)
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
-                return;
-            }
-
-            Entity entity = entry.Entity;
-
-            if (globalWorld.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
-                remotePlayerMovementComponent.Enqueue(fullMovementMessage);
+            movementInbox.TryEnqueue(fullMovementMessage, @for);
         }
 
         /// <summary>
@@ -264,5 +242,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
         }
+
     }
 }
