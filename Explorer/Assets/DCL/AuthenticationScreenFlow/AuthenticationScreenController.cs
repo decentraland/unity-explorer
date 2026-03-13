@@ -9,7 +9,6 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -57,7 +56,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly BuildData buildData;
+        private readonly string installSource;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
@@ -96,7 +95,7 @@ namespace DCL.AuthenticationScreenFlow
             SplashScreen splashScreen,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
-            BuildData buildData,
+            string installSource,
             World world,
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
@@ -115,7 +114,7 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
-            this.buildData = buildData;
+            this.installSource = installSource;
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
@@ -155,7 +154,7 @@ namespace DCL.AuthenticationScreenFlow
             fsm = new MVCStateMachine<AuthStateBase>();
 
             fsm.AddStates(
-                new InitAuthState(viewInstance, buildData.InstallSource),
+                new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),

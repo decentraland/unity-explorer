@@ -79,7 +79,8 @@ namespace Global
                     new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
                     remoteMetadata,
                     dclEnvironment,
-                    systemClipboard),
+                    systemClipboard,
+                    staticContainer.StaticSettings.BuildData.InstallSource),
             };
         }
     }

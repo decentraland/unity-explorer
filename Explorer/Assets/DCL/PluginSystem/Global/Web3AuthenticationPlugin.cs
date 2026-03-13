@@ -11,6 +11,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PluginSystem.Global;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
@@ -111,7 +112,7 @@ namespace DCL.PluginSystem.Global
                 splashScreen,
                 characterPreviewEventBus,
                 audioMixerVolumesController,
-                settings.BuildData,
+                settings.BuildData.InstallSource,
                 world,
                 settings.EmotesSettings,
                 inputBlock,
