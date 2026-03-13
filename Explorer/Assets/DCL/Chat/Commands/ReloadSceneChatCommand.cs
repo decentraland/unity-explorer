@@ -74,10 +74,12 @@ namespace DCL.Chat.Commands
 
         private static void ResetExternalPhysics(CharacterRigidTransform rigidTransform)
         {
-            rigidTransform.ExternalForce = Vector3.zero;
-            rigidTransform.ExternalAcceleration = Vector3.zero;
-            rigidTransform.ExternalImpulse = Vector3.zero;
-            rigidTransform.ExternalVelocity = Vector3.zero;
+            rigidTransform.ExternalForce =
+            rigidTransform.ExternalAcceleration =
+            rigidTransform.ExternalImpulse =
+            rigidTransform.ExternalVelocity =
+            rigidTransform.GravityVelocity =
+            rigidTransform.SlopeGravity = Vector3.zero;
         }
     }
 }
