@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using System.Linq;
+using TMPro;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -20,7 +21,10 @@ namespace DCL.Settings.ModuleControllers
 
             qualitySettingsController.OnPresetChanged += OnPresetChanged;
             view.DropdownView.Dropdown.ClearOptions();
-            view.DropdownView.Dropdown.AddOptions(LEVELS.Select(x => x.ToString()).ToList());
+            var options = new List<TMP_Dropdown.OptionData>(LEVELS.Length);
+            for (int i = 0; i < LEVELS.Length; i++)
+                options.Add(new TMP_Dropdown.OptionData(LEVELS[i].ToString()));
+            view.DropdownView.Dropdown.AddOptions(options);
             view.DropdownView.Dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
             view.DropdownView.Dropdown.SetValueWithoutNotify(LevelToIndex(qualitySettingsController.SceneShadowQuality));
         }

@@ -8,7 +8,6 @@ using DCL.Utilities;
 using ECS.Prioritization;
 using Global.AppArgs;
 using Newtonsoft.Json.Linq;
-using System.Linq;
 using UnityEngine;
 using Utility;
 
@@ -331,7 +330,7 @@ namespace DCL.Quality.Runtime
             }
             else
             {
-                Resolution current = ResolutionUtils.GetAvailableResolutions().First();
+                Resolution current = ResolutionUtils.GetAvailableResolutions()[0];
                 ResolutionWidth = current.width;
                 ResolutionHeight = current.height;
                 ResolutionRefreshRate = current.refreshRateRatio;
