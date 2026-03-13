@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.ChatServices;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -370,6 +371,7 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);
+            pluginScope.Add(new ChatAvatarMouthService(chatHistory, entityParticipantTable, world, playerEntity));
             pluginScope.Add(chatBusListenerService);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatSharedAreaController);

@@ -123,20 +123,7 @@ namespace DCL.Nametags
 
             nametagHolder.Nametag.DisplayMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor, chatBubbleComponent.IsCommunityMessage, chatBubbleComponent.CommunityName);
 
-            string message = chatBubbleComponent.ChatMessage;
             chatBubbleComponent.IsDirty = false;
-
-            // Trigger mouth phoneme animation via partial update (preserves IsVoiceChatSpeaking).
-            if (World.Has<AvatarMouthInputComponent>(entity))
-            {
-                ref var input = ref World.Get<AvatarMouthInputComponent>(entity);
-                input.PendingMessage = message;
-                input.MessageIsDirty = true;
-            }
-            else
-            {
-                World.Add(entity, new AvatarMouthInputComponent { PendingMessage = message, MessageIsDirty = true });
-            }
         }
 
         [Query]

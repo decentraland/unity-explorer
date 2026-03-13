@@ -8,7 +8,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     ///     <see cref="AvatarBlinkComponent"/> and <see cref="AvatarMouthAnimationComponent"/>
     ///     as the "resting" state that is restored after a blink or phoneme animation finishes.
     ///     Eyebrows are fully controlled by this component (no other system overrides them).
-    ///     Added by <c>AvatarFacialAnimationSystem</c> alongside the blink and mouth components.
+    ///     Added by <c>AvatarFacialExpressionSystem</c> alongside the blink and mouth components.
     /// </summary>
     public struct AvatarFaceExpressionComponent
     {

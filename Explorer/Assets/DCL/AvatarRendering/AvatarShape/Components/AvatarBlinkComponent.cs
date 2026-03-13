@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsBlinking;
 
         /// <summary>
-        ///     Current index within the blink animation sequence (see AvatarFacialAnimationSystem.BLINK_SEQUENCE).
+        ///     Current index within the blink animation sequence (see AvatarFacialExpressionSystem.BLINK_SEQUENCE).
         /// </summary>
         public int FrameIndex;
 

@@ -13,7 +13,7 @@ namespace DCL.VoiceChat
     /// <summary>
     ///     Listens to voice-chat speaking events from the LiveKit room and writes
     ///     <see cref="AvatarMouthInputComponent.IsVoiceChatSpeaking"/> on the corresponding ECS
-    ///     entities so that <c>AvatarFacialAnimationSystem</c> can drive the mouth animation
+    ///     entities so that <c>AvatarFacialExpressionSystem</c> can drive the mouth animation
     ///     independently of the nametag system.
     /// </summary>
     public class VoiceChatMouthAnimationHandler : IDisposable

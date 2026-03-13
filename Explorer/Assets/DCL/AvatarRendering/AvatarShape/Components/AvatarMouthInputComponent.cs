@@ -2,7 +2,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     /// <summary>
     ///     Bridge component written by external systems to drive mouth animation on an avatar.
-    ///     <c>AvatarFacialAnimationSystem</c> reads and clears this each frame.
+    ///     <c>AvatarFacialExpressionSystem</c> reads and clears this each frame.
     ///     <para>
     ///         Two independent writers update different fields, so writers must use a
     ///         partial-update pattern (Has + Get or Add) instead of AddOrSet to avoid
@@ -22,13 +22,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         /// <summary>
         ///     True when <see cref="PendingMessage"/> has not been consumed yet.
-        ///     Reset to false by <c>AvatarFacialAnimationSystem</c> after reading the message.
+        ///     Reset to false by <c>AvatarFacialExpressionSystem</c> after reading the message.
         /// </summary>
         public bool MessageIsDirty;
 
         /// <summary>
         ///     True while this avatar is an active speaker in the current voice-chat session.
-        ///     When true, <c>AvatarFacialAnimationSystem</c> loops a hardcoded phoneme string.
+        ///     When true, <c>AvatarFacialExpressionSystem</c> loops a hardcoded phoneme string.
         /// </summary>
         public bool IsVoiceChatSpeaking;
     }

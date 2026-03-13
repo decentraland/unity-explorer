@@ -36,7 +36,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Utility.UIToolkit;
-using AvatarFacialAnimationSystem = DCL.AvatarRendering.AvatarShape.AvatarFacialAnimationSystem;
+using AvatarFacialExpressionSystem = DCL.AvatarRendering.AvatarShape.AvatarFacialExpressionSystem;
 using UpdateFaceExpressionInputSystem = DCL.AvatarRendering.AvatarShape.UpdateFaceExpressionInputSystem;
 using AvatarCleanUpSystem = DCL.AvatarRendering.AvatarShape.AvatarCleanUpSystem;
 using AvatarInstantiatorSystem = DCL.AvatarRendering.AvatarShape.AvatarInstantiatorSystem;
@@ -215,7 +215,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialAnimationSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration, avatarFaceDebugData);
+            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration, avatarFaceDebugData);
             UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);

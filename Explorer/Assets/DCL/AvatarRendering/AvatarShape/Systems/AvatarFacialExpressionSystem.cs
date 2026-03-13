@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.AvatarShape
     /// </remarks>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
-    public partial class AvatarFacialAnimationSystem : BaseUnityLoopSystem
+    public partial class AvatarFacialExpressionSystem : BaseUnityLoopSystem
     {
         /// <summary>Sentinel value: no eye MaterialPropertyBlock override is active (material default = open eyes).</summary>
         private const int NO_EYE_OVERRIDE = -1;
@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly float phonemeDuration;
         private readonly AvatarFaceDebugData? debugData;
 
-        internal AvatarFacialAnimationSystem(
+        internal AvatarFacialExpressionSystem(
             World world,
             Texture2DArray? eyebrowsTextureArray,
             Texture2DArray? eyeTextureArray,
