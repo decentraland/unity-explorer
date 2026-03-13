@@ -1,3 +1,4 @@
+using Coffee.UISoftMask;
 using DCL.CharacterPreview;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
@@ -7,7 +8,6 @@ using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using MVC;
-using SoftMasking;
 using System;
 using System.Collections.Generic;
 using TMPro;
