@@ -30,8 +30,12 @@ namespace DCL.AvatarRendering.AvatarShape
         private static readonly Vector4 REVEAL_NORMAL_FLIPPED = new (0, -1, 0, 0);
         private const float REVEAL_TARGET = 3f;
         private const float HIDE_TARGET = -0.05f;
-        public const float REVEAL_DURATION_SEC = 0.2f;
-        public const float HIDE_DURATION_SEC = 0.4f;
+
+        // Time to reveal the ghost
+        public const float REVEAL_DURATION_SEC = 1f;
+
+        // Time transitioning from ghost to avatar
+        public const float HIDE_DURATION_SEC = 1f;
 
         internal AvatarGhostSystem(World world) : base(world)
         {
