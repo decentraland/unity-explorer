@@ -272,7 +272,7 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
-                var placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct)
+                var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)
                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!placesResult.Success)
@@ -428,7 +428,7 @@ namespace DCL.Communities.CommunityCreation
             if (getCommunityPlacesResult.Value is { Count: > 0 })
             {
                 // Load places details
-                var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
+                var getPlacesDetailsResult = await  placesAPIService.GetDestinationsByIdsAsync(getCommunityPlacesResult.Value, ct)
                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
