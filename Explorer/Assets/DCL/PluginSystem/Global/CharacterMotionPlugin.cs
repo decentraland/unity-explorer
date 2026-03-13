@@ -139,9 +139,10 @@ namespace DCL.PluginSystem.Global
             if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
                 return;
 
-            HandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
+            HandPointAtSystem.InjectToWorld(ref builder);
             PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache);
             PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
+            RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
         }
     }
 }
