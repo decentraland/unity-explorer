@@ -33,9 +33,6 @@ namespace DCL.AvatarRendering.AvatarShape
         public const float REVEAL_DURATION_SEC = 0.2f;
         public const float HIDE_DURATION_SEC = 0.4f;
 
-        /// <summary>Debug flag: keep ghost visible indefinitely, never transition to wearables.</summary>
-        public const bool DEBUG_FREEZE_GHOST = true;
-
         internal AvatarGhostSystem(World world) : base(world)
         {
         }
@@ -53,12 +50,16 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention), typeof(AvatarGhostComponent))]
         private void EnsureGhostAvatar(in Entity entity, ref AvatarBase avatarBase, Profile profile)
         {
-            avatarBase.GhostRenderer.SetActive(true);
-            Renderer ghostRenderer = avatarBase.GhostRenderer.GetComponent<Renderer>();
-            ghostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_TARGET, 0, 0));
-            ghostRenderer.material.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
-            ghostRenderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, new AvatarGhostComponent(ghostRenderer));
+            avatarBase.GhostGameObject.SetActive(true);
+
+            foreach (Renderer renderer in avatarBase.GhostRenderers)
+            {
+                renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_TARGET, 0, 0));
+                renderer.material.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
+                renderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
+            }
+
+            World.Add(entity, new AvatarGhostComponent(avatarBase.GhostRenderers));
         }
 
         [Query]
@@ -88,7 +89,8 @@ namespace DCL.AvatarRendering.AvatarShape
             if (avatarGhostComponent.Phase != AvatarGhostPhase.Visible) return;
             if (!avatarGhostComponent.WearablesHidden) return;
 
-            avatarGhostComponent.Ghost.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
+            foreach (Renderer renderer in avatarGhostComponent.GhostRenderers)
+                renderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
             avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;
             avatarGhostComponent.PhaseElapsed = 0f;
         }
@@ -102,7 +104,9 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarGhostComponent.PhaseElapsed += deltaTime;
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / REVEAL_DURATION_SEC);
             float revealPosition = Mathf.Lerp(HIDE_TARGET, REVEAL_TARGET, progress);
-            avatarGhostComponent.Ghost.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+
+            foreach (Renderer renderer in avatarGhostComponent.GhostRenderers)
+                renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
 
             if (progress >= 1f)
             {
@@ -130,7 +134,9 @@ namespace DCL.AvatarRendering.AvatarShape
                 }
             }
 
-            avatarGhostComponent.Ghost.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+            foreach (Renderer ghostRenderer in avatarGhostComponent.GhostRenderers)
+                ghostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+
             if (progress >= 1f)
             {
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -144,7 +150,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
                 avatarGhostComponent.Phase = AvatarGhostPhase.Hidden;
                 avatarGhostComponent.PhaseElapsed = 0f;
-                avatarGhostComponent.Ghost.gameObject.SetActive(false);
+
+                foreach (Renderer ghostRenderer in avatarGhostComponent.GhostRenderers)
+                    ghostRenderer.gameObject.SetActive(false);
             }
         }
     }
