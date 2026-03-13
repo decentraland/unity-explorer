@@ -407,9 +407,14 @@ jobs:
           mkdir upload_to_s3/ && \
           if [ "${{ matrix.target }}" == "macos" ]; then
             zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
-          elif [[ "${{ matrix.target }}" == "windows64" || "${{ matrix.target }}" == "web" ]]; then
+          elif [ "${{ matrix.target }}" == "windows64" ]; then
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
+          elif [ "${{ matrix.target }}" == "web" ]; then
+            cp -r build upload_to_s3/build
+          else
+            # throw error
+            exit 1
           fi
 
       - name: Install jq
@@ -560,6 +565,8 @@ jobs:
             || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
           }}"
         run: |
+          echo "Upload artifact to: $DESTINATION_PATH"
+
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
