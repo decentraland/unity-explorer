@@ -69,5 +69,8 @@ namespace DCL.NotificationsBus.NotificationTypes
         TRANSFER_RECEIVED,
 
         TIP_RECEIVED,
+
+        BAN_WARNING,
+        BANNED,
     }
 }

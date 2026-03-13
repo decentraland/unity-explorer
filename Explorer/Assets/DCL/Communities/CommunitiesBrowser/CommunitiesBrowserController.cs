@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesCard;
@@ -8,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
@@ -25,7 +27,6 @@ using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -64,6 +65,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -100,7 +103,9 @@ namespace DCL.Communities.CommunitiesBrowser
             IChatEventBus chatEventBus,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -115,6 +120,8 @@ namespace DCL.Communities.CommunitiesBrowser
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
@@ -152,6 +159,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.OpenUserChatRequested += OpenUserChatAsync;
             view.CallUserRequested += CallUserAsync;
             view.BlockUserRequested += BlockUserAsync;
+            view.ReportUserRequested += OpenReportUserForm;
             view.ManageRequestReceivedRequested += ManageRequestReceived;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
@@ -906,6 +914,26 @@ namespace DCL.Communities.CommunitiesBrowser
             catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
+            }
+        }
+
+        private void OpenReportUserForm(ICommunityMemberData profile)
+        {
+            OpenReportUserFormAsync(profile).Forget();
+            return;
+
+            async UniTask OpenReportUserFormAsync(ICommunityMemberData reportedProfile, CancellationToken ct = default)
+            {
+                try
+                {
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        reportedProfile.Address));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
             }
         }
 

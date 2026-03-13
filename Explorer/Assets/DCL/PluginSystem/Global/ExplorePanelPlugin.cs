@@ -519,7 +519,9 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 analytics,
                 communityDataService,
-                loadingStatus);
+                loadingStatus,
+                webBrowser,
+                decentralandUrlsSource);
 
             var placesCardSocialActionsController = new PlacesCardSocialActionsController(placesAPIService, realmNavigator, webBrowser, clipboard, decentralandUrlsSource, navmapBus, mapPathEventBus, homePlaceEventBus);
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));

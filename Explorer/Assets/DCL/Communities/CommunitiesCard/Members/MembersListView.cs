@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private GameObject resultsLoadingMoreSpinner { get; set; } = null!;
 
         [field: Header("Assets")]
-        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] public CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
         [field: SerializeField] private Sprite transferOwnershipSprite { get; set; } = null!;
         [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
         [field: SerializeField] private Sprite banSprite { get; set; } = null!;
@@ -77,6 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
         public event Action<ICommunityMemberData>? RemoveModeratorRequested;
         public event Action<ICommunityMemberData>? AddModeratorRequested;
         public event Action<ICommunityMemberData>? TransferOwnershipRequested;
@@ -114,13 +115,13 @@ namespace DCL.Communities.CommunitiesCard.Members
             foreach (var sectionMapping in memberListSectionsElements)
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
 
+            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
                 .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                 .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
                 .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)))
-                .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!))));
+                .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx!)));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextMenuGiftButton =
@@ -135,6 +136,12 @@ namespace DCL.Communities.CommunitiesCard.Members
                 .AddControl(transferOwnershipContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.TransferOwnershipText, contextMenuSettings.TransferOwnershipSprite, () => ShowTransferOwnershipConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
                 .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickUserText, contextMenuSettings.KickUserSprite, () => ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))))
                 .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name!))));
+
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                       .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor)));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx!), iconColor: redColor, textColor: redColor));
         }
 
         public void Close()

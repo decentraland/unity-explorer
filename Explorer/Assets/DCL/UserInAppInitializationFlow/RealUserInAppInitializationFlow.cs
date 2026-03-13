@@ -186,7 +186,7 @@ namespace DCL.UserInAppInitializationFlow
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
-                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)operationResult.Error.Value.Exception).BanStatusData.ban)), ct).Forget();
                             else
                             {
                                 // Finally, wait for livekit to end handshake that started before.
@@ -255,7 +255,7 @@ namespace DCL.UserInAppInitializationFlow
                 return UniTask.CompletedTask;
 
             if (result.Error is { Exception: UserBlockedException })
-                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
 
             if (result.Error is { State: TaskError.Timeout })
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(
