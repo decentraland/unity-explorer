@@ -56,9 +56,10 @@ namespace DCL.Character.CharacterMotion.Systems
             CameraComponent cam = camera.GetCameraComponent(World);
             float3 cameraForward = cam.Camera.transform.forward;
             float3 cameraUp = cam.Camera.transform.up;
+            Vector3 cameraPosition = cam.Camera.transform.position;
 
             SpawnMarkerQuery(World);
-            UpdateMarkerQuery(World, cameraForward, cameraUp);
+            UpdateMarkerQuery(World, cameraForward, cameraUp, cameraPosition);
             ReleaseMarkerQuery(World);
         }
 
@@ -81,16 +82,9 @@ namespace DCL.Character.CharacterMotion.Systems
 
             PointAtMarkerHolder marker = markerPool.Get();
 
-            Sprite sprite = profile.ProfilePicture?.Asset is { } spriteData
-                ? spriteData.Sprite
-                : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
-
             if (!isLocalPlayer)
                 avatarBase.AudioPlaybackController?.PlayAudioForType(
                     AvatarAudioSettings.AvatarAudioClipType.PointAt);
-
-            marker.Setup(sprite, profile.UserNameColor, profile.UserId, distanceSqr);
-            marker.transform.position = pointAt.WorldHitPoint;
 
             World.Add(entity, marker);
         }
@@ -100,9 +94,9 @@ namespace DCL.Character.CharacterMotion.Systems
         private void UpdateMarker(
             [Data] in float3 cameraForward,
             [Data] in float3 cameraUp,
+            [Data] in Vector3 cameraPosition,
             in HandPointAtComponent pointAt,
             in Profile profile,
-            in AvatarBase avatarBase,
             ref PointAtMarkerHolder marker)
         {
             if (!pointAt.IsPointing)
@@ -112,7 +106,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 ? spriteData.Sprite
                 : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
 
-            marker.Setup(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude);
+            marker.Setup(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
             marker.transform.LookAt(
                 pointAt.WorldHitPoint + (Vector3)cameraForward, cameraUp);
