@@ -22,14 +22,16 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly MovementInbox movementInbox;
         private readonly HashSet<uint> pendingResyncs = new ();
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
+        private readonly ParcelEncoder parcelEncoder;
 
         private bool isDisposed;
 
-        public PulseMultiplayerBus(PulseMultiplayerService pulseService, PeerIdCache peerIdCache, MovementInbox movementInbox)
+        public PulseMultiplayerBus(PulseMultiplayerService pulseService, PeerIdCache peerIdCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
             this.movementInbox = movementInbox;
+            this.parcelEncoder = parcelEncoder;
         }
 
         public void Send(NetworkMovementMessage message)
@@ -50,6 +52,8 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void SubscribeToIncomingMessages(CancellationToken ct)
         {
+            // TODO draining and processing should be moved from the main thread, and guarded by the concurrent collections
+            // TODO Inboxing messages is the only part that should execute on the main thread
             UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
                         SubscribeToPlayerStateFullAsync(ct),
                         SubscribeToPlayerStateDeltaAsync(ct))
@@ -75,6 +79,25 @@ namespace DCL.Multiplayer.Connections.Pulse
                 Inbox(movementMessage, playerJoined.UserId);
             }
         }
+
+        // private async UniTask SubscribeToPlayerLeftAsync(CancellationToken ct)
+        // {
+        //     await foreach (PlayerLeft playerLeft in pulseService.SubscribeAsync<PlayerLeft>(ServerMessage.MessageOneofCase.PlayerLeft, ct))
+        //     {
+        //         if (isDisposed)
+        //         {
+        //             ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+        //             break;
+        //         }
+        //
+        //         peerIdCache.Remove(playerLeft.SubjectId);
+        //
+        //         NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerLeft.State);
+        //         lastMovementMessages[playerLeft.State.SubjectId] = (playerLeft.State.Sequence, movementMessage);
+        //
+        //         Inbox(movementMessage, playerLeft.UserId);
+        //     }
+        // }
 
         private async UniTask SubscribeToPlayerStateFullAsync(CancellationToken ct)
         {
@@ -180,16 +203,23 @@ namespace DCL.Multiplayer.Connections.Pulse
             movementInbox.TryEnqueue(fullMovementMessage, @for);
         }
 
-        private static NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
+        private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
         {
             last.timestamp = delta.ServerTick;
 
             var velocityChanged = false;
             var movementBlendChanged = false;
 
-            if (delta.HasPositionX) last.position.x = delta.PositionXQuantized;
-            if (delta.HasPositionY) last.position.y = delta.PositionYQuantized;
-            if (delta.HasPositionZ) last.position.z = delta.PositionZQuantized;
+            if (delta.HasParcelIndex) last.parcel = parcelEncoder.Decode(delta.ParcelIndex);
+
+            if (delta.HasPositionX)
+                last.position.x = (last.parcel.x * ParcelMathHelper.PARCEL_SIZE) + delta.PositionXQuantized;
+
+            if (delta.HasPositionY)
+                last.position.y = delta.PositionYQuantized;
+
+            if (delta.HasPositionZ)
+                last.position.z = (last.parcel.y * ParcelMathHelper.PARCEL_SIZE) + delta.PositionZQuantized;
 
             if (delta.HasRotationY) last.rotationY = delta.RotationYQuantized;
 
@@ -259,11 +289,20 @@ namespace DCL.Multiplayer.Connections.Pulse
             return last;
         }
 
-        private static void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
+        private void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
         {
             PlayerState state = input.State ??= new PlayerState();
 
-            state.Position = message.position.ToProtoVector();
+            Vector2Int parcelIndex = message.position.ToParcel();
+
+            var relativePosition = new Vector3(
+                message.position.x - (parcelIndex.x * ParcelMathHelper.PARCEL_SIZE),
+                message.position.y,
+                message.position.z - (parcelIndex.y * ParcelMathHelper.PARCEL_SIZE)
+            );
+
+            state.ParcelIndex = parcelEncoder.Encode(parcelIndex);
+            state.Position = relativePosition.ToProtoVector();
             state.Velocity = message.velocity.ToProtoVector();
             state.RotationY = message.rotationY;
             state.MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
@@ -278,11 +317,19 @@ namespace DCL.Multiplayer.Connections.Pulse
                 state.HeadPitch = message.headYawAndPitch[1];
         }
 
-        private static NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full)
+        private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full)
         {
-            PlayerState? playerState = full.State;
+            PlayerState playerState = full.State;
 
-            var vel = new Vector3(playerState.Velocity.X, playerState.Velocity.Y, playerState.Velocity.Z);
+            Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
+
+            var worldPosition = new Vector3(
+                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.X,
+                playerState.Position.Y,
+                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.Z
+            );
+
+            Vector3 vel = playerState.Velocity.ToUnityVector();
 
             float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > MultiplayerMovementMessageBus.WALK_EPSILON ? 1 : 0);
@@ -290,7 +337,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             var message = new NetworkMovementMessage
             {
                 timestamp = full.ServerTick,
-                position = new Vector3(playerState.Position.X, playerState.Position.Y, playerState.Position.Z),
+                parcel = parcel,
+                position = worldPosition,
                 rotationY = playerState.RotationY,
                 velocity = vel,
                 velocitySqrMagnitude = vel.sqrMagnitude,

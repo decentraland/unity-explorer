@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
@@ -35,13 +36,14 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly ParcelEncoder parcelEncoder;
 
         private MultiplayerMovementSettings settings;
         private Entity? selfReplicaEntity;
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, ParcelEncoder parcelEncoder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -54,6 +56,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.realmData = realmData;
             this.remoteMetadata = remoteMetadata;
+            this.parcelEncoder = parcelEncoder;
         }
 
         public void Dispose()
@@ -61,13 +64,14 @@ namespace DCL.PluginSystem.Global
             messageBus.Dispose();
         }
 
-        public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = settings.MovementSettings;
 
             ConfigureCompressionUsage();
 
-            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, (await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct)).Value);
+            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, parcelEncoder);
+            return UniTask.CompletedTask;
         }
 
         private void ConfigureCompressionUsage()

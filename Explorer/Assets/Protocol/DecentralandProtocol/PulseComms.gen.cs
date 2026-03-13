@@ -26,73 +26,82 @@ namespace Decentraland.Pulse {
           string.Concat(
             "CiRkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2VfY29tbXMucHJvdG8SEmRlY2Vu",
             "dHJhbGFuZC5wdWxzZRohZGVjZW50cmFsYW5kL2NvbW1vbi9vcHRpb25zLnBy",
-            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8iJgoQSGFu",
-            "ZHNoYWtlUmVxdWVzdBISCgphdXRoX2NoYWluGAEgASgMIkIKEUhhbmRzaGFr",
-            "ZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSEgoFZXJyb3IYAiABKAlIAIgB",
-            "AUIICgZfZXJyb3IiwQEKDUNsaWVudE1lc3NhZ2USOQoJaGFuZHNoYWtlGAEg",
-            "ASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLkhhbmRzaGFrZVJlcXVlc3RIABI1",
-            "CgVpbnB1dBgCIAEoCzIkLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
-            "ZUlucHV0SAASMwoGcmVzeW5jGAMgASgLMiEuZGVjZW50cmFsYW5kLnB1bHNl",
-            "LlJlc3luY1JlcXVlc3RIAEIJCgdtZXNzYWdlItMCCg1TZXJ2ZXJNZXNzYWdl",
-            "EjoKCWhhbmRzaGFrZRgBIAEoCzIlLmRlY2VudHJhbGFuZC5wdWxzZS5IYW5k",
-            "c2hha2VSZXNwb25zZUgAEkAKEXBsYXllcl9zdGF0ZV9mdWxsGAIgASgLMiMu",
-            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlRnVsbEgAEkcKEnBsYXll",
-            "cl9zdGF0ZV9kZWx0YRgDIAEoCzIpLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5",
-            "ZXJTdGF0ZURlbHRhVGllcjBIABI5Cg1wbGF5ZXJfam9pbmVkGAQgASgLMiAu",
-            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllckpvaW5lZEgAEjUKC3BsYXllcl9s",
-            "ZWZ0GAUgASgLMh4uZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllckxlZnRIAEIJ",
-            "CgdtZXNzYWdlIkIKEFBsYXllclN0YXRlSW5wdXQSLgoFc3RhdGUYASABKAsy",
-            "Hy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGUi2gIKC1BsYXllclN0",
-            "YXRlEhQKDHBhcmNlbF9pbmRleBgBIAEoDRIuCghwb3NpdGlvbhgCIAEoCzIc",
-            "LmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxIuCgh2ZWxvY2l0eRgDIAEo",
-            "CzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMxISCgpyb3RhdGlvbl95",
-            "GAQgASgCEhYKDm1vdmVtZW50X2JsZW5kGAUgASgCEhMKC3NsaWRlX2JsZW5k",
-            "GAYgASgCEhUKCGhlYWRfeWF3GAcgASgCSACIAQESFwoKaGVhZF9waXRjaBgI",
-            "IAEoAkgBiAEBEhMKC3N0YXRlX2ZsYWdzGAkgASgNEjMKC2dsaWRlX3N0YXRl",
-            "GAogASgOMh4uZGVjZW50cmFsYW5kLnB1bHNlLkdsaWRlU3RhdGVCCwoJX2hl",
-            "YWRfeWF3Qg0KC19oZWFkX3BpdGNoIs0GChVQbGF5ZXJTdGF0ZURlbHRhVGll",
-            "cjASEgoKc3ViamVjdF9pZBgBIAEoDRIPCgduZXdfc2VxGAIgASgNEhMKC3Nl",
-            "cnZlcl90aWNrGAMgASgNEhkKDHBhcmNlbF9pbmRleBgEIAEoDUgAiAEBEiQK",
-            "CnBvc2l0aW9uX3gYBSABKA1CC4q1GAcVAACAQRgISAGIAQESJAoKcG9zaXRp",
-            "b25feRgGIAEoDUILirUYBxUAAEhDGA1IAogBARIkCgpwb3NpdGlvbl96GAcg",
-            "ASgNQguKtRgHFQAAgEEYCEgDiAEBEikKCnZlbG9jaXR5X3gYCCABKA1CEIq1",
-            "GAwNAABIwhUAAEhCGAhIBIgBARIpCgp2ZWxvY2l0eV95GAkgASgNQhCKtRgM",
-            "DQAASMIVAABIQhgISAWIAQESKQoKdmVsb2NpdHlfehgKIAEoDUIQirUYDA0A",
-            "AEjCFQAASEIYCEgGiAEBEiQKCnJvdGF0aW9uX3kYCyABKA1CC4q1GAcVAAC0",
-            "QxgHSAeIAQESKAoObW92ZW1lbnRfYmxlbmQYDCABKA1CC4q1GAcVAACAPxgE",
-            "SAiIAQESJQoLc2xpZGVfYmxlbmQYDSABKA1CC4q1GAcVAACAPxgESAmIAQES",
-            "IgoIaGVhZF95YXcYDiABKA1CC4q1GAcVAAC0QxgHSAqIAQESJAoKaGVhZF9w",
-            "aXRjaBgPIAEoDUILirUYBxUAADRDGAZIC4gBARIYCgtzdGF0ZV9mbGFncxgQ",
-            "IAEoDUgMiAEBEjgKC2dsaWRlX3N0YXRlGBEgASgOMh4uZGVjZW50cmFsYW5k",
-            "LnB1bHNlLkdsaWRlU3RhdGVIDYgBAUIPCg1fcGFyY2VsX2luZGV4Qg0KC19w",
-            "b3NpdGlvbl94Qg0KC19wb3NpdGlvbl95Qg0KC19wb3NpdGlvbl96Qg0KC192",
-            "ZWxvY2l0eV94Qg0KC192ZWxvY2l0eV95Qg0KC192ZWxvY2l0eV96Qg0KC19y",
-            "b3RhdGlvbl95QhEKD19tb3ZlbWVudF9ibGVuZEIOCgxfc2xpZGVfYmxlbmRC",
-            "CwoJX2hlYWRfeWF3Qg0KC19oZWFkX3BpdGNoQg4KDF9zdGF0ZV9mbGFnc0IO",
-            "CgxfZ2xpZGVfc3RhdGUifAoPUGxheWVyU3RhdGVGdWxsEhIKCnN1YmplY3Rf",
-            "aWQYASABKA0SEAoIc2VxdWVuY2UYAiABKA0SEwoLc2VydmVyX3RpY2sYAyAB",
-            "KA0SLgoFc3RhdGUYBCABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVy",
-            "U3RhdGUiUwoMUGxheWVySm9pbmVkEg8KB3VzZXJfaWQYASABKAkSMgoFc3Rh",
-            "dGUYAiABKAsyIy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVGdWxs",
-            "IiAKClBsYXllckxlZnQSEgoKc3ViamVjdF9pZBgBIAEoDSI2Cg1SZXN5bmNS",
-            "ZXF1ZXN0EhIKCnN1YmplY3RfaWQYASABKA0SEQoJa25vd25fc2VxGAIgASgN",
-            "KmYKFFBsYXllckFuaW1hdGlvbkZsYWdzEggKBE5PTkUQABIMCghHUk9VTkRF",
-            "RBABEg0KCUxPTkdfSlVNUBACEg0KCUxPTkdfRkFMTBAEEgsKB0ZBTExJTkcQ",
-            "CBILCgdTVFVOTkVEEBAqTgoKR2xpZGVTdGF0ZRIPCgtQUk9QX0NMT1NFRBAA",
-            "EhAKDE9QRU5JTkdfUFJPUBABEgsKB0dMSURJTkcQAhIQCgxDTE9TSU5HX1BS",
-            "T1AQA2IGcHJvdG8z"));
+            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8iPwoQSGFu",
+            "ZHNoYWtlUmVxdWVzdBISCgphdXRoX2NoYWluGAEgASgMEhcKD3Byb2ZpbGVf",
+            "dmVyc2lvbhgCIAEoBSJCChFIYW5kc2hha2VSZXNwb25zZRIPCgdzdWNjZXNz",
+            "GAEgASgIEhIKBWVycm9yGAIgASgJSACIAQFCCAoGX2Vycm9yIi0KGlByb2Zp",
+            "bGVWZXJzaW9uQW5ub3VuY2VtZW50Eg8KB3ZlcnNpb24YASABKAUiRQoeUGxh",
+            "eWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2VkEhIKCnN1YmplY3RfaWQYASAB",
+            "KA0SDwoHdmVyc2lvbhgCIAEoBSKRAgoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
+            "c2hha2UYASABKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVx",
+            "dWVzdEgAEjUKBWlucHV0GAIgASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLlBs",
+            "YXllclN0YXRlSW5wdXRIABIzCgZyZXN5bmMYAyABKAsyIS5kZWNlbnRyYWxh",
+            "bmQucHVsc2UuUmVzeW5jUmVxdWVzdEgAEk4KFHByb2ZpbGVfYW5ub3VuY2Vt",
+            "ZW50GAQgASgLMi4uZGVjZW50cmFsYW5kLnB1bHNlLlByb2ZpbGVWZXJzaW9u",
+            "QW5ub3VuY2VtZW50SABCCQoHbWVzc2FnZSKzAwoNU2VydmVyTWVzc2FnZRI6",
+            "CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNo",
+            "YWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3RhdGVfZnVsbBgCIAEoCzIjLmRl",
+            "Y2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGxIABJHChJwbGF5ZXJf",
+            "c3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVy",
+            "U3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVyX2pvaW5lZBgEIAEoCzIgLmRl",
+            "Y2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2luZWRIABI1CgtwbGF5ZXJfbGVm",
+            "dBgFIAEoCzIeLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJMZWZ0SAASXgog",
+            "cGxheWVyX3Byb2ZpbGVfdmVyc2lvbl9hbm5vdW5jZWQYBiABKAsyMi5kZWNl",
+            "bnRyYWxhbmQucHVsc2UuUGxheWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2Vk",
+            "SABCCQoHbWVzc2FnZSJCChBQbGF5ZXJTdGF0ZUlucHV0Ei4KBXN0YXRlGAEg",
+            "ASgLMh8uZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlItoCCgtQbGF5",
+            "ZXJTdGF0ZRIUCgxwYXJjZWxfaW5kZXgYASABKAUSLgoIcG9zaXRpb24YAiAB",
+            "KAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSLgoIdmVsb2NpdHkY",
+            "AyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSEgoKcm90YXRp",
+            "b25feRgEIAEoAhIWCg5tb3ZlbWVudF9ibGVuZBgFIAEoAhITCgtzbGlkZV9i",
+            "bGVuZBgGIAEoAhIVCghoZWFkX3lhdxgHIAEoAkgAiAEBEhcKCmhlYWRfcGl0",
+            "Y2gYCCABKAJIAYgBARITCgtzdGF0ZV9mbGFncxgJIAEoDRIzCgtnbGlkZV9z",
+            "dGF0ZRgKIAEoDjIeLmRlY2VudHJhbGFuZC5wdWxzZS5HbGlkZVN0YXRlQgsK",
+            "CV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaCLNBgoVUGxheWVyU3RhdGVEZWx0",
+            "YVRpZXIwEhIKCnN1YmplY3RfaWQYASABKA0SDwoHbmV3X3NlcRgCIAEoDRIT",
+            "CgtzZXJ2ZXJfdGljaxgDIAEoDRIZCgxwYXJjZWxfaW5kZXgYBCABKAVIAIgB",
+            "ARIkCgpwb3NpdGlvbl94GAUgASgNQguKtRgHFQAAgEEYCEgBiAEBEiQKCnBv",
+            "c2l0aW9uX3kYBiABKA1CC4q1GAcVAABIQxgNSAKIAQESJAoKcG9zaXRpb25f",
+            "ehgHIAEoDUILirUYBxUAAIBBGAhIA4gBARIpCgp2ZWxvY2l0eV94GAggASgN",
+            "QhCKtRgMDQAASMIVAABIQhgISASIAQESKQoKdmVsb2NpdHlfeRgJIAEoDUIQ",
+            "irUYDA0AAEjCFQAASEIYCEgFiAEBEikKCnZlbG9jaXR5X3oYCiABKA1CEIq1",
+            "GAwNAABIwhUAAEhCGAhIBogBARIkCgpyb3RhdGlvbl95GAsgASgNQguKtRgH",
+            "FQAAtEMYB0gHiAEBEigKDm1vdmVtZW50X2JsZW5kGAwgASgNQguKtRgHFQAA",
+            "gD8YBEgIiAEBEiUKC3NsaWRlX2JsZW5kGA0gASgNQguKtRgHFQAAgD8YBEgJ",
+            "iAEBEiIKCGhlYWRfeWF3GA4gASgNQguKtRgHFQAAtEMYB0gKiAEBEiQKCmhl",
+            "YWRfcGl0Y2gYDyABKA1CC4q1GAcVAAA0QxgGSAuIAQESGAoLc3RhdGVfZmxh",
+            "Z3MYECABKA1IDIgBARI4CgtnbGlkZV9zdGF0ZRgRIAEoDjIeLmRlY2VudHJh",
+            "bGFuZC5wdWxzZS5HbGlkZVN0YXRlSA2IAQFCDwoNX3BhcmNlbF9pbmRleEIN",
+            "CgtfcG9zaXRpb25feEINCgtfcG9zaXRpb25feUINCgtfcG9zaXRpb25fekIN",
+            "CgtfdmVsb2NpdHlfeEINCgtfdmVsb2NpdHlfeUINCgtfdmVsb2NpdHlfekIN",
+            "Cgtfcm90YXRpb25feUIRCg9fbW92ZW1lbnRfYmxlbmRCDgoMX3NsaWRlX2Js",
+            "ZW5kQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaEIOCgxfc3RhdGVfZmxh",
+            "Z3NCDgoMX2dsaWRlX3N0YXRlInwKD1BsYXllclN0YXRlRnVsbBISCgpzdWJq",
+            "ZWN0X2lkGAEgASgNEhAKCHNlcXVlbmNlGAIgASgNEhMKC3NlcnZlcl90aWNr",
+            "GAMgASgNEi4KBXN0YXRlGAQgASgLMh8uZGVjZW50cmFsYW5kLnB1bHNlLlBs",
+            "YXllclN0YXRlImwKDFBsYXllckpvaW5lZBIPCgd1c2VyX2lkGAEgASgJEhcK",
+            "D3Byb2ZpbGVfdmVyc2lvbhgCIAEoBRIyCgVzdGF0ZRgDIAEoCzIjLmRlY2Vu",
+            "dHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGwiIAoKUGxheWVyTGVmdBIS",
+            "CgpzdWJqZWN0X2lkGAEgASgNIjYKDVJlc3luY1JlcXVlc3QSEgoKc3ViamVj",
+            "dF9pZBgBIAEoDRIRCglrbm93bl9zZXEYAiABKA0qZgoUUGxheWVyQW5pbWF0",
+            "aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1Q",
+            "EAISDQoJTE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5ORUQQECpO",
+            "CgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9Q",
+            "EAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJPUBADYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain", "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeResponse), global::Decentraland.Pulse.HandshakeResponse.Parser, new[]{ "Success", "Error" }, new[]{ "Error" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ProfileVersionAnnouncement), global::Decentraland.Pulse.ProfileVersionAnnouncement.Parser, new[]{ "Version" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerProfileVersionsAnnounced), global::Decentraland.Pulse.PlayerProfileVersionsAnnounced.Parser, new[]{ "SubjectId", "Version" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateInput), global::Decentraland.Pulse.PlayerStateInput.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "NewSeq", "ServerTick", "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "ProfileVersion", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerLeft), global::Decentraland.Pulse.PlayerLeft.Parser, new[]{ "SubjectId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ResyncRequest), global::Decentraland.Pulse.ResyncRequest.Parser, new[]{ "SubjectId", "KnownSeq" }, null, null, null, null)
           }));
@@ -156,6 +165,7 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public HandshakeRequest(HandshakeRequest other) : this() {
       authChain_ = other.authChain_;
+      profileVersion_ = other.profileVersion_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -177,6 +187,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "profile_version" field.</summary>
+    public const int ProfileVersionFieldNumber = 2;
+    private int profileVersion_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int ProfileVersion {
+      get { return profileVersion_; }
+      set {
+        profileVersion_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -193,6 +215,7 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (AuthChain != other.AuthChain) return false;
+      if (ProfileVersion != other.ProfileVersion) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -201,6 +224,7 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (AuthChain.Length != 0) hash ^= AuthChain.GetHashCode();
+      if (ProfileVersion != 0) hash ^= ProfileVersion.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -223,6 +247,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteBytes(AuthChain);
       }
+      if (ProfileVersion != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(ProfileVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -237,6 +265,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteBytes(AuthChain);
       }
+      if (ProfileVersion != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(ProfileVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -249,6 +281,9 @@ namespace Decentraland.Pulse {
       int size = 0;
       if (AuthChain.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeBytesSize(AuthChain);
+      }
+      if (ProfileVersion != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(ProfileVersion);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -264,6 +299,9 @@ namespace Decentraland.Pulse {
       }
       if (other.AuthChain.Length != 0) {
         AuthChain = other.AuthChain;
+      }
+      if (other.ProfileVersion != 0) {
+        ProfileVersion = other.ProfileVersion;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -288,6 +326,10 @@ namespace Decentraland.Pulse {
             AuthChain = input.ReadBytes();
             break;
           }
+          case 16: {
+            ProfileVersion = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -309,6 +351,10 @@ namespace Decentraland.Pulse {
             break;
           case 10: {
             AuthChain = input.ReadBytes();
+            break;
+          }
+          case 16: {
+            ProfileVersion = input.ReadInt32();
             break;
           }
         }
@@ -567,6 +613,443 @@ namespace Decentraland.Pulse {
 
   }
 
+  /// <summary>
+  /// Similarly to the LiveKit pipeline, a peer announces the version of its profile but
+  /// it only does it when it's changed as it's sent reliably and stored on the server for other peers
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ProfileVersionAnnouncement : pb::IMessage<ProfileVersionAnnouncement>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ProfileVersionAnnouncement> _parser = new pb::MessageParser<ProfileVersionAnnouncement>(() => new ProfileVersionAnnouncement());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ProfileVersionAnnouncement> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ProfileVersionAnnouncement() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ProfileVersionAnnouncement(ProfileVersionAnnouncement other) : this() {
+      version_ = other.version_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ProfileVersionAnnouncement Clone() {
+      return new ProfileVersionAnnouncement(this);
+    }
+
+    /// <summary>Field number for the "version" field.</summary>
+    public const int VersionFieldNumber = 1;
+    private int version_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Version {
+      get { return version_; }
+      set {
+        version_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ProfileVersionAnnouncement);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ProfileVersionAnnouncement other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Version != other.Version) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Version != 0) hash ^= Version.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Version != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Version);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Version != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Version);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Version != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Version);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ProfileVersionAnnouncement other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Version != 0) {
+        Version = other.Version;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Version = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Version = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class PlayerProfileVersionsAnnounced : pb::IMessage<PlayerProfileVersionsAnnounced>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<PlayerProfileVersionsAnnounced> _parser = new pb::MessageParser<PlayerProfileVersionsAnnounced>(() => new PlayerProfileVersionsAnnounced());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<PlayerProfileVersionsAnnounced> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[3]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerProfileVersionsAnnounced() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerProfileVersionsAnnounced(PlayerProfileVersionsAnnounced other) : this() {
+      subjectId_ = other.subjectId_;
+      version_ = other.version_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PlayerProfileVersionsAnnounced Clone() {
+      return new PlayerProfileVersionsAnnounced(this);
+    }
+
+    /// <summary>Field number for the "subject_id" field.</summary>
+    public const int SubjectIdFieldNumber = 1;
+    private uint subjectId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint SubjectId {
+      get { return subjectId_; }
+      set {
+        subjectId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "version" field.</summary>
+    public const int VersionFieldNumber = 2;
+    private int version_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Version {
+      get { return version_; }
+      set {
+        version_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as PlayerProfileVersionsAnnounced);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(PlayerProfileVersionsAnnounced other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (SubjectId != other.SubjectId) return false;
+      if (Version != other.Version) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (Version != 0) hash ^= Version.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (Version != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Version);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (Version != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Version);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (SubjectId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
+      }
+      if (Version != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Version);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(PlayerProfileVersionsAnnounced other) {
+      if (other == null) {
+        return;
+      }
+      if (other.SubjectId != 0) {
+        SubjectId = other.SubjectId;
+      }
+      if (other.Version != 0) {
+        Version = other.Version;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Version = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Version = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class ClientMessage : pb::IMessage<ClientMessage>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -582,7 +1065,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -611,6 +1094,9 @@ namespace Decentraland.Pulse {
           break;
         case MessageOneofCase.Resync:
           Resync = other.Resync.Clone();
+          break;
+        case MessageOneofCase.ProfileAnnouncement:
+          ProfileAnnouncement = other.ProfileAnnouncement.Clone();
           break;
       }
 
@@ -659,6 +1145,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "profile_announcement" field.</summary>
+    public const int ProfileAnnouncementFieldNumber = 4;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.ProfileVersionAnnouncement ProfileAnnouncement {
+      get { return messageCase_ == MessageOneofCase.ProfileAnnouncement ? (global::Decentraland.Pulse.ProfileVersionAnnouncement) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.ProfileAnnouncement;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -666,6 +1164,7 @@ namespace Decentraland.Pulse {
       Handshake = 1,
       Input = 2,
       Resync = 3,
+      ProfileAnnouncement = 4,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -699,6 +1198,7 @@ namespace Decentraland.Pulse {
       if (!object.Equals(Handshake, other.Handshake)) return false;
       if (!object.Equals(Input, other.Input)) return false;
       if (!object.Equals(Resync, other.Resync)) return false;
+      if (!object.Equals(ProfileAnnouncement, other.ProfileAnnouncement)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -710,6 +1210,7 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.Handshake) hash ^= Handshake.GetHashCode();
       if (messageCase_ == MessageOneofCase.Input) hash ^= Input.GetHashCode();
       if (messageCase_ == MessageOneofCase.Resync) hash ^= Resync.GetHashCode();
+      if (messageCase_ == MessageOneofCase.ProfileAnnouncement) hash ^= ProfileAnnouncement.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -741,6 +1242,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(26);
         output.WriteMessage(Resync);
       }
+      if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
+        output.WriteRawTag(34);
+        output.WriteMessage(ProfileAnnouncement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -763,6 +1268,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(26);
         output.WriteMessage(Resync);
       }
+      if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
+        output.WriteRawTag(34);
+        output.WriteMessage(ProfileAnnouncement);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -781,6 +1290,9 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.Resync) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Resync);
+      }
+      if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ProfileAnnouncement);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -812,6 +1324,12 @@ namespace Decentraland.Pulse {
             Resync = new global::Decentraland.Pulse.ResyncRequest();
           }
           Resync.MergeFrom(other.Resync);
+          break;
+        case MessageOneofCase.ProfileAnnouncement:
+          if (ProfileAnnouncement == null) {
+            ProfileAnnouncement = new global::Decentraland.Pulse.ProfileVersionAnnouncement();
+          }
+          ProfileAnnouncement.MergeFrom(other.ProfileAnnouncement);
           break;
       }
 
@@ -861,6 +1379,15 @@ namespace Decentraland.Pulse {
             Resync = subBuilder;
             break;
           }
+          case 34: {
+            global::Decentraland.Pulse.ProfileVersionAnnouncement subBuilder = new global::Decentraland.Pulse.ProfileVersionAnnouncement();
+            if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
+              subBuilder.MergeFrom(ProfileAnnouncement);
+            }
+            input.ReadMessage(subBuilder);
+            ProfileAnnouncement = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -907,6 +1434,15 @@ namespace Decentraland.Pulse {
             Resync = subBuilder;
             break;
           }
+          case 34: {
+            global::Decentraland.Pulse.ProfileVersionAnnouncement subBuilder = new global::Decentraland.Pulse.ProfileVersionAnnouncement();
+            if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
+              subBuilder.MergeFrom(ProfileAnnouncement);
+            }
+            input.ReadMessage(subBuilder);
+            ProfileAnnouncement = subBuilder;
+            break;
+          }
         }
       }
     }
@@ -929,7 +1465,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -964,6 +1500,9 @@ namespace Decentraland.Pulse {
           break;
         case MessageOneofCase.PlayerLeft:
           PlayerLeft = other.PlayerLeft.Clone();
+          break;
+        case MessageOneofCase.PlayerProfileVersionAnnounced:
+          PlayerProfileVersionAnnounced = other.PlayerProfileVersionAnnounced.Clone();
           break;
       }
 
@@ -1036,6 +1575,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "player_profile_version_announced" field.</summary>
+    public const int PlayerProfileVersionAnnouncedFieldNumber = 6;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.PlayerProfileVersionsAnnounced PlayerProfileVersionAnnounced {
+      get { return messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced ? (global::Decentraland.Pulse.PlayerProfileVersionsAnnounced) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.PlayerProfileVersionAnnounced;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1045,6 +1596,7 @@ namespace Decentraland.Pulse {
       PlayerStateDelta = 3,
       PlayerJoined = 4,
       PlayerLeft = 5,
+      PlayerProfileVersionAnnounced = 6,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1080,6 +1632,7 @@ namespace Decentraland.Pulse {
       if (!object.Equals(PlayerStateDelta, other.PlayerStateDelta)) return false;
       if (!object.Equals(PlayerJoined, other.PlayerJoined)) return false;
       if (!object.Equals(PlayerLeft, other.PlayerLeft)) return false;
+      if (!object.Equals(PlayerProfileVersionAnnounced, other.PlayerProfileVersionAnnounced)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1093,6 +1646,7 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.PlayerStateDelta) hash ^= PlayerStateDelta.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerJoined) hash ^= PlayerJoined.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerLeft) hash ^= PlayerLeft.GetHashCode();
+      if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) hash ^= PlayerProfileVersionAnnounced.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1132,6 +1686,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(42);
         output.WriteMessage(PlayerLeft);
       }
+      if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
+        output.WriteRawTag(50);
+        output.WriteMessage(PlayerProfileVersionAnnounced);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1162,6 +1720,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(42);
         output.WriteMessage(PlayerLeft);
       }
+      if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
+        output.WriteRawTag(50);
+        output.WriteMessage(PlayerProfileVersionAnnounced);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1186,6 +1748,9 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.PlayerLeft) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(PlayerLeft);
+      }
+      if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PlayerProfileVersionAnnounced);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1229,6 +1794,12 @@ namespace Decentraland.Pulse {
             PlayerLeft = new global::Decentraland.Pulse.PlayerLeft();
           }
           PlayerLeft.MergeFrom(other.PlayerLeft);
+          break;
+        case MessageOneofCase.PlayerProfileVersionAnnounced:
+          if (PlayerProfileVersionAnnounced == null) {
+            PlayerProfileVersionAnnounced = new global::Decentraland.Pulse.PlayerProfileVersionsAnnounced();
+          }
+          PlayerProfileVersionAnnounced.MergeFrom(other.PlayerProfileVersionAnnounced);
           break;
       }
 
@@ -1296,6 +1867,15 @@ namespace Decentraland.Pulse {
             PlayerLeft = subBuilder;
             break;
           }
+          case 50: {
+            global::Decentraland.Pulse.PlayerProfileVersionsAnnounced subBuilder = new global::Decentraland.Pulse.PlayerProfileVersionsAnnounced();
+            if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
+              subBuilder.MergeFrom(PlayerProfileVersionAnnounced);
+            }
+            input.ReadMessage(subBuilder);
+            PlayerProfileVersionAnnounced = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1360,6 +1940,15 @@ namespace Decentraland.Pulse {
             PlayerLeft = subBuilder;
             break;
           }
+          case 50: {
+            global::Decentraland.Pulse.PlayerProfileVersionsAnnounced subBuilder = new global::Decentraland.Pulse.PlayerProfileVersionsAnnounced();
+            if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
+              subBuilder.MergeFrom(PlayerProfileVersionAnnounced);
+            }
+            input.ReadMessage(subBuilder);
+            PlayerProfileVersionAnnounced = subBuilder;
+            break;
+          }
         }
       }
     }
@@ -1385,7 +1974,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1593,7 +2182,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1635,10 +2224,10 @@ namespace Decentraland.Pulse {
 
     /// <summary>Field number for the "parcel_index" field.</summary>
     public const int ParcelIndexFieldNumber = 1;
-    private uint parcelIndex_;
+    private int parcelIndex_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint ParcelIndex {
+    public int ParcelIndex {
       get { return parcelIndex_; }
       set {
         parcelIndex_ = value;
@@ -1845,7 +2434,7 @@ namespace Decentraland.Pulse {
     #else
       if (ParcelIndex != 0) {
         output.WriteRawTag(8);
-        output.WriteUInt32(ParcelIndex);
+        output.WriteInt32(ParcelIndex);
       }
       if (position_ != null) {
         output.WriteRawTag(18);
@@ -1895,7 +2484,7 @@ namespace Decentraland.Pulse {
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
       if (ParcelIndex != 0) {
         output.WriteRawTag(8);
-        output.WriteUInt32(ParcelIndex);
+        output.WriteInt32(ParcelIndex);
       }
       if (position_ != null) {
         output.WriteRawTag(18);
@@ -1944,7 +2533,7 @@ namespace Decentraland.Pulse {
     public int CalculateSize() {
       int size = 0;
       if (ParcelIndex != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ParcelIndex);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(ParcelIndex);
       }
       if (position_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
@@ -2041,7 +2630,7 @@ namespace Decentraland.Pulse {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 8: {
-            ParcelIndex = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 18: {
@@ -2106,7 +2695,7 @@ namespace Decentraland.Pulse {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 8: {
-            ParcelIndex = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 18: {
@@ -2174,7 +2763,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2259,15 +2848,15 @@ namespace Decentraland.Pulse {
 
     /// <summary>Field number for the "parcel_index" field.</summary>
     public const int ParcelIndexFieldNumber = 4;
-    private readonly static uint ParcelIndexDefaultValue = 0;
+    private readonly static int ParcelIndexDefaultValue = 0;
 
-    private uint parcelIndex_;
+    private int parcelIndex_;
     /// <summary>
     /// While the player doesn't cross the parcel, this field is omitted from diff
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint ParcelIndex {
+    public int ParcelIndex {
       get { if ((_hasBits0 & 1) != 0) { return parcelIndex_; } else { return ParcelIndexDefaultValue; } }
       set {
         _hasBits0 |= 1;
@@ -2735,7 +3324,7 @@ namespace Decentraland.Pulse {
       }
       if (HasParcelIndex) {
         output.WriteRawTag(32);
-        output.WriteUInt32(ParcelIndex);
+        output.WriteInt32(ParcelIndex);
       }
       if (HasPositionX) {
         output.WriteRawTag(40);
@@ -2813,7 +3402,7 @@ namespace Decentraland.Pulse {
       }
       if (HasParcelIndex) {
         output.WriteRawTag(32);
-        output.WriteUInt32(ParcelIndex);
+        output.WriteInt32(ParcelIndex);
       }
       if (HasPositionX) {
         output.WriteRawTag(40);
@@ -2887,7 +3476,7 @@ namespace Decentraland.Pulse {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
       }
       if (HasParcelIndex) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ParcelIndex);
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(ParcelIndex);
       }
       if (HasPositionX) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(PositionX);
@@ -3023,7 +3612,7 @@ namespace Decentraland.Pulse {
             break;
           }
           case 32: {
-            ParcelIndex = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 40: {
@@ -3110,7 +3699,7 @@ namespace Decentraland.Pulse {
             break;
           }
           case 32: {
-            ParcelIndex = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 40: {
@@ -3190,7 +3779,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3511,7 +4100,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3532,6 +4121,7 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerJoined(PlayerJoined other) : this() {
       userId_ = other.userId_;
+      profileVersion_ = other.profileVersion_;
       state_ = other.state_ != null ? other.state_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -3554,8 +4144,20 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "profile_version" field.</summary>
+    public const int ProfileVersionFieldNumber = 2;
+    private int profileVersion_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int ProfileVersion {
+      get { return profileVersion_; }
+      set {
+        profileVersion_ = value;
+      }
+    }
+
     /// <summary>Field number for the "state" field.</summary>
-    public const int StateFieldNumber = 2;
+    public const int StateFieldNumber = 3;
     private global::Decentraland.Pulse.PlayerStateFull state_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3582,6 +4184,7 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (UserId != other.UserId) return false;
+      if (ProfileVersion != other.ProfileVersion) return false;
       if (!object.Equals(State, other.State)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -3591,6 +4194,7 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (UserId.Length != 0) hash ^= UserId.GetHashCode();
+      if (ProfileVersion != 0) hash ^= ProfileVersion.GetHashCode();
       if (state_ != null) hash ^= State.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -3614,8 +4218,12 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteString(UserId);
       }
+      if (ProfileVersion != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(ProfileVersion);
+      }
       if (state_ != null) {
-        output.WriteRawTag(18);
+        output.WriteRawTag(26);
         output.WriteMessage(State);
       }
       if (_unknownFields != null) {
@@ -3632,8 +4240,12 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(10);
         output.WriteString(UserId);
       }
+      if (ProfileVersion != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(ProfileVersion);
+      }
       if (state_ != null) {
-        output.WriteRawTag(18);
+        output.WriteRawTag(26);
         output.WriteMessage(State);
       }
       if (_unknownFields != null) {
@@ -3648,6 +4260,9 @@ namespace Decentraland.Pulse {
       int size = 0;
       if (UserId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(UserId);
+      }
+      if (ProfileVersion != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(ProfileVersion);
       }
       if (state_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
@@ -3666,6 +4281,9 @@ namespace Decentraland.Pulse {
       }
       if (other.UserId.Length != 0) {
         UserId = other.UserId;
+      }
+      if (other.ProfileVersion != 0) {
+        ProfileVersion = other.ProfileVersion;
       }
       if (other.state_ != null) {
         if (state_ == null) {
@@ -3696,7 +4314,11 @@ namespace Decentraland.Pulse {
             UserId = input.ReadString();
             break;
           }
-          case 18: {
+          case 16: {
+            ProfileVersion = input.ReadInt32();
+            break;
+          }
+          case 26: {
             if (state_ == null) {
               State = new global::Decentraland.Pulse.PlayerStateFull();
             }
@@ -3726,7 +4348,11 @@ namespace Decentraland.Pulse {
             UserId = input.ReadString();
             break;
           }
-          case 18: {
+          case 16: {
+            ProfileVersion = input.ReadInt32();
+            break;
+          }
+          case 26: {
             if (state_ == null) {
               State = new global::Decentraland.Pulse.PlayerStateFull();
             }
@@ -3758,7 +4384,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3960,7 +4586,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

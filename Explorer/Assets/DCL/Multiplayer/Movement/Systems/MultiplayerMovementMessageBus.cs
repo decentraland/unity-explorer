@@ -1,19 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
-using Decentraland.Pulse;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -54,10 +49,10 @@ namespace DCL.Multiplayer.Movement.Systems
             cancellationTokenSource.Dispose();
         }
 
-        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, LandscapeData landscapeData)
+        public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, ParcelEncoder parcelEncoder)
         {
             this.settingsValue = settingsValue;
-            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, landscapeData);
+            messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, parcelEncoder);
         }
 
         public void Send(NetworkMovementMessage message)

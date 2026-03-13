@@ -294,7 +294,9 @@ namespace Global.Dynamic
                     await PulseContainer.CreateAsync(
                         settingsContainer,
                         identityCache,
-                        movementInbox, ct
+                        movementInbox,
+                        staticContainer.QualityContainer.LandscapeData,
+                        ct
                     );
             }
 
@@ -991,7 +993,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
-                    pulseContainer!.pulseMultiplayerBus,
+                    pulseContainer.pulseMultiplayerBus!,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
@@ -999,7 +1001,8 @@ namespace Global.Dynamic
                     appArgs,
                     entityParticipantTable,
                     staticContainer.RealmData,
-                    remoteMetadata),
+                    remoteMetadata,
+                    pulseContainer.parcelEncoder),
                 new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, terrainContainer.WorldsTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape, audioMixerVolumesController, staticContainer.RealmData),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(

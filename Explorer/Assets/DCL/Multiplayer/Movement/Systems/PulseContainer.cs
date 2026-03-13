@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.Multiplayer.Movement;
 using DCL.PluginSystem;
@@ -13,6 +14,8 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public class PulseContainer : DCLWorldContainer<PulseContainer.Settings>
     {
+        internal readonly ParcelEncoder parcelEncoder;
+
         private readonly IWeb3IdentityCache identityCache;
         private readonly MovementInbox movementInbox;
 
@@ -22,10 +25,11 @@ namespace DCL.Multiplayer.Connections.Pulse
         private ENetTransport? transport;
         private CancellationTokenSource? lifeCycleCts;
 
-        public PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox)
+        private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder)
         {
             this.identityCache = identityCache;
             this.movementInbox = movementInbox;
+            this.parcelEncoder = parcelEncoder;
         }
 
         internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
@@ -33,10 +37,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
 
         public static async UniTask<PulseContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer,
-            IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox,
+            IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox, LandscapeData landscapeData,
             CancellationToken ct)
         {
-            var container = new PulseContainer(web3IdentityCache, movementInbox);
+            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData));
             await container.InitializeContainerAsync<PulseContainer, Settings>(pluginSettingsContainer, ct);
             return container;
         }
@@ -48,7 +52,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
             pulseMultiplayerService = new PulseMultiplayerService(transport, messagePipe, identityCache);
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox);
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder);
             pulseMultiplayerBus.SubscribeToIncomingMessages(lifeCycleCts.Token);
 
             return UniTask.CompletedTask;
@@ -65,6 +69,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             [field: SerializeField]
             public ENetTransportOptions ENetTransportOptions { get; private set; }
+
+            [field: SerializeField]
+            public LandscapeDataRef LandscapeData { get; private set; }
         }
     }
 }

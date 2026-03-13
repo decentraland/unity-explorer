@@ -13,6 +13,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             walletsByPeerId[wallet] = peerId;
         }
 
+        public void Remove(uint peerId)
+        {
+            if (peersByWallet.TryGetValue(peerId, out string? wallet))
+                walletsByPeerId.Remove(wallet);
+        }
+
         public bool TryGetWallet(uint peerId, out string wallet) =>
             peersByWallet.TryGetValue(peerId, out wallet);
 
