@@ -408,7 +408,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 }
 
                 int phoneme = MapCharToPhoneme(mouth.AnimatingText, mouth.CharacterIndex);
-                ApplyPhoneme(ref mouth, phoneme);
+                ApplyPhoneme(ref mouth, phoneme == NO_PHONEME_OVERRIDE ? mouth.MouthExpressionIndex : phoneme);
 
                 mouth.CharacterTimer += t;
 
@@ -545,7 +545,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 case 'r':                      return 9;
                 case 'j':                      return 10;
                 case 'w': case 'q':            return 11;
-                default:                       return 0; // Idle: spaces, punctuation, digits, etc.
+                default:                       return NO_PHONEME_OVERRIDE; // spaces, punctuation, digits — fall back to expression mouth
             }
         }
 
