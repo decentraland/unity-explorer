@@ -409,11 +409,11 @@ public float CloseThreshold = 0.08f;           // hysteresis: close below this
 **Threading issue обойдён:**
 - Шаг 1 использовал `HashSet<string>` (заполняемый с native thread, читаемый с main thread — data race). Шаг 2 полностью обходит эту проблему: amplitude читается через `Interlocked` прямо из `LivekitAudioSource`, без промежуточных коллекций. `SpeakingParticipants` HashSet в `ProximityConfigHolder` остаётся, но lip sync его больше не использует.
 
-**Pose group thresholds:**
-- `< SilenceThreshold (0.01)` → idle (index 2)
-- `< 0.15` (smoothed) → SLIGHT {5, 8, 11}
-- `< 0.45` (smoothed) → MEDIUM {1, 3, 4, 6, 9, 10}
-- `≥ 0.45` → WIDE {0, 7, 12, 13, 14, 15}
+**Pose group thresholds (скорректированы по визуальному анализу):**
+- `< SilenceThreshold (0.06)` → idle (index 2)
+- `< 0.15` (smoothed) → SLIGHT {5, 7, 11, 15}
+- `< 0.45` (smoothed) → MEDIUM {1, 3, 8, 9, 14}
+- `≥ 0.45` → WIDE {0, 4, 6, 10, 12, 13}
 - Пороги в коде, sensitivity/smoothing/silence — в ScriptableObject для runtime тюнинга
 
 ---
@@ -435,9 +435,11 @@ public float CloseThreshold = 0.08f;           // hysteresis: close below this
 
 | Параметр | Default | Range | Описание |
 |----------|---------|-------|----------|
-| `LipSyncUseSpeechBandFilter` | false | bool | Переключатель full-spectrum ↔ speech-band |
-| `LipSyncSpeechBandLowHz` | 300 | 80–1000 | Нижний срез (убирает бас, музыку) |
-| `LipSyncSpeechBandHighHz` | 3000 | 1000–8000 | Верхний срез (убирает высокочастотные инструменты) |
+| `LipSyncMode` | FrequencyBands | enum | `AmplitudeWeighted` / `SpeechBandAmplitude` / `FrequencyBands` |
+| `LipSyncSpeechBandLowHz` | 200 | 80–1000 | Нижний срез (убирает бас, музыку) |
+| `LipSyncSpeechBandHighHz` | 3500 | 1000–8000 | Верхний срез (убирает высокочастотные инструменты) |
+
+> **Примечание:** `LipSyncUseSpeechBandFilter` bool заменён на `LipSyncMode` enum в Шаге 3.
 
 ---
 
@@ -494,20 +496,21 @@ static float GoertzelEnergy(float[] data, float targetFreq, int sampleRate)
 
 Вычисляем энергию на 3-4 "представительных" частотах каждой полосы (500 Hz, 1200 Hz, 2800 Hz, 5000 Hz) и используем как proxy для энергии всей полосы.
 
-### 3.3 Маппинг частотных полос → позы
+### 3.3 Маппинг частотных полос → позы (скорректирован по визуальному анализу атласа)
 
-```
-if (bandLow > bandMid * 1.5 && bandLow > bandHigh * 2):
-    → "открытые гласные" позы: indices 0, 7 (A, O — широко открыт)
-else if (bandMid > bandLow && bandMid > bandHigh * 1.5):
-    → "закрытые гласные" позы: indices 1, 5, 14 (E, I, U — округлён)
-else if (bandHigh > bandLow && bandHigh > bandMid):
-    → "свистящие" позы: indices 3, 10 (S, SH — зубы видны)
+```csharp
+// Pose groups — matched to Mouth_Atlas.png sprites
+static readonly int[] POSES_OPEN_VOWEL   = { 4, 6, 8, 9, 13 };   // wide, tongue visible — A, O
+static readonly int[] POSES_CLOSED_VOWEL = { 1, 5, 7, 11, 14 };  // rounded/small — O, OO, E
+static readonly int[] POSES_SIBILANT     = { 0, 3, 10, 12, 15 }; // teeth visible, narrow — S, SH, F
+
+if (high > low && high > mid):
+    → SIBILANT
+else if (low > mid * 1.3):
+    → OPEN_VOWEL
 else:
-    → amplitude-weighted random (fallback на Шаг 2)
+    → CLOSED_VOWEL
 ```
-
-Пороги — первый проход, нужна калибровка на реальных голосах.
 
 ### 3.4 Сравнение с OVRLipSync
 
@@ -534,31 +537,38 @@ else:
 
 | Действие | Файл |
 |----------|------|
-| **Modified** | `LivekitAudioSource.cs` — Goertzel accumulators (500/1500/4000 Hz) в `ComputeLipSyncAmplitudes`, `LipSyncBandLow/Mid/High` properties |
-| **Modified** | `ProximityAudioPositionSystem.cs` — `SelectPoseByBands()`, pose groups `POSES_OPEN_VOWEL/CLOSED_VOWEL/SIBILANT`, mode switching в `UpdateLipSync` |
-| **Modified** | `VoiceChatConfiguration.cs` — `LipSyncMode` enum (AmplitudeWeighted/SpeechBandAmplitude/FrequencyBands), `LipSyncBandSensitivity` |
+| **Modified** | `LivekitAudioSource.cs` — Goertzel accumulators (500/1500/4000 Hz) в `ComputeLipSyncAmplitudes`, `LipSyncBandLow/Mid/High` properties, Goertzel coefficient fix |
+| **Modified** | `ProximityAudioPositionSystem.cs` — `SelectPoseByBands()` with spectral peakedness check, pose groups `POSES_OPEN_VOWEL/CLOSED_VOWEL/SIBILANT`, mode switching в `UpdateLipSync` |
+| **Modified** | `VoiceChatConfiguration.cs` — `LipSyncMode` enum, `LipSyncBandSensitivity`, `LipSyncSpectralPeakedness`, updated all defaults |
 
 ### 3.7 Архитектурные решения
 
 **LipSyncMode enum заменил bool:**
 - `LipSyncUseSpeechBandFilter` bool → `LipSyncMode` enum с 3 значениями
 - Дизайнер переключает в Inspector, результат мгновенный
+- Дефолт: `FrequencyBands` (лучшее разделение речь/музыка)
 
 **Goertzel на 3 представительных частотах (не 4):**
 - 500 Hz (Low — открытые гласные А, О)
 - 1500 Hz (Mid — закрытые гласные Е, И)
 - 4000 Hz (High — свистящие С, Ш, Ф)
-- Одна частота per band = proxy для всей полосы. Дешевле чем 3-4 per band.
+- Коэффициент: стандартная формула `2·cos(2π·f/fs)` (исправлено: убрано лишнее +0.5 смещение)
 
-**Band-to-pose маппинг:**
-- `high > low && high > mid` → SIBILANT {3, 6, 10, 11}
-- `low > mid * 1.3` → OPEN_VOWEL {0, 7, 12, 15}
-- else → CLOSED_VOWEL {1, 5, 9, 14}
-- Все пороги первый проход — нужна калибровка после тестирования
+**Band-to-pose маппинг (скорректирован по визуальному анализу атласа):**
+- `high > low && high > mid` → SIBILANT {0, 3, 10, 12, 15}
+- `low > mid * 1.3` → OPEN_VOWEL {4, 6, 8, 9, 13}
+- else → CLOSED_VOWEL {1, 5, 7, 11, 14}
+
+**Spectral peakedness — music rejection:**
+- `maxBand / total < LipSyncSpectralPeakedness (0.50)` → return idle pose
+- Речь концентрирует энергию в 1-2 полосах (ratio 0.5-0.9)
+- Музыка распределяет равномерно (ratio ~0.33)
+- Настраиваемый порог `LipSyncSpectralPeakedness` (Range 0.35–0.70)
 
 **Silence gate — общая для всех режимов:**
 - Amplitude smoothing + `SilenceThreshold` работает одинаково для всех трёх режимов
-- В FrequencyBands режиме: amplitude = full-spectrum, band energies только для pose selection
+- В FrequencyBands режиме: amplitude = full-spectrum для gate, band energies для pose selection + music rejection
+- Дефолт `SilenceThreshold = 0.06` (было 0.01 — пропускало всё)
 
 ---
 
@@ -674,62 +684,70 @@ class LipSyncContextPool
 
 ---
 
-## Configuration (все шаги)
+## Configuration (актуальное состояние)
+
+Все настройки в `VoiceChatConfiguration` ScriptableObject. Актуальные дефолты после ревизии:
 
 ```csharp
-[Serializable]
-public class LipSyncSettings
-{
-    [Header("General")]
-    public bool Enabled = true;
-    public float MaxDistance = 15f;                      // skip beyond this distance
-    public int IdlePoseIndex = 2;                        // closed mouth pose
+[Header("Lip Sync")]
+public Texture2D MouthAtlasTexture;
+public float LipSyncPoseHoldDuration = 0.08f;              // seconds per pose (~12 fps)
+public int LipSyncIdlePoseIndex = 2;                        // closed mouth pose
+public LipSyncMode LipSyncMode = LipSyncMode.FrequencyBands; // best music rejection
 
-    [Header("Pose Timing")]
-    public float PoseHoldDuration = 0.1f;               // seconds per pose (~10 fps)
-    public float IdleTransitionDelay = 0.2f;             // hold last pose briefly after speech ends
+[Header("Lip Sync — Amplitude (all modes)")]
+public float LipSyncAmplitudeSensitivity = 5f;              // multiplier for raw RMS
+public float LipSyncSmoothingFactor = 0.25f;                // Lerp speed (× dt × 60)
+public float LipSyncSilenceThreshold = 0.06f;               // silence gate (Range 0–0.3)
 
-    [Header("Amplitude (Step 2+)")]
-    public float AmplitudeSensitivity = 3.0f;            // multiplier for raw RMS
-    public float SmoothingFactor = 0.2f;                 // exponential smoothing speed
-    public float OpenThreshold = 0.15f;                  // hysteresis: open mouth above this
-    public float CloseThreshold = 0.08f;                 // hysteresis: close mouth below this
+[Header("Lip Sync — Speech Band (SpeechBandAmplitude mode)")]
+public float LipSyncSpeechBandLowHz = 200f;                 // bandpass low cutoff
+public float LipSyncSpeechBandHighHz = 3500f;               // bandpass high cutoff
 
-    [Header("Atlas")]
-    public AssetReferenceT<Texture2D> MouthAtlasTexture;
-
-    [Header("OVRLipSync (Step 4)")]
-    public int ContextPoolSize = 8;
-}
+[Header("Lip Sync — Frequency Bands (FrequencyBands mode)")]
+public float LipSyncBandSensitivity = 30f;                  // Goertzel energy multiplier
+public float LipSyncSpectralPeakedness = 0.50f;             // music rejection threshold (Range 0.35–0.70)
 ```
+
+### Гайд по настройке для дизайнера
+
+| Сценарий | Что крутить | Направление |
+|----------|-------------|-------------|
+| Музыка шевелит рот | `SpectralPeakedness` | ↑ (0.55–0.60) |
+| Музыка шевелит рот (всё ещё) | `SilenceThreshold` | ↑ (0.08–0.10) |
+| Тихая речь не шевелит рот | `AmplitudeSensitivity` | ↑ (8–10) |
+| Тихая речь не шевелит рот (всё ещё) | `SilenceThreshold` | ↓ (0.03–0.04) |
+| Рот мельтешит/дёргается | `SmoothingFactor` | ↓ (0.15–0.2) |
+| Рот мельтешит (всё ещё) | `PoseHoldDuration` | ↑ (0.12–0.15) |
+| Рот вяло реагирует | `SmoothingFactor` | ↑ (0.4–0.5) |
+| Рот вяло реагирует (всё ещё) | `PoseHoldDuration` | ↓ (0.06–0.08) |
 
 ---
 
 ## Чеклист "не забыть"
 
 ### Визуальное качество
-- [ ] **Smoothing** — exponential Lerp на main thread, deltaTime-corrected, `smoothingFactor * dt * 60f`
-- [ ] **Hysteresis** — разные пороги для открытия (0.15) и закрытия (0.08), предотвращает мерцание
-- [ ] **Hold time** — минимальная длительность каждой позы (~100ms), предотвращает sub-frame flickering
-- [ ] **Idle transition delay** — brief hold (~200ms) последней позы после окончания речи
+- [x] **Smoothing** — exponential Lerp на main thread, deltaTime-corrected, `smoothingFactor * dt * 60f`
+- [x] **Hold time** — минимальная длительность каждой позы (0.08s), предотвращает sub-frame flickering
+- [x] **Pose groups calibrated** — скорректировано по визуальному анализу `Mouth_Atlas.png`
+- [x] **Music rejection** — spectral peakedness check в FrequencyBands mode
+- [x] **Optimal defaults** — все параметры оптимизированы для voice chat сценария
 
 ### Cleanup и устойчивость
-- [ ] **Cleanup при disconnect** — participant уходит → idle поза → clear PropertyBlock
-- [ ] **FindMouthRenderer** — поиск `Mask_Mouth` в `avatarShape.InstantiatedWearables`
-- [ ] **Wearable re-instantiation** — `MouthRenderer == null` → повторный FindMouthRenderer
-- [ ] **DeleteEntityIntention** — пропускать в queries, компонент уходит с entity
+- [x] **FindMouthRenderer** — поиск `Mask_Mouth` в `avatarShape.InstantiatedWearables`
+- [x] **Wearable re-instantiation** — `MouthRenderer == null` → повторный FindMouthRenderer
+- [x] **DeleteEntityIntention** — `[None(typeof(DeleteEntityIntention))]` на query
 - [ ] **World finalize** — revert все PropertyBlock в null через `IFinalizeWorldSystem`
 
 ### Performance и culling
 - [ ] **LOD / Distance culling** — пропускать аватары дальше `MaxDistance` (~15m)
 - [ ] **Visibility culling** — пропускать `avatarShape.IsVisible == false`
-- [ ] **Mouth renderer disabled** — пропускать `MouthRenderer.enabled == false`
-- [ ] **Zero allocations** — reuse MaterialPropertyBlock, no LINQ, no closures, no delegate captures
+- [x] **Zero allocations** — reuse MaterialPropertyBlock, no LINQ, no closures, no delegate captures
 
 ### Инфраструктура
 - [ ] **Feature flag** — в `FeaturesRegistry`, независимый toggle от voice chat
-- [ ] **Assembly dependencies** — VoiceChat → AvatarRendering (для AvatarShapeComponent, FindMouthRenderer)
-- [ ] **Группировка спрайтов** — idle / slight / medium / wide — коррекция после визуального тестирования
+- [x] **Assembly dependencies** — VoiceChat → AvatarRendering (для AvatarShapeComponent, FindMouthRenderer)
+- [ ] **Manifest.json** — вернуть LiveKit SDK на git reference перед merge
 
 ### Координация
 - [ ] **Конфликт с PR #7452** — обе системы пишут MaterialPropertyBlock на Mask_Mouth; нужна приоритизация (голос > текст) или объединение
@@ -761,15 +779,17 @@ public class LipSyncSettings
 ## Rollout Sequence
 
 ```
-Шаг 1 (A2+P1)  →  ✅ DONE. Рот двигается. Ограничение: LiveKit VAD не отпускает idle.
+Шаг 1 (A2+P1)     →  ✅ DONE. Рот двигается. Ограничение: LiveKit VAD не отпускает idle.
     ↓
-Шаг 2 (A4+P2)    →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
+Шаг 2 (A4+P2)     →  ✅ DONE. Amplitude + weighted random. Работает хорошо.
     ↓
-Шаг 2.5 (filter)  →  ✅ DONE. Speech band filter — слабо отработало, заменено enum.
+Шаг 2.5 (filter)  →  ✅ DONE. Speech band filter — слабо отработало (6 dB/oct).
     ↓
-Шаг 3 (A5+P3)     →  ✅ DONE. Goertzel bands → vowel/consonant/sibilant. Тестируем.
+Шаг 3 (A5+P3)     →  ✅ DONE. Goertzel bands + spectral peakedness music rejection.
+                       Дефолты оптимизированы для voice chat.
+                       Pose groups скорректированы по визуальному анализу.
     ↓
-Шаг 4 (A6+P4)  →  Ship за отдельным flag  →  Сравнить качество
+Шаг 4 (A6+P4)     →  OVRLipSync визем → sprite mapping. Не начат.
     ↓
 Убрать флаги, ship как default
 ```
@@ -786,8 +806,11 @@ public class LipSyncSettings
 | `ProximityLipSyncComponent` + `[Query]` | Шаг 1 | **DONE** (в `ProximityAudioPositionSystem`) |
 | `entityParticipantTable` доступ | Все шаги | **DONE** (уже доступен через DI) |
 | AvatarRendering assembly reference | FindMouthRenderer | **DONE** (using добавлены) |
-| LiveKit SDK `OnAudioFilterRead` change | Шаг 2+ | ~5 строк, тривиально |
-| Threading fix (HashSet → thread-safe) | Шаг 2 | Pending (data race из-за FFICallback на native thread) |
+| LiveKit SDK `OnAudioFilterRead` change | Шаг 2+ | **DONE** (RMS + bandpass + Goertzel в `ComputeLipSyncAmplitudes`) |
+| Threading fix (HashSet → thread-safe) | Шаг 2 | **DONE** (обойдено: `Interlocked` per-source вместо shared HashSet) |
+| Spectral peakedness music rejection | Шаг 3 | **DONE** (`LipSyncSpectralPeakedness = 0.50`) |
+| Pose groups visual calibration | Шаг 3 | **DONE** (скорректировано по анализу `Mouth_Atlas.png`) |
+| Manifest.json → git reference | Перед merge | **PENDING** (сейчас `file:../../../LiveKit/client-sdk-unity`) |
 | OVRLipSync Unity package | Шаг 4 | Не добавлен; проверить лицензию |
 | Feature flag registration | Все шаги | Отложено |
 | Координация PR #7452 | Avoid MaterialPropertyBlock conflict | Обсудить с @olavra |

@@ -82,11 +82,11 @@ MonoBehaviour:
   MouthAtlasTexture: {fileID: 2800000, guid: 1644b87ef75df014680c83f770c5e64c, type: 3}
   LipSyncPoseHoldDuration: 0.1
   LipSyncIdlePoseIndex: 2
-  LipSyncMode: 2
-  LipSyncAmplitudeSensitivity: 0.5
+  LipSyncMode: 0
+  LipSyncAmplitudeSensitivity: 3.5
   LipSyncSmoothingFactor: 0.25
-  LipSyncSilenceThreshold: 0.117
+  LipSyncSilenceThreshold: 0.12
   LipSyncSpeechBandLowHz: 447
   LipSyncSpeechBandHighHz: 4636
-  LipSyncBandSensitivity: 5.9
-  LipSyncSpectralPeakedness: 0.449
+  LipSyncBandSensitivity: 1
+  LipSyncSpectralPeakedness: 0.536
