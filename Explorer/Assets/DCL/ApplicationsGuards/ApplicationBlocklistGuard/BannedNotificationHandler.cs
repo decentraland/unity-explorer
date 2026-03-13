@@ -72,17 +72,6 @@ namespace DCL.ApplicationBlocklistGuard
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
             }
-            {
-                string selfUserId = identityCache.EnsuredIdentity().Address;
-
-                GetBanStatusData banStatusData = await ApplicationBlocklistGuard.IsUserBlocklistedAsync(
-                    webRequestController, urlsSource, selfUserId, moderationDataProvider, ct);
-
-                if (!banStatusData.isBanned)
-                    return;
-
-                await mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(banStatusData.ban)), ct);
-            }
         }
     }
 }
