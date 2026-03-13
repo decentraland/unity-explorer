@@ -2,7 +2,7 @@
 
 ## Startup
 
-At the start of every conversation, read [`docs/SKILL.md`](docs/SKILL.md) to load the project documentation map. Skills are automatically loaded by Claude Code from `.claude/skills/` — do not manually read them.
+At the start of every conversation, read [`docs/README.md`](docs/README.md) to load the project documentation map. Skills are automatically loaded by Claude Code from `.claude/skills/` — do not manually read them.
 
 Before writing or modifying any code, follow the code-standards skill for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
 
