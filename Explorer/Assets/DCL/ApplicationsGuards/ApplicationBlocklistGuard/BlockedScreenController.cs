@@ -12,7 +12,7 @@ namespace DCL.ApplicationBlocklistGuard
 {
     public class BlockedScreenController : ControllerBase<BlockedScreenView, BlockedScreenParameters>
     {
-        private const string DEFAULT_INFO_TEXT = "Please contact support for more information.";
+        private const string DEFAULT_INFO_TEXT = "Please contact support team for more information.";
 
         private readonly IWebBrowser webBrowser;
         private readonly StringBuilder infoTextBuilder = new ();
