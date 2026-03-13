@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatTrackManager? trackManager;
         private VoiceChatRoomManager? roomManager;
         private VoiceChatNametagsHandler? nametagsHandler;
+        private VoiceChatMouthAnimationHandler? mouthAnimationHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
@@ -123,6 +124,15 @@ namespace DCL.PluginSystem.Global
                 playerEntity);
 
             pluginScope.Add(nametagsHandler);
+
+            mouthAnimationHandler = new VoiceChatMouthAnimationHandler(
+                roomHub.VoiceChatRoom().Room(),
+                voiceChatOrchestrator,
+                entityParticipantTable,
+                world,
+                playerEntity);
+
+            pluginScope.Add(mouthAnimationHandler);
 
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
             AudioClipConfig muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
