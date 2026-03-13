@@ -42,7 +42,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             dataOffset = 0;
 
             unsafe
-            {gett
+            {
                 fixed (byte* dataPtr = message.Data)
                 {
                     var data = (IntPtr)dataPtr;

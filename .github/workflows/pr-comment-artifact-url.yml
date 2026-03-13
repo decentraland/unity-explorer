@@ -72,6 +72,15 @@ jobs:
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
 
+          WEB_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+            --jq ".artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.expired==false) |
+            select(.name==\"Decentraland_web\") |
+            .id")
+          echo "Web Artifact ID: $WEB_ARTIFACT_ID"
+          echo "WEB_ARTIFACT_ID=$WEB_ARTIFACT_ID" >> "$GITHUB_ENV"
+
           ORIGINAL_EVENT=$(jq -r '.event' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Original Event: $ORIGINAL_EVENT"
 
@@ -123,6 +132,8 @@ jobs:
           WINDOWS_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_windows64.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
           MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
           MAC_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
+          WEB_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WEB_ARTIFACT_ID }}"
+          WEB_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_web.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -132,7 +143,7 @@ jobs:
           body: |-
             ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"> 
             
-            Windows and Mac build successful in Unity Cloud! You can find a link to the downloadable artifact below.
+            Windows, Mac and Web build successful in Unity Cloud! You can find a link to the downloadable artifact below.
             
             | Name                | Link                    |
             | --------            | ----------------------- |
@@ -142,6 +153,8 @@ jobs:
             | Download Windows S3 | ${{ env.WINDOWS_ARTIFACT_S3_URL }} |
             | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
             | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
+            | Download Web        | ${{ env.WEB_ARTIFACT_URL }} |
+            | Download Web S3     | ${{ env.WEB_ARTIFACT_S3_URL }} |
             | Built on            | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
