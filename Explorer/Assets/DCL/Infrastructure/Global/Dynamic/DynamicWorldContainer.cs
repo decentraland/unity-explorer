@@ -396,7 +396,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 
@@ -929,7 +929,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService
+                    worldPermissionsService,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

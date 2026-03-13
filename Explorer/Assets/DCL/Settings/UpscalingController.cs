@@ -11,14 +11,13 @@ namespace DCL.Utilities
     {
         // Used when system doesn't meet minimum specs
         public const float MIN_SPECS_UPSCALER_VALUE = 0.8f;
-        
+
         private const float STP_VALUE_FOR_UI_OPEN = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
-        private const float INITIAL_UPSCALE_VALUE = 1f;
-        
+
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
         private readonly IMVCManager mvcManager;
@@ -44,14 +43,6 @@ namespace DCL.Utilities
 
             mvcManager.OnViewShowed += OnUIOpened;
             mvcManager.OnViewClosed += OnUIClosed;
-
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
-            {
-                UpdateUpscaling(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER));
-                ignoreFirstResolutionChange = true;
-            }
-            else
-                UpdateUpscaling(INITIAL_UPSCALE_VALUE);
         }
 
         //Should always get in decimal form
@@ -59,21 +50,15 @@ namespace DCL.Utilities
         {
             if (currentUIOpened > 0)
                 savedUpscalingDuringUIOpen = newValue;
-            else
-            {
-                SetUpscaling(newValue, UpscalingFilterSelection.FSR);
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, newValue);
-            }
+            else { SetUpscaling(newValue, UpscalingFilterSelection.FSR); }
         }
-
-        public float GetCurrentUpscale() =>
-            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
 
         private void OnUIClosed(IController controller)
         {
             if (ShouldTriggerUpscalerChange(controller))
             {
                 currentUIOpened--;
+
                 if (currentUIOpened == 0)
                     UpdateUpscaling(savedUpscalingDuringUIOpen);
             }
@@ -93,43 +78,20 @@ namespace DCL.Utilities
         private void SetUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = renderScale;
-
-            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = filterSelection;
+            {
+                var renderPipeline = ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline);
+                renderPipeline.renderScale = renderScale;
+                renderPipeline.upscalingFilter = filterSelection;
+            }
         }
 
         //This UIs should force an upscaling reset.
         private bool ShouldTriggerUpscalerChange(IController controller)
         {
-             string controllerTypeName = controller.GetType().Name;
-             return controllerTypeName.Contains("AuthenticationScreenController") ||
-                    controllerTypeName.Contains("ExplorePanelController") ||
-                    controllerTypeName.Contains("PassportController");
-        }
-
-        public void ResolutionChanged(Resolution resolution)
-        {
-            //TODO (Juani): Resolution setting is not correct. You can chose a higher resolution, even if your monitor is not on that resolution.
-            //Therefore, automatically setting it is not currently reliable
-            return;
-
-            //Helper bool for the first stp value set. ResolutionChanged is invoked on application start, and if the value does exist in PlayerPrefs,
-            //the first invoke should be ignored
-            if (ignoreFirstResolutionChange)
-            {
-                ignoreFirstResolutionChange = false;
-                return;
-            }
-
-            var newSTPScale = 1f;
-
-            if (resolution.width > 3000 || resolution.height > 3000)
-                newSTPScale = highResolutionPreset;
-            else if (resolution.width > 2000 || resolution.height > 2000)
-                newSTPScale = midResolutionPreset;
-
-            UpdateUpscaling(newSTPScale);
+            string controllerTypeName = controller.GetType().Name;
+            return controllerTypeName.Contains("AuthenticationScreenController") ||
+                   controllerTypeName.Contains("ExplorePanelController") ||
+                   controllerTypeName.Contains("PassportController");
         }
 
         public void Dispose()

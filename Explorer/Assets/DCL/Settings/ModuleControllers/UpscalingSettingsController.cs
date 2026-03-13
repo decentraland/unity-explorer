@@ -1,5 +1,6 @@
+using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using DCL.Utilities;
 using System;
 
 namespace DCL.Settings.ModuleControllers
@@ -11,22 +12,35 @@ namespace DCL.Settings.ModuleControllers
         private const float STEP_MULTIPLIER = 10f;
 
         private readonly SettingsSliderModuleView viewInstance;
-        private readonly UpscalingController upscalingController;
+        private readonly IQualitySettingsController qualitySettingsController;
 
-        public UpscalingSettingsController(SettingsSliderModuleView viewInstance, UpscalingController upscalingController)
+        public UpscalingSettingsController(SettingsSliderModuleView viewInstance, IQualitySettingsController qualitySettingsController)
         {
             this.viewInstance = viewInstance;
-            this.upscalingController = upscalingController;
+            this.qualitySettingsController = qualitySettingsController;
+
+            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
-            viewInstance.SliderView.Slider.SetValueWithoutNotify(upscalingController.GetCurrentUpscale() * STEP_MULTIPLIER);
-            UpdateUpscalingValue(upscalingController.GetCurrentUpscale() * STEP_MULTIPLIER);
+            viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
+            UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
+        }
+
+        private void OnPresetChanged(QualityPresetLevel _)
+        {
+            viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
+            UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
         }
 
         private void UpdateUpscalingValue(float value)
         {
             //Sent in decimal form
-            upscalingController.UpdateUpscaling(value / STEP_MULTIPLIER);
+            qualitySettingsController.SetResolutionScale(value / STEP_MULTIPLIER);
+            UpdateVisuals(value);
+        }
+
+        private void UpdateVisuals(float value)
+        {
             viewInstance.RevaluateButtonLimits(value);
             //Display is in the hundreds
             viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER}%";
@@ -36,6 +50,7 @@ namespace DCL.Settings.ModuleControllers
         public override void Dispose()
         {
             viewInstance.SliderView.Slider.onValueChanged.RemoveListener(UpdateUpscalingValue);
+            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

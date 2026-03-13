@@ -1,41 +1,38 @@
-﻿using DCL.Prefs;
+using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using ECS.Prioritization;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class SceneDistanceSettingsController : SettingsFeatureController
     {
         private readonly SettingsSliderModuleView view;
-        private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
+        private readonly IQualitySettingsController qualitySettingsController;
 
-        public SceneDistanceSettingsController(SettingsSliderModuleView view, RealmPartitionSettingsAsset realmPartitionSettingsAsset)
+        public SceneDistanceSettingsController(SettingsSliderModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
-            this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
+            this.qualitySettingsController = qualitySettingsController;
 
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SCENE_DISTANCE))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_SCENE_DISTANCE);
-
-            view.SliderView.Slider.onValueChanged.AddListener(SetSceneDistanceSettings);
-            SetSceneDistanceSettings(view.SliderView.Slider.value);
-
-            realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged += OnMaxLoadingDistanceInParcelsChangedChanged;
+            qualitySettingsController.OnPresetChanged += OnPresetChanged;
+            view.SliderView.Slider.onValueChanged.AddListener(OnSliderValueChanged);
+            view.ConfigureWithoutNotify(qualitySettingsController.SceneDistance);
         }
 
-        private void SetSceneDistanceSettings(float distance) =>
-            realmPartitionSettingsAsset.MaxLoadingDistanceInParcels = (int)distance;
-
-        private void OnMaxLoadingDistanceInParcelsChangedChanged(int newDistance)
+        private void OnPresetChanged(QualityPresetLevel _)
         {
-            view.SliderView.Slider.value = newDistance;
-            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_SCENE_DISTANCE, newDistance, save: true);
+            view.ConfigureWithoutNotify(qualitySettingsController.SceneDistance);
+        }
+
+        private void OnSliderValueChanged(float distance)
+        {
+            qualitySettingsController.SetSceneDistance((int)distance);
         }
 
         public override void Dispose()
         {
-            view.SliderView.Slider.onValueChanged.RemoveListener(SetSceneDistanceSettings);
-            realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged -= OnMaxLoadingDistanceInParcelsChangedChanged;
+            view.SliderView.Slider.onValueChanged.RemoveListener(OnSliderValueChanged);
+            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

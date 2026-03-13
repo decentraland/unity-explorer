@@ -5,6 +5,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -38,13 +39,15 @@ namespace DCL.Settings.Configuration
             CHAT_DMS_MODES_FEATURE,
             CHAT_BUBBLES_MODES_FEATURE,
             VOICECHAT_INPUT_DEVICE,
-            CHAT_TRANSLATE_FEATURE
-
+            CHAT_TRANSLATE_FEATURE,
+            MSAA_FEATURE,
+            SHADOWS_QUALITY_FEATURE,
             // add other features...
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
@@ -69,17 +72,12 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance,
-                    realmPartitionSettingsAsset,
-                    landscapeData,
-                    qualitySettingsAsset,
-                    skyboxSettingsAsset),
-
+                DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, upscalingController, appParameters),
-                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, appParameters),
-                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
                 DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
                     systemMemoryCap,
@@ -102,6 +100,8 @@ namespace DCL.Settings.Configuration
                     chatSettingsAsset,
                     isTranslationChatEnabled,
                     eventBus),
+                DropdownFeatures.MSAA_FEATURE => new MSAASettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.SHADOWS_QUALITY_FEATURE => new ShadowsQualitySettingsController(viewInstance, qualitySettingsController),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

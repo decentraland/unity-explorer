@@ -1,48 +1,35 @@
-﻿using DCL.Prefs;
+﻿using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class GraphicsVSyncController : SettingsFeatureController
     {
         private readonly SettingsToggleModuleView view;
+        private readonly IQualitySettingsController qualitySettingsController;
         private SettingsFeatureController fpsLimitController;
-        private int previousTargetFrameRate;
 
-        public GraphicsVSyncController(SettingsToggleModuleView view)
+        public GraphicsVSyncController(SettingsToggleModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
+            this.qualitySettingsController = qualitySettingsController;
 
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_VSYNC_ENABLED))
-                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED);
-
+            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             view.ToggleView.Toggle.onValueChanged.AddListener(SetVSyncEnabled);
+        }
+
+        private void OnPresetChanged(QualityPresetLevel _)
+        {
+            ManualUpdate(qualitySettingsController.VSync);
         }
 
         private void SetVSyncEnabled(bool enabled)
         {
-            //Target frame rate is also modified because despite what the documentation says, it changes how the VSync performs
-            if (enabled)
-            {
-                QualitySettings.vSyncCount = 1;
-                previousTargetFrameRate = Application.targetFrameRate;
-                Application.targetFrameRate = 0;
-            }
-            else
-            {
-                QualitySettings.vSyncCount = 0;
-                Application.targetFrameRate = previousTargetFrameRate;
-            }
-
+            qualitySettingsController.SetVSync(enabled);
             fpsLimitController?.SetViewInteractable(!enabled);
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED, enabled, save: true);
         }
-
-        public override void Dispose() =>
-            view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
 
         public override void OnAllControllersInstantiated(List<SettingsFeatureController> controllers)
         {
@@ -52,14 +39,20 @@ namespace DCL.Settings.ModuleControllers
                     fpsLimitController = fpsController;
                     break;
                 }
-            fpsLimitController?.SetViewInteractable(!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED));
 
-            SettingsDropdownModuleView fpsLimitView = (SettingsDropdownModuleView) fpsLimitController?.controllerView;
-            previousTargetFrameRate = 0;
-            if (fpsLimitView?.DropdownView.Dropdown.value != 0)
-                previousTargetFrameRate = Convert.ToInt32(fpsLimitView?.DropdownView.Dropdown.options[fpsLimitView.DropdownView.Dropdown.value].text);
+            ManualUpdate(qualitySettingsController.VSync);
+        }
 
-            SetVSyncEnabled(view.ToggleView.Toggle.isOn);
+        private void ManualUpdate(bool active)
+        {
+            view.ConfigureWithoutNotify(active);
+            fpsLimitController?.SetViewInteractable(!active);
+        }
+
+        public override void Dispose()
+        {
+            view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
+            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

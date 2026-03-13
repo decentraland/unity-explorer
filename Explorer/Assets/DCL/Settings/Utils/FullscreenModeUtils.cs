@@ -13,5 +13,13 @@ namespace DCL.Settings.Utils
                 FullScreenMode.FullScreenWindow, // Fullscreen Borderless
                 FullScreenMode.ExclusiveFullScreen // Fullscreen
             };
+
+        public static int IndexOf(FullScreenMode mode)
+        {
+            for (int i = 0; i < Modes.Count; i++)
+                if (Modes[i] == mode) return i;
+
+            return -1;
+        }
     }
 }

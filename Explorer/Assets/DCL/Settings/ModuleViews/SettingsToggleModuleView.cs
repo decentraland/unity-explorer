@@ -32,6 +32,12 @@ namespace DCL.Settings.ModuleViews
             ToggleView.Toggle.isOn = configuration.defaultIsOn;
         }
 
+        public void ConfigureWithoutNotify(bool value)
+        {
+            ToggleView.Toggle.SetIsOnWithoutNotify(value);
+            OnToggleValueChanged(value);
+        }
+
         private void OnToggleValueChanged(bool isOn)
         {
             ToggleView.OnImage.SetActive(isOn);

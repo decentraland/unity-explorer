@@ -1,11 +1,7 @@
-﻿using DCL.Prefs;
+using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
-using DCL.Utilities;
-using Global.AppArgs;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -15,32 +11,24 @@ namespace DCL.Settings.ModuleControllers
     {
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
-        private readonly UpscalingController upscalingController;
-        private readonly IAppArgs appParameters;
+        private readonly IQualitySettingsController qualitySettingsController;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController, IAppArgs appParameters)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
         {
             this.view = view;
-            this.upscalingController = upscalingController;
-            this.appParameters = appParameters;
+            this.qualitySettingsController = qualitySettingsController;
 
             LoadResolutionOptions();
 
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
+            int savedIndex = FindResolutionIndex(qualitySettingsController.ResolutionWidth, qualitySettingsController.ResolutionHeight, qualitySettingsController.ResolutionRefreshRate);
+
+            if (savedIndex >= 0)
+                view.DropdownView.Dropdown.value = savedIndex;
             else
             {
-                //When running multiple instances from local scene, the last one opened will set the resolution to the lowest available
-                bool isLocalScene = appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE);
-                int startIndex = isLocalScene ? possibleResolutions.Count - 1 : 0;
-                int endIndex = isLocalScene ? -1 : possibleResolutions.Count;
-                int step = isLocalScene ? -1 : 1;
-
-                for (int index = startIndex; index != endIndex; index += step)
+                for (int index = 0; index < possibleResolutions.Count; index++)
                 {
-                    Resolution resolution = possibleResolutions[index];
-
-                    if (!ResolutionUtils.IsDefaultResolution(resolution))
+                    if (!ResolutionUtils.IsDefaultResolution(possibleResolutions[index]))
                         continue;
 
                     view.DropdownView.Dropdown.value = index;
@@ -49,12 +37,12 @@ namespace DCL.Settings.ModuleControllers
             }
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettingsOnChange);
-            SetResolutionSettings(view.DropdownView.Dropdown.value, true);
+            SetResolutionSettings(view.DropdownView.Dropdown.value);
         }
 
         private void SetResolutionSettingsOnChange(int index)
         {
-            SetResolutionSettings(index, false);
+            SetResolutionSettings(index);
         }
 
         private void LoadResolutionOptions()
@@ -75,16 +63,23 @@ namespace DCL.Settings.ModuleControllers
             }
         }
 
-        private void SetResolutionSettings(int index, bool isInitialSetup)
+        private void SetResolutionSettings(int index)
         {
-            if (appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE) && isInitialSetup)
-                return;
-
             Resolution targetResolution = index < 0 || index >= possibleResolutions.Count ? WindowModeUtils.GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
-            FullScreenMode targetScreenMode = WindowModeUtils.GetTargetScreenMode(appParameters.HasFlag(AppArgsFlags.WINDOWED_MODE));
-            Screen.SetResolution(targetResolution.width, targetResolution.height, targetScreenMode, targetResolution.refreshRateRatio);
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
-            upscalingController.ResolutionChanged(targetResolution);
+            qualitySettingsController.SetResolution(targetResolution.width, targetResolution.height, targetResolution.refreshRateRatio);
+        }
+
+        private int FindResolutionIndex(int width, int height, RefreshRate refreshRate)
+        {
+            for (int i = 0; i < possibleResolutions.Count; i++)
+            {
+                Resolution r = possibleResolutions[i];
+
+                if (r.width == width && r.height == height && r.refreshRateRatio.Equals(refreshRate))
+                    return i;
+            }
+
+            return -1;
         }
 
         public override void Dispose()

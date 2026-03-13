@@ -6,6 +6,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -33,6 +34,7 @@ namespace DCL.Settings.Configuration
 
         public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
