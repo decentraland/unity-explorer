@@ -961,21 +961,26 @@ namespace DCL.Passport
 
             async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
             {
-                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                    ViewDependencies.ConfirmationDialogOpener,
-                    targetProfile!.Name,
-                    viewInstance!.ReportSprite,
-                    ReportCategory.PROFILE,
-                    ct);
+                try
+                {
+                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                        ViewDependencies.ConfirmationDialogOpener,
+                        targetProfile!.Name,
+                        viewInstance!.ReportSprite,
+                        ReportCategory.PROFILE,
+                        ct);
 
-                if (!confirmed)
-                    return;
+                    if (!confirmed)
+                        return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
-                    targetProfile.UserId));
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        targetProfile.UserId));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
             }
         }
 

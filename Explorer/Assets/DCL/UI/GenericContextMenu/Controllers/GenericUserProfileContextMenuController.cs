@@ -392,21 +392,26 @@ namespace DCL.UI
 
             async UniTask ShowReportConfirmationDialogAsync(string reportedUserId, CancellationToken ct)
             {
-                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                    ViewDependencies.ConfirmationDialogOpener,
-                    targetProfile.Name,
-                    contextMenuSettings.ReportButtonConfig.Sprite,
-                    ReportCategory.PROFILE,
-                    ct);
+                try
+                {
+                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                        ViewDependencies.ConfirmationDialogOpener,
+                        targetProfile.Name,
+                        contextMenuSettings.ReportButtonConfig.Sprite,
+                        ReportCategory.PROFILE,
+                        ct);
 
-                if (!confirmed)
-                    return;
+                    if (!confirmed)
+                        return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
-                    reportedUserId));
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        reportedUserId));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
             }
         }
 

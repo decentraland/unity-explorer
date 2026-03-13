@@ -121,21 +121,26 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTask ShowReportConfirmationDialogAsync(Profile.CompactInfo userProfile, CancellationToken ct)
             {
-                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                    ViewDependencies.ConfirmationDialogOpener,
-                    userProfile.Name,
-                    view.ContextMenuSettings.ReportSprite,
-                    ReportCategory.FRIENDS,
-                    ct);
+                try
+                {
+                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                        ViewDependencies.ConfirmationDialogOpener,
+                        userProfile.Name,
+                        view.ContextMenuSettings.ReportSprite,
+                        ReportCategory.FRIENDS,
+                        ct);
 
-                if (!confirmed)
-                    return;
+                    if (!confirmed)
+                        return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
-                    userProfile.UserId));
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        userProfile.UserId));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.FRIENDS); }
             }
         }
 

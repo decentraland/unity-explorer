@@ -924,12 +924,16 @@ namespace DCL.Communities.CommunitiesBrowser
 
             async UniTask OpenReportUserFormAsync(ICommunityMemberData reportedProfile, CancellationToken ct = default)
             {
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                try
+                {
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
-                    reportedProfile.Address));
-
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        reportedProfile.Address));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
             }
         }
 
