@@ -984,7 +984,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        PhonemeDuration: 0.1
+        MouthPoseDuration: 0.08
+        VowelMouthPoseDuration: 0.12
         ExpressionConfig:
           m_AssetGUID: f13fd0befee6d48479806b957b3ca94f
           m_SubObjectName: 

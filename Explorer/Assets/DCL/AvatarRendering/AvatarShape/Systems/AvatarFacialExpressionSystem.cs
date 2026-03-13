@@ -80,6 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly float blinkFrameDuration;
         private readonly Texture2DArray? mouthPoseTextureArray;
         private readonly float mouthPoseDuration;
+        private readonly float vowelMouthPoseDuration;
         private readonly AvatarFaceDebugData? debugData;
 
         internal AvatarFacialExpressionSystem(
@@ -91,6 +92,7 @@ namespace DCL.AvatarRendering.AvatarShape
             float blinkFrameDuration,
             Texture2DArray? mouthPoseTextureArray,
             float mouthPoseDuration,
+            float vowelMouthPoseDuration,
             AvatarFaceDebugData? debugData = null) : base(world)
         {
             this.eyebrowsTextureArray = eyebrowsTextureArray;
@@ -100,6 +102,7 @@ namespace DCL.AvatarRendering.AvatarShape
             this.blinkFrameDuration = blinkFrameDuration;
             this.mouthPoseTextureArray = mouthPoseTextureArray;
             this.mouthPoseDuration = mouthPoseDuration;
+            this.vowelMouthPoseDuration = vowelMouthPoseDuration;
             this.debugData = debugData;
         }
 
@@ -415,9 +418,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
                 mouth.CharacterTimer += t;
 
-                float duration = char.IsUpper(mouth.AnimatingText[mouth.CharacterIndex])
-                    ? mouthPoseDuration * UPPERCASE_DURATION_MULTIPLIER
-                    : mouthPoseDuration;
+                char currentChar = mouth.AnimatingText[mouth.CharacterIndex];
+                float baseDuration = IsVowel(currentChar) ? vowelMouthPoseDuration : mouthPoseDuration;
+                float duration = char.IsUpper(currentChar) ? baseDuration * UPPERCASE_DURATION_MULTIPLIER : baseDuration;
 
                 if (mouth.CharacterTimer >= duration)
                 {
@@ -524,6 +527,12 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         // ─── Mouth pose mapping ──────────────────────────────────────────────────
+
+        private static bool IsVowel(char c)
+        {
+            c = char.ToLowerInvariant(c);
+            return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
+        }
 
         /// <summary>
         ///     Maps a character at <paramref name="index"/> in <paramref name="text"/> to a mouth pose

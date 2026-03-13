@@ -102,6 +102,7 @@ namespace DCL.PluginSystem.Global
 
         private Texture2DArray? mouthPoseTextureArray;
         private float mouthPoseDuration;
+        private float vowelMouthPoseDuration;
 
         private AvatarFaceExpressionDefinition[] faceExpressions = System.Array.Empty<AvatarFaceExpressionDefinition>();
         private readonly AvatarFaceDebugData avatarFaceDebugData = new ();
@@ -177,6 +178,7 @@ namespace DCL.PluginSystem.Global
 
             mouthPoseTextureArray = await CreateMouthPoseTextureArrayAsync(settings, ct);
             mouthPoseDuration = settings.MouthPoseDuration;
+            vowelMouthPoseDuration = settings.VowelMouthPoseDuration;
 
             faceExpressions = await LoadFaceExpressionsAsync(settings, ct);
 
@@ -215,7 +217,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPoseTextureArray, mouthPoseDuration, avatarFaceDebugData);
+            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPoseTextureArray, mouthPoseDuration, vowelMouthPoseDuration, avatarFaceDebugData);
             UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
@@ -560,6 +562,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture2D> MouthAtlasTexture;
             [UnityEngine.Serialization.FormerlySerializedAs("PhonemeDuration")]
             public float MouthPoseDuration = 0.08f;
+            public float VowelMouthPoseDuration = 0.12f;
 
             [Header("Face Expressions")]
             public AssetReferenceT<AvatarFaceExpressionConfig> ExpressionConfig;
