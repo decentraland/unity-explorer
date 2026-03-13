@@ -47,6 +47,13 @@ namespace DCL.AvatarRendering.AvatarShape
         /// <summary>Sentinel value: no eyebrows MaterialPropertyBlock override is active.</summary>
         private const int NO_EYEBROWS_OVERRIDE = -1;
 
+        /// <summary>
+        ///     Phoneme-rich text looped while an avatar is actively speaking in voice chat.
+        ///     Covers lip-closure (m/p), open vowels (a/i), L-shape (l), rounded (o/u), and
+        ///     labiodental (f) so the animation looks naturally varied.
+        /// </summary>
+        private const string VOICE_CHAT_LOOP_TEXT = "el murcielago hindu comia feliz cardillo y kiwi";
+
         // Eye atlas slice indices.
         private const int EYE_HALF_CLOSED = 1;
         private const int EYE_CLOSED = 2;
@@ -343,6 +350,9 @@ namespace DCL.AvatarRendering.AvatarShape
         ///     Advances the phoneme animation for each avatar.
         ///     Re-initialises the renderer reference if the avatar was re-instantiated.
         ///     Reads AvatarMouthTalkingComponent to detect new chat messages.
+        ///     Reads AvatarVoiceChatMouthComponent to loop phoneme animation while the avatar
+        ///     is an active voice-chat speaker. Chat messages take priority over the voice loop;
+        ///     the loop resumes automatically when the chat message finishes.
         /// </summary>
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -370,7 +380,32 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
             }
 
-            // Detect a new chat message. Getting a ref does not trigger an archetype move.
+            // Sync voice-chat speaking state from the bridge component.
+            bool isSpeaking = World.Has<AvatarVoiceChatMouthComponent>(entity) &&
+                              World.Get<AvatarVoiceChatMouthComponent>(entity).IsSpeaking;
+
+            if (mouth.IsVoiceChatSpeaking != isSpeaking)
+            {
+                mouth.IsVoiceChatSpeaking = isSpeaking;
+
+                if (!isSpeaking && mouth.AnimatingText == VOICE_CHAT_LOOP_TEXT)
+                {
+                    // Voice stopped: end the loop immediately.
+                    StopMouthAnimation(ref mouth);
+                    return;
+                }
+
+                if (isSpeaking && mouth.AnimatingText == null)
+                {
+                    // Voice started and mouth is idle: begin the loop.
+                    mouth.AnimatingText = VOICE_CHAT_LOOP_TEXT;
+                    mouth.CharacterIndex = 0;
+                    mouth.CharacterTimer = 0f;
+                }
+            }
+
+            // Detect a new chat message — takes priority over the voice-chat loop.
+            // Getting a ref does not trigger an archetype move.
             if (World.Has<AvatarMouthTalkingComponent>(entity))
             {
                 ref var talking = ref World.Get<AvatarMouthTalkingComponent>(entity);
@@ -397,6 +432,13 @@ namespace DCL.AvatarRendering.AvatarShape
                     mouth.CharacterTimer = 0f;
                     mouth.CharacterIndex++;
                 }
+            }
+            else if (mouth.IsVoiceChatSpeaking)
+            {
+                // Text ended (chat message or previous loop pass); continue the voice loop.
+                mouth.AnimatingText = VOICE_CHAT_LOOP_TEXT;
+                mouth.CharacterIndex = 0;
+                mouth.CharacterTimer = 0f;
             }
             else
             {

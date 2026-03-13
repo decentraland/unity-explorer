@@ -40,5 +40,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         ///     -1 means revert to the material's default texture (idle mouth).
         /// </summary>
         public int MouthExpressionIndex;
+
+        /// <summary>
+        ///     True while the avatar is actively speaking in voice chat.
+        ///     When true, the phoneme animation loops using a hardcoded string instead of stopping
+        ///     when the current text finishes.
+        /// </summary>
+        public bool IsVoiceChatSpeaking;
     }
 }

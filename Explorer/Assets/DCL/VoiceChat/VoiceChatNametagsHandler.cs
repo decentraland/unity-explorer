@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
 using LiveKit.Rooms;
@@ -69,9 +70,15 @@ namespace DCL.VoiceChat
         private void SetIsSpeaking(string participantId, bool isSpeaking)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+            {
                 world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
+                world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = isSpeaking });
+            }
             else if(voiceChatRoom.Participants.LocalParticipant().Identity == participantId)
+            {
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
+                world.AddOrSet(playerEntity, new AvatarVoiceChatMouthComponent { IsSpeaking = isSpeaking });
+            }
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -82,6 +89,7 @@ namespace DCL.VoiceChat
                     if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
                         world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
+                        world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
                         activeSpeakers.Remove(participant.Identity);
                     }
 
@@ -102,12 +110,16 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
+                    world.AddOrSet(playerEntity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
                     activeSpeakers.Clear();
 
                     foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                        {
                             world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
+                            world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
+                        }
                     }
 
                     break;
