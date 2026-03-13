@@ -13,11 +13,12 @@ Every feature can contain an arbitrary range of `Assets` which can include but a
 The default place for a feature is a subdirectory at `Assets/DCL` path.
 
 In order to maintain a reasonable number of assemblies and a manageable number of dependencies between them consider the following rules:
-- By default introduce **one and only one assembly** per feature.
+- **Strive for large assemblies instead of splitting into small ones.** Avoid creating new `.asmdef` or `.asmref` files unless necessary — the folder or a parent folder may already be covered by an existing assembly definition.
+- When a new assembly reference **is** needed, prefer `.asmref` ([Assembly Definition References](https://docs.unity3d.com/Manual/class-AssemblyDefinitionReferenceImporter.html)) to fold code into an existing large assembly rather than introducing a new `.asmdef`.
+- Only create a dedicated `.asmdef` when the feature **must be referenced by other assemblies** or requires strict dependency isolation.
 - Control exposed members by `public` access level: if members should not be exposed make them `internal` instead. It makes the difference when we pursue the minimum number of assemblies.
-- If assemblies have cross-dependencies to avoid unnecessary granularity of assemblies group several features together by [Assembly Definition References](https://docs.unity3d.com/Manual/class-AssemblyDefinitionReferenceImporter.html). They should be reasonably close enough and otherwise undisconnectable to be qualified for such a merge. Otherwise, there should be just a one-directional reference between their assemblies.
-- Use [Assembly Definition References](https://docs.unity3d.com/Manual/class-AssemblyDefinitionReferenceImporter.html) to connect different directories together to a single assembly.
-- Use different directories for **Unit Tests** but connect all of them to the single "DCL.Tests" assembly. We don't care about the number of dependencies in the case of Tests as any other assembly never references Tests.
+- ECS Systems **must always** use an `.asmref` pointing to `DCL.Plugins`.
+- Use different directories for **Unit Tests** but connect all of them to the single "DCL.Tests" assembly via `.asmref`. We don't care about the number of dependencies in the case of Tests as any other assembly never references Tests.
 
 ## Pure technical implementations
 
@@ -42,3 +43,10 @@ All containers and plugins belong to a "global" visibility level:
 - "DCL.Plugins" is the only "global" assembly that can contain any number of references but should not be referenced itself (apart from Tests). Other "global" directories are connected to it by "Assembly Reference".
 - Their Tests are still connected to the "DCL.Tests" assembly.
 - Plugins can reference any types from any assemblies to execute logic on them but they should produce systems and dependencies without knowledge about unrelated assemblies. Thus, we maintain a limited number of references across features.
+
+### Plugin file placement
+
+- `<Feature>Plugin.cs` **must be placed in the `Systems/` folder** alongside the ECS systems it injects.
+- If the plugin has **no ECS systems**, do not create a `Systems/` folder. Place the plugin directly in:
+  - `Assets/DCL/PluginSystem/Global/` — for global plugins (`IDCLGlobalPlugin`)
+  - `Assets/DCL/PluginSystem/World/` — for world plugins (`IDCLWorldPlugin`)
