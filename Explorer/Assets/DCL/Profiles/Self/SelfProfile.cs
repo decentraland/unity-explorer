@@ -160,7 +160,7 @@ namespace DCL.Profiles.Self
                         false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                     if (savedProfile == null)
-                        throw new Exception("Profile could not be retrieved after saving");
+                        throw new Exception($"Profile not found after save for user {newProfile.UserId}");
 
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
