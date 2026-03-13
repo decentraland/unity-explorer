@@ -349,9 +349,8 @@ namespace DCL.AvatarRendering.AvatarShape
         /// <summary>
         ///     Advances the phoneme animation for each avatar.
         ///     Re-initialises the renderer reference if the avatar was re-instantiated.
-        ///     Reads AvatarMouthTalkingComponent to detect new chat messages.
-        ///     Reads AvatarVoiceChatMouthComponent to loop phoneme animation while the avatar
-        ///     is an active voice-chat speaker. Chat messages take priority over the voice loop;
+        ///     Reads <see cref="AvatarMouthInputComponent"/> for both pending chat messages and
+        ///     voice-chat speaking state. Chat messages take priority over the voice loop;
         ///     the loop resumes automatically when the chat message finishes.
         /// </summary>
         [Query]
@@ -380,48 +379,34 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
             }
 
-            // Sync voice-chat speaking state from the bridge component.
-            bool isSpeaking = World.Has<AvatarVoiceChatMouthComponent>(entity) &&
-                              World.Get<AvatarVoiceChatMouthComponent>(entity).IsSpeaking;
+            // Read all mouth input: chat message and voice-chat speaking state.
+            bool isSpeaking = false;
 
-            if (mouth.IsVoiceChatSpeaking != isSpeaking)
+            if (World.Has<AvatarMouthInputComponent>(entity))
             {
-                mouth.IsVoiceChatSpeaking = isSpeaking;
+                ref var input = ref World.Get<AvatarMouthInputComponent>(entity);
+                isSpeaking = input.IsVoiceChatSpeaking;
 
-                if (!isSpeaking && mouth.AnimatingText == VOICE_CHAT_LOOP_TEXT)
+                // Consume a pending chat message — takes priority over the voice-chat loop.
+                if (input.MessageIsDirty)
                 {
-                    // Voice stopped: end the loop immediately.
-                    StopMouthAnimation(ref mouth);
-                    return;
-                }
-
-                if (isSpeaking && mouth.AnimatingText == null)
-                {
-                    // Voice started and mouth is idle: begin the loop.
-                    mouth.AnimatingText = VOICE_CHAT_LOOP_TEXT;
+                    mouth.AnimatingText = input.PendingMessage;
                     mouth.CharacterIndex = 0;
                     mouth.CharacterTimer = 0f;
-                }
-            }
-
-            // Detect a new chat message — takes priority over the voice-chat loop.
-            // Getting a ref does not trigger an archetype move.
-            if (World.Has<AvatarMouthTalkingComponent>(entity))
-            {
-                ref var talking = ref World.Get<AvatarMouthTalkingComponent>(entity);
-
-                if (talking.IsDirty)
-                {
-                    mouth.AnimatingText = talking.Message;
-                    mouth.CharacterIndex = 0;
-                    mouth.CharacterTimer = 0f;
-                    talking.IsDirty = false;
+                    input.MessageIsDirty = false;
                 }
             }
 
             // Advance the phoneme animation.
             if (mouth.AnimatingText != null && mouth.CharacterIndex < mouth.AnimatingText.Length)
             {
+                // Stop the voice loop immediately if speaking ended mid-animation.
+                if (!isSpeaking && mouth.AnimatingText == VOICE_CHAT_LOOP_TEXT)
+                {
+                    StopMouthAnimation(ref mouth);
+                    return;
+                }
+
                 int phoneme = MapCharToPhoneme(mouth.AnimatingText, mouth.CharacterIndex);
                 ApplyPhoneme(ref mouth, phoneme);
 
@@ -433,9 +418,9 @@ namespace DCL.AvatarRendering.AvatarShape
                     mouth.CharacterIndex++;
                 }
             }
-            else if (mouth.IsVoiceChatSpeaking)
+            else if (isSpeaking)
             {
-                // Text ended (chat message or previous loop pass); continue the voice loop.
+                // Idle or text ended — start or continue the voice loop.
                 mouth.AnimatingText = VOICE_CHAT_LOOP_TEXT;
                 mouth.CharacterIndex = 0;
                 mouth.CharacterTimer = 0f;

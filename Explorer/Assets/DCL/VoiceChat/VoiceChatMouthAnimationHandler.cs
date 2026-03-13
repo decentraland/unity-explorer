@@ -11,10 +11,10 @@ using Utility.Arch;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Listens to voice-chat speaking events from the LiveKit room and sets
-    ///     <see cref="AvatarVoiceChatMouthComponent"/> on the corresponding ECS entities so that
-    ///     <c>AvatarFacialAnimationSystem</c> can drive the mouth animation independently of
-    ///     the nametag system.
+    ///     Listens to voice-chat speaking events from the LiveKit room and writes
+    ///     <see cref="AvatarMouthInputComponent.IsVoiceChatSpeaking"/> on the corresponding ECS
+    ///     entities so that <c>AvatarFacialAnimationSystem</c> can drive the mouth animation
+    ///     independently of the nametag system.
     /// </summary>
     public class VoiceChatMouthAnimationHandler : IDisposable
     {
@@ -78,9 +78,22 @@ namespace DCL.VoiceChat
         private void SetIsSpeaking(string participantId, bool isSpeaking)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = isSpeaking });
+                SetMouthSpeaking(entry.Entity, isSpeaking);
             else if (voiceChatRoom.Participants.LocalParticipant().Identity == participantId)
-                world.AddOrSet(playerEntity, new AvatarVoiceChatMouthComponent { IsSpeaking = isSpeaking });
+                SetMouthSpeaking(playerEntity, isSpeaking);
+        }
+
+        private void SetMouthSpeaking(Entity entity, bool isSpeaking)
+        {
+            if (world.Has<AvatarMouthInputComponent>(entity))
+            {
+                ref var input = ref world.Get<AvatarMouthInputComponent>(entity);
+                input.IsVoiceChatSpeaking = isSpeaking;
+            }
+            else
+            {
+                world.Add(entity, new AvatarMouthInputComponent { IsVoiceChatSpeaking = isSpeaking });
+            }
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -89,7 +102,7 @@ namespace DCL.VoiceChat
 
             if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
+                SetMouthSpeaking(entry.Entity, false);
                 activeSpeakers.Remove(participant.Identity);
             }
         }
@@ -99,20 +112,20 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    world.AddOrSet(playerEntity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
+                    SetMouthSpeaking(playerEntity, false);
                     OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    world.AddOrSet(playerEntity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
+                    SetMouthSpeaking(playerEntity, false);
                     activeSpeakers.Clear();
 
                     foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            world.AddOrSet(entry.Entity, new AvatarVoiceChatMouthComponent { IsSpeaking = false });
+                            SetMouthSpeaking(entry.Entity, false);
                     }
 
                     break;
