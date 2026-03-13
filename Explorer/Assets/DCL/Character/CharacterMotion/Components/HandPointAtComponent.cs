@@ -13,6 +13,7 @@ namespace DCL.Character.CharacterMotion.Components
         public Vector2 PressOrigin;
         public bool RotationCompleted;
         public float RotationAnimationWeight;
+        public Vector3 PreviousLookDirection;
 
         private float duration;
 

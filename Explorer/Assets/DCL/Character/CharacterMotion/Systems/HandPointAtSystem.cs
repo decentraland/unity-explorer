@@ -154,23 +154,20 @@ namespace DCL.Character.CharacterMotion.Systems
             handPointAtComponent.IsPointing = true;
         }
 
-        private void LocalPlayerRotationAnimation(
-            in CharacterRigidTransform rigidTransform,
+        private void PlayerRotationAnimation(
             ref AvatarBase avatarBase,
             ref HandPointAtComponent pointAt,
             bool needToRotate,
-            float dt)
+            float dt,
+            float crossY)
         {
-            Vector3 lookDirectionNormalized = rigidTransform.LookDirection.normalized;
-            Vector3 cross = Vector3.Cross(avatarBase.transform.forward, lookDirectionNormalized);
-
             pointAt.RotationAnimationWeight = Mathf.MoveTowards(
                 pointAt.RotationAnimationWeight, needToRotate ? 1f : 0f, localSettings.HandsIKWeightSpeed * dt);
 
-            SetLocalPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && cross.y <= 0, needToRotate && cross.y > 0);
+            SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && crossY <= 0, needToRotate && crossY > 0);
         }
 
-        private void SetLocalPlayerRotationAnimation(ref AvatarBase avatarBase, float weight, bool left, bool right)
+        private void SetPlayerRotationAnimation(ref AvatarBase avatarBase, float weight, bool left, bool right)
         {
             avatarBase.SetRotationLayerWeight(weight);
             avatarBase.SetAnimatorBool(AnimationHashes.ROTATING_LEFT, left);
@@ -315,7 +312,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!pointAt.IsPointing)
             {
                 pointAt.RotationAnimationWeight = 0f;
-                SetLocalPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, false, false);
+                SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, false, false);
                 return;
             }
 
@@ -329,7 +326,10 @@ namespace DCL.Character.CharacterMotion.Systems
             var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
 
             bool isActuallyRotating = rotationInfo.needToRotate && !Mathf.Approximately(rotationInfo.dot, 1f);
-            LocalPlayerRotationAnimation(rigidTransform, ref avatarBase, ref pointAt, isActuallyRotating, dt);
+            Vector3 lookDirectionNormalized = rigidTransform.LookDirection.normalized;
+            Vector3 cross = Vector3.Cross(avatarBase.transform.forward, lookDirectionNormalized);
+
+            PlayerRotationAnimation(ref avatarBase, ref pointAt, isActuallyRotating, dt, cross.y);
 
             ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, rotationInfo);
         }
@@ -348,7 +348,12 @@ namespace DCL.Character.CharacterMotion.Systems
             avatarBase.HandsIKRig.weight = pointAt.AnimationWeight;
 
             if (!pointAt.IsPointing)
+            {
+                pointAt.RotationAnimationWeight = 0f;
+                pointAt.PreviousLookDirection = Vector3.zero;
+                SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, false, false);
                 return;
+            }
 
             Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
 
@@ -357,7 +362,16 @@ namespace DCL.Character.CharacterMotion.Systems
                 localSettings.PointAtRotationVerticalUpThreshold,
                 localSettings.PointAtRotationVerticalDownThreshold);
 
+            if (pointAt.PreviousLookDirection != Vector3.zero)
+            {
+                Vector3 cross = Vector3.Cross(avatarBase.transform.forward, pointAt.PreviousLookDirection);
+                float dot  = Vector3.Dot(avatarBase.transform.forward, pointAt.PreviousLookDirection);
+                PlayerRotationAnimation(ref avatarBase, ref pointAt, !Mathf.Approximately(dot, 1f), dt, cross.y);
+            }
+
             ApplyHandIK(ref pointAt, ref avatarBase, in localSettings, dt, directionToTarget, shoulderPos, (1f, false));
+
+            pointAt.PreviousLookDirection = avatarBase.transform.forward;
         }
     }
 }
