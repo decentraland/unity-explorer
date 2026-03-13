@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             SetPositionAndRotation(ref transComp, firstRemote.position, firstRemote.rotationY);
             ApplyHeadIK(ref headIK, firstRemote.headIKYawEnabled, firstRemote.headIKPitchEnabled, firstRemote.headYawAndPitch);
-            ApplyPointAtIK(ref handPointAt, firstRemote.isPointingAt, firstRemote.isDraggingPointAt, firstRemote.pointAtWorldHitPoint);
+            ApplyPointAtIK(ref handPointAt, firstRemote.isPointingAt, firstRemote.pointAtWorldHitPoint);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.UpdateHeadIK(firstRemote);
@@ -85,7 +85,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             var pointAtWorldHitPoint = Vector3.zero;
             if (remotePlayerMovement.IsPointingAt) pointAtWorldHitPoint = Interpolation.InterpolatePointAtIK(handPointAt, remotePlayerMovement.PointAtWorldHitPoint, settings.InterpolationSettings.PointAtIKInterpolationFactor);
-            ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, remotePlayerMovement.IsDraggingPointAt, pointAtWorldHitPoint);
+            ApplyPointAtIK(ref handPointAt, remotePlayerMovement.IsPointingAt, pointAtWorldHitPoint);
 
             if (intComp.Enabled)
             {
@@ -309,10 +309,9 @@ namespace DCL.Multiplayer.Movement.Systems
             headIK.LookAt = angles.sqrMagnitude > 0.0001f ? Quaternion.Euler(angles.y, angles.x, 0) * Vector3.forward : Vector3.forward;
         }
 
-        private static void ApplyPointAtIK(ref HandPointAtComponent pointAt, bool isPointingAt, bool isDraggingPointAt, Vector3 worldHitPoint)
+        private static void ApplyPointAtIK(ref HandPointAtComponent pointAt, bool isPointingAt, Vector3 worldHitPoint)
         {
             pointAt.IsPointing = isPointingAt;
-            pointAt.IsDragging = isDraggingPointAt;
             pointAt.WorldHitPoint = worldHitPoint;
         }
     }

@@ -34,7 +34,6 @@ namespace DCL.Multiplayer.Movement
         public float2 HeadIKYawAndPitch;
 
         public bool IsPointingAt;
-        public bool IsDraggingPointAt;
         public float3 PointAtWorldHitPoint;
 
         public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
@@ -56,7 +55,6 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawAndPitch = float2.zero;
 
             IsPointingAt = false;
-            IsDraggingPointAt = false;
             PointAtWorldHitPoint = float3.zero;
         }
 
@@ -96,7 +94,6 @@ namespace DCL.Multiplayer.Movement
         public void UpdatePointAtIK(in NetworkMovementMessage message)
         {
             IsPointingAt = message.isPointingAt;
-            IsDraggingPointAt = message.isDraggingPointAt;
             PointAtWorldHitPoint = message.pointAtWorldHitPoint;
         }
 

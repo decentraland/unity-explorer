@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
                 headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch),
-                pointAtData = CompressPointAtData(message.isPointingAt, message.isDraggingPointAt, message.pointAtWorldHitPoint - message.position)
+                pointAtData = CompressPointAtData(message.isPointingAt, message.pointAtWorldHitPoint - message.position)
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Movement
             return value;
         }
 
-        private int CompressPointAtData(bool isPointing, bool isDragging, Vector3 relativeHitPoint)
+        private int CompressPointAtData(bool isPointing, Vector3 relativeHitPoint)
         {
             if (!isPointing) return 0;
 
@@ -120,16 +120,14 @@ namespace DCL.Multiplayer.Movement
             int value = x;
             value |= y << AXIS_BITS;
             value |= z << (AXIS_BITS * 2);
-            if (isDragging) value |= 1 << 30;
-            if (isPointing) value |= 1 << 31;
+            if (isPointing) value |= 1 << 30;
 
             return value;
         }
 
-        private void DecompressPointAtData(int data, out bool isPointing, out bool isDragging, out Vector3 relativeHitPoint)
+        private void DecompressPointAtData(int data, out bool isPointing, out Vector3 relativeHitPoint)
         {
-            isPointing = (data & (1 << 31)) != 0;
-            isDragging = (data & (1 << 30)) != 0;
+            isPointing = (data & (1 << 30)) != 0;
 
             if (!isPointing)
             {
@@ -162,7 +160,7 @@ namespace DCL.Multiplayer.Movement
             var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
 
             DecompressHeadIK(compressedMessage, out float2 headYawAndPitch, out bool headIKYawEnabled, out bool headIKPitchEnabled);
-            DecompressPointAtData(compressedMessage.pointAtData, out bool isPointing, out bool isDragging, out Vector3 relativeHitPoint);
+            DecompressPointAtData(compressedMessage.pointAtData, out bool isPointing, out Vector3 relativeHitPoint);
 
             return new NetworkMovementMessage
             {
@@ -199,7 +197,6 @@ namespace DCL.Multiplayer.Movement
                 headYawAndPitch = headYawAndPitch,
 
                 isPointingAt = isPointing,
-                isDraggingPointAt = isDragging,
                 pointAtWorldHitPoint = position + relativeHitPoint
             };
         }

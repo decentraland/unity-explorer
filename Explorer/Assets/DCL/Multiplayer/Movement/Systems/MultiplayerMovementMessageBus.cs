@@ -149,7 +149,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
 
                 isPointingAt = proto.IsPointingAt,
-                isDraggingPointAt = proto.IsDraggingPointAt,
                 pointAtWorldHitPoint = new Vector3(proto.PointAtX, proto.PointAtY, proto.PointAtZ),
             };
         }
@@ -213,7 +212,6 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.HeadPitch = message.headYawAndPitch.y;
 
             movement.IsPointingAt = message.isPointingAt;
-            movement.IsDraggingPointAt = message.isDraggingPointAt;
             movement.PointAtX = message.pointAtWorldHitPoint.x;
             movement.PointAtY = message.pointAtWorldHitPoint.y;
             movement.PointAtZ = message.pointAtWorldHitPoint.z;

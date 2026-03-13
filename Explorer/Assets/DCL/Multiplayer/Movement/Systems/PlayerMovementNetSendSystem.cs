@@ -109,8 +109,7 @@ namespace DCL.Multiplayer.Movement.Systems
                        Math.Abs(snapshot.headYawAndPitch.x - currentHeadYawAndPitch.x) > HEAD_IK_EPSILON ||
                        Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON ||
                        Vector3.SqrMagnitude(snapshot.pointAtWorldHitPoint - pointAt.WorldHitPoint) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
-                       snapshot.isPointingAt != pointAt.IsPointing ||
-                       snapshot.isDraggingPointAt != pointAt.IsDragging;
+                       snapshot.isPointingAt != pointAt.IsPointing;
             }
         }
 
@@ -166,7 +165,6 @@ namespace DCL.Multiplayer.Movement.Systems
                 isEmoting = isEmoting,
 
                 isPointingAt = pointAt.IsPointing,
-                isDraggingPointAt = pointAt.IsDragging,
                 pointAtWorldHitPoint =  pointAt.WorldHitPoint,
 
                 animState = new AnimationStates

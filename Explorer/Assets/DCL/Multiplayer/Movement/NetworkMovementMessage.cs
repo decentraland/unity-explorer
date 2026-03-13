@@ -25,7 +25,6 @@ namespace DCL.Multiplayer.Movement
         public bool isEmoting;
 
         public bool isPointingAt;
-        public bool isDraggingPointAt;
         public Vector3 pointAtWorldHitPoint;
 
         public AnimationStates animState;
