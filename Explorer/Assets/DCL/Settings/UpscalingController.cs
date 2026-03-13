@@ -11,14 +11,14 @@ namespace DCL.Utilities
     {
         // Used when system doesn't meet minimum specs
         public const float MIN_SPECS_UPSCALER_VALUE = 0.8f;
-        
+
         private const float STP_VALUE_FOR_UI_OPEN = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
         private const float INITIAL_UPSCALE_VALUE = 1f;
-        
+
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
         private readonly IMVCManager mvcManager;
@@ -112,6 +112,7 @@ namespace DCL.Utilities
         {
             //TODO (Juani): Resolution setting is not correct. You can chose a higher resolution, even if your monitor is not on that resolution.
             //Therefore, automatically setting it is not currently reliable
+            //Integrate with NativeWindowManager when we start using this again
             return;
 
             //Helper bool for the first stp value set. ResolutionChanged is invoked on application start, and if the value does exist in PlayerPrefs,
