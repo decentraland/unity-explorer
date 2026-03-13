@@ -108,7 +108,7 @@ jobs:
 
     - name: Cache BuildPatchTool
       id: bpt_cache
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       with:
         path: ${{ runner.temp }}\BuildPatchTool\Engine
         key: ${{ steps.bpt_version.outputs.cache_key }}
