@@ -28,16 +28,19 @@ Skills are automatically loaded by Claude Code from `.claude/skills/`. Each skil
 | [web-requests](../.claude/skills/web-requests/SKILL.md) | HTTP requests, response parsing, signing, retries |
 | [diagnostics-and-logging](../.claude/skills/diagnostics-and-logging/SKILL.md) | ReportHub, severity matrix, Sentry |
 | [feature-flags-and-configuration](../.claude/skills/feature-flags-and-configuration/SKILL.md) | Feature flags, features registry, app arguments |
+| [cross-world-ecs-access](../.claude/skills/cross-world-ecs-access/SKILL.md) | Global world from scene systems, propagation, bridge components |
+| [scene-runtime-and-crdt](../.claude/skills/scene-runtime-and-crdt/SKILL.md) | V8/ClearScript engine, CRDT protocol, JS modules, threading |
+| [multiplayer-and-network-sync](../.claude/skills/multiplayer-and-network-sync/SKILL.md) | LiveKit rooms, movement encoding, interpolation, profile sync |
+| [testing-infrastructure](../.claude/skills/testing-infrastructure/SKILL.md) | UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode |
+| [avatar-rendering-pipeline](../.claude/skills/avatar-rendering-pipeline/SKILL.md) | GPU skinning, Global Vertex Buffer, wearables, emotes |
+| [chat-system](../.claude/skills/chat-system/SKILL.md) | MVP pattern, message bus decorators, commands, encrypted history |
 
 ## When to Use This Document
 
 Use the reference documentation below when you need:
 - Deep architectural context beyond what skills cover
-- Avatar rendering details (GPU skinning, compute shaders)
-- Chat system internals (state machine, commands, auto-translation)
 - Build and CI pipeline specifics (GitHub workflows, Unity Cloud)
 - Development environment setup (SSH, GPG, LODs)
-- Network synchronization details (LiveKit, CRDT bridge)
 
 ## Documentation Reference
 
