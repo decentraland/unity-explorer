@@ -170,8 +170,12 @@ namespace DCL.Profiles
                    && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
                    && AreStringsEquivalent(Gender, profile.Gender)
                    && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(RelationshipStatus, profile.RelationshipStatus)
+                   && AreStringsEquivalent(SexualOrientation, profile.SexualOrientation)
                    && AreStringsEquivalent(Language, profile.Language)
                    && AreStringsEquivalent(Profession, profile.Profession)
+                   && AreStringsEquivalent(RealName, profile.RealName)
+                   && AreStringsEquivalent(Hobbies, profile.Hobbies)
                    && Birthdate == profile.Birthdate
                    && Version == profile.Version
                    && AreLinksSame(links, profile.links)

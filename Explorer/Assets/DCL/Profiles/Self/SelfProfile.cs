@@ -159,7 +159,9 @@ namespace DCL.Profiles.Self
                         // force to fetch the profile: there are some fields that might change, like the profile picture url
                         false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
-                    //TODO (JUANI): Why? Why do we need to do it?
+                    if (savedProfile == null)
+                        throw new Exception("Profile could not be retrieved after saving");
+
                     // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                     // breaking the avatar and the backpack
                     profileCache.Set(savedProfile!.UserId, savedProfile);

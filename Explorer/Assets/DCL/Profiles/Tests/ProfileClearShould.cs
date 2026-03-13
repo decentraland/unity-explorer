@@ -21,6 +21,8 @@ namespace DCL.Profiles.Tests
         [Test]
         public void ResetAllFieldsWhenReturnedToPool()
         {
+            int initialInactive = Profile.POOL.CountInactive;
+
             var profile = Profile.Create();
             var clean = Profile.Create();
             PopulateAllFields(profile);
@@ -28,14 +30,13 @@ namespace DCL.Profiles.Tests
             profile.Dispose();
             var recycled = Profile.Create();
 
-            // Validate the pool returned the same instance
-            Assert.AreEqual(0, Profile.POOL.CountInactive);
+            Assert.AreEqual(initialInactive, Profile.POOL.CountInactive);
             Assert.IsTrue(clean.IsSameProfile(recycled));
 
             recycled.Dispose();
             clean.Dispose();
 
-            Assert.AreEqual(2, Profile.POOL.CountInactive);
+            Assert.AreEqual(initialInactive + 2, Profile.POOL.CountInactive);
         }
 
         private static void PopulateAllFields(Profile profile)
