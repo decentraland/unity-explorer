@@ -21,8 +21,6 @@ namespace DCL.AvatarRendering.Emotes
 
         private LoadTimeout? playTimeout;
 
-        // TODO (Maurizio) what to do with mask here?
-
         public void UpdateRemoteId(URN emoteId)
         {
             this.EmoteId = emoteId;

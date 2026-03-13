@@ -157,6 +157,14 @@ namespace CrdtEcsBridge.RestrictedActions
             CopyToClipboardAsync(text).Forget();
         }
 
+        public void TryStopEmote()
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            globalWorldActions.StopEmote();
+        }
+
         private async UniTask OpenUrlAsync(string url)
         {
             await UniTask.SwitchToMainThread();

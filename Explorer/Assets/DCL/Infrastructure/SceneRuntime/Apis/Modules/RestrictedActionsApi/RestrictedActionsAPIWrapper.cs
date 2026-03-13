@@ -60,8 +60,6 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             {
                 await UniTask.SwitchToMainThread();
                 api.TryTriggerEmote(predefinedEmote, EnumUtils.FromInt<AvatarEmoteMask>((int)mask));
-
-                // api.TryTriggerEmote(predefinedEmote, mask);
             }
         }
 
@@ -73,8 +71,6 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
                 await api.TryTriggerSceneEmoteAsync(src, loop, EnumUtils.FromInt<AvatarEmoteMask>((int)mask), ct);
-
-            // await api.TryTriggerSceneEmoteAsync(src, loop, mask, ct);
         }
 
         [UsedImplicitly]
@@ -84,6 +80,18 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public bool OpenNftDialog(string urn) =>
             api.TryOpenNftDialog(urn);
+
+        [UsedImplicitly]
+        public object StopEmote()
+        {
+            return StopEmoteAsync().ToDisconnectedPromise(this);
+
+            async UniTask StopEmoteAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                api.TryStopEmote();
+            }
+        }
 
         public override void Dispose() { }
     }

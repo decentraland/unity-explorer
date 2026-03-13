@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
+using System.Collections.Generic;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -9,9 +10,11 @@ namespace DCL.AvatarRendering.Emotes
         public URN EmoteUrn;
         public bool EmoteLoop;
         public EmoteReferences? CurrentEmoteReference;
-        public int CurrentAnimationTag;
+        public IReadOnlyDictionary<string, int>? CurrentAnimationTagsByLayerName => currentAnimationTagsByLayerName;
         public bool StopEmote;
         public AvatarEmoteMask Mask;
+
+        private Dictionary<string, int>? currentAnimationTagsByLayerName;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
@@ -34,7 +37,22 @@ namespace DCL.AvatarRendering.Emotes
 
                 // For mecanim animations, we check the actual animator tag
                 // We do that because we can be in a different state even if triggers have been set (e.g., waiting for a jump to finish)
-                return CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
+                if (currentAnimationTagsByLayerName?.TryGetValue(AnimatorEmoteLayers.BASE_LAYER, out int tag) == true)
+                    return tag == AnimationHashes.EMOTE || tag == AnimationHashes.EMOTE_LOOP;
+
+                return false;
+            }
+        }
+
+        public readonly bool IsPlayingMaskedEmote
+        {
+            get
+            {
+                foreach (string layerName in AnimatorEmoteLayers.NON_BASE_LAYERS)
+                    if (currentAnimationTagsByLayerName?.TryGetValue(layerName, out int tag) == true && (tag == AnimationHashes.EMOTE || tag == AnimationHashes.EMOTE_LOOP))
+                        return true;
+
+                return false;
             }
         }
 
@@ -46,6 +64,11 @@ namespace DCL.AvatarRendering.Emotes
             CurrentEmoteReference = null;
             StopEmote = false;
             Mask = AvatarEmoteMask.AemFullBody;
+        }
+
+        public void SetAnimationTag(string layerName, int stateHash) {
+            currentAnimationTagsByLayerName ??= new Dictionary<string, int>(AnimatorEmoteLayers.ALL_LAYERS.Length);
+            currentAnimationTagsByLayerName[layerName] = stateHash;
         }
     }
 }

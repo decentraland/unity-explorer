@@ -307,10 +307,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public List<(URN emoteId, bool isLooping, AvatarEmoteMask mask)> SentEmotes = new ();
 
+            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+                throw new NotImplementedException();
+
             public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) // Parameter name from interface
             {
                 SentEmotes.Add((urn, loopCyclePassed, mask));
             }
+
+            public void SendStop() =>
+                throw new NotImplementedException();
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();

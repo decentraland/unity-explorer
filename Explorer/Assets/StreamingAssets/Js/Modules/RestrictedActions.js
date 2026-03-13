@@ -82,6 +82,13 @@ module.exports.triggerSceneEmote = async function(message) {
     };
 }
 
+module.exports.stopEmote = async function(message) {
+    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    return {
+        success: isSuccess
+    };
+}
+
 module.exports.copyToClipboard = async function(message) {
     UnityRestrictedActionsApi.CopyToClipboard(message.text)
     return {};

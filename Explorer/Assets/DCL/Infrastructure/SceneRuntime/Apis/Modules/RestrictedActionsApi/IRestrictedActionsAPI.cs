@@ -22,5 +22,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         bool TryOpenNftDialog(string urn);
 
         void TryCopyToClipboard(string text);
+
+        void TryStopEmote();
     }
 }

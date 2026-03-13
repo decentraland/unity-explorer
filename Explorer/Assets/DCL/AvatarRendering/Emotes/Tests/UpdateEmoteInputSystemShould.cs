@@ -325,10 +325,16 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             public List<(URN emoteId, bool loopCyclePassed, AvatarEmoteMask mask)> SentEmotes = new ();
 
+            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+                throw new NotImplementedException();
+
             public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask)
             {
                 SentEmotes.Add((urn, loopCyclePassed, mask));
             }
+
+            public void SendStop() =>
+                throw new NotImplementedException();
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();

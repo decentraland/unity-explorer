@@ -124,7 +124,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
+            foreach (string layerName in AnimatorEmoteLayers.ALL_LAYERS)
+            {
+                int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layerName);
+                emoteComponent.SetAnimationTag(layerName, currentStateTag);
+            }
         }
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
@@ -136,6 +140,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.StopEmote = false;
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+
             if (!emoteReference) return;
 
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
@@ -143,8 +148,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (shouldCancelEmote)
             {
                 StopEmote(ref emoteComponent, avatarView);
+
+                Debug.Log($"(Maurizio) StopEmote() because wantsToCancelEmote: {wantsToCancelEmote} or World.Has<HiddenPlayerComponent>(entity): {World.Has<HiddenPlayerComponent>(entity)}");
+
                 return;
             }
+
+            // TODO (Maurizio) maybe we should do this for all layers?
 
             if (!emoteReference.legacy)
             {
@@ -154,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                     return;
                 }
 
-                int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
+                int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
                 bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
                 if (isOnAnotherTag)
@@ -306,8 +316,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView)
         {
-            int prevTag = animationComponent.CurrentAnimationTag;
-            int currentTag = avatarView.GetAnimatorCurrentStateTag();
+            if (animationComponent.CurrentAnimationTagsByLayerName?.TryGetValue(AnimatorEmoteLayers.BASE_LAYER, out int prevTag) != true)
+                return;
+
+            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;

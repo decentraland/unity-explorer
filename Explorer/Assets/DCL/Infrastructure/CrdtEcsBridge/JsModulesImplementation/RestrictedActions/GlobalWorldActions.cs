@@ -136,6 +136,21 @@ namespace CrdtEcsBridge.RestrictedActions
             world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
         }
 
+        public void StopEmote()
+        {
+            // If the avatar is not visible, there is nothing to stop (matches TriggerEmote guard).
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible)
+                return;
+
+            // Signal the emote system to stop whatever emote is currently playing (if any).
+            if (!world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
+                return;
+
+            emoteComponent.StopEmote = true;
+            world.Set(playerEntity, emoteComponent);
+            messageBus.SendStop();
+        }
+
         private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))

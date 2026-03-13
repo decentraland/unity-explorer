@@ -8,6 +8,7 @@ using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 using System;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 
@@ -27,6 +28,12 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         protected override void Update(float t)
+        {
+            ProcessRemoteIntentions(t);
+            ProcessRemoteStopIntentions();
+        }
+
+        private void ProcessRemoteIntentions(float t)
         {
             using var scope = HashSetPool<RemoteEmoteIntention>.Get(out var savedIntentions);
 
@@ -67,6 +74,36 @@ namespace DCL.AvatarRendering.Emotes
 
             bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
                 intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
+        }
+
+        private void ProcessRemoteStopIntentions()
+        {
+            using var scope = HashSetPool<RemoteEmoteStopIntention>.Get(out var savedStopIntentions);
+            using OwnedBunch<RemoteEmoteStopIntention> stopIntentions = emotesMessageBus.EmoteStopIntentions();
+
+            if (!stopIntentions.Available())
+                return;
+
+            foreach (RemoteEmoteStopIntention stopIntention in stopIntentions.Collection())
+            {
+                // The entity was not created yet, so we wait until it is created to be able to consume the intent
+                if (!entityParticipantTable.TryGet(stopIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                {
+                    savedStopIntentions!.Add(stopIntention);
+                    continue;
+                }
+
+                // If the entity has an emote intent not already consumed we remove it straight away
+                if (World.Has<CharacterEmoteIntent>(entry.Entity))
+                    World.Remove<CharacterEmoteIntent>(entry.Entity);
+
+                // check if the existing emote component is playing an emote to stop it
+                if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.IsPlayingMaskedEmote))
+                {
+                    emoteComponent.StopEmote = true;
+                    World.Set(entry.Entity, emoteComponent);
+                }
+            }
         }
     }
 }

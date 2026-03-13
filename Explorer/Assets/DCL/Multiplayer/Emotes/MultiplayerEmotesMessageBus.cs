@@ -34,6 +34,8 @@ namespace DCL.Multiplayer.Emotes
         private uint nextIncrementalId = 1;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
+
         private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
@@ -58,6 +60,9 @@ namespace DCL.Multiplayer.Emotes
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
+
+        public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+            new (sync, emoteStopIntentions);
 
         public void Send(URN emote, bool loopCyclePassed, AvatarEmoteMask mask)
         {
@@ -84,6 +89,8 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.Urn = emoteId;
             emote.Payload.Timestamp = timestamp;
             emote.Payload.Mask = (uint)mask;
+            // Message objects are pooled/reused; ensure no stale optional fields leak from previous uses (e.g. SendStop()).
+            emote.Payload.ClearIsStopping();
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
@@ -91,6 +98,33 @@ namespace DCL.Multiplayer.Emotes
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
             Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, mask);
+        }
+
+        public void SendStop()
+        {
+            if (cancellationTokenSource.IsCancellationRequested)
+                throw new Exception("EmoteMessagesBus is disposed");
+
+            float timestamp = Time.unscaledTime;
+
+            SendStopTo(timestamp, messagePipesHub.IslandPipe());
+            SendStopTo(timestamp, messagePipesHub.ScenePipe());
+
+            if (settings.SelfSending)
+                SelfSendStopWithDelayAsync(timestamp).Forget();
+        }
+        private void SendStopTo(float timestamp, IMessagePipe messagePipe)
+        {
+            MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
+            emote.Payload.IncrementalId = nextIncrementalId++;
+            emote.Payload.Timestamp = timestamp;
+            emote.Payload.IsStopping = true;
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+        }
+        private async UniTaskVoid SelfSendStopWithDelayAsync(float timestamp)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
+            InboxStop(RemotePlayerMovementComponent.TEST_ID, timestamp);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -107,6 +141,15 @@ namespace DCL.Multiplayer.Emotes
                 float timestamp = receivedMessage.Payload.Timestamp != 0f
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
+
+                if (receivedMessage.Payload is { HasIsStopping: true, IsStopping: true })
+                {
+                    // TODO (Maurizio) remove after tests
+                    Debug.Log($"(Maurizio) Requested to stop emoting on walletId: {receivedMessage.FromWalletId}");
+
+                    InboxStop(receivedMessage.FromWalletId, timestamp);
+                    return;
+                }
 
                 AvatarEmoteMask mask = EnumUtils.FromInt<AvatarEmoteMask>((int)receivedMessage.Payload.Mask);
 
@@ -126,9 +169,18 @@ namespace DCL.Multiplayer.Emotes
                 emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, mask));
         }
 
-        public void SaveForRetry(RemoteEmoteIntention intention)
+        private void InboxStop(string walletId, float timestamp)
         {
-            emoteIntentions.Add(intention);
+            if (messageScheduler.TryPass(walletId, timestamp) == false)
+                return;
+            using (sync.GetScope())
+                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
         }
+
+        public void SaveForRetry(RemoteEmoteIntention intention) =>
+            emoteIntentions.Add(intention);
+
+        public void SaveForRetry(RemoteEmoteStopIntention stopIntention) =>
+            emoteStopIntentions.Add(stopIntention);
     }
 }

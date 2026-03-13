@@ -13,5 +13,6 @@ namespace CrdtEcsBridge.RestrictedActions
         void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition);
         UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask, CancellationToken ct);
         void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask);
+        void StopEmote();
     }
 }

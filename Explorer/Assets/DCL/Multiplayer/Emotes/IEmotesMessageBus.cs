@@ -7,8 +7,11 @@ namespace DCL.Multiplayer.Emotes
     public interface IEmotesMessageBus
     {
         OwnedBunch<RemoteEmoteIntention> EmoteIntentions();
+        OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions();
 
         void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask);
+
+        void SendStop();
 
         void OnPlayerRemoved(string walletId);
 

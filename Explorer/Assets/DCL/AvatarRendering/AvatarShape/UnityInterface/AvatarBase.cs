@@ -164,8 +164,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool IsAnimatorInTag(int hashTag) =>
             AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
 
-        public int GetAnimatorCurrentStateTag() =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
+        public int GetAnimatorCurrentStateTag(string layerName)
+        {
+            int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
+            return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+        }
 
         public void ResetAnimatorTrigger(int hash)
         {
@@ -280,7 +283,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         bool IsAnimatorInTag(int hashTag);
 
-        int GetAnimatorCurrentStateTag();
+        int GetAnimatorCurrentStateTag(string layerName);
 
         void ResetAnimatorTrigger(int hash);
 
