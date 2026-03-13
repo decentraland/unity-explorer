@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Profiles.Tables;
@@ -92,9 +92,9 @@ namespace DCL.Analytics.Systems
             jsonObjectBuilder.Set("jsheap_total_executable", profiler.AllScenesTotalHeapSizeExecutable.ByteToMB());
             jsonObjectBuilder.Set("jsheap_limit", profiler.AllScenesHeapSizeLimit.ByteToMB());
 
-            jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneUsedHeapSize.ByteToMB());
-            jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSize.ByteToMB());
-            jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneHasStats ? 0 : profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB());
+            jsonObjectBuilder.Set("jsheap_used_current_scene", profiler.CurrentSceneHasStats ? profiler.CurrentSceneUsedHeapSize.ByteToMB() : 0);
+            jsonObjectBuilder.Set("jsheap_total_current_scene", profiler.CurrentSceneHasStats ? profiler.CurrentSceneTotalHeapSize.ByteToMB() : 0);
+            jsonObjectBuilder.Set("jsheap_total_executable_current_scene", profiler.CurrentSceneHasStats ? profiler.CurrentSceneTotalHeapSizeExecutable.ByteToMB() : 0);
 
             jsonObjectBuilder.Set("running_v8_engines", profiler.ActiveEngines);
 

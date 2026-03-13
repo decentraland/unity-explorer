@@ -15,6 +15,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PrivateWorlds;
 using DCL.Prefs;
 using Global.AppArgs;
 using Unity.Mathematics;
@@ -27,7 +28,6 @@ namespace DCL.RealmNavigation
     {
         public TeleportController TeleportController { get; private set; }
         public IGlobalRealmController RealmController { get; private set; }
-
         public RealmNavigatorDebugView DebugView { get; private set; }
 
         public static RealmContainer Create(
@@ -41,17 +41,13 @@ namespace DCL.RealmNavigation
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
             TeleportController teleportController,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            IWorldPermissionsService worldPermissionsService)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
-            var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
+            var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
-
-            var assetBundleRegistry =
-                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
-                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
-                    : URLDomain.EMPTY;
 
             var realmController = new RealmController(
                 identityCache,
@@ -67,10 +63,11 @@ namespace DCL.RealmNavigation
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
                 localSceneDevelopment,
-                assetBundleRegistry,
                 appArgs,
                 urlsSource,
-                dclEnvironment
+                dclEnvironment,
+                staticContainer.WorldManifestProvider,
+                worldPermissionsService
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

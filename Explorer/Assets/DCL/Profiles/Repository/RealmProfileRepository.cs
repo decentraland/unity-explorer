@@ -4,17 +4,15 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using ECS;
 using ECS.Prioritization.Components;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading;
 using Unity.Collections;
-using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Pool;
 using Utility;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
@@ -24,16 +22,13 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
-        private readonly int batchMaxSize;
-
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
         private readonly ProfilesAnalytics profilesAnalytics;
-        private readonly IRealmData realm;
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IProfileCache profileCache;
-        private readonly URLBuilder urlBuilder = new ();
-        private readonly Dictionary<string, byte[]> files = new ();
+        private readonly ProfileBuilder profileBuilder = new ();
 
         /// <summary>
         ///     It's a simple list, not a dictionary because the number of different lambdas is very limited
@@ -42,22 +37,19 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
-        // private readonly Dictionary<string, UniTaskCompletionSource> ongoingRequests = new (PoolConstants.AVATARS_COUNT);
-
-        // Catalyst servers requires a face thumbnail texture of 256x256
-        // Otherwise it will fail when the profile is published
-        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
+        private UniTaskCompletionSource? currentProfileResolutionTask;
+        private Profile? currentProfile;
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
-            IRealmData realm,
+            PublishIpfsEntityCommand publishIpfsEntityCommand,
             IDecentralandUrlsSource urlsSource,
             IProfileCache profileCache,
             ProfilesAnalytics profilesAnalytics,
             bool useCentralizedProfiles)
         {
             this.webRequestController = webRequestController;
-            this.realm = realm;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.urlsSource = urlsSource;
             this.profileCache = profileCache;
             this.profilesAnalytics = profilesAnalytics;
@@ -83,40 +75,50 @@ namespace DCL.Profiles
             if (string.IsNullOrEmpty(profile.UserId))
                 throw new ArgumentException("Can't set a profile with an empty UserId");
 
-            IIpfsRealm ipfs = realm.Ipfs;
+            currentProfile = profile;
 
-            // TODO: we are not sure if we will need to keep sending snapshots. In the meantime just use white textures
-            byte[] faceSnapshotTextureFile = whiteTexturePng;
-            byte[] bodySnapshotTextureFile = whiteTexturePng;
+            if (currentProfileResolutionTask != null)
+            {
+                var cancelTask = UniTask.WaitUntilCanceled(ct);
+                await UniTask.WhenAny(currentProfileResolutionTask.Task, cancelTask);
+                return;
+            }
 
-            string faceHash = ipfs.GetFileHash(faceSnapshotTextureFile);
-            string bodyHash = ipfs.GetFileHash(bodySnapshotTextureFile);
-
-            SERIALIZER_SETTINGS.Context = new StreamingContext(0, new ProfileConverter.SerializationContext(faceHash, bodyHash));
-
-            IpfsProfileEntity entity = NewPublishProfileEntity(profile, bodyHash, faceHash);
-
-            files.Clear();
-            files[bodyHash] = bodySnapshotTextureFile;
-            files[faceHash] = faceSnapshotTextureFile;
+            currentProfileResolutionTask = new UniTaskCompletionSource();
 
             try
             {
-                await ipfs.PublishAsync(entity, ct, SERIALIZER_SETTINGS, files);
-                profileCache.Set(profile.UserId, profile);
+                Profile localCurrent;
+                do
+                {
+                    localCurrent = profileBuilder.From(currentProfile).Build();
+
+                    // ADR-290: snapshots are no longer sent during profile deployment
+                    IpfsProfileEntity entity = NewPublishProfileEntity(localCurrent);
+
+                    await publishIpfsEntityCommand.ExecuteAsync(entity, CancellationToken.None, SERIALIZER_SETTINGS);
+                }
+                while (!currentProfile.IsSameProfile(localCurrent));
+
+                profileCache.Set(localCurrent.UserId, currentProfile);
+                currentProfileResolutionTask.TrySetResult();
             }
-            finally { files.Clear(); }
+            catch (Exception e)
+            {
+                currentProfileResolutionTask.TrySetException(e);
+            }
+            finally
+            {
+                currentProfileResolutionTask = null;
+            }
         }
 
-        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile, string bodyHash, string faceHash) =>
+        // ADR-290: content array is empty - no snapshot files are sent
+        private static IpfsProfileEntity NewPublishProfileEntity(Profile profile) =>
             new (string.Empty, profile)
             {
                 version = IpfsProfileEntity.DEFAULT_VERSION,
-                content = new ContentDefinition[]
-                {
-                    new () { file = "body.png", hash = bodyHash },
-                    new () { file = "face256.png", hash = faceHash },
-                },
+                content = Array.Empty<ContentDefinition>(),
                 pointers = new[] { profile.UserId },
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 type = IpfsRealmEntityType.Profile.ToEntityString(),
@@ -159,7 +161,7 @@ namespace DCL.Profiles
         {
             lock (ongoingBatches)
             {
-                for (int i = 0; i < ongoingBatches.Count; i++)
+                for (var i = 0; i < ongoingBatches.Count; i++)
                 {
                     ProfilesBatchRequest profilesBatch = ongoingBatches[i];
 
@@ -186,14 +188,14 @@ namespace DCL.Profiles
         private UniTaskCompletionSource<ProfileTier?> AddToBatch(string userId, URLDomain? fromCatalyst,
             List<ProfilesBatchRequest> requests, ProfileTier.Kind tier, IPartitionComponent partition)
         {
-            fromCatalyst ??= realm.Ipfs.LambdasBaseUrl;
+            fromCatalyst ??= URLDomain.FromString(urlsSource.Url(DecentralandUrl.Lambdas));
 
             ProfilesBatchRequest? batch = null;
 
             lock (requests)
             {
                 // Find the batch with the same lambda URL and the same and or higher tier
-                for (int i = 0; i < requests.Count; i++)
+                for (var i = 0; i < requests.Count; i++)
                 {
                     ProfilesBatchRequest profilesBatch = requests[i];
 
@@ -338,7 +340,6 @@ namespace DCL.Profiles
 
                     if (profile != null)
                         profilesAnalytics.OnProfileResolved(id, false);
-
                 }
                 else
                 {
@@ -384,19 +385,23 @@ namespace DCL.Profiles
 
         private URLAddress GetUrl(string id, URLDomain? fromCatalyst)
         {
-            urlBuilder.Clear();
+            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
 
-            urlBuilder.AppendDomain(fromCatalyst ?? realm.Ipfs.LambdasBaseUrl)
-                      .AppendPath(URLPath.FromString($"profiles/{id}"));
+            urlBuilder.AppendPath(URLPath.FromString($"profiles/{id}"));
 
             return urlBuilder.Build();
         }
 
         public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier)
         {
-            urlBuilder.Clear();
+            if (useCentralizedProfiles)
+                return tier switch
+                       {
+                           ProfileTier.Kind.Compact => URLAddress.FromString(urlsSource.Url(DecentralandUrl.ProfilesMetadata)),
+                           _ => URLAddress.FromString(urlsSource.Url(DecentralandUrl.Profiles)),
+                       };
 
-            urlBuilder.AppendDomain(useCentralizedProfiles ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)) : fromCatalyst ?? realm.Ipfs.LambdasBaseUrl);
+            using PooledObject<URLBuilder> _ = DecentralandUrlsUtils.BuildFromDomain(fromCatalyst?.Value ?? urlsSource.Url(DecentralandUrl.Lambdas), out URLBuilder urlBuilder);
 
             urlBuilder.AppendSubDirectory(URLSubdirectory.FromString("profiles"));
 

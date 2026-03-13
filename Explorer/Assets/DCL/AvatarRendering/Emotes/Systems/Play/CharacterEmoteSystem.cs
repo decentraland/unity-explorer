@@ -9,6 +9,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
@@ -40,7 +41,6 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateAfter(typeof(RemoteEmotesSystem))]
     [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
-    [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
@@ -73,11 +73,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
-            CancelEmotesOnMovePlayerToInvokedQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
-            CancelEmotesByMovementQuery(World);
+            CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
-            ConsumeEmoteIntentQuery(World);
+            ConsumeEmoteIntentQuery(World, t);
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
@@ -87,10 +86,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-        }
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
@@ -98,27 +95,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// </summary>
         [Query]
         [All(typeof(PlayerTeleportIntent))]
-        [None(typeof(CharacterEmoteIntent), typeof(MovePlayerToInfo))]
-        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
-            StopEmote(ref emoteComponent, avatarView);
-        }
-
-        /// <summary>
-        /// Stops emote playback when movePlayerTo is invoked.<br/>
-        /// Will not cancel a scene emote that was triggered the same frame movePlayerTo was invoked.
-        /// </summary>
-        [Query]
-        [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesOnMovePlayerToInvoked(Entity entity, in MovePlayerToInfo movePlayerTo, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
-            if (World.TryGet(entity, out CharacterWaitingSceneEmoteLoading waitingEmote) &&
-                movePlayerTo.FrameCount == waitingEmote.FrameCount)
-                return;
-
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-        }
 
         /// <summary>
         /// Stops emote playback when smooth movement with duration is initiated.
@@ -126,17 +105,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerMoveToWithDurationIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-        }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
-        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
+        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
-        }
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
@@ -172,37 +147,34 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
         }
 
-        /// <summary>
-        /// Cancel the emote whenever:
-        /// - Moving horizontally
-        /// - OR moving up
-        /// - OR falling, which can only be true if the character is NOT grounded
-        ///
-        /// The falling flag is computed that way because it's possible to accumulate large vertical speed after teleporting
-        /// even if the character is actually grounded and not moving down
-        ///
-        /// The JustTeleport tag check is needed because the grounded flag is set to false while we are in that 'just teleported' state.
-        /// </summary>
+        // Related issues:
+        // https://github.com/decentraland/unity-explorer/issues/6246
+        // https://github.com/decentraland/unity-explorer/issues/4306
+        // Following how it works on alternative clients, we should only cancel emotes given on the user's input
+        // and not by the physics velocity. This prevents undesired interruptions like movePlayerTo + triggerEmote simultaneously
+        // or random jumps due to physics imprecision
+        // This is a base on which we can keep growing how scenes may interact with the avatar's emotes
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
-        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
+        private void CancelEmotesByMovementInput(
+            ref CharacterEmoteComponent emoteComponent,
+            in IAvatarView avatarView,
+            ref JumpInputComponent jumpInputComponent,
+            ref MovementInputComponent movementInputComponent,
+            in Profile profile)
         {
-            // The seemingly strange 0.447f value is because we were previously only using the squared threshold, and it was 0.2f
-            // The value 0.447^2 is approximately 0.2f
-            const float SPEED_THRESHOLD = 0.447f;
-            const float SPEED_THRESHOLD_SQ = SPEED_THRESHOLD * SPEED_THRESHOLD;
+            if (!emoteComponent.IsPlayingEmote) return;
 
-            float horizontalSpeedSq = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
-            float verticalSpeed = rigidTransform.GravityVelocity.y;
+            const float HORIZONTAL_THRESHOLD_SQ = 0.1f * 0.1f;
 
-            bool shouldCancelEmote = horizontalSpeedSq > SPEED_THRESHOLD_SQ ||
-                                     // If going up (v speed > 0), cancel the emote
-                                     // Otherwise, we only cancel the emote if not grounded
-                                     // This is because we always have some vertical velocity, even when grounded
-                                     // See ApplyGravity.Execute(), all code paths ultimately add to CharacterRigidTransform.GravityVelocity
-                                     (Mathf.Abs(verticalSpeed) > SPEED_THRESHOLD && (verticalSpeed > 0 || !rigidTransform.IsGrounded));
+            float horizontalSpeedSq = movementInputComponent.Axes.sqrMagnitude;
+            bool shouldCancelEmote = horizontalSpeedSq > HORIZONTAL_THRESHOLD_SQ || jumpInputComponent.IsPressed;
 
-            if (shouldCancelEmote) StopEmote(ref emoteComponent, avatarView);
+            if (!shouldCancelEmote) return;
+
+            ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
+
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,8 +198,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
+        private void ConsumeEmoteIntent([Data] float dt, Entity entity,
+            ref CharacterEmoteComponent emoteComponent,
+            ref CharacterEmoteIntent emoteIntent,
+            in IAvatarView avatarView,
+            ref AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -236,7 +211,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                     avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
@@ -262,9 +237,20 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    // Fixes https://github.com/decentraland/unity-explorer/issues/6531
+                    // Rarely happens for an unknown reason that emote.AssetResults[bodyShape] is null, provoking the emote intent to never finish,
+                    // thus props of the previous emote cannot be disposed either.
+                    // By setting a timeout we force unstuck the process
+                    if (emoteIntent.UpdatePlayTimeout(dt))
+                    {
+                        ReportHub.LogError(GetReportData(), $"Cant play emote {emoteId} timeout reached.");
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
 
-                    //Loading not complete
+                    // Loading not complete
                     if (emote.AssetResults[bodyShape] == null)
                         return;
 
@@ -314,10 +300,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
-        {
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent) =>
             characterController.enabled = !emoteComponent.IsPlayingEmote;
-        }
 
         [Query]
         private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)

@@ -1,6 +1,8 @@
-﻿using DCL.ExplorePanel;
+﻿using DCL.Events;
+using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
+using DCL.Places;
 using DCL.Settings;
 using DCL.Settings.Settings;
 using Newtonsoft.Json.Linq;
@@ -17,6 +19,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private readonly CameraReelGalleryController cameraReelGalleryController;
         private readonly SettingsController settingsController;
 
+        private readonly EventsAnalytics eventsAnalytics;
+        private readonly PlacesAnalytics placesAnalytics;
+
         public ExplorePanelAnalytics(IAnalyticsController analytics, ExplorePanelController controller)
         {
             this.analytics = analytics;
@@ -24,6 +29,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.cameraReelController = controller.CameraReelController;
             this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
             this.settingsController = controller.SettingsController;
+            this.eventsAnalytics = new EventsAnalytics(analytics, controller);
+            this.placesAnalytics = new PlacesAnalytics(analytics, controller);
 
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
@@ -39,6 +46,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;
             cameraReelGalleryController.ScreenshotShared -= TrackScreenshotShared;
             settingsController.ChatBubblesVisibilityChanged -= OnChatBubblesVisibilityChanged;
+            eventsAnalytics.Dispose();
+            placesAnalytics.Dispose();
         }
 
         private void TrackScreenshotDownloaded() =>

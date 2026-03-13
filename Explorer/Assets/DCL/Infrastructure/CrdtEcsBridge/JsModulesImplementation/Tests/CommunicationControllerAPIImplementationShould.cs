@@ -52,7 +52,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
             api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
-                jsOperations);
+                jsOperations, InstancePoolsProvider.Create());
         }
 
         [Test]
@@ -71,7 +71,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             api.SendBinary(outerArray);
             api.GetResult();
 
-            var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
+            var expectedCalls = outerArray
+                               .Select(o => o.Array
+                                             .Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array)
+                                             .Take(o.Length + 1))
+                               .ToList();
 
             // Assert the 2d array is equal
             CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
@@ -98,10 +102,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             // Check events to process
             Assert.AreEqual(1, api.EventsToProcess.Count);
 
-            var eventBytes = new byte[walletBytes.Length + data.Length];
-            api.EventsToProcess[0].ReadBytes(0ul, (ulong)eventBytes.Length, eventBytes, 0ul);
-
-            CollectionAssert.AreEqual(expectedMessage, eventBytes);
+            CollectionAssert.AreEqual(expectedMessage,
+                api.EventsToProcess[0].Array.Take(api.EventsToProcess[0].Length));
         }
 
         [Test]

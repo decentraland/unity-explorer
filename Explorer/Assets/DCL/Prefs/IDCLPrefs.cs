@@ -18,5 +18,11 @@ namespace DCL.Prefs
 
         void Save();
 
+        /// <summary>
+        /// Synchronous save that blocks until data is written to disk.
+        /// Use in OnApplicationQuit or other shutdown paths where async save may not complete.
+        /// </summary>
+        void SaveSync();
+
     }
 }

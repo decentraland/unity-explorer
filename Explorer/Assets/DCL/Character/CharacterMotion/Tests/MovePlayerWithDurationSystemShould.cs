@@ -16,6 +16,7 @@ namespace DCL.CharacterMotion.Tests
     {
         private GameObject characterGameObject;
         private IAvatarView avatarView;
+        private CharacterPlatformComponent platformComponent;
 
         [SetUp]
         public void Setup()
@@ -23,6 +24,7 @@ namespace DCL.CharacterMotion.Tests
             system = new MovePlayerWithDurationSystem(world);
             characterGameObject = new GameObject("TestCharacter");
             avatarView = Substitute.For<IAvatarView>();
+            platformComponent = new CharacterPlatformComponent();
         }
 
         [TearDown]
@@ -37,7 +39,8 @@ namespace DCL.CharacterMotion.Tests
             float duration,
             Vector3? cameraTarget = null,
             Vector3? avatarTarget = null,
-            UniTaskCompletionSource<bool> completionSource = null)
+            UniTaskCompletionSource<bool> completionSource = null,
+            CharacterPlatformComponent customPlatformComponent = null)
         {
             characterGameObject.transform.position = startPosition;
 
@@ -56,6 +59,7 @@ namespace DCL.CharacterMotion.Tests
                 movementInput,
                 jumpInput,
                 moveIntent,
+                customPlatformComponent ?? platformComponent,
                 avatarView
             );
         }
@@ -93,20 +97,6 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(characterGameObject.transform.position, Is.EqualTo(targetPosition));
             Assert.That(world.Has<PlayerMoveToWithDurationIntent>(e), Is.False, "Intent should be removed after completion");
-        }
-
-        [Test]
-        public void AddMovePlayerToInfoWhenComplete()
-        {
-            Vector3 startPosition = Vector3.zero;
-            Vector3 targetPosition = new Vector3(10, 0, 0);
-            float duration = 0.5f;
-
-            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration);
-
-            system.Update(0.5f);
-
-            Assert.That(world.Has<MovePlayerToInfo>(e), Is.True, "MovePlayerToInfo should be added after completion");
         }
 
         [Test]
@@ -238,10 +228,10 @@ namespace DCL.CharacterMotion.Tests
 
             var animationComponent = world.Get<CharacterAnimationComponent>(e);
 
+            Assert.That(animationComponent.States.IsSliding, Is.False, "Should not be sliding");
             Assert.That(animationComponent.States.IsGrounded, Is.True, "Should be grounded during movement");
-            Assert.That(animationComponent.States.IsJumping, Is.False, "Should not be jumping");
+            Assert.That(animationComponent.States.JumpCount, Is.EqualTo(0), "Should not be jumping");
             Assert.That(animationComponent.States.IsFalling, Is.False, "Should not be falling");
-            Assert.That(animationComponent.IsSliding, Is.False, "Should not be sliding");
         }
 
         [Test]
@@ -407,6 +397,129 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(completionSource.Task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(completionSource.Task.GetAwaiter().GetResult(), Is.False);
+        }
+
+        [Test]
+        public void ClearPlatformOnCompletion()
+        {
+            // Arrange
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 0.5f;
+
+            var platformGo = new GameObject("Platform");
+            var platform = new CharacterPlatformComponent
+            {
+                CurrentPlatform = platformGo.transform,
+                PlatformCollider = platformGo.AddComponent<BoxCollider>(),
+                LastAvatarRelativePosition = platformGo.transform.InverseTransformPoint(startPosition),
+            };
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, customPlatformComponent: platform);
+
+            // Act
+            system.Update(0.5f);
+
+            // Assert
+            Assert.That(platform.CurrentPlatform, Is.Null, "Platform should be cleared on completion to prevent snap-back");
+            Assert.That(platform.PlatformCollider, Is.Null, "Platform collider should be cleared on completion");
+            Assert.That(characterGameObject.transform.position, Is.EqualTo(targetPosition), "Position should be at target, not snapped back");
+
+            Object.DestroyImmediate(platformGo);
+        }
+
+        [Test]
+        public void ClearPlatformOnMovementInputInterruption()
+        {
+            // Arrange
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 2f;
+
+            var platformGo = new GameObject("Platform");
+            var platform = new CharacterPlatformComponent
+            {
+                CurrentPlatform = platformGo.transform,
+                PlatformCollider = platformGo.AddComponent<BoxCollider>(),
+                LastAvatarRelativePosition = platformGo.transform.InverseTransformPoint(startPosition),
+            };
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, customPlatformComponent: platform);
+
+            system.Update(0.1f);
+
+            // Act
+            world.Set(e, new MovementInputComponent { Kind = MovementKind.JOG, Axes = new Vector2(1, 0) });
+            system.Update(0.1f);
+
+            // Assert
+            Assert.That(platform.CurrentPlatform, Is.Null, "Platform should be cleared on interruption to prevent snap-back");
+            Assert.That(platform.PlatformCollider, Is.Null, "Platform collider should be cleared on interruption");
+
+            Object.DestroyImmediate(platformGo);
+        }
+
+        [Test]
+        public void ClearPlatformOnJumpInputInterruption()
+        {
+            // Arrange
+            Vector3 startPosition = Vector3.zero;
+            Vector3 targetPosition = new Vector3(10, 0, 0);
+            float duration = 2f;
+
+            var platformGo = new GameObject("Platform");
+            var platform = new CharacterPlatformComponent
+            {
+                CurrentPlatform = platformGo.transform,
+                PlatformCollider = platformGo.AddComponent<BoxCollider>(),
+                LastAvatarRelativePosition = platformGo.transform.InverseTransformPoint(startPosition),
+            };
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, customPlatformComponent: platform);
+
+            system.Update(0.1f);
+
+            // Act
+            world.Set(e, new JumpInputComponent { IsPressed = true });
+            system.Update(0.1f);
+
+            // Assert
+            Assert.That(platform.CurrentPlatform, Is.Null, "Platform should be cleared on jump interruption to prevent snap-back");
+            Assert.That(platform.PlatformCollider, Is.Null, "Platform collider should be cleared on jump interruption");
+
+            Object.DestroyImmediate(platformGo);
+        }
+
+        [Test]
+        public void NotSnapBackToStartPositionWhenPlatformWasActive()
+        {
+            // Arrange: Simulates the exact bug scenario where a player standing on a platform
+            // calls movePlayerTo with duration. The platform's LastAvatarRelativePosition
+            // would cause InterpolateCharacterSystem to snap the player back to the start.
+            Vector3 startPosition = new Vector3(5, 0, 5);
+            Vector3 targetPosition = new Vector3(20, 0, 20);
+            float duration = 1f;
+
+            var platformGo = new GameObject("GroundPlatform");
+            var platform = new CharacterPlatformComponent
+            {
+                CurrentPlatform = platformGo.transform,
+                PlatformCollider = platformGo.AddComponent<BoxCollider>(),
+                LastAvatarRelativePosition = platformGo.transform.InverseTransformPoint(startPosition),
+            };
+
+            Entity e = CreatePlayerEntity(startPosition, targetPosition, duration, customPlatformComponent: platform);
+
+            // Act: Run the movement to completion
+            system.Update(1f);
+
+            // Assert: Player should be at target position with platform cleared
+            Assert.That(characterGameObject.transform.position, Is.EqualTo(targetPosition),
+                "Player must be at target position after movement completes");
+            Assert.That(platform.CurrentPlatform, Is.Null,
+                "Platform must be cleared so InterpolateCharacterSystem doesn't snap the player back to start position");
+
+            Object.DestroyImmediate(platformGo);
         }
     }
 }

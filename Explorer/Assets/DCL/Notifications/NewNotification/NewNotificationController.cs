@@ -29,11 +29,11 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NotificationDefaultThumbnails notificationDefaultThumbnails;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
-        private ImageController thumbnailImageController;
+        private ImageController? thumbnailImageController;
         private ImageController badgeThumbnailImageController;
         private ImageController friendsThumbnailImageController;
         private ImageController marketplaceCreditsThumbnailImageController;
@@ -47,14 +47,14 @@ namespace DCL.Notifications.NewNotification
             NotificationIconTypes notificationIconTypes,
             NotificationDefaultThumbnails notificationDefaultThumbnails,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController,
-            IProfileRepository profileRepository) : base(viewFactory)
+            IProfileRepository profileRepository,
+            ImageControllerProvider imageControllerProvider) : base(viewFactory)
         {
             this.notificationIconTypes = notificationIconTypes;
             this.notificationDefaultThumbnails = notificationDefaultThumbnails;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
-            this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
+            this.imageControllerProvider  = imageControllerProvider;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -62,24 +62,30 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController);
+            thumbnailImageController = imageControllerProvider.Create(viewInstance!.NotificationView.NotificationImage);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
-            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
+            badgeThumbnailImageController = imageControllerProvider.Create(viewInstance.BadgeNotificationView.NotificationImage);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
-            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, webRequestController);
+            friendsThumbnailImageController = imageControllerProvider.Create(viewInstance.FriendsNotificationView.NotificationImage);
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
-            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
+            marketplaceCreditsThumbnailImageController = imageControllerProvider.Create(viewInstance.MarketplaceCreditsNotificationView.NotificationImage);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
-            giftToastImageController = new ImageController(viewInstance.GiftToastView.NotificationImage, webRequestController);
+            giftToastImageController = imageControllerProvider.Create(viewInstance.GiftToastView.NotificationImage);
             viewInstance.GiftToastView.NotificationClicked += ClickedNotification;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITY_VOICE_CHAT))
             {
-                communityThumbnailImageController = new ImageController(viewInstance.CommunityVoiceChatNotificationView.NotificationImage, webRequestController);
+                communityThumbnailImageController = imageControllerProvider.Create(viewInstance.CommunityVoiceChatNotificationView.NotificationImage);
                 viewInstance.CommunityVoiceChatNotificationView.NotificationClicked += ClickedNotification;
             }
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            thumbnailImageController?.Dispose();
         }
 
         private void StopAnimation()
@@ -140,6 +146,9 @@ namespace DCL.Notifications.NewNotification
                     case NotificationType.TRANSFER_RECEIVED:
                         await ProcessGiftNotificationAsync(notification);
                         break;
+                    case NotificationType.TIP_RECEIVED:
+                        await ProcessTipReceivedNotificationAsync(notification);
+                        break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
                         break;
@@ -167,7 +176,7 @@ namespace DCL.Notifications.NewNotification
 
             await AnimateGiftNotificationAsync();
         }
-        
+
         private async UniTaskVoid UpdateGiftSenderNameAsync(GiftToastView view, string address, CancellationToken ct)
         {
             try
@@ -202,7 +211,7 @@ namespace DCL.Notifications.NewNotification
                 await UniTask.Delay(TimeSpan.FromSeconds(ANIMATION_DURATION));
             }
         }
-        
+
         private async UniTask ProcessCommunityVoiceChatStartedNotificationAsync(INotification notification)
         {
             viewInstance!.CommunityVoiceChatNotificationView.HeaderText.text = notification.GetHeader();
@@ -226,6 +235,34 @@ namespace DCL.Notifications.NewNotification
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)viewInstance.transform);
 
             await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessTipReceivedNotificationAsync(INotification notification)
+        {
+            TipReceivedNotification tipReceivedNotification = (TipReceivedNotification)notification;
+
+            if (!tipReceivedNotification.SenderProfile.HasValue)
+            {
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(tipReceivedNotification.Metadata.SenderAddress, CancellationToken.None, batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET);
+                tipReceivedNotification.SenderProfile = profile;
+            }
+
+            viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.FriendsNotificationView.NotificationType = notification.Type;
+            viewInstance.FriendsNotificationView.Notification = notification;
+
+            viewInstance!.FriendsNotificationView.ConfigureFromTipReceivedNotificationData(tipReceivedNotification);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(tipReceivedNotification.GetThumbnail()))
+                friendsThumbnailImageController.RequestImage(tipReceivedNotification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                friendsThumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)

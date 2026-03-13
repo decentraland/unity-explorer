@@ -7,7 +7,6 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DG.Tweening;
@@ -195,7 +194,7 @@ namespace DCL.Communities.CommunitiesBrowser
             communityMembersCountText.gameObject.SetActive(showMembers);
 
             if (showMembers)
-                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
+                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, UIUtils.NumberToCompactString(memberCount));
         }
 
         public void SetInviteOrRequestId(string id) =>

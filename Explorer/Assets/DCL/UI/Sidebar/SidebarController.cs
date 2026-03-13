@@ -8,7 +8,9 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
+using DCL.EventsApi;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -22,9 +24,12 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using ECS;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -49,14 +54,17 @@ namespace DCL.UI.Sidebar
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
-
         private bool includeMarketplaceCredits;
+        private readonly HttpEventsApiService eventsApiService;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource? referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
+        private CancellationTokenSource checkForLiveEventsCts = new ();
 
         public event Action? HelpOpened;
+        public event Action? PlacesOpened;
+        public event Action? EventsOpened;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -78,7 +86,8 @@ namespace DCL.UI.Sidebar
             ISelfProfile selfProfile,
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            HttpEventsApiService eventsApiService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -97,6 +106,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.eventsApiService = eventsApiService;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -109,6 +119,7 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
@@ -159,6 +170,25 @@ namespace DCL.UI.Sidebar
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
 
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER))
+            {
+                viewInstance.placesButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Places).Forget();
+                    PlacesOpened?.Invoke();
+                });
+                viewInstance.eventsButton.onClick.AddListener(() =>
+                {
+                    OpenExplorePanelInSectionAsync(ExploreSections.Events).Forget();
+                    EventsOpened?.Invoke();
+                });
+            }
+            else
+            {
+                viewInstance.placesButton.gameObject.SetActive(false);
+                viewInstance.eventsButton.gameObject.SetActive(false);
+            }
+
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
 
@@ -184,6 +214,8 @@ namespace DCL.UI.Sidebar
             CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
 
             OnChatViewFoldingChanged(true);
+
+            viewInstance.SetLiveEventsCounter(0);
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
@@ -267,6 +299,9 @@ namespace DCL.UI.Sidebar
 
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -304,6 +339,21 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(false);
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Result<IReadOnlyList<EventsApi.EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                                   .SuppressToResultAsync(ReportCategory.EVENTS);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
+                await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
+            }
         }
 
 #region Sidebar button handlers

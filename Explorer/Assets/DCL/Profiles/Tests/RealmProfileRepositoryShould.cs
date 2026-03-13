@@ -2,10 +2,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.DebugUtilities;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.TestSuite;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -33,12 +36,20 @@ namespace DCL.Profiles.Tests
         // 19 profiles
         private List<Profile> dtos;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [SetUp]
         public void SetUp()
         {
             webRequestController = Substitute.For<IWebRequestController>();
             profileCache = Substitute.For<IProfileCache>();
-            repository = new RealmProfileRepository(webRequestController, Substitute.For<IRealmData>(), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(Substitute.For<IDebugContainerBuilder>()), IAnalyticsController.Null), false);
+            repository = new RealmProfileRepository(webRequestController, new PublishIpfsEntityCommand(Substitute.For<IWeb3IdentityCache>(), webRequestController, Substitute.For<IDecentralandUrlsSource>(), Substitute.For<IRealmData>()), Substitute.For<IDecentralandUrlsSource>(), profileCache, new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false);
 
             dtos = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(TEST_PROFILES_JSON), RealmProfileRepository.SERIALIZER_SETTINGS)!;
         }

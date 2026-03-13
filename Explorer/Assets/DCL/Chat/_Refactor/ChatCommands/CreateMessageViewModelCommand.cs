@@ -7,16 +7,17 @@ using DCL.Profiles;
 using DCL.Translation.Service;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System.Threading;
 using DCL.Translation;
+using UnityEngine;
 
 namespace DCL.Chat.ChatCommands
 {
     public class CreateMessageViewModelCommand
     {
+        private readonly Color systemMessageColor = new Color32(12, 222, 0, 255);
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatConfig.ChatConfig chatConfig;
         private readonly ITranslationMemory translationMemory;
@@ -66,7 +67,7 @@ namespace DCL.Chat.ChatCommands
             }
 
             if (message.IsSystemMessage)
-                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true, NameColorHelper.GetNameColor(message.SenderValidatedName)));
+                viewModel.ProfileData.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true, systemMessageColor));
             else
                 FetchProfileAsync(message.SenderWalletAddress, viewModel).Forget();
 

@@ -1,15 +1,148 @@
 using CodeLess.Attributes;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.Utility;
 using Sentry;
+using Sentry.Unity;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics
 {
-    [Singleton]
+    /// <summary>
+    ///     Allows to reference Sentry transaction by a static string value
+    /// </summary>
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
+    public partial class SentryTransactionNameMapping : SentryTransactionMapping<string>
+    {
+        public void StartSentryTransaction(TransactionData transactionData)
+        {
+            ITransactionTracer? transactionTracer = StartSentryTransaction(
+                transactionData.TransactionName,
+                new TransactionContext(transactionData.TransactionName, transactionData.TransactionOperation));
+
+            if (transactionTracer is { IsSampled: true })
+            {
+                if (transactionData.Tags != null)
+                    transactionTracer.SetTags(transactionData.Tags);
+
+                IEnumerable<(string, object)>? extra = transactionData.ExtraData;
+
+                if (extra != null)
+                {
+                    foreach ((string key, object value) in extra)
+                        transactionTracer.SetExtra(key, value);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Allows to reference Sentry transaction by a static <see cref="T" /> value
+    /// </summary>
+    /// <typeparam name="T">Uniquely identifies the underlying transaction</typeparam>
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
+    public partial class SentryTransactionMapping<T>
+    {
+        private readonly ConcurrentDictionary<T, ITransactionTracer> sentryTransactions = new ();
+
+        public bool TryGet(T key, out ITransactionTracer transactionTracer) =>
+            sentryTransactions.TryGetValue(key, out transactionTracer);
+
+        public ITransactionTracer? StartSentryTransaction(T key, TransactionContext context, IReadOnlyDictionary<string, object?>? customSamplingContext = null)
+        {
+            if (sentryTransactions.ContainsKey(key)) return null;
+
+            ITransactionTracer transaction = SentryTransactionManager.Instance.StartSentryTransaction(context, customSamplingContext);
+
+            sentryTransactions.TryAdd(key, transaction);
+            return transaction;
+        }
+
+        public void StartSpan(T transactionKey, SpanData spanData)
+        {
+            if (!sentryTransactions.TryGetValue(transactionKey, out ITransactionTracer transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(StartSpan)}) Transaction '{transactionKey}' not found when starting span '{spanData.SpanName}' (op: {spanData.SpanOperation}, depth: {spanData.Depth})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.StartSpan(transaction, spanData);
+        }
+
+        public void EndCurrentSpan(T transactionName)
+        {
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) Transaction '{transactionName}' not found");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndCurrentSpan(transaction);
+        }
+
+        public void EndSpanOnDepth(T transactionName, int depth)
+        {
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) Transaction '{transactionName}' not found (depth: {depth})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndSpanOnDepth(transaction, depth);
+        }
+
+        public void EndSpanOnDepthWithError(T transactionName, int depth, string errorMessage, Exception? exception = null)
+        {
+            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer? transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) Transaction '{transactionName}' not found (depth: {depth}, error: {errorMessage})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndSpanOnDepthWithError(transaction, depth, errorMessage, exception);
+        }
+
+        public void EndTransaction(T key, SpanStatus finishWithStatus = SpanStatus.Ok)
+        {
+            if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransaction)}) Transaction '{key}' not found (status: {finishWithStatus})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndTransaction(transaction, finishWithStatus);
+        }
+
+        public void EndCurrentSpanWithError(T key, string errorMessage, Exception? exception = null)
+        {
+            if (!sentryTransactions.TryGetValue(key, out ITransactionTracer transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) Transaction '{key}' not found (error: {errorMessage})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndCurrentSpanWithError(transaction, errorMessage, exception);
+        }
+
+        public void EndTransactionWithError(T key, string errorMessage, SpanStatus spanStatus = SpanStatus.UnknownError, Exception? exception = null)
+        {
+            if (!sentryTransactions.TryRemove(key, out ITransactionTracer transaction))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransactionWithError)}) Transaction '{key}' not found (error: {errorMessage})");
+                return;
+            }
+
+            SentryTransactionManager.Instance.EndTransactionWithError(transaction, errorMessage, spanStatus, exception);
+        }
+    }
+
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
     public partial class SentryTransactionManager
     {
         private const string ERROR_COUNT = "error_count";
@@ -18,9 +151,8 @@ namespace DCL.PerformanceAndDiagnostics
         private const string ERROR_EXCEPTION_MESSAGE_TAG = "error.exception_message";
         private const string ERROR_STACK_TAG = "error.stack";
 
-        private readonly Dictionary<string, ITransactionTracer> sentryTransactions = new();
-        private readonly Dictionary<string, int> sentryTransactionErrors = new();
-        private readonly Dictionary<string, Stack<ISpan>> transactionsSpans = new();
+        private readonly ConcurrentDictionary<ITransactionTracer, int> sentryTransactionErrors = new ();
+        private readonly ConcurrentDictionary<ITransactionTracer, Stack<ISpan>> transactionsSpans = new ();
 
         public SentryTransactionManager()
         {
@@ -29,41 +161,34 @@ namespace DCL.PerformanceAndDiagnostics
             Application.quitting += OnApplicationQuitting;
         }
 
-        public void StartSentryTransaction(TransactionData transactionData)
+        // Otherwise Sentry creates a new dictionary for every transaction
+        private static readonly IReadOnlyDictionary<string, object?> NO_CUSTOM_SAMPLING_CONTEXT = new Dictionary<string, object?>();
+
+        public ITransactionTracer StartSentryTransaction(TransactionContext context, IReadOnlyDictionary<string, object?>? customSamplingContext = null)
         {
-            if (sentryTransactions.ContainsKey(transactionData.TransactionName)) return;
+            ITransactionTracer transactionTracer = SentrySdk.StartTransaction(context, customSamplingContext ?? NO_CUSTOM_SAMPLING_CONTEXT);
 
-            ITransactionTracer transactionTracer = SentrySdk.StartTransaction(transactionData.TransactionName, transactionData.TransactionOperation);
-
-            if (transactionData.Tags != null)
-                transactionTracer.SetTags(transactionData.Tags);
-
-            IEnumerable<(string, object)>? extra = transactionData.ExtraData;
-
-            if (extra != null)
+            // It doesn't make sense to store any fuzz if it wasn't sampled
+            if (transactionTracer.IsSampled.GetValueOrDefault())
             {
-                foreach ((string key, object value) in extra)
-                    transactionTracer.SetExtra(key, value);
+                sentryTransactionErrors.TryAdd(transactionTracer, 0);
+                transactionTracer.SetTag(ERROR_COUNT, "0");
             }
 
-            sentryTransactions.Add(transactionData.TransactionName, transactionTracer);
-
-            sentryTransactionErrors.Add(transactionData.TransactionName, 0);
-            transactionTracer.SetTag(ERROR_COUNT, "0");
+            return transactionTracer;
         }
 
-        public void StartSpan(SpanData spanData)
-        {
-            if (!sentryTransactions.TryGetValue(spanData.TransactionName, out ITransactionTracer transaction))
-            {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{spanData.TransactionName}' not found");
-                return;
-            }
+        private static readonly ThreadSafeObjectPool<Stack<ISpan>> SPAN_STACK_POOL = new (() => new Stack<ISpan>(1), actionOnRelease: s => s.Clear(), collectionCheck: PoolConstants.CHECK_COLLECTIONS);
 
-            if (!transactionsSpans.TryGetValue(spanData.TransactionName, out Stack<ISpan> spanStack))
+        public ISpan? StartSpan(ITransactionTracer transaction, SpanData spanData)
+        {
+            if (!transaction.IsSampled.GetValueOrDefault())
+                return null;
+
+            if (!transactionsSpans.TryGetValue(transaction, out Stack<ISpan> spanStack))
             {
-                spanStack = new Stack<ISpan>();
-                transactionsSpans[spanData.TransactionName] = spanStack;
+                spanStack = SPAN_STACK_POOL.Get();
+                transactionsSpans[transaction] = spanStack;
             }
 
             if (spanStack.Count > 0 && spanData.Depth < spanStack.Count)
@@ -76,19 +201,24 @@ namespace DCL.PerformanceAndDiagnostics
             ISpan newSpan = parentSpan.StartChild(spanData.SpanOperation, spanData.SpanName);
 
             spanStack.Push(newSpan);
+
+            return newSpan;
         }
 
-        public void EndCurrentSpan(string transactionName)
+        public void EndCurrentSpan(ITransactionTracer transaction)
         {
-            if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            if (!transaction.IsSampled.GetValueOrDefault())
+                return;
+
+            if (!transactionsSpans.TryGetValue(transaction, out Stack<ISpan> spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) No span stack found for transaction '{transaction.Name}'");
                 return;
             }
 
             if (spanStack.Count == 0)
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpan)}) Span stack is empty for transaction '{transaction.Name}' — nothing to close");
                 return;
             }
 
@@ -96,12 +226,75 @@ namespace DCL.PerformanceAndDiagnostics
             currentSpan.Finish();
         }
 
-        public void EndTransaction(string transactionName, SpanStatus finishWithStatus = SpanStatus.Ok)
+        public void EndSpanOnDepth(ITransactionTracer transaction, int depth)
         {
-            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-            {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
+            if (!transaction.IsSampled.GetValueOrDefault())
                 return;
+
+            if (depth < 1)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) Invalid depth '{depth}' for transaction '{transaction.Name}'. Depth must be >= 1");
+                return;
+            }
+
+            if (!transactionsSpans.TryGetValue(transaction, out Stack<ISpan> spanStack))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepth)}) No span stack found for transaction '{transaction.Name}' (depth: {depth})");
+                return;
+            }
+
+            // Stack count is depth+1 (depth 0 => count 1), so close while current depth >= target.
+            while (spanStack.Count > depth)
+            {
+                ISpan span = spanStack.Pop();
+                span.Finish();
+            }
+        }
+
+        public void EndSpanOnDepthWithError(ITransactionTracer transactionTracer, int depth, string errorMessage, Exception? exception = null)
+        {
+            if (!transactionTracer.IsSampled.GetValueOrDefault())
+                return;
+
+            if (depth < 1)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) Invalid depth '{depth}' for transaction '{transactionTracer.Name}'. Depth must be >= 1");
+                return;
+            }
+
+            if (!transactionsSpans.TryGetValue(transactionTracer, out Stack<ISpan> spanStack))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndSpanOnDepthWithError)}) No span stack found for transaction '{transactionTracer.Name}' (depth: {depth}, error: {errorMessage})");
+                return;
+            }
+
+            int closedSpans = 0;
+
+            // Stack count is depth+1 (depth 0 => count 1), so close while current depth >= target.
+            while (spanStack.Count > depth)
+            {
+                ISpan span = spanStack.Pop();
+                FinishSpanWithError(span, errorMessage, exception);
+                closedSpans++;
+            }
+
+            if (closedSpans > 0 && sentryTransactionErrors.TryGetValue(transactionTracer, out int currentErrorCount))
+            {
+                int errorsCount = currentErrorCount + closedSpans;
+                sentryTransactionErrors[transactionTracer] = errorsCount;
+                transactionTracer.SetTag(ERROR_COUNT, errorsCount.ToString());
+            }
+        }
+
+        public bool EndTransaction(ITransactionTracer transaction, SpanStatus finishWithStatus = SpanStatus.Ok)
+        {
+            if (!transaction.IsSampled.GetValueOrDefault())
+                return false;
+
+            if (!transactionsSpans.TryRemove(transaction, out Stack<ISpan>? spanStack))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransaction)}) No span stack found for transaction '{transaction.Name}' (status: {finishWithStatus})");
+                return false;
             }
 
             // Inherit the errors from the last failed span if the status is not ok
@@ -120,45 +313,44 @@ namespace DCL.PerformanceAndDiagnostics
                 }
             }
 
-            if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            while (spanStack.Count > 0)
             {
-                while (spanStack.Count > 0)
-                {
-                    ISpan span = spanStack.Pop();
-                    span.Finish(finishWithStatus);
-                }
+                ISpan span = spanStack.Pop();
+                span.Finish(finishWithStatus);
             }
+
+            SPAN_STACK_POOL.Release(spanStack);
 
             transaction.Finish(finishWithStatus);
 
-            sentryTransactions.Remove(transactionName);
-            transactionsSpans.Remove(transactionName);
+            sentryTransactionErrors.TryRemove(transaction, out _);
+            return true;
         }
 
         private static void CopyTag(ISpan from, ISpan to, string tag)
         {
-            from.Finish();
-
             if (from.Tags.TryGetValue(tag, out string tagValue))
                 to.SetTag(tag, tagValue);
         }
 
-        public void EndTransactionWithError(string transactionName, string errorMessage, Exception? exception = null)
+        public void EndTransactionWithError(ITransactionTracer transaction, string errorMessage, SpanStatus spanStatus = SpanStatus.UnknownError, Exception? exception = null)
         {
-            if (!sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
+            if (!transaction.IsSampled.GetValueOrDefault())
+                return;
+
+            if (!transactionsSpans.TryRemove(transaction, out Stack<ISpan>? spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Transaction '{transactionName}' not found");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndTransactionWithError)}) No span stack found for transaction '{transaction.Name}' (error: {errorMessage})");
                 return;
             }
 
-            if (transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            while (spanStack.Count > 0)
             {
-                while (spanStack.Count > 0)
-                {
-                    ISpan span = spanStack.Pop();
-                    span.Finish();
-                }
+                ISpan span = spanStack.Pop();
+                span.Finish();
             }
+
+            SPAN_STACK_POOL.Release(spanStack);
 
             // Set the transaction status to error and add error information
             transaction.SetTag("status", "error");
@@ -168,55 +360,54 @@ namespace DCL.PerformanceAndDiagnostics
             {
                 transaction.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
                 transaction.SetTag(ERROR_STACK_TAG, exception.StackTrace);
-                transaction.Finish(exception, SpanStatus.InternalError);
+                transaction.Finish(exception);
             }
-            else
-            {
-                transaction.Finish(SpanStatus.UnknownError);
-            }
+            else { transaction.Finish(spanStatus); }
 
-
-            sentryTransactions.Remove(transactionName);
-            transactionsSpans.Remove(transactionName);
+            sentryTransactionErrors.Remove(transaction, out _);
         }
 
-        public void EndCurrentSpanWithError(string transactionName, string errorMessage, Exception? exception = null)
+        public void EndCurrentSpanWithError(ITransactionTracer transactionTracer, string errorMessage, Exception? exception = null)
         {
-            if (sentryTransactionErrors.TryGetValue(transactionName, out int currentErrorCount))
+            if (sentryTransactionErrors.TryGetValue(transactionTracer, out int currentErrorCount))
             {
-                sentryTransactionErrors[transactionName] = currentErrorCount + 1;
+                int errorsCount = currentErrorCount + 1;
+                sentryTransactionErrors[transactionTracer] = errorsCount;
 
-                if(sentryTransactions.TryGetValue(transactionName, out ITransactionTracer transaction))
-                    transaction.SetTag(ERROR_COUNT, sentryTransactionErrors[transactionName].ToString());
+                transactionTracer.SetTag(ERROR_COUNT, errorsCount.ToString());
             }
 
-            if (!transactionsSpans.TryGetValue(transactionName, out Stack<ISpan> spanStack))
+            if (!transactionsSpans.TryGetValue(transactionTracer, out Stack<ISpan> spanStack))
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No spans found for transaction '{transactionName}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) No span stack found for transaction '{transactionTracer.Name}' (error: {errorMessage})");
                 return;
             }
 
             if (spanStack.Count == 0)
             {
-                ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"No active spans to end for transaction '{transactionName}'");
+                ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(EndCurrentSpanWithError)}) Span stack is empty for transaction '{transactionTracer.Name}' — nothing to close (error: {errorMessage})");
                 return;
             }
 
             ISpan currentSpan = spanStack.Pop();
+            FinishSpanWithError(currentSpan, errorMessage, exception);
+        }
 
-            currentSpan.SetTag("status", "error");
-            currentSpan.SetTag(ERROR_MESSAGE_TAG, errorMessage);
+        private static void FinishSpanWithError(ISpan span, string errorMessage, Exception? exception = null)
+        {
+            span.SetTag("status", "error");
+            span.SetTag(ERROR_MESSAGE_TAG, errorMessage);
 
             if (exception != null)
             {
-                currentSpan.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
-                currentSpan.SetTag(ERROR_EXCEPTION_MESSAGE_TAG, exception.Message);
-                currentSpan.SetTag(ERROR_STACK_TAG, exception.StackTrace);
-                currentSpan.Finish(exception, SpanStatus.InternalError);
+                span.SetTag(ERROR_TYPE_TAG, exception.GetType().Name);
+                span.SetTag(ERROR_EXCEPTION_MESSAGE_TAG, exception.Message);
+                span.SetTag(ERROR_STACK_TAG, exception.StackTrace);
+                span.Finish(exception, SpanStatus.InternalError);
             }
             else
             {
-                currentSpan.Finish(SpanStatus.UnknownError);
+                span.Finish(SpanStatus.UnknownError);
             }
         }
 
@@ -227,9 +418,9 @@ namespace DCL.PerformanceAndDiagnostics
 
         private void FinishAllTransactions()
         {
-            var transactionKeys = new List<string>(sentryTransactions.Keys);
+            var transactionKeys = new List<ITransactionTracer>(transactionsSpans.Keys);
 
-            foreach (string transactionKey in transactionKeys)
+            foreach (ITransactionTracer transactionKey in transactionKeys)
             {
                 try
                 {
@@ -237,7 +428,7 @@ namespace DCL.PerformanceAndDiagnostics
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.Log(new ReportData(ReportCategory.ANALYTICS), $"Error finishing transaction '{transactionKey}' during application quit: {ex.Message}");
+                    ReportHub.LogWarning(new ReportData(ReportCategory.ANALYTICS), $"({nameof(FinishAllTransactions)}) Error finishing transaction '{transactionKey.Name}' during application quit: {ex.Message}");
                 }
             }
         }
@@ -253,7 +444,6 @@ namespace DCL.PerformanceAndDiagnostics
 
     public struct SpanData
     {
-        public string TransactionName;
         public string SpanName;
         public string SpanOperation;
         public int Depth;

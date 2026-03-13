@@ -140,7 +140,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private static PlayerOriginRaycastResultForSceneEntities GetRaycastAt(float distance)
         {
             var raycastResult = new PlayerOriginRaycastResultForSceneEntities();
-            raycastResult.SetupHit(new RaycastHit { distance = distance }, default(GlobalColliderSceneEntityInfo), distance);
+            raycastResult.SetupHit(new RaycastHit { distance = distance }, default(GlobalColliderSceneEntityInfo), distance, distance);
             return raycastResult;
         }
     }

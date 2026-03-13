@@ -1,7 +1,10 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
+using DCL.FeatureFlags;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
+using Global.AppArgs;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -43,6 +46,21 @@ namespace ECS.TestSuite
             materialComponent.Result = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
             world.Add(entity, materialComponent);
             return materialComponent;
+        }
+
+        public static void SetUpFeaturesRegistry(params string[] flags)
+        {
+            var featureFlagsDto = new FeatureFlagsResultDto { flags = new Dictionary<string, bool>() };
+            foreach (string flag in flags) featureFlagsDto.flags.Add(flag, true);
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(featureFlagsDto));
+
+            FeaturesRegistry.Initialize(new FeaturesRegistry(new ApplicationParametersParser(), false));
+        }
+
+        public static void TearDownFeaturesRegistry()
+        {
+            FeatureFlagsConfiguration.Reset();
+            FeaturesRegistry.Reset();
         }
     }
 }

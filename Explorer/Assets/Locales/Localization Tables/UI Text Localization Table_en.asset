@@ -44,6 +44,14 @@ MonoBehaviour:
     m_Localized: Communities
     m_Metadata:
       m_Items: []
+  - m_Id: 294575855150305280
+    m_Localized: Places
+    m_Metadata:
+      m_Items: []
+  - m_Id: 301924463168196608
+    m_Localized: Events
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

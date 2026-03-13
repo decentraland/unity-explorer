@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests;
@@ -8,28 +9,26 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
     public static class AssetBundleRegistryVersionHelper
     {
-        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), ub => ub.Clear() , defaultCapacity: 2);
         private static readonly IExtendedObjectPool<StringBuilder> STRING_BUILDER_POOL = new ExtendedObjectPool<StringBuilder>(() => new StringBuilder(), sb => sb.Clear(), defaultCapacity: 2);
         private static readonly ThreadSafeListPool<ABVersionsResponse> DTO_POOL = new (25, 50);
 
         public static async UniTask<AssetBundlesVersions> GetABRegistryVersionsByPointersAsync(
             URN[] pointers,
             IWebRequestController webRequestController,
-            URLDomain assetBundleRegistryVersionURL,
+            string assetBundleRegistryVersionURL,
             ReportData reportCategory,
             CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
-            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
+            using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleRegistryVersionURL, out URLBuilder urlBuilder);
             using var sbScope = STRING_BUILDER_POOL.Get(out var bodyBuilder);
-
-            urlBuilder.AppendDomain(assetBundleRegistryVersionURL);
 
             bodyBuilder.Append("{\"pointers\":[");
 

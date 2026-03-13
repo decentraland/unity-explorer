@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Audio;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.WebRequests;
 using LiveKit.Internal;
@@ -53,17 +53,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
+
         private readonly string logPrefix;
-
         private readonly InteriorRoom room = new ();
-
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
-
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
-
         private readonly IObjectPool<IRoom> roomPool;
+        private readonly bool isDuplicateIdentityStopFeatureEnabled;
 
         private CancellationTokenSource? cancellationTokenSource;
         private bool isDuplicateIdentityDetected;
@@ -72,6 +69,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected ConnectiveRoom()
         {
+            isDuplicateIdentityStopFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY);
+
             logPrefix = GetType().Name;
 
             roomPool = new ObjectPool<IRoom>(() =>
@@ -166,9 +165,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
             }
 
-            if (isDuplicateIdentityDetected)
+
+            if (isDuplicateIdentityDetected && isDuplicateIdentityStopFeatureEnabled)
             {
-                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity detected, stopping reconnection loop");
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity detected, stopping reconnection loop");
                 connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
                 attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
             }
@@ -189,8 +189,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    // When we receive a 403 Forbidden Access error, we have to set the attempt to connect state to FORBIDDEN_ACCESS
-                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                    // World content server scene comms can return 401 for denied access, while older flows returned 403.
+                    // Both should trigger the forbidden-access recovery path (used by scene-ban handling).
+                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS or WebRequestUtils.UNAUTHORIZED_ACCESS })
                         OnForbiddenAccess();
 
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
@@ -220,6 +221,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{logPrefix} - Trying to disconnect current room finished");
+        }
+
+        protected void SetNoConnectionRequired()
+        {
+            attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
         }
 
         protected async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
@@ -294,13 +300,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             return (connectResult, roomSelection);
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is DisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();
-                ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity disconnect reason received, interrupting reconnection attempts");
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - DuplicateIdentity disconnect reason received, interrupting reconnection attempts");
             }
         }
     }

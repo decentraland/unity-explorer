@@ -8,6 +8,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
@@ -20,10 +21,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private const string COMPONENT_NAME = "UIText";
 
         private readonly IComponentPool<Label> labelsPool;
+        private readonly StyleFontDefinition[] styleFontDefinitions;
 
-        public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry, in StyleFontDefinition[] styleFontDefinitions) : base(world)
         {
             labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
+            this.styleFontDefinitions = styleFontDefinitions;
         }
 
         protected override void Update(float t)
@@ -53,7 +56,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent);
+            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent, in styleFontDefinitions);
             sdkModel.IsDirty = false;
         }
     }

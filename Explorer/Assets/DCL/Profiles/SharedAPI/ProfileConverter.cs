@@ -1,6 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Utilities;
+using DCL.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,16 +17,11 @@ namespace DCL.Profiles
     [Preserve]
     public class ProfileConverter : JsonConverter<Profile>
     {
-        public readonly struct SerializationContext
-        {
-            public readonly string FaceHash;
-            public readonly string BodyHash;
+        private readonly bool includeSnapshots;
 
-            public SerializationContext(string faceHash, string bodyHash)
-            {
-                FaceHash = faceHash;
-                BodyHash = bodyHash;
-            }
+        public ProfileConverter(bool includeSnapshots = false)
+        {
+            this.includeSnapshots = includeSnapshots;
         }
 
         public override void WriteJson(JsonWriter writer, Profile? value, JsonSerializer serializer)
@@ -40,7 +35,7 @@ namespace DCL.Profiles
             writer.WriteStartObject();
             writer.WritePropertyName("avatars");
             writer.WriteStartArray();
-            SerializeProfile(writer, serializer.Context.Context as SerializationContext?, value);
+            SerializeProfile(writer, value);
             writer.WriteEndArray();
             writer.WriteEndObject();
         }
@@ -113,7 +108,7 @@ namespace DCL.Profiles
             profile.Hobbies = jObject["hobbies"]?.Value<string>() ?? "";
 
             long birthdate = jObject["birthDate"]?.Value<long>() ?? 0;
-            profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).DateTime : null;
+            profile.Birthdate = birthdate != 0 ? DateTimeOffset.FromUnixTimeSeconds(birthdate).UtcDateTime : null;
 
             DeserializeLinks(jObject["links"]!, ref profile.links);
             DeserializeArrayToCollection(jObject["blocked"], ref profile.blocked, static s => s);
@@ -145,9 +140,9 @@ namespace DCL.Profiles
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
 
-            avatar.EyesColor = DeserializeColor(jObject["eyes"]?["color"], Color.black);
-            avatar.HairColor = DeserializeColor(jObject["hair"]?["color"], Color.black);
-            avatar.SkinColor = DeserializeColor(jObject["skin"]?["color"], Color.black);
+            avatar.EyesColor = JsonUtils.DeserializeColor(jObject["eyes"]?["color"], Color.black);
+            avatar.HairColor = JsonUtils.DeserializeColor(jObject["hair"]?["color"], Color.black);
+            avatar.SkinColor = JsonUtils.DeserializeColor(jObject["skin"]?["color"], Color.black);
 
             avatar.BodyShape = BodyShape.FromStringSafe(jObject["bodyShape"]?.Value<string>() ?? "");
 
@@ -176,18 +171,6 @@ namespace DCL.Profiles
                     equippedEmotes[slot] = urn;
                 }
             }
-        }
-
-        private Color DeserializeColor(JToken? jObject, Color color)
-        {
-            if (jObject == null) return color;
-
-            color.r = jObject["r"]?.Value<float>() ?? 0;
-            color.g = jObject["g"]?.Value<float>() ?? 0;
-            color.b = jObject["b"]?.Value<float>() ?? 0;
-            color.a = jObject["a"]?.Value<float>() ?? 1;
-
-            return color;
         }
 
         private void DeserializeArrayToHashSet<TResult>(JToken? token, HashSet<TResult> set, Func<string, TResult> selector)
@@ -225,7 +208,7 @@ namespace DCL.Profiles
             }
         }
 
-        private void SerializeProfile(JsonWriter writer, SerializationContext? context, Profile profile)
+        private void SerializeProfile(JsonWriter writer, Profile profile)
         {
             writer.WriteStartObject();
 
@@ -260,7 +243,7 @@ namespace DCL.Profiles
             writer.WriteValue(profile.HasConnectedWeb3);
 
             writer.WritePropertyName("avatar");
-            SerializeAvatar(writer, context, profile);
+            SerializeAvatar(writer, profile);
 
             writer.WritePropertyName("country");
             writer.WriteValue(profile.Country);
@@ -293,7 +276,7 @@ namespace DCL.Profiles
             writer.WriteValue(profile.Hobbies);
 
             writer.WritePropertyName("birthDate");
-            writer.WriteValue(profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value).ToUnixTimeSeconds() : 0);
+            writer.WriteValue(profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value, TimeSpan.Zero).ToUnixTimeSeconds() : 0);
 
             writer.WritePropertyName("links");
             SerializeLinks(writer, profile.links);
@@ -304,10 +287,17 @@ namespace DCL.Profiles
             writer.WritePropertyName("interests");
             SerializeCollectionToArray(writer, profile.interests);
 
+            if (profile is { HasClaimedName: true, ClaimedNameColor: not null })
+            {
+                writer.WritePropertyName("nameColor");
+                JsonUtils.SerializeColor(writer, profile.ClaimedNameColor.Value);
+            }
+
             writer.WriteEndObject();
         }
 
-        private void SerializeAvatar(JsonWriter writer, SerializationContext? context, Profile profile)
+        // ADR-290: snapshots property removed - no longer sent during profile deployment
+        private void SerializeAvatar(JsonWriter writer, Profile profile)
         {
             Avatar avatar = profile.Avatar;
 
@@ -325,47 +315,38 @@ namespace DCL.Profiles
             writer.WritePropertyName("emotes");
             SerializeEmoteList(writer, avatar.emotes);
 
-            writer.WritePropertyName("snapshots");
-            writer.WriteStartObject();
+            // Fixes https://github.com/decentraland/unity-explorer/issues/6841
+            // We need to propagate the snapshots to the scenes
+            if (includeSnapshots)
+            {
+                writer.WritePropertyName("snapshots");
+                writer.WriteStartObject();
 
-            writer.WritePropertyName("face256");
-            writer.WriteValue(context?.FaceHash ?? profile.GetCompact().FaceSnapshotUrl.Value);
-            writer.WritePropertyName("body");
-            writer.WriteValue(context?.BodyHash ?? profile.Avatar.BodySnapshotUrl.Value);
-            writer.WriteEndObject();
+                writer.WritePropertyName("face256");
+                writer.WriteValue(profile.Compact.FaceSnapshotUrl);
+                writer.WritePropertyName("body");
+                writer.WriteValue(avatar.BodySnapshotUrl);
+                writer.WriteEndObject();
+            }
 
             writer.WritePropertyName("eyes");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.EyesColor);
+            JsonUtils.SerializeColor(writer, avatar.EyesColor);
             writer.WriteEndObject();
 
             writer.WritePropertyName("hair");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.HairColor);
+            JsonUtils.SerializeColor(writer, avatar.HairColor);
             writer.WriteEndObject();
 
             writer.WritePropertyName("skin");
             writer.WriteStartObject();
             writer.WritePropertyName("color");
-            SerializeColor(writer, avatar.SkinColor);
+            JsonUtils.SerializeColor(writer, avatar.SkinColor);
             writer.WriteEndObject();
 
-            writer.WriteEndObject();
-        }
-
-        private void SerializeColor(JsonWriter writer, Color color)
-        {
-            writer.WriteStartObject();
-            writer.WritePropertyName("r");
-            writer.WriteValue(color.r);
-            writer.WritePropertyName("g");
-            writer.WriteValue(color.g);
-            writer.WritePropertyName("b");
-            writer.WriteValue(color.b);
-            writer.WritePropertyName("a");
-            writer.WriteValue(color.a);
             writer.WriteEndObject();
         }
 

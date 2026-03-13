@@ -6,9 +6,8 @@ using DCL.Utilities;
 using DCL.Utility.Types;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -51,10 +50,12 @@ namespace Global.Dynamic.Landscapes
                 worldsTerrain.SwitchVisibility(false);
 
                 if (!genesisTerrain.IsTerrainGenerated)
-                    await genesisTerrain.GenerateGenesisTerrainAndShowAsync(processReport: landscapeLoadReport,
+                    await genesisTerrain.GenerateGenesisTerrainAndShowAsync(
+                        realmController.RealmData.WorldManifest,
+                        processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
-                    await genesisTerrain.ShowAsync(landscapeLoadReport);
+                    await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
             }
             else
             {
@@ -63,7 +64,7 @@ namespace Global.Dynamic.Landscapes
                 if (realmController.RealmData.IsLocalScene())
                     await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
                 else
-                    await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
+                    await GenerateFixedScenesTerrainAsync(realmController.RealmData.WorldManifest, landscapeLoadReport, ct);
             }
 
             TerrainLoaded?.Invoke(CurrentTerrain);
@@ -111,23 +112,29 @@ namespace Global.Dynamic.Landscapes
             }
         }
 
-        private async UniTask GenerateFixedScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        private async UniTask GenerateFixedScenesTerrainAsync(WorldManifest worldManifest, AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
                 return;
 
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
+            if (!worldManifest.IsEmpty)
+            {
+                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
+                return;
+            }
+
+            List<SceneEntityDefinition> sceneEntityDefinitions = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var parcelsAmount = 0;
 
-            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
+            foreach (SceneEntityDefinition sceneEntity in sceneEntityDefinitions)
+                parcelsAmount += sceneEntity.metadata.scene.DecodedParcels.Count;
 
             using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
-                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                foreach (SceneEntityDefinition sceneEntity in sceneEntityDefinitions)
                 {
-                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                    foreach (Vector2Int parcel in sceneEntity.metadata.scene.DecodedParcels)
                         parcels.Add(parcel.ToInt2());
                 }
 

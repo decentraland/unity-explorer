@@ -28,6 +28,7 @@ using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Utils;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -42,18 +43,21 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using Newtonsoft.Json.Linq;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using MVC;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
+using ECS;
+using System.IO;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -82,12 +86,14 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private FileStream? singleInstanceLock;
 
         private void Awake()
         {
@@ -119,12 +125,17 @@ namespace Global.Dynamic
             }
 
             bootstrapContainer?.Dispose();
+            splashScreen.Dispose();
 
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
         private void OnApplicationQuit()
         {
+            // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
+            try { singleInstanceLock?.Dispose(); }
+            catch { }
+
             DisableAllSelectableTransitions();
         }
 
@@ -150,6 +161,8 @@ namespace Global.Dynamic
 #endif
             );
 
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
@@ -169,7 +182,8 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
+            var realmData = new RealmData();
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -180,10 +194,6 @@ namespace Global.Dynamic
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
-            var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var cdpClient = ChromeDevtoolProtocolClient.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget);
-            var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
@@ -193,13 +203,12 @@ namespace Global.Dynamic
                 debugSettings,
                 sceneLoaderSettings: settings,
                 decentralandUrlsSource,
-                webRequestsContainer,
+                debugContainer,
                 identityCache,
                 globalPluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
                 splashScreen.Value,
-                realmUrls,
                 diskCache,
                 partialsDiskCache,
                 world,
@@ -214,6 +223,12 @@ namespace Global.Dynamic
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
 
+                if (ShouldForceSingleRunningInstance(applicationParametersParser))
+                {
+                    await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
+                    return;
+                }
+
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
@@ -224,7 +239,7 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, playerEntity, memoryCap, applicationParametersParser, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -261,7 +276,10 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
-                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
+                var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
+
+                if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                    await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -278,7 +296,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -340,6 +358,35 @@ namespace Global.Dynamic
             }
         }
 
+        private async UniTask ShowSingleRunningInstancePopupAsync(AddressablesProvisioner assetsProvisioner, CancellationToken ct)
+        {
+            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value.GetComponent<ErrorPopupView>();
+            ErrorPopupView popup = Instantiate(prefab);
+            popup.OkButton.onClick.AddListener(ExitUtils.Exit);
+        }
+
+        private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
+        {
+#if UNITY_EDITOR
+            return false;
+#endif
+            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
+
+            try
+            {
+                string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+
+                // Note that FileShare.None should lock the file to other processes, and it does,
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                singleInstanceLock.Lock(0, 0);
+            }
+            catch (IOException) { return true; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
+
+            return false;
+        }
+
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
@@ -351,7 +398,7 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
+        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
                 new UnitySystemInfoProvider(),
@@ -369,11 +416,31 @@ namespace Global.Dynamic
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
+            UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
+
+            var specsProperties = new JObject
+            {
+                ["meets_requirements"] = hasMinimumSpecs,
+            };
+
+            foreach (SpecResult result in minimumSpecsGuard.Results)
+            {
+                string categoryKey = result.Category.ToString().ToLowerInvariant();
+                specsProperties[$"{categoryKey}_met"] = result.IsMet;
+
+                if (!result.IsMet)
+                {
+                    specsProperties[$"{categoryKey}_required"] = result.Required;
+                    specsProperties[$"{categoryKey}_actual"] = result.Actual;
+                }
+            }
+
+            analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
-                return;
+                return minimumSpecsGuard.Results;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
                                                  .AssetsProvisioner!
@@ -387,6 +454,37 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;
+
+            return minimumSpecsGuard.Results;
+        }
+
+        private async UniTask BlockOnInsufficientDiskSpaceAsync(IReadOnlyList<SpecResult> specResults, IAppArgs applicationParametersParser, CancellationToken ct)
+        {
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_CHECK_DISK_SPACE);
+            bool storageMet = true;
+
+            foreach (SpecResult result in specResults)
+            {
+                if (result.Category == SpecCategory.Storage)
+                {
+                    storageMet = result.IsMet;
+                    break;
+                }
+            }
+
+            if (storageMet && !forceShow)
+                return;
+
+            var insufficientDiskSpacePrefab = await bootstrapContainer!
+                                                   .AssetsProvisioner!
+                                                   .ProvideMainAssetAsync(dynamicSettings.InsufficientDiskSpaceScreenPrefab, ct);
+
+            ControllerBase<InsufficientDiskSpaceScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                InsufficientDiskSpaceScreenController.CreateLazily(insufficientDiskSpacePrefab.Value.GetComponent<InsufficientDiskSpaceScreenView>(), null);
+
+            var controller = new InsufficientDiskSpaceScreenController(viewFactory);
+            dynamicWorldContainer!.MvcManager.RegisterController(controller);
+            await dynamicWorldContainer!.MvcManager.ShowAsync(InsufficientDiskSpaceScreenController.IssueCommand(), ct);
         }
 
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
@@ -434,7 +532,9 @@ namespace Global.Dynamic
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (!Application.isEditor)
-                runVersionControl = !applicationParametersParser.HasDebugFlag() && !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK);
+                runVersionControl = !applicationParametersParser.HasDebugFlag() &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK) &&
+                                    !applicationParametersParser.HasFlag(AppArgsFlags.AUTOPILOT);
 
             if (!runVersionControl)
                 return false;
@@ -576,6 +676,7 @@ namespace Global.Dynamic
             if (uri.Host == "realm-provider-ea.decentraland.org") return true;
             if (uri.Host == "realm-provider-ea.decentraland.zone") return true;
             if (uri.Host == "worlds-content-server.decentraland.org") return true;
+            if (uri.Host == "worlds-content-server.decentraland.zone") return true;
 
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
@@ -627,7 +728,7 @@ namespace Global.Dynamic
         private static void DisableAllSelectableTransitions()
         {
             DOTween.KillAll();
-            Selectable[] all = FindObjectsByType<UnityEngine.UI.Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
+            Selectable[] all = FindObjectsByType<Selectable>(FindObjectsInactive.Include, FindObjectsSortMode.None) ?? Array.Empty<Selectable>();
 
             foreach (var s in all)
             {

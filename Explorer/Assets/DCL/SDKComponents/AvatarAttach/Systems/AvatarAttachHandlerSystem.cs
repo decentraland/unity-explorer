@@ -1,6 +1,9 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
@@ -8,7 +11,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
-using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -17,6 +19,9 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -31,18 +36,24 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly ExposedTransform playerTransform;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         public AvatarAttachHandlerSystem(
             World world,
             World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            ExposedTransform playerTransform,
             ISceneStateProvider sceneStateProvider,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy) : base(world)
+            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy,
+            IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.playerTransform = playerTransform;
             this.sceneStateProvider = sceneStateProvider;
             this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
@@ -50,6 +61,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             if (!mainPlayerAvatarBaseProxy.Configured || !entityParticipantTableProxy.Configured) return;
 
             UpdateAvatarAttachTransformQuery(World);
+            UpdateAvatarAttachedEntitySDKTransformQuery(World);
             HideDetachedQuery(World);
 
             World.Remove<AvatarAttachComponent>(COMPONENT_REMOVAL_QUERY);
@@ -119,6 +131,17 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         }
 
         [Query]
+        [All(typeof(PBAvatarAttach))]
+        private void UpdateAvatarAttachedEntitySDKTransform(CRDTEntity crdtEntity, ref SDKTransform sdkTransform, in TransformComponent transformComponent)
+        {
+            // Attached entities are not reparented to the Player, delta has to be calculated manually
+            sdkTransform.Position.Value = transformComponent.Transform.position - playerTransform.Position.Value;
+            sdkTransform.Rotation.Value = Quaternion.Inverse(playerTransform.Rotation.Value) * transformComponent.Transform.rotation;
+
+            WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, crdtEntity);
+        }
+
+        [Query]
         [All(typeof(AvatarAttachComponent))]
         private void FinalizeComponents(in Entity entity)
         {
@@ -128,6 +151,18 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteSDKTransformUpdateInCRDT(in SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
+        {
+            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component, transform) =>
+            {
+                component.Position.Value = transform.Position.Value;
+                component.ParentId = transform.ParentId;
+                component.Rotation.Value = transform.Rotation.Value;
+                component.Scale = transform.Scale;
+            }, sdkEntity, sdkTransform);
         }
     }
 }

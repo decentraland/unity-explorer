@@ -19,11 +19,13 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -89,6 +91,8 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IInputBlock inputBlock;
         private readonly ISelfProfile selfProfile;
         private readonly IAnalyticsController analytics;
+        private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
 
         private CommunityCardVoiceChatPresenter? communityCardVoiceChatController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -130,10 +134,13 @@ namespace DCL.Communities.CommunitiesCard
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
@@ -156,6 +163,7 @@ namespace DCL.Communities.CommunitiesCard
             this.thumbnailLoader = new ThumbnailLoader(null);
             this.selfProfile = selfProfile;
             this.analytics = analytics;
+            this.homePlaceEventBus = homePlaceEventBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
@@ -397,7 +405,10 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser,
-                profileRepository);
+                profileRepository,
+                decentralandUrlsSource,
+                homePlaceEventBus,
+                worldPermissionsService);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

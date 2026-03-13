@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
         private AutoTranslateAnalytics? autoTranslateAnalytics;
         private OutfitsAnalytics outfitsAnalytics;
+        private GiftAnalytics giftAnalytics;
         private HomeMarkerAnalytics homeMarkerAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
@@ -83,12 +85,16 @@ namespace DCL.PluginSystem.Global
 
             autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
             outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
+            giftAnalytics = new GiftAnalytics(analytics, eventBus);
             homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
 
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            AvatarLoaderAnalyticsSystem.InjectToWorld(ref builder);
+            AvatarWearablesResolutionAnalyticsSystem.InjectToWorld(ref builder);
+            AvatarInstantiatorAnalyticsSystem.InjectToWorld(ref builder, analytics);
             ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
             DebugAnalyticsSystem.InjectToWorld(ref builder, analytics, debugContainerBuilder);
         }

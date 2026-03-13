@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -12,6 +12,7 @@ using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
@@ -47,6 +48,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
             backpackEventBus.DeactivateEvent += OnDeactivate;
+            backpackEventBus.EquipOutfitEvent += OnEquipOutfit;
         }
 
         private void OnDeactivate()
@@ -91,8 +93,31 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAll;
-
+            backpackEventBus.EquipOutfitEvent -= OnEquipOutfit;
             emotePreviewCancellationToken.SafeCancelAndDispose();
+        }
+
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            previewAvatarModel.Wearables ??= new List<URN>();
+            previewAvatarModel.Wearables.Clear();
+            previewAvatarModel.BodyShape = command.BodyShape;
+
+            foreach (var wearable in wearables)
+            {
+                if (wearable.Type != WearableType.BodyShape)
+                    previewAvatarModel.Wearables.Add(wearable.GetUrn());
+            }
+
+            previewAvatarModel.EyesColor = command.EyesColor;
+            previewAvatarModel.HairColor = command.HairColor;
+            previewAvatarModel.SkinColor = command.SkinColor;
+
+            previewAvatarModel.ForceRenderCategories.Clear();
+            foreach (var f in command.ForceRender)
+                previewAvatarModel.ForceRenderCategories.Add(f);
+
+            OnModelUpdated();
         }
 
         private void OnFilterEvent(string? category, AvatarWearableCategoryEnum? categoryEnum, string? searchText)
@@ -179,7 +204,7 @@ namespace DCL.Backpack.CharacterPreview
             if (emote == null) return;
             PlayEmote(emote.GetUrn().Shorten());
         }
-        
+
         private void OnEmoteSelected(IEmote emote)
         {
             async UniTaskVoid EnsureEmoteAndPlayItAsync(CancellationToken ct)

@@ -27,6 +27,14 @@ namespace DCL.Multiplayer.SDK.Tests
         private PlayerCRDTEntity playerCRDTEntity;
         private CharacterDataPropagationUtility characterDataPropagationUtility;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [SetUp]
         public void Setup()
         {

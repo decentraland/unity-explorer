@@ -244,7 +244,7 @@ namespace DCL.Passport.Modules
                         break;
                     case AdditionalFieldType.BIRTH_DATE:
                         if (valueToSave != null)
-                            currentProfile.Birthdate = DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None);
+                            currentProfile.Birthdate = DateTime.SpecifyKind(DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None), DateTimeKind.Utc);
                         else
                             currentProfile.Birthdate = null;
                         break;

@@ -20,20 +20,20 @@ namespace DCL.Backpack.Gifting.Presenters
         private const string MsgErrorNonTransferableNft = "Cannot send this item as a gift because it's not a transferable NFT.";
         private const string CouldNotFindTokenForUrnLog = "Could not find a valid tokenId for URN {0}. Aborting gift transfer.";
         private const string DefaultGiftItemName = "Item";
-        
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-        
+
         private readonly IProfileRepository profileRepository;
         private readonly GiftSelectionComponentFactory componentFactory;
         private readonly GiftInventoryService giftInventoryService;
         private readonly IAvatarEquippedStatusProvider  equippedStatusProvider;
         private readonly IMVCManager mvcManager;
-        
+
         private GiftingHeaderPresenter? headerPresenter;
         private GiftingFooterPresenter? footerPresenter;
 
         private GiftingTabsManager? tabsManager;
-        
+
         private IGiftingGridPresenter? wearablesGridPresenter;
         private IGiftingGridPresenter? emotesGridPresenter;
         private GiftingErrorsController? giftingErrorsController;
@@ -55,7 +55,7 @@ namespace DCL.Backpack.Gifting.Presenters
         }
 
         #region MVC
-        
+
         protected override void OnViewInstantiated()
         {
             if (viewInstance == null) return;
@@ -63,7 +63,7 @@ namespace DCL.Backpack.Gifting.Presenters
             headerPresenter = componentFactory.CreateHeader(viewInstance.HeaderView);
             footerPresenter = componentFactory.CreateFooter(viewInstance.FooterView);
             giftingErrorsController = componentFactory.CreateErrorController(viewInstance);
-            
+
             tabsManager = componentFactory.CreateTabs(viewInstance,
                 out var wPresenter,
                 out var ePresenter);
@@ -131,7 +131,11 @@ namespace DCL.Backpack.Gifting.Presenters
 
         protected override void OnViewClose()
         {
-            if (headerPresenter != null) headerPresenter.OnSearchChanged -= HandleSearchChanged;
+            if (headerPresenter != null)
+            {
+                headerPresenter.OnSearchChanged -= HandleSearchChanged;
+                headerPresenter.Clear();
+            }
             if (footerPresenter != null) footerPresenter.OnSendGift -= HandleSendGift;
 
             if (wearablesGridPresenter != null)
@@ -264,7 +268,7 @@ namespace DCL.Backpack.Gifting.Presenters
         {
             if (viewInstance == null)
                 return UniTask.Never(ct);
-            
+
             return UniTask.WhenAny(
                 viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance!.BackgroundButton.OnClickAsync(ct),

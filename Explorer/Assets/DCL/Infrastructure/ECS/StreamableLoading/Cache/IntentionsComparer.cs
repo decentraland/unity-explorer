@@ -40,6 +40,9 @@ namespace ECS.StreamableLoading.Cache
 
 			public static bool operator !=(SourcedIntentionId left, SourcedIntentionId right) =>
 				!left.Equals(right);
-		}
+
+            public override string ToString() =>
+                $"Intention: {intention}, Source: {source}";
+        }
 	}
 }

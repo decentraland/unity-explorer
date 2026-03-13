@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Sentry;
 using System;
@@ -74,8 +74,8 @@ namespace DCL.SocialService
                 {
                     retryAttempt++;
 
-                    SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
-                                            + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
+                    Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
+                                                         + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
 
                     var webSocketErrorCode = (WebSocketError)e.ErrorCode;
 
@@ -90,6 +90,11 @@ namespace DCL.SocialService
 
                     try { await WaitNextRetryAsync(retryAttempt, ct); }
                     catch (OperationCanceledException) { break; }
+                }
+                catch (InvalidOperationException e) when (IsExpectedDisconnectException(e))
+                {
+                    // Expected during sign-out or transport close, exit gracefully
+                    break;
                 }
                 catch (Exception e)
                 {
@@ -109,5 +114,14 @@ namespace DCL.SocialService
 
             await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
         }
+
+        /// <summary>
+        ///     Checks if the exception is expected during sign-out or transport disconnection.
+        ///     These exceptions should not be logged as errors.
+        /// </summary>
+        private static bool IsExpectedDisconnectException(InvalidOperationException e) =>
+            e.Message.Contains("Transport", StringComparison.OrdinalIgnoreCase)
+            || e.Message.Contains("Identity is not found", StringComparison.OrdinalIgnoreCase)
+            || e.Message.Contains("RPC", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -32,11 +32,10 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController)
+            ref CharacterController characterController,
+            in JumpState jumpState)
         {
-            rigidTransform.PlatformDelta = Vector3.zero;
-
-            if (rigidTransform.JustJumped)
+            if (jumpState.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
                 platformComponent.PlatformCollider = null;
@@ -65,9 +64,6 @@ namespace DCL.CharacterMotion.Systems
                 return;
 
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
-
-            Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
-            rigidTransform.PlatformDelta = newGroundWorldPos - characterTransform.position;
 
             Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
             Vector3 rotationDelta = newCharacterForward - characterTransform.forward;

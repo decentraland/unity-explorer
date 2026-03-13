@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Utility;
 using ECS;
@@ -13,6 +14,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -21,10 +23,9 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
     public static class LoadThumbnailsUtils
     {
         public static readonly SpriteData DEFAULT_THUMBNAIL = new (new TextureData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
-        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
 
-        public static async UniTask CreateThumbnailABPromiseAsync(
-            IRealmData realmData,
+        public static void CreateThumbnailABPromise(
+            IDecentralandUrlsSource realmData,
             IThumbnailAttachment attachment,
             World world,
             IPartitionComponent partitionComponent,
@@ -75,7 +76,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
         }
 
         private static void CreateThumbnailTexturePromise(
-            IRealmData realmData,
+            IDecentralandUrlsSource urlsSource,
             URLPath thumbnailPath,
             IThumbnailAttachment attachment,
             World world,
@@ -83,11 +84,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             CancellationTokenSource? cancellationTokenSource = null
         )
         {
-            using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
-            var urlBuilder = urlBuilderScope.Value;
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(attachment.GetContentDownloadUrl() != null ? URLDomain.FromString(attachment.GetContentDownloadUrl()!) : realmData.Ipfs.ContentBaseUrl)
-                .AppendPath(thumbnailPath);
+            using PooledObject<URLBuilder> urlBuilderScope = DecentralandUrlsUtils.BuildFromDomain(attachment.GetContentDownloadUrl() ?? urlsSource.Url(DecentralandUrl.Content), out URLBuilder urlBuilder);
+            urlBuilder.AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention

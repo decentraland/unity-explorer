@@ -7,62 +7,35 @@ namespace DCL.SDKComponents.SceneUI.Classes
     public class TextFieldPlaceholder : IDisposable
     {
         private TextField textField;
-        private string placeholder;
-        private Color placeholderColor;
-        private Color normalColor;
+
         private bool isPlaceholder;
         private bool isFocused;
-        private bool isReadonly;
 
-        public void SetupTextField(TextField textFieldToSetup)
+        public bool IsReadonly { get; set; }
+        public string PlaceholderText { get; set; }
+        public Color PlaceholderColor { get; set; }
+        public Color NormalColor { get; set; }
+
+        public void Initialize(TextField textFieldToSetup, string placeholderText, Color placeholderColor)
         {
             textField = textFieldToSetup;
             textField.RegisterCallback<FocusInEvent>(OnFocusIn);
             textField.RegisterCallback<FocusOutEvent>(OnFocusOut);
-            // To support changing the value from code
-            textField.RegisterValueChangedCallback(OnValueChanged);
-            OnFocusOut(null);
+
+            PlaceholderText = placeholderText;
+            PlaceholderColor = placeholderColor;
+
+            Refresh();
         }
 
-        public void SetPlaceholder(string placeholderValue)
+        public void Refresh()
         {
-            this.placeholder = placeholderValue;
+            isPlaceholder = !isFocused && InputIsNullOrEmpty();
 
             if (isPlaceholder)
-                UpdateIfFocusStateIs(false);
-        }
-
-        public void SetNormalColor(Color color)
-        {
-            normalColor = color;
-
-            if (!isPlaceholder || isFocused)
-                SetNormalStyle();
-        }
-
-        public void SetReadOnly(bool isReadOnly) =>
-            this.isReadonly = isReadOnly;
-
-        public void SetPlaceholderColor(Color color)
-        {
-            placeholderColor = color;
-
-            if (isPlaceholder)
-                UpdateIfFocusStateIs(false);
-        }
-
-        public void Refresh() =>
-            OnFocusOut(null);
-
-        private void UpdateIfFocusStateIs(bool focusState)
-        {
-            if (isFocused != focusState)
-                return;
-
-            if (focusState)
-                SetNormalStyle();
-            else
                 SetPlaceholderStyle();
+            else
+                SetNormalStyle();
         }
 
         private void SetNormalStyle()
@@ -70,7 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
             if (textField == null)
                 return;
 
-            textField.style.color = normalColor;
+            textField.style.color = NormalColor;
         }
 
         private void SetPlaceholderStyle()
@@ -78,16 +51,13 @@ namespace DCL.SDKComponents.SceneUI.Classes
             if (textField == null)
                 return;
 
-            textField.style.color = placeholderColor;
-            textField.SetValueWithoutNotify(placeholder);
+            textField.style.color = PlaceholderColor;
+            textField.SetValueWithoutNotify(PlaceholderText);
         }
 
         private void OnFocusIn(FocusInEvent _)
         {
-            if (textField == null)
-                return;
-
-            if (isReadonly)
+            if (textField == null || IsReadonly)
                 return;
 
             if (isPlaceholder)
@@ -104,31 +74,15 @@ namespace DCL.SDKComponents.SceneUI.Classes
             if (textField == null)
                 return;
 
-            if (isReadonly)
+            if (IsReadonly)
                 return;
 
-            if (InputIsNullOrEmpty())
-            {
-                SetPlaceholderStyle();
-                isPlaceholder = true;
-            }
-            else
-            {
-                SetNormalStyle();
-                isPlaceholder = false;
-            }
-
             isFocused = false;
+            Refresh();
         }
 
         private bool InputIsNullOrEmpty() =>
             string.IsNullOrEmpty(textField.text);
-
-        private void OnValueChanged(ChangeEvent<string> newValue)
-        {
-            if (!isFocused)
-                OnFocusOut(null);
-        }
 
         public void Dispose()
         {
@@ -137,7 +91,6 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
             textField.UnregisterCallback<FocusInEvent>(OnFocusIn);
             textField.UnregisterCallback<FocusOutEvent>(OnFocusOut);
-            textField.UnregisterValueChangedCallback(OnValueChanged);
         }
     }
 }

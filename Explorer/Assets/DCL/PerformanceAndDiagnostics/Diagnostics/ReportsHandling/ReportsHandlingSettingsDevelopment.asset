@@ -581,8 +581,6 @@ MonoBehaviour:
     - Category: OUTFITS
       Severity: 1
     - Category: GIFTING
-      Severity: 3
-    - Category: GIFTING
       Severity: 2
     - Category: GIFTING
       Severity: 0
@@ -601,6 +599,44 @@ MonoBehaviour:
     - Category: MVC_STATE_MACHINE
       Severity: 4
     - Category: MVC_STATE_MACHINE
+      Severity: 1
+    - Category: GLTF_CONTAINER
+      Severity: 4
+    - Category: GLTF_CONTAINER
+      Severity: 1
+    - Category: GLTF_CONTAINER
+      Severity: 0
+    - Category: TEXTURES
+      Severity: 0
+    - Category: TEXTURES
+      Severity: 4
+    - Category: TEXTURES
+      Severity: 1
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 4
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 1
+    - Category: SCENE_PERMISSIONS
+      Severity: 4
+    - Category: SCENE_PERMISSIONS
+      Severity: 1
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 1
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 4
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 4
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 1
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 1
+    - Category: PLACES
+      Severity: 4
+    - Category: PLACES
+      Severity: 1
+    - Category: ANALYTICS_INTERNAL
+      Severity: 4
+    - Category: ANALYTICS_INTERNAL
       Severity: 1
   sentryMatrix:
     entries: []

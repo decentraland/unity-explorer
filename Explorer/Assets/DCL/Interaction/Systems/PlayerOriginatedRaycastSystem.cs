@@ -11,6 +11,7 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using DCL.InWorldCamera;
 using ECS.Abstract;
@@ -39,7 +40,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private readonly InputAction pointInput;
 
         internal PlayerOriginatedRaycastSystem(World world, InputAction pointInput,
-            IEntityCollidersGlobalCache collidersGlobalCache, PlayerInteractionEntity playerInteractionEntity,
+            IEntityCollidersGlobalCache collidersGlobalCache,
+            PlayerInteractionEntity playerInteractionEntity,
             float maxRaycastDistance) : base(world)
         {
             this.pointInput = pointInput;
@@ -58,40 +60,65 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         {
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForGlobalEntities;
+            GlobalColliderGlobalEntityInfo? previousGlobalEntity = raycastResultForGlobalEntities.GetEntityInfo();
 
-            if (cursorComponent.CursorState == CursorState.Panning || World.Has<InWorldCameraComponent>(entity))
+            try
             {
-                raycastResultForSceneEntities.Reset();
-                raycastResultForGlobalEntities.Reset();
-                return;
-            }
 
-            Ray ray = CreateRay(in camera, in cursorComponent);
-
-            // we are interested in one hit only
-            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
-
-            raycastResultForSceneEntities.SetRay(ray);
-            raycastResultForGlobalEntities.SetRay(ray);
-
-            if (hasHit)
-            {
-                float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
-
-                if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
-                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance);
-                else
+                if (cursorComponent.CursorState == CursorState.Panning || World.Has<InWorldCameraComponent>(entity))
+                {
                     raycastResultForSceneEntities.Reset();
-
-                if (collidersGlobalCache.TryGetGlobalEntity(hitInfo.collider, out GlobalColliderGlobalEntityInfo globalEntityInfo))
-                    raycastResultForGlobalEntities.SetupHit(hitInfo, globalEntityInfo, distance);
-                else
                     raycastResultForGlobalEntities.Reset();
+                    return;
+                }
+
+                Ray ray = CreateRay(in camera, in cursorComponent);
+
+                // we are interested in one hit only
+                bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
+
+                raycastResultForSceneEntities.SetRay(ray);
+                raycastResultForGlobalEntities.SetRay(ray);
+
+                if (hasHit)
+                {
+                    float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
+
+                    if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
+                    {
+                        Vector3? playerPosition = playerInteractionEntity.PlayerPosition;
+                        float? playerDistance = null;
+
+                        if (playerPosition != null)
+                            playerDistance = Vector3.Distance(hitInfo.point, (Vector3)playerPosition);
+
+                        raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance, playerDistance);
+                    }
+                    else
+                        raycastResultForSceneEntities.Reset();
+
+                    if (collidersGlobalCache.TryGetGlobalEntity(hitInfo.collider, out GlobalColliderGlobalEntityInfo globalEntityInfo))
+                        raycastResultForGlobalEntities.SetupHit(hitInfo, globalEntityInfo, distance);
+                    else
+                        raycastResultForGlobalEntities.Reset();
+                }
+                else
+                {
+                    raycastResultForSceneEntities.Reset();
+                    raycastResultForGlobalEntities.Reset();
+                }
             }
-            else
+            finally
             {
-                raycastResultForSceneEntities.Reset();
-                raycastResultForGlobalEntities.Reset();
+                // Update HoveredComponent
+                Entity? newGlobalEntity = raycastResultForGlobalEntities.GetEntityInfo()?.EntityReference;
+                if(previousGlobalEntity.HasValue && previousGlobalEntity.Value.EntityReference != newGlobalEntity)
+                    World.Remove<HoveredComponent>(previousGlobalEntity.Value.EntityReference);
+
+                // Add hover to newly hit entity (only global entities, not scene entities)
+                // Scene entities don't need hover markers since visual highlighting is only used for avatars
+                if(newGlobalEntity.HasValue && (!previousGlobalEntity.HasValue || previousGlobalEntity.Value.EntityReference != newGlobalEntity))
+                    World.Add<HoveredComponent>(newGlobalEntity.Value);
             }
         }
 

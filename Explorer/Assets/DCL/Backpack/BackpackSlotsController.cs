@@ -9,6 +9,7 @@ using DCL.CharacterPreview;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 using Utility;
 
@@ -47,6 +48,7 @@ namespace DCL.Backpack
             this.backpackEventBus.ForceRenderEvent += SetForceRender;
             this.backpackEventBus.UnEquipAllEvent += UnEquipAll;
             this.backpackEventBus.UnEquipAllWearablesEvent += UnEquipAll;
+            this.backpackEventBus.EquipOutfitEvent += OnEquipOutfit;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
@@ -198,12 +200,40 @@ namespace DCL.Backpack
             avatarSlot.SelectedBackground.SetActive(true);
         }
 
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        {
+            UnEquipAll();
+
+            foreach (var w in wearables)
+            {
+                if (!avatarSlots.TryGetValue(w.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView)) 
+                    continue;
+
+                equippedWearables.Add(w);
+
+                avatarSlotView.Item1.SlotWearableUrn = w.GetUrn();
+                avatarSlotView.Item1.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(w.GetRarity());
+                avatarSlotView.Item1.EmptyOverlay.SetActive(false);
+                
+                avatarSlotView.Item2 = avatarSlotView.Item2.SafeRestart();
+
+                WaitForThumbnailAsync(w, avatarSlotView.Item1, avatarSlotView.Item2.Token).Forget();
+            }
+
+            forceRender.Clear();
+            foreach (var f in command.ForceRender)
+                forceRender.Add(f);
+
+            CalculateHideStatus();
+        }
+        
         public void Dispose()
         {
             backpackEventBus.EquipWearableEvent -= EquipInSlot;
             backpackEventBus.UnEquipWearableEvent -= UnEquipInSlot;
-            this.backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             backpackEventBus.UnEquipAllWearablesEvent -= UnEquipAll;
+            backpackEventBus.EquipOutfitEvent -= OnEquipOutfit;
 
             foreach (var avatarSlotView in avatarSlots.Values)
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;

@@ -50,8 +50,10 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
-        [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
-        [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+
+        [field: SerializeField] public ParcelsRef ParsedParcels;
+
+
 
 
         [Serializable]
@@ -73,9 +75,21 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
+        public class AvatarOutlineSettingsRef : AssetReferenceT<AvatarHighlightData>
+        {
+            public AvatarOutlineSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
         public class RoadDataRef : AssetReferenceT<RoadSettingsAsset>
         {
             public RoadDataRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ParcelsRef : AssetReferenceT<ParcelData>
+        {
+            public ParcelsRef(string guid) : base(guid) { }
         }
     }
 }
