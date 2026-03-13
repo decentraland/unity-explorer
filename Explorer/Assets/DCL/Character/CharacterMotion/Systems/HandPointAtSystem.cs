@@ -150,65 +150,6 @@ namespace DCL.Character.CharacterMotion.Systems
             handPointAtComponent.IsPointing = true;
         }
 
-        private (float dot, bool needToRotate) HandleAvatarRotation(
-            in AvatarBase avatarBase,
-            in ICharacterControllerSettings settings,
-            ref CharacterRigidTransform rigidTransform,
-            Vector3 directionToTarget
-        )
-        {
-            Vector3 dirHorizontal = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
-            float horizontalMag = dirHorizontal.magnitude;
-
-            float crossY, dotH;
-
-            Vector3 lookH = new Vector3(rigidTransform.LookDirection.x, 0f, rigidTransform.LookDirection.z);
-            float lookHMag = lookH.magnitude;
-
-            if (horizontalMag > 1e-6f && lookHMag > 1e-6f)
-            {
-                Vector3 dirHNorm = dirHorizontal / horizontalMag;
-                Vector3 lookHNorm = lookH / lookHMag;
-                crossY = Vector3.Cross(lookHNorm, dirHNorm).y;
-                dotH = Vector3.Dot(lookHNorm, dirHNorm);
-            }
-            else
-            {
-                crossY = 0f;
-                dotH = 1f;
-            }
-
-            // crossY > 0 rotate right, else rotate left
-            bool needToRotate = crossY > settings.PointAtRotationHorizontalRightThreshold
-                                || crossY < -settings.PointAtRotationHorizontalLeftThreshold
-                                || dotH < 0;
-
-            if (needToRotate)
-            {
-                float targetCrossY = 0f;
-
-                if (crossY > settings.PointAtRotationHorizontalRightThreshold)
-                    targetCrossY = settings.PointAtRotationHorizontalRightThreshold;
-                else if (crossY < -settings.PointAtRotationHorizontalLeftThreshold)
-                    targetCrossY = -settings.PointAtRotationHorizontalLeftThreshold;
-                else if (dotH < 0)
-                    targetCrossY = crossY >= 0
-                        ? settings.PointAtRotationHorizontalRightThreshold
-                        : -settings.PointAtRotationHorizontalLeftThreshold;
-
-                Vector3 dirH = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
-                Vector3 perpH = Vector3.Cross(directionToTarget, Vector3.up);
-                float m = perpH.magnitude;
-
-                float s = Mathf.Clamp(targetCrossY, -1f, 1f);
-                float c = Mathf.Sqrt(1f - (s * s));
-
-                rigidTransform.LookDirection = ((c * dirH) + (s * perpH)) / m;
-            }
-
-            return (Vector3.Dot(avatarBase.transform.forward, rigidTransform.LookDirection), needToRotate);
-        }
-
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(RemotePlayerMovementComponent))]
         private void ApplyPointAtIK(
@@ -234,7 +175,10 @@ namespace DCL.Character.CharacterMotion.Systems
                 settings.PointAtRotationVerticalUpThreshold,
                 settings.PointAtRotationVerticalDownThreshold);
 
-            var rotationInfo = HandleAvatarRotation(avatarBase, settings, ref rigidTransform, directionToTarget);
+            var rotationInfo = HandPointAtHelper.CalculateAvatarRotation(avatarBase, settings, rigidTransform.LookDirection, directionToTarget);
+
+            if (rotationInfo.needToRotate)
+                rigidTransform.LookDirection = rotationInfo.newLookDirection;
 
             bool isActuallyRotating = rotationInfo.needToRotate && !Mathf.Approximately(rotationInfo.dot, 1f);
             Vector3 lookDirectionNormalized = rigidTransform.LookDirection.normalized;

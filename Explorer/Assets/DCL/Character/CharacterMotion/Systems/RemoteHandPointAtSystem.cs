@@ -70,8 +70,9 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             pointAt.IsDragging = false;
+            var rotationInfo = HandPointAtHelper.CalculateAvatarRotation(avatarBase, localSettings, avatarBase.transform.forward, directionToTarget);
 
-            HandPointAtHelper.ApplyHandIK(ref pointAt, ref avatarBase, in localSettings, dt, directionToTarget, shoulderPos, (0, false), true);
+            HandPointAtHelper.ApplyHandIK(ref pointAt, ref avatarBase, in localSettings, dt, directionToTarget, shoulderPos, rotationInfo, true);
 
             pointAt.PreviousLookDirection = avatarBase.transform.forward;
         }

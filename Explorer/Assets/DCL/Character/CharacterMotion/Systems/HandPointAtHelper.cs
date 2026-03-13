@@ -9,6 +9,13 @@ namespace DCL.Character.CharacterMotion.Systems
 {
     public static class HandPointAtHelper
     {
+        public struct RotationInfo
+        {
+            public float dot;
+            public bool needToRotate;
+            public Vector3 newLookDirection;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ApplyAnimationWeight(
             ref HandPointAtComponent pointAt,
@@ -74,7 +81,7 @@ namespace DCL.Character.CharacterMotion.Systems
             float dt,
             Vector3 directionToTarget,
             Vector3 shoulderPos,
-            (float dot, bool needToRotate) rotationInfo,
+            RotationInfo rotationInfo,
             bool overrideSpeed = false)
         {
             Vector3 ikTargetPos = shoulderPos + (directionToTarget * settings.PointAtArmReach);
@@ -99,6 +106,72 @@ namespace DCL.Character.CharacterMotion.Systems
             backOfHand.Normalize();
 
             target.rotation = Quaternion.LookRotation(-backOfHand, pointDirection);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RotationInfo CalculateAvatarRotation(
+            in AvatarBase avatarBase,
+            in ICharacterControllerSettings settings,
+            Vector3 lookDirection,
+            Vector3 directionToTarget
+        )
+        {
+            Vector3 dirHorizontal = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
+            float horizontalMag = dirHorizontal.magnitude;
+
+            float crossY, dotH;
+
+            Vector3 lookH = new Vector3(lookDirection.x, 0f, lookDirection.z);
+            float lookHMag = lookH.magnitude;
+
+            if (horizontalMag > 1e-6f && lookHMag > 1e-6f)
+            {
+                Vector3 dirHNorm = dirHorizontal / horizontalMag;
+                Vector3 lookHNorm = lookH / lookHMag;
+                crossY = Vector3.Cross(lookHNorm, dirHNorm).y;
+                dotH = Vector3.Dot(lookHNorm, dirHNorm);
+            }
+            else
+            {
+                crossY = 0f;
+                dotH = 1f;
+            }
+
+            // crossY > 0 rotate right, else rotate left
+            bool needToRotate = crossY > settings.PointAtRotationHorizontalRightThreshold
+                                || crossY < -settings.PointAtRotationHorizontalLeftThreshold
+                                || dotH < 0;
+
+            Vector3 newLookDirection = Vector3.zero;
+            if (needToRotate)
+            {
+                float targetCrossY = 0f;
+
+                if (crossY > settings.PointAtRotationHorizontalRightThreshold)
+                    targetCrossY = settings.PointAtRotationHorizontalRightThreshold;
+                else if (crossY < -settings.PointAtRotationHorizontalLeftThreshold)
+                    targetCrossY = -settings.PointAtRotationHorizontalLeftThreshold;
+                else if (dotH < 0)
+                    targetCrossY = crossY >= 0
+                        ? settings.PointAtRotationHorizontalRightThreshold
+                        : -settings.PointAtRotationHorizontalLeftThreshold;
+
+                Vector3 dirH = new Vector3(directionToTarget.x, 0f, directionToTarget.z);
+                Vector3 perpH = Vector3.Cross(directionToTarget, Vector3.up);
+                float m = perpH.magnitude;
+
+                float s = Mathf.Clamp(targetCrossY, -1f, 1f);
+                float c = Mathf.Sqrt(1f - (s * s));
+
+                newLookDirection = ((c * dirH) + (s * perpH)) / m;
+            }
+
+            return new RotationInfo
+            {
+                dot = Vector3.Dot(avatarBase.transform.forward, needToRotate ? newLookDirection : lookDirection),
+                needToRotate = needToRotate,
+                newLookDirection = newLookDirection
+            };
         }
     }
 }
