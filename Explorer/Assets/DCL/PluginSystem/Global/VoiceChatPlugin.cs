@@ -14,6 +14,7 @@ using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
 using UnityEngine;
@@ -39,6 +40,8 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
+        private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
+        private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -49,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private ProximityVoiceChatManager? proximityVoiceChatManager;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -89,7 +93,10 @@ namespace DCL.PluginSystem.Global
             RustAudioClient.DeInit();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder, debugContainer);
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
@@ -135,6 +142,11 @@ namespace DCL.PluginSystem.Global
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
+
+            proximityConfigHolder.Config = voiceChatConfiguration;
+
+            proximityVoiceChatManager = new ProximityVoiceChatManager(roomHub.IslandRoom(), voiceChatConfiguration, proximityAudioSources);
+            pluginScope.Add(proximityVoiceChatManager);
         }
 
         [Serializable]
