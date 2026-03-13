@@ -98,6 +98,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
         [field: SerializeField] public Transform Armature { get; private set; }
 
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; }
+
+        public List<Renderer> GhostRenderers { get; private set; }
+
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
@@ -127,6 +131,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
 
             headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+
+            GhostRenderers = new List<Renderer>();
+
+            foreach (Renderer renderer in GhostGameObject.transform.GetComponentsInChildren<Renderer>())
+                GhostRenderers.Add(renderer);
         }
 
         public Transform GetTransform() =>
@@ -204,8 +213,16 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.enabled = true;
         }
 
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
         public Vector3 GetAdaptiveNametagPosition()
         {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
             Vector3 headPos = headAramatureBone.position;
 
             float maxY = headPos.y;

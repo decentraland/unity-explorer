@@ -173,6 +173,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
+            AvatarGhostSystem.InjectToWorld(ref builder);
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler, computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
