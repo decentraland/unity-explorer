@@ -1,14 +1,27 @@
+---
+name: feature-flags-and-configuration
+description: "Feature flags, features registry, and app arguments. Use when gating features behind remote flags (FeatureFlagsConfiguration), feature gating, conditional features, runtime configuration, command-line flags, launch arguments, registering features in FeaturesRegistry, checking or adding app arguments (AppArgs), or implementing feature providers."
+user-invocable: false
+---
+
 # Feature Flags & Configuration
-
-## Activation
-
-Use this skill when gating features behind flags, checking runtime configuration, using the features registry, or working with app arguments.
 
 ## Sources
 
 - `docs/feature-flags.md` — Runtime feature flag system
 - `docs/features-registry.md` — Centralized feature state management
 - `docs/app-arguments.md` — Command-line flags and arguments
+
+---
+
+## When to Use Each Mechanism
+
+| Need | Mechanism |
+|------|-----------|
+| Simple remote flag | `FeatureFlagsConfiguration.IsEnabled()` |
+| Flag + app args combined | `FeaturesRegistry` |
+| Runtime-dependent check | `IFeatureProvider` + `FeaturesRegistry` |
+| Launch-time configuration only | `AppArgs.HasFlag()` / `TryGetValue()` |
 
 ---
 
@@ -52,7 +65,8 @@ public partial class MapPinLoaderSystem : BaseUnityLoopSystem, IFinalizeWorldSys
 
     public MapPinLoaderSystem(World world, /* ... */) : base(world)
     {
-        // Cache flag value in constructor — checked every frame in Update
+        // Cache flag value in constructor — Why: flag checks happen every frame in Update;
+        // re-fetching from config every frame is wasteful
         useCustomMapPinIcons = FeatureFlagsConfiguration.Instance.IsEnabled(
             FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
     }
@@ -108,6 +122,8 @@ Overridable via app arguments:
 ## Features Registry (Local)
 
 `FeaturesRegistry` is a singleton that consolidates feature enable/disable logic from multiple sources: feature flags, app arguments, editor mode, and runtime conditions.
+
+**Why FeaturesRegistry exists alongside FeatureFlagsConfiguration:** `FeatureFlagsConfiguration` only handles remote flags. `FeaturesRegistry` consolidates all sources (remote flags, app args, editor mode, runtime checks) into a single query point, so systems don't need to check multiple sources.
 
 ### Declaring Features
 

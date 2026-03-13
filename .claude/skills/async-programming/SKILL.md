@@ -1,8 +1,10 @@
+---
+name: async-programming
+description: "Async programming patterns with UniTask, cancellation tokens, and exception handling. Use when writing async code, handling CancellationTokenSource lifecycle, using SuppressToResultAsync, implementing detached UniTask/UniTaskVoid flows, or working with Result/EnumResult types for exception-free flow propagation."
+user-invocable: false
+---
+
 # Async Programming Patterns
-
-## Activation
-
-Use this skill when writing async code with UniTask, handling cancellation, managing detached flows, or implementing exception-safe async pipelines.
 
 ## Sources
 
@@ -13,15 +15,7 @@ Use this skill when writing async code with UniTask, handling cancellation, mana
 
 ## Core Rules
 
-1. **Minimize detached `UniTask` / `UniTaskVoid` calls.** A detached flow is a `UniTaskVoid` or `.Forget()`-ed `UniTask` — it creates a heap-allocated delegate disconnected from its origin. Prefer parent async flow when possible.
-
-2. **Always catch exceptions in detached flows:**
-   - Ignore `OperationCanceledException` (normal cancellation)
-   - Report all others via `ReportHub.LogException`
-
-3. **Use `SuppressToResultAsync()`** to convert exceptions into `Result` values cleanly.
-
-4. **Handle cancellation with `ct.IsCancellationRequested`**, never `ThrowIfCancellationRequested()` — exceptions are expensive.
+> Condensed rules are in CLAUDE.md §9. This skill provides expanded patterns and code examples not covered there.
 
 ## Exception Handling Pattern
 

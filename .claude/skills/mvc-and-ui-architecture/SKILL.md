@@ -1,8 +1,10 @@
+---
+name: mvc-and-ui-architecture
+description: "MVC UI architecture — controllers, views, window stacking, and shared space. Use when building UI controllers (ControllerBase), showing views via MVCManager, connecting UI to ECS via bridge systems, implementing context menus, settings panels, or coordinating panel visibility."
+user-invocable: false
+---
+
 # MVC & UI Architecture
-
-## Activation
-
-Use this skill when building UI controllers, views, window stacking, shared space panels, context menus, settings panels, or connecting UI to ECS.
 
 ## Sources
 
@@ -21,8 +23,8 @@ All controllers inherit `ControllerBase<TView, TInputData>` or `ControllerBase<T
 
 ### View Instantiation
 
-- **Lazy:** `CreateLazily` — View created on first show
-- **Pre-warmed:** `Preallocate` — View created at startup
+- **Lazy:** `CreateLazily` — View created on first show. **Why:** Saves startup time for rarely-used views.
+- **Pre-warmed:** `Preallocate` — View created at startup. **Why:** Avoids first-show lag for critical UI that must appear instantly (e.g., minimap, HUD).
 
 ### Controller Lifecycle
 
@@ -110,6 +112,8 @@ Sorting layers control view ordering and behavior:
 | `Fullscreen` | Hides popups when shown. Blurs persistent layer. |
 | `Popup` | Stackable. Focus/blur support. |
 | `Overlay` | Above everything. |
+
+**Why layer separation matters:** Prevents z-order bugs, ensures fullscreen views properly occlude popups, and enables the blur/focus lifecycle that controllers rely on for suspend/resume logic.
 
 ## ECS-Controller Bridge
 

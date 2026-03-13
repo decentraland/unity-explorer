@@ -1,8 +1,10 @@
+---
+name: ecs-system-and-component-design
+description: "ECS system and component design patterns using Arch ECS. Use when creating or modifying systems, components, queries, cleanup logic, singletons, or system tests — also when reviewing code that manipulates World, Entity, or component references, even if the user doesn't mention 'ECS' explicitly."
+user-invocable: false
+---
+
 # ECS System & Component Design
-
-## Activation
-
-Use this skill when creating or modifying ECS systems, components, queries, cleanup logic, singletons, or system tests.
 
 ## Sources
 
@@ -15,13 +17,7 @@ Use this skill when creating or modifying ECS systems, components, queries, clea
 
 ## System Design Rules
 
-1. **Systems are the sole logic entry point for entities.** Entity manipulation outside systems is strictly forbidden.
-2. Systems **must not hold persistent entity/component collections.** Temporary collections for per-frame aggregation are allowed.
-3. Systems **must not contain state** — all state goes into ECS components.
-4. Systems must inherit from `BaseUnityLoopSystem`.
-5. Constructors must be **`internal`** and accept only shared dependencies (settings, pools, utilities, factories).
-6. **Single responsibility** — split systems >200 lines into static counterparts.
-7. Assign each system to a `SystemGroup` based on purpose (e.g., `PhysicsSystemGroup`, `PresentationSystemGroup`, `CleanUpGroup`).
+> Condensed rules are in CLAUDE.md §1–7. This skill provides expanded examples and patterns not covered there.
 
 ### Code Example — Clean System
 
@@ -35,8 +31,8 @@ public partial class BillboardSystem : BaseUnityLoopSystem
     private const float MINIMUM_DISTANCE_TO_ROTATE_SQR = 0.25f * 0.25f;
     private readonly IExposedCameraData exposedCameraData;
 
-    // Internal constructor with shared dependencies only
-    public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
+    // Internal constructor with shared dependencies only (see CLAUDE.md §1)
+    internal BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
     {
         this.exposedCameraData = exposedCameraData;
     }
@@ -78,6 +74,8 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 
 ## Querying Best Practices
 
+> See CLAUDE.md §3 for core query rules. This section adds the preference ranking not covered there.
+
 Ranked from most preferred to least:
 
 1. **Source-generated queries** (preferred) — Use `[Query]` attribute with `[Data]` parameters
@@ -85,21 +83,9 @@ Ranked from most preferred to least:
 3. **`World.InlineQuery`** — Outside systems or generic cases; uses `IForEach<T>` struct
 4. **`World.Query`** — Last resort due to delegate/closure overhead
 
-**Rules:**
-- Always filter out `DeleteEntityIntention` in queries that should not process dying entities
-- No nested queries
-- Use `TryGet` for known entities over queries
-- Consolidate queries sharing the same filters
-
-## Performance Constraints
-
-- System `Update()` must be **allocation-free**
-- Keep logic minimal — systems execute multiple times per frame (one per world)
-- Use centralized throttling via `[ThrottlingEnabled]` attribute and `SystemGroupsUpdateGate`
-
 ## Safe Component Mutation
 
-This is critical — incorrect mutation causes silent data loss:
+> See CLAUDE.md §5 for the full mutation rules. This section adds the code example and component design guidance.
 
 ```csharp
 // CORRECT — ref var modifies the component in-place
@@ -111,18 +97,6 @@ var component = world.Get<MyComponent>(entity);
 component.Value = 42; // This modification is lost!
 ```
 
-**Rules:**
-- Use `ref var` to modify components, **never `var` alone**
-- Apply structural changes (`World.Add`, `World.Remove`) **after all `ref` mutations** — structural changes invalidate existing refs
-- Pass `Entity` by value if making structural changes (not `in Entity`)
-- Use `ref` for mutation, `in` for read-only, `ref readonly` for immutable refs
-
-## Component Design Principles
-
-- SDK and custom components are treated equally in ECS
-- Add extra data using **separate components** — do not modify SDK component definitions
-- Prefer stateful components over frequent structural changes (adding/removing)
-- Use `AssetPromise<T>` for async-loaded assets; always operate via `ref`
 - Components should be data-only (no logic); may have pool, static factory, or non-empty constructor
 - Prefer `struct` for components; use `class` for MonoBehaviors, existing class lifecycle, or cross-world references
 
@@ -175,7 +149,7 @@ Prefer `ReleasePoolableComponentSystem<T, TProvider>` for pooled disposals.
 
 ### Code Example — Full Cleanup Lifecycle
 
-From `CleanUpAudioSourceSystem.cs`:
+From `CleanUpAudioSourceSystem.cs` — shows all three triggers + `IForEach<T>` struct pattern:
 
 ```csharp
 [UpdateInGroup(typeof(CleanUpGroup))]
@@ -185,12 +159,6 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
 {
     private ReleaseAudioSourceComponent releaseAudioSourceComponent;
 
-    private CleanUpAudioSourceSystem(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry)
-        : base(world)
-    {
-        releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, poolsRegistry);
-    }
-
     protected override void Update(float t)
     {
         HandleEntityDestructionQuery(World);
@@ -198,19 +166,13 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
         World.Remove<AudioSourceComponent>(in HandleComponentRemoval_QueryDescription);
     }
 
-    [Query]
-    [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
+    [Query] [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
     private void HandleComponentRemoval(ref AudioSourceComponent component)
-    {
-        releaseAudioSourceComponent.Update(ref component);
-    }
+        => releaseAudioSourceComponent.Update(ref component);
 
-    [Query]
-    [All(typeof(DeleteEntityIntention))]
+    [Query] [All(typeof(DeleteEntityIntention))]
     private void HandleEntityDestruction(ref AudioSourceComponent component)
-    {
-        releaseAudioSourceComponent.Update(ref component);
-    }
+        => releaseAudioSourceComponent.Update(ref component);
 
     public void FinalizeComponents(in Query query)
     {
@@ -219,37 +181,46 @@ public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWo
             ref releaseAudioSourceComponent);
     }
 
-    // IForEach<T> struct pattern for allocation-free inline queries
+    // IForEach<T> struct — allocation-free callback for InlineQuery
     private readonly struct ReleaseAudioSourceComponent : IForEach<AudioSourceComponent>
     {
         private readonly World world;
         private readonly IComponentPool componentPool;
 
-        public ReleaseAudioSourceComponent(World world, IComponentPoolsRegistry poolsRegistry)
-        {
-            this.world = world;
-            poolsRegistry.TryGetPool(typeof(AudioSource), out componentPool);
-        }
-
         public void Update(ref AudioSourceComponent component)
         {
             component.CleanUp(world);
-            if (component.AudioSource != null)
-                componentPool.Release(component.AudioSource);
+            if (component.AudioSource != null) componentPool.Release(component.AudioSource);
             component.Dispose();
         }
     }
 }
 ```
 
+## Intention Components (Request-Response Pattern)
+
+The codebase uses "intention" struct components to model async ECS requests. A system creates an entity with an intention; a loading system processes it and adds `StreamableLoadingResult<T>`.
+
+**Base interfaces:**
+- `IAssetIntention` — has `CancellationTokenSource`
+- `ILoadingIntention : IAssetIntention` — adds `CommonLoadingArguments` (URL, source, attempts, etc.)
+
+**Common intention types:** `GetTextureIntention`, `GetAudioClipIntention`, `GetSceneFacadeIntention`, `DeleteEntityIntention`, `GetProfilesBatchIntent`, and 15+ others.
+
+**4-step pattern:**
+1. **Create** — Build an `AssetPromise` entity with the intention component
+2. **Load** — A `LoadSystemBase<TAsset, TIntention>` picks it up, loads the asset, adds `StreamableLoadingResult<T>`
+3. **Consume** — The requesting system calls `TryConsume` / `TryGetResult` to retrieve the result
+4. **Cleanup** — Dereference via `TryDereference`, destroy via `ForgetLoading` or `Consume`
+
+See the **asset-promise-lifecycle** skill for full creation, polling, error handling, and cleanup patterns.
+
 ## ECS Singletons
 
-Single-instance entities for `Player`, `Input`, `Camera`, `Time`, etc.
+> See CLAUDE.md §8 for core singleton rules. This section adds caching details.
 
 - Cache via `WorldExtensions` (`world.CacheCamera()`, `world.CachePlayer()`)
-- Use `TryGet` for mutation, `Has` for presence checks
-- **`TryGet` is 2x faster than `Query` for single entities** — prefer `TryGet`
-- Use `SingleInstanceEntity` struct; cache once, store in system
+- Use `SingleInstanceEntity` struct; cache once, store in system field
 
 ## Testing Systems
 
