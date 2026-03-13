@@ -2,6 +2,7 @@
 
 **Status:** Accepted (design phase)
 **Date:** 2026-03-13
+**Updated:** 2026-03-13 (ID fix, nested types, forward-compat path)
 **Authors:** Voice Chat team
 
 ---
@@ -37,6 +38,12 @@ Audio Effect Zones по семантике ближе к `AvatarModifierArea` --
 
 ### Proto-определение
 
+> **ID fix:** Изначально планировали ID 1072, но он уже занят `camera_mode.proto`. Используем **1073**.
+>
+> **Nested types:** По рекомендации коллеги все sub-messages и enums вложены внутрь `PBAudioEffectZone`, чтобы при codegen не создавались отдельные top-level типы в namespace.
+>
+> **SilenceEffect:** Оставлен как пустой message (не `bool`), чтобы можно было добавить поля позже (например, `reduction_db` для частичной тишины) без breaking change.
+
 ```protobuf
 syntax = "proto3";
 package decentraland.sdk.components;
@@ -44,11 +51,14 @@ package decentraland.sdk.components;
 import "decentraland/sdk/components/common/id.proto";
 import "decentraland/common/vectors.proto";
 
-option (common.ecs_component_id) = 1072;
+option (common.ecs_component_id) = 1073;
 
+// Defines a region of space where audio effects are applied to sound sources inside.
+// The Entity's Transform position determines the center-point of the region.
+// Transform rotation is applied, but scale is ignored (use the area field instead).
 message PBAudioEffectZone {
   decentraland.common.Vector3 area = 1;
-  optional AudioEffectZoneMeshType mesh = 2;     // default: BOX
+  // field 2 reserved for future optional mesh type (BOX/SPHERE)
   repeated string exclude_ids = 3;
 
   oneof effect {
@@ -58,52 +68,62 @@ message PBAudioEffectZone {
     AmplificationEffect amplification = 13;
     SilenceEffect silence = 14;
   }
-}
 
-message ReverbEffect {
-  optional float decay_time = 1;       // seconds, default 1.0
-  optional float wet_mix = 2;          // 0..1, default 0.5
-  optional ReverbPreset preset = 3;
-}
+  // --- Nested enums ---
 
-enum ReverbPreset {
-  RP_SMALL_ROOM = 0;
-  RP_LARGE_HALL = 1;
-  RP_CAVE = 2;
-  RP_CATHEDRAL = 3;
-}
+  enum ReverbPreset {
+    RP_SMALL_ROOM = 0;
+    RP_LARGE_HALL = 1;
+    RP_CAVE = 2;
+    RP_CATHEDRAL = 3;
+  }
 
-message EchoEffect {
-  optional float delay = 1;            // ms, default 500
-  optional float decay_ratio = 2;      // 0..1, default 0.5
-}
+  enum FilterType {
+    FT_METALLIC = 0;
+    FT_OPAQUE = 1;       // low-pass / muffled
+    FT_WATERY = 2;
+    FT_ROBOTIC = 3;
+  }
 
-message FilterEffect {
-  FilterType filter_type = 1;
-  optional float intensity = 2;        // 0..1, default 0.5
-}
+  // --- Nested effect messages ---
 
-enum FilterType {
-  FT_METALLIC = 0;
-  FT_OPAQUE = 1;       // low-pass / muffled
-  FT_WATERY = 2;
-  FT_ROBOTIC = 3;
-}
+  message ReverbEffect {
+    optional float decay_time = 1;       // seconds, default 1.0
+    optional float wet_mix = 2;          // 0..1, default 0.5
+    optional ReverbPreset preset = 3;
+  }
 
-message AmplificationEffect {
-  optional float volume_multiplier = 1;    // default 2.0
-  optional float distance_multiplier = 2;  // default 2.0
-}
+  message EchoEffect {
+    optional float delay = 1;            // ms, default 500
+    optional float decay_ratio = 2;      // 0..1, default 0.5
+  }
 
-message SilenceEffect {
-  // Mutes all audio sources inside the zone
-}
+  message FilterEffect {
+    FilterType filter_type = 1;
+    optional float intensity = 2;        // 0..1, default 0.5
+  }
 
-enum AudioEffectZoneMeshType {
-  AEZMT_BOX = 0;
-  AEZMT_SPHERE = 1;
+  message AmplificationEffect {
+    optional float volume_multiplier = 1;    // default 2.0
+    optional float distance_multiplier = 2;  // default 2.0
+  }
+
+  message SilenceEffect {
+    // Mutes all audio sources inside the zone.
+    // Empty message for forward compatibility -- fields can be added later.
+  }
 }
 ```
+
+### Reserved fields for future iterations (all additive, no breaking change)
+
+| Field # | Name | Iteration | Description |
+|---------|------|-----------|-------------|
+| 2 | `mesh` | TBD | `optional MeshType mesh` (BOX/SPHERE) |
+| 4 | `fade_time` | 6 | `optional float fade_time` for transitions |
+| 5 | `audio_target_mask` | 5 | `optional uint32` bitmask (VOICE/AVATAR_SOUNDS/WORLD_AUDIO) |
+| 6 | `priority` | 7 | `optional int32` for scene-controlled stacking |
+| 20 | `effects` | 8 | `repeated AudioEffect` for multiple effects per zone |
 
 ### Архитектура на Unity-стороне
 
@@ -136,6 +156,7 @@ flowchart TD
 
 - Одна зона = один эффект. Проще реализация, проще отладка
 - Миграция на `repeated` запланирована на итерацию 8
+- Миграция НЕ является breaking change: добавляется новое поле `repeated AudioEffect effects = 20;` параллельно с `oneof`. Unity-код: `if (effects.Count > 0) use effects; else check oneof`. Старые задеплоенные сцены (oneof) продолжают работать. Подробнее — см. Future Considerations
 
 **2. Source-based по умолчанию**
 
@@ -251,8 +272,21 @@ Unity AudioFilter компоненты добавляются на тот же G
 
 ### Future Considerations
 
-- Миграция `oneof` -> `repeated` для нескольких эффектов на зону
+- **Миграция `oneof` -> `repeated`** (итерация 8): НЕ breaking change. Добавляем `repeated AudioEffect effects = 20;` как wrapper message с oneof внутри. Старый `oneof effect` остаётся deprecated. Unity-код проверяет `effects` первым, fallback на `oneof`:
+  ```protobuf
+  // field 20 — new, additive
+  repeated AudioEffect effects = 20;
+  message AudioEffect {
+    oneof effect {
+      ReverbEffect reverb = 1;
+      EchoEffect echo = 2;
+      FilterEffect filter = 3;
+      AmplificationEffect amplification = 4;
+      SilenceEffect silence = 5;
+    }
+  }
+  ```
 - Listener-based зоны (обработка на AudioListener)
-- `audio_target_mask` для фильтрации по типу источника
-- `fade_time` для плавных переходов
-- `priority` в proto для серверной приоритизации
+- `audio_target_mask` (field 5) для фильтрации по типу источника
+- `fade_time` (field 4) для плавных переходов
+- `priority` (field 6) в proto для серверной приоритизации

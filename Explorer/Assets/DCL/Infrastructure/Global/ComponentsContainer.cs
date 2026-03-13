@@ -130,6 +130,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAnimator>.Create(ComponentID.ANIMATOR).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBCameraModeArea>.Create(ComponentID.CAMERA_MODE_AREA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAudioEffectZone>.Create(ComponentID.AUDIO_EFFECT_ZONE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPlayerIdentityData>.Create(ComponentID.PLAYER_IDENTITY_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarBase>.Create(ComponentID.AVATAR_BASE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())

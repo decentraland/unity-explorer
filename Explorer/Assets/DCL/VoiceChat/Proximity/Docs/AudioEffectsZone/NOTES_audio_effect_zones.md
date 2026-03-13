@@ -230,9 +230,9 @@ public struct AudioEffectActiveZones
 
 ## Proto Component ID
 
-Выбранный ID: **1072** (следующий после CameraModeArea = 1071).
+Выбранный ID: **1073** (main branch).
 
-Диапазон 12xx -- основные компоненты. 14xx -- экспериментальные. 1072 вписывается в ряд зонных компонентов:
+> **Исправление:** Изначально планировали 1072, но он уже занят `camera_mode.proto` (`PBCameraMode`). Обнаружено при grep всех `ecs_component_id` в protocol repo.
 
 | ID | Component |
 |----|-----------|
@@ -240,13 +240,42 @@ public struct AudioEffectActiveZones
 | 1061 | PBTriggerAreaResult |
 | 1070 | PBAvatarModifierArea |
 | 1071 | PBCameraModeArea |
-| **1072** | **PBAudioEffectZone** |
+| 1072 | PBCameraMode (ЗАНЯТ!) |
+| **1073** | **PBAudioEffectZone** |
 
-Перед финальным выбором ID -- проверить нет ли конфликтов с другими командами.
+---
+
+## Colleague Feedback (resolved)
+
+### 1. SDKEntityTriggerArea reuse
+
+> "I would suggest we keep reusing the SDKEntityTriggerArea for the core detection of users getting in/out of the area."
+
+Подтверждено -- используем `SDKEntityTriggerArea` как и для `AvatarModifierArea` / `CameraModeArea`. Централизованная детекция через Unity collision triggers.
+
+### 2. Nested types in proto
+
+> "All the new messages, enums etc you have in the new protobuf file, put them inside PBAudioEffectZone not outside, or they will be separate 'types' when the generated code is created from the protobuf file."
+
+Принято -- все sub-messages (`ReverbEffect`, `EchoEffect`, etc.) и enums (`ReverbPreset`, `FilterType`) вложены внутрь `PBAudioEffectZone`. В C# codegen это даёт `PBAudioEffectZone.Types.ReverbEffect` вместо top-level `ReverbEffect`.
+
+### 3. SilenceEffect: empty message vs bool
+
+> "SilenceEffect will there be properties in that message? or better to have a bool instead of a whole protobuf message for that?"
+
+Решение: **пустой message** `SilenceEffect {}`. Причина -- forward compatibility: если позже понадобятся параметры (например, `reduction_db` для частичной тишины / whisper zone), можно добавить поля без breaking change. С `bool` пришлось бы создавать новый message и deprecate bool.
+
+### 4. Stacking / overlapping zones
+
+> "You enter Area A, effects of A applied. You enter Area B (without exiting A), effects of B applied. Exiting Area A (while still in B), exit effects ignored. Then when you exit B, exiting effects of B applied."
+
+Для итерации 1 (только Silence) это приемлемо: last-wins семантика. Для будущих итераций с разными типами эффектов потребуется zone stack (см. Stacking Evolution).
 
 ---
 
 ## SDK Usage Example (target DX)
+
+> **Note:** Размер зоны задаётся через поле `area` в proto (как в `AvatarModifierArea`), а НЕ через `Transform.scale`. Transform.position = центр, Transform.rotation = поворот, scale игнорируется.
 
 ```typescript
 import { engine, Transform, AudioEffectZone } from '@dcl/sdk/ecs'
@@ -255,31 +284,37 @@ import { Vector3 } from '@dcl/sdk/math'
 // Silence zone -- mutes all voices inside
 const silenceZone = engine.addEntity()
 Transform.create(silenceZone, {
-  position: Vector3.create(8, 1, 8),
-  scale: Vector3.create(4, 3, 4)
+  position: Vector3.create(8, 1, 8)
 })
-AudioEffectZone.setSilence(silenceZone)
+AudioEffectZone.create(silenceZone, {
+  area: Vector3.create(4, 3, 4),
+  silence: {}
+})
 
 // Reverb zone -- cathedral effect
 const reverbZone = engine.addEntity()
 Transform.create(reverbZone, {
-  position: Vector3.create(16, 2, 16),
-  scale: Vector3.create(10, 6, 10)
+  position: Vector3.create(16, 2, 16)
 })
-AudioEffectZone.setReverb(reverbZone, {
-  preset: ReverbPreset.RP_CATHEDRAL,
-  wetMix: 0.7
+AudioEffectZone.create(reverbZone, {
+  area: Vector3.create(10, 6, 10),
+  reverb: {
+    preset: AudioEffectZone.ReverbPreset.RP_CATHEDRAL,
+    wetMix: 0.7
+  }
 })
 
 // Amplification zone -- microphone effect
 const micZone = engine.addEntity()
 Transform.create(micZone, {
-  position: Vector3.create(24, 1, 24),
-  scale: Vector3.create(2, 2, 2)
+  position: Vector3.create(24, 1, 24)
 })
-AudioEffectZone.setAmplification(micZone, {
-  volumeMultiplier: 3.0,
-  distanceMultiplier: 4.0
+AudioEffectZone.create(micZone, {
+  area: Vector3.create(2, 2, 2),
+  amplification: {
+    volumeMultiplier: 3.0,
+    distanceMultiplier: 4.0
+  }
 })
 ```
 

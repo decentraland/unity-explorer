@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../.."
+		},
+		{
+			"path": "../../../../../SDK/protocol"
+		},
+		{
+			"path": "../../../../../SDK/sdk7-test-scenes"
+		}
+	],
+	"settings": {}
+}

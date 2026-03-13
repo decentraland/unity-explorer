@@ -40,7 +40,7 @@ namespace DCL.SDKEntityTriggerArea.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea), typeof(PBTriggerArea))]
+        [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea), typeof(PBTriggerArea), typeof(PBAudioEffectZone))]
         private void HandleComponentRemoval(Entity entity, ref SDKEntityTriggerAreaComponent component)
         {
             component.TryRelease(poolRegistry);

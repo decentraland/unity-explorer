@@ -27,8 +27,8 @@ SDK-определяемые зоны, модифицирующие аудио (
 #### SDK / Protocol
 
 1. Создать `protocol/proto/decentraland/sdk/components/audio_effect_zone.proto`
-   - Полный proto из ADR (все messages и enums), но Unity реализует только `SilenceEffect`
-   - ID: 1072
+   - Полный proto из ADR (все messages и enums вложены в PBAudioEffectZone), но Unity реализует только `SilenceEffect`
+   - ID: **1073** (1072 занят `camera_mode.proto`)
 2. Добавить импорт в `protocol/public/sdk-components.proto`:
    ```protobuf
    import public "decentraland/sdk/components/audio_effect_zone.proto";
@@ -241,6 +241,7 @@ SDK-определяемые зоны, модифицирующие аудио (
 ### Details
 
 ```protobuf
+// Nested inside PBAudioEffectZone:
 enum AudioTargetType {
   ATT_ALL = 0;
   ATT_VOICE = 1;
@@ -248,8 +249,8 @@ enum AudioTargetType {
   ATT_WORLD_AUDIO = 4;
 }
 
-// В PBAudioEffectZone:
-optional uint32 audio_target_mask = 4;  // bitmask, default ATT_ALL
+// В PBAudioEffectZone (field 5, reserved):
+optional uint32 audio_target_mask = 5;  // bitmask, default ATT_ALL
 ```
 
 ### Notes
@@ -272,7 +273,7 @@ optional uint32 audio_target_mask = 4;  // bitmask, default ATT_ALL
 
 ### Scope
 
-- Добавить `optional float fade_time` в `PBAudioEffectZone` proto
+- Добавить `optional float fade_time = 4` в `PBAudioEffectZone` proto (field 4, reserved)
 - Unity: lerp параметров при enter/exit
 
 ### Details
@@ -346,12 +347,15 @@ Silence (highest) > Amplification > Filter > Reverb > Echo (lowest)
 
 ### Scope
 
-- Миграция proto: `oneof effect` -> `repeated AudioEffect effects`
+- Миграция proto: добавить `repeated AudioEffect effects = 20` параллельно с `oneof`
 - Unity: цепочка эффектов на одном AudioSource
 
 ### Details
 
 ```protobuf
+// Добавляется НОВОЕ поле (field 20), oneof остаётся deprecated
+repeated AudioEffect effects = 20;
+
 message AudioEffect {
   oneof effect {
     ReverbEffect reverb = 1;
@@ -361,18 +365,15 @@ message AudioEffect {
     SilenceEffect silence = 5;
   }
 }
-
-// В PBAudioEffectZone замена:
-// oneof effect { ... }  ->  repeated AudioEffect effects = 10;
 ```
 
+- **НЕ breaking change**: старый `oneof` (fields 10-14) остаётся, новый `repeated` добавляется
+- Unity-код: `if (effects.Count > 0) use effects; else check oneof`
 - Порядок в массиве = порядок в DSP chain
 - Приоритет вычисляется по наивысшему эффекту в массиве
-- Обратная совместимость: если `effects` пуст, проверить `oneof` поля (deprecation)
 
 ### Notes
 
-- Breaking change в proto -- требует координации с SDK командой
 - Сложность стекинга возрастает: per-zone chain + inter-zone priority
 
 ### Files

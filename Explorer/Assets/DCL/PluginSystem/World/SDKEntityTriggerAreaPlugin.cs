@@ -11,6 +11,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.SDKComponents.AudioEffectZone.Systems;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.SDKComponents.TriggerArea.Systems;
@@ -82,9 +83,11 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PBAudioEffectZone>.InjectToWorld(ref builder);
 
             sceneIsCurrentListeners.Add(SDKEntityTriggerAreaHandlerSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject));
 
+            finalizeWorldSystems.Add(AudioEffectZoneHandlerSystem.InjectToWorld(ref builder, globalWorld));
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(

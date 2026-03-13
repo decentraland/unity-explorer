@@ -30,6 +30,7 @@ namespace DCL.ECS7
         public const int AVATAR_MODIFIER_AREA = 1070;
         public const int CAMERA_MODE_AREA = 1071;
         public const int CAMERA_MODE = 1072;
+        public const int AUDIO_EFFECT_ZONE = 1073;
         public const int AVATAR_ATTACH = 1073;
         public const int POINTER_LOCK = 1074;
         public const int MAIN_CAMERA = 1075;
