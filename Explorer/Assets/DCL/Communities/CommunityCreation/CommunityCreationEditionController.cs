@@ -272,7 +272,7 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
-                var placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct)
+                var placesResult = await placesAPIService.GetDestinationsByOwnerAsync(ownProfile.UserId, ct)
                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!placesResult.Success)
@@ -283,39 +283,17 @@ namespace DCL.Communities.CommunityCreation
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.Data)
                 {
-                    var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
+                    bool isWorld = !string.IsNullOrEmpty(placeInfo.world_name);
+                    var placeText = $"{placeInfo.title} ({(isWorld ? placeInfo.world_name : placeInfo.base_position)})";
                     placesToAdd.Add(placeText);
 
                     currentCommunityPlaces.Add(
                         new CommunityPlace(
                             placeInfo.id,
-                            false,
+                            isWorld,
                             placeText,
                             placeInfo.owner,
                             string.Empty));
-                }
-
-                // Worlds
-                var worldsResult = await placesAPIService.GetWorldsByOwnerAsync(ownProfile.UserId, ct)
-                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-                if (!worldsResult.Success)
-                {
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_WORLDS_ERROR_MESSAGE));
-                    return;
-                }
-
-                foreach (PlacesData.PlaceInfo worldInfo in worldsResult.Value.Data)
-                {
-                    var worldText = $"{worldInfo.title} ({worldInfo.world_name})";
-                    placesToAdd.Add(worldText);
-
-                    currentCommunityPlaces.Add(new CommunityPlace (
-                        worldInfo.id,
-                        true,
-                        worldText,
-                        worldInfo.owner,
-                        string.Empty));
                 }
 
                 // Owners' names
@@ -428,7 +406,7 @@ namespace DCL.Communities.CommunityCreation
             if (getCommunityPlacesResult.Value is { Count: > 0 })
             {
                 // Load places details
-                var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
+                var getPlacesDetailsResult = await  placesAPIService.GetDestinationsByIdsAsync(getCommunityPlacesResult.Value, ct)
                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested)
