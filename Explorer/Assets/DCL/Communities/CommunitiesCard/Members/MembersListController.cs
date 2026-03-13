@@ -256,21 +256,26 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTask ShowReportConfirmationDialogAsync(ICommunityMemberData memberData, CancellationToken ct)
             {
-                bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                    ViewDependencies.ConfirmationDialogOpener,
-                    memberData.Name,
-                    view.contextMenuSettings.ReportSprite,
-                    ReportCategory.PROFILE,
-                    ct);
+                try
+                {
+                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
+                        ViewDependencies.ConfirmationDialogOpener,
+                        memberData.Name,
+                        view.contextMenuSettings.ReportSprite,
+                        ReportCategory.PROFILE,
+                        ct);
 
-                if (!confirmed)
-                    return;
+                    if (!confirmed)
+                        return;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
-                webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                    ownProfile != null ? ownProfile.UserId : string.Empty,
-                    memberData.Address));
+                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
+                        ownProfile != null ? ownProfile.UserId : string.Empty,
+                        memberData.Address));
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
             }
         }
 
