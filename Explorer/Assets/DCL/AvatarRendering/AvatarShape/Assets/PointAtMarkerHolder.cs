@@ -1,5 +1,9 @@
+using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape.Assets
 {
@@ -11,6 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         [field: SerializeField] public SpriteRenderer SpriteRenderer { get; private set; }
         [field: SerializeField] public SizeRangeData MinData { get; private set; }
         [field: SerializeField] public SizeRangeData MaxData { get; private set; }
+        [SerializeField] private float fadeDuration = 0.3f;
 
         [Serializable]
         public struct SizeRangeData
@@ -21,13 +26,61 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
 
         private MaterialPropertyBlock mpb;
         private string lastProfileId;
+        private CancellationTokenSource fadeCts;
+
+        private Color originalColor;
 
         private void Awake()
         {
             mpb = new MaterialPropertyBlock();
+            originalColor = SpriteRenderer.color;
         }
 
-        public void Setup(Sprite sprite, Color backgroundColor, string profileId, float sqrDistance)
+        public void FadeIn()
+        {
+            Color color = originalColor;
+            color.a = 0f;
+            SpriteRenderer.color = color;
+
+            fadeCts = fadeCts.SafeRestart();
+            AnimateColor(1f, fadeCts.Token).Forget();
+        }
+
+        public void FadeOutAndRelease(IObjectPool<PointAtMarkerHolder> pool)
+        {
+            Color color = originalColor;
+            color.a = 1f;
+            SpriteRenderer.color = color;
+
+            fadeCts = fadeCts.SafeRestart();
+            AnimateColor(0f, fadeCts.Token, pool).Forget();
+        }
+
+        private async UniTaskVoid AnimateColor(float endAlpha, CancellationToken ct, IObjectPool<PointAtMarkerHolder>? pool = null)
+        {
+            Color color = SpriteRenderer.color;
+            float startAlpha = color.a;
+            float elapsed = 0f;
+
+            while (elapsed < fadeDuration)
+            {
+                if (ct.IsCancellationRequested)
+                    break;
+
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / fadeDuration);
+                color.a = Mathf.Lerp(startAlpha, endAlpha, t);
+                SpriteRenderer.color = color;
+                await UniTask.Yield(ct);
+            }
+
+            color.a = endAlpha;
+            SpriteRenderer.color = color;
+
+            pool?.Release(this);
+        }
+
+        public void UpdateData(Sprite sprite, Color backgroundColor, string profileId, float sqrDistance)
         {
             float distance = Mathf.Sqrt(sqrDistance);
             float size;

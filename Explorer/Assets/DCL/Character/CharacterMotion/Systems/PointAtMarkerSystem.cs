@@ -86,6 +86,8 @@ namespace DCL.Character.CharacterMotion.Systems
                 avatarBase.AudioPlaybackController?.PlayAudioForType(
                     AvatarAudioSettings.AvatarAudioClipType.PointAt);
 
+            marker.FadeIn();
+
             World.Add(entity, marker);
         }
 
@@ -106,7 +108,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 ? spriteData.Sprite
                 : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
 
-            marker.Setup(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
+            marker.UpdateData(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
             marker.transform.LookAt(
                 pointAt.WorldHitPoint + (Vector3)cameraForward, cameraUp);
@@ -123,7 +125,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (pointAt.IsPointing && (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude <= MAX_POINT_AT_DISTANCE_SQR)
                 return;
 
-            markerPool.Release(marker);
+            marker.FadeOutAndRelease(markerPool);
             World.Remove<PointAtMarkerHolder>(entity);
         }
     }

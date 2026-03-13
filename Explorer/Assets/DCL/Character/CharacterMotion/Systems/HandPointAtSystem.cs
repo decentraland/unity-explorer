@@ -189,6 +189,5 @@ namespace DCL.Character.CharacterMotion.Systems
             HandPointAtHelper.ApplyHandIK(ref pointAt, ref avatarBase, in settings, dt, directionToTarget, shoulderPos, rotationInfo);
         }
 
-
     }
 }
