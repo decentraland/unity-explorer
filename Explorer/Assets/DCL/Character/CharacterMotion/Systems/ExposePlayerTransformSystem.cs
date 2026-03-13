@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using ECS.Abstract;
