@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     public struct AvatarMouthInputComponent
     {
         /// <summary>
-        ///     The chat message text to animate through phonemes. Null when no message is pending.
+        ///     The chat message text to animate through mouth poses. Null when no message is pending.
         /// </summary>
         public string? PendingMessage;
 
@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         /// <summary>
         ///     True while this avatar is an active speaker in the current voice-chat session.
-        ///     When true, <c>AvatarFacialExpressionSystem</c> loops a hardcoded phoneme string.
+        ///     When true, <c>AvatarFacialExpressionSystem</c> loops a hardcoded mouth pose string.
         /// </summary>
         public bool IsVoiceChatSpeaking;
     }

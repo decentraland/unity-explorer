@@ -6,7 +6,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     ///     Holds the current face expression state for an avatar.
     ///     The expression is the base layer: eyes and mouth indices are copied into
     ///     <see cref="AvatarBlinkComponent"/> and <see cref="AvatarMouthAnimationComponent"/>
-    ///     as the "resting" state that is restored after a blink or phoneme animation finishes.
+    ///     as the "resting" state that is restored after a blink or mouth pose animation finishes.
     ///     Eyebrows are fully controlled by this component (no other system overrides them).
     ///     Added by <c>AvatarFacialExpressionSystem</c> alongside the blink and mouth components.
     /// </summary>

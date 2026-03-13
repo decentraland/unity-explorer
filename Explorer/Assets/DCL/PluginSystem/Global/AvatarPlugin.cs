@@ -100,8 +100,8 @@ namespace DCL.PluginSystem.Global
         private float maxBlinkInterval;
         private float blinkFrameDuration;
 
-        private Texture2DArray? mouthPhonemeTextureArray;
-        private float phonemeDuration;
+        private Texture2DArray? mouthPoseTextureArray;
+        private float mouthPoseDuration;
 
         private AvatarFaceExpressionDefinition[] faceExpressions = System.Array.Empty<AvatarFaceExpressionDefinition>();
         private readonly AvatarFaceDebugData avatarFaceDebugData = new ();
@@ -154,8 +154,8 @@ namespace DCL.PluginSystem.Global
             if (eyeTextureArray != null)
                 Object.Destroy(eyeTextureArray);
 
-            if (mouthPhonemeTextureArray != null)
-                Object.Destroy(mouthPhonemeTextureArray);
+            if (mouthPoseTextureArray != null)
+                Object.Destroy(mouthPoseTextureArray);
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
@@ -175,8 +175,8 @@ namespace DCL.PluginSystem.Global
             maxBlinkInterval = settings.MaxBlinkInterval;
             blinkFrameDuration = settings.BlinkFrameDuration;
 
-            mouthPhonemeTextureArray = await CreateMouthPhonemeTextureArrayAsync(settings, ct);
-            phonemeDuration = settings.PhonemeDuration;
+            mouthPoseTextureArray = await CreateMouthPoseTextureArrayAsync(settings, ct);
+            mouthPoseDuration = settings.MouthPoseDuration;
 
             faceExpressions = await LoadFaceExpressionsAsync(settings, ct);
 
@@ -215,7 +215,7 @@ namespace DCL.PluginSystem.Global
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPhonemeTextureArray, phonemeDuration, avatarFaceDebugData);
+            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPoseTextureArray, mouthPoseDuration, avatarFaceDebugData);
             UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
@@ -436,9 +436,9 @@ namespace DCL.PluginSystem.Global
 
         /// <summary>
         ///     Slices the 1024×1024 mouth atlas into 16 individual 256×256 Texture2DArray slices,
-        ///     one per phoneme / expression entry.
+        ///     one per mouth pose / expression entry.
         /// </summary>
-        private async UniTask<Texture2DArray?> CreateMouthPhonemeTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask<Texture2DArray?> CreateMouthPoseTextureArrayAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             if (settings.MouthAtlasTexture == null || string.IsNullOrEmpty(settings.MouthAtlasTexture.AssetGUID))
                 return null;
@@ -556,9 +556,10 @@ namespace DCL.PluginSystem.Global
             public float MaxBlinkInterval = 8.0f;
             public float BlinkFrameDuration = 0.05f;
 
-            [Header("Mouth Phoneme Animation")]
+            [Header("Mouth Pose Animation")]
             public AssetReferenceT<Texture2D> MouthAtlasTexture;
-            public float PhonemeDuration = 0.08f;
+            [UnityEngine.Serialization.FormerlySerializedAs("PhonemeDuration")]
+            public float MouthPoseDuration = 0.08f;
 
             [Header("Face Expressions")]
             public AssetReferenceT<AvatarFaceExpressionConfig> ExpressionConfig;

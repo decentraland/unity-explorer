@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
     /// <summary>
-    ///     Holds per-avatar state for mouth phoneme animation.
+    ///     Holds per-avatar state for mouth mouth pose animation.
     ///     Added by AvatarFacialExpressionSystem to fully instantiated avatars.
     /// </summary>
     public struct AvatarMouthAnimationComponent
@@ -14,7 +14,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Renderer MouthRenderer;
 
         /// <summary>
-        ///     The text currently being animated through phonemes. Null when idle.
+        ///     The text currently being animated through mouth poses. Null when idle.
         /// </summary>
         public string? AnimatingText;
 
@@ -24,19 +24,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public int CharacterIndex;
 
         /// <summary>
-        ///     Accumulated time the current character's phoneme has been displayed.
+        ///     Accumulated time the current character's mouth pose has been displayed.
         /// </summary>
         public float CharacterTimer;
 
         /// <summary>
-        ///     Last applied phoneme slice index into the phoneme Texture2DArray.
+        ///     Last applied mouth pose slice index into the mouth pose Texture2DArray.
         ///     -1 means no MaterialPropertyBlock override is active (default material).
         /// </summary>
-        public int CurrentPhonemeIndex;
+        public int CurrentMouthPoseIndex;
 
         /// <summary>
         ///     Base mouth atlas slice index from the current face expression.
-        ///     Applied when phoneme animation ends to restore the expression resting state.
+        ///     Applied when mouth pose animation ends to restore the expression resting state.
         ///     -1 means revert to the material's default texture (idle mouth).
         /// </summary>
         public int MouthExpressionIndex;

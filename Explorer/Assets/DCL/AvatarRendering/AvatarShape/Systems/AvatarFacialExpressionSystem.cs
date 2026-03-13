@@ -12,8 +12,8 @@ namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
     ///     Drives all 2D facial animations for instantiated avatars: eyebrow expressions,
-    ///     eye blinking, and mouth phoneme animation.
-    ///     Expressions act as the base (resting) layer. Blink and phoneme systems temporarily
+    ///     eye blinking, and mouth mouth pose animation.
+    ///     Expressions act as the base (resting) layer. Blink and mouth pose systems temporarily
     ///     override the eyes and mouth respectively, then restore the expression when they end.
     ///     Uses MaterialPropertyBlock overrides per-renderer to avoid modifying shared pool materials.
     /// </summary>
@@ -41,14 +41,17 @@ namespace DCL.AvatarRendering.AvatarShape
         /// <summary>Sentinel value: no eye MaterialPropertyBlock override is active (material default = open eyes).</summary>
         private const int NO_EYE_OVERRIDE = -1;
 
-        /// <summary>Sentinel value: no phoneme MaterialPropertyBlock override is active.</summary>
-        private const int NO_PHONEME_OVERRIDE = -1;
+        /// <summary>Sentinel value: no mouth pose MaterialPropertyBlock override is active.</summary>
+        private const int NO_MOUTH_POSE = -1;
+
+        /// <summary>Uppercase letters hold their mouth pose for this multiple of <see cref="mouthPoseDuration"/>.</summary>
+        private const float UPPERCASE_DURATION_MULTIPLIER = 2f;
 
         /// <summary>Sentinel value: no eyebrows MaterialPropertyBlock override is active.</summary>
         private const int NO_EYEBROWS_OVERRIDE = -1;
 
         /// <summary>
-        ///     Phoneme-rich text looped while an avatar is actively speaking in voice chat.
+        ///     Mouth-pose-rich text looped while an avatar is actively speaking in voice chat.
         ///     Covers lip-closure (m/p), open vowels (a/i), L-shape (l), rounded (o/u), and
         ///     labiodental (f) so the animation looks naturally varied.
         /// </summary>
@@ -75,8 +78,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly float minBlinkInterval;
         private readonly float maxBlinkInterval;
         private readonly float blinkFrameDuration;
-        private readonly Texture2DArray? phonemeTextureArray;
-        private readonly float phonemeDuration;
+        private readonly Texture2DArray? mouthPoseTextureArray;
+        private readonly float mouthPoseDuration;
         private readonly AvatarFaceDebugData? debugData;
 
         internal AvatarFacialExpressionSystem(
@@ -86,8 +89,8 @@ namespace DCL.AvatarRendering.AvatarShape
             float minBlinkInterval,
             float maxBlinkInterval,
             float blinkFrameDuration,
-            Texture2DArray? phonemeTextureArray,
-            float phonemeDuration,
+            Texture2DArray? mouthPoseTextureArray,
+            float mouthPoseDuration,
             AvatarFaceDebugData? debugData = null) : base(world)
         {
             this.eyebrowsTextureArray = eyebrowsTextureArray;
@@ -95,8 +98,8 @@ namespace DCL.AvatarRendering.AvatarShape
             this.minBlinkInterval = minBlinkInterval;
             this.maxBlinkInterval = maxBlinkInterval;
             this.blinkFrameDuration = blinkFrameDuration;
-            this.phonemeTextureArray = phonemeTextureArray;
-            this.phonemeDuration = phonemeDuration;
+            this.mouthPoseTextureArray = mouthPoseTextureArray;
+            this.mouthPoseDuration = mouthPoseDuration;
             this.debugData = debugData;
         }
 
@@ -108,7 +111,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (eyeTextureArray != null)
                 SetupBlinkComponentQuery(World);
 
-            if (phonemeTextureArray != null)
+            if (mouthPoseTextureArray != null)
                 SetupMouthComponentQuery(World);
 
             // When the debug widget changed the expression, propagate it to all avatar expression components.
@@ -132,8 +135,8 @@ namespace DCL.AvatarRendering.AvatarShape
             if (eyeTextureArray != null)
                 UpdateBlinkQuery(World, t);
 
-            // Phoneme animation overrides mouth temporarily.
-            if (phonemeTextureArray != null)
+            // mouth pose animation overrides mouth temporarily.
+            if (mouthPoseTextureArray != null)
                 UpdateMouthAnimationQuery(World, t);
         }
 
@@ -154,7 +157,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 EyebrowsRenderer = eyebrowsRenderer,
                 EyebrowsExpressionIndex = 0,
                 EyesExpressionIndex = NO_EYE_OVERRIDE,
-                MouthExpressionIndex = NO_PHONEME_OVERRIDE,
+                MouthExpressionIndex = NO_MOUTH_POSE,
                 CurrentEyebrowsIndex = NO_EYEBROWS_OVERRIDE,
                 IsDirty = false,
             });
@@ -198,8 +201,8 @@ namespace DCL.AvatarRendering.AvatarShape
             World.Add(entity, new AvatarMouthAnimationComponent
             {
                 MouthRenderer = mouthRenderer,
-                CurrentPhonemeIndex = NO_PHONEME_OVERRIDE,
-                MouthExpressionIndex = NO_PHONEME_OVERRIDE,
+                CurrentMouthPoseIndex = NO_MOUTH_POSE,
+                MouthExpressionIndex = NO_MOUTH_POSE,
             });
         }
 
@@ -278,9 +281,9 @@ namespace DCL.AvatarRendering.AvatarShape
             // Sync the resting mouth state into the mouth component so StopMouth restores it.
             mouth.MouthExpressionIndex = expression.MouthExpressionIndex;
 
-            // If not currently animating phonemes, apply the expression mouth immediately.
+            // If not currently animating mouth poses, apply the expression mouth immediately.
             if (mouth.AnimatingText == null)
-                ApplyPhoneme(ref mouth, expression.MouthExpressionIndex);
+                ApplyMouthPose(ref mouth, expression.MouthExpressionIndex);
         }
 
         // ─── Blink ────────────────────────────────────────────────────────────
@@ -344,10 +347,10 @@ namespace DCL.AvatarRendering.AvatarShape
             }
         }
 
-        // ─── Mouth phoneme animation ──────────────────────────────────────────
+        // ─── Mouth mouth pose animation ──────────────────────────────────────────
 
         /// <summary>
-        ///     Advances the phoneme animation for each avatar.
+        ///     Advances the mouth pose animation for each avatar.
         ///     Re-initialises the renderer reference if the avatar was re-instantiated.
         ///     Reads <see cref="AvatarMouthInputComponent"/> for both pending chat messages and
         ///     voice-chat speaking state. Chat messages take priority over the voice loop;
@@ -369,7 +372,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 mouth.AnimatingText = null;
                 mouth.CharacterIndex = 0;
                 mouth.CharacterTimer = 0f;
-                mouth.CurrentPhonemeIndex = NO_PHONEME_OVERRIDE;
+                mouth.CurrentMouthPoseIndex = NO_MOUTH_POSE;
             }
 
             // Suppress animation when the avatar or its mouth renderer is invisible.
@@ -397,7 +400,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 }
             }
 
-            // Advance the phoneme animation.
+            // Advance the mouth pose animation.
             if (mouth.AnimatingText != null && mouth.CharacterIndex < mouth.AnimatingText.Length)
             {
                 // Stop the voice loop immediately if speaking ended mid-animation.
@@ -407,12 +410,16 @@ namespace DCL.AvatarRendering.AvatarShape
                     return;
                 }
 
-                int phoneme = MapCharToPhoneme(mouth.AnimatingText, mouth.CharacterIndex);
-                ApplyPhoneme(ref mouth, phoneme == NO_PHONEME_OVERRIDE ? mouth.MouthExpressionIndex : phoneme);
+                int mouthPose = MapCharToMouthPose(mouth.AnimatingText, mouth.CharacterIndex);
+                ApplyMouthPose(ref mouth, mouthPose == NO_MOUTH_POSE ? mouth.MouthExpressionIndex : mouthPose);
 
                 mouth.CharacterTimer += t;
 
-                if (mouth.CharacterTimer >= phonemeDuration)
+                float duration = char.IsUpper(mouth.AnimatingText[mouth.CharacterIndex])
+                    ? mouthPoseDuration * UPPERCASE_DURATION_MULTIPLIER
+                    : mouthPoseDuration;
+
+                if (mouth.CharacterTimer >= duration)
                 {
                     mouth.CharacterTimer = 0f;
                     mouth.CharacterIndex++;
@@ -478,17 +485,17 @@ namespace DCL.AvatarRendering.AvatarShape
             mouth.AnimatingText = null;
 
             // Restore the expression resting mouth state (or clear to material default if no expression).
-            ApplyPhoneme(ref mouth, mouth.MouthExpressionIndex);
+            ApplyMouthPose(ref mouth, mouth.MouthExpressionIndex);
         }
 
-        private void ApplyPhoneme(ref AvatarMouthAnimationComponent mouth, int phonemeIndex)
+        private void ApplyMouthPose(ref AvatarMouthAnimationComponent mouth, int mouthPoseIndex)
         {
-            if (mouth.CurrentPhonemeIndex == phonemeIndex)
+            if (mouth.CurrentMouthPoseIndex == mouthPoseIndex)
                 return;
 
-            mouth.CurrentPhonemeIndex = phonemeIndex;
+            mouth.CurrentMouthPoseIndex = mouthPoseIndex;
 
-            if (phonemeIndex == NO_PHONEME_OVERRIDE)
+            if (mouthPoseIndex == NO_MOUTH_POSE)
             {
                 // Revert to the renderer's default material texture.
                 mouth.MouthRenderer.SetPropertyBlock(null);
@@ -496,8 +503,8 @@ namespace DCL.AvatarRendering.AvatarShape
             }
 
             s_Mpb.Clear();
-            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, phonemeTextureArray);
-            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, phonemeIndex);
+            s_Mpb.SetTexture(MAINTEX_ARR_TEX_SHADER, mouthPoseTextureArray);
+            s_Mpb.SetInteger(MAINTEX_ARR_SHADER_INDEX, mouthPoseIndex);
             mouth.MouthRenderer.SetPropertyBlock(s_Mpb);
         }
 
@@ -516,13 +523,13 @@ namespace DCL.AvatarRendering.AvatarShape
             expression.EyebrowsRenderer.SetPropertyBlock(s_Mpb);
         }
 
-        // ─── Phoneme mapping ──────────────────────────────────────────────────
+        // ─── Mouth pose mapping ──────────────────────────────────────────────────
 
         /// <summary>
-        ///     Maps a character at <paramref name="index"/> in <paramref name="text"/> to a phoneme
+        ///     Maps a character at <paramref name="index"/> in <paramref name="text"/> to a mouth pose
         ///     slice index. Digraphs (th, ch, sh) are detected by peeking at the next character.
         /// </summary>
-        private static int MapCharToPhoneme(string text, int index)
+        private static int MapCharToMouthPose(string text, int index)
         {
             char c = char.ToLowerInvariant(text[index]);
             char next = index + 1 < text.Length ? char.ToLowerInvariant(text[index + 1]) : '\0';
@@ -545,7 +552,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 case 'r':                      return 9;
                 case 'j':                      return 10;
                 case 'w': case 'q':            return 11;
-                default:                       return NO_PHONEME_OVERRIDE; // spaces, punctuation, digits — fall back to expression mouth
+                default:                       return NO_MOUTH_POSE; // spaces, punctuation, digits — fall back to expression mouth
             }
         }
 
