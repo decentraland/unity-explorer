@@ -22,7 +22,6 @@ using DCL.Emoji;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -165,15 +164,18 @@ namespace DCL.Chat
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
             
-            var favoritesService = new ChatReactionFavoritesService(
-                reactionsConfig.MessageReactions.DefaultFavoriteEmojiIndices);
+            int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
+                reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
+            int maxRecent = reactionsConfig.MessageReactions.MaxRecentEmojis;
+            var recentsService = new ChatReactionRecentsService(fixedDefaults, maxRecent);
 
             reactionsPresenter = new ChatReactionsPresenter(
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 situationalReactionService,
                 reactionsConfig.Atlas,
-                favoritesService,
+                recentsService,
+                fixedDefaults,
                 view.EmojiPanelView,
                 emojiPanelPresenter);
 

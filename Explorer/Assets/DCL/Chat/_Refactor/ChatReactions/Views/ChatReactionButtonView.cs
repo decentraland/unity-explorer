@@ -1,36 +1,18 @@
-using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Grouping view for the chat reaction button and its emoji picker popup.
-    /// The picker panel sits above the button in the prefab hierarchy and is hidden by default.
+    /// View for the chat reaction button. The heart icon is set statically
+    /// in the prefab and never changes at runtime.
     /// </summary>
     public class ChatReactionButtonView : MonoBehaviour
     {
         [field: SerializeField] public Button ReactionButton { get; private set; } = null!;
-        [field: SerializeField] public RawImage EmojiIcon { get; private set; } = null!;
-        [field: SerializeField] public SituationalReactionPickerView PickerView { get; private set; } = null!;
-
-        private EventTrigger cachedEventTrigger;
-
-        public EventTrigger ButtonEventTrigger =>
-            cachedEventTrigger ??= ReactionButton.GetComponent<EventTrigger>()
-                                   ?? ReactionButton.gameObject.AddComponent<EventTrigger>();
 
         public void Show() => gameObject.SetActive(true);
 
         public void Hide() => gameObject.SetActive(false);
-
-        public void SetEmoji(int atlasIndex, ChatReactionsAtlasConfig atlasConfig)
-        {
-            if (EmojiIcon == null) return;
-
-            EmojiIcon.texture = atlasConfig.Atlas;
-            EmojiIcon.uvRect = atlasConfig.GetUVRect(atlasIndex);
-        }
     }
 }

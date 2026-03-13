@@ -1,24 +1,27 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Top-level presenter that owns and coordinates <see cref="ChatReactionButtonPresenter"/>
-    /// and <see cref="ChatReactionsSelectorPresenter"/>.
+    /// Top-level presenter that coordinates the reaction button, shortcuts bar,
+    /// and emoji panel. Button click toggles the bar. Clicking any emoji in the
+    /// bar or panel sends it immediately without closing panels.
     /// </summary>
     public sealed class ChatReactionsPresenter : IDisposable
     {
         private readonly ChatReactionButtonPresenter buttonPresenter;
         private readonly ChatReactionsSelectorPresenter selectorPresenter;
-        private readonly ChatReactionFavoritesService favoritesService;
-        private readonly ChatReactionButtonView buttonView;
+        private readonly ISituationalReactionService reactionService;
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly ChatClickDetectionHandler clickDetectionHandler;
         private readonly RectTransform emojiPanelRect;
         private readonly RectTransform addButtonRect;
+        private readonly RectTransform buttonRect;
 
         private bool emojiPanelOpenedByReactions;
         private bool reactionsEnabled = true;
@@ -28,13 +31,13 @@ namespace DCL.Chat.ChatReactions
             ChatReactionsSelectorView selectorView,
             ISituationalReactionService reactionService,
             ChatReactionsAtlasConfig atlasConfig,
-            ChatReactionFavoritesService favoritesService,
+            ChatReactionRecentsService recentsService,
+            int[] fixedDefaults,
             EmojiPanelView emojiPanelView,
             EmojiPanelPresenter emojiPanelPresenter)
         {
-            this.buttonView = buttonView;
+            this.reactionService = reactionService;
             this.emojiPanelPresenter = emojiPanelPresenter;
-            this.favoritesService = favoritesService;
             this.atlasConfig = atlasConfig;
 
             emojiPanelRect = (RectTransform)emojiPanelView.transform;
@@ -42,52 +45,60 @@ namespace DCL.Chat.ChatReactions
 
             selectorPresenter = new ChatReactionsSelectorPresenter(
                 selectorView,
-                favoritesService,
+                recentsService,
                 atlasConfig,
-                selectorView.ItemPrefab);
+                selectorView.ItemPrefab,
+                fixedDefaults);
 
-            buttonPresenter = new ChatReactionButtonPresenter(buttonView, reactionService);
-            buttonPresenter.HoldTriggered += OnHoldTriggered;
-            buttonPresenter.PickerEmojiSelected += OnPickerEmojiSelected;
+            buttonPresenter = new ChatReactionButtonPresenter(buttonView);
+            buttonRect = buttonPresenter.ButtonRect;
 
+            // Click-outside detection: target is the selector, ignore the button and emoji panel.
+            clickDetectionHandler = new ChatClickDetectionHandler(
+                selectorView.transform,
+                buttonView.transform,
+                emojiPanelView.transform);
+
+            clickDetectionHandler.OnClickOutside += OnClickOutside;
+            clickDetectionHandler.Pause();
+
+            buttonPresenter.ButtonClicked += OnButtonClicked;
             selectorPresenter.ReactionClicked += OnSelectorReactionClicked;
-            selectorPresenter.ReactionRemoved += OnSelectorReactionRemoved;
             selectorPresenter.AddClicked += OnAddClicked;
+        }
 
-            int selected = favoritesService.SelectedIndex;
-
-            if (selected < 0)
-                favoritesService.TryGetFirstFavorite(out selected);
-
-            if (selected >= 0)
+        private void OnButtonClicked()
+        {
+            if (selectorPresenter.IsVisible)
             {
-                buttonView.SetEmoji(selected, atlasConfig);
-                buttonPresenter.SetSelectedEmoji(selected);
+                HideBar();
             }
-        }
-
-        private void OnHoldTriggered()
-        {
-            selectorPresenter.Show();
-        }
-
-        private void OnPickerEmojiSelected(int atlasIndex)
-        {
-            favoritesService.SetSelected(atlasIndex);
-            buttonView.SetEmoji(atlasIndex, atlasConfig);
+            else
+            {
+                selectorPresenter.Show();
+                clickDetectionHandler.Resume();
+            }
         }
 
         private void OnSelectorReactionClicked(int atlasIndex)
         {
-            SelectEmoji(atlasIndex);
-            HideEmojiPanel();
-            selectorPresenter.Hide();
+            // Send the reaction immediately — do NOT close the bar.
+            // Only record usage; the bar refreshes next time it opens to avoid
+            // visually shuffling icons while the user is actively clicking.
+            reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            selectorPresenter.RecordUsage(atlasIndex);
         }
 
-        private void OnSelectorReactionRemoved(int atlasIndex)
+        private void OnClickOutside()
         {
-            favoritesService.TryGetFirstFavorite(out int fallback);
-            SelectEmoji(fallback);
+            HideBar();
+        }
+
+        private void HideBar()
+        {
+            HideEmojiPanel();
+            selectorPresenter.Hide();
+            clickDetectionHandler.Pause();
         }
 
         private void OnAddClicked()
@@ -127,10 +138,9 @@ namespace DCL.Chat.ChatReactions
             int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
             if (atlasIndex < 0) return;
 
-            selectorPresenter.AddReaction(atlasIndex);
-            SelectEmoji(atlasIndex);
-            HideEmojiPanel();
-            selectorPresenter.Hide();
+            // Send the reaction immediately — do NOT close panels.
+            reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            selectorPresenter.RecordUsage(atlasIndex);
         }
 
         private static bool TryGetSingleCodepoint(string text, out uint codepoint)
@@ -151,15 +161,6 @@ namespace DCL.Chat.ChatReactions
             return true;
         }
 
-        private void SelectEmoji(int atlasIndex)
-        {
-            favoritesService.SetSelected(atlasIndex);
-            buttonPresenter.SetSelectedEmoji(atlasIndex);
-
-            if (atlasIndex >= 0)
-                buttonView.SetEmoji(atlasIndex, atlasConfig);
-        }
-
         public void SetReactionsEnabled(bool enabled)
         {
             reactionsEnabled = enabled;
@@ -172,25 +173,23 @@ namespace DCL.Chat.ChatReactions
         {
             if (!reactionsEnabled) return;
 
-            HideEmojiPanel();
+            HideBar();
             buttonPresenter.Show();
-            selectorPresenter.Hide();
         }
 
         public void Hide()
         {
-            HideEmojiPanel();
+            HideBar();
             buttonPresenter.Hide();
-            selectorPresenter.Hide();
         }
 
         public void Dispose()
         {
             HideEmojiPanel();
-            buttonPresenter.HoldTriggered -= OnHoldTriggered;
-            buttonPresenter.PickerEmojiSelected -= OnPickerEmojiSelected;
+            clickDetectionHandler.OnClickOutside -= OnClickOutside;
+            clickDetectionHandler.Dispose();
+            buttonPresenter.ButtonClicked -= OnButtonClicked;
             selectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
-            selectorPresenter.ReactionRemoved -= OnSelectorReactionRemoved;
             selectorPresenter.AddClicked -= OnAddClicked;
 
             buttonPresenter.Dispose();

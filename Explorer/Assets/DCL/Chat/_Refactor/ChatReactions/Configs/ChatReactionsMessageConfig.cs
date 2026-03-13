@@ -19,10 +19,14 @@ namespace DCL.Chat.ChatReactions.Configs
                         "Must be the same length as AvailableEmojiIndices.")]
         [field: SerializeField] public Sprite[] ReactionPickerIcons { get; private set; } = System.Array.Empty<Sprite>();
 
-        [field: Header("Selector Defaults")]
-        [field: Tooltip("Atlas tile indices shown in the reaction selector on first launch " +
-                        "(before the user customizes). Keep this short (3–5 items).")]
-        [field: SerializeField] public int[] DefaultFavoriteEmojiIndices { get; private set; } = System.Array.Empty<int>();
+        [field: Header("Situational Shortcuts Bar")]
+        [field: Tooltip("Unicode codepoints of the fixed emojis always shown in the shortcuts bar. " +
+                        "These are converted to atlas tile indices at runtime via ChatReactionsAtlasConfig.")]
+        [field: SerializeField] public uint[] FixedDefaultEmojiUnicodes { get; private set; } = System.Array.Empty<uint>();
+
+        [field: Min(1)]
+        [field: Tooltip("Maximum number of recently-used emoji slots shown after the divider in the shortcuts bar.")]
+        [field: SerializeField] public int MaxRecentEmojis { get; private set; } = 3;
 
         [field: Header("Behaviour")]
         [field: Min(1)]

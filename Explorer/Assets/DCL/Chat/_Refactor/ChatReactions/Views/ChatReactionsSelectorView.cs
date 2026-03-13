@@ -10,10 +10,12 @@ namespace DCL.Chat.ChatReactions
         [SerializeField] private RectTransform container;
         [SerializeField] private ChatReactionItemView reactionItemPrefab;
         [SerializeField] private Button addButton;
+        [SerializeField] private GameObject divider;
 
         public RectTransform Container => container;
         public ChatReactionItemView ItemPrefab => reactionItemPrefab;
         public RectTransform AddButtonRect => (RectTransform)addButton.transform;
+        public GameObject Divider => divider;
 
         public event Action? OnAddClicked;
 

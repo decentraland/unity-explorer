@@ -7,12 +7,13 @@ namespace DCL.Chat.ChatReactions.Editor
 {
     public static class ChatReactionPrefsDebug
     {
-        [MenuItem("Decentraland/Cache/Clear Reaction Favorites")]
-        public static void ClearReactionFavorites()
+        [MenuItem("Decentraland/Cache/Clear Reaction Recents")]
+        public static void ClearReactionRecents()
         {
             PlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_FAVORITES);
+            PlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_SELECTED);
             PlayerPrefs.Save();
-            Debug.Log("Cleared " + DCLPrefKeys.CHAT_REACTION_FAVORITES + " from PlayerPrefs");
+            Debug.Log("Cleared reaction recents and legacy selected key from PlayerPrefs");
         }
     }
 }

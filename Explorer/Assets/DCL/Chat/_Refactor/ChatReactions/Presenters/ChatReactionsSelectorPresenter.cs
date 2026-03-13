@@ -7,27 +7,35 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Chat.ChatReactions
 {
+    /// <summary>
+    /// Manages the shortcuts bar: 6 fixed default emojis, a divider, up to 3 recently
+    /// used emojis, and the [+] button. Clicking any emoji fires <see cref="ReactionClicked"/>
+    /// without closing the bar.
+    /// </summary>
     public sealed class ChatReactionsSelectorPresenter : IDisposable
     {
         private readonly ChatReactionsSelectorView view;
-        private readonly ChatReactionFavoritesService favoritesService;
+        private readonly ChatReactionRecentsService recentsService;
         private readonly ChatReactionsAtlasConfig atlasConfig;
+        private readonly int[] fixedDefaults;
         private readonly ObjectPool<ChatReactionItemView> itemPool;
-        private readonly List<ChatReactionItemView> activeItems = new();
+        private readonly List<ChatReactionItemView> defaultItems = new();
+        private readonly List<ChatReactionItemView> recentItems = new();
 
         public event Action<int>? ReactionClicked;
-        public event Action<int>? ReactionRemoved;
         public event Action? AddClicked;
 
         public ChatReactionsSelectorPresenter(
             ChatReactionsSelectorView view,
-            ChatReactionFavoritesService favoritesService,
+            ChatReactionRecentsService recentsService,
             ChatReactionsAtlasConfig atlasConfig,
-            ChatReactionItemView itemPrefab)
+            ChatReactionItemView itemPrefab,
+            int[] fixedDefaults)
         {
             this.view = view;
-            this.favoritesService = favoritesService;
+            this.recentsService = recentsService;
             this.atlasConfig = atlasConfig;
+            this.fixedDefaults = fixedDefaults;
 
             itemPool = new ObjectPool<ChatReactionItemView>(
                 createFunc: () => Object.Instantiate(itemPrefab, view.Container),
@@ -39,93 +47,106 @@ namespace DCL.Chat.ChatReactions
                     item.transform.SetParent(view.Container);
                 },
                 actionOnDestroy: item => Object.Destroy(item.gameObject),
-                defaultCapacity: 8,
+                defaultCapacity: 12,
                 maxSize: 32);
 
             view.OnAddClicked += OnAddClicked;
-            view.Hide();
 
-            SetReactions(favoritesService.Favorites);
+            SpawnFixedDefaults();
+
+            view.Hide();
         }
+
+        public bool IsVisible => view.gameObject.activeSelf;
 
         public void Show()
         {
-            ResetCloseButtons();
+            RefreshRecents();
             view.Show();
         }
 
         public void Hide() => view.Hide();
 
-        public void AddReaction(int atlasIndex)
+        /// <summary>
+        /// Records that the user sent this emoji without refreshing the bar.
+        /// The bar updates next time <see cref="Show"/> is called.
+        /// </summary>
+        public void RecordUsage(int atlasIndex)
         {
-            favoritesService.Add(atlasIndex);
-            SpawnItem(atlasIndex);
+            recentsService.RecordUsage(atlasIndex);
         }
 
         public void Dispose()
         {
             view.OnAddClicked -= OnAddClicked;
-            ReleaseAll();
+
+            ReleaseRecentItems();
+
+            for (int i = 0; i < defaultItems.Count; i++)
+            {
+                defaultItems[i].OnClicked -= HandleReactionClicked;
+                itemPool.Release(defaultItems[i]);
+            }
+
+            defaultItems.Clear();
             itemPool.Dispose();
         }
 
-        private void SetReactions(IReadOnlyList<int> atlasIndices)
+        private void SpawnFixedDefaults()
         {
-            ReleaseAll();
+            for (int i = 0; i < fixedDefaults.Length; i++)
+            {
+                var item = itemPool.Get();
+                item.Initialize(fixedDefaults[i], atlasConfig);
+                item.OnClicked += HandleReactionClicked;
 
-            for (int i = 0; i < atlasIndices.Count; i++)
-                SpawnItem(atlasIndices[i]);
+                // Place before divider.
+                if (view.Divider != null)
+                    item.transform.SetSiblingIndex(view.Divider.transform.GetSiblingIndex());
+
+                defaultItems.Add(item);
+            }
+
+            // Keep [+] at the end.
+            view.AddButtonRect.SetAsLastSibling();
         }
 
-        private void SpawnItem(int atlasIndex)
+        private void RefreshRecents()
         {
-            var item = itemPool.Get();
-            item.Initialize(atlasIndex, atlasConfig);
-            item.OnClicked += HandleReactionClicked;
-            item.OnCloseClicked += HandleReactionRemoved;
-            item.transform.SetSiblingIndex(view.Container.childCount - 2);
-            activeItems.Add(item);
+            ReleaseRecentItems();
+
+            IReadOnlyList<int> recents = recentsService.Recents;
+
+            bool hasRecents = recents.Count > 0;
+
+            if (view.Divider != null)
+                view.Divider.SetActive(hasRecents);
+
+            for (int i = 0; i < recents.Count; i++)
+            {
+                var item = itemPool.Get();
+                item.Initialize(recents[i], atlasConfig);
+                item.OnClicked += HandleReactionClicked;
+                recentItems.Add(item);
+            }
+
+            // Always keep [+] at the end of the container.
+            view.AddButtonRect.SetAsLastSibling();
         }
 
-        private void ReleaseItem(ChatReactionItemView item)
+        private void ReleaseRecentItems()
         {
-            item.OnClicked -= HandleReactionClicked;
-            item.OnCloseClicked -= HandleReactionRemoved;
-            itemPool.Release(item);
-        }
+            for (int i = 0; i < recentItems.Count; i++)
+            {
+                recentItems[i].OnClicked -= HandleReactionClicked;
+                itemPool.Release(recentItems[i]);
+            }
 
-        private void ReleaseAll()
-        {
-            foreach (var item in activeItems)
-                ReleaseItem(item);
-
-            activeItems.Clear();
-        }
-
-        private void ResetCloseButtons()
-        {
-            foreach (var item in activeItems)
-                item.HideCloseButton();
+            recentItems.Clear();
         }
 
         private void OnAddClicked() => AddClicked?.Invoke();
 
         private void HandleReactionClicked(int atlasIndex) => ReactionClicked?.Invoke(atlasIndex);
-
-        private void HandleReactionRemoved(int atlasIndex)
-        {
-            favoritesService.Remove(atlasIndex);
-
-            for (int i = activeItems.Count - 1; i >= 0; i--)
-            {
-                if (activeItems[i].AtlasIndex != atlasIndex) continue;
-
-                ReleaseItem(activeItems[i]);
-                activeItems.RemoveAt(i);
-                break;
-            }
-
-            ReactionRemoved?.Invoke(atlasIndex);
-        }
     }
 }

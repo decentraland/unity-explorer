@@ -1,21 +1,22 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat.ChatReactions
 {
-    public sealed class ChatReactionItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    /// <summary>
+    /// Individual emoji item in the shortcuts bar. Displays an emoji from the atlas
+    /// and fires <see cref="OnClicked"/> when tapped.
+    /// </summary>
+    public sealed class ChatReactionItemView : MonoBehaviour
     {
         [SerializeField] private Button selectButton;
         [SerializeField] private RawImage emojiImage;
-        [SerializeField] private Button closeButton;
 
         public int AtlasIndex { get; private set; }
 
         public event Action<int>? OnClicked;
-        public event Action<int>? OnCloseClicked;
 
         private bool listenersAttached;
 
@@ -29,14 +30,8 @@ namespace DCL.Chat.ChatReactions
             if (!listenersAttached)
             {
                 selectButton.onClick.AddListener(HandleClicked);
-
-                if (closeButton != null)
-                    closeButton.onClick.AddListener(HandleCloseClicked);
-
                 listenersAttached = true;
             }
-
-            HideCloseButton();
         }
 
         public void Show() => gameObject.SetActive(true);
@@ -46,7 +41,6 @@ namespace DCL.Chat.ChatReactions
         public void ResetForPool()
         {
             OnClicked = null;
-            OnCloseClicked = null;
             AtlasIndex = -1;
         }
 
@@ -55,26 +49,9 @@ namespace DCL.Chat.ChatReactions
             if (!listenersAttached) return;
 
             selectButton.onClick.RemoveListener(HandleClicked);
-
-            if (closeButton != null)
-                closeButton.onClick.RemoveListener(HandleCloseClicked);
-
             listenersAttached = false;
         }
 
-        public void OnPointerEnter(PointerEventData eventData) => SetCloseButtonVisible(true);
-
-        public void OnPointerExit(PointerEventData eventData) => SetCloseButtonVisible(false);
-
-        public void HideCloseButton() => SetCloseButtonVisible(false);
-
-        private void SetCloseButtonVisible(bool visible)
-        {
-            if (closeButton != null)
-                closeButton.gameObject.SetActive(visible);
-        }
-
         private void HandleClicked() => OnClicked?.Invoke(AtlasIndex);
-        private void HandleCloseClicked() => OnCloseClicked?.Invoke(AtlasIndex);
     }
 }

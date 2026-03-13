@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
@@ -93,6 +95,25 @@ namespace DCL.Chat.ChatReactions.Configs
 
             Debug.Log(sb.ToString());
 #endif
+        }
+
+        /// <summary>
+        /// Converts an array of Unicode codepoints to atlas tile indices.
+        /// Logs a warning for any codepoint not found in the atlas.
+        /// </summary>
+        public int[] ResolveUnicodesToTileIndices(uint[] unicodes)
+        {
+            var result = new int[unicodes.Length];
+
+            for (int i = 0; i < unicodes.Length; i++)
+            {
+                result[i] = GetTileIndexFromUnicode(unicodes[i]);
+
+                if (result[i] < 0)
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"Emoji U+{unicodes[i]:X4} not found in atlas — tile index will be -1");
+            }
+
+            return result;
         }
 
         public Rect GetUVRect(int tileIndex)
