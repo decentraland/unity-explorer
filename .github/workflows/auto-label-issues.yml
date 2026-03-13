@@ -21,33 +21,38 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+
       - name: AI label analysis
         uses: anthropics/claude-code-action@v1
         with:
           allowed_bots: "sentry"
           prompt: |
             You are an issue triage assistant. Your ONLY action is to apply labels — do NOT post any comments.
-
             Repository: ${{ github.repository }}
             Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
-
             Steps:
             1. Fetch all available labels:
-               gh label list --repo ${{ github.repository }} --json name,description --limit 100
-
+               gh label list --repo ${{ github.repository }} --json name,description --limit 100 > /tmp/labels.json
             2. Fetch the issue details:
-               gh issue view ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --json title,body,labels
-
+               gh issue view ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --json title,body,labels > /tmp/issue.json
             3. Analyze the issue and select appropriate labels by considering:
                - The type of issue (bug, feature request, question, improvement, etc.)
                - Technical areas or components mentioned
                - Severity or priority indicators
                - Platform mentions (e.g. desktop, web, mobile)
                - User impact described
-
-            4. Apply labels using:
+            4. Create a summary report:
+               Save your analysis and decisions to /tmp/label_analysis.md in this format:
+               ## Issue Analysis
+               **Issue Number:** #[number]
+               **Title:** [title]
+               **Analysis:** [your reasoning]
+               **Selected Labels:** [list of labels]
+               **Applied:** [yes/no]
+            5. Apply labels using:
                gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --add-label "label1" --add-label "label2"
-
             Rules:
             - ALWAYS include the "new" label.
             - ALWAYS include a priority label (low, medium, high, critical).
@@ -59,3 +64,21 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue edit:*)"
+
+      - name: Copy Claude execution output to artifacts
+        if: always()
+        run: |
+          if [ -f /home/runner/work/_temp/claude-execution-output.json ]; then
+            cp /home/runner/work/_temp/claude-execution-output.json artifacts/claude-execution-output_${{ github.event.issue.number || github.event.inputs.issue_number }}.json
+            echo "✓ Claude execution output captured"
+          else
+            echo "⚠ Claude execution output not found"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: label-analysis-${{ github.event.issue.number || github.event.inputs.issue_number }}
+          path: artifacts/
+          retention-days: 90
