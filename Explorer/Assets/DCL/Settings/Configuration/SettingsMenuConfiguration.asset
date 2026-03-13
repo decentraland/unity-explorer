@@ -22,7 +22,7 @@ MonoBehaviour:
     <SettingsGroups>k__BackingField: []
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
-    - <GroupTitle>k__BackingField: Preset
+    - <GroupTitle>k__BackingField: General
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
@@ -629,7 +629,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: 
+          <ModuleName>k__BackingField: Graphics Preset
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0

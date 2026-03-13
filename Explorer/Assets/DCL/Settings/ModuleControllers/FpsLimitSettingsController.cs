@@ -1,7 +1,7 @@
-﻿using DCL.Quality;
+﻿using DCL.Diagnostics;
+using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using System;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -27,7 +27,13 @@ namespace DCL.Settings.ModuleControllers
 
         private void OnDropdownValueChanged(int index)
         {
-            int fps = index == 0 ? 0 : Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
+            int fps = 0;
+
+            if (index != 0 && !int.TryParse(view.DropdownView.Dropdown.options[index].text, out fps))
+            {
+                ReportHub.LogError(ReportCategory.SETTINGS_MENU, $"FPS limit option text is not a valid integer: {view.DropdownView.Dropdown.options[index].text}");
+                return;
+            }
 
             qualitySettingsController.SetFpsLimit(fps);
         }
@@ -39,7 +45,7 @@ namespace DCL.Settings.ModuleControllers
 
             for (int i = 1; i < view.DropdownView.Dropdown.options.Count; i++)
             {
-                if (Convert.ToInt32(view.DropdownView.Dropdown.options[i].text) == fps)
+                if (int.TryParse(view.DropdownView.Dropdown.options[i].text, out int optionFps) && optionFps == fps)
                     return i;
             }
 

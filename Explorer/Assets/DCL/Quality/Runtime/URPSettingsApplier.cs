@@ -1,5 +1,5 @@
-using System;
 using System.Reflection;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -93,18 +93,30 @@ namespace DCL.Quality.Runtime
                 AdditionalLightsRenderingMode = typeof(UniversalRenderPipelineAsset).GetField("m_AdditionalLightsRenderingMode", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
+        private static bool TrySetReflectionField(FieldInfo? field, object target, object value, string fieldName)
+        {
+            if (field == null)
+            {
+                ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"{fieldName} field not found via reflection — skipping.");
+                return false;
+            }
+
+            field.SetValue(target, value);
+            return true;
+        }
+
         public static void ApplySunShadows(bool enabled)
         {
             EnsureReflectionProperties();
             var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
-            MainLightRenderingMode.SetValue(renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled);
+            TrySetReflectionField(MainLightRenderingMode, renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled, nameof(MainLightRenderingMode));
         }
 
         public static void ApplySceneLight(bool enabled)
         {
             EnsureReflectionProperties();
             var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
-            AdditionalLightsRenderingMode.SetValue(renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled);
+            TrySetReflectionField(AdditionalLightsRenderingMode, renderPipelineAsset, enabled ? LightRenderingMode.PerPixel : LightRenderingMode.Disabled, nameof(AdditionalLightsRenderingMode));
         }
 
         public static void ApplyMaxObjectsPerLight(int maxLights)
@@ -118,7 +130,7 @@ namespace DCL.Quality.Runtime
         {
             EnsureReflectionProperties();
             var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
-            AdditionalLightShadowsSupported.SetValue(renderPipelineAsset, enabled);
+            TrySetReflectionField(AdditionalLightShadowsSupported, renderPipelineAsset, enabled, nameof(AdditionalLightShadowsSupported));
         }
 
         public static void ApplyShadowQuality(ShadowQualityConfig shadowQualityConfig)
@@ -126,13 +138,13 @@ namespace DCL.Quality.Runtime
             EnsureReflectionProperties();
             var renderPipelineAsset = (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset);
             renderPipelineAsset.mainLightShadowmapResolution = shadowQualityConfig.MainShadowResolution;
-            AdditionalLightsShadowResolutionTierLow.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier0);
-            AdditionalLightsShadowResolutionTierMedium.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier1);
-            AdditionalLightsShadowResolutionTierHigh.SetValue(renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier2);
+            TrySetReflectionField(AdditionalLightsShadowResolutionTierLow, renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier0, nameof(AdditionalLightsShadowResolutionTierLow));
+            TrySetReflectionField(AdditionalLightsShadowResolutionTierMedium, renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier1, nameof(AdditionalLightsShadowResolutionTierMedium));
+            TrySetReflectionField(AdditionalLightsShadowResolutionTierHigh, renderPipelineAsset, shadowQualityConfig.ShadowResolutionTier2, nameof(AdditionalLightsShadowResolutionTierHigh));
             renderPipelineAsset.shadowCascadeCount = shadowQualityConfig.CascadeCount;
             renderPipelineAsset.shadowDepthBias = shadowQualityConfig.DepthBias;
             renderPipelineAsset.shadowNormalBias = shadowQualityConfig.NormalBias;
-            SupportsSoftShadows.SetValue(renderPipelineAsset, shadowQualityConfig.SoftShadows);
+            TrySetReflectionField(SupportsSoftShadows, renderPipelineAsset, shadowQualityConfig.SoftShadows, nameof(SupportsSoftShadows));
         }
 
         public static void ApplyShadowDistance(float distance)

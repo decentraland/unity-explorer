@@ -22,7 +22,6 @@ namespace DCL.Settings.ModuleControllers
                 if( name != "Custom")
                     this.view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = name });
 
-            view.DropdownView.Dropdown.value = (int)qualitySettingsController.CurrentPreset;
             view.DropdownView.Dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
             view.DropdownView.Dropdown.placeholder.GetComponent<TMP_Text>().text = "Custom";
             qualitySettingsController.OnPresetChanged += OnPresetChanged;

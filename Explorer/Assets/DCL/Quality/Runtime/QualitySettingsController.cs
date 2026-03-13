@@ -182,6 +182,9 @@ namespace DCL.Quality.Runtime
 
         public void SetWindowMode(int index)
         {
+            if (index < 0 || index >= FullscreenModeUtils.Modes.Count)
+                return;
+
             WindowMode = FullscreenModeUtils.Modes[index];
             DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
             URPSettingsApplier.ApplyResolution(ResolutionWidth, ResolutionHeight, WindowMode, ResolutionRefreshRate);
@@ -306,7 +309,9 @@ namespace DCL.Quality.Runtime
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
             {
                 int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
-                WindowMode = FullscreenModeUtils.Modes[index];
+                WindowMode = index >= 0 && index < FullscreenModeUtils.Modes.Count
+                    ? FullscreenModeUtils.Modes[index]
+                    : FullScreenMode.FullScreenWindow;
             }
             else { WindowMode = FullScreenMode.FullScreenWindow; }
         }
