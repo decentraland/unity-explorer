@@ -62,7 +62,13 @@ namespace DCL.SDKComponents.SceneUI.Components
             if (!RelationData.layoutIsDirty)
                 return;
 
-            Assert.IsNotNull(RelationData.head);
+            RelationData.RebuildLinkedList();
+
+            if (RelationData.head == null)
+            {
+                RelationData.layoutIsDirty = false;
+                return;
+            }
 
             // Instead of creating a new collection with VisualElements keep the index in the tabIndex
 
