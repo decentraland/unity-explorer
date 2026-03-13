@@ -106,6 +106,7 @@ namespace DCL.Profiles
             catch (Exception e)
             {
                 currentProfileResolutionTask.TrySetException(e);
+                throw;
             }
             finally
             {
@@ -237,9 +238,10 @@ namespace DCL.Profiles
             Assert.IsTrue(!versionSpecified || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
 
             bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+            bool forceCatalyst = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST);
 
             // Compact Tiers are not supported on catalysts
-            if (!useCentralizedProfiles)
+            if (!useCentralizedProfiles || forceCatalyst)
                 tier = ProfileTier.Kind.Full;
 
             try
@@ -267,7 +269,7 @@ namespace DCL.Profiles
                 try
                 {
                     // Two paths
-                    if (EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
+                    if (forceCatalyst || EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
                         return await EnforceSingleGetAsync();
                     else
                     {
@@ -296,7 +298,7 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, ct);
+                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, forceCatalyst, ct);
             }
         }
 
@@ -326,14 +328,15 @@ namespace DCL.Profiles
         ///     GET supports full profiles only and should be never used to retrieve compact ones
         /// </summary>
         /// <returns></returns>
-        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, CancellationToken ct)
+        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, bool forceCatalyst,
+            CancellationToken ct)
         {
             try
             {
                 ProfileTier? profile;
 
                 // Centralized endpoint doesn't support GET
-                if (useCentralizedProfiles)
+                if (useCentralizedProfiles && !forceCatalyst)
                 {
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);
