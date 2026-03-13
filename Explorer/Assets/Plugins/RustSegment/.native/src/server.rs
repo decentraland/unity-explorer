@@ -1,10 +1,12 @@
 use anyhow::{anyhow, Context};
 use core::str;
+use futures::future::FutureExt;
 use std::{
     ffi::CString,
+    panic::AssertUnwindSafe,
     sync::{
         atomic::{AtomicU64, Ordering},
-        Arc,
+        Arc, Weak,
     },
 };
 use tokio::sync::Mutex;
@@ -27,7 +29,6 @@ use segment::queue::queued_batcher::QueuedBatcher;
 pub struct AppContext {
     pub batcher: QueuedBatcher,
     pub queue: Arc<Mutex<CombinedAnalyticsEventQueue>>,
-    pub daemon: Arc<Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     pub segment_client: segment::HttpClient,
     pub write_key: String,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
@@ -36,22 +37,23 @@ pub struct AppContext {
 
 pub struct SegmentServer {
     context: Arc<Mutex<AppContext>>,
+    daemon: Arc<parking_lot::Mutex<AnalyticsEventSendDaemon<segment::HttpClient>>>,
     next_id: AtomicU64,
 }
 
 pub enum ServerState {
-    Ready(Arc<SegmentServer>, tokio::runtime::Runtime),
+    Ready(Arc<SegmentServer>, tokio::runtime::Runtime, EventBridge),
     Disposed,
 }
 
 pub struct Server {
-    state: std::sync::Mutex<ServerState>,
+    state: parking_lot::Mutex<ServerState>,
 }
 
 impl Default for Server {
     fn default() -> Self {
         Self {
-            state: std::sync::Mutex::new(ServerState::Disposed),
+            state: parking_lot::Mutex::new(ServerState::Disposed),
         }
     }
 }
@@ -65,51 +67,55 @@ impl Server {
         callback_fn: FfiCallbackFn,
         error_fn: Option<FfiErrorCallbackFn>,
     ) -> bool {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return false;
-        }
-
-        let mut state = state_lock.unwrap();
+        let mut state = self.state.lock();
 
         match *state {
-            ServerState::Ready(_, _) => false,
+            ServerState::Ready(_, _, _) => false,
             ServerState::Disposed => {
                 let new_runtime = tokio::runtime::Builder::new_multi_thread()
+                    .worker_threads(1)
                     .enable_all()
                     .build()
                     .unwrap();
+
+                let event_bridge = EventBridge::new(callback_fn, error_fn);
 
                 let server = SegmentServer::new(
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
-                    callback_fn,
-                    error_fn,
+                    event_bridge.input(),
                     &new_runtime,
                 );
-                *state = ServerState::Ready(Arc::new(server), new_runtime);
+
+                *state = ServerState::Ready(Arc::new(server), new_runtime, event_bridge);
                 true
             }
         }
     }
 
     pub fn dispose(&self) -> bool {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return false;
-        }
-
-        let mut state = state_lock.unwrap();
+        let mut state = self.state.lock();
         let extracted = std::mem::replace(&mut *state, ServerState::Disposed);
 
         match extracted {
             ServerState::Disposed => false,
-            ServerState::Ready(_, runtime) => {
+            ServerState::Ready(server, runtime, event_bridge) => {
+                server.stop_daemon();
+                drop(event_bridge);
                 runtime.shutdown_background();
                 *state = ServerState::Disposed;
                 true
             }
+        }
+    }
+
+    pub fn try_pump_next_event(&self) -> bool {
+        let state = self.state.lock();
+
+        match &*state {
+            ServerState::Disposed => false,
+            ServerState::Ready(_, _, event_bridge) => event_bridge.pump_next(),
         }
     }
 
@@ -123,21 +129,99 @@ impl Server {
     where
         <Fut as Future>::Output: Send,
     {
-        let state_lock = self.state.lock();
-        if state_lock.is_err() {
-            return 0;
-        }
-
-        let state = state_lock.unwrap();
+        let state = self.state.lock();
 
         match &*state {
             ServerState::Disposed => 0,
-            ServerState::Ready(server, runtime) => {
+            ServerState::Ready(server, runtime, _) => {
                 let id = server.next_id();
                 let future_task = func(server.clone(), id);
-                runtime.spawn(future_task);
+                let future_task = AssertUnwindSafe(future_task);
+                runtime.spawn(future_task.catch_unwind());
                 id
             }
+        }
+    }
+}
+
+pub struct EventBridge {
+    callback_fn: FfiCallbackFn,
+    error_fn: Option<FfiErrorCallbackFn>,
+
+    callback_queue: Arc<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
+    error_queue: Arc<crossbeam_queue::SegQueue<String>>,
+}
+
+impl EventBridge {
+    pub fn new(callback_fn: FfiCallbackFn, error_fn: Option<FfiErrorCallbackFn>) -> Self {
+        Self {
+            callback_fn,
+            error_fn,
+            callback_queue: Arc::new(crossbeam_queue::SegQueue::new()),
+            error_queue: Arc::new(crossbeam_queue::SegQueue::new()),
+        }
+    }
+
+    // must be called from external FFI side to avoid thrading issue of Unity
+    pub fn pump_next(&self) -> bool {
+        // dequeue errors first
+        if let Some(message) = self.error_queue.pop() {
+            if let Some(cb) = self.error_fn {
+                if let Ok(cstr) = CString::new(message) {
+                    unsafe {
+                        cb(cstr.as_ptr());
+                    }
+                };
+            };
+
+            return true;
+        }
+
+        // dequeue events next
+        if let Some((id, response)) = self.callback_queue.pop() {
+            unsafe {
+                (self.callback_fn)(id, response);
+            }
+            return true;
+        }
+
+        // if nothing dequeued
+        false
+    }
+
+    pub fn input(&self) -> EventInput {
+        let cq = Arc::downgrade(&self.callback_queue);
+        let eq = Arc::downgrade(&self.error_queue);
+        EventInput::new(cq, eq)
+    }
+}
+
+#[derive(Clone)]
+pub struct EventInput {
+    callback_queue: Weak<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
+    error_queue: Weak<crossbeam_queue::SegQueue<String>>,
+}
+
+impl EventInput {
+    pub fn new(
+        callback_queue: Weak<crossbeam_queue::SegQueue<(OperationHandleId, Response)>>,
+        error_queue: Weak<crossbeam_queue::SegQueue<String>>,
+    ) -> Self {
+        Self {
+            callback_queue,
+            error_queue,
+        }
+    }
+
+    pub fn try_enqueue_event(&self, id: OperationHandleId, response: Response) {
+        if let Some(q) = self.callback_queue.upgrade() {
+            q.push((id, response));
+        }
+    }
+
+    pub fn try_enqueue_error(&self, msg: String) {
+        if let Some(q) = self.error_queue.upgrade() {
+            q.push(msg);
         }
     }
 }
@@ -151,18 +235,13 @@ impl SegmentServer {
         queue_file_path: String,
         queue_count_limit: u32,
         writer_key: String,
-        callback_fn: FfiCallbackFn,
-        error_fn: Option<FfiErrorCallbackFn>,
+        event_input: EventInput,
         async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
+        let error_event_input = event_input.clone();
         let error_fn = Box::new(move |message: &str| {
-            if let Some(cb) = error_fn {
-                if let Ok(cstr) = CString::new(message) {
-                    unsafe {
-                        cb(cstr.as_ptr());
-                    }
-                };
-            };
+            let message = String::from(message);
+            error_event_input.try_enqueue_error(message);
         });
 
         let event_queue: CombinedAnalyticsEventQueueNewResult =
@@ -183,30 +262,38 @@ impl SegmentServer {
         let client = HttpClient::default();
         let send_daemon =
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
-        let send_daemon = Arc::new(Mutex::new(send_daemon));
+        let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
 
-        let moved_error_fn = error_fn.clone();
         let moved_send_daemon = send_daemon.clone();
-        async_runtime.spawn(async move {
-            let mut guard = moved_send_daemon.lock().await;
-            guard.start(moved_error_fn);
-        });
+
+        let daemon_event_input = event_input.clone();
+        async_runtime.spawn(
+            AssertUnwindSafe(async move {
+                let mut guard = moved_send_daemon.lock();
+                guard.start(move |message: &str| {
+                    let message = String::from(message);
+                    daemon_event_input.try_enqueue_error(message);
+                });
+            })
+            .catch_unwind(),
+        );
+
         let direct_client = HttpClient::default();
 
         let context = AppContext {
             batcher: queue_batcher,
             queue: event_queue,
-            daemon: send_daemon,
             segment_client: direct_client,
             write_key: writer_key,
-            callback_fn: Box::new(move |id, response| unsafe {
-                callback_fn(id, response);
+            callback_fn: Box::new(move |id, response| {
+                event_input.try_enqueue_event(id, response);
             }),
             error_fn,
         };
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
+            daemon: send_daemon,
             context: Arc::new(Mutex::new(context)),
         }
     }
@@ -324,6 +411,10 @@ impl SegmentServer {
                     .report_error(Some(id), e.to_string());
             }
         }
+    }
+
+    pub fn stop_daemon(&self) {
+        self.daemon.lock().stop();
     }
 }
 

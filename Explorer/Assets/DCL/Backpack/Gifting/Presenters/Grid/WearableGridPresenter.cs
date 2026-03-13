@@ -58,15 +58,16 @@ namespace DCL.Backpack.Gifting.Presenters
 
             ReportHub.Log(ReportCategory.GIFTING, $"[Gifting-Search] Requesting Page {page} search: '{search}'");
 
-            (var wearables, int total) = await wearablesProvider.GetAsync(
-                pageSize: itemPageCount,
-                pageNumber: page,
+            (var wearables, int total) = await wearablesProvider.GetTrimmedByParamsAsync(
+                new IWearablesProvider.Params(itemPageCount, page)
+                {
+                    SortingField = currentSort.OrderByOperation.ToSortingField(),
+                    OrderBy = currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
+                    Category = string.Empty,
+                    CollectionType = IWearablesProvider.CollectionType.OnChain,
+                    Name = search,
+                },
                 ct: ct,
-                sortingField: currentSort.OrderByOperation.ToSortingField(),
-                orderBy: currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                category: string.Empty,
-                collectionType: IWearablesProvider.CollectionType.OnChain,
-                name: search,
                 results: resultsBuffer
             );
 

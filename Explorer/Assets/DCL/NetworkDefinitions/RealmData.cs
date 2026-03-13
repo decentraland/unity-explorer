@@ -26,7 +26,9 @@ namespace ECS
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
+        public string WorldCommsSecret { get; set; }
         public bool Configured { get; private set; }
+        public float? SkyboxFixedHour { get; private set; }
 
         /// <summary>
         ///     World manifest from asset-bundle-registry (occupied parcels, spawn coordinate, total). Null when not fetched or not applicable.
@@ -76,7 +78,7 @@ namespace ECS
                     return false;
 
                 if (RealmType.Value is RealmKind.LocalScene)
-                    return true;
+                    return false;
 
                 //TODO: Worlds that use the Genesis discoverability.
                 //For now, all worlds and their scenes are fetched on startup
@@ -93,6 +95,7 @@ namespace ECS
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
             Hostname = string.Empty;
+            WorldCommsSecret = string.Empty;
             WorldManifest = WorldManifest.Empty;
         }
 
@@ -103,7 +106,7 @@ namespace ECS
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
-            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest)
+            string hostname, bool isLocalSceneDevelopment, WorldManifest worldManifest, float? skyboxFixedHour = null)
         {
             IsDirty = true;
             Configured = true;
@@ -116,6 +119,7 @@ namespace ECS
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
             WorldManifest = worldManifest;
+            SkyboxFixedHour = skyboxFixedHour;
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;
@@ -133,6 +137,7 @@ namespace ECS
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
             WorldManifest.Dispose();
+            SkyboxFixedHour = null;
             realmType.Value = RealmKind.Uninitialized;
         }
 

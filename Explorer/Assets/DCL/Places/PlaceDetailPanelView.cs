@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities;
+using DCL.EventsApi;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
@@ -34,11 +36,16 @@ namespace DCL.Places
         [SerializeField] private ImageView placeThumbnailImage = null!;
         [SerializeField] private Sprite defaultPlaceThumbnail = null!;
         [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private GameObject creatorContainer = null!;
         [SerializeField] private ProfilePictureView creatorThumbnail = null!;
+        [SerializeField] private Image creatorThumbnailImage = null!;
+        [SerializeField] private Button openPassportButton = null!;
         [SerializeField] private TMP_Text creatorNameText = null!;
+        [SerializeField] private TMP_Text creatorWalletText = null!;
         [SerializeField] private TMP_Text likeRateText = null!;
         [SerializeField] private TMP_Text visitsText = null!;
-        [SerializeField] private GameObject liveTag = null!;
+        [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
+        [SerializeField] private GameObject onlineMembersContainer = null!;
         [SerializeField] private TMP_Text onlineMembersText = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
         [SerializeField] private TMP_Text descriptionText = null!;
@@ -57,6 +64,17 @@ namespace DCL.Places
         [SerializeField] private GameObject startExitNavigationButtonsContainer = null!;
         [SerializeField] private Button startNavigationButton = null!;
         [SerializeField] private Button exitNavigationButton = null!;
+
+        [Header("World Access")]
+        [SerializeField] private GameObject? actionButtonsContainer;
+        [SerializeField] private GameObject? worldAccessStatusContainer;
+        [SerializeField] private TMP_Text? worldAccessStatusText;
+        [SerializeField] private Button enterPasswordButton = null!;
+
+        private static readonly Color WORLD_ACCESS_STATUS_RESTRICTED = new (0.761f, 0.722f, 0.792f, 1f);
+        private static readonly Color WORLD_ACCESS_STATUS_GREEN = new (0.2f, 0.8f, 0.2f);
+        private const string PADLOCK_CLOSED_SPRITE = "<sprite name=\"PadlockClosed\">";
+        private const string PADLOCK_OPENED_SPRITE = "<sprite name=\"PadlockOpened\">";
 
         [Header("Configuration")]
         [SerializeField] private PlaceContextMenuConfiguration placeCardContextMenuConfiguration = null!;
@@ -80,6 +98,7 @@ namespace DCL.Places
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public HoverableTooltip tooltip;
             }
         }
 
@@ -97,6 +116,7 @@ namespace DCL.Places
         public event Action<PlacesData.PlaceInfo>? JumpInButtonClicked;
         public event Action<PlacesData.PlaceInfo>? StartNavigationButtonClicked;
         public event Action? ExitNavigationButtonClicked;
+        public event Action<string>? OpenPassportClicked;
 
         private readonly UniTask[] closeTasks = new UniTask[2];
 
@@ -114,6 +134,7 @@ namespace DCL.Places
             homeToggle.Toggle.onValueChanged.AddListener(value => HomeToggleChanged?.Invoke(currentPlaceInfo, value));
             shareButton.onClick.AddListener(() => OpenCardContextMenu(shareButton.transform.position));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
+            enterPasswordButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
             startNavigationButton.onClick.AddListener(() => StartNavigationButtonClicked?.Invoke(currentPlaceInfo));
             exitNavigationButton.onClick.AddListener(() => ExitNavigationButtonClicked?.Invoke());
 
@@ -156,27 +177,36 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             CancellationToken cancellationToken,
             List<Profile.CompactInfo>? friends = null,
-            HomePlaceEventBus? homePlaceEventBus = null)
+            HomePlaceEventBus? homePlaceEventBus = null,
+            EventDTO? liveEvent = null)
         {
             currentPlaceInfo = placeInfo;
             mainScroll.verticalNormalizedPosition = 1;
 
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, cancellationToken, true).Forget();
             placeNameText.text = placeInfo.title;
-            creatorThumbnail.gameObject.SetActive(false);
-            creatorNameText.text = !string.IsNullOrEmpty(placeInfo.contact_name) ? placeInfo.contact_name : "Unknown";
+            creatorContainer.SetActive(false);
+            creatorNameText.text = placeInfo.contact_name;
+            creatorNameText.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
+            creatorWalletText.text = !string.IsNullOrEmpty(placeInfo.owner) && placeInfo.owner.Length >= 10 ? $"{placeInfo.owner[..5]}...{placeInfo.owner[^5..]}" : "Unknown";
+            creatorWalletText.gameObject.SetActive(string.IsNullOrEmpty(placeInfo.contact_name));
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             visitsText.text = UIUtils.NumberToCompactString(placeInfo.user_visits);
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
-            onlineMembersText.text = $"{(placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count)}";
+            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            onlineMembersText.text = $"{onlineMembers}";
+            onlineMembersContainer.SetActive(onlineMembers > 0);
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;
             coordsText.text = placeInfo.base_position;
             parcelsText.text = placeInfo.Positions.Length.ToString();
             favoritesText.text = UIUtils.NumberToCompactString(placeInfo.favorites);
-            updatedDateText.text = !string.IsNullOrEmpty(placeInfo.updated_at) ? DateTimeOffset.Parse(placeInfo.updated_at).ToString("dd/MM/yyyy") : "-";
-            liveTag.SetActive(placeInfo.live);
+            updatedDateText.text = DateTimeOffset.TryParse(placeInfo.updated_at, out var date) ? date.ToString("dd/MM/yyyy") : "-";
+
+            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
+            if (liveEvent != null)
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
 
             bool isHome = homePlaceEventBus?.IsHome(placeInfo) ?? false;
             SilentlySetHomeToggle(isHome);
@@ -187,6 +217,11 @@ namespace DCL.Places
             startExitNavigationButtonsContainer.SetActive(!isWorld);
             if (!isWorld)
                 SetNavigation(isNavigating);
+
+            if (isWorld)
+                HideWorldAccessButtons();
+            else
+                SetWorldAccessState(WorldAccessCheckResult.Allowed);
 
             SetCategories(placeInfo.categories);
         }
@@ -207,6 +242,7 @@ namespace DCL.Places
                     bool friendExists = i < friendProfiles.Count;
                     if (!friendExists) continue;
                     Profile.CompactInfo friendInfo = friendProfiles[i];
+                    friendsConnected.thumbnails[i].tooltip.Configure(friendInfo.Name);
 
                     friendsProfileThumbnails[i].SetLoading(friendInfo.UserNameColor);
                     if (!string.IsNullOrEmpty(friendInfo.FaceSnapshotUrl))
@@ -224,9 +260,10 @@ namespace DCL.Places
             }
         }
 
-        public async UniTask SetCreatorThumbnailAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
+        public async UniTask SetCreatorAsync(Profile.CompactInfo? creatorProfile, CancellationToken cancellationToken)
         {
-            creatorThumbnail.gameObject.SetActive(false);
+            creatorProfileThumbnail.UpdateValue(ProfileThumbnailViewModel.Default());
+            openPassportButton.onClick.RemoveAllListeners();
 
             if (creatorProfile != null)
             {
@@ -240,9 +277,21 @@ namespace DCL.Places
                         creatorProfile.Value.FaceSnapshotUrl,
                         cancellationToken);
 
-                    creatorThumbnail.gameObject.SetActive(creatorProfileThumbnail.Value.Sprite != null);
+                    if (creatorProfileThumbnail.Value.Sprite != null)
+                        openPassportButton.onClick.AddListener(() => OpenPassportClicked?.Invoke(currentPlaceInfo.owner));
+
+                    if (!string.IsNullOrEmpty(creatorProfile.Value.Name))
+                    {
+                        creatorNameText.text = creatorProfile.Value.Name;
+                        creatorNameText.gameObject.SetActive(true);
+                        creatorWalletText.gameObject.SetActive(false);
+                    }
                 }
             }
+
+            creatorNameText.color = creatorThumbnailImage.color;
+            creatorWalletText.color = creatorThumbnailImage.color;
+            creatorContainer.SetActive(true);
         }
 
         public void SilentlySetLikeToggle(bool isOn)
@@ -273,6 +322,61 @@ namespace DCL.Places
         {
             startNavigationButton.gameObject.SetActive(!isNavigating);
             exitNavigationButton.gameObject.SetActive(isNavigating);
+        }
+
+        public void HideWorldAccessButtons()
+        {
+            jumpInButton.gameObject.SetActive(false);
+            enterPasswordButton.gameObject.SetActive(false);
+            if (worldAccessStatusContainer != null)
+                worldAccessStatusContainer.SetActive(false);
+            if (actionButtonsContainer != null)
+                actionButtonsContainer.SetActive(false);
+        }
+
+        public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
+        {
+            bool isInvited = accessState == WorldAccessCheckResult.Allowed && accessType == WorldAccessType.AllowList;
+            bool isRestricted = accessState == WorldAccessCheckResult.AccessDenied || accessState == WorldAccessCheckResult.PasswordRequired;
+
+            if (worldAccessStatusContainer != null)
+            {
+                if (isRestricted || isInvited)
+                {
+                    worldAccessStatusContainer.SetActive(true);
+                    if (worldAccessStatusText != null)
+                    {
+                        if (accessState == WorldAccessCheckResult.AccessDenied)
+                        {
+                            worldAccessStatusText.text = PADLOCK_CLOSED_SPRITE + " INVITE ONLY";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
+                        }
+                        else if (accessState == WorldAccessCheckResult.PasswordRequired)
+                        {
+                            worldAccessStatusText.text = PADLOCK_CLOSED_SPRITE + " PASSWORD REQUIRED";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_RESTRICTED;
+                        }
+                        else
+                        {
+                            worldAccessStatusText.text = PADLOCK_OPENED_SPRITE + " YOU ARE INVITED";
+                            worldAccessStatusText.color = WORLD_ACCESS_STATUS_GREEN;
+                        }
+                    }
+                }
+                else
+                    worldAccessStatusContainer.SetActive(false);
+            }
+
+            bool showJumpIn = accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed;
+            bool showEnterPassword = accessState == WorldAccessCheckResult.PasswordRequired;
+
+            jumpInButton.gameObject.SetActive(showJumpIn);
+            enterPasswordButton.gameObject.SetActive(showEnterPassword);
+
+            // Hide the action buttons container entirely when no button is visible,
+            // so it doesn't take layout space (e.g. Invitation Only worlds).
+            if (actionButtonsContainer != null)
+                actionButtonsContainer.SetActive(showJumpIn || showEnterPassword || startExitNavigationButtonsContainer.activeSelf);
         }
 
         private void OpenCardContextMenu(Vector2 position)

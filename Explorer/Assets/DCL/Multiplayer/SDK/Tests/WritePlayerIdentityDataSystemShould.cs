@@ -23,6 +23,14 @@ namespace DCL.Multiplayer.SDK.Tests
         private SDKProfile profile;
         private PlayerSceneCRDTEntity playerCRDTEntity;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [SetUp]
         public void Setup()
         {

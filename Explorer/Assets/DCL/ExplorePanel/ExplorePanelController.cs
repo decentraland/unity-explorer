@@ -5,6 +5,7 @@ using DCL.Communities.CommunitiesBrowser;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -84,7 +85,6 @@ namespace DCL.ExplorePanel
             EventsController eventsController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            bool includeDiscover,
             ISharedSpaceManager sharedSpaceManager,
             HttpEventsApiService eventsApiService)
             : base(viewFactory)
@@ -100,7 +100,7 @@ namespace DCL.ExplorePanel
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
-            this.includeDiscover = includeDiscover;
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
@@ -155,7 +155,7 @@ namespace DCL.ExplorePanel
 
             includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
-            lastShownSection = includeDiscover ? ExploreSections.Places : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
+            lastShownSection = includeDiscover ? ExploreSections.Events : includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, lastShownSection);
 
@@ -271,14 +271,14 @@ namespace DCL.ExplorePanel
 
         private void RegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
+            dclInput.Shortcuts.MainMenu.canceled += OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed += OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed += OnPlacesHotkeyPressed;
             dclInput.Shortcuts.Events.performed += OnEventsHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
@@ -399,14 +399,14 @@ namespace DCL.ExplorePanel
 
         private void UnRegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
+            dclInput.Shortcuts.MainMenu.canceled -= OnCloseMainMenu;
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
             dclInput.Shortcuts.Communities.performed -= OnCommunitiesHotkeyPressed;
             dclInput.Shortcuts.Places.performed -= OnPlacesHotkeyPressed;
             dclInput.Shortcuts.Events.performed -= OnEventsHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()

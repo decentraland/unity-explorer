@@ -33,37 +33,45 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         {
             switch (state)
             {
-                // Triggers when the user is not logged in (login is requested)
-                // TODO: We should also track the auth Request UUID here to link the explorer_v2 event with the auth page view and login events.
+                // Triggered WHEN login screen is shown
+                case AuthStatus.LoginSelectionScreen:
+                    analytics.Track(Authentication.LOGIN_SELECTION_SCREEN);
+                    break;
+
+                // Triggered WHEN the user press one of the login buttons in the Login Selection Screen
                 case AuthStatus.LoginRequested:
                     analytics.Track(Authentication.LOGIN_REQUESTED, new JObject
                     {
                         { "method", controller.CurrentLoginMethod.ToString() },
                     });
-
                     break;
 
-                // Triggered when the user tries to log in and is redirected to the authentication site
-                case AuthStatus.VerificationInProgress:
+                // Triggered WHEN verification screen is shown (dapp code or OTP)
+                case AuthStatus.VerificationRequested:
                     analytics.Track(Authentication.VERIFICATION_REQUESTED, new JObject
                     {
                         { "requestID", controller.CurrentRequestID },
                     });
-
                     break;
 
-                // Triggered when the user is logged in
-                case AuthStatus.LoggedIn:
+                case AuthStatus.ProfileFetching:
+                    analytics.Track(Authentication.PROFILE_FETCHING);
+                    break;
+                case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
                     analytics.Track(Authentication.LOGGED_IN, new JObject
                     {
                         { "method", controller.CurrentLoginMethod.ToString() },
                     }, isInstant: true);
-
                     break;
 
-                // Triggers when the user is already logged in (has valid Identity)
-                case AuthStatus.LoggedInCached:
+                // CACHED FLOW - when the user is already logged in (has valid Identity)
+                case AuthStatus.ProfileFetchingCached:
+                    analytics.Track(Authentication.PROFILE_FETCHING_CACHED);
+                    break;
+                case AuthStatus.LoggedInCached: // Triggered WHEN the user gets in Lobby
                     analytics.Track(Authentication.LOGGED_IN_CACHED, isInstant: true); break;
+
+                default: throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 

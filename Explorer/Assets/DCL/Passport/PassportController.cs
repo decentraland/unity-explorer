@@ -147,7 +147,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuBlockUserButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
         private NameColorPickerController? colorPickerController;
-        private Color? userNameColorToSave;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -326,8 +325,7 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController,
-                imageControllerProvider));
+                passportErrorsController));
 
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
@@ -412,6 +410,7 @@ namespace DCL.Passport
                                       getUserPositionBuffer,
                                       onlineUsersProvider,
                                       realmNavigator,
+                                      decentralandUrlsSource,
                                       parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
                                           parcel))),
                               false));
@@ -463,7 +462,7 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,
                 parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
         }
 
@@ -648,7 +647,6 @@ namespace DCL.Passport
 
         private void SetNewUserNameColor(Color color)
         {
-            userNameColorToSave = color;
             UpdateBackgroundColor(color);
             UpdateUserNameTextColor(color);
         }

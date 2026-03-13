@@ -89,6 +89,7 @@ namespace DCL.Minimap
         private SceneRestrictionsController? sceneRestrictionsController;
         private bool isOwnPlayerBanned;
         private ToggleContextMenuControlSettings homeToggleSettings;
+        private string previousRealmName = string.Empty;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -153,6 +154,7 @@ namespace DCL.Minimap
             favoriteCancellationToken.SafeCancelAndDispose();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            realmNavigator.NavigationExecuted -= OnNavigationExecuted;
 
             donationsService.DonationsEnabledCurrentScene.OnUpdate -= EvaluateDonateToCreatorButton;
 
@@ -183,6 +185,14 @@ namespace DCL.Minimap
         {
             SetGenesisMode(realmKind is RealmKind.GenesisCity);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
+            previousRealmName = string.Empty;
+        }
+
+        private void OnNavigationExecuted(Vector2Int _)
+        {
+            // Force a place refresh on the next player position tick even if parcel doesn't change.
+            previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
+            previousRealmName = string.Empty;
         }
 
         private void EvaluateDonateToCreatorButton((bool enabled, string? creatorAddress, Vector2Int? baseParcel) donationStatus)
@@ -207,6 +217,7 @@ namespace DCL.Minimap
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmData.IsGenesis());
             realmData.RealmType.OnUpdate += OnRealmChanged;
+            realmNavigator.NavigationExecuted += OnNavigationExecuted;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
@@ -237,7 +248,13 @@ namespace DCL.Minimap
         {
             bool isHome;
             if (realmData.ScenesAreFixed)
-                isHome = homePlaceEventBus.CurrentHomeWorldName == realmData.RealmName;
+            {
+                string? homeWorldName = homePlaceEventBus.CurrentHomeWorldName;
+                if (string.IsNullOrEmpty(homeWorldName))
+                    homeWorldName = HomeMarkerController.DeserializeWorldName();
+
+                isHome = string.Equals(homeWorldName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
+            }
             else
                 isHome = !homePlaceEventBus.IsWorldHome && homePlaceEventBus.CurrentHomeCoordinates == previousParcelPosition;
 
@@ -284,7 +301,7 @@ namespace DCL.Minimap
                 try
                 {
                     PlacesData.PlaceInfo? info = realmData.ScenesAreFixed
-                        ? await GetWorldInfoAsync(realmData.RealmName, ct)
+                        ? await GetWorldInfoAsync(previousParcelPosition, realmData.RealmName, ct)
                         : await GetPlaceInfoAsync(previousParcelPosition, ct);
 
                     if (info == null)
@@ -413,11 +430,17 @@ namespace DCL.Minimap
         private void UpdatePlaceDisplayAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = playerPosition.ToParcel();
+            bool realmNameChanged = realmData.Configured
+                && !string.Equals(previousRealmName, realmData.RealmName, StringComparison.OrdinalIgnoreCase);
 
-            if (previousParcelPosition == playerParcelPosition)
+            if (previousParcelPosition == playerParcelPosition && !realmNameChanged)
                 return;
 
             previousParcelPosition = playerParcelPosition;
+
+            if (realmData.Configured)
+                previousRealmName = realmData.RealmName;
+
             placesApiCts.SafeCancelAndDispose();
             placesApiCts = new CancellationTokenSource();
             RefreshPlaceInfoUIAsync(playerParcelPosition, placesApiCts.Token).Forget();
@@ -434,16 +457,16 @@ namespace DCL.Minimap
 
             if (realmData.ScenesAreFixed)
             {
-                viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
-
-                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(realmData.RealmName, ct);
+                PlacesData.PlaceInfo? worldInfo = await GetWorldInfoAsync(parcelPosition, realmData.RealmName, ct);
                 if (worldInfo != null)
                 {
+                    viewInstance!.placeNameText.text = worldInfo.title;
                     viewInstance!.favoriteButton.SetButtonState(worldInfo.user_favorite);
                     placesAPIService.AddRecentlyVisitedPlace(worldInfo.id);
                 }
                 else
                 {
+                    viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     viewInstance!.favoriteButton.SetButtonState(false, false);
                 }
             }
@@ -492,13 +515,13 @@ namespace DCL.Minimap
             return null;
         }
 
-        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(string worldName, CancellationToken ct)
+        private async UniTask<PlacesData.PlaceInfo?> GetWorldInfoAsync(Vector2Int parcelPosition, string worldName, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
             try
             {
-                return await placesAPIService.GetWorldAsync(worldName, ct);
+                return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
             }
             catch (OperationCanceledException _) { }
             catch (NotAPlaceException notAPlaceException)

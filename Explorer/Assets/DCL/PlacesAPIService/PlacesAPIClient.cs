@@ -283,9 +283,13 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string coord, string realmName, CancellationToken ct)
         {
-            var url = $"{baseWorldsURL}?names={placeId}";
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+            urlBuilder.AppendParameter(new URLParameter("positions", coord));
+            urlBuilder.AppendParameter(new URLParameter("names", realmName));
+            URLAddress url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
@@ -300,19 +304,49 @@ namespace DCL.PlacesAPIService
                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
-
-
             if (!response.ok)
-                throw new NotAPlaceException(placeId);
+                throw new NotAPlaceException(coord);
 
-            // At this moment WR is already disposed
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved for coord: {coord}");
+
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
+
+            var placeIdsList = placeIds.ToList();
+
+            if (placeIdsList.Count == 0)
+                return new PlacesData.PlacesAPIResponse()
+                {
+                    ok = true,
+                    data = new List<PlacesData.PlaceInfo>(),
+                    total = 0
+                };
+
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
+            {
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
+            }
+            jsonBody.Append("]");
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool? withConnectedUsers = null)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseDestinationsURL));
 
             if (withConnectedUsers != null)
                 urlBuilder.AppendParameter(WITH_CONNECTED_USERS);
@@ -335,9 +369,6 @@ namespace DCL.PlacesAPIService
                     jsonBody.Append(", ");
             }
             jsonBody.Append("]");
-
-            if (placeIdsList.Count == 0)
-                jsonBody.Clear();
 
             PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(urlBuilder.Build(), GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
