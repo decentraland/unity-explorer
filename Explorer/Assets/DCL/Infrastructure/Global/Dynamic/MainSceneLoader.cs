@@ -52,7 +52,6 @@ using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
@@ -102,30 +101,51 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
-            DisableAllSelectableTransitions();
+            try { DisableAllSelectableTransitions(); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                     plugin.SafeDispose(ReportCategory.ENGINE);
 
-                if (globalWorld != null)
-                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                try
+                {
+                    if (globalWorld != null)
+                        dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
             if (staticContainer != null)
             {
-                // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
-                foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
-                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                // Exclude SharedPlugins as they were already disposed as GlobalPlugins
+                var sharedPlugins = staticContainer.SharedPlugins;
+
+                foreach (IDCLWorldPlugin worldPlugin in staticContainer.ECSWorldPlugins)
+                {
+                    bool isShared = false;
+
+                    for (int i = 0; i < sharedPlugins.Count; i++)
+                    {
+                        if (ReferenceEquals(worldPlugin, sharedPlugins[i]))
+                        {
+                            isShared = true;
+                            break;
+                        }
+                    }
+
+                    if (!isShared)
+                        worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                }
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
-            bootstrapContainer?.Dispose();
-            splashScreen.Dispose();
+            bootstrapContainer?.SafeDispose(ReportCategory.ENGINE);
+            splashScreen.SafeDispose(ReportCategory.ENGINE);
 
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
