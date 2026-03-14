@@ -141,14 +141,31 @@ namespace DCL.WebRequests
 
         public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct, int timeout = 0)
         {
+            var result = await HeadReachabilityAsync(controller, reportData, url, ct, timeout);
+            return result.IsReachable;
+        }
+
+        public static async UniTask<HeadReachabilityResult> HeadReachabilityAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct, int timeout = 0)
+        {
             await UniTask.SwitchToMainThread();
 
-            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url, RetryPolicy.NONE, timeout: timeout), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
+            try
+            {
+                string contentType = await HeadAsync<HeadContentTypeOp, string>(
+                    controller,
+                    new CommonArguments(url, RetryPolicy.NONE, timeout: timeout),
+                    new HeadContentTypeOp(),
+                    default(GenericHeadArguments),
+                    ct,
+                    reportData);
+
+                return new HeadReachabilityResult(true, contentType);
+            }
             catch (UnityWebRequestException unityWebRequestException)
             {
-                // Endpoint was unreacheable
+                // Endpoint was unreachable
                 if (unityWebRequestException.Result == UnityWebRequest.Result.ConnectionError)
-                    return false;
+                    return HeadReachabilityResult.Unreachable;
 
                 // HEAD request might not be fully supported by the streaming platforms
                 switch (unityWebRequestException.ResponseCode)
@@ -157,15 +174,19 @@ namespace DCL.WebRequests
                     case WebRequestUtils.BAD_REQUEST:
                     case WebRequestUtils.FORBIDDEN_ACCESS:
                     case WebRequestUtils.NOT_FOUND:
-                        return false;
+                        return HeadReachabilityResult.Unreachable;
                 }
 
                 // Assume everything else means that there is such an endpoint for Non-HEAD ops
-                return true;
+                return new HeadReachabilityResult(true, null);
             }
-            catch (Exception) { return false; }
+            catch (Exception) { return HeadReachabilityResult.Unreachable; }
+        }
 
-            return true;
+        private readonly struct HeadContentTypeOp : IWebRequestOp<GenericHeadRequest, string>
+        {
+            public UniTask<string> ExecuteAsync(GenericHeadRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult(webRequest.UnityWebRequest.GetResponseContentType());
         }
 
         public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
