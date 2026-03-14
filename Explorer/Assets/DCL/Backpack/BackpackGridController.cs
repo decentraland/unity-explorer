@@ -5,11 +5,11 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Diagnostics;
 using DCL.UI;
 using MVC;
 using Runtime.Wearables;
@@ -365,18 +365,7 @@ namespace DCL.Backpack
 
             try
             {
-                (var wearables, int totalAmount) = await wearablesProvider.GetTrimmedByParamsAsync(
-                    new IWearablesProvider.Params(CURRENT_PAGE_SIZE, pageNumber)
-                    {
-                        SortingField = currentSort.OrderByOperation.ToSortingField(),
-                        OrderBy = currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
-                        Category = currentCategory,
-                        CollectionType = collectionType,
-                        SmartWearablesOnly = currentSmartWearablesOnly,
-                        Name = currentSearch,
-                    },
-                    ct,
-                    results);
+                (var wearables, int totalAmount) = await FetchWearablesWithRetryAsync(pageNumber, collectionType, ct);
 
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
@@ -400,6 +389,30 @@ namespace DCL.Backpack
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
+        }
+
+        private async UniTask<(IReadOnlyList<ITrimmedWearable> wearables, int totalAmount)> FetchWearablesWithRetryAsync(
+            int pageNumber, IWearablesProvider.CollectionType collectionType, CancellationToken ct)
+        {
+            var requestParams = new IWearablesProvider.Params(CURRENT_PAGE_SIZE, pageNumber)
+            {
+                SortingField = currentSort.OrderByOperation.ToSortingField(),
+                OrderBy = currentSort.SortAscending ? IWearablesProvider.OrderBy.Ascending : IWearablesProvider.OrderBy.Descending,
+                Category = currentCategory,
+                CollectionType = collectionType,
+                SmartWearablesOnly = currentSmartWearablesOnly,
+                Name = currentSearch,
+            };
+
+            try { return await wearablesProvider.GetTrimmedByParamsAsync(requestParams, ct, results); }
+            catch (OperationCanceledException) { throw; }
+            catch (WearableFetchException e)
+            {
+                ReportHub.Log(ReportCategory.BACKPACK, $"Wearable fetch failed, retrying once: {e.Message}");
+                results.Clear();
+                await UniTask.Delay(1000, cancellationToken: ct);
+                return await wearablesProvider.GetTrimmedByParamsAsync(requestParams, ct, results);
+            }
         }
 
         private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
