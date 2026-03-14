@@ -37,5 +37,9 @@ namespace SceneRuntime.Apis.Modules.Runtime
         [UsedImplicitly]
         public object GetSceneInformation() =>
             api.GetSceneInformation();
+
+        [UsedImplicitly]
+        public object GetExplorerInformation() =>
+            api.GetExplorerInformation();
     }
 }

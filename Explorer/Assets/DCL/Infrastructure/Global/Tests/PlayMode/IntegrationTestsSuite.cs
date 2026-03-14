@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Settings;
 using DCL.Web3;
@@ -82,7 +83,7 @@ namespace Global.Tests.PlayMode
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, new BuildData(), globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 analyticsContainer,
