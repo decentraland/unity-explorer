@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.MediaStream
             if (playingAddress == null) return;
             if (IsVideoOpened) return;
 
-            var address = playingAddress.Value;
+            LivekitAddress address = playingAddress.Value;
 
             OpenMedia(address);
         }
@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.MediaStream
             if (playingAddress == null) return;
             if (isAudioOpened) return;
 
-            var address = playingAddress.Value;
+            LivekitAddress address = playingAddress.Value;
 
             OpenMedia(address);
         }

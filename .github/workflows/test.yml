@@ -33,6 +33,263 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
+  lint:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Move Docker data-root to /mnt/docker
+        run: |
+          sudo systemctl stop docker
+          sudo mkdir -p /mnt/docker
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+          for i in {1..10}; do
+            docker info >/dev/null 2>&1 && break
+            sleep 3
+          done
+          docker info | sed -n '1,40p'
+          df -h /mnt /mnt/docker
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          submodules: recursive
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v4
+        id: lfs-cache-lint
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add GitHub to the SSH known hosts file
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
+
+      - name: Prepare SSH for Unity
+        run: |
+          rm -rf /tmp/ssh-unity
+          mkdir -p -m 0700 /tmp/ssh-unity
+          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
+          cp /home/runner/.ssh/key-* /tmp/ssh-unity/ 2>/dev/null || true
+          chmod 600 /tmp/ssh-unity/*
+
+      - name: Prepare Unity writable dirs
+        run: |
+          mkdir -p /tmp/unity-home/.local/share/unity3d
+          mkdir -p /tmp/unity-home/.cache/unity3d
+          mkdir -p /tmp/unity-home/.config/unity3d
+          chmod -R 777 /tmp/unity-home
+
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version-lint
+        run: |
+          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
+          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
+      - name: Set image names
+        id: img-lint
+        run: |
+          version="${{ steps.unity-version-lint.outputs.version }}"
+          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
+          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
+          tag="ubuntu-$version-$flavor-$imgVer"
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          upstream="unityci/editor:$tag"
+          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "upstream=$upstream" >> $GITHUB_OUTPUT
+          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          for i in 1 2 3; do
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin && exit 0
+            echo "GHCR login failed, retry $i/3"
+            sleep $((i * 10))
+          done
+          exit 1
+
+      - name: Restore Unity image from GHCR or seed from Docker Hub
+        run: |
+          set -o pipefail
+          ghcr="${{ steps.img-lint.outputs.ghcr }}"
+          upstream="${{ steps.img-lint.outputs.upstream }}"
+
+          if docker pull "$ghcr" 2>&1 | tee /tmp/ghcr-pull.log; then
+            exit 0
+          fi
+
+          if grep -qiE 'manifest unknown|not found' /tmp/ghcr-pull.log; then
+            echo "GHCR image missing, trying upstream..."
+            docker pull "$upstream"
+            docker tag "$upstream" "$ghcr"
+            docker push "$ghcr"
+          else
+            echo "GHCR pull failed, but not because the image is missing."
+            cat /tmp/ghcr-pull.log
+            exit 1
+          fi
+
+      # - name: Activate Unity license
+      #   run: |
+      #     docker run --rm \
+      #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
+      #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
+      #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
+      #       -e UNITY_EMAIL="$UNITY_EMAIL" \
+      #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+      #       -e UNITY_LICENSE="$UNITY_LICENSE" \
+      #       ${{ steps.img-lint.outputs.ghcr }} \
+      #       /bin/bash -lc 'source /opt/unity/activate.sh 2>/dev/null || true; unity-editor -batchmode -nographics -quit -logFile /dev/stdout'
+
+      # # C# Linting using JetBrains ReSharper CLI
+
+      # - name: Generate solution inside Unity Docker container
+      #   run: |
+      #     docker run --rm \
+      #       -v "${{ github.workspace }}:/workspace" \
+      #       -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+      #       -v /tmp/ssh-unity:/root/.ssh:ro \
+      #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
+      #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
+      #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
+      #       -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+      #       -e UNITY_EMAIL="$UNITY_EMAIL" \
+      #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+      #       -e UNITY_LICENSE="$UNITY_LICENSE" \
+      #       -w /workspace \
+      #       ${{ steps.img-lint.outputs.ghcr }} \
+      #       unity-editor \
+      #       -batchmode \
+      #       -nographics \
+      #       -projectPath /workspace/Explorer \
+      #       -executeMethod UnityEditor.SyncVS.SyncSolution \
+      #       -quit \
+      #       -logFile -
+
+      - name: Rewrite GitHub SSH URLs to HTTPS
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.REPOS_READ_ONLY_TOKEN }}@github.com/".insteadOf "git@github.com:"
+          git config --global url."https://x-access-token:${{ secrets.REPOS_READ_ONLY_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Generate solution with GameCI Builder
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          GIT_PRIVATE_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+          # GIT_CONFIG_EXTENSIONS: true
+        with:
+          projectPath: Explorer
+          customImage: ${{ steps.img-lint.outputs.ghcr }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: Packages.Rider.Editor.RiderScriptEditor.SyncSolution
+
+      - name: Debug generated solution state
+        run: |
+          set -euxo pipefail
+
+          echo "===== pwd ====="
+          pwd
+
+          echo "===== workspace root ====="
+          ls -la
+
+          echo "===== Explorer root ====="
+          ls -la Explorer || true
+
+          echo "===== Find solution / project / editor files ====="
+          find Explorer -maxdepth 4 \( \
+            -name "*.sln" -o \
+            -name "*.csproj" -o \
+            -name "*.asmdef" -o \
+            -name "*.cs" -o \
+            -name "manifest.json" -o \
+            -name "packages-lock.json" \
+          \) | sort
+
+          echo "===== GenerateSolution script ====="
+          if [ -f Explorer/Assets/Editor/CI/GenerateSolution.cs ]; then
+            sed -n '1,200p' Explorer/Assets/Editor/CI/GenerateSolution.cs
+          else
+            echo "Explorer/Assets/Editor/CI/GenerateSolution.cs not found"
+          fi
+
+          echo "===== Look for executeMethod target references ====="
+          grep -RIn --include="*.cs" --include="*.asmdef" "GenerateSolution\|SyncVS\|CI\." Explorer/Assets Explorer/Packages || true
+
+          echo "===== Packages manifest ====="
+          if [ -f Explorer/Packages/manifest.json ]; then
+            sed -n '1,220p' Explorer/Packages/manifest.json
+          else
+            echo "Explorer/Packages/manifest.json not found"
+          fi
+
+          echo "===== Packages lock ====="
+          if [ -f Explorer/Packages/packages-lock.json ]; then
+            sed -n '1,260p' Explorer/Packages/packages-lock.json
+          else
+            echo "Explorer/Packages/packages-lock.json not found"
+          fi
+
+          echo "===== Editor folder tree ====="
+          find Explorer/Assets/Editor -maxdepth 4 -type f | sort || true
+
+          echo "===== Any solution outside Explorer ====="
+          find . -maxdepth 5 -name "*.sln" | sort || true
+
+          echo "===== Top-level Explorer files ====="
+          find Explorer -maxdepth 1 -type f | sort
+
+      - name: Download ReSharper Command Line Tools
+        run: |
+          wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
+          unzip -q rsharp.zip -d rsharp
+          chmod +x rsharp/*.sh
+
+      - name: Run ReSharper InspectCode (static analysis)
+        run: |
+          rsharp/inspectcode.sh Explorer/Explorer.sln \
+            --no-build \
+            --verbosity=INFO \
+            --properties:Configuration=Debug \
+            --disable-settings-layers:SolutionPersonal \
+            --output=InspectCodeReport.json
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: csharp-lint-reports
+          path: |
+            InspectCodeReport.json
+            # CodeStyleReport.xml
+
+      # END: C# Linting using JetBrains ReSharper CLI
+
+
   test:
     # Skip when PR has 'perf_test' label (performance tests run in separate workflow)
     if: |
@@ -205,3 +462,12 @@ jobs:
           name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
+
+  watchdog:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: |
+      needs.lint.result == 'failure' ||
+      needs.test.result == 'failure'
+    steps:
+      - run: exit 1
