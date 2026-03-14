@@ -45,6 +45,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName WEB_REQUESTS_STRESS_TEST = "Web Requests Stress Test".AsWidgetName();
             public static readonly WidgetName LANDSCAPE_GPUI = "Landscape - GPUI".AsWidgetName();
             public static readonly WidgetName NAMETAGS = "Nametags".AsWidgetName();
+            public static readonly WidgetName AVATAR_FACE = "Avatar Face".AsWidgetName();
             public static readonly WidgetName CHAT = "Chat".AsWidgetName();
             public static readonly WidgetName WEB3_AUTHENTICATION = "Web3 Authentication".AsWidgetName();
             public static readonly WidgetName WORLD_INFO = "World Info".AsWidgetName();

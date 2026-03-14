@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
+using Utility.Arch;
 
 namespace DCL.Nametags
 {
@@ -115,7 +116,7 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void ProcessChatBubbleComponents(in NametagHolder nametagHolder, ref ChatBubbleComponent chatBubbleComponent)
+        private void ProcessChatBubbleComponents(Entity entity, in NametagHolder nametagHolder, ref ChatBubbleComponent chatBubbleComponent)
         {
             if (!chatBubbleComponent.IsDirty)
                 return;

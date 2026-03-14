@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1554270bcc86e5e44aad60a36104ecc7
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Mouth_Atlas.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 17775668c745d4edfae3bff500f95f32
     m_Address: F_Eyes_00
     m_ReadOnly: 0
@@ -170,6 +175,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6efa1304115c46d478df19d1e8fd5f80
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Image_8.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
     m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
     m_ReadOnly: 0
@@ -242,6 +252,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
     m_Address: RemoteAvatarCollider
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e829d698cff53741ad9b166893b2f56
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Eyebrows_Atlas.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -330,6 +345,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f13fd0befee6d48479806b957b3ca94f
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceExpressionConfig.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
     m_Address: DefaultBlack_512_BC7.DDS
     m_ReadOnly: 0
@@ -347,6 +367,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa9a67059d8a204408ce435cc8827612
     m_Address: Assets/DCL/VoiceChat/VoiceChatMicrophoneAudioSource.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdde4a8fe27c97c448b609ddc755484b
+    m_Address: Assets/DCL/AvatarRendering/Wearables/Assets/Eyes_Atlas.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
