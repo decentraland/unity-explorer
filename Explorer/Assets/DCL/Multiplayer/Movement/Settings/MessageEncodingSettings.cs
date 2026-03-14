@@ -12,6 +12,8 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public const int HEAD_ROTATION_BITS = 6;
 
+        public const int POINT_AT_AXIS_BITS = 20; // 19 magnitude + 1 sign
+
         // int32 - 9 (Anim) - 2 (Tiers) = 21 bits
         [Header("TIMESTAMP [21]")]
         public float TIMESTAMP_QUANTUM = 0.02f;
@@ -24,6 +26,9 @@ namespace DCL.Multiplayer.Movement.Settings
         public MovementEncodingConfig tier1;
         public MovementEncodingConfig tier2;
         public MovementEncodingConfig tier3;
+
+        [Header("POINT AT")]
+        public float POINT_AT_MAX_DISTANCE = 1000f; // Max distance it's the far clipping plane
 
         public int MOVEMENT_KIND_START_BIT => TIMESTAMP_BITS;
         public int SLIDING_BIT => MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;

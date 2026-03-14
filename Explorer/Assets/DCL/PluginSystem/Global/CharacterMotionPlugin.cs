@@ -1,15 +1,21 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.CharacterMotion.Systems;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -17,6 +23,8 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GliderProp;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global
@@ -30,9 +38,12 @@ namespace DCL.PluginSystem.Global
         private readonly ILandscape landscape;
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ObjectProxy<FriendsCache> friendsCache;
 
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
+        private IObjectPool<PointAtMarkerHolder> pointAtMarkerPool;
 
         public CharacterMotionPlugin(
             ICharacterObject characterObject,
@@ -41,7 +52,9 @@ namespace DCL.PluginSystem.Global
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILandscape landscape,
             IScenesCache scenesCache,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IWeb3IdentityCache web3IdentityCache,
+            ObjectProxy<FriendsCache> friendsCache)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -50,6 +63,8 @@ namespace DCL.PluginSystem.Global
             this.landscape = landscape;
             this.scenesCache = scenesCache;
             this.assetsProvisioner = assetsProvisioner;
+            this.web3IdentityCache = web3IdentityCache;
+            this.friendsCache = friendsCache;
         }
 
         public void Dispose()
@@ -60,6 +75,23 @@ namespace DCL.PluginSystem.Global
         {
             this.settings = settings;
             gliderPropPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.Gliding.PropPrefab, ct)).Value;
+
+            PointAtMarkerHolder prefab = (await assetsProvisioner.ProvideMainAssetAsync(
+                settings.PointAtMarkerPrefab, ct: ct)).Value.GetComponent<PointAtMarkerHolder>();
+
+            var poolRoot = componentPoolsRegistry.RootContainerTransform();
+            var poolParent = new GameObject("POOL_CONTAINER_PointAtMarkers").transform;
+            poolParent.parent = poolRoot;
+
+            pointAtMarkerPool = new ObjectPool<PointAtMarkerHolder>(
+                createFunc: () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, poolParent),
+                actionOnRelease: m =>
+                {
+                    m.ResetState();
+                    m.gameObject.SetActive(false);
+                },
+                actionOnDestroy: UnityObjectUtils.SafeDestroy,
+                actionOnGet: m => m.gameObject.SetActive(true));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -81,7 +113,8 @@ namespace DCL.PluginSystem.Global
                 new HeadIKComponent(),
                 new MovementSpeedLimit(),
                 new GlideState(),
-                new JumpState());
+                new JumpState(),
+                new HandPointAtComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
@@ -102,6 +135,14 @@ namespace DCL.PluginSystem.Global
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
             GroundDistanceSystem.InjectToWorld(ref builder);
             GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
+
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
+                return;
+
+            HandPointAtSystem.InjectToWorld(ref builder);
+            PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache);
+            PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
+            RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
         }
     }
 }

@@ -106,6 +106,17 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKRotationSpeed { get; set; } = 45;
         [field: SerializeField] public float HeadIKWeightChangeSpeed { get; set; } = 2;
         [field: SerializeField] public float HeadIKRemotePlayersDistance { get; set; } = 10;
+
+        [field: Header("Point at IK")]
+        [field: SerializeField] public float PointAtMaxDistance { get; set; } = 100f;
+        [field: SerializeField] public float PointAtDuration { get; set; } = 10f;
+        [field: SerializeField, Range(0.5f, 2f)] public float PointAtArmReach { get; set; } = 1.55f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationHorizontalRightThreshold { get; set; } = 0.5f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationHorizontalLeftThreshold { get; set; } = 0.3f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalUpThreshold { get; set; } = 0.5f;
+        [field: SerializeField, Range(0.0f, 1f)] public float PointAtRotationVerticalDownThreshold { get; set; } = 0.5f;
+        [field: SerializeField] public float PointAtRotationSpeed { get; set; } = 250f;
+
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
     }

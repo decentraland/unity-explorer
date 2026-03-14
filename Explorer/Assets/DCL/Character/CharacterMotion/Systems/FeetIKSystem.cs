@@ -1,10 +1,11 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -91,7 +92,8 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             in StunComponent stunComponent,
             in CharacterEmoteComponent emoteComponent,
-            in CharacterPlatformComponent platformComponent
+            in CharacterPlatformComponent platformComponent,
+            in HandPointAtComponent handPointAtComponent
         )
         {
             // Debug stuff and enable/disable mechanic
@@ -121,8 +123,13 @@ namespace DCL.CharacterMotion.Systems
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isEnabled, settings, dt);
             ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isEnabled, settings, dt);
 
+            // Crossfade leg IK with rotation animation to avoid flickering during transitions
+            float rotationBlend = 1f - handPointAtComponent.RotationAnimationWeight;
+            avatarBase.RightLegIK.weight *= rotationBlend;
+            avatarBase.LeftLegIK.weight *= rotationBlend;
+
             // Third: Calculate the "pull" distance and update the hips, in order to extend the feet downwards so the character can have one feet a step higher depending on the ground complexity
-            ApplyHipsHeightCorrection(dt, ref feetIKComponent, avatarBase, settings);
+            ApplyHipsHeightCorrection(dt, ref feetIKComponent, avatarBase, settings, handPointAtComponent.RotationAnimationWeight);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -239,13 +246,30 @@ namespace DCL.CharacterMotion.Systems
             float dt,
             ref FeetIKComponent feetIKComponent,
             AvatarBase avatarBase,
-            ICharacterControllerSettings settings)
+            ICharacterControllerSettings settings,
+            float rotationAnimationWeight)
         {
             // Get the most stretched feet distance
             float highestDist = Mathf.Max(feetIKComponent.Right.Distance, feetIKComponent.Left.Distance) - settings.HipsHeightCorrection;
 
-            // Calculate the target weight based ond both feet weight
+            // Calculate the target weight based on both feet weight
             float weight = (avatarBase.RightLegIK.weight + avatarBase.LeftLegIK.weight) / 2;
+
+            // Enter freeze when rotation starts and weight would drop
+            if (rotationAnimationWeight > 0f && weight < avatarBase.HipsConstraint.weight)
+            {
+                feetIKComponent.HipsFrozen = true;
+                return;
+            }
+
+            // Stay frozen until legs have recovered to near the frozen hips value
+            if (feetIKComponent.HipsFrozen)
+            {
+                if (weight >= avatarBase.HipsConstraint.weight - 0.01f)
+                    feetIKComponent.HipsFrozen = false;
+                else
+                    return;
+            }
 
             MultiPositionConstraintData data = avatarBase.HipsConstraint.data;
             Vector3 offset = data.offset;

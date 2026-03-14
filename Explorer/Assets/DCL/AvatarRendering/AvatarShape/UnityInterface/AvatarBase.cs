@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using System;
@@ -12,6 +13,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private int rightPointAtLayerIndex;
+        private int rotationLayerIndex;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -19,6 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; }
 
         public Animation? LegacyAnimation { get; private set; }
 
@@ -118,6 +123,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             RandomID = Random.Range(0, 1000);
 
+            rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
+            rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -137,6 +144,16 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             if (LegacyAnimation != null) return LegacyAnimation;
             LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
             return LegacyAnimation;
+        }
+
+        public void SetPointAtLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
+
+        public void SetRotationLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
         }
 
         public void SetAnimatorFloat(int hash, float value)

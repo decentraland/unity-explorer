@@ -1112,7 +1112,7 @@ MonoBehaviour:
     m_Hint: {fileID: 7144652942040965548}
     m_TargetPositionWeight: 1
     m_TargetRotationWeight: 1
-    m_HintWeight: 1
+    m_HintWeight: 0
     m_MaintainTargetPositionOffset: 0
     m_MaintainTargetRotationOffset: 0
 --- !u!1 &2660097177476898865
@@ -3530,6 +3530,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RandomID: 0
   <AvatarAnimator>k__BackingField: {fileID: 6654053651110562472}
+  <AudioPlaybackController>k__BackingField: {fileID: 1956365971855606590}
   <RigBuilder>k__BackingField: {fileID: 2952854576378652397}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}
