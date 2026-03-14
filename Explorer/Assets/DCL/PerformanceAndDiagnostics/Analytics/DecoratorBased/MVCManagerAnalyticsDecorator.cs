@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AuthenticationScreenFlow;
-using DCL.Chat;
 using DCL.ChatArea;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
@@ -77,5 +76,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SetAllViewsCanvasActive(IController except, bool isActive) =>
             core.SetAllViewsCanvasActive(except, isActive);
+
+        public void CloseAllNonPersistentViews(CancellationToken ct = default) =>
+            core.CloseAllNonPersistentViews(ct);
     }
 }

@@ -130,7 +130,7 @@ namespace DCL.PluginSystem.Global
         private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
         {
             transactionConfirmationView = Object.Instantiate(popupPrefab);
-            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 500));
             transactionConfirmationView.gameObject.SetActive(false);
             web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
         }

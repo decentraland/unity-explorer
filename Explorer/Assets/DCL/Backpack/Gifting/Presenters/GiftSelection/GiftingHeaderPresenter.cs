@@ -6,7 +6,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using UnityEngine;
 using Utility;
@@ -30,7 +29,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private readonly GiftingHeaderView view;
         private readonly IProfileRepository profileRepository;
-        private readonly UserWalletAddressElementController walletAddressController;
+        private readonly UserWalletAddressElementPresenter walletAddressController;
         private readonly IInputBlock inputBlock;
 
         private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail =
@@ -52,7 +51,7 @@ namespace DCL.Backpack.Gifting.Presenters
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
 
-            walletAddressController = new UserWalletAddressElementController(view.UserProfileWallet);
+            walletAddressController = new UserWalletAddressElementPresenter(view.UserProfileWallet);
 
             view.UserProfileImage.Bind(profileThumbnail);
             view.SearchBar.inputField.onSelect.AddListener(DisableInputs);

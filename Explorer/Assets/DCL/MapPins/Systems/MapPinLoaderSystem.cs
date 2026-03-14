@@ -30,7 +30,6 @@ namespace DCL.SDKComponents.MapPins.Systems
     {
         private const int ATTEMPTS_COUNT = 6;
 
-        private readonly World globalWorld;
         private readonly IPartitionComponent partitionComponent;
         private readonly ISceneData sceneData;
         private readonly IMapPinsEventBus mapPinsEventBus;
@@ -39,10 +38,9 @@ namespace DCL.SDKComponents.MapPins.Systems
         private int xRounded;
         private int yRounded;
 
-        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, IMapPinsEventBus mapPinsEventBus) : base(world)
+        private MapPinLoaderSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent, IMapPinsEventBus mapPinsEventBus) : base(world)
         {
             this.sceneData = sceneData;
-            this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
             this.mapPinsEventBus = mapPinsEventBus;
             useCustomMapPinIcons = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);

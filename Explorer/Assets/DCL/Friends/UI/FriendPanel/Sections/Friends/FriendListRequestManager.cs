@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -24,7 +23,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public event Action<Profile.CompactInfo>? JumpInClicked;
         public event Action<Profile.CompactInfo>? ChatClicked;
 
-        public FriendListRequestManager(IFriendsService friendsService,
+        public FriendListRequestManager(
+            IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
             LoopListView2 loopListView,

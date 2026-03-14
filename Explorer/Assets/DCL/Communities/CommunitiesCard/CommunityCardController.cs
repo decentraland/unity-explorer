@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Announcements;
 using DCL.Communities.CommunitiesCard.Events;
@@ -11,6 +10,7 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Input;
 using DCL.Input.Component;
@@ -30,7 +30,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -43,7 +42,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -67,7 +65,7 @@ namespace DCL.Communities.CommunitiesCard
         private const string CREATE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error unsubscribing notifications for this community. Please try again.";
         private const string DELETE_NOTIFICATIONS_OPT_OUT_ERROR_MESSAGE = "There was an error subscribing notifications for this community. Please try again.";
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -81,8 +79,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -104,6 +101,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
         private CancellationTokenSource communityNotificationsToggleCancellationTokenSource = new ();
+        private readonly EventSubscriptionScope eventScope = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
         private ISpriteCache? spriteCache;
         private bool isSpriteCacheExternal;
@@ -125,8 +123,7 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
@@ -152,7 +149,6 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
@@ -165,7 +161,7 @@ namespace DCL.Communities.CommunitiesCard
             this.analytics = analytics;
             this.homePlaceEventBus = homePlaceEventBus;
 
-            chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
+            eventScope.Add(chatEventBus.Subscribe<ChatEvents.OpenPrivateConversationRequestedEvent>(evt => CloseCardOnConversationRequested(evt.UserId)));
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
@@ -190,7 +186,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
-                viewInstance.OpenChatRequested -= OnOpenCommunityChatAsync;
+                viewInstance.OpenChatRequested -= OnOpenCommunityChat;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
@@ -203,7 +199,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.CopyCommunityLinkRequested -= OnCopyCommunityLinkRequested;
             }
 
-            chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
+            eventScope.Dispose();
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
@@ -349,26 +345,14 @@ namespace DCL.Communities.CommunitiesCard
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
 
-        private async void OnOpenCommunityChatAsync()
-        {
-            try
-            {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(communityData.id);
-                CloseController();
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
-            }
-        }
+        private void OnOpenCommunityChat() =>
+            ChatOpener.Instance.OpenCommunityConversationWithId(communityData.id);
 
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
-            viewInstance.OpenChatRequested += OnOpenCommunityChatAsync;
+            viewInstance.OpenChatRequested += OnOpenCommunityChat;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
@@ -392,7 +376,6 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                sharedSpaceManager,
                 chatEventBus,
                 web3IdentityCache,
                 selfProfile);
@@ -420,7 +403,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 decentralandUrlsSource);
 
-            if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
             {
                 announcementsSectionController = new AnnouncementsSectionController(
                     viewInstance.AnnouncementsSectionView,
@@ -433,16 +416,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        private void OnClosePanel()
-        {
-            OnClosePanelAsync().Forget();
-            return;
-
-            async UniTaskVoid OnClosePanelAsync()
-            {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-            }
-        }
+        private void OnClosePanel() => ChatOpener.Instance.CloseAllViewsAndFocusChat();
 
         protected override void OnViewShow()
         {
@@ -467,11 +441,10 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance!.SetLoadingState(true);
                 //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
-                if (CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled())
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
                     viewInstance.AnnouncementsSectionView.SetLoadingStateActive(true);
                 else
                     viewInstance.MembersListView.SetLoadingStateActive(true);
-
 
                 if (spriteCache == null)
                 {

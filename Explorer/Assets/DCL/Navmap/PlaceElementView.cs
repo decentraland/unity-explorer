@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.WebRequests;
 using System;
 using TMPro;
 using UnityEngine;
@@ -37,7 +36,7 @@ namespace DCL.Navmap
         [field: SerializeField]
         public GameObject LiveContainer { get; private set; }
 
-        private ImageController imageController;
+        private ImageController? imageController;
 
         public Vector2Int coords;
 
@@ -49,7 +48,7 @@ namespace DCL.Navmap
         }
 
         public void SetPlaceImage(string imageUrl) =>
-            imageController.RequestImage(imageUrl, true);
+            imageController?.RequestImage(imageUrl, true);
 
         public void OnPointerEnter(PointerEventData eventData)
         {

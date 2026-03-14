@@ -1,7 +1,5 @@
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using System;
 using System.Globalization;
 using TMPro;
@@ -20,7 +18,7 @@ namespace DCL.Donations.UI
         private const int THIRD_RECOMMENDATION_INDEX = 2;
         private const int OTHER_RECOMMENDATION_INDEX = 3;
 
-        public event Action<DonationPanelViewModel, decimal>? SendDonationRequested;
+        public event Action<DonationPanelViewModel?, decimal>? SendDonationRequested;
 
         [field: Header("References")]
         [field: SerializeField] internal Button cancelButton { get; set; } = null!;
@@ -52,16 +50,17 @@ namespace DCL.Donations.UI
         [field: SerializeField] private GameObject donationErrorTip { get; set; } = null!;
 
         [field: Header("Donation recommendations")]
-        [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; }
+        [field: SerializeField] private ButtonWithSelectableStateView[] recommendationButtons { get; set; } = null!;
 
-        private UserWalletAddressElementController? creatorAddressController;
+        private UserWalletAddressElementPresenter? creatorAddressController;
+        private DonationPanelViewModel? currentViewModel;
         private Color donationBorderOriginalColor;
         private Color manaAvailableOriginalColor;
-        private DonationPanelViewModel currentViewModel;
+
 
         private void Awake()
         {
-            creatorAddressController = new UserWalletAddressElementController(creatorAddressElement);
+            creatorAddressController = new UserWalletAddressElementPresenter(creatorAddressElement);
             donationBorderOriginalColor = donationBorderError[0].color;
             manaAvailableOriginalColor = manaAvailableText.color;
 
@@ -131,12 +130,12 @@ namespace DCL.Donations.UI
             if (donationInputFieldMana.interactable)
                 donationInputFieldMana.OnSelect(null);
 
-            for (int i = 0; i < recommendationButtons.Length; i++)
+            for (var i = 0; i < recommendationButtons.Length; i++)
             {
                 recommendationButtons[i].SetSelected(i == index);
 
                 if (i == index && i != OTHER_RECOMMENDATION_INDEX)
-                    donationInputFieldMana.text = currentViewModel.SuggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
+                    donationInputFieldMana.text = currentViewModel?.SuggestedDonationAmount[i].ToString(DECIMAL_FORMAT);
             }
         }
 

@@ -53,14 +53,13 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly IAppArgs appParameters;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
-        public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+        public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
@@ -78,7 +77,6 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
             IAppArgs appParameters)
@@ -98,7 +96,6 @@ namespace DCL.Settings
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.upscalingController = upscalingController;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.appParameters = appParameters;
@@ -184,7 +181,7 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -216,7 +213,6 @@ namespace DCL.Settings
                                 upscalingController,
                                 assetsProvisioner,
                                 volumeBus,
-                                isTranslationChatEnabled,
                                 eventBus,
                                 appParameters);
 

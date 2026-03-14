@@ -14,14 +14,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.analytics = analytics;
             this.chatController = chatController;
 
-            chatController.CommandRegistry.SelectChannel.ChannelOpened += OnConversationOpened;
-            chatController.CommandRegistry.CloseChannel.ChannelClosed += OnConversationClosed;
+            chatController.ChatCommandRegistry.SelectChannel.ChannelOpened += OnConversationOpened;
+            chatController.ChatCommandRegistry.CloseChannel.ChannelClosed += OnConversationClosed;
         }
 
         public void Dispose()
         {
-            chatController.CommandRegistry.SelectChannel.ChannelOpened -= OnConversationOpened;
-            chatController.CommandRegistry.CloseChannel.ChannelClosed -= OnConversationClosed;
+            chatController.ChatCommandRegistry.SelectChannel.ChannelOpened -= OnConversationOpened;
+            chatController.ChatCommandRegistry.CloseChannel.ChannelClosed -= OnConversationClosed;
         }
 
         private void OnConversationClosed() =>

@@ -2,10 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.FeatureFlags;
 using DCL.Diagnostics;
 using DCL.Events;
 using DCL.EventsApi;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -16,7 +16,6 @@ using DCL.Places;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -31,25 +30,23 @@ using Utility;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>, IControllerInSharedSpace<ExplorePanelView, ExplorePanelParameter>, IBlocksChat
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
-
         private readonly BackpackController backpackController;
-        private readonly ProfileWidgetController profileWidgetController;
+        private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
-        private bool includeCommunities;
+        private readonly IMVCManager mvcManager;
         private readonly bool includeDiscover;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly HttpEventsApiService eventsApiService;
+        private bool includeCommunities;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource? animationCts;
-        private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
         private CancellationTokenSource setupExploreSectionsCts;
         private CancellationTokenSource checkForLiveEventsCts;
@@ -57,6 +54,7 @@ namespace DCL.ExplorePanel
         private ExploreSections lastShownSection;
         private bool isControlClosing;
 
+        private CommunitiesBrowserController communitiesBrowserController { get; }
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
@@ -64,11 +62,9 @@ namespace DCL.ExplorePanel
         public PlacesController PlacesController { get; }
         public EventsController EventsController { get; }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
         public bool CanBeClosedByEscape => State != ControllerState.ViewShowing;
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PlacesOpenedFromStartMenu;
         public event Action? EventsOpenedFromStartMenu;
@@ -78,41 +74,42 @@ namespace DCL.ExplorePanel
             SettingsController settingsController,
             BackpackController backpackController,
             CameraReelController cameraReelController,
-            ProfileWidgetController profileWidgetController,
+            SidebarProfileButtonPresenter profileButtonPresenter,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
             PlacesController placesController,
             EventsController eventsController,
             IInputBlock inputBlock,
-            bool includeCameraReel,
-            ISharedSpaceManager sharedSpaceManager,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             SettingsController = settingsController;
             this.backpackController = backpackController;
             CameraReelController = cameraReelController;
-            this.profileWidgetController = profileWidgetController;
+            this.profileButtonPresenter = profileButtonPresenter;
             dclInput = DCLInput.Instance;
             this.profileMenuController = profileMenuController;
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
-            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
             this.inputBlock = inputBlock;
-            this.includeCameraReel = includeCameraReel;
-            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
-            this.sharedSpaceManager = sharedSpaceManager;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.mvcManager = mvcManager;
+            this.communitiesBrowserController = communitiesBrowserController;
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
+            this.eventsApiService = eventsApiService;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
+
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Backpack).Forget());
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, p => OnShowSectionFromNotificationAsync(p, ExploreSections.Communities).Forget());
+
             EventsController = eventsController;
-            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
@@ -120,17 +117,10 @@ namespace DCL.ExplorePanel
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
         {
-            if(State == ControllerState.ViewHidden)
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(sectionToShow));
+            if (State == ControllerState.ViewHidden)
+                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(sectionToShow)));
             else
                 ShowSection(sectionToShow);
-        }
-
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
-            isControlClosing = true;
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override void OnViewInstantiated()
@@ -197,17 +187,17 @@ namespace DCL.ExplorePanel
                 );
             }
 
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowProfileMenuAsync);
+            viewInstance?.ProfileWidget?.OpenProfileButton?.Button?.onClick.AddListener(ShowProfileMenuAsync);
         }
 
         protected override void OnViewShow()
         {
             isControlClosing = false;
-            sectionSelectorController!.ResetAnimators();
+            sectionSelectorController.ResetAnimators();
 
             ExploreSections sectionToShow = inputData.IsSectionProvided ? inputData.Section : lastShownSection;
 
-            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections!)
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == sectionToShow, tab, section, true);
                 sectionSelectorController.SetAnimationState(section == sectionToShow, tabsBySections[section]);
@@ -219,11 +209,7 @@ namespace DCL.ExplorePanel
             if (inputData.SettingsSection != null)
                 SettingsController.Toggle(inputData.SettingsSection.Value);
 
-            profileWidgetCts = profileWidgetCts.SafeRestart();
-
-            profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
-                                        new ControllerNoData(), profileWidgetCts.Token)
-                                   .Forget();
+            profileButtonPresenter.LoadProfile();
 
             profileMenuCts = profileMenuCts.SafeRestart();
 
@@ -255,16 +241,16 @@ namespace DCL.ExplorePanel
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
             if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
-            sectionSelectorController!.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
             if (!isOn) return;
 
             if (shownSection == lastShownSection)
-                exploreSections![lastShownSection].Activate();
+                exploreSections[lastShownSection].Activate();
 
             lastShownSection = shownSection;
         }
@@ -308,7 +294,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Navmap)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Navmap);
             }
             else
@@ -319,7 +305,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Settings)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Settings);
             }
             else
@@ -332,7 +318,7 @@ namespace DCL.ExplorePanel
 
             if (lastShownSection != ExploreSections.Communities)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Communities);
             }
             else
@@ -369,7 +355,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Backpack)
             {
-                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Backpack);
             }
             else
@@ -378,18 +364,17 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            ToggleSection(true, tabsBySections![section], section, true);
+            ToggleSection(true, tabsBySections[section], section, true);
         }
 
         protected override void OnViewClose()
         {
-            foreach (ISection exploreSectionsValue in exploreSections!.Values)
+            foreach (ISection exploreSectionsValue in exploreSections.Values)
                 exploreSectionsValue.Deactivate();
 
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
                 profileMenuController.HideViewAsync(CancellationToken.None).Forget();
 
-            profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
 
@@ -421,7 +406,6 @@ namespace DCL.ExplorePanel
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
                                   UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
@@ -429,13 +413,13 @@ namespace DCL.ExplorePanel
 
         private async void ShowProfileMenuAsync()
         {
+            profileMenuCts = profileMenuCts.SafeRestart();
+
             if (profileMenuController.State == ControllerState.ViewHidden)
             {
                 try
                 {
-                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 0),
-                                                                         new ControllerNoData(), profileMenuCts.Token);
-
+                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 0),new ControllerNoData(), profileMenuCts.Token);
                     await profileMenuController.HideViewAsync(profileMenuCts.Token);
                 }
                 catch (OperationCanceledException)
@@ -447,8 +431,7 @@ namespace DCL.ExplorePanel
 
         private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
         {
-            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
-                                                                                     .SuppressToResultAsync(ReportCategory.EVENTS);
+            Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true).SuppressToResultAsync(ReportCategory.EVENTS);
 
             if (ct.IsCancellationRequested)
                 return;

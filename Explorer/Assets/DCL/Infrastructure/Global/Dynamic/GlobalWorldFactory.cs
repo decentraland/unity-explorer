@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.GlobalPartitioning;
 using DCL.Interaction.Raycast;
 using DCL.Ipfs;
@@ -98,13 +99,11 @@ namespace Global.Dynamic
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            bool localSceneDevelopment,
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             StartParcel startParcel,
-            bool isBuilderCollectionPreview,
             EntitiesAnalytics entitiesAnalytics)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -126,7 +125,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;
@@ -136,7 +135,7 @@ namespace Global.Dynamic
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.startParcel = startParcel;
-            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
+            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;

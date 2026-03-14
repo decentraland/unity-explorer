@@ -189,11 +189,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            bool showMembers = CommunitiesFeatureAccess.Instance.CanMembersCounterBeDisplayer();
-            communityMembersSeparator.SetActive(showMembers);
-            communityMembersCountText.gameObject.SetActive(showMembers);
+            bool isMembersCounterEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_MEMBERS_COUNTER);
+            communityMembersSeparator.SetActive(isMembersCounterEnabled);
+            communityMembersCountText.gameObject.SetActive(isMembersCounterEnabled);
 
-            if (showMembers)
+            if (isMembersCounterEnabled)
                 communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, UIUtils.NumberToCompactString(memberCount));
         }
 
