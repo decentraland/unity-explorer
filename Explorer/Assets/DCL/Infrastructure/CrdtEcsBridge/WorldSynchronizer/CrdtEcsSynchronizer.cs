@@ -68,15 +68,15 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
-            if (disposed)
+            try
             {
-                // If the scene was disposed before just dispose the sync buffer
-                syncCommandBuffer.Dispose();
-                return;
+                if (disposed)
+                    // If the scene was disposed before just dispose the sync buffer
+                    syncCommandBuffer.Dispose();
+                else
+                    syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             }
-
-            syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
-            semaphore.Release();
+            finally { semaphore.Release(); }
         }
     }
 }
