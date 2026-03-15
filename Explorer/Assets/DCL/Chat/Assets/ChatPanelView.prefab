@@ -531,7 +531,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
   <ReactionButton>k__BackingField: {fileID: 4251436806075189262}
-  icon: {fileID: 0}
+  <icon>k__BackingField: {fileID: 0}
 --- !u!114 &5186545154324102699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1994,7 +1994,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
   <ReactionButton>k__BackingField: {fileID: 9134375418826102299}
-  icon: {fileID: 2837788084586182247}
+  <icon>k__BackingField: {fileID: 2837788084586182247}
 --- !u!114 &9134375418826102299
 MonoBehaviour:
   m_ObjectHideFlags: 0

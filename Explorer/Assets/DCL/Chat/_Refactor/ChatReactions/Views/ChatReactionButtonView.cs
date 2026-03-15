@@ -15,7 +15,7 @@ namespace DCL.Chat.ChatReactions
         private const float ANIM_DURATION = 0.1f;
 
         [field: SerializeField] public Button ReactionButton { get; private set; } = null!;
-        [field: SerializeField] private Image icon { get; private set; } = null!;
+        [field: SerializeField] private Image icon { get;  set; } = null!;
 
         public void Show() => gameObject.SetActive(true);
 
