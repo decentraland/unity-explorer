@@ -14,7 +14,17 @@ namespace DCL.Chat.ChatReactions
         private readonly Func<Vector3?>? cachedLocalHeadGetter;
         private readonly IReactionMessageBus? reactionBus;
 
-        public bool Enabled { get; set; } = true;
+        /// <summary>
+        /// When false, incoming remote reactions are not shown in the UI lane.
+        /// User's own reactions are always displayed.
+        /// </summary>
+        public bool ShowRemoteUIReactions { get; set; } = true;
+
+        /// <summary>
+        /// When false, no world-space reactions (particles above avatar heads) are spawned.
+        /// Controlled by the In-World Chat Bubbles &amp; Reactions setting.
+        /// </summary>
+        public bool WorldReactionsEnabled { get; set; } = true;
 
         private readonly Func<List<Vector3>>? cachedNearbyGetter;
         private bool debugActive;
@@ -68,7 +78,7 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerWorldReaction(Vector3 worldPos, int emojiIndex, int count)
         {
-            if (!Enabled) return;
+            if (!WorldReactionsEnabled) return;
             worldReactionSimulation.TriggerWorldReaction(worldPos, emojiIndex, count);
         }
 
@@ -78,7 +88,7 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public void TriggerWorldReactionForAvatar(string walletId, int emojiIndex, int count)
         {
-            if (!Enabled) return;
+            if (!WorldReactionsEnabled) return;
             if (avatarPosition == null) return;
 
             Vector3? headPos = avatarPosition.GetHeadPosition(walletId);
@@ -88,38 +98,33 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
-            if (!Enabled) return;
             chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
             TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
-            if (!Enabled) return;
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, count);
             TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void TriggerDefaultUIReaction()
         {
-            if (!Enabled) return;
             chatReactionSimulation.TriggerDefaultUIReaction();
             TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
         {
-            if (!Enabled) return;
             chatReactionSimulation.TriggerDefaultUIReactionFromRect(sourceRect);
             TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
         }
 
         public void BeginUIStream(RectTransform sourceRect)
         {
-            if (!Enabled) return;
             chatReactionSimulation.BeginUIStream(sourceRect);
 
-            if (cachedLocalHeadGetter != null)
+            if (cachedLocalHeadGetter != null && WorldReactionsEnabled)
                 worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex);
         }
 
@@ -131,12 +136,11 @@ namespace DCL.Chat.ChatReactions
 
         public void ToggleUIStream(RectTransform sourceRect)
         {
-            if (!Enabled) return;
             chatReactionSimulation.ToggleUIStream(sourceRect);
 
             if (cachedLocalHeadGetter != null)
             {
-                if (chatReactionSimulation.IsStreaming)
+                if (chatReactionSimulation.IsStreaming && WorldReactionsEnabled)
                     worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex);
                 else
                     worldReactionSimulation.EndStream();
@@ -196,13 +200,13 @@ namespace DCL.Chat.ChatReactions
 
         private void OnRemoteReaction(ReactionReceivedArgs args)
         {
-            if (!Enabled) return;
+            if (args.Type != ReactionType.Situational) return;
 
-            if (args.Type == ReactionType.Situational)
-            {
+            if (WorldReactionsEnabled)
                 TriggerWorldReactionForAvatar(args.WalletId, args.EmojiIndex, args.Count);
+
+            if (ShowRemoteUIReactions)
                 chatReactionSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);
-            }
         }
 
         private void TriggerWorldForLocalPlayer(int emojiIndex)
@@ -212,7 +216,9 @@ namespace DCL.Chat.ChatReactions
             Vector3? headPos = avatarPosition.GetLocalPlayerHeadPosition();
             if (!headPos.HasValue) return;
 
-            worldReactionSimulation.TriggerWorldReaction(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
+            if (WorldReactionsEnabled)
+                worldReactionSimulation.TriggerWorldReaction(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
+
             reactionBus?.SendSituationalReaction(emojiIndex);
         }
     }

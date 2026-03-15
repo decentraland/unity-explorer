@@ -108,6 +108,7 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private ChatSettingsAsset? chatSettingsAsset;
         private ChatSettingsAsset.ChatReactionsEnabledDelegate? onReactionsEnabledChanged;
+        private ChatSettingsAsset.ChatBubblesVisibilityDelegate? onBubblesVisibilityChanged;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -194,8 +195,14 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            if (chatSettingsAsset != null && onReactionsEnabledChanged != null)
-                chatSettingsAsset.ChatReactionsEnabledChanged -= onReactionsEnabledChanged;
+            if (chatSettingsAsset != null)
+            {
+                if (onReactionsEnabledChanged != null)
+                    chatSettingsAsset.ChatReactionsEnabledChanged -= onReactionsEnabledChanged;
+
+                if (onBubblesVisibilityChanged != null)
+                    chatSettingsAsset.BubblesVisibilityChanged -= onBubblesVisibilityChanged;
+            }
 
             chatStorage?.Dispose();
             pluginScope.Dispose();
@@ -244,10 +251,16 @@ namespace DCL.PluginSystem.Global
                 avatarReactionPosition,
                 reactionBus);
 
-            situationalReactionService.Enabled = settings.ChatSettingsAsset.chatReactionsEnabled;
             chatSettingsAsset = settings.ChatSettingsAsset;
-            onReactionsEnabledChanged = enabled => situationalReactionService.Enabled = enabled;
+
+            situationalReactionService.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
+            situationalReactionService.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
+
+            onReactionsEnabledChanged = enabled => situationalReactionService.ShowRemoteUIReactions = enabled;
             chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
+
+            onBubblesVisibilityChanged = visibility => situationalReactionService.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
+            chatSettingsAsset.BubblesVisibilityChanged += onBubblesVisibilityChanged;
 
             pluginScope.Add(situationalReactionService);
 

@@ -41,7 +41,6 @@ namespace DCL.Chat
         private readonly ChatStateMachine chatStateMachine;
         private readonly EventSubscriptionScope uiScope;
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
-        private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ChatReactionsPresenter reactionsPresenter;
 
         private CancellationTokenSource initCts = new ();
@@ -75,7 +74,6 @@ namespace DCL.Chat
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.commandRegistry = commandRegistry;
-            this.chatSettingsAsset = chatSettingsAsset;
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
@@ -179,9 +177,6 @@ namespace DCL.Chat
                 view.EmojiPanelView,
                 emojiPanelPresenter);
 
-            chatSettingsAsset.ChatReactionsEnabledChanged += OnChatReactionsEnabledChanged;
-            reactionsPresenter.SetReactionsEnabled(chatSettingsAsset.chatReactionsEnabled);
-
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,
                 reactionsConfig,
@@ -241,8 +236,6 @@ namespace DCL.Chat
 
         public void Dispose()
         {
-            chatSettingsAsset.ChatReactionsEnabledChanged -= OnChatReactionsEnabledChanged;
-
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed -= OnUIClose;
 
@@ -254,11 +247,6 @@ namespace DCL.Chat
             communityVoiceChatSubTitleButtonPresenter.Dispose();
 
             chatAreaEventBusScope.Dispose();
-        }
-
-        private void OnChatReactionsEnabledChanged(bool enabled)
-        {
-            reactionsPresenter.SetReactionsEnabled(enabled);
         }
 
         private void OnViewShow(ChatSharedAreaEvents.ChatPanelViewShowEvent evt)

@@ -109,7 +109,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: In-World Chat Bubbles
+          <ModuleName>k__BackingField: In-World Chat Bubbles & Reactions
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0

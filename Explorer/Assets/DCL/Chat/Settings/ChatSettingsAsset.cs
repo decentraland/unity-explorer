@@ -17,8 +17,10 @@ namespace DCL.Settings.Settings
             = "Chat messages will be translated into the language you select in this setting.";
         public delegate void ChatPrivacyDelegate(ChatPrivacySettings privacySettings);
         public delegate void ChatReactionsEnabledDelegate(bool enabled);
+        public delegate void ChatBubblesVisibilityDelegate(ChatBubbleVisibilitySettings settings);
 
         public event ChatReactionsEnabledDelegate? ChatReactionsEnabledChanged;
+        public event ChatBubblesVisibilityDelegate? BubblesVisibilityChanged;
 
         public event ChatPrivacyDelegate? PrivacySettingsSet;
         public event ChatPrivacyDelegate? PrivacySettingsRead;
@@ -40,6 +42,7 @@ namespace DCL.Settings.Settings
         public void SetBubblesVisibility(ChatBubbleVisibilitySettings bubblesSettings)
         {
             chatBubblesVisibilitySettings = bubblesSettings;
+            BubblesVisibilityChanged?.Invoke(bubblesSettings);
         }
 
         public void SetReactionsEnabled(bool enabled)

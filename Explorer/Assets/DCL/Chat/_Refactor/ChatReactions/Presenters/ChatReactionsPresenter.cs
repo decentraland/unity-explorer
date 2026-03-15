@@ -24,7 +24,6 @@ namespace DCL.Chat.ChatReactions
         private readonly RectTransform buttonRect;
 
         private bool emojiPanelOpenedByReactions;
-        private bool reactionsEnabled = true;
 
         public ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
@@ -161,18 +160,8 @@ namespace DCL.Chat.ChatReactions
             return true;
         }
 
-        public void SetReactionsEnabled(bool enabled)
-        {
-            reactionsEnabled = enabled;
-
-            if (!enabled)
-                Hide();
-        }
-
         public void Show()
         {
-            if (!reactionsEnabled) return;
-
             HideBar();
             buttonPresenter.Show();
         }
