@@ -190,6 +190,100 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
 
         [Test]
+        public void FilterPhysicsAndTriggerComponentsFromCRDTMessages()
+        {
+            // Verifies that PhysicsCombinedForce (1216), PhysicsCombinedImpulse (1215),
+            // TriggerAreaResult (1061 via APPEND_COMPONENT), and DELETE_COMPONENT_NETWORK
+            // for physics IDs are all filtered from cross-client CRDT sync.
+
+            const byte COMMS_CRDT = 1;
+
+            const int PUT_NETWORK_HEADER =
+                CRDTConstants.MESSAGE_HEADER_LENGTH + 20; // 8 + 20 = 28
+
+            const int APPEND_HEADER =
+                CRDTConstants.MESSAGE_HEADER_LENGTH + 16; // 8 + 16 = 24
+
+            const int DELETE_NETWORK_HEADER =
+                CRDTConstants.MESSAGE_HEADER_LENGTH + 16; // 8 + 16 = 24
+
+            int contentLength = 0;
+
+            // Build: VALID_PUT | DROP_FORCE | DROP_IMPULSE | DROP_TRIGGER_APPEND | DROP_DELETE_NET | VALID_PUT2
+            int totalFrames = PUT_NETWORK_HEADER // VALID_PUT
+                            + PUT_NETWORK_HEADER // PhysicsCombinedForce (dropped)
+                            + PUT_NETWORK_HEADER // PhysicsCombinedImpulse (dropped)
+                            + APPEND_HEADER      // TriggerAreaResult APPEND (dropped)
+                            + DELETE_NETWORK_HEADER // DELETE_COMPONENT_NETWORK for force (dropped)
+                            + PUT_NETWORK_HEADER; // VALID_PUT2
+
+            var crdtMessage = new byte[1 + totalFrames];
+            var span = crdtMessage.AsSpan();
+            span[0] = COMMS_CRDT;
+            var body = span.Slice(1);
+
+            // Frame 1: VALID PUT_COMPONENT_NETWORK (component 999) -> kept
+            body.Write(PUT_NETWORK_HEADER + contentLength);
+            body.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            body.Write(10); // entity
+            body.Write(999u); // component id
+            body.Write(1); // timestamp
+            body.Write(0); // network id
+            body.Write(contentLength);
+
+            // Frame 2: PhysicsCombinedForce PUT_COMPONENT_NETWORK (1216) -> dropped
+            body.Write(PUT_NETWORK_HEADER + contentLength);
+            body.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            body.Write(1); // entity (PlayerEntity)
+            body.Write(1216u); // PhysicsCombinedForce
+            body.Write(2); // timestamp
+            body.Write(0); // network id
+            body.Write(contentLength);
+
+            // Frame 3: PhysicsCombinedImpulse PUT_COMPONENT_NETWORK (1215) -> dropped
+            body.Write(PUT_NETWORK_HEADER + contentLength);
+            body.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            body.Write(1); // entity
+            body.Write(1215u); // PhysicsCombinedImpulse
+            body.Write(3); // timestamp
+            body.Write(0); // network id
+            body.Write(contentLength);
+
+            // Frame 4: TriggerAreaResult APPEND_COMPONENT (1061) -> dropped
+            body.Write(APPEND_HEADER + contentLength);
+            body.Write((uint)CRDTMessageType.APPEND_COMPONENT);
+            body.Write(50); // entity (tunnel entity)
+            body.Write(1061u); // TriggerAreaResult
+            body.Write(4); // timestamp
+            body.Write(contentLength); // data length
+
+            // Frame 5: DELETE_COMPONENT_NETWORK for PhysicsCombinedForce (1216) -> dropped
+            body.Write((uint)DELETE_NETWORK_HEADER);
+            body.Write((uint)CRDTMessageType.DELETE_COMPONENT_NETWORK);
+            body.Write(1); // entity
+            body.Write(1216u); // PhysicsCombinedForce
+            body.Write(5); // timestamp
+            body.Write(0); // extra
+
+            // Frame 6: VALID PUT_COMPONENT_NETWORK (component 2000) -> kept
+            body.Write(PUT_NETWORK_HEADER + contentLength);
+            body.Write((uint)CRDTMessageType.PUT_COMPONENT_NETWORK);
+            body.Write(20); // entity
+            body.Write(2000u); // valid component
+            body.Write(6); // timestamp
+            body.Write(0); // network id
+            body.Write(contentLength);
+
+            var filteredBuffer = new byte[crdtMessage.Length];
+            CRDTFilter.FilterSceneMessageBatch(crdtMessage, filteredBuffer, out int filteredWrite);
+
+            // Only 2 frames should survive (frame 1 and frame 6)
+            int expectedSize = 1 + (2 * PUT_NETWORK_HEADER); // type byte + 2 valid PUT frames
+            Assert.AreEqual(expectedSize, filteredWrite,
+                "Should contain exactly 2 frames: 4 dropped (force, impulse, trigger, delete), 2 kept");
+        }
+
+        [Test]
         public void ApplyFilterToCRDTStateResponseMessages()
         {
             // Tests that RES_CRDT_STATE messages (type 3) are filtered to remove NO_SYNC_COMPONENT_ID
