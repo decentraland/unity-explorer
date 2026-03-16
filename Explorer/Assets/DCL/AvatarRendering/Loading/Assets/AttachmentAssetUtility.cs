@@ -55,6 +55,8 @@ namespace DCL.AvatarRendering.Loading.Assets
             return cachedWearable;
         }
 
+        // TODO: Spring bones — this method destroys all children without a Renderer, which would delete spring bone transforms.
+        // Before spring bones can work, preserve transforms that are spring bone nodes
         private static void RemoveBonesGameObjects(Transform wearableRoot)
         {
             using PoolExtensions.Scope<List<Renderer>> pooledList =
