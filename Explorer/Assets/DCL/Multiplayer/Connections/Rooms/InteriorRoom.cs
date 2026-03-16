@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorDataPipe dataPipe = new ();
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
-        private readonly InteriorAudioTracks audioTracks = new ();
+        private readonly InteriorLocalTracks localTracks = new ();
 
         private const int RESET_ROOM_TIMEOUT_SECONDS = 5;
 
@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => assigned.Info;
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
-        public IAudioTracks AudioTracks => audioTracks;
+        public ILocalTracks LocalTracks => localTracks;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -156,7 +156,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             dataPipe.Assign(room.DataPipe);
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
-            audioTracks.Assign(room.AudioTracks);
+            localTracks.Assign(room.LocalTracks);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
