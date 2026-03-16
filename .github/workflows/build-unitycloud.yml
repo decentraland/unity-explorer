@@ -561,6 +561,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
@@ -572,6 +573,10 @@ jobs:
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+
+          if [ "${{ matrix.target }}" == "web" ]; then
+            echo "Web build link: $EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL/$DESTINATION_PATH/build/Decentraland/index.html"
+          fi
 
       # web doesn't have debug symbols
       - name: Upload debug symbols
