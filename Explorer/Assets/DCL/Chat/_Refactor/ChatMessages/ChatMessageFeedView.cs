@@ -63,6 +63,7 @@ namespace DCL.Chat.ChatMessages
 
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
+        public event Action<string, ChatEntryView>? OnReactionButtonClicked;
 
         private Sequence? _fadeSequenceTween;
 
@@ -262,6 +263,13 @@ namespace DCL.Chat.ChatMessages
                     itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
                     itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
                     itemScript.RecalculateHeight();
+                }
+
+                if (itemScript.messageBubbleElement.reactionButton != null)
+                {
+                    itemScript.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
+                    itemScript.messageBubbleElement.reactionButton.onClick.AddListener(() =>
+                        OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, itemScript));
                 }
 
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;

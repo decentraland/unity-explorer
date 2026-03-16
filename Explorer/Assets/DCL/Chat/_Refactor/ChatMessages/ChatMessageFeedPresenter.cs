@@ -668,39 +668,28 @@ namespace DCL.Chat.ChatMessages
             {
                 var vm = viewModels[i];
                 if (ReferenceEquals(vm, separatorViewModel)) continue;
+                if (vm.Message.IsSystemMessage) continue;
 
                 string msgId = vm.Message.MessageId;
                 if (string.IsNullOrEmpty(msgId)) continue;
 
-                // Stable pattern based on message hash so reactions don't shuffle
-                int pattern = Math.Abs(msgId.GetHashCode()) % 3;
+                // Seeded RNG for stable reactions across refreshes
+                var rng = new System.Random(Math.Abs(msgId.GetHashCode()));
+                int emojiCount = rng.Next(1, 7); // 1-6 unique emojis per message
 
-                switch (pattern)
+                for (int e = 0; e < emojiCount; e++)
                 {
-                    case 0: // no reactions
-                        break;
-                    case 1: // single row, one is "own"
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xAlice");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], DEBUG_OWN_WALLET);
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[1], "0xBob");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[4], "0xCharlie");
-                        break;
-                    case 2: // two rows (8 unique emojis), some are "own"
-                        // Row 1: 6 emojis
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xAlice");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xBob");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], DEBUG_OWN_WALLET);
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[1], "0xAlice");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[2], "0xAlice");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[3], "0xBob");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[3], DEBUG_OWN_WALLET);
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[4], "0xCharlie");
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[5], "0xDave");
-                        // Row 2: 2 more unique emojis (using nearby atlas indices)
-                        channel.FillReaction(msgId, 1298, "0xAlice");
-                        channel.FillReaction(msgId, 1298, DEBUG_OWN_WALLET);
-                        channel.FillReaction(msgId, 368, "0xBob");
-                        break;
+                    int walletCount = rng.Next(1, 21); // 1-20 reactors per emoji
+
+                    for (int w = 0; w < walletCount; w++)
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[e % DEBUG_EMOJIS.Length], $"0xWallet{w:D3}");
+                }
+
+                // Add own wallet to ~half the emojis
+                for (int e = 0; e < emojiCount; e++)
+                {
+                    if (rng.Next(0, 2) == 0)
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[e % DEBUG_EMOJIS.Length], DEBUG_OWN_WALLET);
                 }
             }
         }

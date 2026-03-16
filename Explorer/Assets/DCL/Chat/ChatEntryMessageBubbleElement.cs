@@ -29,6 +29,7 @@ namespace DCL.Chat
         [field: SerializeField] internal TMP_Text timestamp { get; private set; } = null!;
         [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; } = null!;
         [field: SerializeField] internal Button messageOptionsButton { get; private set; } = null!;
+        [field: SerializeField] internal Button? reactionButton { get; private set; }
 
         public event Action? OnTranslateRequest;
         public event Action? OnRevertRequest;
@@ -47,13 +48,17 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton.gameObject.SetActive(true);
+            reactionButton?.gameObject.SetActive(true);
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             if (!popupOpen)
+            {
                 messageOptionsButton.gameObject.SetActive(false);
+                reactionButton?.gameObject.SetActive(false);
+            }
 
             OnPointerExitEvent?.Invoke();
         }
@@ -63,6 +68,7 @@ namespace DCL.Chat
         public void Reset()
         {
             messageOptionsButton.gameObject.SetActive(false);
+            reactionButton?.gameObject.SetActive(false);
         }
 
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
