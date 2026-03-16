@@ -64,6 +64,7 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
+        public event Action<string, int>? OnReactionPillClicked;
 
         private Sequence? _fadeSequenceTween;
 
@@ -262,6 +263,10 @@ namespace DCL.Chat.ChatMessages
                     itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty);
                     itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
                     itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
+
+                    itemScript.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
+                    itemScript.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
+
                     itemScript.RecalculateHeight();
                 }
 
@@ -303,6 +308,11 @@ namespace DCL.Chat.ChatMessages
         private void HandleRevertRequest(string messageId)
         {
             OnRevertMessageRequested?.Invoke(messageId);
+        }
+
+        private void HandleReactionPillClicked(string messageId, int emojiIndex)
+        {
+            OnReactionPillClicked?.Invoke(messageId, emojiIndex);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

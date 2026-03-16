@@ -5,6 +5,7 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Emoji;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Web3;
@@ -36,6 +37,7 @@ namespace DCL.Chat.ChatMessages
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
+        private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -73,7 +75,8 @@ namespace DCL.Chat.ChatMessages
             CreateMessageViewModelCommand createMessageViewModelCommand,
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
-            RevertToOriginalCommand revertToOriginalCommand)
+            RevertToOriginalCommand revertToOriginalCommand,
+            EmojiPanelPresenter emojiPanelPresenter)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -89,6 +92,7 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
+            this.emojiPanelPresenter = emojiPanelPresenter;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -475,6 +479,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked += OnReactionButtonClicked;
+            view.OnReactionPillClicked += OnReactionPillClicked;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -499,6 +505,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked -= OnReactionButtonClicked;
+            view.OnReactionPillClicked -= OnReactionPillClicked;
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
@@ -537,6 +545,17 @@ namespace DCL.Chat.ChatMessages
         private void OnScrollToBottomButtonClicked()
         {
             view.ShowLastMessage(useSmoothScroll: true);
+        }
+
+        private void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
+        {
+            emojiPanelPresenter.SetPanelVisibility(true);
+        }
+
+        private void OnReactionPillClicked(string messageId, int emojiIndex)
+        {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,
+                $"Reaction pill clicked: messageId={messageId}, emojiIndex={emojiIndex}");
         }
 
         protected override void Activate()
