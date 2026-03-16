@@ -6,15 +6,13 @@ using TMPro;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class GraphicsPresetSettingsController : SettingsFeatureController
+    public class GraphicsPresetSettingsController : BaseQualitySettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly IQualitySettingsController qualitySettingsController;
 
-        public GraphicsPresetSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
+        public GraphicsPresetSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.view = view;
-            this.qualitySettingsController = qualitySettingsController;
 
             this.view.DropdownView.Dropdown.options.Clear();
 
@@ -24,7 +22,6 @@ namespace DCL.Settings.ModuleControllers
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
             view.DropdownView.Dropdown.placeholder.GetComponent<TMP_Text>().text = "Custom";
-            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             OnPresetChanged( qualitySettingsController.CurrentPreset);
         }
 
@@ -38,7 +35,7 @@ namespace DCL.Settings.ModuleControllers
             qualitySettingsController.SetPreset(level);
         }
 
-        private void OnPresetChanged(QualityPresetLevel level)
+        protected override void OnPresetChanged(QualityPresetLevel level)
         {
             if (level == QualityPresetLevel.Custom)
             {
@@ -50,8 +47,8 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            base.Dispose();
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
-            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

@@ -1,26 +1,23 @@
-﻿using DCL.Quality;
+using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
 using System.Collections.Generic;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class GraphicsVSyncController : SettingsFeatureController
+    public class GraphicsVSyncController : BaseQualitySettingsFeatureController
     {
         private readonly SettingsToggleModuleView view;
-        private readonly IQualitySettingsController qualitySettingsController;
         private SettingsFeatureController fpsLimitController;
 
-        public GraphicsVSyncController(SettingsToggleModuleView view, IQualitySettingsController qualitySettingsController)
+        public GraphicsVSyncController(SettingsToggleModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.view = view;
-            this.qualitySettingsController = qualitySettingsController;
 
-            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             view.ToggleView.Toggle.onValueChanged.AddListener(SetVSyncEnabled);
         }
 
-        private void OnPresetChanged(QualityPresetLevel _)
+        protected override void OnPresetChanged(QualityPresetLevel _)
         {
             ManualUpdate(qualitySettingsController.VSync);
         }
@@ -51,8 +48,8 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            base.Dispose();
             view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
-            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

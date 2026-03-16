@@ -18,6 +18,7 @@ using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Settings.Configuration
@@ -70,18 +71,35 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
-                ToggleFeatures.HDR_FEATURE => new HdrSettingsController(viewInstance, qualitySettingsController),
-                ToggleFeatures.BLOOM_FEATURE => new BloomSettingsController(viewInstance, qualitySettingsController),
-                ToggleFeatures.AVATAR_OUTLINE_FEATURE => new AvatarOutlineSettingsController(viewInstance, qualitySettingsController),
-                ToggleFeatures.SUN_SHADOWS_FEATURE => new SunShadowsSettingsController(viewInstance, qualitySettingsController),
-                ToggleFeatures.SCENE_SHADOWS_FEATURE => new SceneShadowsSettingsController(viewInstance, qualitySettingsController),
-                ToggleFeatures.SCENE_LIGHTS_FEATURE => new SceneLightsSettingsController(viewInstance, qualitySettingsController),
+                ToggleFeatures.HDR_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
+                ToggleFeatures.BLOOM_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
+                ToggleFeatures.AVATAR_OUTLINE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
+                ToggleFeatures.SUN_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
+                ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
+                ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
 
             controller.SetView(viewInstance);
             return controller;
+        }
+
+        private static SimpleQualitySettingFeatureController CreateSimpleToggle(
+            SettingsToggleModuleView view,
+            QualitySettingsController qualitySettingsController,
+            UnityAction<bool> setter,
+            Func<IQualitySettingsController, bool> getter)
+        {
+            return new SimpleQualitySettingFeatureController(qualitySettingsController,
+                () =>
+                {
+                    view.ToggleView.Toggle.onValueChanged.AddListener(setter);
+                    view.ConfigureWithoutNotify(getter(qualitySettingsController));
+                },
+                x => view.ConfigureWithoutNotify(getter(x)),
+                () => view.ToggleView.Toggle.onValueChanged.RemoveListener(setter)
+            );
         }
     }
 }

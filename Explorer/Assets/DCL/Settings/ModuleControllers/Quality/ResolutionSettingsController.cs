@@ -7,16 +7,14 @@ using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class ResolutionSettingsController : SettingsFeatureController
+    public class ResolutionSettingsController : BaseQualitySettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
-        private readonly IQualitySettingsController qualitySettingsController;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.view = view;
-            this.qualitySettingsController = qualitySettingsController;
 
             LoadResolutionOptions();
 
@@ -84,6 +82,7 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            base.Dispose();
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetResolutionSettingsOnChange);
         }
     }

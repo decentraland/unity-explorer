@@ -45,7 +45,7 @@ namespace DCL.Quality.Runtime
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IAppArgs appArgs;
         private readonly IAnalyticsController analytics;
-        private QualityPresetData presetData;
+        private QualityPresetData? presetData;
 
         public QualitySettingsController(
             QualityPresetsAsset presetsAsset,

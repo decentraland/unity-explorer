@@ -18,6 +18,7 @@ using DCL.SkyBox;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Settings.Configuration
@@ -71,8 +72,8 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, qualitySettingsController),
-                SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, qualitySettingsController),
+                SliderFeatures.SCENE_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetSceneDistance((int)v), x => x.SceneDistance),
+                SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, qualitySettingsController.SetLandscapeDistance, x => x.LandscapeDistance),
                 SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
@@ -83,12 +84,29 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, qualitySettingsController),
-                SliderFeatures.MAX_SCENE_LIGHTS_FEATURE => new MaxSceneLightsSettingsController(viewInstance, qualitySettingsController),
-                SliderFeatures.SHADOW_DISTANCE_FEATURE => new ShadowDistanceSettingsController(viewInstance, qualitySettingsController),
+                SliderFeatures.MAX_SCENE_LIGHTS_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetMaxSceneLights((int)v), x => x.MaxSceneLights),
+                SliderFeatures.SHADOW_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetShadowDistance((int)v), x => x.ShadowDistance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(),
             };
             return controller;
+        }
+
+        private static SimpleQualitySettingFeatureController CreateSimpleSlider(
+            SettingsSliderModuleView view,
+            QualitySettingsController qualitySettingsController,
+            UnityAction<float> setter,
+            Func<IQualitySettingsController, float> getter)
+        {
+            return new SimpleQualitySettingFeatureController(qualitySettingsController,
+                () =>
+                {
+                    view.SliderView.Slider.onValueChanged.AddListener(setter);
+                    view.ConfigureWithoutNotify(getter(qualitySettingsController));
+                },
+                x => view.ConfigureWithoutNotify(getter(x)),
+                () => view.SliderView.Slider.onValueChanged.RemoveAllListeners()
+            );
         }
     }
 }

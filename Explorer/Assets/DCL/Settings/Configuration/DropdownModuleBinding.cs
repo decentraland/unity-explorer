@@ -14,6 +14,8 @@ using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -25,6 +27,9 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public class DropdownModuleBinding : SettingsModuleBinding<SettingsDropdownModuleView, SettingsDropdownModuleView.Config, DropdownModuleBinding.DropdownFeatures>
     {
+        private static readonly MsaaLevel[] MSAA_LEVELS = { MsaaLevel.Off, MsaaLevel.X2, MsaaLevel.X4, MsaaLevel.X8 };
+        private static readonly ShadowQualityLevel[] SHADOW_QUALITY_LEVELS = { ShadowQualityLevel.Low, ShadowQualityLevel.Medium, ShadowQualityLevel.High };
+
         public enum DropdownFeatures
         {
             GRAPHICS_QUALITY_FEATURE,
@@ -100,14 +105,57 @@ namespace DCL.Settings.Configuration
                     chatSettingsAsset,
                     isTranslationChatEnabled,
                     eventBus),
-                DropdownFeatures.MSAA_FEATURE => new MSAASettingsController(viewInstance, qualitySettingsController),
-                DropdownFeatures.SHADOWS_QUALITY_FEATURE => new ShadowsQualitySettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.MSAA_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, MSAA_LEVELS, qualitySettingsController.SetMsaa, x => x.Msaa),
+                DropdownFeatures.SHADOWS_QUALITY_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
 
             controller.SetView(viewInstance);
             return controller;
+        }
+
+        /// <summary>
+        /// Wires a dropdown view to a quality setting backed by an enum (e.g. MsaaLevel, ShadowQualityLevel).
+        /// Populates options from <paramref name="levels"/>, syncs selection on preset changes, and cleans up listeners on dispose.
+        /// </summary>
+        private static SimpleQualitySettingFeatureController CreateDropdownQualityController<TEnum>(
+            SettingsDropdownModuleView view,
+            IQualitySettingsController qualitySettingsController,
+            IReadOnlyList<TEnum> levels,
+            Action<TEnum> setter,
+            Func<IQualitySettingsController, TEnum> getter) where TEnum : Enum
+        {
+            return new SimpleQualitySettingFeatureController(
+                qualitySettingsController,
+                // Initialize: populate dropdown options and bind selection changes to the setter
+                () =>
+                {
+                    view.DropdownView.Dropdown.ClearOptions();
+                    var options = new List<TMP_Dropdown.OptionData>(levels.Count);
+                    for (int i = 0; i < levels.Count; i++)
+                        options.Add(new TMP_Dropdown.OptionData(levels[i].ToString()));
+                    view.DropdownView.Dropdown.AddOptions(options);
+                    view.DropdownView.Dropdown.onValueChanged.AddListener(index =>
+                    {
+                        if (index >= 0 && index < levels.Count)
+                            setter(levels[index]);
+                    });
+                    view.DropdownView.Dropdown.SetValueWithoutNotify(IndexOf(levels, getter(qualitySettingsController)));
+                },
+                // OnPresetChanged: sync the dropdown selection to the current quality value
+                x => view.DropdownView.Dropdown.SetValueWithoutNotify(IndexOf(levels, getter(x))),
+                // Dispose: remove listeners to prevent stale references
+                () => view.DropdownView.Dropdown.onValueChanged.RemoveAllListeners()
+            );
+
+            static int IndexOf<T>(IReadOnlyList<T> list, T value)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    if (EqualityComparer<T>.Default.Equals(list[i], value))
+                        return i;
+                return 0;
+            }
         }
     }
 }

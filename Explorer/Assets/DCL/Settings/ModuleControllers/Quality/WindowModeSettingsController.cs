@@ -1,20 +1,19 @@
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
+using DCL.Utilities.Extensions;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class WindowModeSettingsController : SettingsFeatureController
+    public class WindowModeSettingsController : BaseQualitySettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly IQualitySettingsController qualitySettingsController;
 
-        public WindowModeSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
+        public WindowModeSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.view = view;
-            this.qualitySettingsController = qualitySettingsController;
 
-            int index = FullscreenModeUtils.IndexOf(qualitySettingsController.WindowMode);
+            int index = FullscreenModeUtils.Modes.IndexOf(qualitySettingsController.WindowMode);
 
             if (index >= 0)
                 view.DropdownView.Dropdown.SetValueWithoutNotify(index);
@@ -29,6 +28,7 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            base.Dispose();
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(OnValueChanged);
         }
     }

@@ -1,26 +1,23 @@
-﻿using DCL.Diagnostics;
+using DCL.Diagnostics;
 using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class FpsLimitSettingsController : SettingsFeatureController
+    public class FpsLimitSettingsController : BaseQualitySettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly IQualitySettingsController qualitySettingsController;
 
-        public FpsLimitSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController)
+        public FpsLimitSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.view = view;
-            this.qualitySettingsController = qualitySettingsController;
 
-            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             view.DropdownView.Dropdown.value = FpsToDropdownIndex(qualitySettingsController.FpsLimit);
             view.DropdownView.Dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
 
-        private void OnPresetChanged(QualityPresetLevel _)
+        protected override void OnPresetChanged(QualityPresetLevel _)
         {
             view.DropdownView.Dropdown.SetValueWithoutNotify(FpsToDropdownIndex(qualitySettingsController.FpsLimit));
         }
@@ -54,8 +51,8 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
+            base.Dispose();
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
-            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }

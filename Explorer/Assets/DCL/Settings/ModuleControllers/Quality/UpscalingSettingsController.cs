@@ -1,32 +1,28 @@
 using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.Settings.ModuleViews;
-using System;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class UpscalingSettingsController : SettingsFeatureController
+    public class UpscalingSettingsController : BaseQualitySettingsFeatureController
     {
         //This is a special case slider. To be able to step values, the min and max alue are 5 and 12, respectively.
         //Then again, the value to set up the UpscalerController is in decimals, 0.5 to 1.2
         private const float STEP_MULTIPLIER = 10f;
 
         private readonly SettingsSliderModuleView viewInstance;
-        private readonly IQualitySettingsController qualitySettingsController;
 
-        public UpscalingSettingsController(SettingsSliderModuleView viewInstance, IQualitySettingsController qualitySettingsController)
+        public UpscalingSettingsController(SettingsSliderModuleView viewInstance, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
         {
             this.viewInstance = viewInstance;
-            this.qualitySettingsController = qualitySettingsController;
 
-            qualitySettingsController.OnPresetChanged += OnPresetChanged;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
             viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
             UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
         }
 
-        private void OnPresetChanged(QualityPresetLevel _)
+        protected override void OnPresetChanged(QualityPresetLevel _)
         {
             viewInstance.ConfigureWithoutNotify(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
             UpdateVisuals(qualitySettingsController.ResolutionScale * STEP_MULTIPLIER);
@@ -46,11 +42,10 @@ namespace DCL.Settings.ModuleControllers
             viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER}%";
         }
 
-
         public override void Dispose()
         {
+            base.Dispose();
             viewInstance.SliderView.Slider.onValueChanged.RemoveListener(UpdateUpscalingValue);
-            qualitySettingsController.OnPresetChanged -= OnPresetChanged;
         }
     }
 }
