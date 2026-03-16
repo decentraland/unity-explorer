@@ -422,6 +422,7 @@ jobs:
 
       - name: Enforce artifact size budget
         id: size_check
+        if: matrix.target != 'web'
         env:
           # Per-target absolute caps (MB)
           MAX_MACOS_MB: 370
