@@ -12,9 +12,8 @@ namespace CRDT
         // Components that must NOT be synced between clients.
         // ComponentId is at body offset 4 (after entityId) for all relevant message types.
         private const uint VIDEO_CONTROL_STATE = 2092194694;   // asset-packs::VideoControlState
-        private const uint PHYSICS_COMBINED_IMPULSE = 1215;    // Player-specific physics impulse
-        private const uint PHYSICS_COMBINED_FORCE = 1216;      // Player-specific physics force
-        private const uint TRIGGER_AREA_RESULT = 1061;         // Client-specific trigger events (entity-1 ambiguity across clients)
+        private const uint PHYSICS_COMBINED_IMPULSE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_IMPULSE;    // Player-specific physics impulse
+        private const uint PHYSICS_COMBINED_FORCE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_FORCE;      // Player-specific physics force
 
         /// <summary>
         /// Output must be equal or bigger than memory
@@ -87,11 +86,7 @@ namespace CRDT
             messageBody.Slice(4).ReadConst<uint>();
 
         private static bool IsNoSyncComponent(uint componentId) =>
-            componentId is VIDEO_CONTROL_STATE
-                or PHYSICS_COMBINED_IMPULSE
-                or PHYSICS_COMBINED_FORCE
-                // or TRIGGER_AREA_RESULT
-                ;
+            componentId is VIDEO_CONTROL_STATE or PHYSICS_COMBINED_IMPULSE or PHYSICS_COMBINED_FORCE;
 
         /// <summary>
         /// Filters CRDT messages from a span, removing messages with no-sync component IDs.
@@ -119,9 +114,7 @@ namespace CRDT
 
                 uint bodyLength = CRDTMessageTypeUtils.TypeLengthBytes(messageType, crdtMessages);
 
-                bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK
-                                      or CRDTMessageType.DELETE_COMPONENT_NETWORK
-                                      or CRDTMessageType.APPEND_COMPONENT
+                bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
                                   && IsNoSyncComponent(ReadComponentId(crdtMessages));
 
                 if (!shouldDrop)
