@@ -18,7 +18,8 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Architecture Overview](architecture-overview.md)** — ECS concepts, dependency management, containers, and abstractions
 - **[Directories & Assemblies](directories-and-assemblies-structure.md)** — Project folder structure and assembly rules
 - **[Systems](systems.md)** — ECS system lifecycle, streamables, and scene bounds
-- **[Scene Runtime](scene-runtime.md)** — SDK7 scene execution, CRDT bridge, and JS modules
+- **[Scene Runtime](scene-runtime.md)** — SDK7 scene execution, CRDT bridge, JS modules, scene lifecycle states, and threading model
+- **[Cross-World ECS Access](cross-world-ecs-access.md)** — Global world from scene systems, injection chain, propagation systems, bridge components
 - **[MVC](mvc.md)** — UI architecture: controllers, views, and the MVC manager
 - **[Third-Party Libraries](third-party-libraries.md)** — ArchECS, ClearScript, and Sentry
 
@@ -35,7 +36,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Asset Bundles Conversion](asset-bundles-conversion.md)** — GLTF to Asset Bundle conversion pipeline
 - **[Web Requests Framework](web-requests-framework.md)** — Allocation-free web requests with retry policies
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
-- **[Network Synchronization](network-synchronization.md)** — Entity sync via LiveKit in worlds and Genesis City
+- **[Network Synchronization](network-synchronization.md)** — LiveKit dual-room architecture, movement encoding/interpolation, profile sync, entity availability
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 
 ## Avatar System
@@ -64,6 +65,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[IPFS Realms](ipfs-realms.md)** — Publishing entities to IPFS catalysts
 
 ## Testing & Debugging
+- **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
