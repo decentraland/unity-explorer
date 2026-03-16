@@ -38,7 +38,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly URLBuilder urlBuilder = new ();
 
-        internal static bool HasTokenFile() =>
+        internal bool HasTokenFile() =>
             File.Exists(TOKEN_PATH);
 
         public TokenFileAuthenticator(URLAddress authApiUrl,

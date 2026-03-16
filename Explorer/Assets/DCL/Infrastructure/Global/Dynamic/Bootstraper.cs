@@ -39,7 +39,6 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
 using JsCodeResolver = DCL.AssetsProvision.CodeResolver.JsCodeResolver;
-using Newtonsoft.Json.Linq;
 
 namespace Global.Dynamic
 {
@@ -318,58 +317,25 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            bool shouldTrackAutoLogin = EnableAnalytics && TokenFileAuthenticator.HasTokenFile();
+            IWeb3Authenticator authenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController,
+                bootstrapContainer.Web3AccountFactory);
+
+            if (EnableAnalytics)
+                authenticator = new TrackedTokenFileAuthenticator((TokenFileAuthenticator)authenticator, bootstrapContainer.Analytics.Controller);
 
             try
             {
-                var authenticator = new TokenFileAuthenticator(
-                    URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                    webRequestsContainer.WebRequestController,
-                    bootstrapContainer.Web3AccountFactory);
-
-                if (shouldTrackAutoLogin)
-                {
-                    bootstrapContainer.Analytics.Controller.Track(
-                        AnalyticsEvents.Authentication.AUTOLOGIN_INITIATED,
-                        isInstant: true);
-                }
-
                 IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
 
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
                 if (EnableAnalytics)
                     bootstrapContainer.Analytics.Controller.Identify(identity);
-
-                if (shouldTrackAutoLogin)
-                {
-                    bootstrapContainer.Analytics.Controller.Track(
-                        AnalyticsEvents.Authentication.AUTOLOGIN_SUCCESS,
-                        isInstant: true);
-                }
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
-            catch (Exception e)
-            {
-                if (shouldTrackAutoLogin)
-                {
-                    const int MAX_MESSAGE_LENGTH = 500;
-                    string message = e.Message ?? string.Empty;
-                    if (message.Length > MAX_MESSAGE_LENGTH)
-                        message = message[..MAX_MESSAGE_LENGTH];
-
-                    bootstrapContainer.Analytics.Controller.Track(
-                        AnalyticsEvents.Authentication.AUTOLOGIN_FAILURE,
-                        new JObject
-                        {
-                            ["error_type"] = e.GetType().Name,
-                            ["error_message"] = message,
-                        },
-                        isInstant: true);
-                }
-
-                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
