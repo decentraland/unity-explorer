@@ -1,8 +1,10 @@
+---
+name: asset-promise-lifecycle
+description: "AssetPromise lifecycle for async ECS asset loading — textures, models, audio, wearables. Use when creating, polling, consuming, or cleaning up asset promises, working with memory budgeting and cache dereferencing, or implementing async loading, texture loading, model loading, streaming, or loading pipeline logic."
+user-invocable: false
+---
+
 # Asset Promise Lifecycle
-
-## Activation
-
-Use this skill when loading assets asynchronously through ECS — textures, models, audio clips, wearables, or any resource that requires an async loading pipeline.
 
 ## Sources
 
@@ -90,6 +92,35 @@ When cleaning up, always dereference cached assets to allow memory reclamation:
 ```csharp
 promise.TryDereference(World);
 ```
+
+## Error Handling
+
+`StreamableLoadingResult<T>` carries success/failure state:
+
+- `.Succeeded` — `true` if asset loaded successfully
+- `.Asset` — the loaded asset (null on failure)
+- `.Exception` — the failure exception (null on success)
+
+```csharp
+if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
+{
+    if (result.Succeeded)
+    {
+        Texture2D texture = result.Asset!.EnsureTexture2D();
+        ApplyTexture(texture);
+    }
+    else
+    {
+        // Log the exception if it wasn't already logged by StreamableLoadingException
+        result.TryLogException();
+        ApplyFallback();
+    }
+}
+```
+
+`TryLogException()` logs the exception via `ReportHub` only if it wasn't already logged during construction (i.e., non-`StreamableLoadingException` failures). Use it for deferred logging in consuming systems.
+
+---
 
 ## Code Example — Full Promise Lifecycle
 

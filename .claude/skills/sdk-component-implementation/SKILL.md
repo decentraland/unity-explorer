@@ -1,8 +1,10 @@
+---
+name: sdk-component-implementation
+description: "End-to-end SDK7 component implementation from protocol definition to C# systems. Use when implementing a new SDK component (PB* types, protobuf components, CRDT, protocol buffer), modifying existing SDK component systems, adding result components for scene-to-explorer communication, or registering components in ComponentsContainer."
+user-invocable: false
+---
+
 # SDK Component Implementation
-
-## Activation
-
-Use this skill when implementing a new SDK7 component end-to-end, modifying an existing SDK component's systems, or adding result components for scene-to-explorer communication.
 
 ## Sources
 
@@ -124,17 +126,17 @@ Assets/DCL/SDKComponents/<Feature>/
 - Tests: `.asmref` pointing to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests` for PlayMode).
 - Do not create a standalone `.asmdef` for ECS systems.
 
-See `plugin-architecture.md` § "Assembly Structure" for full assembly, naming, and plugin placement rules.
+See the **plugin-architecture** skill for full assembly, naming, and plugin placement rules.
 
 ---
 
 ## Plugin Creation
 
-Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` and `TweenPlugin.cs` for examples of each.
+Two interfaces exist: `IDCLWorldPlugin<TSettings>` (has `InitializeAsync` + nested `Settings` class) and `IDCLWorldPluginWithoutSettings` (no async init). See `LightSourcePlugin.cs` (in `PluginSystem/World/` — predates the current convention) and `TweenPlugin.cs` for examples of each pattern.
 
 **File:** `Explorer/Assets/DCL/SDKComponents/<Feature>/Systems/<Feature>Plugin.cs`
 
-> Plugins with ECS systems live in the `Systems/` folder alongside those systems. Only plugins **without** ECS systems go into `PluginSystem/Global/` or `PluginSystem/World/`. See `plugin-architecture.md` § "Plugin file placement".
+> Plugins with ECS systems live in the `Systems/` folder alongside those systems. Only plugins **without** ECS systems go into `PluginSystem/Global/` or `PluginSystem/World/`. See the **plugin-architecture** skill § "Plugin file placement".
 
 ```csharp
 // With settings (LightSourcePlugin pattern)
@@ -207,32 +209,13 @@ private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceCo
 
 ### Cleanup System (three scenarios)
 
-From `CleanUpAudioSourceSystem.cs` -- all three cleanup triggers with query attributes:
+Cleanup must handle three triggers — see the **ecs-system-and-component-design** skill for full patterns and the `CleanUpAudioSourceSystem` example:
 
-```csharp
-// 1. SDK component removed (entity alive): [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
-// 2. Entity destroyed:                     [All(typeof(DeleteEntityIntention))]
-// 3. World disposed:                       IFinalizeWorldSystem.FinalizeComponents(in Query)
-[UpdateInGroup(typeof(CleanUpGroup))]
-[ThrottlingEnabled]
-public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
-{
-    protected override void Update(float t)
-    {
-        HandleEntityDestructionQuery(World);
-        HandleComponentRemovalQuery(World);
-        World.Remove<AudioSourceComponent>(in HandleComponentRemoval_QueryDescription);
-    }
+1. **SDK component removed** — `[None(typeof(PBMyComponent), typeof(DeleteEntityIntention))]`
+2. **Entity destroyed** — `[All(typeof(DeleteEntityIntention))]`
+3. **World disposed** — implement `IFinalizeWorldSystem.FinalizeComponents(in Query)`
 
-    [Query] [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
-    private void HandleComponentRemoval(ref AudioSourceComponent component) { Release(ref component); }
-
-    [Query] [All(typeof(DeleteEntityIntention))]
-    private void HandleEntityDestruction(ref AudioSourceComponent component) { Release(ref component); }
-
-    public void FinalizeComponents(in Query query) { /* InlineQuery to release all remaining */ }
-}
-```
+Place in `[UpdateInGroup(typeof(CleanUpGroup))]` with `[ThrottlingEnabled]`.
 
 ### Custom SystemGroup (only when needed)
 
@@ -249,23 +232,19 @@ public partial class LightSourcesGroup { }
 
 ## CRDT Bridge (Result Components)
 
-Use `IECSToCRDTWriter` (available via `sharedDependencies.EcsToCRDTWriter`) to send data back to the scene runtime.
+Use `IECSToCRDTWriter` (via `sharedDependencies.EcsToCRDTWriter`) to send data back to the scene runtime:
 
 ```csharp
-// LWW PUT -- simple (overwrites prior state)
+// LWW PUT -- overwrites prior state
 ecsToCRDTWriter.PutMessage<PBAudioAnalysis>(sdkComponent, entity);
 
-// LWW PUT -- with prepare callback
+// LWW PUT -- with prepare callback (use static lambda to avoid allocation)
 ecsToCRDTWriter.PutMessage<PBRealmInfo, (IRealmData rd, CommsRoomInfo ci)>(
-    static (c, d) => { c.BaseUrl = d.rd.Ipfs.CatalystBaseUrl.Value; c.RealmName = d.rd.RealmName; },
+    static (c, d) => { c.BaseUrl = d.rd.Ipfs.CatalystBaseUrl.Value; },
     SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmData, commsRoomInfo));
 
-// GOVS APPEND -- accumulates values (events)
-ecsToCRDTWriter.AppendMessage<PBAudioEvent, (MediaState state, uint ts)>(
-    static (e, d) => { e.State = d.state; e.Timestamp = d.ts; },
-    sdkEntity, (int)sceneStateProvider.TickNumber, (mediaState, sceneStateProvider.TickNumber));
-
-// DELETE
+// GOVS APPEND -- accumulates values (events); DELETE -- removes component
+ecsToCRDTWriter.AppendMessage<PBAudioEvent, ...>(static (e, d) => { ... }, sdkEntity, tickNumber, data);
 ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
 ```
 
