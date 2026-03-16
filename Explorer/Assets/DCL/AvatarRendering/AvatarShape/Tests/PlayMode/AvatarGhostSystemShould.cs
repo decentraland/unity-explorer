@@ -56,6 +56,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                .GetField("<GhostGameObject>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
                .SetValue(avatarBase, ghostGO);
 
+            typeof(AvatarBase)
+               .GetField("<GhostRenderer>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+               .SetValue(avatarBase, renderer);
+
             return avatarBase;
         }
 
