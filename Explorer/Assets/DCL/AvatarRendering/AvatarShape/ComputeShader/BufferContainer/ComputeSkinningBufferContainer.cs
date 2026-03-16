@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class ComputeSkinningBufferContainer : IDisposable
     {
-        internal static readonly ListObjectPool<Matrix4x4> MATRIX4X4_POOL = new (listInstanceDefaultCapacity: ComputeShaderConstants.BONE_COUNT);
+        internal static readonly ListObjectPool<Matrix4x4> MATRIX4X4_POOL = new (listInstanceDefaultCapacity: ComputeShaderConstants.BASE_BONE_COUNT);
 
         //5000 is an approximation of a top value a wearable may have for its vertex count
         internal static readonly ListObjectPool<Vector3> VECTOR3_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 5000);
@@ -74,11 +74,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
         }
 
-        public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
+        public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, int boneCount)
         {
             List<Matrix4x4> bindPosesList = MATRIX4X4_POOL.Get();
             mesh.GetBindposes(bindPosesList);
-            NativeArray<Matrix4x4>.Copy(UnsafeUtility.As<List<Matrix4x4>, ListPrivateFieldAccess<Matrix4x4>>(ref bindPosesList)._items, 0, bindPosesMatrix, ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter, ComputeShaderConstants.BONE_COUNT);
+            NativeArray<Matrix4x4>.Copy(UnsafeUtility.As<List<Matrix4x4>, ListPrivateFieldAccess<Matrix4x4>>(ref bindPosesList)._items, 0, bindPosesMatrix, boneCount * skinnedMeshCounter, boneCount);
             MATRIX4X4_POOL.Release(bindPosesList);
 
             List<BoneWeight> boneWeightPool = BONE_WEIGHT_POOL.Get();
@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             //Setup vertex index for current wearable
             for (var i = 0; i < mesh.vertexCount; i++)
-                bindPosesIndexList[vertexCounter + i] = ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter;
+                bindPosesIndexList[vertexCounter + i] = boneCount * skinnedMeshCounter;
         }
 
         //Helper class to access private fields of List<T>

@@ -39,8 +39,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public void Execute(int index)
         {
-            // The avatarIndex is calculated by dividing the index by the amount of bones per avatar
-            // Therefore, all of the indexes between 0 and ComputeShaderConstants.BONE_COUNT correlates to a single avatar
+            // The avatarIndex is calculated by dividing the index by the bone stride
+            // Therefore, all of the indexes between 0 and boneCount correlates to a single avatar
             int avatarIndex = index / boneCount;
 
             if (!UpdateAvatar[avatarIndex])

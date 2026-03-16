@@ -19,8 +19,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
 
         internal const int AVATAR_ARRAY_SIZE = 100;
-        private const int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
-        private const int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
         private QuickArray<Matrix4x4> matrixFromAllAvatars;
         private QuickArray<bool> updateAvatar;
@@ -35,6 +33,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private int avatarIndex;
         private int nextResizeValue;
         private int currentAvatarAmountSupported;
+        private int currentBoneStride;
+
+        public int CurrentBoneStride => currentBoneStride;
 
 #if UNITY_INCLUDE_TESTS
         public int MatrixFromAllAvatarsLength => matrixFromAllAvatars.Length;
@@ -44,9 +45,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public AvatarTransformMatrixJobWrapper()
         {
-            bonesCombined = new QuickArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH);
+            currentBoneStride = ComputeShaderConstants.BASE_BONE_COUNT;
+            int bonesPerAvatarLength = AVATAR_ARRAY_SIZE * currentBoneStride;
 
-            job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, bonesCombined.InnerNativeArray());
+            bonesCombined = new QuickArray<Matrix4x4>(bonesPerAvatarLength);
+
+            job = new BoneMatrixCalculationJob(currentBoneStride, bonesPerAvatarLength, bonesCombined.InnerNativeArray());
 
             matrixFromAllAvatars = new QuickArray<Matrix4x4>(AVATAR_ARRAY_SIZE);
             updateAvatar = new QuickArray<bool>(AVATAR_ARRAY_SIZE);
@@ -71,6 +75,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void UpdateAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
+            int avatarBoneCount = transformMatrixComponent.bones.Count;
+
+            if (avatarBoneCount > currentBoneStride)
+                ResizeBoneStride(avatarBoneCount);
+
             if (transformMatrixComponent.IndexInGlobalJobArray.IsValid() == false)
             {
                 if (releasedIndexes.Count > 0)
@@ -90,10 +99,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             Profiler.BeginSample("Calculate localToWorldMatrix on MainThread");
 
-            int globalIndexOffset = validIndex * BONES_ARRAY_LENGTH;
+            int globalIndexOffset = validIndex * currentBoneStride;
 
             //Add all bones to the bonesCombined array with the current available index
-            for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
+            for (int i = 0; i < avatarBoneCount; i++)
                 bonesCombined[globalIndexOffset + i] = transformMatrixComponent.bones[i].localToWorldMatrix;
 
             Profiler.EndSample();
@@ -106,21 +115,38 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 ResizeArrays();
         }
 
+        private void ResizeBoneStride(int requiredBoneCount)
+        {
+            currentBoneStride = Math.Min(requiredBoneCount, ComputeShaderConstants.MAX_BONE_COUNT);
+            int totalBones = currentBoneStride * currentAvatarAmountSupported;
+
+            bonesCombined.ReAlloc(totalBones);
+
+            job.Dispose();
+            job = new BoneMatrixCalculationJob(currentBoneStride, totalBones, bonesCombined.InnerNativeArray());
+
+            // Invalidate all avatars for one frame — data layout changed
+            for (int i = 0; i < currentAvatarAmountSupported; i++)
+                updateAvatar[i] = false;
+        }
+
         private void ResizeArrays()
         {
-            bonesCombined.ReAlloc(BONES_PER_AVATAR_LENGTH * nextResizeValue);
+            int totalBones = currentBoneStride * AVATAR_ARRAY_SIZE * nextResizeValue;
+
+            bonesCombined.ReAlloc(totalBones);
             matrixFromAllAvatars.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
             updateAvatar.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
 
             job.Dispose();
-            job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH * nextResizeValue, bonesCombined.InnerNativeArray());
+            job = new BoneMatrixCalculationJob(currentBoneStride, totalBones, bonesCombined.InnerNativeArray());
 
             currentAvatarAmountSupported = AVATAR_ARRAY_SIZE * nextResizeValue;
             nextResizeValue++;
         }
 
         private int ActiveBonesCount() =>
-            avatarIndex * BONES_ARRAY_LENGTH;
+            avatarIndex * currentBoneStride;
 
         public void Dispose()
         {

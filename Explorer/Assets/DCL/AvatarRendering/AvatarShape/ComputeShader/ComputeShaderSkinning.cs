@@ -20,25 +20,25 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public override AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterialPool, AvatarShapeComponent avatarShapeComponent,
-            in FacialFeaturesTextures facialFeatureTexture)
+            in FacialFeaturesTextures facialFeatureTexture, int boneCount)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
 
             CreateMeshData(meshesData, gameObjects);
 
-            (int vertCount, int boneCount) = SetupCounters(meshesData);
+            (int vertCount, int totalBoneBufferCount) = SetupCounters(meshesData, boneCount);
 
-            AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
+            AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, totalBoneBufferCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 
             Bounds totalBounds =  CalculateLocalBoundsFromMeshes(meshesData);
 
             ListPool<MeshData>.Release(meshesData);
 
-            return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader, totalBounds);
+            return new AvatarCustomSkinningComponent(vertCount, boneCount, buffers, materialSetups, skinningShader, totalBounds);
         }
 
-        private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount)
+        private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount, int boneCount)
         {
             Profiler.BeginSample(nameof(SetupComputeShader));
 
@@ -54,12 +54,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
 
-            AvatarCustomSkinningComponent.Buffers buffers = SetupBuffers(computeSkinningBufferContainer, skinningShader, vertCount);
+            AvatarCustomSkinningComponent.Buffers buffers = SetupBuffers(computeSkinningBufferContainer, skinningShader, vertCount, boneCount);
             buffers.AssignBuffer(computeSkinningBufferContainer);
 
             Profiler.EndSample();
@@ -69,10 +69,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private AvatarCustomSkinningComponent.Buffers SetupBuffers(
             ComputeSkinningBufferContainer computeSkinningBufferContainer,
-            UnityEngine.ComputeShader cs, int vertCount)
+            UnityEngine.ComputeShader cs, int vertCount, int boneCount)
         {
             computeSkinningBufferContainer.EndWriting();
-            var mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
+            var mBones = new ComputeBuffer(boneCount, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
 
             int kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
             computeSkinningBufferContainer.SetBuffers(cs, kernel);
@@ -82,15 +82,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer)
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount)
         {
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
 
-            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter);
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount);
         }
 
-        private (int vertCount, int boneCount) SetupCounters(IReadOnlyList<MeshData> meshesData)
+        private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
         {
             Profiler.BeginSample(nameof(SetupCounters));
 
@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             Profiler.EndSample();
 
-            return (vertCount, skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT);
+            return (vertCount, skinnedMeshRendererCount * boneCount);
         }
 
         private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,

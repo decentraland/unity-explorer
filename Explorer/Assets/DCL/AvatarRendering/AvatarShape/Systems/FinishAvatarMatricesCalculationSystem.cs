@@ -20,6 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
         private NativeArray<float4x4> currentResult;
+        private int currentBoneStride;
 
         internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
             AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
@@ -32,6 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             jobWrapper.CompleteBoneMatrixCalculations();
             currentResult = jobWrapper.job.BonesMatricesResult;
+            currentBoneStride = jobWrapper.CurrentBoneStride;
             ExecuteQuery(World);
         }
 
@@ -43,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarCustomSkinningComponent computeShaderSkinning
         )
         {
-            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, currentBoneStride);
             if (result.Success == false)
                 ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
         }

@@ -73,13 +73,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     }
 
     /// <summary>
-    /// Guarantees amount of bones in the array
+    /// Guarantees amount of bones in the array is within valid range.
     /// </summary>
     public readonly struct BoneArray
     {
-        public const int COUNT = ComputeShaderConstants.BONE_COUNT;
-
         public readonly Transform[] Inner;
+
+        public int Count => Inner.Length;
 
         public Transform this[int i] => Inner[i];
 
@@ -88,10 +88,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.Inner = inner;
         }
 
-        public static Result<BoneArray> From(Transform[] bones) =>
-            bones.Length != COUNT
-                ? Result<BoneArray>.ErrorResult($"Cannot map bone array, mismatch count: real {bones.Length}, expected: {COUNT}")
-                : Result<BoneArray>.SuccessResult(new BoneArray(bones));
+        public static Result<BoneArray> From(Transform[] bones)
+        {
+            if (bones.Length < ComputeShaderConstants.BASE_BONE_COUNT || bones.Length > ComputeShaderConstants.MAX_BONE_COUNT)
+                return Result<BoneArray>.ErrorResult($"Cannot map bone array, count {bones.Length} outside valid range [{ComputeShaderConstants.BASE_BONE_COUNT}, {ComputeShaderConstants.MAX_BONE_COUNT}]");
+
+            return Result<BoneArray>.SuccessResult(new BoneArray(bones));
+        }
 
         public static BoneArray FromOrDefault(Transform[] bones, ReportData reportData)
         {
@@ -108,8 +111,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public static BoneArray NewDefault()
         {
-            var inner = new Transform[COUNT];
-            for (int i = 0; i < COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
+            var inner = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
+            for (int i = 0; i < ComputeShaderConstants.BASE_BONE_COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
             return new BoneArray(inner);
         }
     }

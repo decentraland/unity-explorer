@@ -76,6 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
         public readonly int VertCount;
+        public readonly int BoneCount;
 
         internal readonly List<MaterialSetup> materials;
         private readonly Buffers buffers;
@@ -88,9 +89,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public Bounds LocalBounds { get; private set; }
 
-        internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
+        internal AvatarCustomSkinningComponent(int vertCount, int boneCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
         {
             VertCount = vertCount;
+            BoneCount = boneCount;
             this.buffers = buffers;
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
@@ -113,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
+        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray, int boneStride)
         {
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
@@ -125,16 +127,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 return Result.ErrorResult("ComputeSkinning error: Cannot get bones (ComputeBuffer)");
             }
 
-            bones.SetData(bonesResult, validIndex * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
+            bones.SetData(bonesResult, validIndex * boneStride, 0, BoneCount);
             computeShaderInstance.Dispatch(buffers.kernel, (VertCount / 64) + 1, 1, 1);
             return Result.SuccessResult();
-
-            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
-            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
-            //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
-            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
-            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
-            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
         }
 
         public void SetVertOutRegion(FixedComputeBufferHandler.Slice region)
