@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -16,11 +15,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public AvatarGhostPhase Phase;
         public float PhaseElapsed;
         public bool WearablesHidden;
-        public readonly List<Renderer> GhostRenderers;
+        public readonly Renderer GhostRenderer;
 
-        public AvatarGhostComponent(List<Renderer> ghostRenderers)
+        public AvatarGhostComponent(Renderer ghostRenderer)
         {
-            GhostRenderers = ghostRenderers;
+            GhostRenderer = ghostRenderer;
             Phase = AvatarGhostPhase.Revealing;
             PhaseElapsed = 0f;
             WearablesHidden = false;

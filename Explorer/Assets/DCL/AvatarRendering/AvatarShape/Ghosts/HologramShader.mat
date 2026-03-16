@@ -8,19 +8,18 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: HologramShader
-  m_Shader: {fileID: -6465566751694194690, guid: 5261976c2b2374a19a8a6da137150c94, type: 3}
+  m_Shader: {fileID: 4800000, guid: 0d14b8bcf14ea40a9b04692435ab3097, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _ALPHATEST_ON
   - _SURFACE_TYPE_TRANSPARENT
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Transparent
+  stringTagMap: {}
   disabledShaderPasses:
   - DepthOnly
   - MOTIONVECTORS
@@ -61,10 +60,17 @@ Material:
     - _DstBlendAlpha: 10
     - _Emission_Intensity: 5
     - _Flicker_Speed: 0.8
+    - _FresnelBandDensity: 4
+    - _FresnelBandSpeed: 0.7
     - _FresnelPower: 1
+    - _GlitchDensity: 12
+    - _GlitchIntensity: 0.03
+    - _GlitchSpeed: 6
+    - _GlitchThreshold: 0.85
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _ScanlineNoiseMin: 0.4
     - _Scanlines_Alpha: 0.5
     - _SrcBlend: 5
     - _SrcBlendAlpha: 1
@@ -77,8 +83,8 @@ Material:
     m_Colors:
     - _FresnelColor: {r: 0, g: 4.823456, b: 7.129739, a: 0.972549}
     - _RevealNormal: {r: 0, g: 1, b: 0, a: 0}
-    - _RevealPosition: {r: 0, g: 2, b: 0, a: 0}
-    - _ScanLineSpeed: {r: 0, g: -1, b: 0, a: 0}
+    - _RevealPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _ScanLineSpeed: {r: 0, g: 1, b: 0, a: 0}
     - _ScanLineTilling: {r: 1, g: 5, b: 0, a: 0}
     - _Vertex_Offset: {r: 0.2, g: 0, b: 0.2, a: 0}
   m_BuildTextureStacks: []

@@ -100,7 +100,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [field: SerializeField] public GameObject GhostGameObject { get; private set; }
 
-        public List<Renderer> GhostRenderers { get; private set; }
+        public Renderer GhostRenderer { get; private set; }
 
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
@@ -132,10 +132,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
 
-            GhostRenderers = new List<Renderer>();
-
-            foreach (Renderer renderer in GhostGameObject.transform.GetComponentsInChildren<Renderer>())
-                GhostRenderers.Add(renderer);
+            GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
         }
 
         public Transform GetTransform() =>

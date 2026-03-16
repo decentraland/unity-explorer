@@ -13,8 +13,9 @@ struct Attributes
 struct Varyings
 {
     float4 positionCS : SV_POSITION;
-    float3 positionWS : TEXCOORD0;
-    half3  normalWS   : TEXCOORD1;
+    float3 positionOS : TEXCOORD0;
+    float3 positionWS : TEXCOORD1;
+    half3  normalWS   : TEXCOORD2;
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -37,6 +38,7 @@ Varyings vert(Attributes input)
     displacedWS.x   += glitch;
 
     output.positionCS = TransformWorldToHClip(displacedWS);
+    output.positionOS = input.positionOS.xyz;
     output.positionWS = displacedWS;
     output.normalWS   = (half3)normalInputs.normalWS;
 
@@ -45,11 +47,11 @@ Varyings vert(Attributes input)
 
 half4 frag(Varyings input) : SV_Target
 {
-    // --- Reveal clip (general plane equation) ---
-    // Passes vertices on the _RevealNormal side of the plane through _RevealPosition.
-    // AvatarGhostSystem animates _RevealPosition.y from -0.05 -> 3 with normal (0,+/-1,0).
-    // Uses float for world-space position subtraction, half for the dot
-    clip((half)dot(_RevealNormal.xyz, (half3)(_RevealPosition.xyz - input.positionWS)));
+    // --- Reveal clip (object space) ---
+    // Hip is at positionOS.y = 1, so subtract 1 to shift to feet-relative (feet=0, head=2).
+    // positionOS is already interpolated from the vertex shader — no matrix multiply needed.
+    float3 adjustedPosOS = float3(input.positionOS.x, 1.0 - input.positionOS.y, input.positionOS.z);
+    clip((half)dot(_RevealNormal.xyz, (half3)(_RevealPosition.xyz - adjustedPosOS)));
 
     // --- Fresnel ---
     half3 viewDirWS = (half3)normalize(GetCameraPositionWS() - input.positionWS);
@@ -57,17 +59,17 @@ half4 frag(Varyings input) : SV_Target
     half  baseFresnel = pow(1.0h - saturate(dot(viewDirWS, normalWS)), _FresnelPower);
 
     // --- Banded fresnel brightness variation ---
-    // Coarse bands — independent of scanline density, re-rolls slowly over time
-    float brightBand     = floor(input.positionWS.y * _FresnelBandDensity);
-    half  bandBrightness = (half)frac(sin(brightBand * 91.7 + floor(_Time.y * _FresnelBandSpeed) * 43.1) * 43758.5453);
+    // Coarse bands in object space — stable across world elevation and avatar movement
+    float brightBand     = floor(input.positionOS.y * _FresnelBandDensity);
+    half  bandBrightness = (half)frac(sin(brightBand * 91.7) * 43758.5453);
     half  bandedFresnel  = baseFresnel * bandBrightness * bandBrightness;
 
     // --- Procedural scanlines with per-line intensity variation ---
-    // Position * tiling accumulates in float, frac() brings to [0,1] then half
-    float scanYCoord  = input.positionWS.y * _ScanLineTilling.y + _Time.y * _ScanLineSpeed.y;
+    // Object-space Y keeps scanlines stable relative to the avatar regardless of world position
+    float scanYCoord  = input.positionOS.y * _ScanLineTilling.y + _Time.y * _ScanLineSpeed.y;
     half  scanline    = (half)smoothstep(0.3, 0.7, frac(scanYCoord));
-    // Hash each scanline row to vary brightness — some lines brighter, some dimmer
-    float scanRow     = floor(scanYCoord);
+    // Hash from static object-space Y to avoid brightness jumps as scanlines scroll
+    float scanRow     = floor(input.positionOS.y * _ScanLineTilling.y);
     half  scanNoise   = (half)frac(sin(scanRow * 153.7) * 43758.5453);
     half scanNoiseRange = 1.0h - _ScanlineNoiseMin;
     scanline         *= _Scanlines_Alpha * (_ScanlineNoiseMin + scanNoise * scanNoiseRange);
