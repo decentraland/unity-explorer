@@ -77,7 +77,7 @@ Shader "DCL/Sprites/CircleAlwaysOnTop"
 
                 fixed4 result;
                 result.rgb = finalColor;
-                result.a = outerMask;
+                result.a = outerMask * IN.color.a;
 
                 return result;
             }
