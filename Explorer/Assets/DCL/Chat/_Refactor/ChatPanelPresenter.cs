@@ -18,6 +18,7 @@ using System;
 using System.Threading;
 using DCL.Translation;
 using DCL.Translation.Service;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -186,6 +187,7 @@ namespace DCL.Chat
 
         private void OnUIClose(InputAction.CallbackContext obj)
         {
+            Debug.Log($"[PACO] OnUIClose (ESC): isMinimized={chatStateMachine.IsMinimized}");
             if (chatStateMachine.IsMinimized) return;
 
             chatStateMachine.SetVisibility(true);
@@ -235,11 +237,13 @@ namespace DCL.Chat
 
         private void OnMvcViewShowed(ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent evt)
         {
+            Debug.Log("[PACO] OnMvcViewShowed (IBlocksChat opened)");
             chatStateMachine.Minimize();
         }
 
         private void OnMvcViewClosed(ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent evt)
         {
+            Debug.Log($"[PACO] OnMvcViewClosed: isFocused={chatStateMachine.IsFocused}");
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();
         }

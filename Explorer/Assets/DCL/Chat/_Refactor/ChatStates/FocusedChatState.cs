@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.ChatServices;
 using MVC;
+using UnityEngine;
 
 namespace DCL.Chat.ChatStates
 {
@@ -18,6 +19,7 @@ namespace DCL.Chat.ChatStates
 
         public void Enter()
         {
+            Debug.Log("[PACO] >>> FocusedChatState.Enter()");
             mediator.SetupForFocusedState();
 
             inputBlocker.Block();
@@ -25,6 +27,7 @@ namespace DCL.Chat.ChatStates
 
         public override void Exit()
         {
+            Debug.Log($"[PACO] <<< FocusedChatState.Exit()\n{System.Environment.StackTrace}");
             inputBlocker.Unblock();
         }
 

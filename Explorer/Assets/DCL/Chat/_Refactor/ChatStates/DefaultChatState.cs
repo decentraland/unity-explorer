@@ -1,4 +1,5 @@
 ﻿using MVC;
+using UnityEngine;
 
 namespace DCL.Chat.ChatStates
 {
@@ -18,6 +19,7 @@ namespace DCL.Chat.ChatStates
 
         public void Enter()
         {
+            Debug.Log($"[PACO] >>> DefaultChatState.Enter()\n{System.Environment.StackTrace}");
             uiMediator.SetupForDefaultState(animate: true);
             uiMediator.chatInputPresenter.OnBlur();
         }

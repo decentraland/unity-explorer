@@ -1,6 +1,7 @@
 ﻿using DCL.Chat.ChatServices;
 using MVC;
 using System;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat.ChatStates
@@ -75,6 +76,7 @@ namespace DCL.Chat.ChatStates
 
         public void OnViewShow()
         {
+            Debug.Log($"[PACO] OnViewShow: {fsm.CurrentState?.GetType().Name} -> DefaultChatState\n{System.Environment.StackTrace}");
             inputBlocker.Initialize();
 
             fsm.Enter<DefaultChatState>();
@@ -97,11 +99,13 @@ namespace DCL.Chat.ChatStates
 
         private void HandleClickInside()
         {
+            Debug.Log($"[PACO] HandleClickInside: state={fsm.CurrentState?.GetType().Name}");
             fsm.CurrentState!.OnClickInside();
         }
 
         private void HandleClickOutside()
         {
+            Debug.Log($"[PACO] HandleClickOutside: state={fsm.CurrentState?.GetType().Name}\n{System.Environment.StackTrace}");
             fsm.CurrentState!.OnClickOutside();
         }
 
@@ -117,11 +121,13 @@ namespace DCL.Chat.ChatStates
 
         public void Minimize()
         {
+            Debug.Log($"[PACO] Minimize: state={fsm.CurrentState?.GetType().Name}\n{System.Environment.StackTrace}");
             fsm.CurrentState!.OnMinimizeRequested();
         }
 
         public void SetInitialState(bool focus)
         {
+            Debug.Log($"[PACO] SetInitialState(focus={focus}): state={fsm.CurrentState?.GetType().Name}, prev={fsm.PreviousState?.GetType().Name}\n{System.Environment.StackTrace}");
             if (focus)
                 fsm.Enter<FocusedChatState>();
             else
@@ -141,6 +147,7 @@ namespace DCL.Chat.ChatStates
 
         public void PopState()
         {
+            Debug.Log($"[PACO] PopState: state={fsm.CurrentState?.GetType().Name}, prev={fsm.PreviousState?.GetType().Name}\n{System.Environment.StackTrace}");
             fsm.TryPopState();
         }
 
@@ -150,6 +157,7 @@ namespace DCL.Chat.ChatStates
         /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
         {
+            Debug.Log($"[PACO] SetVisibility(isVisible={isVisible}): state={fsm.CurrentState?.GetType().Name}\n{System.Environment.StackTrace}");
             if (isVisible)
                 fsm.Enter<DefaultChatState>();
             else

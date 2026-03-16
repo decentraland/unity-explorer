@@ -308,6 +308,8 @@ namespace DCL.Chat.ChatMessages
 
         internal void StartChatEntriesFadeout()
         {
+            Debug.Log($"[PACO] StartChatEntriesFadeout\n{System.Environment.StackTrace}");
+
             // Kill any previous sequence or
             // tweens touching this CanvasGroup
             _fadeSequenceTween?.Kill();
@@ -320,14 +322,18 @@ namespace DCL.Chat.ChatMessages
 
             _fadeSequenceTween = DOTween.Sequence()
                 .AppendInterval(waitSeconds)
+                .AppendCallback(() => Debug.Log($"[PACO] Fade delay elapsed, DOFade about to begin. alpha={chatEntriesCanvasGroup.alpha}"))
                 .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime))
                 .OnComplete(() =>
                 {
+                    Debug.Log("[PACO] Fade sequence COMPLETED (alpha reached 0.4)");
                     completed = true;
                     _fadeSequenceTween = null;
                 })
                 .OnKill(() =>
                 {
+                    Debug.Log($"[PACO] Fade sequence KILLED (completed={completed})");
+
                     // If killed before completion,
                     // snap back to fully visible
                     if (!completed && chatEntriesCanvasGroup)
@@ -339,6 +345,8 @@ namespace DCL.Chat.ChatMessages
 
         internal void StopChatEntriesFadeout()
         {
+            Debug.Log($"[PACO] StopChatEntriesFadeout\n{System.Environment.StackTrace}");
+
             _fadeSequenceTween?.Kill();
             chatEntriesCanvasGroup.DOKill();
             chatEntriesCanvasGroup.alpha = 1f;

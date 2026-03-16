@@ -138,6 +138,8 @@ namespace DCL.Chat.ChatMessages
             scrollToBottomPresenter.OnChannelChanged();
             separatorFixedIndexFromBottom = -1;
             messageCountWhenSeparatorViewed = null;
+
+            Debug.Log($"[PACO] OnChatReset: isFocused {isFocused} -> false\n{System.Environment.StackTrace}");
             isFocused = false;
         }
 
@@ -271,7 +273,10 @@ namespace DCL.Chat.ChatMessages
 
             // 5. Handle the fade-out for unfocused chat
             if (!isFocused)
+            {
+                Debug.Log($"[PACO] OnMessageAdded restarting fade (isFocused=false)\n{System.Environment.StackTrace}");
                 view.RestartChatEntriesFadeout();
+            }
         }
 
         private void ScrollToNewMessagesSeparator()
@@ -557,6 +562,8 @@ namespace DCL.Chat.ChatMessages
 
         public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
         {
+            Debug.Log($"[PACO] SetFocusState: {this.isFocused} -> {isFocused}\n{System.Environment.StackTrace}");
+
             this.isFocused = isFocused;
 
             // Delegate logical state change to sub-presenter
