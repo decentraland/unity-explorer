@@ -40,10 +40,10 @@ namespace DCL.AvatarRendering.AvatarShape
         private const float REVEAL_OFFSET = 2.05f;
 
         // Time to reveal the ghost
-        private const float REVEAL_DURATION_SEC = 0.8f;
+        internal const float REVEAL_DURATION_SEC = 0.8f;
 
         // Time transitioning from ghost to avatar
-        private const float HIDE_DURATION_SEC = 0.5f;
+        internal const float HIDE_DURATION_SEC = 0.5f;
 
         private readonly Material ghostMaterialTemplate;
 
