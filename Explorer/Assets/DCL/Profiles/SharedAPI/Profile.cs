@@ -6,14 +6,13 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Profiles
 {
     public partial class Profile : IDirtyMarker, IDisposable
     {
-        private static readonly ThreadSafeObjectPool<Profile> POOL = new (
+        internal static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());
 
@@ -48,7 +47,7 @@ namespace DCL.Profiles
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
         /// </summary>
-        public bool IsDirty { get; set; } = true;
+        public bool IsDirty { get; set; }
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
@@ -66,6 +65,7 @@ namespace DCL.Profiles
         public Profile()
         {
             compact = new CompactInfo();
+            Avatar = new Avatar();
         }
 
         public Profile(string userId, string name, Avatar avatar)
@@ -94,31 +94,40 @@ namespace DCL.Profiles
 
         public void Clear()
         {
-            Compact.Clear();
-            blocked?.Clear();
-            interests?.Clear();
-            links?.Clear();
+            // Replace the struct instead of calling Compact.Clear() which operates on a copy
+            GetCompact().Dispose();
+            compact = new CompactInfo();
+
+            blocked = null;
+            interests = null;
+            links = null;
             Birthdate = null;
-            Avatar.Clear();
+
+            // Avatars on the pool should always have an empty avatar for reusage.
+            // We cannot just clear its values because Profile may not be the original avatar owner
+            // To be fully safe to clear it, the scope should be tighter
+            Avatar = new Avatar();
             Country = null;
             Email = null;
             Gender = null;
             Description = null;
             Hobbies = null;
-            Language = default(string?);
-            Profession = default(string?);
-            Pronouns = default(string?);
+            Language = null;
+            Profession = null;
+            Pronouns = null;
             Version = default(int);
-            EmploymentStatus = default(string?);
+            EmploymentStatus = null;
+            RealName = null;
+            RelationshipStatus = null;
+            SexualOrientation = null;
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
-            ProfilePicture = null;
             IsDirty = false;
         }
 
         public static Profile NewRandomProfile(string? userId)
         {
-            BodyShape bodyShape = UnityEngine.Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
 
             return new Profile(
                 userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
@@ -161,8 +170,12 @@ namespace DCL.Profiles
                    && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
                    && AreStringsEquivalent(Gender, profile.Gender)
                    && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(RelationshipStatus, profile.RelationshipStatus)
+                   && AreStringsEquivalent(SexualOrientation, profile.SexualOrientation)
                    && AreStringsEquivalent(Language, profile.Language)
                    && AreStringsEquivalent(Profession, profile.Profession)
+                   && AreStringsEquivalent(RealName, profile.RealName)
+                   && AreStringsEquivalent(Hobbies, profile.Hobbies)
                    && Birthdate == profile.Birthdate
                    && Version == profile.Version
                    && AreLinksSame(links, profile.links)
