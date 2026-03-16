@@ -321,6 +321,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+
+            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
+                throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData

@@ -148,9 +148,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (shouldCancelEmote)
             {
                 StopEmote(ref emoteComponent, avatarView);
-
-                Debug.Log($"(Maurizio) StopEmote() because wantsToCancelEmote: {wantsToCancelEmote} or World.Has<HiddenPlayerComponent>(entity): {World.Has<HiddenPlayerComponent>(entity)}");
-
                 return;
             }
 
@@ -349,27 +346,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void CreateEmotePromise(URN urn, BodyShape bodyShape)
         {
-            Debug.Log($"(Maurizio) CreateEmotePromise called with URN: {urn}, bodyShape: {bodyShape}");
-
             loadEmoteBuffer[0] = urn;
 
             if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene))
             {
-                Debug.Log($"(Maurizio) Parsed scene emote URN. sceneKey='{sceneId}', emoteHash='{emoteHash}', loop='{loop}', localSceneDevelopment='{localSceneDevelopment}'");
-
                 if (scene == null)
-                {
-                    Debug.Log($"(Maurizio) Failed to resolve sceneFacade for key '{sceneId}'");
                     return;
-                }
-
-                Debug.Log($"(Maurizio) Resolved sceneFacade for key '{sceneId}'. SceneEntityDefinition.id='{scene.SceneData.SceneEntityDefinition.id}' SceneShortInfo.Name='{scene.SceneData.SceneShortInfo.Name}'");
 
                 // Local scene preview path, this is needed if a remote client plays a scene emote this client has not yet played
                 if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
                 {
-                    Debug.Log($"(Maurizio) Using local-scene emote load for hash '{emoteHash}' with path '{emotePath}'");
-
                     SceneEmoteFromLocalPromise.Create(World,
                         new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop),
                         PartitionComponent.TOP_PRIORITY);
@@ -379,25 +365,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 // Deployed scenes path (asset bundles)
                 if (scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion == null)
-                {
-                    Debug.Log($"(Maurizio) Scene '{scene.SceneData.SceneEntityDefinition.id}' has no assetBundleManifestVersion, skipping realm emote load");
                     return;
-                }
-
-                Debug.Log($"(Maurizio) Using realm emote load for sceneKey='{sceneId}', hash='{emoteHash}'");
 
                 SceneEmoteFromRealmPromise.Create(World,
                     new GetSceneEmoteFromRealmIntention(sceneId, scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
                     PartitionComponent.TOP_PRIORITY);
             }
             else
-            {
-                Debug.Log($"(Maurizio) URN '{urn}' is not a scene-emote URN, falling back to pointer-based emote load");
-
                 EmotePromise.Create(World,
                     EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
                     PartitionComponent.TOP_PRIORITY);
-            }
         }
 
         private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene)
@@ -476,7 +453,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             emotePath = string.Empty;
-            Debug.Log($"(Maurizio) TryResolveLocalSceneEmotePath: failed to find hash '{hash}' in SceneEntityDefinition.content (len={content.Length})");
             return false;
         }
     }

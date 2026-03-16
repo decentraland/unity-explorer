@@ -144,9 +144,6 @@ namespace DCL.Multiplayer.Emotes
 
                 if (receivedMessage.Payload is { HasIsStopping: true, IsStopping: true })
                 {
-                    // TODO (Maurizio) remove after tests
-                    Debug.Log($"(Maurizio) Requested to stop emoting on walletId: {receivedMessage.FromWalletId}");
-
                     InboxStop(receivedMessage.FromWalletId, timestamp);
                     return;
                 }
@@ -173,6 +170,7 @@ namespace DCL.Multiplayer.Emotes
         {
             if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;
+
             using (sync.GetScope())
                 emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
         }

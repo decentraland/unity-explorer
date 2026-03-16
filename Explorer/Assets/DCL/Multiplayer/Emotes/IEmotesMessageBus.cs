@@ -16,5 +16,6 @@ namespace DCL.Multiplayer.Emotes
         void OnPlayerRemoved(string walletId);
 
         void SaveForRetry(RemoteEmoteIntention intention);
+        void SaveForRetry(RemoteEmoteStopIntention intention);
     }
 }

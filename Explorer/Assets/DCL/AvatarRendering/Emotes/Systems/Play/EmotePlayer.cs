@@ -256,9 +256,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             // Set triggers
             int emoteTriggerHash = AnimationHashes.GetFromEmoteMask(mask);
 
-            // TODO (Maurizio) remove after tests
-            Debug.Log($"(Maurizio) mask: {mask}, avatarClipName: {emoteReferences.avatarClip?.name}, layer: {emoteLayer}, emoteTriggerHash: {emoteTriggerHash}");
-
             // TODO (Maurizio) probably we need to check all other layers as well here
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : emoteTriggerHash);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);

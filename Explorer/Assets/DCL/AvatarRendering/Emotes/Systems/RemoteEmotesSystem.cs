@@ -30,7 +30,7 @@ namespace DCL.AvatarRendering.Emotes
         protected override void Update(float t)
         {
             ProcessRemoteIntentions(t);
-            ProcessRemoteStopIntentions();
+            ProcessRemoteStopIntentions(t);
         }
 
         private void ProcessRemoteIntentions(float t)
@@ -76,34 +76,67 @@ namespace DCL.AvatarRendering.Emotes
                 intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
 
-        private void ProcessRemoteStopIntentions()
+        private void ProcessRemoteStopIntentions(float t)
         {
             using var scope = HashSetPool<RemoteEmoteStopIntention>.Get(out var savedStopIntentions);
-            using OwnedBunch<RemoteEmoteStopIntention> stopIntentions = emotesMessageBus.EmoteStopIntentions();
 
-            if (!stopIntentions.Available())
-                return;
-
-            foreach (RemoteEmoteStopIntention stopIntention in stopIntentions.Collection())
+            // Use a scoped using block so Dispose (which clears the set) runs BEFORE SaveForRetry
+            // re-adds items. A declaration-level using would clear the set at method exit, wiping retries.
+            using (OwnedBunch<RemoteEmoteStopIntention> stopIntentions = emotesMessageBus.EmoteStopIntentions())
             {
-                // The entity was not created yet, so we wait until it is created to be able to consume the intent
-                if (!entityParticipantTable.TryGet(stopIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                if (!stopIntentions.Available())
+                    return;
+
+                foreach (RemoteEmoteStopIntention stopIntention in stopIntentions.Collection())
                 {
+                    // The entity was not created yet, so we wait until it is created to be able to consume the intent
+                    if (!entityParticipantTable.TryGet(stopIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                    {
+                        savedStopIntentions!.Add(stopIntention);
+                        continue;
+                    }
+
+                    // If the entity has an emote intent not already consumed we remove it straight away
+                    if (World.Has<CharacterEmoteIntent>(entry.Entity))
+                    {
+                        World.Remove<CharacterEmoteIntent>(entry.Entity);
+                        continue;
+                    }
+
+                    // check if the existing emote component is playing an emote to stop it
+                    // Note: CurrentEmoteReference is set immediately by EmotePlayer.Play(), while
+                    // IsPlayingEmote/IsPlayingMaskedEmote rely on animator state tags that take at
+                    // least one frame to reflect a newly triggered emote. Without this check, a stop
+                    // arriving in that window would be retried and eventually discarded as stale.
+                    if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.IsPlayingMaskedEmote || emoteComponent.CurrentEmoteReference != null))
+                    {
+                        emoteComponent.StopEmote = true;
+                        World.Set(entry.Entity, emoteComponent);
+                        continue;
+                    }
+
+                    // Entity exists but the play intention hasn't been applied yet (still queued
+                    // waiting for interpolation to catch up). Save the stop for retry so it can
+                    // cancel the emote once the play is eventually consumed.
+                    // However, if interpolation has already passed the stop's timestamp, the
+                    // corresponding play was either never received or already consumed — discard.
+                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+
+                    if (!interpolationExists || StopIsInPresentOrPast(replicaMovement, stopIntention, intComp))
+                        continue;
+
                     savedStopIntentions!.Add(stopIntention);
-                    continue;
-                }
-
-                // If the entity has an emote intent not already consumed we remove it straight away
-                if (World.Has<CharacterEmoteIntent>(entry.Entity))
-                    World.Remove<CharacterEmoteIntent>(entry.Entity);
-
-                // check if the existing emote component is playing an emote to stop it
-                if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.IsPlayingMaskedEmote))
-                {
-                    emoteComponent.StopEmote = true;
-                    World.Set(entry.Entity, emoteComponent);
                 }
             }
+
+            foreach (RemoteEmoteStopIntention savedStopIntention in savedStopIntentions!)
+                emotesMessageBus.SaveForRetry(savedStopIntention);
+
+            return;
+
+            bool StopIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteStopIntention stopIntention, InterpolationComponent intComp) =>
+                intComp.Time + t >= stopIntention.Timestamp || replicaMovement.PastMessage.timestamp >= stopIntention.Timestamp;
         }
     }
 }

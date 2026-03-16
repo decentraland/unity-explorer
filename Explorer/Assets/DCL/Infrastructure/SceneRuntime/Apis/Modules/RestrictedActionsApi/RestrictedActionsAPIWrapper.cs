@@ -11,6 +11,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
     {
         private readonly IRestrictedActionsAPI api;
 
+        private CancellationTokenSource? triggerEmoteCancellationToken;
         private CancellationTokenSource? triggerSceneEmoteCancellationToken;
 
         public RestrictedActionsAPIWrapper(IRestrictedActionsAPI api, CancellationTokenSource disposeCts) : base(disposeCts)
@@ -54,11 +55,13 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerEmote(string predefinedEmote, uint mask)
         {
-            return TriggerEmoteAsync().ToDisconnectedPromise(this);
+            triggerEmoteCancellationToken = triggerEmoteCancellationToken.SafeRestart();
+            return TriggerEmoteAsync(triggerEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
-            async UniTask TriggerEmoteAsync()
+            async UniTask TriggerEmoteAsync(CancellationToken ct)
             {
                 await UniTask.SwitchToMainThread();
+                if (ct.IsCancellationRequested) return;
                 api.TryTriggerEmote(predefinedEmote, EnumUtils.FromInt<AvatarEmoteMask>((int)mask));
             }
         }
@@ -84,6 +87,10 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object StopEmote()
         {
+            // Cancel any in-flight trigger operations so they don't fire after the stop
+            triggerEmoteCancellationToken = triggerEmoteCancellationToken.SafeRestart();
+            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
+
             return StopEmoteAsync().ToDisconnectedPromise(this);
 
             async UniTask StopEmoteAsync()
