@@ -1,4 +1,6 @@
-﻿using DCL.ChatArea;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.ChatArea;
 using Newtonsoft.Json.Linq;
 using System;
 
@@ -34,3 +36,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             });
     }
 }
+
+#endif

@@ -1,11 +1,15 @@
 using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
+
+#if !UNITY_WEBGL
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
+#endif
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
@@ -41,18 +45,19 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 for (var i = 0; i < dataList.Count; i++)
                 {
-                    var message = (ITypedArray<byte>)dataList[i];
+                    object dataItem = dataList[i];
+                    IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(dataItem);
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
                     {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
                         lastInput.Add(element);
                     }
                     else
                     {
                         element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
                         lastInput[i] = element;
                     }
                 }
@@ -68,10 +73,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
                 api.SendBinary(lastInput, recipient);
             }
-            catch (Exception e)
-            {
-                sceneExceptionsHandler.OnEngineException(e);
-            }
+            catch (Exception e) { sceneExceptionsHandler.OnEngineException(e); }
         }
 
         [UsedImplicitly]
@@ -88,10 +90,10 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 {
                     object? obj = peerData[i];
 
-                    if (obj is IScriptObject perRecipientStruct)
+                    if (obj is IDCLScriptObject perRecipientStruct)
                     {
-                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
-                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
+                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address");
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data");
 
                         if (data.Count is 0)
                             continue;
@@ -110,7 +112,18 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     }
                 }
 
-            return api.GetResult();
+            IDCLScriptObject result = api.GetResult();
+
+            // Get the native JavaScript object for proper enumeration support
+            // ClearScript can handle ScriptObject natively but not adapter wrappers
+            // When passed to JavaScript, ScriptObject is enumerable but V8ScriptObjectAdapter is not
+            object nativeObject = result.GetNativeObject();
+#if !UNITY_WEBGL
+            // For V8, ensure we return ScriptObject for proper JavaScript enumeration
+            if (nativeObject is ScriptObject so)
+                return so;
+#endif
+            return nativeObject;
         }
     }
 }

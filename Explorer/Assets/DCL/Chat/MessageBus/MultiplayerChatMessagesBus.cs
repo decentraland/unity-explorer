@@ -1,3 +1,6 @@
+#if !NO_LIVEKIT_MODE
+
+#nullable enable
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
@@ -20,6 +23,7 @@ using LiveKit.Rooms;
 using System;
 using System.Threading;
 using Utility;
+using DCL.LiveKit.Public;
 using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat.MessageBus
@@ -246,3 +250,5 @@ namespace DCL.Chat.MessageBus
         }
     }
 }
+
+#endif

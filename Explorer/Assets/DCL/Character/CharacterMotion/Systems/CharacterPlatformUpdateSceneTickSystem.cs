@@ -10,7 +10,6 @@ using SceneRunner.Scene;
 namespace DCL.CharacterMotion.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(RotateCharacterSystem))]
     public partial class CharacterPlatformUpdateSceneTickSystem : BaseUnityLoopSystem
     {

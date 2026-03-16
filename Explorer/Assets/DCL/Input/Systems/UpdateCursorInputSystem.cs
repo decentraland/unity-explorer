@@ -120,7 +120,7 @@ namespace DCL.Input.Systems
             if (cursorComponent.CursorState == CursorState.Free)
             {
                 bool positionChanged = (mousePos - lastRaycastPosition).sqrMagnitude > RAYCAST_POSITION_THRESHOLD_SQR;
-                bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame();
+                bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 bool needsFreshRaycast = positionChanged || inputWantsToLock || shouldBeLocked;
 
                 if (needsFreshRaycast)
@@ -233,7 +233,7 @@ namespace DCL.Input.Systems
             bool isMouseOutOfBounds = mousePos.x < MOUSE_BOUNDS_OFFSET || mousePos.x > Screen.width - MOUSE_BOUNDS_OFFSET ||
                                       mousePos.y < MOUSE_BOUNDS_OFFSET || mousePos.y > Screen.height - MOUSE_BOUNDS_OFFSET;
 
-            bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame();
+            bool inputWantsToLock = cameraActions.Lock.WasPressedThisFrame(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             bool inputWantsToUnlock = cameraActions.Unlock.WasPressedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
@@ -285,7 +285,7 @@ namespace DCL.Input.Systems
 
                 case CursorState.Locked:
                     crosshairCanvas.SetDisplayed(true);
-                    cursor.Lock();
+                    cursor.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     cursor.SetVisibility(false);
                     break;
 

@@ -1,13 +1,15 @@
-﻿using DCL.Chat.History;
+﻿#if !NO_LIVEKIT_MODE
+
+using DCL.Chat.History;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Chat.ChatServices
 {
@@ -19,10 +21,8 @@ namespace DCL.Chat.ChatServices
     {
         private readonly IRoomHub roomHub;
         private readonly IEventBus eventBus;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCache;
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
-        private readonly HashSet<string> blockedOnlineParticipants = new (PoolConstants.AVATARS_COUNT);
 
         public IReadOnlyCollection<string> OnlineParticipants
         {
@@ -32,12 +32,10 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        public NearbyUserStateService(IRoomHub roomHub, IEventBus eventBus,
-            ObjectProxy<IUserBlockingCache> userBlockingCache)
+        public NearbyUserStateService(IRoomHub roomHub, IEventBus eventBus)
         {
             this.roomHub = roomHub;
             this.eventBus = eventBus;
-            this.userBlockingCache = userBlockingCache;
         }
 
         public void Activate()
@@ -52,13 +50,6 @@ namespace DCL.Chat.ChatServices
 
             roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChange;
             roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChange;
-
-            if (!userBlockingCache.Configured) return;
-
-            userBlockingCache.StrictObject.UserBlocked += BlockedSetOffline;
-            userBlockingCache.StrictObject.UserBlocksYou += BlockedSetOffline;
-            userBlockingCache.StrictObject.UserUnblocked += UnblockedSetOnline;
-            userBlockingCache.StrictObject.UserUnblocksYou += UnblockedSetOnline;
         }
 
         public void Deactivate()
@@ -70,13 +61,6 @@ namespace DCL.Chat.ChatServices
             roomHub.SceneRoom().Room().ConnectionStateChanged -= OnRoomConnectionStateChange;
 
             lock (onlineParticipants) { onlineParticipants.Clear(); }
-
-            if (!userBlockingCache.Configured) return;
-
-            userBlockingCache.StrictObject.UserBlocked -= BlockedSetOffline;
-            userBlockingCache.StrictObject.UserBlocksYou -= BlockedSetOffline;
-            userBlockingCache.StrictObject.UserUnblocked -= UnblockedSetOnline;
-            userBlockingCache.StrictObject.UserUnblocksYou -= UnblockedSetOnline;
         }
 
         private void RefreshAllOnlineParticipants(IReadOnlyCollection<string> participantIdentities)
@@ -84,49 +68,34 @@ namespace DCL.Chat.ChatServices
             lock (onlineParticipants)
             {
                 onlineParticipants.Clear();
-                blockedOnlineParticipants.Clear();
 
                 foreach (string participantIdentity in participantIdentities)
-                    if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(participantIdentity))
-                        blockedOnlineParticipants.Add(participantIdentity);
-                    else
-                        onlineParticipants.Add(participantIdentity);
+                    onlineParticipants.Add(participantIdentity);
             }
         }
 
-        private void OnSceneRoomUpdatesFromParticipants(Participant participant, UpdateFromParticipant update)
+        private void OnSceneRoomUpdatesFromParticipants(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.IslandRoom());
         }
 
-        private void OnIslandUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnIslandUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.SceneRoom().Room());
         }
 
-        private void OnRoomUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, IRoom otherRoom)
+        private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
             lock (onlineParticipants)
             {
-                bool participantIsBlocked = userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(participant.Identity);
-
-                if (update == UpdateFromParticipant.Connected)
-                {
-                    if (participantIsBlocked)
-                        blockedOnlineParticipants.Add(participant.Identity);
-                    else
-                        SetOnline(participant.Identity);
-                }
+                if (update == UpdateFromParticipant.Connected) { SetOnline(participant.Identity); }
                 else if (update == UpdateFromParticipant.Disconnected)
                 {
                     // User is not disconnected if they are still in another room
                     if (otherRoom.Participants.RemoteParticipant(participant.Identity) != null)
                         return;
 
-                    if (participantIsBlocked)
-                        blockedOnlineParticipants.Remove(participant.Identity);
-                    else
-                        SetOffline(participant.Identity);
+                    SetOffline(participant.Identity);
                 }
             }
         }
@@ -139,14 +108,14 @@ namespace DCL.Chat.ChatServices
         ///     </list>
         /// </summary>
         /// <param name="connectionState"></param>
-        private void OnRoomConnectionStateChange(ConnectionState connectionState)
+        private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
             lock (onlineParticipants)
             {
                 switch (connectionState)
                 {
-                    case ConnectionState.ConnDisconnected:
-                    case ConnectionState.ConnConnected:
+                    case LKConnectionState.ConnDisconnected:
+                    case LKConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
                         eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
                         break;
@@ -165,29 +134,7 @@ namespace DCL.Chat.ChatServices
             if (onlineParticipants.Remove(userId))
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
         }
-
-        private void UnblockedSetOnline(string userId)
-        {
-            lock (onlineParticipants)
-            {
-                if (blockedOnlineParticipants.Contains(userId) && onlineParticipants.Add(userId))
-                {
-                    blockedOnlineParticipants.Remove(userId);
-                    eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true));
-                }
-            }
-        }
-
-        private void BlockedSetOffline(string userId)
-        {
-            lock (onlineParticipants)
-            {
-                if (onlineParticipants.Remove(userId))
-                {
-                    blockedOnlineParticipants.Add(userId);
-                    eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
-                }
-            }
-        }
     }
 }
+
+#endif

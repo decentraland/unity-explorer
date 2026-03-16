@@ -40,7 +40,7 @@ namespace SceneRuntime.Factory.JsSource
             var charSpan = MemoryMarshal.Cast<byte, char>(data.Memory.Span);
             var output = new string(charSpan);
             data.Dispose();
-            
+
             return UniTask.FromResult(output);
         }
     }

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -100,8 +102,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
             try
             {
-                // Delay the profile resolution in case it's not found, as otherwise it will be re-requested every frame - it's not the desired behaviour
-                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token, batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token);
 
                 if (profile is null)
                     return;
@@ -128,3 +129,5 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         }
     }
 }
+
+#endif

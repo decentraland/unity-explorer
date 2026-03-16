@@ -1,6 +1,7 @@
-﻿using Arch.Core;
+using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -15,9 +16,16 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private static readonly string[] COMMON_SHADERS =
         {
-            "dcl/scene_ignore_windows", "dcl/scene_ignore_mac",
+#if UNITY_WEBGL
+            "dcl/scene_ignore",
+            "dcl/universal render pipeline/lit_ignore",
+            "dcl/toon_ignore"
+#else
+            "dcl/scene_ignore_windows",
+            "dcl/scene_ignore_mac",
             "dcl/universal render pipeline/lit_ignore_windows",
             "dcl/universal render pipeline/lit_ignore_mac",
+#endif
         };
 
         private readonly URLDomain streamingAssetURL;
@@ -59,15 +67,17 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
+                string? version = assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion();
+                string? buildDate = assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate();
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 assetBundleIntention.Hash = assetBundleIntention.AssetBundleManifestVersion.CheckCasing(assetBundleIntention.Hash);
-                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
+                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, version ?? "");
                 assetBundleIntention.CommonArguments = ca;
 
-                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, buildDate ?? "");
             }
         }
 

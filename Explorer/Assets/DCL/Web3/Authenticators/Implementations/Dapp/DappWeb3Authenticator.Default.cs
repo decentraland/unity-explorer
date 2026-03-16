@@ -10,6 +10,7 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
+#if !UNITY_WEBGL
     public partial class DappWeb3Authenticator
     {
         public class Default : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
@@ -87,4 +88,5 @@ namespace DCL.Web3.Authenticators
             }
         }
     }
+#endif
 }

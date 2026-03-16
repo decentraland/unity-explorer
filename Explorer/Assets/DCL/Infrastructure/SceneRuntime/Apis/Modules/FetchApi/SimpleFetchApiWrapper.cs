@@ -1,12 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using JetBrains.Annotations;
-using Microsoft.ClearScript;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules.FetchApi
 {
@@ -31,11 +28,11 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             {
                 ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct, isLocalSceneDevelopment);
 
-                var headersToJs = new PropertyBag();
+                var headersToJs = new Dictionary<string, string>();
 
                 if (response.Headers != null)
                     foreach (KeyValuePair<string, string> header in response.Headers)
-                        headersToJs.Add(header.Key, header.Value);
+                        headersToJs[header.Key] = header.Value;
 
                 return new ResponseToJs
                 {
@@ -62,7 +59,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             public string url;
             public string data;
             public string type;
-            public PropertyBag headers;
+            public Dictionary<string, string> headers;
         }
     }
 }

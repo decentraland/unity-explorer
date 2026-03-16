@@ -26,6 +26,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine.Scripting;
+using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -88,7 +89,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             var nativeData = downloadHandler.nativeData;
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             using (deserializationSampler.Auto())
             {

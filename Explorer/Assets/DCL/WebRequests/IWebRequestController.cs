@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Utility.Types;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -14,7 +15,7 @@ namespace DCL.WebRequests
     {
         public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { WebRequestUtils.NOT_FOUND };
 
-        public IRequestHub RequestHub { get; }
+        internal IRequestHub requestHub { get; }
 
         public UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
@@ -23,8 +24,8 @@ namespace DCL.WebRequests
 #if UNITY_EDITOR
         public static int TOTAL_BUDGET = 15;
 
-        public static readonly IWebRequestController TEST = new WebRequestController(
-            IWebRequestsAnalyticsContainer.TEST,
+        public static readonly IWebRequestController DEFAULT = new WebRequestController(
+            IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
                 DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY)

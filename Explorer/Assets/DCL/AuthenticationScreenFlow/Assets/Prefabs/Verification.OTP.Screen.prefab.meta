@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/AuthenticationScreenFlow/Assets/Prefabs/Verification.OTP.Screen.prefab.meta
 guid: 8759ec5bb9160bc4e8d6c804318bbcdf
+========
+guid: 421866c63941c466aaa78f9f5098685b
+>>>>>>>> origin/shape/webgl_client_merge:Explorer/Assets/DCL/AvatarRendering/Emotes/EmbeddedEmotes/CommonEmotes/Cry/Cry_Emote.prefab.meta
 PrefabImporter:
   externalObjects: {}
   userData: 

@@ -1,4 +1,6 @@
-﻿using CommunicationData.URLHelpers;
+﻿#if !NO_LIVEKIT_MODE
+
+using CommunicationData.URLHelpers;
 using DCL.Character;
 using Utility;
 
@@ -17,3 +19,5 @@ namespace DCL.Multiplayer.Profiles.Poses
             remoteMetadata.Metadata.TryGetValue(walletId, out IRemoteMetadata.ParticipantMetadata metadata) ? metadata.LambdasEndpoint : null;
     }
 }
+
+#endif

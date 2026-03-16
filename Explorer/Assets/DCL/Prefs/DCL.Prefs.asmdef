@@ -1,9 +1,7 @@
 {
     "name": "DCL.Prefs",
     "rootNamespace": "",
-    "references": [
-        "GUID:767f25efd20d4339a8b1683f8dc1d7d8"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

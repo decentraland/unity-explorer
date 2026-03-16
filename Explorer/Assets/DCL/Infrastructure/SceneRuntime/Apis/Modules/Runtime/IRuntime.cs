@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using ECS;
-using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules.Runtime
 {
@@ -32,7 +31,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
         [Serializable]
         public struct ReadFileResponse
         {
-            public ITypedArray<byte> content;
+            public IDCLTypedArray<byte> content;
             public string hash;
         }
 

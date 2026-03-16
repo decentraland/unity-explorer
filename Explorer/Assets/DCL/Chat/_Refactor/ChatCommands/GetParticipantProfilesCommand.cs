@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Chat.History;
 using DCL.Chat.ChatServices;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -47,3 +49,5 @@ namespace DCL.Chat.ChatCommands
         }
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.MapLayers.HomeMarker;
@@ -209,3 +211,5 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
     }
 }
+
+#endif

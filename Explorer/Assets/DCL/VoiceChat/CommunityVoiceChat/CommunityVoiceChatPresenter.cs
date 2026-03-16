@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities.CommunitiesDataProvider;
@@ -286,7 +288,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnParticipantIsSpeaking(bool isSpeaking, VoiceChatParticipantState participantState)
         {
             if (isSpeaking)
-                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name);
+                currentlySpeakingUsers.TryAdd(participantState.WalletId, participantState.Name.Value);
             else
                 currentlySpeakingUsers.Remove(participantState.WalletId);
 
@@ -367,3 +369,5 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         }
     }
 }
+
+#endif

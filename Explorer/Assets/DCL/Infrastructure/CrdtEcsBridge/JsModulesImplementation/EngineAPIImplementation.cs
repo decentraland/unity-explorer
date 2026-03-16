@@ -1,4 +1,4 @@
-﻿using CRDT.Deserializer;
+using CRDT.Deserializer;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
@@ -12,7 +12,6 @@ using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -35,12 +34,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly MultiThreadSync multiThreadSync;
-        private readonly MultiThreadSync.Owner syncOwner;
-        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
+        private readonly IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
+
+#if !UNITY_WEBGL
+        private readonly MultiThreadSync multiThreadSync;
+        private readonly MultiThreadSync.Owner syncOwner;
+#endif
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
 
@@ -51,11 +53,14 @@ namespace CrdtEcsBridge.JsModulesImplementation
             ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
-            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            IOutgoingCRDTMessagesProvider outgoingCrdtMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
-            ISceneExceptionsHandler exceptionsHandler,
-            MultiThreadSync multiThreadSync,
-            MultiThreadSync.Owner syncOwner)
+            ISceneExceptionsHandler exceptionsHandler
+#if !UNITY_WEBGL
+            ,MultiThreadSync multiThreadSync,
+            MultiThreadSync.Owner syncOwner
+#endif
+        )
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -63,9 +68,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtDeserializer = crdtDeserializer;
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
-            this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+            this.outgoingCrdtMessagesProvider = outgoingCrdtMessagesProvider;
+
+#if !UNITY_WEBGL
             this.multiThreadSync = multiThreadSync;
             this.syncOwner = syncOwner;
+#endif
+
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -170,7 +179,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() =>
-            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
+            outgoingCrdtMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
 
         protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
 
@@ -235,7 +244,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
+#if !UNITY_WEBGL
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+#endif
 
                 applyBufferSampler.Begin();
 

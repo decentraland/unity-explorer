@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: '[QA] (Enter Section) | (Enter Title)' 
-labels: 'bug, new, need QA validation, qa-team'
+title: '[QA] Section | Title' 
+labels: 'bug, new, need QA validation'
 assignees: ''
 
 

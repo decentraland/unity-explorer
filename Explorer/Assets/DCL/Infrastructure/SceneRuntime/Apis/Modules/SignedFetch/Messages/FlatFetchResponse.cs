@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine.Networking;
-using PropertyBag = Microsoft.ClearScript.PropertyBag;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
 {
@@ -24,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public readonly long status;
         public readonly string statusText;
         public readonly string body;
-        public readonly PropertyBag headers;
+        public readonly Dictionary<string, string> headers;
 
         public FlatFetchResponse(bool ok, long status, string statusText, string body, Dictionary<string, string> headers)
         {
@@ -32,10 +31,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
             this.status = status;
             this.statusText = statusText;
             this.body = body;
-            this.headers = new PropertyBag();
-
-            foreach (var header in headers)
-                this.headers.Add(header.Key, header.Value);
+            this.headers = new Dictionary<string, string>(headers);
         }
 
         public static FlatFetchResponse Cancelled = new (true, 0, "Cancelled", "Request was canceled.", new Dictionary<string, string>());

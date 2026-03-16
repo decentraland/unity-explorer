@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Profiles.Poses;
@@ -24,3 +26,5 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         }
     }
 }
+
+#endif

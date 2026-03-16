@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.SystemGroups;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
@@ -31,3 +33,5 @@ namespace DCL.PluginSystem.World
         }
     }
 }
+
+#endif

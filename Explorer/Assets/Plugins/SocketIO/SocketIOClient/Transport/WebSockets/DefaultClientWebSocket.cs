@@ -4,9 +4,8 @@ using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
 using System.Net;
-using System.Net.WebSockets;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 #if NET461_OR_GREATER
 using System.Reflection;
@@ -19,7 +18,7 @@ namespace SocketIOClient.Transport.WebSockets
     {
         public DefaultClientWebSocket()
         {
-            _ws = new ClientWebSocket();
+            _ws = new Utility.Networking.DCLWebSocket();
 #if NET461_OR_GREATER
             AllowHeaders();
 #endif
@@ -67,37 +66,37 @@ namespace SocketIOClient.Transport.WebSockets
         }
 #endif
 
-        private readonly ClientWebSocket _ws;
+        private readonly Utility.Networking.DCLWebSocket _ws;
         private readonly IMemoryPool memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
 
-        public WebSocketState State => (WebSocketState)_ws.State;
+        public SocketIOClient.Transport.WebSockets.WebSocketState State =>
+            (SocketIOClient.Transport.WebSockets.WebSocketState)_ws.State;
 
-        public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        public async UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+            await _ws.ConnectAsync(uri, cancellationToken);
         }
 
-        public async Task DisconnectAsync(CancellationToken cancellationToken)
+        public async UniTask DisconnectAsync(CancellationToken cancellationToken)
         {
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
+            await _ws.CloseAsync(Utility.Networking.WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken);
         }
 
-        public async Task SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        public async UniTask SendAsync(ReadOnlyMemory<byte> data, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
         {
-            WebSocketMessageType msgType = WebSocketMessageType.Text;
+            Utility.Networking.WebSocketMessageType msgType = Utility.Networking.WebSocketMessageType.Text;
 
-            if (type == TransportMessageType.Binary) { msgType = WebSocketMessageType.Binary; }
+            if (type == TransportMessageType.Binary) { msgType = Utility.Networking.WebSocketMessageType.Binary; }
 
-            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
+            await _ws.SendAsync(data, msgType, endOfMessage, cancellationToken);
         }
 
-        public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
+        public async UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
             var memory = memoryPool.Memory(bufferSize);
             byte[] buffer = memory.DangerousBuffer();
 
-            System.Net.WebSockets.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!
-                                                                            .ConfigureAwait(false);
+            Utility.Networking.WebSocketReceiveResult? result = await _ws.ReceiveAsync(buffer, cancellationToken)!;
             return new WebSocketReceiveResult(
                 memory,
                 result.Count,
@@ -105,14 +104,6 @@ namespace SocketIOClient.Transport.WebSockets
                 (TransportMessageType)result.MessageType
             );
         }
-
-        public void AddHeader(string key, string val)
-        {
-            _ws.Options.SetRequestHeader(key, val);
-        }
-
-        public void SetProxy(IWebProxy proxy) =>
-            _ws.Options.Proxy = proxy;
 
         public void Dispose()
         {

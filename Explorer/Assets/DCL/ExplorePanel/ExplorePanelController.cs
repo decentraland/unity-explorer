@@ -60,9 +60,13 @@ namespace DCL.ExplorePanel
         public NavmapController NavmapController { get; }
         public CameraReelController CameraReelController { get; }
         public SettingsController SettingsController { get; }
+
+#if !NO_LIVEKIT_MODE
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
+#endif
         public PlacesController PlacesController { get; }
-        public EventsController EventsController { get; }
+        public EventsContlroler EventsController { get; }
+
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -80,7 +84,9 @@ namespace DCL.ExplorePanel
             CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
+#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController communitiesBrowserController,
+#endif
             PlacesController placesController,
             EventsController eventsController,
             IInputBlock inputBlock,
@@ -102,7 +108,9 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = includeCameraReel;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.sharedSpaceManager = sharedSpaceManager;
+#if !NO_LIVEKIT_MODE
             CommunitiesBrowserController = communitiesBrowserController;
+#endif
             PlacesController = placesController;
             EventsController = eventsController;
             this.eventsApiService = eventsApiService;
@@ -148,7 +156,9 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, SettingsController },
                 { ExploreSections.Backpack, backpackController },
                 { ExploreSections.CameraReel, CameraReelController },
-                { ExploreSections.Communities, CommunitiesBrowserController },
+#if !NO_LIVEKIT_MODE
+                 { ExploreSections.Communities, CommunitiesBrowserController },
+#endif
                 { ExploreSections.Places, PlacesController },
                 { ExploreSections.Events, EventsController },
             };

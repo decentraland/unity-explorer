@@ -32,7 +32,11 @@ namespace DCL.SDKComponents.MediaStream
         private const string CONTENT_SERVER_PREFIX = "/content/contents";
 
         private readonly ISceneData sceneData;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRoom streamingRoom;
+#endif
+
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
@@ -44,12 +48,29 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
-        public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
-            IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache)
+        public MediaFactory(
+                ISceneData sceneData,
+
+#if !NO_LIVEKIT_MODE
+                IRoom streamingRoom,
+#endif
+
+                MediaPlayerCustomPool mediaPlayerPool,
+                ISceneStateProvider sceneStateProvider,
+                MediaVolume mediaVolume,
+                IObjectPool<RenderTexture> videoTexturesPool,
+                IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
+                World world,
+                IWebRequestController webRequestController,
+                IPerformanceBudget frameBudget,
+                AssetPreLoadCache assetPreLoadCache))
         {
             this.sceneData = sceneData;
+
+#if !NO_LIVEKIT_MODE
             this.streamingRoom = streamingRoom;
+#endif
+
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
@@ -143,8 +164,10 @@ namespace DCL.SDKComponents.MediaStream
 
             if (url.IsLivekitAddress())
             {
+#if !UNITY_WEBGL
                 isValidLocalPath = true;
                 isValidStreamUrl = true;
+#endif
             }
 
             else
@@ -172,11 +195,20 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
                 MultiMediaPlayer player = address.Match(
                     (streamingRoom, mediaPlayerPool),
                     onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
                     onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
                 );
+#else
+            // For now: LivekitPlayer is not available on WebGL; LiveKit addresses produce a silent no-op AvPro player
+            MultiMediaPlayer player = address.Match(
+                mediaPlayerPool,
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.GetOrCreateReusableMediaPlayer(address.Url), ctx)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.GetOrCreateReusableMediaPlayer(string.Empty), ctx))
+            );
+#endif
 
                 component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
                 {

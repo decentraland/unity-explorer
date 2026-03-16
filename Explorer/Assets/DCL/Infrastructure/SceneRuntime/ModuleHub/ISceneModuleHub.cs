@@ -1,4 +1,3 @@
-using Microsoft.ClearScript.V8;
 using System.Collections.Generic;
 
 namespace SceneRuntime.ModuleHub
@@ -7,6 +6,6 @@ namespace SceneRuntime.ModuleHub
     {
         void LoadAndCompileJsModules(IReadOnlyDictionary<string, string> sources);
 
-        V8Script ModuleScript(string moduleName);
+        ICompiledScript ModuleScript(string moduleName);
     }
 }

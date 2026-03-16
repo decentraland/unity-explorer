@@ -1,11 +1,15 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
+
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit;
 using LiveKit.Rooms.Tracks;
 using LiveKit.RtcSources.Video;
+using LiveKit.Rooms;
+using LiveKit.Rooms.Tracks;
 
 namespace DCL.Multiplayer.Connections.Rooms.Interior
 {
-    public class InteriorLocalTracks: ILocalTracks, IInterior<ILocalTracks>
+    public class InteriorLocalTracks : ILocalTracks, IInterior<ILocalTracks>
     {
         private ILocalTracks assigned = NullLocalTracks.INSTANCE;
 
@@ -24,3 +28,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         }
     }
 }
+
+#endif

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -35,6 +35,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         private void UpdateIndices([Data] IReadOnlyDictionary<int, FixedComputeBufferHandler.Slice> remapping, ref AvatarCustomSkinningComponent avatarCustomSkinningComponent)
         {
+            if (avatarCustomSkinningComponent.VertsOutRegion.Length == 0) return;
             if (remapping.TryGetValue(avatarCustomSkinningComponent.VertsOutRegion.StartIndex, out FixedComputeBufferHandler.Slice newRegion))
                 avatarCustomSkinningComponent.SetVertOutRegion(newRegion);
         }

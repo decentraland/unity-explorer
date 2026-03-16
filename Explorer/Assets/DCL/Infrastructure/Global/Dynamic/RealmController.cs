@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -29,8 +29,10 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
+using Temp.Helper.WebClient;
 using Unity.Mathematics;
 using DCL.PrivateWorlds;
+using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -128,6 +130,7 @@ namespace Global.Dynamic
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
+            WebGLDebugLog.Log("RealmController.cs", "SetRealmAsync start", realm.ToString());
             World world = globalWorld!.EcsWorld;
 
             try { await UnloadCurrentRealmAsync(); }
@@ -143,9 +146,13 @@ namespace Global.Dynamic
                 serverAbout.Clear();
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+                // Unity JsonParser sometimes NREs on WebGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Newtonsoft);
+#else
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+#endif
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
-
                 string hostname = ResolveHostname(realm, result);
 
                 float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }
@@ -191,6 +198,7 @@ namespace Global.Dynamic
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
+                WebGLDebugLog.LogError("RealmController.cs", $"SetRealmAsync failed: {e.GetType().Name}", $"{e.Message}\n{e.StackTrace}");
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
                 throw new RealmChangeException($"Failed to connect to '{url}'", e);
             }

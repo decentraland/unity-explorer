@@ -4,20 +4,19 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using Microsoft.ClearScript;
+using DCL.WebRequests.GenericDelete;
+using SceneRuntime;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using static DCL.CrdtEcsBridge.JsModulesImplementation.SimpleFetchAdHoc;
+using UnityEngine.Networking;
 
-namespace DCL.CrdtEcsBridge.JsModulesImplementation
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SimpleFetchApiImplementation : ISimpleFetchApi
     {
-        [SuppressMessage("ReSharper", "InconsistentNaming")]
         private enum RequestMethod
         {
             GET,
@@ -33,7 +32,7 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
         private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly IProfileRepository profileRepository;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider, IProfileRepository profileRepository)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
         {
             this.sceneShortInfo = sceneShortInfo;
             this.permissionsProvider = permissionsProvider;
@@ -118,7 +117,7 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
         {
             var webRequestHeaders = new WebRequestHeadersInfo();
 
-            if (headers is IScriptObject scriptObject)
+            if (headers is IDCLScriptObject scriptObject)
             {
                 IEnumerable<string> propertyNames = scriptObject.PropertyNames.EnsureNotNull();
 
@@ -134,5 +133,35 @@ namespace DCL.CrdtEcsBridge.JsModulesImplementation
 
         private static RequestMethod ParseRequestMethod(string request) =>
             Enum.TryParse(request, true, out RequestMethod method) ? method : RequestMethod.INVALID;
+
+        private struct GenerateResponseOp<TGenericRequest> : IWebRequestOp<TGenericRequest, ISimpleFetchApi.Response>
+            where TGenericRequest: struct, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest, ITypedWebRequest
+        {
+            public async UniTask<ISimpleFetchApi.Response> ExecuteAsync(TGenericRequest request, CancellationToken ct)
+            {
+                UnityWebRequest unityWebRequest = request.UnityWebRequest;
+                string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
+                Dictionary<string, string>? responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
+                bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
+                bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
+                var requestStatus = (int)unityWebRequest.responseCode;
+                var requestStatusText = unityWebRequest.responseCode.ToString();
+                string requestUrl = unityWebRequest.url.EnsureNotNull();
+
+                var result = new ISimpleFetchApi.Response
+                {
+                    Headers = responseHeadersDictionary,
+                    Ok = requestOk,
+                    Redirected = requestRedirected,
+                    Status = requestStatus,
+                    StatusText = requestStatusText,
+                    URL = requestUrl,
+                    Data = responseData,
+                    Type = "basic", //Handle Response Types properly  type ResponseType = 'basic' | 'cors' | 'default' | 'error' | 'opaque' | 'opaqueredirect'
+                };
+
+                return result;
+            }
+        }
     }
 }

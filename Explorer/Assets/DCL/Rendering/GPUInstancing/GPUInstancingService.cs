@@ -1,4 +1,4 @@
-﻿using DCL.Diagnostics;
+using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
@@ -140,7 +140,7 @@ namespace DCL.Rendering.GPUInstancing
 
         public void RenderIndirect()
         {
-            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
+            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender || LandscapeData == null)
                 return;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
@@ -210,7 +210,7 @@ namespace DCL.Rendering.GPUInstancing
                 buffers.GroupData = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 1, 192);
                 buffers.ArrLODCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 8, sizeof(uint));
 
-                // TODO : set flag to Lock
+                // TODO : set flag to lock
                 buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
                 buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
 

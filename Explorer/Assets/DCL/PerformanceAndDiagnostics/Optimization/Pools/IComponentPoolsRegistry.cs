@@ -7,7 +7,7 @@ namespace DCL.Optimization.Pools
     ///     The registry of the pools of components including both SDK ones and non-SDK ones. <br />
     ///     The set of the pools of components should be provided
     ///     as a shared instance across the worlds and CRDT Deserialization <br />
-    ///     Thread-safe
+    ///     Threadsafe
     /// </summary>
     public interface IComponentPoolsRegistry : IDisposable
     {

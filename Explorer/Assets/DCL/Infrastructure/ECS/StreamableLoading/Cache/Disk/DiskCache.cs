@@ -1,7 +1,9 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
 using DCL.Utility.Types;
-using DCL.WebRequests.Dumper;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
@@ -27,9 +29,6 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator
         {
-            if (WebRequestsDebugControl.DisableCache)
-                return EnumResult<TaskError>.SuccessResult();
-
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
             string path = PathFrom(key, extension);
             bool existed = File.Exists(path);
@@ -67,9 +66,6 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {
-            if (WebRequestsDebugControl.DisableCache)
-                return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
-
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
             try
@@ -103,9 +99,6 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token)
         {
-            if (WebRequestsDebugControl.DisableCache)
-                return EnumResult<TaskError>.SuccessResult();
-
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
             try
@@ -165,10 +158,10 @@ namespace ECS.StreamableLoading.Cache.Disk
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
             T resultDeserialize = await serializer.DeserializeAsync(data.Value, token);
-
+            
             if(resultDeserialize != null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(resultDeserialize));
-
+            
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
         }
 
@@ -176,3 +169,5 @@ namespace ECS.StreamableLoading.Cache.Disk
             diskCache.RemoveAsync(key, extension, token);
     }
 }
+
+#endif

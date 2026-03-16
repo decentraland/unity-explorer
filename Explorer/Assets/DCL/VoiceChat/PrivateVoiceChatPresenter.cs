@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.VoiceChat
 {
@@ -58,7 +59,7 @@ namespace DCL.VoiceChat
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             if (connectionUpdate == ConnectionUpdate.Connected)
                 view.SetInCallSection();
@@ -80,15 +81,15 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile.CompactInfo? profile = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
-                    if (profile != null) userName = profile.Value.Name;
+                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
+                    if (profileAsync != null) userName = profileAsync.Name;
                 }
             }
 
             view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, userName);
         }
 
-        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
 
         }

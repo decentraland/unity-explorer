@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using System;
 using Arch.Core;
 using Arch.SystemGroups;
@@ -275,15 +277,14 @@ namespace DCL.PluginSystem.Global
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
 
-            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus, userBlockingCacheProxy);
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, eventBus);
 
             var communityUserStateService = new CommunityUserStateService(
                 communityDataProvider,
                 communitiesEventBus,
                 eventBus,
                 chatHistory,
-                web3IdentityCache,
-                userBlockingCacheProxy);
+                web3IdentityCache);
 
             pluginScope.Add(communityUserStateService);
 
@@ -445,3 +446,5 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
     }
 }
+
+#endif

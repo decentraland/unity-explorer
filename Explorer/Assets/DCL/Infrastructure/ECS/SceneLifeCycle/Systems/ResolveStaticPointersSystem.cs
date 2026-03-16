@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
@@ -14,6 +14,7 @@ using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using Utility;
 
@@ -61,6 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
+                    WebGLDebugLog.Log("ResolveStaticPointersSystem", "CreateSceneFacadePromise", $"parcel=({parcel.x},{parcel.y})", "H5");
                     CreateSceneFacadePromise.Execute(World, entity, in definition, partitionComponent);
                     return;
                 }

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -36,10 +36,16 @@ namespace ECS.Unity.Materials.Systems
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
-        private readonly IMediaFactory mediaFactory;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget,
-            IMediaFactory mediaFactory) : base(world)
+        private readonly IMediaFactory? mediaFactory;
+
+        public StartMaterialsLoadingSystem(
+                World world,
+                DestroyMaterial destroyMaterial,
+                ISceneData sceneData,
+                int attemptsCount,
+                IPerformanceBudget capFrameTimeBudget,
+                IMediaFactory? mediaFactory = null) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
@@ -214,6 +220,8 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponentValue.IsVideoTexture)
             {
+                if (mediaFactory == null) return false;
+
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
                 if (!mediaFactory.TryAddConsumer(entity, textureComponentValue.VideoPlayerEntity, out TextureData? textureData))

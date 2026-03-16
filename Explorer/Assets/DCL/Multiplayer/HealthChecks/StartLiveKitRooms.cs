@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -31,3 +33,5 @@ namespace DCL.Multiplayer.HealthChecks
         }
     }
 }
+
+#endif

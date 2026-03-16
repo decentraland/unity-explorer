@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Utilities;
@@ -56,7 +55,7 @@ namespace DCL.Friends.UI.PushNotifications
             }
         }
 
-        private void FriendConnected(Profile.CompactInfo friendProfile)
+        private void FriendConnected(FriendProfile friendProfile)
         {
             toastAnimationCancellationTokenSource = toastAnimationCancellationTokenSource.SafeRestart();
             ResolveThumbnailAndShowAsync(toastAnimationCancellationTokenSource.Token).Forget();

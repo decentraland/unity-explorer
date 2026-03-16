@@ -42,6 +42,7 @@ namespace Global.Dynamic
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
         private bool isLocalSceneDevelopmentRealm;
+        private Vector2Int? genesisIsolatedParcel;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -55,6 +56,9 @@ namespace Global.Dynamic
 
         public IReadOnlyList<int2> GetPredefinedParcels()
         {
+            if (genesisIsolatedParcel.HasValue)
+                return new List<int2> { new (genesisIsolatedParcel.Value.x, genesisIsolatedParcel.Value.y) };
+
             if (predefinedScenes.enabled)
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
@@ -93,6 +97,13 @@ namespace Global.Dynamic
 
             if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
                 ParsePositionAppParameter(parcelToTeleportOverride);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.GENESIS_SCENE, out string? genesisSceneValue)
+                && RealmHelper.TryParseParcelFromString(genesisSceneValue, out Vector2Int parcel))
+            {
+                genesisIsolatedParcel = parcel;
+                targetScene = parcel;
+            }
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
@@ -160,6 +171,10 @@ namespace Global.Dynamic
 
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
+            // URL-driven genesis scene (?genesisScene=x,y) wins over feature flags and home position
+            if (genesisIsolatedParcel.HasValue)
+                return;
+
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
                 return;

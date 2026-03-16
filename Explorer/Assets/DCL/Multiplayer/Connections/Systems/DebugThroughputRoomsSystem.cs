@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !NO_LIVEKIT_MODE
+
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
@@ -57,8 +59,8 @@ namespace DCL.Multiplayer.Connections.Systems
             infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
             infoWidget.SetVisibilityBinding(infoVisibilityBinding);
 
-            this.island = BufferBinding.CreateAndAttach(infoWidget, islandBufferBunch, "Island");
-            this.scene = BufferBinding.CreateAndAttach(infoWidget, sceneBufferBunch, "Scene");
+            island = BufferBinding.CreateAndAttach(infoWidget, islandBufferBunch, "Island");
+            scene = BufferBinding.CreateAndAttach(infoWidget, sceneBufferBunch, "Scene");
 
             mutableListScene = new List<(string name, string value)>();
             livekitListScene = new ElementBinding<IReadOnlyList<(string name, string value)>>(mutableListScene);
@@ -115,12 +117,16 @@ namespace DCL.Multiplayer.Connections.Systems
 
         private static void CollectAndDisplay(IParticipantsHub participantsHub, List<(string name, string value)> mutableList, ElementBinding<IReadOnlyList<(string name, string value)>> binding)
         {
-            var participants = participantsHub.RemoteParticipantIdentities();
+            IReadOnlyDictionary<string, LKParticipant> participants = participantsHub.RemoteParticipantIdentities();
             mutableList.Clear();
 
             foreach ((string sid, _) in participants)
             {
-                var participant = participantsHub.RemoteParticipant(sid);
+#if UNITY_WEBGL && (!UNITY_EDITOR)
+                var participant = participantsHub.RemoteParticipant(sid).Value;
+#else
+                LKParticipant? participant = participantsHub.RemoteParticipant(sid);
+#endif
                 if (participant == null) continue;
                 mutableList.Add((sid, participant.ConnectionQuality.ToString()));
             }
@@ -179,3 +185,5 @@ namespace DCL.Multiplayer.Connections.Systems
         }
     }
 }
+
+#endif

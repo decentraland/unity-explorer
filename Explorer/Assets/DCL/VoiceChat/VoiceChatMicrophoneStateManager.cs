@@ -61,8 +61,14 @@ namespace DCL.VoiceChat
                                            (!isRoomConnected && currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTING_CALL &&
                                             currentCallStatus != VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
+// don't update micro on webGL
+#if !UNITY_WEBGL
             if (shouldEnableMicrophone) { microphoneHandler.EnableMicrophoneForCall(); }
             else if (shouldDisableMicrophone) { microphoneHandler.DisableMicrophoneForCall(); }
+#else
+            UnityEngine.Debug.LogError("VoiceChatMicrophoneStateManager.cs not available in WebGL"); 
+#endif
+
         }
     }
 }

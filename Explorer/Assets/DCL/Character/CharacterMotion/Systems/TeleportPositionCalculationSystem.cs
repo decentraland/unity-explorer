@@ -27,7 +27,9 @@ namespace DCL.Character.CharacterMotion.Systems
         private SingleInstanceEntity? cameraCached;
         private SingleInstanceEntity cameraEntity => cameraCached ??= World.CacheCamera();
 
-        public TeleportPositionCalculationSystem(World world, ILandscape landscape) : base(world)
+        public TeleportPositionCalculationSystem(World world
+                , ILandscape landscape
+                ) : base(world)
         {
             this.landscape = landscape;
         }
@@ -48,9 +50,24 @@ namespace DCL.Character.CharacterMotion.Systems
             if (sceneDef == null)
             {
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
-                teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
+
+                teleportIntent.Position = targetWorldPosition
+                    .WithTerrainOffset(
+                            landscape
+                            .GetHeight(
+                                targetWorldPosition.x,
+                                targetWorldPosition.z
+                                )
+                            );
             }
-            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) { teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation(); }
+
+            else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
+            {
+                teleportIntent.Position = ParcelMathHelper
+                    .GetPositionByParcelPosition(parcel)
+                    .WithErrorCompensation();
+            }
+
             else
             {
                 (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);

@@ -2,6 +2,7 @@
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NUnit.Framework;
+using SceneRuntime.V8;
 using UnityEngine;
 
 namespace SceneRuntime.Tests
@@ -15,7 +16,7 @@ namespace SceneRuntime.Tests
         public void SetUp()
         {
             engineFactory = new V8EngineFactory();
-            engine = engineFactory.Create(new SceneShortInfo(new Vector2Int(0, 0), "test"));
+            engine = engineFactory.CreateV8Engine(new SceneShortInfo(new Vector2Int(0, 0), "test"));
         }
 
         [TearDown]

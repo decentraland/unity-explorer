@@ -4,7 +4,7 @@ namespace DCL.Input
     {
         bool IsLocked();
 
-        void Lock();
+        void Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         void Unlock();
 

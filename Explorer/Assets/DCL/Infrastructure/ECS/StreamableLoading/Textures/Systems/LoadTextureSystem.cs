@@ -41,18 +41,18 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<TextureData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(MediaFactory)} synchronously");
+            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by MediaFactory synchronously");
 
             Texture2D? result;
 
             if (intention.IsAvatarTexture)
             {
-                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(intention.AvatarTextureUserId!, ct);
+                Profile? profile = await profileRepository.GetAsync(intention.AvatarTextureUserId!, ct);
 
                 if (profile == null)
                     throw new Exception($"No profile found for {intention.AvatarTextureUserId}");
 
-                result = await TryResolveAvatarTextureAsync(profile.Value.FaceSnapshotUrl, intention, ct);
+                result = await TryResolveAvatarTextureAsync(profile.Avatar.FaceSnapshotUrl, intention, ct);
             }
             else
             {

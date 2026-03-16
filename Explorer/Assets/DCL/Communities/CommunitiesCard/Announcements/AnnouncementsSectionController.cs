@@ -144,7 +144,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 return;
             }
 
-            Profile? profile = await profileRepo.GetAsync(identity.Identity!.Address, ct, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+            Profile? profile = await profileRepo.GetAsync(identity.Identity!.Address, ct);
             view.SetProfile(profile, profileRepositoryWrapper);
         }
 

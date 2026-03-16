@@ -12,6 +12,7 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -527,7 +528,7 @@ namespace DCL.Chat.ChatMessages
             view.ShowLastMessage(useSmoothScroll: true);
         }
 
-        protected override void Activate()
+        protected override void Activate(ControllerNoData input)
         {
             view.Show();
 

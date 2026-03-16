@@ -8,7 +8,7 @@ using Utility;
 namespace DCL.Multiplayer.Profiles.Tables
 {
     /// <summary>
-    ///     NOT Thread-safe
+    ///     NOT thread-safe
     /// </summary>
     public class EntityParticipantTable : IEntityParticipantTable
     {

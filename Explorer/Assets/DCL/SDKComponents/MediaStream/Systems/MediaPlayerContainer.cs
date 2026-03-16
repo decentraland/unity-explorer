@@ -24,19 +24,37 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
+
+#if !NO_LIVEKIT_MODE
         private readonly ObjectProxy<IRoomHub> roomHubProxy;
+#endif
+
         private readonly CacheCleaner cacheCleaner;
         private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly MediaVolume mediaVolume;
 
-        public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache)
+        public MediaPlayerContainer(
+                IAssetsProvisioner assetsProvisioner,
+                IWebRequestController webRequestController,
+                VolumeBus volumeBus,
+                IPerformanceBudget frameBudget,
+
+#if !NO_LIVEKIT_MODE
+                ObjectProxy<IRoomHub> roomHubProxy,
+#endif
+
+                CacheCleaner cacheCleaner
+              , AssetPreLoadCache assetPreLoadCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
+
+#if !NO_LIVEKIT_MODE
             this.roomHubProxy = roomHubProxy;
+#endif
+
             this.cacheCleaner = cacheCleaner;
             this.assetPreLoadCache = assetPreLoadCache;
 

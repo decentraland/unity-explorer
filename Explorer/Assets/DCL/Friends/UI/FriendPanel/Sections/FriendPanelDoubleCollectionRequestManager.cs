@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
@@ -25,7 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private bool excludeFirstCollection;
         private bool excludeSecondCollection;
 
-        public event Action<Profile.CompactInfo>? ElementClicked;
+        public event Action<FriendProfile>? ElementClicked;
 
         protected FriendPanelDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -55,9 +54,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected abstract int GetFirstCollectionCount();
         protected abstract int GetSecondCollectionCount();
 
-        protected abstract Profile.CompactInfo GetFirstCollectionElement(int index);
-
-        protected abstract Profile.CompactInfo GetSecondCollectionElement(int index);
+        protected abstract FriendProfile GetFirstCollectionElement(int index);
+        protected abstract FriendProfile GetSecondCollectionElement(int index);
 
         protected override int GetListViewElementsCount()
         {
@@ -105,10 +103,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
                     int collectionIndex = index - 1;
-                    Profile.CompactInfo friendProfile = GetFirstCollectionElement(collectionIndex);
+                    FriendProfile friendProfile = GetFirstCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
@@ -129,10 +127,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
                     int collectionIndex = index - onlineFriendMarker - 2;
-                    Profile.CompactInfo friendProfile = GetSecondCollectionElement(collectionIndex);
+                    FriendProfile friendProfile = GetSecondCollectionElement(collectionIndex);
                     friendListUserView.Configure(friendProfile, profileRepositoryWrapper);
                     CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
-                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.UserId]);
+                    friendListUserView.ConfigureThumbnailClickData(thumbnailContextMenuActions[friendProfile.Address.ToString()]);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -20,6 +20,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -61,18 +62,31 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
-                    suppressErrors: true); // Suppress errors because here we have our own error handling
+            AssetBundle? assetBundle = null;
+            AssetBundleLoadingResult? assetBundleResult = null;
 
-            AssetBundle? assetBundle = assetBundleResult.AssetBundle;
+#if UNITY_WEBGL
+            if (ShaderBundlePreloader.TryGetPreloadedBundle(intention.Hash ?? "", out AssetBundle? preloaded))
+                assetBundle = preloaded;
+#endif
+
+            if (assetBundle == null)
+            {
+                assetBundleResult = await webRequestController
+                    .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
+                        suppressErrors: true); // Suppress errors because here we have our own error handling
+                assetBundle = assetBundleResult.Value.AssetBundle;
+            }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
+            {
+                string error = assetBundleResult?.DataProcessingError ?? "unknown";
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {error}");
+            }
 
             try
             {
@@ -90,7 +104,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 // Switch to thread pool to parse JSONs
 
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
                 AssetBundleData[] dependencies;
@@ -117,11 +131,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
                     source, intention.IsDependency, intention.LookForDependencies, ct);
+                return result;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache

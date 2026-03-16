@@ -5,7 +5,7 @@ using UnityEngine.Pool;
 namespace DCL.Optimization.Pools
 {
     /// <summary>
-    /// Entry point for Thread-safe pools dedicated to SDK/ECS components
+    /// Entry point for thread-safe pools dedicated to SDK/ECS components
     /// </summary>
     public static class ComponentPool
     {

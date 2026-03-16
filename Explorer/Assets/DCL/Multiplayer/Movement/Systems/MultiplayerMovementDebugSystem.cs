@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !NO_LIVEKIT_MODE
+
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
@@ -67,9 +69,18 @@ namespace DCL.Multiplayer.Movement.Systems
         private bool useLinear;
         private string debugProfileId;
 
-        internal MultiplayerMovementDebugSystem(World world, Entity playerEntity, IRealmData realmData, IDebugContainerBuilder debugBuilder, RemoteEntities remoteEntities,
-            ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IMultiplayerMovementSettings mainSettings,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRemoteMetadata remoteMetadata) : base(world)
+        internal MultiplayerMovementDebugSystem(
+                World world, 
+                Entity playerEntity, 
+                IRealmData realmData, 
+                IDebugContainerBuilder debugBuilder, 
+                RemoteEntities remoteEntities,
+                ExposedTransform playerTransform, 
+                MultiplayerDebugSettings debugSettings, 
+                IMultiplayerMovementSettings mainSettings,
+                IReadOnlyEntityParticipantTable entityParticipantTable, 
+                IRemoteMetadata remoteMetadata
+                ) : base(world)
         {
             this.playerEntity = playerEntity;
             this.realmData = realmData;
@@ -227,3 +238,5 @@ namespace DCL.Multiplayer.Movement.Systems
         }
     }
 }
+
+#endif

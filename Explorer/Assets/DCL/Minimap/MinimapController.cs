@@ -27,7 +27,11 @@ using DCL.Chat.MessageBus;
 using DCL.Donations;
 using DCL.Donations.UI;
 using DCL.Minimap.Settings;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
+#endif
+
 using DCL.RealmNavigation;
 using DCL.UI.Controls.Configs;
 using DG.Tweening;
@@ -72,7 +76,11 @@ namespace DCL.Minimap
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ReloadSceneChatCommand reloadSceneCommand;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRoomHub roomHub;
+#endif
+
         private readonly ILoadingStatus loadingStatus;
         private readonly bool includeBannedUsersFromScene;
         private readonly HomePlaceEventBus homePlaceEventBus;
@@ -112,7 +120,11 @@ namespace DCL.Minimap
             IDecentralandUrlsSource decentralandUrls,
             IChatMessagesBus chatMessagesBus,
             ReloadSceneChatCommand reloadSceneCommand,
+
+#if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
+#endif
+
             ILoadingStatus loadingStatus,
             bool includeBannedUsersFromScene,
             HomePlaceEventBus homePlaceEventBus,
@@ -134,7 +146,11 @@ namespace DCL.Minimap
             this.decentralandUrls = decentralandUrls;
             this.chatMessagesBus = chatMessagesBus;
             this.reloadSceneCommand = reloadSceneCommand;
+
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
+
             this.loadingStatus = loadingStatus;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             this.homePlaceEventBus = homePlaceEventBus;
@@ -160,9 +176,13 @@ namespace DCL.Minimap
 
             if (includeBannedUsersFromScene)
             {
+
+#if !NO_LIVEKIT_MODE
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess -= ShowOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomConnected -= HideOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomDisconnected -= HideOwnPlayerBannedMark;
+#endif
+
                 showBannedTooltipCts.SafeCancelAndDispose();
             }
 
@@ -238,9 +258,13 @@ namespace DCL.Minimap
 
             if (includeBannedUsersFromScene)
             {
+
+#if !NO_LIVEKIT_MODE
                 roomHub.SceneRoom().CurrentSceneRoomForbiddenAccess += ShowOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomConnected += HideOwnPlayerBannedMark;
                 roomHub.SceneRoom().CurrentSceneRoomDisconnected += HideOwnPlayerBannedMark;
+#endif
+
             }
         }
 

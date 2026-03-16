@@ -1,21 +1,18 @@
-using DCL.Profiles;
+using UnityEngine;
 
 namespace DCL.Chat
 {
     /// <summary>
     ///     A subset of a Profile, stores only the necessary data to be presented by the view.
     /// </summary>
-    public readonly struct ChatMemberListData
+    public struct ChatMemberListData
     {
-        public readonly Profile.CompactInfo Profile;
-        public readonly ChatMemberConnectionStatus ConnectionStatus;
-
-        public string Name => Profile.ValidatedName;
-
-        public ChatMemberListData(Profile.CompactInfo profile, ChatMemberConnectionStatus connectionStatus)
-        {
-            Profile = profile;
-            ConnectionStatus = connectionStatus;
-        }
+        public string Id;
+        public string Name;
+        public string FaceSnapshotUrl;
+        public string WalletId;
+        public ChatMemberConnectionStatus ConnectionStatus;
+        public Color ProfileColor;
+        public bool HasClaimedName;
     }
 }

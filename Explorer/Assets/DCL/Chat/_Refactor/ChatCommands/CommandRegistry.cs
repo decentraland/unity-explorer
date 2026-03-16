@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Audio;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatServices;
@@ -183,3 +185,5 @@ namespace DCL.Chat.ChatCommands
         }
     }
 }
+
+#endif

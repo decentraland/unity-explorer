@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
+
 using LiveKit;
 using LiveKit.Internal;
 using LiveKit.Proto;
@@ -37,3 +39,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         }
     }
 }
+
+#endif

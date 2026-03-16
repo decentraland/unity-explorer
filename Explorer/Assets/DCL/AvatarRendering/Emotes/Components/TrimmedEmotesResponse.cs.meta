@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/AvatarRendering/Emotes/Components/TrimmedEmotesResponse.cs.meta
 guid: 20d8a7f3ac3140b8844aba8b08295242
+========
+guid: b4c8f8c0a66e4a6d82626049f871be30
+>>>>>>>> origin/shape/webgl_client_merge:Explorer/Assets/DCL/Profiles/Repository/RealmProfileRepository.ProfileJsonRootDtoConverter.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

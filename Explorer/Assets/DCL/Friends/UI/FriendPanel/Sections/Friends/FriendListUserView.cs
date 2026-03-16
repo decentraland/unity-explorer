@@ -1,4 +1,3 @@
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using TMPro;
@@ -21,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
 
-        public override void Configure(Profile.CompactInfo profile, ProfileRepositoryWrapper profileDataProvider)
+        public override void Configure(FriendProfile profile, ProfileRepositoryWrapper profileDataProvider)
         {
             buttons.Clear();
             buttons.Add(JumpInButton);

@@ -1,7 +1,5 @@
 ﻿using CRDT;
 using CrdtEcsBridge.PoolsProviders;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -16,7 +14,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         // Must be aligned with SDK runtime 1st-byte values at:
         // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
-        enum CommsMessageType {
+        private enum CommsMessageType {
           CRDT = 1,
           REQ_CRDT_STATE = 2,   // Special signal to receive CRDT State from a peer
           RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
@@ -27,7 +25,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-        private readonly ScriptObject eventArray;
+        private readonly IDCLScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
@@ -94,7 +92,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public ScriptObject GetResult()
+        public IDCLScriptObject GetResult()
         {
             lock (eventsToProcess)
             {
@@ -103,7 +101,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 for (var i = 0; i < eventsToProcess.Count; i++)
                 {
                     PoolableByteArray src = eventsToProcess[i];
-                    ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
+                    IDCLTypedArray<byte> dst = jsOperations.GetTempUint8Array();
                     dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
                     src.Dispose();
                     object subArray = dst.InvokeMethod("subarray", 0, src.Length);

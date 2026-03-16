@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Entities;
@@ -23,3 +25,5 @@ namespace DCL.RealmNavigation.TeleportOperations
         }
     }
 }
+
+#endif

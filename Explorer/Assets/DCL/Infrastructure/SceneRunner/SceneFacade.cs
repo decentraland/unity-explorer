@@ -1,14 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
-using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
 
@@ -18,12 +19,13 @@ namespace SceneRunner
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
+        private readonly InterlockedFlag sceneCodeIsRunning = new ();
+
+        private int intervalMS;
+
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
         public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
-
-        internal ISceneRuntime runtimeInstance => deps.Runtime;
-        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public ISceneData SceneData { get; }
 
@@ -31,9 +33,8 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        private int intervalMS;
-
-        private readonly InterlockedFlag sceneCodeIsRunning = new ();
+        internal ISceneRuntime runtimeInstance => deps.Runtime;
+        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public SceneFacade(
             ISceneData sceneData,
@@ -50,7 +51,7 @@ namespace SceneRunner
 
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
         /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
@@ -66,9 +67,20 @@ namespace SceneRunner
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
+        public void ApplyStaticMessagesIfAny()
+        {
+            if (SceneData.StaticSceneMessages.Data.Length > 0)
+                runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
+        }
+
         public void SetTargetFPS(int fps)
         {
             intervalMS = (int)(1000f / fps);
+        }
+
+        public void OpenEcsGate()
+        {
+            deps.SyncDeps.systemGroupThrottler.Open();
         }
 
         UniTask ISceneFacade.StartScene() =>
@@ -104,14 +116,14 @@ namespace SceneRunner
                 // Start the scene
                 await runtimeInstance.StartScene();
             }
-            catch (ScriptEngineException e)
+            catch (JavaScriptExecutionException e)
             {
                 sceneExceptionsHandler.OnJavaScriptException(e);
                 return;
             }
             finally { sceneCodeIsRunning.Reset(); }
 
-            MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
+            MultithreadingUtility.AssertMainThread(nameof(ISceneRuntime.StartScene));
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
@@ -130,17 +142,22 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                    deps.SyncDeps.WebGLSceneUpdateQueue.Enqueue(this, deltaTime, sceneExceptionsHandler);
+                    sceneCodeIsRunning.Reset();
+#else
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
-                    catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
+                    catch (JavaScriptExecutionException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
                     finally { sceneCodeIsRunning.Reset(); }
 
                     SceneStateProvider.TickNumber++;
+#endif
 
-                    MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+                    MultithreadingUtility.AssertMainThread(nameof(ISceneRuntime.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
@@ -150,17 +167,18 @@ namespace SceneRunner
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
-                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    await Task.Delay(sleepMS, ct);
-                    MultithreadingUtility.AssertMainThread(nameof(Task.Delay));
+                    // UPD - Task is not supported on WebGL, UniTask is used
+                    await UniTask.Delay(sleepMS, cancellationToken: ct);
+                    MultithreadingUtility.AssertMainThread(nameof(UniTask.Delay));
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
             catch (OperationCanceledException) { }
         }
 
-        private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
+        private async UniTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
             {
@@ -180,7 +198,8 @@ namespace SceneRunner
                     return false;
 
                 // Just idle, don't do anything, need to wait for an actual value
-                await Task.Delay(10, ct);
+                // WebGL-friendly
+                await UniTask.Delay(10, cancellationToken: ct);
             }
 
             return true;
@@ -195,7 +214,7 @@ namespace SceneRunner
 
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="ISceneRuntime"/> through its
         /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
@@ -212,6 +231,7 @@ namespace SceneRunner
             // Let the scene loop finish gracefully to prevent synchronous exceptions:
             // Microsoft.ClearScript.ScriptEngineException
             // Error: Cannot access a disposed object.
+
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 

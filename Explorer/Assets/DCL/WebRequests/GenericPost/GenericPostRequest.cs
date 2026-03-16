@@ -1,4 +1,4 @@
-﻿using UnityEngine.Networking;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {

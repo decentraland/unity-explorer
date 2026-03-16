@@ -91,10 +91,12 @@ class WebSocket {
                         case 'Text':
                             messageType = "text";
                             body = data.text;
+                            console.log("[WebSocketApi] receive id=" + self.webSocketId + " Text len=" + (body ? body.length : 0));
                             break;
                         case 'Binary':
                             messageType = "binary";
                             body = data.binary;
+                            console.log("[WebSocketApi] receive id=" + self.webSocketId + " Binary len=" + (body ? body.length : 0));
                             break;
                         case 'Close':
                             // this close is initiated by the server

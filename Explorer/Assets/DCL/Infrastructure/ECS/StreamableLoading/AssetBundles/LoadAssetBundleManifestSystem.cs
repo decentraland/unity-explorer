@@ -68,13 +68,18 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
 
+
+
         private void CheckSceneAbDTO(string version, string hash)
         {
             if (string.IsNullOrEmpty(version))
                 ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version missing for {hash}");
 
             var intVersion = int.Parse(version.AsSpan().Slice(1));
-            int supportedVersion = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WINDOWS : AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_MAC;
+            //TODO WEBGL: ADD AN #IF UNITY_WEB GL HERE TO AVOID THE IF
+            int supportedVersion = IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WEBGL
+                : IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WINDOWS
+                : AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_MAC;
 
             if (intVersion < supportedVersion)
                 ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version {intVersion} is not supported. Minimum supported version is {supportedVersion}, Asset bundle {hash} requires rebuild");

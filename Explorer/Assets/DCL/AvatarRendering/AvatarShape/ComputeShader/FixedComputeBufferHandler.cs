@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using DCL.Diagnostics;
 using System;
@@ -88,6 +88,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public void Release(Slice slice)
         {
+            if (slice.Length == 0) return;
+
             // When releasing a region:
             // Remove the region from the usedRegions list.
             // Merge the region with any adjacent free regions in the freeRegions list.

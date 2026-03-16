@@ -34,7 +34,7 @@ namespace DCL.Input
         public bool IsLocked() =>
             Cursor.lockState != CursorLockMode.None;
 
-        public void Lock()
+        public void Lock() // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG 
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

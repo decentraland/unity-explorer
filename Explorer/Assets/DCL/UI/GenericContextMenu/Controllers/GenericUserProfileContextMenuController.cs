@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -62,7 +66,11 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -91,13 +99,17 @@ namespace DCL.UI
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
-        private Profile.CompactInfo targetProfile;
+        private Profile targetProfile;
 
         private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -111,7 +123,11 @@ namespace DCL.UI
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.friendServiceProxy = friendServiceProxy;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.includeUserBlocking = includeUserBlocking;
@@ -162,9 +178,9 @@ namespace DCL.UI
             }
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
-            CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
+            CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action onContextMenuShow = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -199,7 +215,7 @@ namespace DCL.UI
                 }
             }
 
-            userProfileControlSettings.SetInitialData(profile, contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
@@ -240,21 +256,21 @@ namespace DCL.UI
                    };
         }
 
-        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userData.UserId);
+                    SendFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userData.UserId);
+                    RemoveFriend(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userData.UserId);
+                    CancelFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userData.UserId);
+                    AcceptFriendship(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -327,24 +343,36 @@ namespace DCL.UI
 
         private void OnMentionUserClicked(string userName)
         {
+#if !NO_LIVEKIT_MODE
             closeContextMenuTask.TrySetResult();
 
             ShowChatAsync(() =>
             {
                 chatEventBus.InsertText(userName + " ");
             }).Forget();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
+#if !NO_LIVEKIT_MODE
             closeContextMenuTask.TrySetResult();
             ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
             onChatShown?.Invoke();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnStartCallButtonClicked(string userId)
@@ -355,8 +383,12 @@ namespace DCL.UI
 
         private async UniTaskVoid StartCallAsync(string userId)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnBlockUserClicked(string userId)
@@ -364,7 +396,7 @@ namespace DCL.UI
             ShowBlockUserPromptAsync(targetProfile).Forget();
         }
 
-        private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)
+        private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
         {
             await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }

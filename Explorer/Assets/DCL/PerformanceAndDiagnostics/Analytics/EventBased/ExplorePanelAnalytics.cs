@@ -1,4 +1,4 @@
-﻿using DCL.Events;
+using DCL.Events;
 using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;

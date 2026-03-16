@@ -1,3 +1,5 @@
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -9,7 +11,7 @@ namespace Utility.Tasks
     /// <summary>
     ///     see https://source.dot.net/#System.Net.Quic/System/Net/Quic/Internal/ResettableValueTaskSource.cs
     /// </summary>
-    public class AutoResetValueTaskSource : IValueTaskSource
+    public class _AutoResetValueTaskSource : IValueTaskSource
     {
         // None -> [TryGetValueTask] -> Awaiting -> [TrySetResult|TrySetException(final: false)] -> Ready -> [GetResult] -> None
         // None -> [TrySetResult|TrySetException(final: false)] -> Ready -> [TryGetValueTask] -> [GetResult] -> None
@@ -32,9 +34,9 @@ namespace Utility.Tasks
         ///     Returns <c>true</c> is this task source has entered its final state, i.e. <see cref="TrySetResult(bool)" /> or <see cref="TrySetException(Exception, bool)" />
         ///     was called with <c>final</c> set to <c>true</c> and the result was propagated.
         /// </summary>
-        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed;
+        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
-        public AutoResetValueTaskSource()
+        public _AutoResetValueTaskSource()
         {
             valueTaskSource = new ManualResetValueTaskSourceCore<bool>();
             state = State.None;
@@ -177,3 +179,4 @@ namespace Utility.Tasks
         }
     }
 }
+#endif

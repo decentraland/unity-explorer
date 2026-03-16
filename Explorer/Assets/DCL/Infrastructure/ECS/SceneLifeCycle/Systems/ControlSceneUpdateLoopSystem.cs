@@ -14,6 +14,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.ISceneFacade, ECS.SceneLifeCycle.Components.GetSceneFacadeIntention>;
+using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -110,11 +111,14 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 try
                 {
-                    await UniTask.SwitchToThreadPool();
+                    await DCLTask.SwitchToThreadPool();
+
                     if (destroyCancellationToken.IsCancellationRequested) return;
 
-                    // Provide basic Thread Pool synchronization context
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+#if !UNITY_WEBGL
+                    // Provide basic thread-pool synchronization context
+                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
                     // FPS is set by another system
                     await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);

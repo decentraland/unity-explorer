@@ -6,7 +6,8 @@ namespace DCL.Platforms
         {
             Windows,
             Mac,
-            Linux
+            Linux,
+            WebGL
         }
 
         Kind CurrentPlatform();

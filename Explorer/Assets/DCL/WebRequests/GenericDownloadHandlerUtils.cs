@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Newtonsoft.Json;
 using System;
@@ -9,6 +9,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace DCL.WebRequests
 {
@@ -224,7 +225,7 @@ namespace DCL.WebRequests
                         text = downloadHandler.text;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         return JsonUtility.FromJson<T>(text);
                     }
@@ -233,7 +234,7 @@ namespace DCL.WebRequests
                         var nativeData = downloadHandler.nativeData;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
@@ -299,7 +300,7 @@ namespace DCL.WebRequests
                         text = downloadHandler.text;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         JsonUtility.FromJsonOverwrite(text, Target);
                     }
@@ -308,7 +309,7 @@ namespace DCL.WebRequests
                         var nativeData = downloadHandler.nativeData;
 
                         if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                            await UniTask.SwitchToThreadPool();
+                            await DCLTask.SwitchToThreadPool();
 
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 

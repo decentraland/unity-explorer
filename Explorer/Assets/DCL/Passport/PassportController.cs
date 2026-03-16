@@ -5,8 +5,12 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -24,7 +28,11 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
+#endif
+
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
@@ -95,7 +103,11 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRemoteMetadata remoteMetadata;
+#endif
+
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
@@ -115,7 +127,12 @@ namespace DCL.Passport
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
+
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -180,7 +197,11 @@ namespace DCL.Passport
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
+
+#if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
+#endif
+
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -197,7 +218,11 @@ namespace DCL.Passport
             bool includeUserBlocking,
             bool includeCommunities,
             bool isNameEditorEnabled,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
@@ -225,7 +250,11 @@ namespace DCL.Passport
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
+
+#if !NO_LIVEKIT_MODE
             this.remoteMetadata = remoteMetadata;
+#endif
+
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
@@ -244,7 +273,9 @@ namespace DCL.Passport
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
@@ -444,8 +475,12 @@ namespace DCL.Passport
 
             async UniTaskVoid OnStartCallButtonClickedAsync()
             {
+#if !NO_LIVEKIT_MODE
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
                 voiceChatOrchestrator.StartPrivateCallWithUserId(inputData.UserId);
+#else
+                Debug.LogError("Conversations are not supported without livekit");
+#endif
             }
         }
 
@@ -456,8 +491,12 @@ namespace DCL.Passport
 
         private async UniTaskVoid OnOpenConversationAsync()
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
+#else
+            throw new Exception("Conversations are not supported without livekit");
+#endif
         }
 
         private void OnJumpToFriendButtonClicked()
@@ -618,8 +657,17 @@ namespace DCL.Passport
                     characterPreviewController!.OnBeforeShow();
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct,
-                    batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                Profile? profile = await profileRepository.GetAsync(userId, 0,
+
+#if !NO_LIVEKIT_MODE
+                        remoteMetadata.GetLambdaDomainOrNull(userId),
+#else
+                        null,
+#endif
+
+                        ct,
+                        batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET
+                        );
 
                 if (profile == null)
                     return;
@@ -904,7 +952,7 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Compact, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
         private void GiftUserClicked()
@@ -976,8 +1024,8 @@ namespace DCL.Passport
                     bool friendExists = i < mutualFriendsResult.Friends.Count;
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
-                    Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend);
+                    FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }

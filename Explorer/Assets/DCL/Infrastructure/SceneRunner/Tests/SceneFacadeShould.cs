@@ -14,7 +14,6 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -31,6 +30,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.WebGL;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
@@ -50,8 +50,8 @@ using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.V8;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -104,7 +104,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
                 Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.TEST,
+                IWebRequestController.DEFAULT,
                 NullRoomHub.INSTANCE,
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
@@ -112,7 +112,12 @@ namespace SceneRunner.Tests
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>());
+                Substitute.For<DCL.Clipboard.ISystemClipboard>()
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+,
+                new WebGLSceneUpdateQueue()
+#endif
+                );
         }
 
         [OneTimeTearDown]
@@ -137,7 +142,7 @@ namespace SceneRunner.Tests
         private ISDKComponentsRegistry componentsRegistry = null!;
         private SceneFactory sceneFactory = null!;
 
-        private readonly ConcurrentBag<ISceneFacade> sceneFacades = new ();
+        private readonly DCLConcurrentBag<ISceneFacade> sceneFacades = new ();
 
         private string path;
 
@@ -223,7 +228,7 @@ namespace SceneRunner.Tests
         {
             int waitTime = lifeTimeMs.Max() + 100;
 
-            var list = new ConcurrentBag<int>();
+            var list = new DCLConcurrentBag<int>();
 
             await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
 
@@ -379,7 +384,9 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
+#if !UNITY_WEBGL
                     new MultiThreadSync(new SceneShortInfo()),
+#endif
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),

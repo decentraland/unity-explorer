@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.V8;
 using System.Collections;
 using System.Threading;
 using UnityEngine;
@@ -55,7 +56,7 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
-                using SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
+                using ISceneRuntime sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.ExecuteSceneJson();
@@ -84,7 +85,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetAPIRawDataPool(Arg.Any<int>())
                                      .Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), _ => { }));
 
-                using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
+                using ISceneRuntime sceneRuntime = await factory.CreateByPathAsync(path,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);

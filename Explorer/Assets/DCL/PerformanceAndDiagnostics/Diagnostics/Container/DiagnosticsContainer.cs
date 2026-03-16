@@ -32,7 +32,9 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
         {
+#if !UNITY_WEBGL
             settings.NotifyErrorDebugLogDisabled();
+#endif
 
             int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length;
             List<IReportHandler> handlers = new (handlersCount);
@@ -44,24 +46,27 @@ namespace DCL.Diagnostics
             SentryReportHandler? sentryReportHandler = null;
             SentrySampler? sentrySampler = null;
 
+#if !UNITY_WEBGL
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add(sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), sentrySampler = new SentrySampler(), settings.DebounceEnabled));
+#endif
 
             var logger = new ReportHubLogger(handlers);
+            ReportHub.Initialize(logger);
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
-
-            // Override Default Unity Logger
+#if !UNITY_WEBGL
             Debug.unityLogger.logHandler = logger;
-
-            // Enable Hub static accessors
-            ReportHub.Initialize(logger);
+#endif
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings, SentrySampler = sentrySampler };
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
+#if UNITY_WEBGL
+            return;
+#endif
             SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
             ReportHub.EnforceUnconditionalVerboseLogs = true;
             ReportHubLogger.AddHandler(reportHandler);

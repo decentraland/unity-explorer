@@ -1,18 +1,21 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
-using DCL.Utility.Types;
 using DCL.Utility.Exceptions;
+using DCL.Utility.Types;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
-using Microsoft.ClearScript;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -40,6 +43,7 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false)
         {
+            WebGLDebugLog.Log("TeleportToSpawnPointOperationBase.InternalExecuteAsync", "start", $"parcel=({parcel.x},{parcel.y})", "H2");
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
             EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride);
@@ -48,7 +52,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
             // See https://github.com/decentraland/unity-explorer/issues/6124 we should teleport the player even if the scene cannot be loaded due to a missing manifest
             // We need to prevent the error propagation, otherwise the load state remains invalid which provokes issues like the incapability of typing another command in the chat
-            if (res.Error is { Exception: ScriptEngineException } or { Exception: ManifestNotFoundException })
+            if (res.Error is { Exception: JavaScriptExecutionException } or { Exception: ManifestNotFoundException })
             {
                 ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Error on teleport to spawn point {parcel}: {res.Error.Value.Exception}");
                 return EnumResult<TaskError>.SuccessResult();

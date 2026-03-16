@@ -35,8 +35,7 @@ namespace DCL.Chat.ChatCommands
         {
             if (string.IsNullOrWhiteSpace(commandPayload.Body)) return;
 
-            //TODO FRAN: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
-            // What does it mean?
+            //TODO: Migrate this to CHAT CONTROLLER, as we dont know the channel here so we cant discriminate which sounds to play or not.
             if (chatSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(sound);
 

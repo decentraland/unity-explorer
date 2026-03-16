@@ -1,4 +1,7 @@
-﻿using DCL.Chat.ChatStates;
+﻿#if !NO_LIVEKIT_MODE
+using DCL.Chat.ChatStates;
+#endif
+
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using System.Collections.Generic;
@@ -198,7 +201,11 @@ namespace DCL.Chat
         /// </summary>
         public struct ChatStateChangedEvent
         {
+
+#if !NO_LIVEKIT_MODE
             public ChatState CurrentState;
+#endif
+
         }
 #endregion
 

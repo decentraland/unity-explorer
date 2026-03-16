@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -129,3 +131,5 @@ namespace DCL.Multiplayer.SDK.Tests
         }
     }
 }
+
+#endif

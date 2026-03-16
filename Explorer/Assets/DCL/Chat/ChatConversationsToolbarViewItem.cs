@@ -278,7 +278,7 @@ namespace DCL.Chat
             }
         }
 
-        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel> viewModel)
+        public virtual void BindProfileThumbnail(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModel)
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);

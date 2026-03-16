@@ -36,6 +36,6 @@ namespace DCL.WebRequests
             finally { requestCompleteDebugMetric.Value++; }
         }
 
-        IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
+        IRequestHub IWebRequestController.requestHub => origin.requestHub;
     }
 }

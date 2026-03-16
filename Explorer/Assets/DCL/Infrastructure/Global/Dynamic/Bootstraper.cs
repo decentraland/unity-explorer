@@ -31,6 +31,8 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
+using Global.Dynamic.LaunchModes;
+using Temp.Helper.WebClient;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
@@ -45,6 +47,10 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
 using JsCodeResolver = DCL.AssetsProvision.CodeResolver.JsCodeResolver;
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 
 namespace Global.Dynamic
 {
@@ -97,6 +103,7 @@ namespace Global.Dynamic
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
+            WebGLDebugLog.Log("Bootstraper.cs", "PreInitializeSetupAsync resolved realm", realm ?? "(null)");
 
             // Initialize .NET logging ASAP since it might be used by another systems
             // Otherwise we might get exceptions in different platforms
@@ -179,7 +186,13 @@ namespace Global.Dynamic
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
+                    EnableLOD =
+#if UNITY_WEBGL
+                        false
+#else
+                        debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play
+#endif
+                    ,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
@@ -200,10 +213,13 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
+            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: start (ECSWorldPlugins then GlobalPlugins)");
             var anyFailure = false;
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: ECSWorldPlugins done");
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: GlobalPlugins done", $"anyFailure={anyFailure}");
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -233,20 +249,35 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot,
+            UIDocument? debugUiRoot,
             Entity playerEntity
         )
         {
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: start WebJsSources");
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
             if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
+                WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: Play mode, CachedWebJsSources");
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
-                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer()));
+
+
+#if UNITY_WEBGL
+            var diskCacheInstance = IDiskCache<string>.Null.INSTANCE;
+#else
+            var diskCacheInstance = new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer());
+#endif
+
+
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, diskCacheInstance);
             }
 
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before SceneSharedContainer.Create");
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            WebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
+#endif
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
@@ -254,23 +285,54 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
+
+#if !NO_LIVEKIT_MODE
                 dynamicWorldContainer.RoomHub,
+#endif
+
                 dynamicWorldContainer.MvcManager,
                 dynamicWorldContainer.MessagePipesHub,
+
+#if !NO_LIVEKIT_MODE
                 dynamicWorldContainer.RemoteMetadata,
+#endif
+
                 webJsSources,
                 bootstrapContainer.Environment,
                 dynamicWorldContainer.SystemClipboard
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                ,
+                webglSceneUpdateQueue
+#endif
             );
 
-            GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
-                sceneSharedContainer.SceneFactory, playerEntity);
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after SceneSharedContainer.Create");
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before GlobalWorldFactory.Create");
+
+            GlobalWorld globalWorld;
+            try
+            {
+                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(
+                    sceneSharedContainer.SceneFactory, playerEntity
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                    , webglSceneUpdateQueue
+#endif
+                );
+            }
+            catch (Exception e)
+            {
+                WebGLDebugLog.LogError("Bootstraper.cs", $"GlobalWorldFactory.Create THREW: {e.GetType().Name}: {e.Message}", e.StackTrace);
+                throw;
+            }
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after GlobalWorldFactory.Create");
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
-            InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
+            if (debugUiRoot != null)
+                InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
+            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: done");
             return globalWorld;
         }
 
@@ -287,6 +349,7 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
+            WebGLDebugLog.Log("Bootstraper.cs", "LoadStartingRealmAsync about to connect", startingRealm.Value.ToString());
             if (realmLaunchSettings.initialRealm is InitialRealm.World)
             {
                 bool isAuthorized = await dynamicWorldContainer.RealmController
@@ -368,8 +431,9 @@ namespace Global.Dynamic
             // Make Debug Panel available
             debugContainerBuilder.IsVisible = hasDebugFlag || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
 
-            // Start application with Debug Panel open/closed
-            debugContainerBuilder.Container.SetPanelVisibility(hasDebugFlag);
+            // Start application with Debug Panel open/closed (skip if stub builder, e.g. WebGL)
+            try { debugContainerBuilder.Container.SetPanelVisibility(hasDebugFlag); }
+            catch (NotSupportedException) { }
         }
     }
 }

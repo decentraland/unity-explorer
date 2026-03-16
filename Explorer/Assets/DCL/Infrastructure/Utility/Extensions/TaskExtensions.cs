@@ -1,4 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+﻿// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utility.Types;
 using System;
@@ -53,3 +56,4 @@ namespace DCL.Utilities.Extensions
         }
     }
 }
+#endif

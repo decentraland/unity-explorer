@@ -1,9 +1,11 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.PoolsProviders;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
+using Unity.Collections.LowLevel.Unsafe;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -23,6 +25,27 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             var array = byteArrayPool.GetAPIRawDataPool(
                 IJsOperations.LIVEKIT_MAX_SIZE);
+            string walletId = message.FromWalletId;
+            int dataLength = message.Data.Length;
+            int dataOffset;
+            var array = jsOperations.GetTempUint8Array();
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            // WebGL has no direct memory access — build the payload in managed memory then bulk-copy to JS
+            byte[] walletIdBytes = Encoding.UTF8.GetBytes(walletId);
+            int walletIdByteLength = Math.Min(walletIdBytes.Length, byte.MaxValue);
+            dataOffset = walletIdByteLength + 1;
+
+            if (dataOffset + dataLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                throw new InternalBufferOverflowException("Received a message larger than LIVEKIT_MAX_SIZE");
+
+            var buffer = new byte[dataOffset + dataLength];
+            buffer[0] = (byte)walletIdByteLength;
+            Buffer.BlockCopy(walletIdBytes, 0, buffer, 1, walletIdByteLength);
+            message.Data.CopyTo(buffer.AsSpan(dataOffset));
+
+            array.WriteBytes(buffer, 0, (ulong)(dataOffset + dataLength), 0);
+#else
 
             int walletIdLength = Encoding.UTF8.GetBytes(message.FromWalletId,
                 array.Array.AsSpan(1));

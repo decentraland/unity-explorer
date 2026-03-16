@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -19,6 +19,7 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using UnityEngine.UIElements;
 using Utility;
+using UnityEngine;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
 namespace Global.Dynamic
@@ -67,7 +68,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "2 - static container loaded" },
+                { STAGE_KEY, "1 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
@@ -96,9 +97,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, ct);
+            await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
 
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
@@ -122,7 +123,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "1 - feature flag initialized" },
+                { STAGE_KEY, "2 - feature flag initialized" },
             });
         }
 
@@ -145,7 +146,7 @@ namespace Global.Dynamic
         public GlobalWorld CreateGlobalWorld(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
             DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot,
+            UIDocument? debugUiRoot,
             Entity playerEntity)
         {
             GlobalWorld result = core.CreateGlobalWorld(bootstrapContainer, staticContainer, dynamicWorldContainer, debugUiRoot, playerEntity);

@@ -173,7 +173,7 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchToInWorldCamera();
 
-            cursor.Lock();
+            cursor.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Locked;
 

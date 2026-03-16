@@ -1,27 +1,23 @@
-using DCL.Profiles;
+using CommunicationData.URLHelpers;
 using DCL.Web3;
 using System;
+using UnityEngine;
 
 namespace DCL.Friends
 {
-    public class BlockedProfile
+    public class BlockedProfile : FriendProfile
     {
-        public Profile.CompactInfo Profile { get; }
         public DateTime Timestamp { get; }
 
         public BlockedProfile(Web3Address address,
             string name,
             bool hasClaimedName,
-            string facePictureUrl,
-            DateTime timestamp)
+            URLAddress facePictureUrl,
+            DateTime timestamp,
+            Color userNameColor)
+            : base(address, name, hasClaimedName, facePictureUrl, userNameColor)
         {
-            Profile = new Profile.CompactInfo(address, name, hasClaimedName, facePictureUrl);
             Timestamp = timestamp;
         }
-
-        public Web3Address Address => Profile.Address;
-
-        public static implicit operator Profile.CompactInfo(BlockedProfile blockedProfile) =>
-            blockedProfile.Profile;
     }
 }

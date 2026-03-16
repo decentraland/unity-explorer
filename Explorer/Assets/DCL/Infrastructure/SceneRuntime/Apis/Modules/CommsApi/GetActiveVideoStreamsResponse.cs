@@ -1,9 +1,12 @@
+// Currently video streams are not supported on webgl
+#if !UNITY_WEBGL
+
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
-using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
 using System;
+using LiveKit.Rooms.TrackPublications;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
@@ -53,3 +56,5 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
     }
 }
+
+#endif

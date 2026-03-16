@@ -78,7 +78,8 @@ namespace Global.Dynamic
                 c.MapRenderer = mapRenderer;
             });
 
-            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
+            realmData.RealmType.OnUpdate += kind =>
+                mapRendererContainer.MapRenderer!.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
 
             return mapRendererContainer;
         }

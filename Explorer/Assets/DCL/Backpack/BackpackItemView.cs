@@ -35,12 +35,6 @@ namespace DCL.Backpack
         public Button EquipButton { get; private set; }
 
         [field: SerializeField]
-        public GameObject EquipSpinner { get; private set; }
-
-        [field: SerializeField]
-        public GameObject EquipButtonText { get; private set; }
-
-        [field: SerializeField]
         public Button UnEquipButton { get; private set; }
 
         [field: SerializeField]
@@ -102,21 +96,6 @@ namespace DCL.Backpack
             }
         }
 
-        public bool CanHover { get; set; } = true;
-
-        public bool IsLoading
-        {
-            get => isLoading;
-
-            set
-            {
-                isLoading = value;
-                EquipButtonText.SetActive(!isLoading);
-                EquipSpinner.SetActive(isLoading);
-            }
-        }
-        private bool isLoading;
-
         private CancellationTokenSource cts;
         private bool isCompatibleWithBodyShape;
 
@@ -124,8 +103,6 @@ namespace DCL.Backpack
         {
             EquipButton.onClick.AddListener(() =>
             {
-                if (IsLoading) return;
-
                 OnEquip?.Invoke(Slot, ItemId);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(EquipWearableAudio);
             });
@@ -152,8 +129,6 @@ namespace DCL.Backpack
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!CanHover) return;
-
             AnimateHover();
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             SetEquipButtonsState();
@@ -175,8 +150,6 @@ namespace DCL.Backpack
         {
             if (string.IsNullOrEmpty(ItemId)) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;
-
-            if (!CanHover && eventData.clickCount != 2) return;
 
             switch (eventData.clickCount)
             {

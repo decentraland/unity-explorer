@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utility;
@@ -17,6 +16,7 @@ using LiveKit.Proto;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Chat.ChatServices
 {
@@ -108,7 +108,7 @@ namespace DCL.Chat.ChatServices
                 );
 
                 await UniTask.WaitUntil(() =>
-                    chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
+                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected &&
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
@@ -162,14 +162,14 @@ namespace DCL.Chat.ChatServices
                 friendIds.Clear();
                 foreach (var friend in allFriends)
                 {
-                    friendIds.Add(friend.UserId);
+                    friendIds.Add(friend.Address);
                 }
             }
         }
 
-        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
+        private async UniTask<List<FriendProfile>> GetAllFriendsAsync(CancellationToken ct)
         {
-            var allFriends = new List<Profile.CompactInfo>();
+            var allFriends = new List<FriendProfile>();
             if (!friendsService.Configured) return allFriends;
 
             int pageNum = 0;
@@ -241,7 +241,7 @@ namespace DCL.Chat.ChatServices
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
 
             //If we allow ALL messages, we need to know their settings.
-            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)!.Metadata);
+            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)?.Metadata);
 
             if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
@@ -249,7 +249,7 @@ namespace DCL.Chat.ChatServices
             return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
         }
 
-        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             lock (onlineParticipants)
             {
@@ -275,7 +275,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
             string userId = participant.Identity;
@@ -310,7 +310,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Address);
 
         private void OnYouBlockedByUser(string userId)
         {
@@ -320,7 +320,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Profile.UserId);
+            CheckOnlineStatusAndNotify(profile.Address);
 
         /// <summary>
         /// Determines if a given user should be considered "online"

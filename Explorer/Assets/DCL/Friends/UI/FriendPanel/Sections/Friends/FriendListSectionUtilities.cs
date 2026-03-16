@@ -5,7 +5,6 @@ using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
@@ -73,7 +72,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
-        internal static void OpenProfilePassport(Profile.CompactInfo profile, IPassportBridge passportBridge) =>
+        internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
 
         internal static string FormatDate(DateTime date)

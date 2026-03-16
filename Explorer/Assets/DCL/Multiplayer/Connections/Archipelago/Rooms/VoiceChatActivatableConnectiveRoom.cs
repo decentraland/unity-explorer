@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
@@ -11,10 +10,14 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
+
+#if !UNITY_WEBGL
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
+#endif
+
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
@@ -192,6 +195,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private static IRoom CreateFreshRoom()
         {
+
+#if !UNITY_WEBGL
             var hub = new ParticipantsHub();
 
             var newRoom = new Room(
@@ -208,6 +213,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 new AudioStreams(hub),
                 null!
             );
+#else
+            Room newRoom = new Room();
+#endif
 
             return new LogRoom(newRoom, "VoiceChat");
         }

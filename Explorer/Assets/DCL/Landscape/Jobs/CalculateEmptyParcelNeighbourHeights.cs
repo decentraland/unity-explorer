@@ -18,8 +18,8 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly NativeParallelHashMap<int2, int>.ReadOnly emptyParcelHeight;
         [ReadOnly] private readonly int2 minBoundsInParcels;
         [ReadOnly] private readonly int2 maxBoundsInParcels;
-        [ReadOnly] private readonly NativeArray<int2> emptyParcels;
-        [ReadOnly] private NativeHashSet<int2> ownedParcels;
+        [ReadOnly] private readonly NativeArray<int2>.ReadOnly emptyParcels;
+        [ReadOnly] private readonly NativeHashSet<int2>.ReadOnly ownedParcels;
 
         [ReadOnly] private readonly int2 up;
         [ReadOnly] private readonly int2 right;
@@ -27,8 +27,8 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly int2 left;
 
         public CalculateEmptyParcelNeighbourHeights(
-            in NativeArray<int2> emptyParcels,
-            in NativeHashSet<int2> ownedParcels,
+            in NativeArray<int2>.ReadOnly emptyParcels,
+            in NativeHashSet<int2>.ReadOnly ownedParcels,
             NativeParallelHashMap<int2, EmptyParcelNeighborData>.ParallelWriter result,
             in NativeParallelHashMap<int2, int>.ReadOnly emptyParcelHeight,
             in int2 minBoundsInParcels,

@@ -32,7 +32,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial)
         {
             TextureArraySlot?[] results = slotsPool.Get();
-
             for (var i = 0; i < mappings.Count; i++)
             {
                 TextureArrayMapping mapping = mappings[i];
@@ -44,7 +43,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 else if (IsFormatValidForDefaultTex(handlerFormat))
                     mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
-
             return results;
         }
 
@@ -69,8 +67,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         }
 
         private bool IsFormatValidForDefaultTex(TextureFormat texFormat) =>
+#if UNITY_WEBGL
+            texFormat == DEFAULT_WEBGL_TEXTURE_FORMAT;
+#else
             texFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
-            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
-            || texFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT;
+            || texFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT
+            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT;
+#endif
     }
 }

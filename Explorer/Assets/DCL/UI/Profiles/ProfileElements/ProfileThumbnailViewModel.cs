@@ -6,7 +6,46 @@ namespace DCL.UI.ProfileElements
 {
     public readonly struct ProfileThumbnailViewModel : IEquatable<ProfileThumbnailViewModel>
     {
-        public static readonly Color DEFAULT_PROFILE_COLOR = Color.white;
+        /// <summary>
+        ///     The color is not provided at the moment of binding, and updated with the thumbnail at once
+        /// </summary>
+        public readonly struct WithColor : IEquatable<WithColor>
+        {
+            public static readonly Color DEFAULT_PROFILE_COLOR = Color.white;
+
+            public readonly ProfileThumbnailViewModel Thumbnail;
+            public readonly Color ProfileColor;
+
+            public WithColor(ProfileThumbnailViewModel thumbnail, Color profileColor)
+            {
+                ProfileColor = profileColor;
+                Thumbnail = thumbnail;
+            }
+
+            public WithColor SetColor(Color color) =>
+                new (Thumbnail, color);
+
+            public WithColor SetProfile(ProfileThumbnailViewModel thumbnail) =>
+                new (thumbnail, ProfileColor);
+
+            public WithColor SetLoading(Color color) =>
+                new (ReadyToLoad(), color);
+
+            public bool Equals(WithColor other) =>
+                Thumbnail.Equals(other.Thumbnail) && ProfileColor.Equals(other.ProfileColor);
+
+            public override bool Equals(object? obj) =>
+                obj is WithColor other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(Thumbnail, ProfileColor);
+
+            public static WithColor Default() =>
+                new (ProfileThumbnailViewModel.Default(), Color.white);
+
+            public static IReactiveProperty<WithColor> DefaultReactive() =>
+                new ReactiveProperty<WithColor>(Default());
+        }
 
         public enum State : byte
         {
@@ -24,38 +63,39 @@ namespace DCL.UI.ProfileElements
         public readonly State ThumbnailState;
         public readonly Sprite? Sprite;
         public readonly bool FitAndCenterImage;
-        public readonly Color ProfileColor;
 
-        internal ProfileThumbnailViewModel(State thumbnailState, Sprite? sprite, Color? profileColor = null, bool fitAndCenterImage = false)
+        private ProfileThumbnailViewModel(State thumbnailState, Sprite? sprite, bool fitAndCenterImage = false)
         {
             ThumbnailState = thumbnailState;
             Sprite = sprite;
-            ProfileColor = profileColor ?? DEFAULT_PROFILE_COLOR;
             FitAndCenterImage = fitAndCenterImage;
         }
 
-        public static ProfileThumbnailViewModel ReadyToLoad(Color? color = null) =>
-            new (State.LOADING, null, color);
+        public ProfileThumbnailViewModel TryBind() =>
+            ThumbnailState == State.NOT_BOUND ? new ProfileThumbnailViewModel(State.LOADING, Sprite) : this;
 
-        public static ProfileThumbnailViewModel Default(Color? color = null) =>
-            new (State.NOT_BOUND, null, color);
+        public static ProfileThumbnailViewModel ReadyToLoad() =>
+            new (State.LOADING, null);
 
-        public static ProfileThumbnailViewModel FromFallback(Sprite sprite, Color? color = null) =>
-            new (State.FALLBACK, sprite, color);
+        public static ProfileThumbnailViewModel Default() =>
+            new (State.NOT_BOUND, null);
 
-        public static ProfileThumbnailViewModel Error(Color? color = null) =>
-            new (State.ERROR, null, color);
+        public static ProfileThumbnailViewModel FromFallback(Sprite sprite) =>
+            new (State.FALLBACK, sprite);
 
-        public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache, Color? color = null, bool fitAndCenter = false) =>
-            new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite, color, fitAndCenter);
+        public static ProfileThumbnailViewModel Error() =>
+            new (State.ERROR, null);
+
+        public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache, bool fitAndCenter = false) =>
+            new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite, fitAndCenter);
 
         public bool Equals(ProfileThumbnailViewModel other) =>
-            ThumbnailState == other.ThumbnailState && Equals(Sprite, other.Sprite) && ProfileColor == other.ProfileColor;
+            ThumbnailState == other.ThumbnailState && Equals(Sprite, other.Sprite);
 
         public override bool Equals(object? obj) =>
             obj is ProfileThumbnailViewModel other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine((int)ThumbnailState, Sprite, ProfileColor);
+            HashCode.Combine((int)ThumbnailState, Sprite);
     }
 }

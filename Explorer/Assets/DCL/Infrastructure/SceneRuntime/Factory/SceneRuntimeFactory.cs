@@ -4,37 +4,47 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization;
 using ECS;
+using SceneRuntime.Factory.WebSceneSource.Cache;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
-using SceneRuntime.Factory.WebSceneSource.Cache;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+
+// ReSharper disable once RedundantUsingDirective
+using SceneRuntime.WebClient;
+
+#else
+using SceneRuntime.V8;
+#endif
 
 namespace SceneRuntime.Factory
 {
     public sealed class SceneRuntimeFactory
     {
-        private readonly IRealmData realmData;
-        private readonly V8EngineFactory engineFactory;
-
         public enum InstantiationBehavior
         {
-            StayOnMainThread,
-            SwitchToThreadPool,
+            STAY_ON_MAIN_THREAD,
+            SWITCH_TO_THREAD_POOL,
         }
+
+        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
+        private readonly IRealmData? realmData;
+        private readonly IJavaScriptEngineFactory engineFactory;
 
         private readonly IWebJsSources webJsSources;
         private readonly IJsSourcesCache jsSourcesCache;
-
-        private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
-            IWebJsSources webJsSources)
+        public SceneRuntimeFactory(IRealmData? realmData, IJavaScriptEngineFactory engineFactory, IWebJsSources webJsSources)
         {
             this.realmData = realmData;
             this.engineFactory = engineFactory;
@@ -43,10 +53,10 @@ namespace SceneRuntime.Factory
         }
 
         /// <summary>
-        /// How to use it
-        /// 1. Ensure that the directory exists at the path DIR
-        /// 2. Launch the Unity Editor and play scenes normally
-        /// 3. Check the directory DIR for the cached files
+        ///     How to use it
+        ///     1. Ensure that the directory exists at the path DIR
+        ///     2. Launch the Unity Editor and play scenes normally
+        ///     3. Check the directory DIR for the cached files
         ///     3.1 Some of them can be minified, use https://www.unminify2.com/ to explore them comfortably
         /// </summary>
         /// <returns>Cache for scenes</returns>
@@ -68,43 +78,51 @@ namespace SceneRuntime.Factory
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+        internal async UniTask<ISceneRuntime> CreateBySourceCodeAsync(
             string sourceCode,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
-            InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
+            InstantiationBehavior instantiationBehavior = InstantiationBehavior.STAY_ON_MAIN_THREAD)
         {
             await EnsureCalledOnMainThreadAsync();
 
             jsSourcesCache.Cache(
-                $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
+                $"{realmData?.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
                 sourceCode
             );
 
-            (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
+            (string initCode, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
-            if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
-                await UniTask.SwitchToThreadPool();
+            // Note: In WebGL, thread pool switching may not work properly, so we skip it
+                await DCLTask.SwitchToThreadPool();
 
-            // Provide basic Thread Pool synchronization context
-            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+#if !UNITY_WEBGL
+            // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
-                engineFactory);
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            // WebClient JavaScript engine uses native interop which requires the main thread
+            await UniTask.SwitchToMainThread();
+            return new WebClientSceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
+#else
+            return new V8SceneRuntimeImpl(wrappedSource, initCode, moduleDictionary, sceneShortInfo, engineFactory);
+#endif
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
+        public async UniTask<ISceneRuntime> CreateByPathAsync(
             URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
-            InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
+            InstantiationBehavior instantiationBehavior = InstantiationBehavior.STAY_ON_MAIN_THREAD)
         {
             await EnsureCalledOnMainThreadAsync();
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
@@ -120,14 +138,46 @@ namespace SceneRuntime.Factory
             }
         }
 
-        private async UniTask<string> GetJsInitSourceCodeAsync(CancellationToken ct) =>
-            await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
-                ct);
+        private async UniTask<string> GetJsInitSourceCodeAsync(CancellationToken ct)
+        {
+            string streamingPath = Application.streamingAssetsPath;
+            string url;
 
-        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            // In WebGL, Application.streamingAssetsPath already returns a full HTTP URL
+            // e.g., "http://localhost:8800/StreamingAssets" or "http://localhost:8800/StreamingAssets/"
+            // Normalize to ensure we have a trailing slash
+            if (!streamingPath.EndsWith("/"))
+                streamingPath += "/";
+            url = $"{streamingPath}Js/Init.js";
+#else
+            // For Editor and other platforms, use file:// protocol
+            url = $"file://{streamingPath}/Js/Init.js";
+#endif
+
+            return await webJsSources.SceneSourceCodeAsync(URLAddress.FromString(url), ct);
+        }
+
+        private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct)
+        {
+            string streamingPath = Application.streamingAssetsPath;
+            string url;
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            // In WebGL, Application.streamingAssetsPath already returns a full HTTP URL
+            // e.g., "http://localhost:8800/StreamingAssets" or "http://localhost:8800/StreamingAssets/"
+            // Normalize to ensure we have a trailing slash
+            if (!streamingPath.EndsWith("/"))
+                streamingPath += "/";
+            url = $"{streamingPath}Js/Modules/{moduleName}";
+#else
+            // For Editor and other platforms, use file:// protocol
+            url = $"file://{streamingPath}/Js/Modules/{moduleName}";
+#endif
+
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
-                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
+                URLAddress.FromString(url), ct)));
+        }
 
         private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
         {

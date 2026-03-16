@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -28,6 +28,9 @@ namespace ECS.Unity.Visibility.Systems
             // (backwards compatibility for entities not yet processed by propagation system)
             UpdateVisibilityFromPBComponentQuery(World);
 
+            // Default: entities with renderer but no visibility component -> visible
+            ApplyDefaultVisibilityForRenderablesQuery(World);
+
             // Handle newly created renderable components
             eventsBuffer.ForEach(forEachEvent);
 
@@ -37,6 +40,7 @@ namespace ECS.Unity.Visibility.Systems
         /// <summary>
         /// Updates visibility if renderable component was resolved/updated this frame.
         /// Checks ResolvedVisibilityComponent first (supports propagation), then falls back to PBVisibilityComponent.
+        /// Entities with a renderer but no visibility component default to visible.
         /// </summary>
         private void ProcessEvent(Entity entity, TComponent @event)
         {
@@ -49,7 +53,13 @@ namespace ECS.Unity.Visibility.Systems
 
             // Fallback to direct PBVisibilityComponent
             if (World.TryGet(entity, out PBVisibilityComponent? visibilityComponent))
+            {
                 UpdateVisibilityInternal(in @event, visibilityComponent!.GetVisible());
+                return;
+            }
+
+            // No visibility component: default to visible so assets with renderers are shown
+            UpdateVisibilityInternal(in @event, true);
         }
 
         /// <summary>
@@ -72,6 +82,17 @@ namespace ECS.Unity.Visibility.Systems
         {
             if (visibility.IsDirty)
                 UpdateVisibilityInternal(in component, visibility.GetVisible());
+        }
+
+        /// <summary>
+        /// Ensures entities with a renderable component but no visibility component are visible.
+        /// Fixes rendering when PBVisibilityComponent is not present (e.g. WebGL scene CRDT).
+        /// </summary>
+        [Query]
+        [None(typeof(PBVisibilityComponent), typeof(ResolvedVisibilityComponent))]
+        private void ApplyDefaultVisibilityForRenderables(in TComponent component)
+        {
+            UpdateVisibilityInternal(in component, true);
         }
 
         /// <summary>

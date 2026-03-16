@@ -1,5 +1,4 @@
 using DCL.FeatureFlags;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using System;
@@ -29,9 +28,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         private bool canUnHover = true;
 
-        public Profile.CompactInfo UserProfile { get; protected set; }
+        public FriendProfile UserProfile { get; protected set; }
 
-        public event Action<Profile.CompactInfo>? MainButtonClicked;
+        public event Action<FriendProfile>? MainButtonClicked;
 
         internal bool CanUnHover
         {
@@ -64,7 +63,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public virtual void Configure(Profile.CompactInfo friendProfile, ProfileRepositoryWrapper profileDataProvider)
+        public virtual void Configure(FriendProfile friendProfile, ProfileRepositoryWrapper profileDataProvider)
         {
             UnHover();
             UserProfile = friendProfile;
@@ -73,15 +72,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             UserName.text = friendProfile.Name;
             UserName.color = userColor;
-            UserNameTag.text = friendProfile.WalletId;
+            UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.UserId));
-            ProfilePicture.Setup(profileDataProvider, friendProfile);
+            OfficialIcon.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(friendProfile.Address));
+            ProfilePicture.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
         public void ConfigureThumbnailClickData(Action thumbnailContextMenuAction) =>
-            ProfilePicture.ConfigureThumbnailClickData(thumbnailContextMenuAction, UserProfile.UserId);
+            ProfilePicture.ConfigureThumbnailClickData(thumbnailContextMenuAction, UserProfile.Address.ToString());
 
         protected virtual void ToggleButtonView(bool isActive)
         {

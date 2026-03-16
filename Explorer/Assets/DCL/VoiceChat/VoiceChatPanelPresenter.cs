@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using DCL.Chat.ChatServices;
 using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
@@ -132,3 +134,5 @@ namespace DCL.VoiceChat
         }
     }
 }
+
+#endif

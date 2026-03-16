@@ -19,6 +19,8 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using Temp.Helper.WebClient;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
@@ -97,9 +99,15 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
+            try
+            {
+            if (!realmData.Configured)
+                WebGLDebugLog.Log("LoadWearablesByParam", "Waiting for realm configured...");
             await realmData.WaitConfiguredAsync();
+            WebGLDebugLog.Log("LoadWearablesByParam", "Realm configured, proceeding with wearable load", $"userId={intention.UserID}");
 
             var url = BuildUrlFromIntention(in intention);
+            WebGLDebugLog.Log("LoadWearablesByParam", "Request URL", url.Value);
 
             if (intention.NeedsBuilderAPISigning)
             {
@@ -122,6 +130,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             GetReportCategory()
                         )
                     );
+
+                WebGLDebugLog.Log("LoadWearablesByParam", "Lambda response received", $"TotalAmount={lambdaResponse.TotalAmount} PageCount={lambdaResponse.Page?.Count ?? 0}");
+                if (lambdaResponse.TotalAmount == 0)
+                    WebGLDebugLog.LogWarning("LoadWearablesByParam", "Lambda returned 0 wearables", $"url={url.Value}");
 
                 var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, ct);
 
@@ -146,7 +158,15 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 }
             }
 
-            return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
+            var result = AssetFromPreparedIntention(in intention);
+            WebGLDebugLog.Log("LoadWearablesByParam", "Wearables load completed", $"userId={intention.UserID} resultCount={result.Wearables?.Count ?? 0}");
+            return new StreamableLoadingResult<TAsset>(result);
+            }
+            catch (Exception ex)
+            {
+                WebGLDebugLog.LogError("LoadWearablesByParam", "Wearables load failed", ex.ToString());
+                throw;
+            }
         }
 
         private async UniTask<AssetBundlesVersions> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>> lambdaResponse, CancellationToken ct)
@@ -205,7 +225,12 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             // Run the asset bundle fallback check in parallel
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
-                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
+            {
+                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(
+                    wearableVersions.mac.version, wearableVersions.mac.buildDate,
+                    wearableVersions.windows.version, wearableVersions.windows.buildDate,
+                    wearableVersions.webgl.version, wearableVersions.webgl.buildDate);
+            }
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 

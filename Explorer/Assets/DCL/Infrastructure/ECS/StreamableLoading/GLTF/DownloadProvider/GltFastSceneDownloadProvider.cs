@@ -1,3 +1,7 @@
+// GLTFast forces usage of Task that is not compatible with WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -61,3 +65,5 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         }
     }
 }
+
+#endif

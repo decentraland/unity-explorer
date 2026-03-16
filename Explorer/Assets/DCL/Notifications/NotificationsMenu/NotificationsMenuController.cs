@@ -322,7 +322,7 @@ namespace DCL.Notifications.NotificationsMenu
                 {
                     if (giftView.Notification is GiftReceivedNotification current && current.Metadata.SenderAddress == address)
                     {
-                        giftView.UpdateSenderName(profile.Value.Name, profile.Value.UserNameColor);
+                        giftView.UpdateSenderName(profile.Name, profile.UserNameColor);
                     }
                 }
             }
@@ -385,10 +385,10 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct).SuppressAnyExceptionWithFallback(null);
 
                 if (profile != null)
-                    return await profileRepository.GetProfileThumbnailAsync(profile.Value.FaceSnapshotUrl, ct);
+                    return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);
 
                 return null;
             }

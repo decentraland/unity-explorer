@@ -17,6 +17,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
+using Temp.Helper.WebClient;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
@@ -146,6 +147,9 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
+            if (avatarBase == null)
+                WebGLDebugLog.Log("AvatarInstantiator", "Main player: InstantiateNewAvatar returned null (wearables not ready or budget exhausted)");
+
             if (avatarBase != null)
             {
                 // Re-enable rigs since by default we disable them when instantiating new avatars
@@ -153,7 +157,9 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarBase.HandsIKRig.enabled = true;
                 avatarBase.FeetIKRig.enabled = true;
 
+                WebGLDebugLog.Log("AvatarInstantiator", "Main player avatar instantiated, setting mainPlayerAvatarBaseProxy");
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
+                WebGLDebugLog.Log("AvatarInstantiator", "mainPlayerAvatarBaseProxy.Configured is now true");
             }
         }
 
@@ -234,7 +240,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 foreach (var renderer in cachedAttachment.Renderers)
                     renderer.enabled = false;
 
-            skinningComponent.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount));
+            skinningComponent.SetVertOutRegion(skinningComponent.VertCount > 0 ? vertOutBuffer.Rent(skinningComponent.VertCount) : default);
             avatarBase.gameObject.SetActive(true);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 

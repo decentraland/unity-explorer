@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using MVC;
@@ -53,21 +52,37 @@ namespace DCL.UI.ProfileElements
         public event Action? PointerEnter;
         public event Action? PointerExit;
 
-        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp)
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModelProp)
+        {
+            binding?.Dispose();
+
+            viewModelProp.UpdateValue(viewModelProp.Value.SetProfile(viewModelProp.Value.Thumbnail.TryBind()));
+
+            OnThumbnailWithColorUpdated(viewModelProp.Value);
+            binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
+        }
+
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
         {
             // Unbind previous binding if exists
             binding?.Dispose();
 
-            viewModelProp.TryBind();
+            viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
+
+            SetBaseBackgroundColor(userNameColor);
 
             OnThumbnailUpdated(viewModelProp.Value);
             binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
 
-        private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
+        private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
         {
             SetBaseBackgroundColor(model.ProfileColor);
+            OnThumbnailUpdated(model.Thumbnail);
+        }
 
+        private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
+        {
             switch (model.ThumbnailState)
             {
                 case ProfileThumbnailViewModel.State.LOADING:
@@ -106,14 +121,6 @@ namespace DCL.UI.ProfileElements
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
             LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
-        }
-
-        [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, in Profile.CompactInfo profile)
-        {
-            profileRepositoryWrapper = profileDataProvider;
-            SetBackgroundColor(profile.UserNameColor);
-            LoadThumbnailAsync(profile.FaceSnapshotUrl, false).Forget();
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]

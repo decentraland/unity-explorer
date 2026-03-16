@@ -38,9 +38,9 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
@@ -58,11 +58,18 @@ using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using ECS;
 using System.IO;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
+
+#if !UNITY_WEBGL
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
+
+using UnityEngine.Rendering.Universal;
 
 namespace Global.Dynamic
 {
@@ -97,6 +104,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            UniversalRenderPipelineAsset urpAsset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            WebGLDebugLog.Log("MainSceneLoader.cs", "Awake URP", urpAsset?.name ?? "null");
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -151,8 +160,17 @@ namespace Global.Dynamic
                 decentralandEnvironment = env;
         }
 
+        private static void LogInit(string location, string message, bool? splashNull, bool? globalPluginNull, bool? staticSettingsNull)
+        {
+            string splash = splashNull == null ? "-" : (splashNull.Value ? "null" : "ok");
+            string gp = globalPluginNull == null ? "-" : (globalPluginNull.Value ? "null" : "ok");
+            string ss = staticSettingsNull == null ? "-" : (staticSettingsNull.Value ? "null" : "ok");
+            WebGLDebugLog.Log(location, message, $"splash={splash} globalPlugin={gp} staticSettings={ss}");
+        }
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            WebGLDebugLog.Log("MainSceneLoader.cs", "applicationParametersParser");
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
@@ -170,34 +188,47 @@ namespace Global.Dynamic
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "memoryCap");
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "ApplyConfig");
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "applicationParametersParser");
             if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
                 WindowModeUtils.ApplyWindowedMode();
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "Create");
             World world = World.Create();
 
             var realmData = new RealmData();
             var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "AddressablesProvisioner");
             var assetsProvisioner = new AddressablesProvisioner();
 
+            WebGLDebugLog.Log("MainSceneLoader.cs", "splashScreen");
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+            LogInit("MainSceneLoader:after_splash_await", "after ProvideInstanceAsync", splashScreen.Value == null, null, null);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
+
             var debugViewsCatalog = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.DebugViewsCatalog, ct)).Value;
             var debugContainer = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
+#if UNITY_WEBGL
+            await ShaderBundlePreloader.PreloadAsync(ct);
+#endif
 
+
+            WebGLDebugLog.Log("BootstrapContainer.CreateAsync");
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 assetsProvisioner,
                 debugSettings,
@@ -216,9 +247,9 @@ namespace Global.Dynamic
                 dclVersion,
                 destroyCancellationToken
             );
+            LogInit("MainSceneLoader:after_BootstrapCreateAsync", "after BootstrapContainer.CreateAsync", null, null, null);
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
-
             try
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
@@ -247,9 +278,17 @@ namespace Global.Dynamic
                     return;
                 }
 
+                WebGLDebugLog.Log("InitializePlayerEntity");
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
-                staticContainer!.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                WebGLDebugLog.Log("InitializeFeatureFlagsAsync");
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                bootstrap.InitializeFeaturesRegistry();
+
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
@@ -276,11 +315,12 @@ namespace Global.Dynamic
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
 
+#if !UNITY_WEBGL //We only verify hardware on non-webGL platforms
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
                 if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
-
+#endif
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
@@ -302,9 +342,11 @@ namespace Global.Dynamic
                     return;
                 }
 
+                WebGLDebugLog.Log("MainSceneLoader: before CreateGlobalWorld");
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
                 await LoadStartingRealmAsync(ct);
+                WebGLDebugLog.Log("MainSceneLoader.cs", "after LoadStartingRealmAsync", "RealmData.Configured=" + dynamicWorldContainer!.RealmController.RealmData.Configured);
                 await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
@@ -317,9 +359,9 @@ namespace Global.Dynamic
             {
                 // ignore
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // unhandled exception
+                WebGLDebugLog.Log("MainSceneLoader.cs:catch", "Init failed", "{\"exceptionType\":\"" + (ex.GetType().FullName ?? "") + "\",\"message\":\"" + (ex.Message ?? "").Replace("\"", "'") + "\",\"stackTrace\":\"" + (ex.StackTrace ?? "").Replace("\"", "'").Replace("\n", " ").Replace("\r", " ") + "\"}", "H0_actual_exception");
                 GameReports.PrintIsDead();
                 throw;
             }
@@ -490,6 +532,7 @@ namespace Global.Dynamic
         private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
+#if !UNITY_WEBGL
             //If Livekit is down, stop bootstrapping
             if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;
@@ -497,7 +540,7 @@ namespace Global.Dynamic
             //If application requires version update, stop bootstrapping
             if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen.Value, ct))
                 return false;
-
+#endif
             //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
             await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
 
@@ -613,10 +656,16 @@ namespace Global.Dynamic
 
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
+#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+#if UNITY_WEBGL
+            ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while WebGL");
+            return new IDiskCache.Fake();
+#else
+
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
@@ -644,6 +693,7 @@ namespace Global.Dynamic
 
             var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
             return diskCache;
+#endif
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

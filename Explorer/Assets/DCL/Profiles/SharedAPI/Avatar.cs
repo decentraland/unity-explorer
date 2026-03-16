@@ -27,12 +27,13 @@ namespace DCL.Profiles
         ///     The slot can be unequipped - in this case it will contain `null` URN, it's a valid case
         /// </summary>
         public IReadOnlyList<URN> Emotes => emotes;
+        public URLAddress FaceSnapshotUrl { get; internal set; }
         public URLAddress BodySnapshotUrl { get; internal set; }
         public Color EyesColor { get; internal set; }
         public Color HairColor { get; internal set; }
         public Color SkinColor { get; internal set; }
 
-        public Avatar() { }
+        internal Avatar() { }
 
         public Avatar(BodyShape bodyShape, HashSet<URN> wearables, Color eyesColor, Color hairColor, Color skinColor)
         {
@@ -41,6 +42,8 @@ namespace DCL.Profiles
             EyesColor = eyesColor;
             HairColor = hairColor;
             SkinColor = skinColor;
+
+            FaceSnapshotUrl = URLAddress.EMPTY;
             BodySnapshotUrl = URLAddress.EMPTY;
         }
 
@@ -81,6 +84,7 @@ namespace DCL.Profiles
             SkinColor = default(Color);
             SkinColor = default(Color);
             BodySnapshotUrl = default(URLAddress);
+            FaceSnapshotUrl = default(URLAddress);
         }
 
 #if UNITY_EDITOR

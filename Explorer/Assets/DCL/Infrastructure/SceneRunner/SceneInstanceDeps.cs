@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CRDT.Deserializer;
@@ -16,12 +16,9 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Clipboard;
-using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
-using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -29,6 +26,9 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -44,7 +44,9 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
+#if !UNITY_WEBGL
 using Utility.Multithreading;
+#endif
 
 namespace SceneRunner
 {
@@ -71,7 +73,14 @@ namespace SceneRunner
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
+#if !UNITY_WEBGL
         private readonly MultiThreadSync ecsMultiThreadSync;
+#endif
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+        public readonly WebGLSceneUpdateQueue WebGLSceneUpdateQueue;
+#endif
+
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -95,7 +104,9 @@ namespace SceneRunner
             URLAddress sceneCodeUrl,
             SceneEcsExecutor ecsExecutor,
             ISceneData sceneData,
+#if !UNITY_WEBGL
             MultiThreadSync ecsMultiThreadSync,
+#endif
             ICRDTDeserializer crdtDeserializer,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISystemGroupsUpdateGate systemGroupThrottler,
@@ -114,7 +125,9 @@ namespace SceneRunner
             SceneCodeUrl = sceneCodeUrl;
             EcsExecutor = ecsExecutor;
             this.sceneData = sceneData;
+#if !UNITY_WEBGL
             this.ecsMultiThreadSync = ecsMultiThreadSync;
+#endif
             this.crdtDeserializer = crdtDeserializer;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.systemGroupThrottler = systemGroupThrottler;
@@ -129,11 +142,21 @@ namespace SceneRunner
             IJsApiPermissionsProvider permissionsProvider,
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
-            ISceneEntityFactory entityFactory)
+            ISceneEntityFactory entityFactory
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+           ,
+            WebGLSceneUpdateQueue webglSceneUpdateQueue
+#endif
+        )
         {
             this.sceneData = sceneData;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            WebGLSceneUpdateQueue = webglSceneUpdateQueue;
+#endif
             this.permissionsProvider = permissionsProvider;
+#if !UNITY_WEBGL
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
+#endif
             CRDTProtocol = new CRDTProtocol();
             SceneStateProvider = new SceneStateProvider();
             systemGroupThrottler = new SystemGroupsUpdateGate();
@@ -148,9 +171,22 @@ namespace SceneRunner
             var entityEventsBuilder = new EntityEventsBuilder();
 
             /* Pass dependencies here if they are needed by the systems */
-            ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, entityCollidersGlobalCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
-                systemGroupThrottler, systemsUpdateGate);
+            ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(
+                sceneData,
+                partitionProvider,
+                ecsToCRDTWriter,
+                entitiesMap,
+                ExceptionsHandler,
+                EntityCollidersCache,
+                entityCollidersGlobalCache,
+                SceneStateProvider,
+                entityEventsBuilder,
+#if !UNITY_WEBGL
+                    ecsMultiThreadSync,
+#endif
+                systemGroupThrottler,
+                systemsUpdateGate
+            );
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
@@ -177,7 +213,9 @@ namespace SceneRunner
             systemGroupThrottler.Dispose();
             systemsUpdateGate.Dispose();
             EntityCollidersCache.Dispose();
+#if !UNITY_WEBGL
             ecsMultiThreadSync.Dispose();
+#endif
             ExceptionsHandler.Dispose();
         }
 
@@ -230,7 +268,6 @@ namespace SceneRunner
                 IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions,
                 IRealmData realmData,
-                IProfileRepository profileRepository,
                 ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
@@ -261,11 +298,13 @@ namespace SceneRunner
         internal class WithRuntimeAndJsAPI : WithRuntimeAndJsAPIBase
         {
             public WithRuntimeAndJsAPI
-            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+            (SceneInstanceDependencies syncDeps, ISceneRuntime sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
+#if !UNITY_WEBGL
                 MultiThreadSync.Owner syncOwner,
+#endif
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub)
@@ -278,21 +317,29 @@ namespace SceneRunner
                         syncDeps.CRDTWorldSynchronizer,
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
-                        syncDeps.ExceptionsHandler,
+                        syncDeps.ExceptionsHandler
+#if !UNITY_WEBGL
+                        ,
                         syncDeps.ecsMultiThreadSync,
                         syncOwner),
+#endif
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
         {
             public WithRuntimeJsAndSDKObservablesEngineAPI
-            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+            (SceneInstanceDependencies syncDeps, ISceneRuntime sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, MultiThreadSync.Owner syncOwner,
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
-                IRoomHub roomHub)
+                IRoomHub roomHub,
+                IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings,
+#if !UNITY_WEBGL
+                MultiThreadSync.Owner syncOwner
+#endif
+                )
                 : base(new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -302,9 +349,13 @@ namespace SceneRunner
                         syncDeps.CRDTWorldSynchronizer,
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
-                        syncDeps.ExceptionsHandler,
+                        syncDeps.ExceptionsHandler
+#if !UNITY_WEBGL
+                        ,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner),
+                        syncOwner
+#endif
+                    ),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub) { }
         }
     }

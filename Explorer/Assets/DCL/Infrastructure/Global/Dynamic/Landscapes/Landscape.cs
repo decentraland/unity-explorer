@@ -108,7 +108,7 @@ namespace Global.Dynamic.Landscapes
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(parcels.AsReadOnly(), landscapeLoadReport);
             }
         }
 
@@ -138,7 +138,7 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(parcels.AsReadOnly(), landscapeLoadReport);
             }
         }
     }

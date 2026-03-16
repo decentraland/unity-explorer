@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace DCL.Multiplayer.Profiles.Bunches
 {
     /// <summary>
-    ///     Thread-safe. Takes ownership of a list, and allows to read it safely, on dispose it would be cleaned and considered as performed
+    ///     thread-safe. Takes ownership of a list, and allows to read it safely, on dispose it would be cleaned and considered as performed
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public readonly struct OwnedBunch<T> : IBunch<T> where T: struct

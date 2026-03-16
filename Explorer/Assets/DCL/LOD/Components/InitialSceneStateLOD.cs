@@ -20,7 +20,7 @@ namespace DCL.LOD.Components
 
         public bool AssetsShouldGoToTheBridge;
 
-        public enum State
+        public enum InitialSceneStateLODState
         {
             UNINITIALIZED,
             PROCESSING,
@@ -28,21 +28,21 @@ namespace DCL.LOD.Components
             RESOLVED
         }
 
-        public State CurrentState;
+        public InitialSceneStateLODState CurrentState;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
 
         public void ForgetLoading(World world)
         {
-            if (CurrentState is State.FAILED or State.RESOLVED)
+            if (CurrentState is InitialSceneStateLODState.FAILED or InitialSceneStateLODState.RESOLVED)
                 return;
 
             AssetBundlePromise.ForgetLoading(world);
 
-            if (CurrentState is State.PROCESSING)
+            if (CurrentState is InitialSceneStateLODState.PROCESSING)
                 Clear();
 
-            CurrentState = State.UNINITIALIZED;
+            CurrentState = InitialSceneStateLODState.UNINITIALIZED;
         }
 
         private void Clear()
@@ -78,7 +78,7 @@ namespace DCL.LOD.Components
             AssetBundleData != null && Assets.Count == TotalAssetsToInstantiate;
 
         public bool IsProcessing() =>
-            CurrentState is State.PROCESSING;
+            CurrentState is InitialSceneStateLODState.PROCESSING;
 
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)

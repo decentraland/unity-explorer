@@ -1,9 +1,9 @@
 ﻿using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -20,10 +20,16 @@ namespace DCL.UI.ProfileElements
             this.profileRepository = profileRepository;
         }
 
-        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, Profile.CompactInfo profile, CancellationToken ct) =>
-            ExecuteAsync(property, fallback, profile.UserId, profile.FaceSnapshotUrl, ct);
+        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl,
+            CancellationToken ct) =>
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(vm), static p => p.Value, fallback, userId, faceSnapshotUrl, ct);
 
-        public async UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
+        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel.WithColor> property, Sprite? fallback, string userId, string faceSnapshotUrl,
+            CancellationToken ct) =>
+            ExecuteAsync(property, static (p, vm) => p.UpdateValue(p.Value.SetProfile(vm)), static p => p.Value.Thumbnail, fallback, userId, faceSnapshotUrl, ct);
+
+        private async UniTask ExecuteAsync<T>(IReactiveProperty<T> property, Action<IReactiveProperty<T>, ProfileThumbnailViewModel> setProfile, Func<IReactiveProperty<T>, ProfileThumbnailViewModel> getProfile,
+            Sprite? fallback, string userId, string faceSnapshotUrl, CancellationToken ct)
         {
             // We don't need to wait (and skip frames) until the property is bound if the data is already cached.
 
@@ -31,12 +37,12 @@ namespace DCL.UI.ProfileElements
 
             if (cachedSprite != null)
             {
-                property.SetLoaded(cachedSprite, true);
+                setProfile(property, ProfileThumbnailViewModel.FromLoaded(cachedSprite, true));
                 return;
             }
 
             // Wait until the property is bound
-            while (property.Value.ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
+            while (getProfile(property).ThumbnailState == ProfileThumbnailViewModel.State.NOT_BOUND)
                 await UniTask.Yield();
 
             if (ct.IsCancellationRequested)
@@ -47,7 +53,7 @@ namespace DCL.UI.ProfileElements
                 Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(faceSnapshotUrl, ct);
 
                 if (downloadedSprite != null)
-                    property.SetLoaded(downloadedSprite, false);
+                    setProfile(property, ProfileThumbnailViewModel.FromLoaded(downloadedSprite, false));
                 else
                     UpdateFromError();
             }
@@ -60,7 +66,7 @@ namespace DCL.UI.ProfileElements
 
             void UpdateFromError()
             {
-                property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
+                setProfile(property, fallback == null ? ProfileThumbnailViewModel.Error() : ProfileThumbnailViewModel.FromFallback(fallback));
             }
         }
     }

@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -6,11 +8,14 @@ using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+
+#if !UNITY_WEBGL
+using LiveKit.Rooms.TrackPublications;
+#endif
 
 namespace DCL.VoiceChat
 {
@@ -19,6 +24,7 @@ namespace DCL.VoiceChat
     ///     connection management.
     /// </summary>
     public class VoiceChatRoomManager : IDisposable
+#if !UNITY_WEBGL
     {
         private const string TAG = nameof(VoiceChatRoomManager);
 
@@ -346,4 +352,20 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }
     }
+#else // WebGL impl does nothing
+    {
+        public event Action? ConnectionEstablished;
+        public event Action? ConnectionLost;
+
+        public VoiceChatRoomManager()
+        {}
+
+        public void Dispose()
+        {
+            // Ignore
+        }
+    }
+#endif
 }
+
+#endif

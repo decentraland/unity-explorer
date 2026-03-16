@@ -1,9 +1,13 @@
-﻿using Cysharp.Threading.Tasks;
+﻿// TRUST_WEBGL_THREAD_SAFETY_FLAG - TODO: do we even need this code? It doesn't seem to be used
+#if !UNITY_WEBGL
+
+using Cysharp.Threading.Tasks;
 using LiveKit.Audio;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Types;
 using System;
+using Utility.Multithreading; 
 
 namespace DCL.Multiplayer.Connections.Audio
 {
@@ -33,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Audio
             uint sampleRate
         )
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
             using OwnedAudioFrame uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
             Write(uFrame, outputBuffer);
         }
@@ -46,3 +50,5 @@ namespace DCL.Multiplayer.Connections.Audio
         }
     }
 }
+
+#endif

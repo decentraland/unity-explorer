@@ -5,7 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -17,7 +16,10 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Pool;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
@@ -65,6 +67,20 @@ namespace DCL.AvatarRendering.Emotes.Load
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesByPointers([Data] float dt, in Entity entity,
+            ref GetEmotesByPointersIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            try
+            {
+                GetEmotesByPointersInternal(dt, entity, ref intention, ref partitionComponent);
+            }
+            catch (NullReferenceException ex)
+            {
+                WebGLDebugLog.LogError(GetReportCategory(), $"LoadEmotesByPointers NRE: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private void GetEmotesByPointersInternal(float dt, in Entity entity,
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {

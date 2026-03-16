@@ -63,7 +63,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public void OnSceneIsCurrentChanged(bool enteredScene)
         {
+#if !UNITY_WEBGL
             ToggleCurrentStreamsStateQuery(World, enteredScene);
+#endif
         }
 
         [Query]
@@ -90,9 +92,11 @@ namespace DCL.SDKComponents.MediaStream
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
 
+#if !UNITY_WEBGL
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureAudioIsPlaying();
+#endif
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -137,13 +141,14 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
+#if !UNITY_WEBGL
 
                 if (component.IsPlaying)
-
                     // Covers cases like leaving and re-entering the scene
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureVideoIsPlaying();
+#endif
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -198,6 +203,7 @@ namespace DCL.SDKComponents.MediaStream
                     return;
             }
 
+#if !UNITY_WEBGL
             if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
             {
                 if (!livekitPlayer?.IsVideoOpened ?? false)
@@ -206,6 +212,7 @@ namespace DCL.SDKComponents.MediaStream
                     return;
                 }
             }
+#endif
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -234,6 +241,7 @@ namespace DCL.SDKComponents.MediaStream
                 Graphics.Blit(Texture2D.blackTexture, assignedTexture.Texture);
         }
 
+#if !UNITY_WEBGL
         [Query]
         private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
         {
@@ -245,13 +253,14 @@ namespace DCL.SDKComponents.MediaStream
                 World.Remove<MediaPlayerComponent>(entity);
             }
         }
+#endif
 
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
         {
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
-                string selfUrl = urlMediaAddress.Url;
-                string otherUrl = other!.Url;
+                string selfUrl = urlMediaAddress!.Value.Url;
+                string otherUrl = other!.Value.Url;
 
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;

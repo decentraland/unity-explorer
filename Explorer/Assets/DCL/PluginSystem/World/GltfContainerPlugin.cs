@@ -1,3 +1,7 @@
+// GLTFast forces usage of Task that is not compatible with WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
@@ -122,3 +126,5 @@ namespace DCL.PluginSystem.World
             UniTask.CompletedTask;
     }
 }
+
+#endif

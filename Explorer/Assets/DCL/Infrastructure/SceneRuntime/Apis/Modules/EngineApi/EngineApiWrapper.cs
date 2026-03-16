@@ -1,12 +1,15 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility;
+#if !UNITY_WEBGL || UNITY_EDITOR
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
+#endif
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
@@ -32,7 +35,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
+        public PoolableByteArray CrdtSendToRenderer(
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                object data
+#else
+                ITypedArray<byte> data
+#endif
+        )
         {
             if (disposeCts.IsCancellationRequested)
                 return PoolableByteArray.EMPTY;
@@ -41,8 +50,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
-
+                IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(data);
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
                 Profiler.EndThreadProfiling();
@@ -52,8 +61,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             catch (Exception e)
             {
                 if (!disposeCts.IsCancellationRequested)
-
-                    // Report an uncategorized MANAGED exception (don't propagate it further)
                     exceptionsHandler.OnEngineException(e);
 
                 return PoolableByteArray.EMPTY;

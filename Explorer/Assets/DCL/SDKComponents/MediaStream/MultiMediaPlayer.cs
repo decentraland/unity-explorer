@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
 using REnum;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
@@ -33,81 +34,128 @@ namespace DCL.SDKComponents.MediaStream
             if (AvProMediaPlayer.TryGetComponent(out AudioSource audioSource))
                 AvProMediaPlayer.SetAudioSource(audioSource);
         }
+
+        public bool Equals(AvProPlayer other) =>
+            AvProMediaPlayer.Equals(other.AvProMediaPlayer) && MediaPlayerCustomPool.Equals(other.MediaPlayerCustomPool);
+
+        public override bool Equals(object? obj) =>
+            obj is AvProPlayer other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(AvProMediaPlayer, MediaPlayerCustomPool);
     }
 
     [REnum]
     [REnumField(typeof(AvProPlayer))]
+
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
     [REnumField(typeof(LivekitPlayer))]
+#endif
+
     public partial struct MultiMediaPlayer
     {
         public bool IsPlaying => Match(
-            static avPro => avPro.AvProMediaPlayer.Control.IsPlaying(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PLAYING
+            static avPro => avPro.AvProMediaPlayer.Control.IsPlaying()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static livekitPlayer => livekitPlayer.State is PlayerState.PLAYING
+#endif
         );
 
         public float CurrentTime => Match(
-            static avProPlayer => (float)avProPlayer.AvProMediaPlayer.Control.GetCurrentTime(),
-            static _ => 0f
+            static avProPlayer => (float)avProPlayer.AvProMediaPlayer.Control.GetCurrentTime()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => 0f
+#endif
         );
 
         public float Duration => Match(
-            static avProPlayer => (float)avProPlayer.AvProMediaPlayer.Info.GetDuration(),
-            static _ => 0f
+            static avProPlayer => (float)avProPlayer.AvProMediaPlayer.Info.GetDuration()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => 0f
+#endif
         );
 
         public bool IsFinished => Match(
-            static avPro => avPro.AvProMediaPlayer.Control.IsFinished(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
+            static avPro => avPro.AvProMediaPlayer.Control.IsFinished()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static livekitPlayer => livekitPlayer.State is PlayerState.STOPPED
+#endif
         );
 
         public bool IsPaused => Match(
-            static avPro => avPro.AvProMediaPlayer.Control.IsPaused(),
-            static livekitPlayer => livekitPlayer.State is PlayerState.PAUSED
+            static avPro => avPro.AvProMediaPlayer.Control.IsPaused()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static livekitPlayer => livekitPlayer.State is PlayerState.PAUSED
+#endif
+
         );
 
         public bool IsSeeking => Match(
-            static avPro => avPro.AvProMediaPlayer.Control.IsSeeking(),
-            static _ => false
+            static avPro => avPro.AvProMediaPlayer.Control.IsSeeking()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => false
+#endif
+
         );
 
         public bool IsBuffering => Match(
-            static avPro => avPro.AvProMediaPlayer.Control.IsBuffering(),
-            static _ => false
+            static avPro => avPro.AvProMediaPlayer.Control.IsBuffering()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => false
+#endif
         );
 
         public bool HasControl => Match(
-            static avPro => avPro.AvProMediaPlayer.Control != null,
-            static _ => false
+            static avPro => avPro.AvProMediaPlayer.Control != null
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => false
+#endif
         );
 
         public bool IsReady => Match(
-            static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
-            static _ => true
+            static avPro => avPro.AvProMediaPlayer.TextureProducer != null
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => true
+#endif
         );
 
         public bool WaitingForProperties => Match(
-            static avPro => avPro.WaitingForProperties,
-            static _ => false
-        );
+            static avPro => avPro.WaitingForProperties
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+          , static _ => false
+#endif        );
 
         public Vector2 GetTexureScale => Match(static avPro =>
             {
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
                 return new Vector2(1, vScale);
-            },
-            static _ => new Vector2(1, -1)
+            }
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => new Vector2(1, -1)
+#endif
         );
 
-        public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),
-            static _ => false);
+        public bool IsSpatial => Match(
+                static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f)
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static _ => false
+#endif
+                );
 
         public float SpatialMaxDistance => Match(
-            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE,
-            static _ => 0f);
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.maxDistance
+            ?? MediaPlayerComponent.DEFAULT_SPATIAL_MAX_DISTANCE
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => 0f
+#endif
+            );
 
         public float SpatialMinDistance => Match(
-            static avPro => avPro.AvProMediaPlayer.AudioSource?.minDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE,
-            static _ => 0f);
+            static avPro => avPro.AvProMediaPlayer.AudioSource?.minDistance ?? MediaPlayerComponent.DEFAULT_SPATIAL_MIN_DISTANCE
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+            , static _ => 0f
+#endif
+            );
 
         public void Dispose(MediaAddress address)
         {
@@ -116,17 +164,21 @@ namespace DCL.SDKComponents.MediaStream
                 onAvProPlayer: static (address, avPro) =>
                 {
                     if (address.IsUrlMediaAddress(out var url))
-                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Url, avPro.AvProMediaPlayer);
-                },
-                onLivekitPlayer: static (_, livekitPlayer) => livekitPlayer.Dispose()
+                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Value.Url, avPro.AvProMediaPlayer);
+                }
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , onLivekitPlayer: static (_, livekitPlayer) => livekitPlayer.Dispose()
+#endif
             );
         }
 
         public void CloseCurrentStream()
         {
             Match(
-                static avPro => avPro.AvProMediaPlayer.CloseCurrentStream(),
-                static livekitPlayer => livekitPlayer.CloseCurrentStream()
+                static avPro => avPro.AvProMediaPlayer.CloseCurrentStream()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static livekitPlayer => livekitPlayer.CloseCurrentStream()
+#endif
             );
         }
 
@@ -137,16 +189,20 @@ namespace DCL.SDKComponents.MediaStream
         {
             Match(
                 position,
-                static (pose, avPlayer) => avPlayer.AvProMediaPlayer.transform.position = pose,
-                static (pose, livekitPlayer) => livekitPlayer.PlaceAudioAt(pose)
+                static (pose, avPlayer) => avPlayer.AvProMediaPlayer.transform.position = pose
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (pose, livekitPlayer) => livekitPlayer.PlaceAudioAt(pose)
+#endif
             );
         }
 
         public Texture? LastTexture()
         {
             return Match(
-                static avPro => avPro.AvProMediaPlayer.TextureProducer.GetTexture(),
-                static livekitPlayer => livekitPlayer.LastTexture()
+                static avPro => avPro.AvProMediaPlayer.TextureProducer.GetTexture()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static livekitPlayer => livekitPlayer.LastTexture()
+#endif
             );
         }
 
@@ -154,23 +210,29 @@ namespace DCL.SDKComponents.MediaStream
         {
             Match(
                 volume,
-                static (ctx, avPro) => avPro.AvProMediaPlayer.AudioVolume = ctx,
-                static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx));
+                static (ctx, avPro) => avPro.AvProMediaPlayer.AudioVolume = ctx
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (ctx, livekitPlayer) => livekitPlayer!.SetVolume(ctx)
+#endif
+            );
         }
 
         public readonly void CrossfadeVolume(float volume, float volumeDelta = 1)
         {
             Match(
                 (volume, volumeDelta),
-                static (ctx, avPro) => avPro.AvProMediaPlayer.CrossfadeVolume(ctx.volume, ctx.volumeDelta),
-                static (ctx, livekitPlayer) => livekitPlayer!.CrossfadeVolume(ctx.volume, ctx.volumeDelta));
+                static (ctx, avPro) => avPro.AvProMediaPlayer.CrossfadeVolume(ctx.volume, ctx.volumeDelta)
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (ctx, livekitPlayer) => livekitPlayer!.CrossfadeVolume(ctx.volume, ctx.volumeDelta)
+#endif
+                );
         }
 
         public void UpdatePlaybackProperties(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var avProPlayer))
             {
-                MediaPlayer mediaPlayer = avProPlayer!.AvProMediaPlayer;
+                var mediaPlayer = avProPlayer!.Value.AvProMediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
                 mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
             }
@@ -182,22 +244,27 @@ namespace DCL.SDKComponents.MediaStream
         {
             Match(
                 (hasPlaying, isPlaying),
-                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying),
-                static (ctx, livekitPlayer) => livekitPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying)
+                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying)
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (ctx, livekitPlayer) => livekitPlayer.UpdatePlayback(ctx.hasPlaying, ctx.isPlaying)
+#endif
             );
         }
 
         public readonly void SetLooping(bool isLooping) =>
             Match(
                 isLooping,
-                static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
-                static (_, _) => { });
+                static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx)
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (_, _) => { }
+#endif
+                );
 
         public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
-                MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
+                var avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 mediaPlayer.WaitingForProperties = true;
                 await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer);
@@ -230,7 +297,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (ctx.player.IsAvProPlayer(out var avProPlayer) == false)
                         return false;
 
-                    MediaPlayer player = avProPlayer!.AvProMediaPlayer;
+                    var player = avProPlayer!.Value.AvProMediaPlayer;
 
                     //VideoPlayer may be reused
                     if (player.MediaOpened)
@@ -241,9 +308,13 @@ namespace DCL.SDKComponents.MediaStream
                 },
                 onLivekitAddress: static (ctx, address) =>
                 {
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
                     bool result = ctx.player.IsLivekitPlayer(out var livekitPlayer);
                     livekitPlayer?.OpenMedia(address);
                     return result;
+#else
+                    return false;
+#endif
                 }
             );
         }
@@ -263,7 +334,7 @@ namespace DCL.SDKComponents.MediaStream
         public void TrySeek(double seekTime)
         {
             if (IsAvProPlayer(out var avProPlayer))
-                avProPlayer!.AvProMediaPlayer.Control.Seek(seekTime);
+                avProPlayer!.Value.AvProMediaPlayer.Control.Seek(seekTime);
 
             // Livekit streaming doesn't support seeking
         }
@@ -271,24 +342,32 @@ namespace DCL.SDKComponents.MediaStream
         public void Play()
         {
             Match(
-                static avPro => avPro.AvProMediaPlayer.Control.Play(),
-                static livekitPlayer => livekitPlayer.Play()
+                static avPro => avPro.AvProMediaPlayer.Control.Play()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static livekitPlayer => livekitPlayer.Play()
+#endif
             );
         }
 
         public void Pause()
         {
             Match(
-                static avPro => avPro.AvProMediaPlayer.Control.Pause(),
+                static avPro => avPro.AvProMediaPlayer.Control.Pause()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                ,
                 static livekitPlayer => livekitPlayer.Pause()
+#endif
             );
         }
 
         public ErrorCode GetLastError()
         {
             return Match(
-                static avPro => avPro.AvProMediaPlayer.Control.GetLastError(),
+                static avPro => avPro.AvProMediaPlayer.Control.GetLastError()
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                ,
                 static _ => ErrorCode.None
+#endif
             );
         }
 
@@ -303,8 +382,11 @@ namespace DCL.SDKComponents.MediaStream
                     audioSource.minDistance = args.minDistance;
                     audioSource.maxDistance = args.maxDistance;
                     audioSource.rolloffMode = AudioRolloffMode.Linear;
-                },
-                static (_, _) => { });
+                }
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static (_, _) => { }
+#endif
+                );
         }
 
         /// <summary>
@@ -315,8 +397,10 @@ namespace DCL.SDKComponents.MediaStream
         public AudioSource? ExposedAudioSource()
         {
             return Match(
-                static avPro => avPro.AvProMediaPlayer.AudioSource,
-                static livekitPlayer => livekitPlayer.ExposedAudioSource()
+                static avPro => avPro.AvProMediaPlayer.AudioSource
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+                , static livekitPlayer => livekitPlayer.ExposedAudioSource()
+#endif
             );
         }
     }

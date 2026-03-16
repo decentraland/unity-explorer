@@ -1,3 +1,5 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesBrowser.Commands;
 using DCL.Diagnostics;
@@ -70,7 +72,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnGoToStream(string communityId)
         {
+#if !NO_LIVEKIT_MODE
             commandsLibrary.GoToStreamCommand.Execute(communityId);
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         public void Dispose()
@@ -287,3 +293,5 @@ namespace DCL.Communities.CommunitiesBrowser
         }
     }
 }
+
+#endif

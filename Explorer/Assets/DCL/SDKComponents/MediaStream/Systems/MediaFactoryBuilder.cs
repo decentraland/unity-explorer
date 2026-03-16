@@ -16,7 +16,11 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public class MediaFactoryBuilder
     {
+
+#if !NO_LIVEKIT_MODE
         private readonly ObjectProxy<IRoomHub> roomHub;
+#endif
+
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
         private readonly MediaVolume volumeBus;
         private readonly IWebRequestController webRequestController;
@@ -24,11 +28,24 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
 
-        public MediaFactoryBuilder(ObjectProxy<IRoomHub> roomHub, IWebRequestController webRequestController, MediaVolume volumeBus,
-            IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache)
+        public MediaFactoryBuilder(
+
+#if !NO_LIVEKIT_MODE
+                ObjectProxy<IRoomHub> roomHub,
+#endif
+
+                IWebRequestController webRequestController,
+                MediaVolume volumeBus,
+                IPerformanceBudget performanceBudget,
+                MediaPlayer mediaPlayerPrefab,
+                IObjectPool<RenderTexture> videoTexturesPool,
+                AssetPreLoadCache assetPreLoadCache)
         {
+
+#if !NO_LIVEKIT_MODE
             this.roomHub = roomHub;
+#endif
+
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
             this.videoTexturesPool = videoTexturesPool;
@@ -39,7 +56,20 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
-            new (sceneDeps.SceneData, roomHub.StrictObject.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
-                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache);
+            new (
+                    sceneDeps.SceneData,
+
+#if !NO_LIVEKIT_MODE
+                    roomHub.StrictObject.StreamingRoom(),
+#endif
+                    mediaPlayerCustomPool,
+                    sceneDeps.SceneStateProvider,
+                    volumeBus,
+                    videoTexturesPool,
+                    sceneDeps.EntitiesMap,
+                    world,
+                    webRequestController,
+                    performanceBudget,
+                    assetPreLoadCache);
     }
 }

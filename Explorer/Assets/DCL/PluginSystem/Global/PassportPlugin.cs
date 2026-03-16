@@ -15,7 +15,11 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Profiles.Poses;
+#endif
+
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
@@ -52,7 +56,11 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IInputBlock inputBlock;
+
+#if !NO_LIVEKIT_MODE
         private readonly IRemoteMetadata remoteMetadata;
+#endif
+
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -92,7 +100,11 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
+
+#if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
+#endif
+
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
@@ -109,10 +121,18 @@ namespace DCL.PluginSystem.Global
             bool includeUserBlocking,
             bool includeCommunities,
             bool isNameEditorEnabled,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
+
+#if !NO_LIVEKIT_MODE
             IVoiceChatOrchestrator voiceChatOrchestrator,
+#endif
+
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
@@ -130,7 +150,11 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.inputBlock = inputBlock;
+
+#if !NO_LIVEKIT_MODE
             this.remoteMetadata = remoteMetadata;
+#endif
+
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -195,7 +219,11 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 badgesAPIClient,
                 inputBlock,
+
+#if !NO_LIVEKIT_MODE
                 remoteMetadata,
+#endif
+
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
                 friendsService,
@@ -212,7 +240,11 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 includeCommunities,
                 isNameEditorEnabled,
+
+#if !NO_LIVEKIT_MODE
                 chatEventBus,
+#endif
+
                 sharedSpaceManager,
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,

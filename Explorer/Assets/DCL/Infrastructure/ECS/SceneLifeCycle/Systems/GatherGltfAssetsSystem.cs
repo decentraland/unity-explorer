@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;

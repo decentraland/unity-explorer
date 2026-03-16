@@ -11,6 +11,7 @@ namespace Plugins.DclNativeProcesses
     /// </summary>
     internal static class DclProcessesNativeMethods
     {
+#if !UNITY_WEBGL
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         private const string LIB_NAME = "DCLProcesses.dll";
 #else
@@ -29,12 +30,16 @@ namespace Plugins.DclNativeProcesses
             string[] args,
             int argc
         );
+#endif
     }
 
     public static class DclProcesses
     {
         public static Result<int> Start(string fileName, string[] args)
         {
+#if UNITY_WEBGL
+            return Result.ErrorResult("Process launching is not supported on WebGL platform");
+#else
             int resultCode = DclProcessesNativeMethods.start_process(fileName, args, args.Length);
 
             if (resultCode == -1)
@@ -42,6 +47,7 @@ namespace Plugins.DclNativeProcesses
 
             int pid = resultCode;
             return Result<int>.SuccessResult(pid);
+#endif
         }
     }
 
@@ -54,6 +60,10 @@ namespace Plugins.DclNativeProcesses
 
         public ProcessName(int pid)
         {
+#if UNITY_WEBGL
+            ptr = IntPtr.Zero;
+            Name = string.Empty;
+#else
             ptr = DclProcessesNativeMethods.get_process_name(pid);
 
             if (ptr == IntPtr.Zero)
@@ -63,12 +73,15 @@ namespace Plugins.DclNativeProcesses
             }
 
             Name = Marshal.PtrToStringAnsi(ptr);
+#endif
         }
 
         public void Dispose()
         {
+#if !UNITY_WEBGL
             if (ptr != IntPtr.Zero)
                 DclProcessesNativeMethods.free_name(ptr);
+#endif
         }
     }
 }

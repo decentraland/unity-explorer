@@ -1,7 +1,6 @@
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
 using DCL.Utilities;
-using Newtonsoft.Json;
 using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -12,15 +11,15 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityMembersResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        [JsonConverter(typeof(CommunitiesDTOConverters.GetCommunityMembersResponseMemberDataConverter))]
         public class MemberData : ICommunityMemberData
         {
-            [JsonIgnore]
-            public Profile.CompactInfo Profile { get; internal set; }
-
             public string communityId;
+            public string memberAddress;
             public CommunityMemberRole role;
             public string joinedAt;
+            public string profilePictureUrl;
+            public bool hasClaimedName;
+            public string name;
             public int mutualFriends;
 
             public FriendshipStatus friendshipStatus
@@ -37,8 +36,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             }
 
             private FriendshipStatus friendStatus;
+            private Color userNameColor;
 
             public string Id => communityId;
+            public string Address => memberAddress;
+            public string ProfilePictureUrl => profilePictureUrl;
+            public bool HasClaimedName => hasClaimedName;
+            public string Name => name;
             public int MutualFriends => mutualFriends;
             public CommunityMemberRole Role
             {
@@ -52,14 +56,40 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 set => friendshipStatus = value;
             }
 
-            public Color GetUserNameColor() =>
-                Profile.UserNameColor;
+            public Color GetUserNameColor()
+            {
+                if (userNameColor == default(Color))
+                    userNameColor = CalculateUserNameColor();
+
+                return userNameColor;
+            }
+
+            private Color CalculateUserNameColor()
+            {
+                string displayName = string.Empty;
+
+                if (string.IsNullOrEmpty(name))
+                    return NameColorHelper.GetNameColor(name);
+
+                string result = string.Empty;
+                MatchCollection matches = Profile.VALID_NAME_CHARACTERS.Matches(name);
+
+                foreach (Match match in matches)
+                    result += match.Value;
+
+                displayName = result;
+
+                if (!hasClaimedName && !string.IsNullOrEmpty(memberAddress) && memberAddress.Length > 4)
+                    displayName = $"{result}{memberAddress}";
+
+                return NameColorHelper.GetNameColor(displayName);
+            }
 
             public override int GetHashCode() =>
-                Profile.UserId.GetHashCode();
+                memberAddress.GetHashCode();
 
             private bool Equals(MemberData other) =>
-                Profile.UserId.Equals(other.Profile.UserId);
+                memberAddress.Equals(other.memberAddress);
 
             public override bool Equals(object? obj)
             {

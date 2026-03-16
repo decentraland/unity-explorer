@@ -1,6 +1,12 @@
+#if !NO_LIVEKIT_MODE
+
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -12,6 +18,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
@@ -49,7 +56,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
@@ -83,7 +94,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ISharedSpaceManager sharedSpaceManager,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             IWeb3IdentityCache web3IdentityCache,
             ISelfProfile selfProfile) : base(view, PAGE_SIZE)
         {
@@ -92,7 +107,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.web3IdentityCache = web3IdentityCache;
 
             this.view.InitGrid();
@@ -441,7 +460,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Reset();
         }
 
-        private async void HandleContextMenuUserProfileButtonAsync(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private async void HandleContextMenuUserProfileButtonAsync(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             try
             {
@@ -451,34 +470,34 @@ namespace DCL.Communities.CommunitiesCard.Members
                 switch (friendshipStatus)
                 {
                     case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.UserId, ct)
+                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct)
                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
                         await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
-                            OneShotFriendAccepted = userData,
+                            OneShotFriendAccepted = userData.ToFriendProfile()
                         }), ct: ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
                         await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(
-                                new Web3Address(userData.UserId), userData.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
+                                new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
                             ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
                         await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
                         {
-                            UserId = new Web3Address(userData.UserId),
+                            UserId = new Web3Address(userData.userAddress),
                         }), ct);
 
                         break;
                     case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
                         await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
-                            DestinationUser = new Web3Address(userData.UserId),
+                            DestinationUser = new Web3Address(userData.userAddress),
                         }), ct);
 
                         break;
@@ -487,7 +506,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (ct.IsCancellationRequested)
                     return;
 
-                await FetchFriendshipStatusAndRefreshAsync(userData.UserId, ct);
+                await FetchFriendshipStatusAndRefreshAsync(userData.userAddress, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
@@ -590,7 +609,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             OpenProfilePassport(profile);
 
         private void OnFriendButtonClicked(ICommunityMemberData profile) =>
-            HandleContextMenuUserProfileButtonAsync(profile.Profile, profile.FriendshipStatus.Convert());
+            HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.FriendshipStatus.Convert());
 
         private void OnUnbanButtonClicked(ICommunityMemberData profile)
         {
@@ -618,3 +637,5 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
     }
 }
+
+#endif

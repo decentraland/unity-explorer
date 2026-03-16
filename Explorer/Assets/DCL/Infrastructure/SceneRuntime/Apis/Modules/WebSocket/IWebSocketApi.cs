@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
-using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -24,7 +24,7 @@ namespace SceneRuntime.Apis.Modules
 
         UniTask ConnectAsync(int websocketId, string url, CancellationToken ct);
 
-        UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct);
+        UniTask SendBinaryAsync(int websocketId, IDCLArrayBuffer data, ulong size, CancellationToken ct);
 
         UniTask SendTextAsync(int websocketId, string data, CancellationToken ct);
 
@@ -44,7 +44,7 @@ namespace SceneRuntime.Apis.Modules
             ///     Either "Binary" or "Text"
             /// </summary>
             public string type;
-            public ITypedArray<byte> binary;
+            public IDCLTypedArray<byte> binary;
             public string text;
         }
     }

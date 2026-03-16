@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+
+#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+#endif
+
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -46,7 +50,11 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
+
+#if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
+#endif
+
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -81,7 +89,11 @@ namespace DCL.UI
 
         public CommunityPlayerEntryContextMenu(
             ObjectProxy<IFriendsService> friendServiceProxy,
+
+#if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
+#endif
+
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -94,7 +106,11 @@ namespace DCL.UI
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.friendServiceProxy = friendServiceProxy;
+
+#if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
+#endif
+
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -139,7 +155,7 @@ namespace DCL.UI
                           ;
         }
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo targetProfile, Vector3 position, Vector2 offset,
+        public async UniTask ShowUserProfileContextMenuAsync(Profile targetProfile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
             ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT,
             bool targetIsSpeaker = false)
@@ -165,7 +181,7 @@ namespace DCL.UI
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
-            userProfileControlSettings.SetInitialData(targetProfile, contextMenuFriendshipStatus);
+            userProfileControlSettings.SetInitialData(targetProfile.ToUserData(), contextMenuFriendshipStatus);
 
             openUserProfileButtonControlSettings.SetData(targetProfile.UserId);
             openConversationControlSettings.SetData(targetProfile.UserId);
@@ -206,21 +222,21 @@ namespace DCL.UI
                    };
         }
 
-        private void OnFriendsButtonClicked(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userData.UserId);
+                    SendFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userData.UserId);
+                    RemoveFriend(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userData.UserId);
+                    CancelFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userData.UserId);
+                    AcceptFriendship(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -293,14 +309,22 @@ namespace DCL.UI
 
         private void OnOpenConversationButtonClicked(string userId)
         {
+#if !NO_LIVEKIT_MODE
             closeContextMenuTask.TrySetResult();
             ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
+#if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             onChatShown?.Invoke();
+#else
+            Debug.LogError("Not supported");
+#endif
         }
 
         private void OnJumpInClicked(string userId)
@@ -365,7 +389,7 @@ namespace DCL.UI
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          voiceChatContextMenuSettings.BanUserPopupSprite,
                                                                                          false, false,
-                                                                                         userInfo: participant.Profile),
+                                                                                         userInfo: new ConfirmationDialogParameter.UserData(walletId, participant.ProfilePictureUrl, NameColorHelper.GetNameColor(participant.Name))),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

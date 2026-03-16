@@ -20,8 +20,9 @@ namespace DCL.Landscape.GPUIHelpers
             // GPUIRuntimeSettings.cs:
             // if (maxComputeWorkGroupSize < 64)
             // Debug.LogError("Max. Compute Work Group Size is: " + maxComputeWorkGroupSize + ". GPUI requires minimum work group size of 64.");
-
+#if UNITY_WEBGL
             if (SystemInfo.maxComputeWorkGroupSize < 64)
+#endif
                 scriptToDisable.enabled = false;
         }
     }

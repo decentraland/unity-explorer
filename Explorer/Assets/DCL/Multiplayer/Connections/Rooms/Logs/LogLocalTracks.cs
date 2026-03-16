@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
+
 using DCL.Diagnostics;
 using LiveKit;
 using LiveKit.Rooms.Tracks;
@@ -47,3 +49,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         }
     }
 }
+
+#endif

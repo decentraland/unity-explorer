@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
@@ -256,3 +258,5 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
+
+#endif
