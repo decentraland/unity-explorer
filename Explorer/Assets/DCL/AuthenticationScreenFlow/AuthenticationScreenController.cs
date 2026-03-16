@@ -91,6 +91,7 @@ namespace DCL.AuthenticationScreenFlow
         private StringVariable? profileNameLabel;
         private IInputBlock inputBlock;
         private float originalWorldAudioVolume;
+        private bool isNewGuestSession;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -363,6 +364,8 @@ namespace DCL.AuthenticationScreenFlow
                     };
                     sentryTransactionManager.StartSpan(web3AuthSpan);
 
+                    isNewGuestSession = IsGuestMode() && string.IsNullOrEmpty(DCLPlayerPrefs.GetString(DCLPrefKeys.GUEST_SIGNER_KEY, string.Empty));
+
                     IWeb3Identity identity = await web3Authenticator.LoginAsync(ct, ShowVerification);
                     await UniTask.SwitchToMainThread();
 
@@ -484,18 +487,26 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
-            WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "calling selfProfile.ProfileAsync");
-            Profile? profile = await selfProfile.ProfileAsync(ct);
+            Profile? profile = null;
 
-            if (profile == null)
+            // Skip the fetch entirely for brand-new guests: they can't have a profile on the
+            // catalyst yet, and ProfileAsync would keep retrying until timeout.
+            if (!IsGuestMode() || !isNewGuestSession)
             {
-                if (!IsGuestMode())
+                WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "calling selfProfile.ProfileAsync");
+                profile = await selfProfile.ProfileAsync(ct);
+
+                if (profile == null && !IsGuestMode())
                 {
                     WebGLDebugLog.LogError("AuthScreen.FetchProfileAsync", "ProfileAsync returned null");
                     throw new ProfileNotFoundException();
                 }
+            }
 
-                // New guest with no Catalyst profile yet: create and publish a random one
+            if (profile == null)
+            {
+                // Guest with no profile (new guest, or returning guest whose profile is missing):
+                // create and publish a random one.
                 WebGLDebugLog.Log("AuthScreen.FetchProfileAsync", "Guest has no profile — calling UpdateProfileAsync to create and publish");
                 Profile randomProfile = Profile.NewRandomProfile(storedIdentityProvider.Identity?.Address.ToString());
 
