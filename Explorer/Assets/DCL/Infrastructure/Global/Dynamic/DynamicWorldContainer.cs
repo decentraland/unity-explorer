@@ -10,6 +10,9 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -36,7 +39,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.Minimap;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
@@ -46,12 +49,11 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
-using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
@@ -59,24 +61,34 @@ using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Navmap;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
+using DCL.NotificationsBus;
+using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.SmartWearables;
+using DCL.PluginSystem.World;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.SDKComponents.AvatarLocomotion;
+using DCL.Settings.ScreenMode;
 using DCL.SkyBox;
 using DCL.SocialService;
+using DCL.Translation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -89,7 +101,6 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -109,21 +120,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Backpack.Gifting.Services;
-using DCL.Backpack.Gifting.Services.PendingTransfers;
-using DCL.Backpack.Gifting.Services.SnapshotEquipped;
-using DCL.Multiplayer.Connections.Pulse;
-using DCL.Multiplayer.Connections.Pulse.ENet;
-using DCL.NotificationsBus;
-using DCL.PluginSystem.SmartWearables;
-using DCL.Optimization.AdaptivePerformance.Systems;
-using DCL.PluginSystem.World;
-using DCL.SDKComponents.AvatarLocomotion;
-using DCL.Settings.ScreenMode;
-using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
-using DCL.PrivateWorlds;
-using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -262,6 +258,8 @@ namespace Global.Dynamic
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
+            var pulseIncomingProfileAnnouncements = new PulseIncomingProfileAnnouncements();
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -296,6 +294,7 @@ namespace Global.Dynamic
                         identityCache,
                         movementInbox,
                         staticContainer.QualityContainer.LandscapeData,
+                        pulseIncomingProfileAnnouncements,
                         ct
                     );
             }
@@ -362,7 +361,7 @@ namespace Global.Dynamic
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity, pulseContainer.pulseProfilePropagationBus!);
 
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
@@ -756,7 +755,9 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     islandThroughputBunch,
                     sceneThroughputBunch,
-                    voiceChatRoom
+                    voiceChatRoom,
+                    // TODO: properly branch profile announcements depending on server setup
+                    pulseIncomingProfileAnnouncements
                 ),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),

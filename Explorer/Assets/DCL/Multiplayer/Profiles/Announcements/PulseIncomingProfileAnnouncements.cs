@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
-    public class PulseRemoteProfileAnnouncements : IRemoteAnnouncements
+    public class PulseIncomingProfileAnnouncements : IRemoteAnnouncements
     {
         private readonly List<RemoteAnnouncement> list = new ();
 

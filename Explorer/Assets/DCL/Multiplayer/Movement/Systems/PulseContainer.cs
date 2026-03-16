@@ -2,6 +2,8 @@
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Systems;
+using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.PluginSystem;
 using DCL.Web3.Identities;
 using System;
@@ -22,22 +24,27 @@ namespace DCL.Multiplayer.Connections.Pulse
         private CancellationTokenSource? lifeCycleCts;
 
         internal readonly ParcelEncoder parcelEncoder;
+        private readonly PulseIncomingProfileAnnouncements incomingProfiles;
 
         internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
         internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
+        internal PulseProfilePropagationBus? pulseProfilePropagationBus { get; private set; }
 
-        private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder)
+        private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder,
+            PulseIncomingProfileAnnouncements incomingProfiles)
         {
             this.identityCache = identityCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
+            this.incomingProfiles = incomingProfiles;
         }
 
         public static async UniTask<PulseContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer,
             IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox, LandscapeData landscapeData,
+            PulseIncomingProfileAnnouncements incomingProfiles,
             CancellationToken ct)
         {
-            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData));
+            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData), incomingProfiles);
             await container.InitializeContainerAsync<PulseContainer, Settings>(pluginSettingsContainer, ct);
             return container;
         }
@@ -49,8 +56,10 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
             pulseMultiplayerService = new PulseMultiplayerService(transport, messagePipe, identityCache);
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder,);
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, incomingProfiles);
             pulseMultiplayerBus.SubscribeToIncomingMessages(lifeCycleCts.Token);
+
+            pulseProfilePropagationBus = new PulseProfilePropagationBus(pulseMultiplayerService);
 
             return UniTask.CompletedTask;
         }

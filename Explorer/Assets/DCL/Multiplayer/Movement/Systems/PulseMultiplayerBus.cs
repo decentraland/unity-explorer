@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly HashSet<uint> pendingResyncs = new ();
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly ParcelEncoder parcelEncoder;
-        private readonly PulseRemoteProfileAnnouncements remoteProfileAnnouncements;
+        private readonly PulseIncomingProfileAnnouncements incomingProfiles;
 
         private bool isDisposed;
 
@@ -33,13 +33,13 @@ namespace DCL.Multiplayer.Connections.Pulse
             PeerIdCache peerIdCache,
             MovementInbox movementInbox,
             ParcelEncoder parcelEncoder,
-            PulseRemoteProfileAnnouncements remoteProfileAnnouncements)
+            PulseIncomingProfileAnnouncements incomingProfiles)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
-            this.remoteProfileAnnouncements = remoteProfileAnnouncements;
+            this.incomingProfiles = incomingProfiles;
         }
 
         public void Send(NetworkMovementMessage message)
@@ -87,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     continue;
                 }
 
-                remoteProfileAnnouncements.Enqueue(userId, announcement.Version);
+                incomingProfiles.Enqueue(userId, announcement.Version);
             }
         }
 
@@ -101,7 +101,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     break;
                 }
 
-                remoteProfileAnnouncements.Enqueue(playerJoined.UserId, playerJoined.ProfileVersion);
+                incomingProfiles.Enqueue(playerJoined.UserId, playerJoined.ProfileVersion);
 
                 peerIdCache.Set(playerJoined.UserId, playerJoined.State.SubjectId);
 

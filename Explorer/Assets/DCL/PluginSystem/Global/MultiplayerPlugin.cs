@@ -14,6 +14,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Multiplayer.Connections.Systems.Throughput;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
         private readonly IActivatableConnectiveRoom chatRoom;
         private readonly IActivatableConnectiveRoom voiceChatRoom;
+        private readonly IRemoteAnnouncements remoteAnnouncements;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -89,7 +91,9 @@ namespace DCL.PluginSystem.Global
             CharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
-            ThroughputBufferBunch sceneThroughputBufferBunch, IActivatableConnectiveRoom voiceChatRoom)
+            ThroughputBufferBunch sceneThroughputBufferBunch,
+            IActivatableConnectiveRoom voiceChatRoom,
+            IRemoteAnnouncements remoteAnnouncements)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -114,6 +118,7 @@ namespace DCL.PluginSystem.Global
             this.islandThroughputBufferBunch = islandThroughputBufferBunch;
             this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
             this.voiceChatRoom = voiceChatRoom;
+            this.remoteAnnouncements = remoteAnnouncements;
         }
 
         public void Dispose()
@@ -141,7 +146,7 @@ namespace DCL.PluginSystem.Global
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new LivekitRemoteAnnouncements(messagePipesHub),
+                remoteAnnouncements,
                 new LogRemoveIntentions(
                     new ThreadSafeRemoveIntentions(roomHub)
                 ),

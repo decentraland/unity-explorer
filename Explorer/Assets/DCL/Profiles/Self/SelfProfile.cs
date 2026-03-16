@@ -22,6 +22,7 @@ namespace DCL.Profiles.Self
         private readonly IProfileCache profileCache;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly IProfilePropagation propagation;
         private readonly ProfileBuilder profileBuilder = new ();
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
@@ -36,7 +37,8 @@ namespace DCL.Profiles.Self
             IReadOnlyList<URN>? forcedEmotes,
             IProfileCache profileCache,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IProfilePropagation propagation)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -48,6 +50,7 @@ namespace DCL.Profiles.Self
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.propagation = propagation;
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
@@ -139,7 +142,10 @@ namespace DCL.Profiles.Self
                         false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                     if (savedProfile != null)
+                    {
                         profileCache.Set(savedProfile.UserId, savedProfile);
+                        propagation.Propagate(savedProfile);
+                    }
 
                     return savedProfile;
                 }
@@ -166,6 +172,7 @@ namespace DCL.Profiles.Self
                     // breaking the avatar and the backpack
                     profileCache.Set(savedProfile!.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile!);
+                    propagation.Propagate(savedProfile);
                     return savedProfile;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
