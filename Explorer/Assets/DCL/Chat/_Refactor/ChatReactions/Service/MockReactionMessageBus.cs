@@ -35,7 +35,7 @@ namespace DCL.Chat.ChatReactions
 
         public void SendSituationalReaction(int emojiIndex) { }
 
-        public void SendMessageReaction(int emojiIndex, string messageId) { }
+        public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing) { }
 
         public void Dispose()
         {

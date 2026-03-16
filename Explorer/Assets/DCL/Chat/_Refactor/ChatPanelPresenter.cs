@@ -22,6 +22,7 @@ using DCL.Emoji;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Web3.Identities;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -68,7 +69,9 @@ namespace DCL.Chat
             ITranslationCache translationCache,
             SituationalReactionService situationalReactionService,
             ChatReactionsConfig reactionsConfig,
-            ChatSettingsAsset chatSettingsAsset)
+            ChatSettingsAsset chatSettingsAsset,
+            ChatMessageReactionService messageReactionService,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -139,13 +142,12 @@ namespace DCL.Chat
                 commandRegistry.MarkMessagesAsRead,
                 commandRegistry.TranslateMessageCommand,
                 commandRegistry.RevertToOriginalCommand,
-                emojiPanelPresenter);
+                emojiPanelPresenter,
+                messageReactionService,
+                reactionsConfig.Atlas);
 
-#if UNITY_EDITOR
-            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, "0xOwnUser");
-#else
-            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, string.Empty);
-#endif
+            string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,

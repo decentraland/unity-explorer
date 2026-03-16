@@ -82,5 +82,17 @@ namespace DCL.Chat.History
         /// </summary>
         public static string GetId(string walletId, double timestampRaw) =>
             $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
+
+        /// <summary>
+        /// Creates a stable key for cross-client reaction matching. Rounds the timestamp
+        /// to the nearest second so relay drift (~0.5s) doesn't cause mismatches.
+        /// </summary>
+        public static string GetStableReactionKey(string walletId, double timestampRaw)
+        {
+            // Floor to 2-second buckets to absorb relay drift (~0.5s).
+            // Math.Floor avoids boundary mismatches that Math.Round causes at second edges.
+            long bucket = (long)Math.Floor(timestampRaw * 86400.0 / 2.0);
+            return $"{walletId}:{bucket.ToString(CultureInfo.InvariantCulture)}";
+        }
     }
 }

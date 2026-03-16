@@ -8,6 +8,8 @@ using DCL.Diagnostics;
 using DCL.Emoji;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -38,6 +40,8 @@ namespace DCL.Chat.ChatMessages
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly ChatMessageReactionService messageReactionService;
+        private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -46,6 +50,7 @@ namespace DCL.Chat.ChatMessages
 
         private readonly ChatMessageViewModel separatorViewModel;
 
+        private string? pendingReactionMessageId;
         private IDisposable? onChannelSelectedSubscription;
 
         private CancellationTokenSource loadChannelCts = new ();
@@ -76,7 +81,9 @@ namespace DCL.Chat.ChatMessages
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
             RevertToOriginalCommand revertToOriginalCommand,
-            EmojiPanelPresenter emojiPanelPresenter)
+            EmojiPanelPresenter emojiPanelPresenter,
+            ChatMessageReactionService messageReactionService,
+            ChatReactionsAtlasConfig atlasConfig)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -93,6 +100,8 @@ namespace DCL.Chat.ChatMessages
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
             this.emojiPanelPresenter = emojiPanelPresenter;
+            this.messageReactionService = messageReactionService;
+            this.atlasConfig = atlasConfig;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -153,6 +162,7 @@ namespace DCL.Chat.ChatMessages
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
             translationSettings.OnAutoTranslationSettingsChanged -= OnAutoTranslationSettingsChanged;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
         }
 
         private void OnTranslateMessage(string messageId)
@@ -507,6 +517,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked -= OnReactionButtonClicked;
             view.OnReactionPillClicked -= OnReactionPillClicked;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            pendingReactionMessageId = null;
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
@@ -549,13 +561,57 @@ namespace DCL.Chat.ChatMessages
 
         private void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
         {
+            pendingReactionMessageId = messageId;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            emojiPanelPresenter.EmojiSelected += OnEmojiSelectedForMessageReaction;
             emojiPanelPresenter.SetPanelVisibility(true);
+        }
+
+        private void OnEmojiSelectedForMessageReaction(string emojiUnicode)
+        {
+            if (string.IsNullOrEmpty(pendingReactionMessageId) || string.IsNullOrEmpty(emojiUnicode))
+                return;
+
+            if (!TryGetSingleCodepoint(emojiUnicode, out uint codepoint))
+                return;
+
+            int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
+
+            if (atlasIndex < 0)
+                return;
+
+            messageReactionService.ToggleReaction(pendingReactionMessageId, atlasIndex);
+
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            emojiPanelPresenter.SetPanelVisibility(false);
+            pendingReactionMessageId = null;
+        }
+
+        private static bool TryGetSingleCodepoint(string text, out uint codepoint)
+        {
+            codepoint = 0;
+
+            if (text.Length == 0)
+                return false;
+
+            if (char.IsHighSurrogate(text[0]))
+            {
+                if (text.Length < 2 || !char.IsLowSurrogate(text[1]))
+                    return false;
+
+                codepoint = (uint)char.ConvertToUtf32(text[0], text[1]);
+            }
+            else
+            {
+                codepoint = text[0];
+            }
+
+            return true;
         }
 
         private void OnReactionPillClicked(string messageId, int emojiIndex)
         {
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES,
-                $"Reaction pill clicked: messageId={messageId}, emojiIndex={emojiIndex}");
+            messageReactionService.ToggleReaction(messageId, emojiIndex);
         }
 
         protected override void Activate()
@@ -659,8 +715,7 @@ namespace DCL.Chat.ChatMessages
             ChatChannel? channel = currentChannelService.CurrentChannel;
             if (channel == null) return;
 
-            // DEBUG: inject fake reactions to test UI rendering — REMOVE before merge
-            InjectDebugReactions(channel);
+            messageReactionService.RegisterChannelMessages(channel);
 
             for (int i = 0; i < viewModels.Count; i++)
             {
@@ -670,51 +725,6 @@ namespace DCL.Chat.ChatMessages
                 vm.Reactions = channel.GetReactions(vm.Message.MessageId);
             }
         }
-
-#if UNITY_EDITOR
-        // Default emoji atlas indices: ❤️=3564, 👏=1297, 😢=367, 🤣=2954, 🔥=2723, 😭=395
-        private static readonly int[] DEBUG_EMOJIS = { 3564, 1297, 367, 2954, 2723, 395 };
-        private const string DEBUG_OWN_WALLET = "0xOwnUser";
-        private readonly HashSet<string> debugInjectedChannels = new ();
-
-        private void InjectDebugReactions(ChatChannel channel)
-        {
-            // Only inject once per channel to keep reactions stable across refreshes
-            if (!debugInjectedChannels.Add(channel.Id.Id))
-                return;
-
-            for (int i = 0; i < viewModels.Count; i++)
-            {
-                var vm = viewModels[i];
-                if (ReferenceEquals(vm, separatorViewModel)) continue;
-                if (vm.Message.IsSystemMessage) continue;
-
-                string msgId = vm.Message.MessageId;
-                if (string.IsNullOrEmpty(msgId)) continue;
-
-                // Seeded RNG for stable reactions across refreshes
-                var rng = new System.Random(Math.Abs(msgId.GetHashCode()));
-                int emojiCount = rng.Next(1, 7); // 1-6 unique emojis per message
-
-                for (int e = 0; e < emojiCount; e++)
-                {
-                    int walletCount = rng.Next(1, 21); // 1-20 reactors per emoji
-
-                    for (int w = 0; w < walletCount; w++)
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[e % DEBUG_EMOJIS.Length], $"0xWallet{w:D3}");
-                }
-
-                // Add own wallet to ~half the emojis
-                for (int e = 0; e < emojiCount; e++)
-                {
-                    if (rng.Next(0, 2) == 0)
-                        channel.FillReaction(msgId, DEBUG_EMOJIS[e % DEBUG_EMOJIS.Length], DEBUG_OWN_WALLET);
-                }
-            }
-        }
-#else
-        private void InjectDebugReactions(ChatChannel channel) { }
-#endif
 
         private void ClearTranslationsForCurrentChannel()
         {

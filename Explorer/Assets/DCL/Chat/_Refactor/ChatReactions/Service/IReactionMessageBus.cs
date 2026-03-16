@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.History;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -26,12 +27,24 @@ namespace DCL.Chat.ChatReactions
         }
     }
 
+    public readonly struct ReactionChannelRouting
+    {
+        public readonly ChatChannel.ChatChannelType ChannelType;
+        public readonly string ChannelId;
+
+        public ReactionChannelRouting(ChatChannel.ChatChannelType channelType, string channelId)
+        {
+            ChannelType = channelType;
+            ChannelId = channelId;
+        }
+    }
+
     public interface IReactionMessageBus : IDisposable
     {
         event Action<ReactionReceivedArgs> ReactionReceived;
 
         void SendSituationalReaction(int emojiIndex);
 
-        void SendMessageReaction(int emojiIndex, string messageId);
+        void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing);
     }
 }

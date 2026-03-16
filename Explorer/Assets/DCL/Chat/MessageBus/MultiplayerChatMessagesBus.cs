@@ -191,6 +191,9 @@ namespace DCL.Chat.MessageBus
             if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(walletId)) return false;
 
             newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] RECEIVED message: protoTimestamp={receivedMessage.Payload.Timestamp} messageId={newMessage.MessageId} from={walletId}");
+
             return true;
         }
 
@@ -242,6 +245,10 @@ namespace DCL.Chat.MessageBus
             chat.Payload.ClearForwardedFrom(); // It has to be reset in every use. To be filled by the server.
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
+
+            string msgId = ChatUtils.GetId(identityCache.Identity?.Address ?? "", timestamp);
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] SENT message: timestamp={timestamp} messageId={msgId}");
+
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
     }

@@ -860,6 +860,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     chatSharedAreaEventBus,
                     messagePipesHub,
+                    bootstrapContainer.Environment,
                     currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,
