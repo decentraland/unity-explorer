@@ -4,6 +4,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
+using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Utilities.Extensions;
 using Decentraland.Pulse;
 using System;
@@ -15,6 +16,7 @@ using GlideState = Decentraland.Pulse.GlideState;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
+    // TODO: This class should be moved into another package as it resolves many kind of multiplayer messages
     public class PulseMultiplayerBus : IDisposable
     {
         private readonly PulseMultiplayerService pulseService;
@@ -23,15 +25,21 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly HashSet<uint> pendingResyncs = new ();
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly ParcelEncoder parcelEncoder;
+        private readonly PulseRemoteProfileAnnouncements remoteProfileAnnouncements;
 
         private bool isDisposed;
 
-        public PulseMultiplayerBus(PulseMultiplayerService pulseService, PeerIdCache peerIdCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder)
+        public PulseMultiplayerBus(PulseMultiplayerService pulseService,
+            PeerIdCache peerIdCache,
+            MovementInbox movementInbox,
+            ParcelEncoder parcelEncoder,
+            PulseRemoteProfileAnnouncements remoteProfileAnnouncements)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
+            this.remoteProfileAnnouncements = remoteProfileAnnouncements;
         }
 
         public void Send(NetworkMovementMessage message)
@@ -56,9 +64,31 @@ namespace DCL.Multiplayer.Connections.Pulse
             // TODO Inboxing messages is the only part that should execute on the main thread
             UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
                         SubscribeToPlayerStateFullAsync(ct),
-                        SubscribeToPlayerStateDeltaAsync(ct))
+                        SubscribeToPlayerStateDeltaAsync(ct),
+                        SubscribeToProfileAnnouncementsAsync(ct))
                    .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
                    .Forget();
+        }
+
+        private async UniTask SubscribeToProfileAnnouncementsAsync(CancellationToken ct)
+        {
+            await foreach (PlayerProfileVersionsAnnounced? announcement in pulseService.SubscribeAsync<PlayerProfileVersionsAnnounced>(
+                               ServerMessage.MessageOneofCase.PlayerProfileVersionAnnounced, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving remote profile annoucement while disposed");
+                    break;
+                }
+
+                if (!peerIdCache.TryGetWallet(announcement.SubjectId, out string userId))
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Cannot process remote profile announcement, peer not found: {announcement.SubjectId}");
+                    continue;
+                }
+
+                remoteProfileAnnouncements.Enqueue(userId, announcement.Version);
+            }
         }
 
         private async UniTask SubscribeToPlayerJoinedAsync(CancellationToken ct)
@@ -70,6 +100,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                     ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
                     break;
                 }
+
+                remoteProfileAnnouncements.Enqueue(playerJoined.UserId, playerJoined.ProfileVersion);
 
                 peerIdCache.Set(playerJoined.UserId, playerJoined.State.SubjectId);
 

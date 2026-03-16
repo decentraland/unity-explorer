@@ -141,7 +141,7 @@ namespace DCL.PluginSystem.Global
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new RemoteAnnouncements(messagePipesHub),
+                new LivekitRemoteAnnouncements(messagePipesHub),
                 new LogRemoveIntentions(
                     new ThreadSafeRemoveIntentions(roomHub)
                 ),

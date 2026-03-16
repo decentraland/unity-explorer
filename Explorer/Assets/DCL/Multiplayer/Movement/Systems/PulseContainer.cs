@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.ECSComponents;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.Multiplayer.Movement;
@@ -14,16 +13,18 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public class PulseContainer : DCLWorldContainer<PulseContainer.Settings>
     {
-        internal readonly ParcelEncoder parcelEncoder;
-
         private readonly IWeb3IdentityCache identityCache;
         private readonly MovementInbox movementInbox;
-
         private readonly PeerIdCache peerIdCache = new ();
         private readonly MessagePipe messagePipe = new ();
 
         private ENetTransport? transport;
         private CancellationTokenSource? lifeCycleCts;
+
+        internal readonly ParcelEncoder parcelEncoder;
+
+        internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
+        internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
 
         private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder)
         {
@@ -31,10 +32,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
         }
-
-        internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
-
-        internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
 
         public static async UniTask<PulseContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer,
             IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox, LandscapeData landscapeData,
@@ -52,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
             pulseMultiplayerService = new PulseMultiplayerService(transport, messagePipe, identityCache);
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder);
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder,);
             pulseMultiplayerBus.SubscribeToIncomingMessages(lifeCycleCts.Token);
 
             return UniTask.CompletedTask;

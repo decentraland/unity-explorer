@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Character;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -25,7 +26,7 @@ namespace DCL.Multiplayer.Profiles.Systems
     [UpdateBefore(typeof(AvatarGroup))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
-        private readonly RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements;
+        private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly RemoteProfiles.RemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
@@ -37,7 +38,7 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         public MultiplayerProfilesSystem(
             World world,
-            RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements,
+            IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
             RemoteProfiles.RemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,

@@ -7,11 +7,11 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 {
-    public class RemoteAnnouncements
+    public class LivekitRemoteAnnouncements : IRemoteAnnouncements
     {
         private readonly List<RemoteAnnouncement> list = new ();
 
-        public RemoteAnnouncements(IMessagePipesHub messagePipesHub)
+        public LivekitRemoteAnnouncements(IMessagePipesHub messagePipesHub)
         {
             messagePipesHub.IslandPipe().Subscribe<AnnounceProfileVersion>(Packet.MessageOneofCase.ProfileVersion, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<AnnounceProfileVersion>(Packet.MessageOneofCase.ProfileVersion, OnMessageReceived);

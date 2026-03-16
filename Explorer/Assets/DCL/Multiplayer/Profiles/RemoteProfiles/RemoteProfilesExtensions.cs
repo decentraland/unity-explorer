@@ -6,7 +6,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 {
     public static class RemoteProfilesExtensions
     {
-        public static void Download(this RemoteProfiles remoteProfiles, RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements)
+        public static void Download(this RemoteProfiles remoteProfiles, IRemoteAnnouncements remoteAnnouncements)
         {
             using Bunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch();
 

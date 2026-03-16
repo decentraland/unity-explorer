@@ -12,5 +12,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         GATEKEEPER = 1,
         ISLAND = 1 << 1,
         CHAT = 1 << 2,
+        PULSE = 1 << 3,
     }
 }
