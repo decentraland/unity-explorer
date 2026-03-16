@@ -399,13 +399,6 @@ namespace DCL.Chat.ChatMessages
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but User State Service is NOT set. Aborting.");
                 return;
             }
-            else if (currentChannelService.UserStateService == null)
-            {
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,
-                    $"{nameof(UpdateChannelMessages)} called, but {nameof(currentChannelService.UserStateService)} is null. Aborting.");
-
-                return;
-            }
 
             loadChannelCts = loadChannelCts.SafeRestart();
 
