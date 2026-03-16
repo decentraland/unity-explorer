@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Google.Protobuf;
+using System;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -7,13 +8,13 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// <summary>
     ///     Abstraction for the transport in case it's used actively from other services
     /// </summary>
-    public interface ITransport
+    public interface ITransport : IDisposable
     {
         TransportState State { get; }
 
         UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
-        UniTask DisconnectAsync(CancellationToken ct);
+        UniTask DisconnectAsync(DisconnectReason reason, CancellationToken ct);
 
         UniTask ListenForIncomingDataAsync(CancellationToken ct);
 
@@ -33,6 +34,17 @@ namespace DCL.Multiplayer.Connections.Pulse
             CONNECTED,
             DISCONNECTING,
             DISCONNECTED,
+        }
+
+        public enum DisconnectReason
+        {
+            None = 0,
+            Graceful = 1,           // clean shutdown / server stopping
+            AuthTimeout = 2,        // PENDING_AUTH deadline exceeded
+            AuthFailed = 3,         // handshake validation failed
+            DuplicateSession = 4,   // evicted by newer connection with same player_id
+            Kicked = 5,             // admin kick
+            ServerFull = 6,
         }
     }
 }

@@ -57,6 +57,15 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
+        public void Dispose()
+        {
+            serverPeer = null;
+            client?.Flush();
+            client?.Dispose();
+            client = null;
+            Library.Deinitialize();
+        }
+
         public UniTask ConnectAsync(string ip, int port, CancellationToken ct)
         {
             if (!Library.Initialize())
@@ -73,12 +82,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             return UniTask.CompletedTask;
         }
 
-        public UniTask DisconnectAsync(CancellationToken ct)
+        public UniTask DisconnectAsync(ITransport.DisconnectReason reason, CancellationToken ct)
         {
-            serverPeer = null;
-            client?.Dispose();
-            client = null;
-            Library.Deinitialize();
+            serverPeer?.Disconnect((uint) reason);
             return UniTask.CompletedTask;
         }
 

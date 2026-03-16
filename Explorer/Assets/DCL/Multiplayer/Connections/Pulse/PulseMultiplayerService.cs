@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerService
+    public partial class PulseMultiplayerService : IDisposable
     {
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
@@ -29,6 +29,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.transport = transport;
             this.pipe = pipe;
             this.identityCache = identityCache;
+        }
+
+        public void Dispose()
+        {
+            connectionLifeCycleCts.SafeCancelAndDispose();
+            transport.Dispose();
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
@@ -64,7 +70,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public async UniTask DisconnectAsync(CancellationToken ct)
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
-            await transport.DisconnectAsync(ct);
+            await transport.DisconnectAsync(ITransport.DisconnectReason.Graceful, ct);
         }
 
         public IUniTaskAsyncEnumerable<T> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)

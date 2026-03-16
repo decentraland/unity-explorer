@@ -68,6 +68,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             lifeCycleCts?.SafeCancelAndDispose();
             pulseMultiplayerBus?.Dispose();
+            pulseMultiplayerService?.Dispose();
         }
 
         [Serializable]

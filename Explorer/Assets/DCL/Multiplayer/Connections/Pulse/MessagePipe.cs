@@ -35,11 +35,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         /// </summary>
         public void OnDataReceived(MessagePacket packet)
         {
-            ServerMessage? message = null;
-
-            if (message is null)
-                return;
-
             if (IncomingMessage.TryCreate(packet.FromPeer, packet.Data, out IncomingMessage incomingMessage))
                 incomingChannel.TryWrite(incomingMessage);
         }
