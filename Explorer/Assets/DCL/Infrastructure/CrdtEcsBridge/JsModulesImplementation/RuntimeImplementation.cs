@@ -33,6 +33,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
     public class RuntimeImplementation : IRuntime
     {
         private const string AGENT = "unity-explorer";
+        private const string PLATFORM = "desktop";
 
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
@@ -140,17 +141,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
             new()
             {
                 agent = AGENT,
-                platform = GetPlatformString(),
+                platform = PLATFORM,
                 configurationsJson = JsonConvert.SerializeObject(new Dictionary<string, string>
                 {
                     ["installSource"] = installSource,
                 }),
             };
 
-        private static string GetPlatformString() =>
-            Application.platform switch
-            {
-                _ => "desktop",
-            };
+
     }
 }
