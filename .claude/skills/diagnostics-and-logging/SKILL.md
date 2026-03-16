@@ -1,8 +1,10 @@
+---
+name: diagnostics-and-logging
+description: "Diagnostics, logging, and error reporting via ReportHub. Use when adding log statements, configuring severity matrices, tagging systems with LogCategory, integrating with Sentry, or overriding log levels at runtime."
+user-invocable: false
+---
+
 # Diagnostics & Logging
-
-## Activation
-
-Use this skill when adding logging, error reporting, configuring severity matrices, or integrating with Sentry.
 
 ## Sources
 
@@ -123,27 +125,4 @@ Drop a `.json` file in the build root folder, launch with `--use-log-matrix "fil
 
 ## Code Example — Exception Handling with Logging
 
-From `MinimapController.cs`:
-
-```csharp
-private async UniTask<PlacesData.PlaceInfo?> GetPlaceInfoAsync(
-    Vector2Int parcelPosition, CancellationToken ct)
-{
-    try
-    {
-        return await placesAPIService.GetPlaceAsync(parcelPosition, ct);
-    }
-    catch (OperationCanceledException _) { }
-    catch (NotAPlaceException e)
-    {
-        ReportHub.LogWarning(ReportCategory.UNSPECIFIED,
-            $"Not a place requested: {e.Message}");
-    }
-    catch (Exception exception)
-    {
-        ReportHub.LogException(exception, ReportCategory.GENERIC_WEB_REQUEST);
-    }
-
-    return null;
-}
-```
+For a real-world example combining exception handling with ReportHub logging, see the **async-programming** skill's `MinimapController.GetPlaceInfoAsync` pattern. It demonstrates the standard three-tier catch hierarchy: silent `OperationCanceledException`, `LogWarning` for expected errors, and `LogException` for unexpected failures.
