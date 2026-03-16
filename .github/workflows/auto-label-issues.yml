@@ -32,6 +32,12 @@ jobs:
             You are an issue triage assistant. Your ONLY action is to apply labels — do NOT post any comments.
             Repository: ${{ github.repository }}
             Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
+
+            Context:
+            - The repository has rich product and engineering documentation under the docs/ directory.
+            - Incident severity, hotfix rules, and SEV-1/SEV-2 definitions are documented in docs/incident-management-and-hotfix-policy.md.
+            - Use those docs as guidance when inferring severity/priority from user impact, but you must still map to existing GitHub labels only.
+
             Steps:
             1. Fetch all available labels:
                gh label list --repo ${{ github.repository }} --json name,description --limit 100 > /tmp/labels.json
@@ -40,7 +46,7 @@ jobs:
             3. Analyze the issue and select appropriate labels by considering:
                - The type of issue (bug, feature request, question, improvement, etc.)
                - Technical areas or components mentioned
-               - Severity or priority indicators
+               - Severity or priority indicators, informed by the docs/incident-management-and-hotfix-policy.md guidelines where relevant
                - Platform mentions (e.g. desktop, web, mobile)
                - User impact described
             4. Create a summary report:
@@ -53,6 +59,7 @@ jobs:
                **Applied:** [yes/no]
             5. Apply labels using:
                gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --add-label "label1" --add-label "label2"
+
             Rules:
             - ALWAYS include the "new" label.
             - ALWAYS include a priority label (low, medium, high, critical).

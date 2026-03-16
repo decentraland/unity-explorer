@@ -75,3 +75,6 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, and Unity Cloud
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
+
+## Operations
+- **[Incident Management & Hotfix Policy](incident-management-and-hotfix-policy.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
