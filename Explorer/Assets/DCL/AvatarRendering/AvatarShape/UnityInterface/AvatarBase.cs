@@ -74,6 +74,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
+        [field: Header("TORSO IK")]
+        [field: SerializeField] public Rig TorsoIKRig { get; private set; }
+        [field: SerializeField] public Transform TorsoTarget { get; private set; }
+
         [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }

@@ -114,7 +114,8 @@ namespace DCL.PluginSystem.Global
                 new MovementSpeedLimit(),
                 new GlideState(),
                 new JumpState(),
-                new HandPointAtComponent());
+                new HandPointAtComponent(),
+                new TorsoIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
@@ -136,13 +137,14 @@ namespace DCL.PluginSystem.Global
             GroundDistanceSystem.InjectToWorld(ref builder);
             GliderPropControllerSystem.InjectToWorld(ref builder, settings.Gliding, gliderPropPrefab, componentPoolsRegistry);
 
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
-                return;
-
-            HandPointAtSystem.InjectToWorld(ref builder);
-            PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache);
-            PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
-            RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT))
+            {
+                HandPointAtSystem.InjectToWorld(ref builder);
+                PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache);
+                PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
+                RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
+                TorsoIKSystem.InjectToWorld(ref builder, settings.ControllerSettings);
+            }
         }
     }
 }

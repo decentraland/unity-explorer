@@ -154,7 +154,8 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
                 new HeadIKComponent(),
-                new HandPointAtComponent()
+                new HandPointAtComponent(),
+                new TorsoIKComponent()
             );
 
             collidersGlobalCache.Associate(remoteAvatarCollider.Collider, entity);
