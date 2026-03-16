@@ -80,7 +80,7 @@ namespace Global
                     remoteMetadata,
                     dclEnvironment,
                     systemClipboard,
-                    staticContainer.StaticSettings.BuildData.InstallSource),
+                    staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty),
             };
         }
     }
