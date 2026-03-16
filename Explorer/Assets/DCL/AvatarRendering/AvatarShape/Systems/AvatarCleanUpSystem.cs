@@ -24,7 +24,6 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarCleanUpSystem : BaseUnityLoopSystem
     {
-        private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -37,7 +36,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
         internal AvatarCleanUpSystem(
             World world,
-            IPerformanceBudget instantiationFrameTimeBudget,
             FixedComputeBufferHandler vertOutBuffer,
             IAvatarMaterialPoolHandler avatarMaterialPoolHandler,
             IComponentPool<AvatarBase> avatarPoolRegistry,
@@ -46,7 +44,6 @@ namespace DCL.AvatarRendering.AvatarShape
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
-            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.vertOutBuffer = vertOutBuffer;
             this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -58,39 +55,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            DestroyGhostAvatarQuery(World);
             DestroyAvatarQuery(World);
         }
 
         protected override void OnDispose()
         {
-            DestroyGhostAvatarOnDisposeQuery(World);
             DestroyAvatarOnDisposeQuery(World);
-        }
-
-        /// <summary>
-        ///     Release ghost-only AvatarBase (avatar was loading but entity destroyed before wearables resolved).
-        /// </summary>
-        [Query]
-        [None(typeof(AvatarCustomSkinningComponent))]
-        private void DestroyGhostAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase, ref DeleteEntityIntention deleteEntityIntention)
-        {
-            deleteEntityIntention.DeferDeletion = false;
-
-            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
-                mainPlayerAvatarBaseProxy.ReleaseObject();
-
-            avatarPoolRegistry.Release(avatarBase);
-        }
-
-        [Query]
-        [None(typeof(AvatarCustomSkinningComponent))]
-        private void DestroyGhostAvatarOnDispose(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase)
-        {
-            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
-                mainPlayerAvatarBaseProxy.ReleaseObject();
-
-            avatarPoolRegistry.Release(avatarBase);
         }
 
         /// <summary>

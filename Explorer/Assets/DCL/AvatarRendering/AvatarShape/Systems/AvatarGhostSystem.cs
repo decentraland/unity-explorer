@@ -40,13 +40,16 @@ namespace DCL.AvatarRendering.AvatarShape
         private const float REVEAL_OFFSET = 2.05f;
 
         // Time to reveal the ghost
-        public const float REVEAL_DURATION_SEC = 5f;
+        private const float REVEAL_DURATION_SEC = 0.8f;
 
         // Time transitioning from ghost to avatar
-        public const float HIDE_DURATION_SEC = 5f;
+        private const float HIDE_DURATION_SEC = 0.5f;
 
-        internal AvatarGhostSystem(World world) : base(world)
+        private readonly Material ghostMaterialTemplate;
+
+        internal AvatarGhostSystem(World world, Material ghostMaterialTemplate) : base(world)
         {
+            this.ghostMaterialTemplate = ghostMaterialTemplate;
         }
 
         protected override void Update(float t)
@@ -62,31 +65,33 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention), typeof(AvatarGhostComponent), typeof(CharacterPreviewComponent))]
         private void EnsureGhostAvatar(in Entity entity, ref AvatarBase avatarBase, Profile profile)
         {
-            avatarBase.GhostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_OFFSET, 0, 0));
-            avatarBase.GhostRenderer.material.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
-            avatarBase.GhostRenderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
+            // Instantiate once per avatar so subsequent SetVector calls never trigger Unity material copies
+            var ghostMaterial = new Material(ghostMaterialTemplate);
+            avatarBase.GhostRenderer.sharedMaterial = ghostMaterial;
+
+            ghostMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_OFFSET, 0, 0));
+            ghostMaterial.SetColor(COLOR_SHADER_ID, profile!.UserNameColor);
+            ghostMaterial.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_DEFAULT);
 
             avatarBase.GhostGameObject.SetActive(true);
 
-            World.Add(entity, new AvatarGhostComponent(avatarBase.GhostRenderer));
+            World.Add(entity, new AvatarGhostComponent(avatarBase.GhostRenderer, ghostMaterial));
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void HideNewlyInstantiatedWearables(ref AvatarBase avatarBase, ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
+        private void HideNewlyInstantiatedWearables(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.WearablesHidden) return;
             if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
-
-            float wearableHideY = avatarBase.transform.position.y + HIDE_OFFSET;
 
             foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
             {
                 foreach (Renderer renderer in cachedAttachment.Renderers)
                 {
-                    if (renderer == null || renderer.material == null) continue;
-                    renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, wearableHideY, 0, 0));
-                    renderer.material.SetFloat(REVEAL_ENABLED_SHADER_ID, 1f);
+                    if (renderer == null || renderer.sharedMaterial == null) continue;
+                    renderer.sharedMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, HIDE_OFFSET, 0, 0));
+                    renderer.sharedMaterial.SetFloat(REVEAL_ENABLED_SHADER_ID, 1f);
                 }
             }
 
@@ -101,7 +106,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!avatarGhostComponent.WearablesHidden) return;
 
             // Flip the ghost normal so it disappears bottom-to-top while wearables reveal bottom-to-top
-            avatarGhostComponent.GhostRenderer.material.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
+            avatarGhostComponent.GhostMaterial.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
             avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;
             avatarGhostComponent.PhaseElapsed = 0f;
         }
@@ -116,7 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / REVEAL_DURATION_SEC);
             float ghostRevealY = Mathf.Lerp(HIDE_OFFSET, REVEAL_OFFSET, progress);
 
-            avatarGhostComponent.GhostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, ghostRevealY, 0, 0));
+            avatarGhostComponent.GhostMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, ghostRevealY, 0, 0));
 
             if (progress >= 1f)
             {
@@ -133,18 +138,18 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / HIDE_DURATION_SEC);
-            float revealPosition = Mathf.Lerp(HIDE_OFFSET, REVEAL_OFFSET, progress);
+            float ghostRevealY = Mathf.Lerp(HIDE_OFFSET, REVEAL_OFFSET, progress);
 
             foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
             {
                 foreach (Renderer renderer in cachedAttachment.Renderers)
                 {
-                    if (renderer == null || renderer.material == null) continue;
-                    renderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+                    if (renderer == null || renderer.sharedMaterial == null) continue;
+                    renderer.sharedMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, ghostRevealY, 0, 0));
                 }
             }
 
-            avatarGhostComponent.GhostRenderer.material.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, revealPosition, 0, 0));
+            avatarGhostComponent.GhostMaterial.SetVector(REVEAL_POSITION_SHADER_ID, new Vector4(0, ghostRevealY, 0, 0));
 
             if (progress >= 1f)
             {
@@ -152,8 +157,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 {
                     foreach (Renderer renderer in cachedAttachment.Renderers)
                     {
-                        if (renderer == null || renderer.material == null) continue;
-                        renderer.material.SetFloat(REVEAL_ENABLED_SHADER_ID, 0f);
+                        if (renderer == null || renderer.sharedMaterial == null) continue;
+                        renderer.sharedMaterial.SetFloat(REVEAL_ENABLED_SHADER_ID, 0f);
                     }
                 }
 
@@ -163,6 +168,5 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarBase.GhostGameObject.SetActive(false);
             }
         }
-
     }
 }
