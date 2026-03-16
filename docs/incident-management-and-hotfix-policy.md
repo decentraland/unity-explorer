@@ -43,15 +43,15 @@ Tag the right team when reporting or escalating an incident.
 
 # Severity
 
-> 🏷️ Severity levels align with GitHub issue labels. See [Issue Prioritization & Labeling Guidelines](https://www.notion.so/Issue-Prioritization-Labeling-Guidelines-26a5f41146a580d9b0fbe455a7648a77?pvs=21) for the full labeling reference.
+> 🏷️ Severity levels align with GitHub issue labels.
 
-[Primary & Secondary Features - when to hotfix](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21)
+[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md) 
 
 | Level | GitHub label | When to use | Examples |
 | --- | --- | --- | --- |
 | **SEV-1** | `0-critical` | Core platform broken for most users. No workaround. | Login fails for everyone; client won't launch; teleport completely broken; Marketplace inaccessible |
-| **SEV-2** | `1-high` | A [primary feature](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21) is broken for some users. Platform still partially works. | Other users don't see your avatar; voice chat down; emotes not equipping; emote wheel not working; Marketplace credits not updating |
-| **SEV-3** | `2-medium` | A [secondary feature](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21) is degraded. Main flows still work. | Weekly goals tooltip wrong; camera shortcuts broken; backpack category filter off |
+| **SEV-2** | `1-high` | A [primary category feature](primary-and-secondary-categories-when-to-hotfix.md) is broken for some users. Platform still partially works. | Other users don't see your avatar; voice chat down; emotes not equipping; emote wheel not working; Marketplace credits not updating |
+| **SEV-3** | `2-medium` | A [secondary category feature](primary-and-secondary-categories-when-to-hotfix.md) is degraded. Main flows still work. | Weekly goals tooltip wrong; camera shortcuts broken; backpack category filter off |
 | **SEV-4** | `3-low` | Minor issue, low user impact. | Wearable panel misaligned; tooltip copy error |
 | **SEV-5** | `3-low` | Cosmetic only. No functional impact. | Typo in a navigation label; icon slightly off-position |
 
@@ -60,7 +60,7 @@ Tag the right team when reporting or escalating an incident.
 SEV-1 and SEV-2 are **major incidents** escalated to #crash. SEV-3 through SEV-5 stay in #qa-team and the bug reporting tool.
 
 - **SEV-1 incidents always require a hotfix.**
-- **SEV-2 incidents require a hotfix only if they affect a Primary feature category (see [Hotfix Policy](https://www.notion.so/Incident-Management-Bug-Reporting-3195f41146a5818da9bbf589b8d97237?pvs=21)).**
+- **SEV-2 incidents require a hotfix only if they affect a Primary feature category**
 
 > 📎 GitHub label `3-low` maps to both SEV-4 and SEV-5. If there is zero functional impact (purely visual or copy) → SEV-5. Anything with minor but real functional impact → SEV-4.
 
@@ -111,7 +111,7 @@ Once the incident is created, **immediately notify**:
 - Coordinate the investigation
 - Use `/update-incident` to post progress as it develops — this keeps the status page current
 - Hand off the Point role explicitly in #crash if needed (shift change, fatigue)
-- Once root cause is identified, the **Point and QA decide whether the fix should be released as a hotfix or scheduled for the normal release cycle**, following the [**Hotfix Policy**](https://www.notion.so/Incident-Management-Bug-Reporting-3195f41146a5818da9bbf589b8d97237?pvs=21).
+- Once root cause is identified, the **Point and QA decide whether the fix should be released as a hotfix or scheduled for the normal release cycle**
 
 ## 5. QA validates the fix
 
@@ -131,15 +131,15 @@ Once the incident is created, **immediately notify**:
 
 # Hotfix Policy - When to hotfix
 
-[Primary & Secondary Features - when to hotfix](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21)
+[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md)
 
 **SEV-1** — always hotfix.
 
-**SEV-2** — hotfix only if the bug falls into a [**Primary category**](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21).
+**SEV-2** — hotfix only if the bug falls into a [**Primary category**](primary-and-secondary-categories-when-to-hotfix.md).
 
 SEV-2 bugs in Secondary categories are fixed in the normal release cycle.
 
-Sometimes even if a feature belongs to a [**Secondary category**](https://www.notion.so/Primary-Secondary-Features-when-to-hotfix-31e5f41146a581938a86d53b7f49b482?pvs=21), the issue may still require a hotfix if:
+Sometimes even if a feature belongs to a [**Secondary category**](primary-and-secondary-categories-when-to-hotfix.md), the issue may still require a hotfix if:
 
 - A large percentage of users are affected
 - Core gameplay becomes impossible

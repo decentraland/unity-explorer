@@ -36,6 +36,7 @@ jobs:
             Context:
             - The repository has rich product and engineering documentation under the docs/ directory.
             - Incident severity, hotfix rules, and SEV-1/SEV-2 definitions are documented in docs/incident-management-and-hotfix-policy.md.
+            - Primary vs Secondary categories (used to decide whether SEV-2 implies hotfix-level priority) are listed in docs/primary-and-secondary-categories-when-to-hotfix.md.
             - Use those docs as guidance when inferring severity/priority from user impact, but you must still map to existing GitHub labels only.
 
             Steps:

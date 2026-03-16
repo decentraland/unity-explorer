@@ -78,3 +78,4 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 ## Operations
 - **[Incident Management & Hotfix Policy](incident-management-and-hotfix-policy.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
+- **[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md)** — Primary vs secondary feature categories used to decide SEV-2 hotfixes
