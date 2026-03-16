@@ -14,7 +14,6 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
-using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -29,6 +28,7 @@ using DCL.Audio;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
+using ECS.SceneLifeCycle.WebGL;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
@@ -36,7 +36,6 @@ using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {
@@ -109,7 +108,7 @@ namespace Global.Tests.PlayMode
 
             staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
 
-            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
@@ -129,6 +128,11 @@ namespace Global.Tests.PlayMode
                 webJsSources,
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>()
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+,
+                new WebGLSceneUpdateQueue()
+#endif
+
             );
 
             return (staticContainer, sceneSharedContainer);
