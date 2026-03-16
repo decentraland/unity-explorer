@@ -131,6 +131,12 @@ namespace DCL.Chat
                 commandRegistry.TranslateMessageCommand,
                 commandRegistry.RevertToOriginalCommand);
 
+#if UNITY_EDITOR
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, "0xOwnUser");
+#else
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, string.Empty);
+#endif
+
             var emojiContainer = view.InputView.emojiContainer;
             var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
             var emojiPanelPresenter = new EmojiPanelPresenter(

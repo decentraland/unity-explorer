@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.Utilities;
 using DG.Tweening;
@@ -29,6 +30,9 @@ namespace DCL.Chat.ChatMessages
         private CancellationTokenSource? fadeoutCts;
 
         private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
+
+        private ChatReactionsAtlasConfig? reactionsAtlasConfig;
+        private string? ownWalletAddress;
 
         // View models are reused and set
         // by reference from the presenter
@@ -83,6 +87,12 @@ namespace DCL.Chat.ChatMessages
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
+        }
+
+        public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress)
+        {
+            reactionsAtlasConfig = atlasConfig;
+            ownWalletAddress = walletAddress;
         }
 
         private void ChatScrollToBottomToBottomClicked()
@@ -245,6 +255,14 @@ namespace DCL.Chat.ChatMessages
                 itemScript.OnRevertRequested -= HandleRevertRequest;
                 itemScript.OnTranslateRequested += HandleTranslateRequest;
                 itemScript.OnRevertRequested += HandleRevertRequest;
+
+                if (itemScript.messageReactionsView != null && reactionsAtlasConfig != null)
+                {
+                    itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty);
+                    itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
+                    itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
+                    itemScript.RecalculateHeight();
+                }
 
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;

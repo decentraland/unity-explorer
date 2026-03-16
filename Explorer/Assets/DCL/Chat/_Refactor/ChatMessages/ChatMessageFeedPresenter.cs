@@ -234,6 +234,7 @@ namespace DCL.Chat.ChatMessages
             }
 
             viewModels.Insert(index, newMessageViewModel);
+            newMessageViewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(newMessageViewModel.Message.MessageId);
             if (viewModelsMap != null)
                 viewModelsMap[newMessageViewModel.Message.MessageId] = newMessageViewModel;
 
@@ -415,6 +416,9 @@ namespace DCL.Chat.ChatMessages
                 {
                     ReleaseAndClearAllModels();
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
+
+                    BindReactionsToViewModels();
+
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
                     RebuildFastIndexIfNeeded();
@@ -483,6 +487,9 @@ namespace DCL.Chat.ChatMessages
 
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
+
+            if (currentChannelService.CurrentChannel != null)
+                currentChannelService.CurrentChannel.ReactionChanged += OnReactionChanged;
         }
 
         private void Unsubscribe()
@@ -496,6 +503,9 @@ namespace DCL.Chat.ChatMessages
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
+
+            if (currentChannelService.CurrentChannel != null)
+                currentChannelService.CurrentChannel.ReactionChanged -= OnReactionChanged;
         }
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
@@ -508,6 +518,15 @@ namespace DCL.Chat.ChatMessages
         {
             if (upd.Qualifies(currentChannelService.CurrentChannel))
                 view.RefreshVisibleElements();
+        }
+
+        private void OnReactionChanged(string messageId)
+        {
+            var viewModel = FindViewModelById(messageId);
+            if (viewModel == null) return;
+
+            viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            view.ReconstructScrollView(false);
         }
 
         private void OnRequestScrollAction()
@@ -615,6 +634,79 @@ namespace DCL.Chat.ChatMessages
 
             return LinearFindViewModelById(messageId); // safe fallback when index is disabled
         }
+
+        private void BindReactionsToViewModels()
+        {
+            ChatChannel? channel = currentChannelService.CurrentChannel;
+            if (channel == null) return;
+
+            // DEBUG: inject fake reactions to test UI rendering — REMOVE before merge
+            InjectDebugReactions(channel);
+
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (ReferenceEquals(vm, separatorViewModel)) continue;
+
+                vm.Reactions = channel.GetReactions(vm.Message.MessageId);
+            }
+        }
+
+#if UNITY_EDITOR
+        // Default emoji atlas indices: ❤️=3564, 👏=1297, 😢=367, 🤣=2954, 🔥=2723, 😭=395
+        private static readonly int[] DEBUG_EMOJIS = { 3564, 1297, 367, 2954, 2723, 395 };
+        private const string DEBUG_OWN_WALLET = "0xOwnUser";
+        private readonly HashSet<string> debugInjectedChannels = new ();
+
+        private void InjectDebugReactions(ChatChannel channel)
+        {
+            // Only inject once per channel to keep reactions stable across refreshes
+            if (!debugInjectedChannels.Add(channel.Id.Id))
+                return;
+
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (ReferenceEquals(vm, separatorViewModel)) continue;
+
+                string msgId = vm.Message.MessageId;
+                if (string.IsNullOrEmpty(msgId)) continue;
+
+                // Stable pattern based on message hash so reactions don't shuffle
+                int pattern = Math.Abs(msgId.GetHashCode()) % 3;
+
+                switch (pattern)
+                {
+                    case 0: // no reactions
+                        break;
+                    case 1: // single row, one is "own"
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xAlice");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], DEBUG_OWN_WALLET);
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[1], "0xBob");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[4], "0xCharlie");
+                        break;
+                    case 2: // two rows (8 unique emojis), some are "own"
+                        // Row 1: 6 emojis
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xAlice");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], "0xBob");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[0], DEBUG_OWN_WALLET);
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[1], "0xAlice");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[2], "0xAlice");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[3], "0xBob");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[3], DEBUG_OWN_WALLET);
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[4], "0xCharlie");
+                        channel.FillReaction(msgId, DEBUG_EMOJIS[5], "0xDave");
+                        // Row 2: 2 more unique emojis (using nearby atlas indices)
+                        channel.FillReaction(msgId, 1298, "0xAlice");
+                        channel.FillReaction(msgId, 1298, DEBUG_OWN_WALLET);
+                        channel.FillReaction(msgId, 368, "0xBob");
+                        break;
+                }
+            }
+        }
+#else
+        private void InjectDebugReactions(ChatChannel channel) { }
+#endif
 
         private void ClearTranslationsForCurrentChannel()
         {
