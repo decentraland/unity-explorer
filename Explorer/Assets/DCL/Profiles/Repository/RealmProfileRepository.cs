@@ -269,6 +269,7 @@ namespace DCL.Profiles
                 try
                 {
                     // Two paths
+                    // Forcing from catalyst dispatches the current batch. Its current usage is to retrieve an update profile, so we need it straight away
                     if (forceCatalyst || EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
                         return await EnforceSingleGetAsync();
                     else
