@@ -6,9 +6,9 @@ on:
       testMode:
         description: 'Test mode'
         required: false
-        default: 'playmode'
+        default: 'editmode'
         type: choice
-        options: [playmode, editmode]
+        options: [editmode]
       timeoutMinutes:
         description: 'Timeout per job (minutes)'
         required: false
@@ -59,8 +59,34 @@ jobs:
       fail-fast: false   # keep all namespace jobs running so you see the full picture
       matrix:
         namespace:
-          - DCL
-          - SceneRunner
+          # ── DCL sub-namespaces (708 tests total) ──
+          - DCL.AvatarRendering           # 110 tests
+          - DCL.Character                 #  10 tests
+          - DCL.CharacterCamera           #  44 tests
+          - DCL.CharacterMotion           #  35 tests
+          - DCL.CommunicationData         #  17 tests
+          - DCL.DebugUtilities            #   1 test
+          - DCL.FeatureFlags              #  14 tests
+          - DCL.Interaction               #  51 tests
+          - DCL.InWorldCamera             #   3 tests
+          - DCL.LOD                       #  10 tests
+          - DCL.MapRenderer               # 105 tests
+          - DCL.Minimap                   #   1 test
+          - DCL.Multiplayer               #  69 tests
+          - DCL.Optimization              #   8 tests
+          - DCL.Profiles                  #  17 tests
+          - DCL.ResourcesUnloading        #  15 tests
+          - DCL.Roads                     #   1 test
+          - DCL.SceneLoadingScreens       #   5 tests
+          - DCL.SDKComponents             #  69 tests
+          - DCL.SDKEntityTriggerArea      #   3 tests
+          - DCL.Tests                     #   9 tests
+          - DCL.Translation               #  96 tests
+          - DCL.UI.DebugMenu              #  15 tests
+
+          # ── SceneRunner sub-namespaces (50 tests total) ──
+          - SceneRunner.Scene.Tests       #   6 tests
+          - SceneRunner.Tests             #  44 tests
 
     steps:
       - name: Move Docker data-root to /mnt/docker
