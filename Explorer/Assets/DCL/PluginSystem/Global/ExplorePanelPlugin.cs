@@ -325,7 +325,7 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed -= OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
-            dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
+            dclInput.Shortcuts.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
             dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
         }
 
@@ -342,7 +342,7 @@ namespace DCL.PluginSystem.Global
                 dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
-                dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
+                dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
 
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
                 CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
