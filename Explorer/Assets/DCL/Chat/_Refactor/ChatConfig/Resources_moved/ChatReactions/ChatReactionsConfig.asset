@@ -23,11 +23,11 @@ MonoBehaviour:
   StreamUILane: 0
   StreamLocalPlayer: 0
   StreamRemotePlayers: 0
-  uiAliveCount: 24
+  uiAliveCount: 0
   uiPoolCapacity: 1023
   worldAliveCount: 0
   worldPoolCapacity: 1023
-  nearbyAvatarCount: 8
+  nearbyAvatarCount: 16
   isUIStreaming: 0
   isWorldStreaming: 0
   isDebugNearbyActive: 0
