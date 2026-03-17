@@ -68,6 +68,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
+        [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; }
 

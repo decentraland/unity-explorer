@@ -17,6 +17,12 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class TorsoIKSystem : BaseUnityLoopSystem
     {
+        private const float LEAN_FORWARD_Z_VALUE = 0.2f;
+        private const float LEAN_BACKWARD_Z_VALUE = -0.1f;
+        private const float LEAN_MIDPOINT_Z_VALUE = (LEAN_FORWARD_Z_VALUE + LEAN_BACKWARD_Z_VALUE) / 2f;
+        private const float LEAN_HALF_RANGE_Z_VALUE = (LEAN_FORWARD_Z_VALUE - LEAN_BACKWARD_Z_VALUE) / 2f;
+        private const float MIN_HEAD_IK_CONTRIBUTION = 0.5f;
+
         private readonly ICharacterControllerSettings localSettings;
 
         private TorsoIKSystem(World world,
@@ -46,6 +52,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 torsoIKComponent.Weight, targetAnimWeight, localSettings.IKWeightSpeed * dt);
 
             avatarBase.TorsoIKRig.weight = torsoIKComponent.Weight;
+            avatarBase.HeadLookAtTargetVerticalConstraint.weight = 1f;
 
             if (!handPointAtComponent.IsPointing)
                 return;
@@ -59,9 +66,11 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 float elevation = Mathf.Atan2(direction.y, horizontalMag);
                 float t = Mathf.InverseLerp(-localSettings.PointAtRotationVerticalDownThreshold, localSettings.PointAtRotationVerticalUpThreshold, elevation);
-                targetZ = Mathf.Lerp(0.2f, -0.1f, t);
+                targetZ = Mathf.Lerp(LEAN_FORWARD_Z_VALUE, LEAN_BACKWARD_Z_VALUE, t);
             }
 
+            float headWeight = Mathf.Lerp(MIN_HEAD_IK_CONTRIBUTION, 1f, 1f - Mathf.Abs(targetZ - LEAN_MIDPOINT_Z_VALUE) / LEAN_HALF_RANGE_Z_VALUE);
+            avatarBase.HeadLookAtTargetVerticalConstraint.weight = headWeight;
 
             Vector3 localPos = avatarBase.TorsoTarget.localPosition;
             localPos.z = targetZ;
