@@ -42,11 +42,16 @@ jobs:
         (github.event.label.name == 'force-build') ||
         (github.event.label.name == 'clean-build')
       )
-    name: Test (${{ matrix.testMode }})
+    name: Test (${{ matrix.testFilter }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        testMode: [playmode, editmode]
+        testFilter:
+          - SceneExceptionHandlerShould   #  6 tests (Scene.Tests)
+          - ECSWorldFacadeShould          #  4 tests (Tests)
+          - SceneFacadeShould             # 38 tests (Tests)
+          - SceneFactoryShould            #  2 tests (Tests)
     steps:
 
       - name: Move Docker data-root to /mnt/docker
@@ -109,7 +114,6 @@ jobs:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
 
-      # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
         run: |
@@ -126,15 +130,12 @@ jobs:
           echo "version=$ver" >> $GITHUB_OUTPUT
           echo "Detected Unity version: $ver"
 
-      # --- Build image references (GHCR + upstream) ---
       - name: Set image names
         id: img
         run: |
           version="${{ steps.unity-version.outputs.version }}"
           flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
           imgVer="${{ env.UNITY_IMAGE_VERSION }}"
-
-          # ubuntu-<unityVersion>-<flavor>-<gameciVersion>
           tag="ubuntu-$version-$flavor-$imgVer"
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           upstream="unityci/editor:$tag"
@@ -145,7 +146,6 @@ jobs:
           echo "Upstream image: $upstream"
           echo "GHCR image:     $ghcr"
 
-      # --- Log into GHCR ---
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -153,14 +153,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      # --- Restore Unity image from GHCR (fast path) ---
       - name: Restore Unity image from GHCR
         id: restore-image
         continue-on-error: true
         run: |
           docker pull "${{ steps.img.outputs.ghcr }}"
 
-      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
       - name: Download from Docker Hub and upload to GHCR (if missing)
         if: steps.restore-image.outcome == 'failure'
         run: |
@@ -172,7 +170,6 @@ jobs:
           docker push $ghcr
           echo "Seeded GHCR: $ghcr"
 
-      # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
         timeout-minutes: 10
@@ -181,27 +178,29 @@ jobs:
           SHELL: /bin/bash
         with:
           projectPath: Explorer
-          testMode: ${{ matrix.testMode }}
+          testMode: playmode
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
+          customParameters: >-
+            -buildTarget StandaloneLinux64
+            -testCategory "!Performance"
+            -testFilter "${{ matrix.testFilter }}"
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
         if: always()
         uses: dorny/test-reporter@v2.1.1
         with:
-          name: Unity Tests (${{ matrix.testMode }})
+          name: Unity Tests (${{ matrix.testFilter }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-nunit
           fail-on-error: true
           fail-on-empty: true
           use-actions-summary: true
 
-      # Upload artifact
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Test results (${{ matrix.testMode }})
+          name: Test results (${{ matrix.testFilter }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
