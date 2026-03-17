@@ -214,7 +214,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 DecentralandUrl.ReportUserForm => $"https://report.decentraland.{ENV}/players?player_address={{0}}&reported_address={{1}}",
-                DecentralandUrl.BannedUsers => $"https://social-api.decentraland.{ENV}/v1/moderation/users/{{0}}/bans",
+                DecentralandUrl.BannedUsers => $"https://comms-gatekeeper.decentraland.{ENV}/moderation/users/{{0}}/bans",
 
                 DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
