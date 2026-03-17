@@ -131,6 +131,7 @@ namespace DCL.AvatarRendering.AvatarShape
             bool pointAtEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
             avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) || pointAtEnabled;
             avatarBase.HandsIKRig.enabled = pointAtEnabled;
+            avatarBase.TorsoIKRig.enabled = pointAtEnabled;
 
             // Feet IK components are not added to remote entities
             // We still disable the rigs to ensure no cpu time is wasted
