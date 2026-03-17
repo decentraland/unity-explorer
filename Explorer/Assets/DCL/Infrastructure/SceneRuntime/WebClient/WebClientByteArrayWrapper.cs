@@ -25,6 +25,8 @@ namespace SceneRuntime.WebClient
         public ulong Read(ulong index, ulong length, byte[] destination, ulong destinationIndex)
         {
             if (length == 0) return 0;
+            if (destinationIndex >= (ulong)destination.LongLength) return 0;
+            if (index >= (ulong)data.Length) return 0;
 
             ulong actualLength = Math.Min(length, (ulong)destination.LongLength - destinationIndex);
             actualLength = Math.Min(actualLength, (ulong)data.Length - index);
@@ -36,6 +38,8 @@ namespace SceneRuntime.WebClient
         public void ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
         {
             if (count == 0) return;
+            if (destinationIndex >= (ulong)destination.LongLength) return;
+            if (offset >= (ulong)data.Length) return;
 
             ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
             actualCount = Math.Min(actualCount, (ulong)data.Length - offset);
@@ -46,6 +50,8 @@ namespace SceneRuntime.WebClient
         public void WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
         {
             if (count == 0) return;
+            if (sourceIndex >= (ulong)source.LongLength) return;
+            if (offset >= (ulong)data.Length) return;
 
             ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
             actualCount = Math.Min(actualCount, (ulong)data.Length - offset);
@@ -76,6 +82,8 @@ namespace SceneRuntime.WebClient
             public ulong ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
             {
                 if (count == 0) return 0;
+                if (destinationIndex >= (ulong)destination.LongLength) return 0;
+                if (offset >= (ulong)data.Length) return 0;
 
                 ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
                 actualCount = Math.Min(actualCount, (ulong)data.Length - offset);
@@ -87,6 +95,8 @@ namespace SceneRuntime.WebClient
             public ulong WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
             {
                 if (count == 0) return 0;
+                if (sourceIndex >= (ulong)source.LongLength) return 0;
+                if (offset >= (ulong)data.Length) return 0;
 
                 ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
                 actualCount = Math.Min(actualCount, (ulong)data.Length - offset);

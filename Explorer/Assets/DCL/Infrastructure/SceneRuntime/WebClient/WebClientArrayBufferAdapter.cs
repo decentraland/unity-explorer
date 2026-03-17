@@ -15,7 +15,8 @@ namespace SceneRuntime.WebClient
 
         public WebClientScriptObject ScriptObject => scriptObject;
 
-        public static implicit operator WebClientScriptObject(WebClientArrayBufferAdapter adapter) => adapter.scriptObject;
+        public static implicit operator WebClientScriptObject(WebClientArrayBufferAdapter adapter) =>
+            adapter.scriptObject;
 
         ulong IDCLArrayBuffer.Size
         {
@@ -33,6 +34,9 @@ namespace SceneRuntime.WebClient
 
             ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
 
+            if (actualCount > int.MaxValue)
+                throw new OverflowException($"[WebClientArrayBufferAdapter] Operation length {actualCount} exceeds int.MaxValue.");
+
             unsafe
             {
                 fixed (byte* dstPtr = destination)
@@ -48,6 +52,7 @@ namespace SceneRuntime.WebClient
                     }
                 }
             }
+
             return actualCount;
         }
 
@@ -57,6 +62,9 @@ namespace SceneRuntime.WebClient
                 return 0;
 
             ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
+
+            if (actualCount > int.MaxValue)
+                throw new OverflowException($"[WebClientArrayBufferAdapter] Operation length {actualCount} exceeds int.MaxValue.");
 
             unsafe
             {
@@ -73,6 +81,7 @@ namespace SceneRuntime.WebClient
                     }
                 }
             }
+
             return actualCount;
         }
 

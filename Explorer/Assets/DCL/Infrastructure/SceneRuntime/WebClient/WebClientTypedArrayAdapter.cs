@@ -64,6 +64,9 @@ namespace SceneRuntime.WebClient
             ulong actualLength = Math.Min(length, (ulong)destination.LongLength - destinationIndex);
             actualLength = Math.Min(actualLength, Length - index);
 
+            if (actualLength > int.MaxValue)
+                throw new OverflowException($"[WebClientTypedArrayAdapter] Operation length {actualLength} exceeds int.MaxValue.");
+
             unsafe
             {
                 fixed (byte* dstPtr = destination)
@@ -97,6 +100,9 @@ namespace SceneRuntime.WebClient
             ulong actualCount = Math.Min(count, (ulong)destination.LongLength - destinationIndex);
             actualCount = Math.Min(actualCount, Length - offset);
 
+            if (actualCount > int.MaxValue)
+                throw new OverflowException($"[WebClientTypedArrayAdapter] Operation length {actualCount} exceeds int.MaxValue.");
+
             unsafe
             {
                 fixed (byte* dstPtr = destination)
@@ -121,6 +127,9 @@ namespace SceneRuntime.WebClient
 
             ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
             actualCount = Math.Min(actualCount, Length - offset);
+
+            if (actualCount > int.MaxValue)
+                throw new OverflowException($"[WebClientTypedArrayAdapter] Operation length {actualCount} exceeds int.MaxValue.");
 
             unsafe
             {

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -43,12 +44,15 @@ namespace SceneRuntime.WebClient
 
         public WebClientScriptObject(WebClientJavaScriptEngine engine, string propertyPath)
         {
-            this.engine = engine;
-            this.ObjectId = propertyPath;
+            this.engine = engine ?? throw new ArgumentNullException(nameof(engine));
+            ObjectId = propertyPath;
         }
 
         public object InvokeMethod(string name, params object[] args)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(InvokeMethod)} on a disposed engine.");
+
             if (!IsObjectId(ObjectId))
                 throw new InvalidOperationException($"Cannot invoke method on non-object path: {ObjectId}");
 
@@ -81,11 +85,37 @@ namespace SceneRuntime.WebClient
                             return deserialized;
                         }
 
+                        if (result < 0)
+                        {
+                            int newSize = -result;
+                            Marshal.FreeHGlobal(resultPtr);
+                            resultPtr = IntPtr.Zero;
+                            resultPtr = Marshal.AllocHGlobal(newSize);
+                            result = JSContext_InvokeObjectMethod(contextIdPtr, objectIdPtr, methodNamePtr, argsJsonPtr, resultPtr, newSize);
+
+                            if (result > 0)
+                            {
+                                string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
+                                object deserialized = JsonConvert.DeserializeObject(resultStr);
+
+                                if (deserialized is string str && IsObjectId(str))
+                                    return new WebClientScriptObject(engine, str);
+
+                                return deserialized;
+                            }
+
+                            throw new InvalidOperationException($"Failed to invoke method {name} on object {ObjectId} (required buffer size: {newSize})");
+                        }
+
                         throw new InvalidOperationException($"Failed to invoke method {name} on object {ObjectId}");
                     }
                     finally { Marshal.FreeHGlobal(contextIdPtr); }
                 }
-                finally { Marshal.FreeHGlobal(resultPtr); }
+                finally
+                {
+                    if (resultPtr != IntPtr.Zero)
+                        Marshal.FreeHGlobal(resultPtr);
+                }
             }
             finally
             {
@@ -97,6 +127,9 @@ namespace SceneRuntime.WebClient
 
         public object InvokeAsFunction(params object[] args)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(InvokeAsFunction)} on a disposed engine.");
+
             string argsJson = SerializeArgsForJs(args);
 
             if (IsObjectId(ObjectId))
@@ -159,11 +192,34 @@ namespace SceneRuntime.WebClient
                                 return JsonConvert.DeserializeObject(resultStr);
                             }
 
+                            if (result < 0)
+                            {
+                                int newSize = -result;
+                                Marshal.FreeHGlobal(resultPtr);
+                                resultPtr = IntPtr.Zero;
+                                resultPtr = Marshal.AllocHGlobal(newSize);
+                                result = JSContext_InvokeFunction(contextIdPtr, funcNamePtr, argsJsonPtr, resultPtr, newSize);
+
+                                if (result > 0)
+                                {
+                                    string resultStr = Utf8Marshal.PtrToStringUTF8(resultPtr, result);
+                                    return JsonConvert.DeserializeObject(resultStr);
+                                }
+
+                                ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}' even after buffer resize to {newSize}");
+                                return null;
+                            }
+
+                            ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}'");
                             return null;
                         }
                         finally { Marshal.FreeHGlobal(contextIdPtr); }
                     }
-                    finally { Marshal.FreeHGlobal(resultPtr); }
+                    finally
+                    {
+                        if (resultPtr != IntPtr.Zero)
+                            Marshal.FreeHGlobal(resultPtr);
+                    }
                 }
                 finally
                 {
@@ -175,6 +231,9 @@ namespace SceneRuntime.WebClient
 
         public object GetProperty(string name)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(GetProperty)} on a disposed engine.");
+
             if (IsObjectId(ObjectId))
             {
                 IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ObjectId);
@@ -204,6 +263,7 @@ namespace SceneRuntime.WebClient
                                 return deserialized;
                             }
 
+                            ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientScriptObject] GetProperty failed for property '{name}' on object '{ObjectId}'");
                             return null;
                         }
                         finally { Marshal.FreeHGlobal(contextIdPtr); }
@@ -223,6 +283,9 @@ namespace SceneRuntime.WebClient
 
         public void SetProperty(string name, object value)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(SetProperty)} on a disposed engine.");
+
             if (IsObjectId(ObjectId))
             {
                 string valueJson = SerializeValueForJs(value);
@@ -291,7 +354,7 @@ namespace SceneRuntime.WebClient
 
             var parts = new string[args.Length];
 
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
                 parts[i] = SerializeValueForJs(args[i]);
 
             return "[" + string.Join(",", parts) + "]";
@@ -336,6 +399,9 @@ namespace SceneRuntime.WebClient
 
         public object Invoke(bool asConstructor, params object[] args)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(Invoke)} on a disposed engine.");
+
             if (asConstructor)
             {
                 string argsJson = SerializeArgsForJs(args);
@@ -362,6 +428,7 @@ namespace SceneRuntime.WebClient
                                 {
                                     bufferSize = -result;
                                     Marshal.FreeHGlobal(objectIdPtr);
+                                    objectIdPtr = IntPtr.Zero;
                                     objectIdPtr = Marshal.AllocHGlobal(bufferSize);
                                     result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
                                 }
@@ -375,12 +442,16 @@ namespace SceneRuntime.WebClient
                         }
                         finally { Marshal.FreeHGlobal(contextIdPtr); }
                     }
-                    finally { Marshal.FreeHGlobal(objectIdPtr); }
+                    finally
+                    {
+                        if (objectIdPtr != IntPtr.Zero)
+                            Marshal.FreeHGlobal(objectIdPtr);
+                    }
                 }
                 finally { Marshal.FreeHGlobal(exprPtr); }
             }
 
-            return this;
+            return InvokeAsFunction(args);
         }
 
         public void SetProperty(int index, IDCLTypedArray<byte> value)
@@ -412,6 +483,9 @@ namespace SceneRuntime.WebClient
 
         public static WebClientScriptObject CreateFromExpression(WebClientJavaScriptEngine engine, string expression)
         {
+            if (engine.IsDisposed)
+                throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine), $"Cannot call {nameof(CreateFromExpression)} on a disposed engine.");
+
             IntPtr exprPtr = Utf8Marshal.StringToHGlobalUTF8(expression);
 
             try
@@ -433,6 +507,7 @@ namespace SceneRuntime.WebClient
                             {
                                 bufferSize = -result;
                                 Marshal.FreeHGlobal(objectIdPtr);
+                                objectIdPtr = IntPtr.Zero;
                                 objectIdPtr = Marshal.AllocHGlobal(bufferSize);
                                 result = JSContext_StoreObject(contextIdPtr, exprPtr, objectIdPtr, bufferSize);
                             }
@@ -446,7 +521,11 @@ namespace SceneRuntime.WebClient
                     }
                     finally { Marshal.FreeHGlobal(contextIdPtr); }
                 }
-                finally { Marshal.FreeHGlobal(objectIdPtr); }
+                finally
+                {
+                    if (objectIdPtr != IntPtr.Zero)
+                        Marshal.FreeHGlobal(objectIdPtr);
+                }
             }
             finally { Marshal.FreeHGlobal(exprPtr); }
         }

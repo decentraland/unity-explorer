@@ -359,5 +359,10 @@ namespace DCL.Diagnostics
 
         public const string DONATIONS = nameof(DONATIONS);
         public const string ASSET_PRE_LOAD = nameof(ASSET_PRE_LOAD);
+
+        /// <summary>
+        ///     WebGL JS-C# bridge (WebClientJavaScriptEngine, WebClientScriptObject, and related types)
+        /// </summary>
+        public const string WEB_CLIENT = nameof(WEB_CLIENT);
     }
 }

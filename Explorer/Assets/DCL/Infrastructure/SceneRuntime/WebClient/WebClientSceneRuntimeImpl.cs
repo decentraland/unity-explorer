@@ -1,5 +1,4 @@
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -104,7 +103,10 @@ namespace SceneRuntime.WebClient
                 // Get the script ID for registration
                 string scriptId = (script as WebGLCompiledScript)?.ScriptId ?? "";
                 if (string.IsNullOrEmpty(scriptId))
+                {
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"Skipping module registration: compiled script for '{moduleName}' is not a WebGLCompiledScript or has no script ID.");
                     continue;
+                }
 
                 // Register with the ~ prefix that Init.js uses for require()
                 // e.g., require('~system/WebSocketApi') -> module name "~system/WebSocketApi"

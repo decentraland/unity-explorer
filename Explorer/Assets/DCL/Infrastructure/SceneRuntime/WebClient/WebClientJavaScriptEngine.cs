@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using AOT;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -27,6 +27,7 @@ namespace SceneRuntime.WebClient
         private static bool s_callbackRegistered;
         internal readonly string contextId;
         private bool disposed;
+        internal bool IsDisposed => disposed;
 
         public IDCLScriptObject Global
         {
@@ -81,16 +82,16 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static MethodInfo? FindMethod(Type type, string methodName, int argCount)
         {
-            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
             MethodInfo? exactMatch = null;
             MethodInfo? zeroParamFallback = null;
 
-            foreach (var method in methods)
+            foreach (MethodInfo method in methods)
             {
                 if (method.Name != methodName)
                     continue;
 
-                var parameters = method.GetParameters();
+                ParameterInfo[] parameters = method.GetParameters();
 
                 // Exact match on parameter count - return immediately
                 if (parameters.Length == argCount)
@@ -113,9 +114,7 @@ namespace SceneRuntime.WebClient
             // If we have a method by name but wrong param count, log and return it
             // The caller will get a more helpful error
             if (exactMatch != null)
-            {
-                Debug.LogWarning($"[WebClientJavaScriptEngine] Method {methodName} found but param count mismatch. Expected: {exactMatch.GetParameters().Length}, Got: {argCount}");
-            }
+                ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Method {methodName} found but param count mismatch. Expected: {exactMatch.GetParameters().Length}, Got: {argCount}");
 
             return exactMatch;
         }
@@ -137,18 +136,18 @@ namespace SceneRuntime.WebClient
 
                 if (hostObject == null)
                 {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
                     return;
                 }
 
-                // Parse arguments first to determine count
-                object?[]? args = null;
-                int argCount = 0;
+                // Pre-parse arguments to determine count for method resolution
+                var argCount = 0;
+                JArray? jsonArray = null;
 
                 if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
                 {
-                    args = JsonConvert.DeserializeObject<object?[]>(argsJson);
-                    argCount = args?.Length ?? 0;
+                    jsonArray = JArray.Parse(argsJson);
+                    argCount = jsonArray.Count;
                 }
 
                 // Find method handling overloads
@@ -156,14 +155,17 @@ namespace SceneRuntime.WebClient
 
                 if (method == null)
                 {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
                     return;
                 }
+
+                // Parse arguments and convert to method parameter types
+                object?[]? args = ParseAndConvertArguments((object?)jsonArray ?? argsJson, method.GetParameters());
 
                 // Invoke the method
                 method.Invoke(hostObject, args);
             }
-            catch (Exception ex) { Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method: {ex}"); }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.WEB_CLIENT); }
         }
 
         /// <summary>
@@ -185,12 +187,12 @@ namespace SceneRuntime.WebClient
 
                 if (hostObject == null)
                 {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Host object not found: contextId={contextId}, objectId={objectId}");
                     return WriteResultToBuffer("{\"error\":\"Host object not found\"}", resultBuffer, resultBufferSize);
                 }
 
                 // Pre-parse arguments to determine count for method resolution
-                int argCount = 0;
+                var argCount = 0;
                 JArray? jsonArray = null;
 
                 if (!string.IsNullOrEmpty(argsJson) && argsJson != "[]")
@@ -204,12 +206,12 @@ namespace SceneRuntime.WebClient
 
                 if (method == null)
                 {
-                    Debug.LogWarning($"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Method not found: {methodName} on {hostObject.GetType().Name}");
                     return WriteResultToBuffer("{\"error\":\"Method not found\"}", resultBuffer, resultBufferSize);
                 }
 
                 // Parse arguments and convert to method parameter types
-                object?[]? args = ParseAndConvertArguments(argsJson, method.GetParameters());
+                object?[]? args = ParseAndConvertArguments(jsonArray ?? (object?)argsJson, method.GetParameters());
 
                 // Invoke the method
                 object? result = method.Invoke(hostObject, args);
@@ -221,37 +223,47 @@ namespace SceneRuntime.WebClient
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[WebClientJavaScriptEngine] Error invoking host object method with return: {ex}");
-                string errorJson = JsonConvert.SerializeObject(new { error = ex.Message });
+                ReportHub.LogException(ex, ReportCategory.WEB_CLIENT);
+                string errorJson = JsonConvert.SerializeObject(new { error = ex.ToString() });
                 return WriteResultToBuffer(errorJson, resultBuffer, resultBufferSize);
             }
         }
 
         /// <summary>
         ///     Parses JSON arguments and converts them to the expected parameter types.
+        ///     The <paramref name="args"/> parameter may be a pre-parsed <see cref="JArray"/> or a raw JSON string.
         /// </summary>
-        private static object?[]? ParseAndConvertArguments(string argsJson, ParameterInfo[] parameters)
+        private static object?[]? ParseAndConvertArguments(object? args, ParameterInfo[] parameters)
         {
             // No parameters expected - return null (not empty array) for proper invocation
             if (parameters.Length == 0)
                 return null;
 
+            // Resolve to a JArray (or null/empty sentinel)
+            JArray? jsonArray = null;
+
+            if (args is JArray prearsed)
+                jsonArray = prearsed;
+            else if (args is string argsJson && !string.IsNullOrEmpty(argsJson) && argsJson != "[]")
+                jsonArray = JArray.Parse(argsJson);
+
             // Empty args but parameters expected - return array with default values
-            if (string.IsNullOrEmpty(argsJson) || argsJson == "[]")
+            if (jsonArray == null || jsonArray.Count == 0)
             {
                 var defaultArgs = new object?[parameters.Length];
-                for (int i = 0; i < parameters.Length; i++)
+
+                for (var i = 0; i < parameters.Length; i++)
                 {
-                    var paramType = parameters[i].ParameterType;
+                    Type paramType = parameters[i].ParameterType;
                     defaultArgs[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
                 }
+
                 return defaultArgs;
             }
 
             try
             {
-                var jsonArray = JArray.Parse(argsJson);
-                var args = new object?[parameters.Length];
+                var result = new object?[parameters.Length];
 
                 for (var i = 0; i < parameters.Length; i++)
                 {
@@ -263,51 +275,47 @@ namespace SceneRuntime.WebClient
                         JToken? jsonValue = jsonArray[i];
 
                         if (jsonValue == null || jsonValue.Type == JTokenType.Null)
-                        {
-                            args[i] = null;
-                        }
+                            result[i] = null;
                         else if (jsonValue is JObject jObj && jObj.TryGetValue("__type", out JToken? typeToken) && typeToken.Value<string>() == "ByteArray")
                         {
                             // Handle ByteArray type marker - convert Base64 to byte array wrapper
                             string base64Data = jObj.Value<string>("data") ?? "";
                             byte[] bytes = string.IsNullOrEmpty(base64Data) ? Array.Empty<byte>() : Convert.FromBase64String(base64Data);
-                            args[i] = new WebClientByteArrayWrapper(bytes);
+                            result[i] = new WebClientByteArrayWrapper(bytes);
                         }
                         else
                         {
                             // Special handling for IList<object> - JSON.NET can't instantiate interfaces
                             if (param.ParameterType == typeof(IList<object>) && jsonValue is JArray jArr)
-                            {
-                                args[i] = jArr.ToObject<List<object>>();
-                            }
+                                result[i] = jArr.ToObject<List<object>>();
                             else
-                            {
+
                                 // Convert the JSON value to the expected parameter type
-                                args[i] = jsonValue.ToObject(param.ParameterType);
-                            }
+                                result[i] = jsonValue.ToObject(param.ParameterType);
                         }
                     }
                     else
                     {
                         // No JSON value for this parameter - use default
-                        var paramType = param.ParameterType;
-                        args[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
+                        Type paramType = param.ParameterType;
+                        result[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
                     }
                 }
 
-                return args;
+                return result;
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[WebClientJavaScriptEngine] Error parsing arguments: {ex.Message}\nArgsJson: {argsJson}\nParameters: {string.Join(", ", parameters.Select(p => p.ParameterType.Name))}\nStack: {ex.StackTrace}");
-                // Return array with defaults rather than null to avoid invoke errors
-                var fallbackArgs = new object?[parameters.Length];
-                for (int i = 0; i < parameters.Length; i++)
+                var sb = new StringBuilder("[WebClientJavaScriptEngine] Error parsing arguments. Parameters: ");
+
+                for (var i = 0; i < parameters.Length; i++)
                 {
-                    var paramType = parameters[i].ParameterType;
-                    fallbackArgs[i] = paramType.IsValueType ? Activator.CreateInstance(paramType) : null;
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(parameters[i].ParameterType.Name);
                 }
-                return fallbackArgs;
+
+                ReportHub.LogException(new InvalidOperationException(sb.ToString(), ex), ReportCategory.WEB_CLIENT);
+                throw new InvalidOperationException(sb.ToString(), ex);
             }
         }
 
@@ -316,16 +324,14 @@ namespace SceneRuntime.WebClient
         /// </summary>
         private static string SerializeResult(object? result)
         {
-            // Debug.Log($"[SerializeResult] Input type: {result?.GetType().Name ?? "null"}");
-
             if (result == null)
                 return "null";
 
             // Handle PoolableByteArray - serialize as Base64 with type marker
             if (result is PoolableByteArray poolableByteArray)
             {
-                // Debug.Log("[SerializeResult] Serializing PoolableByteArray");
-                if (poolableByteArray.IsEmpty) { return JsonConvert.SerializeObject(new { __type = "ByteArray", data = "", isEmpty = true }); }
+                if (poolableByteArray.IsEmpty)
+                    return JsonConvert.SerializeObject(new { __type = "ByteArray", data = "", isEmpty = true });
 
                 byte[] bytes = poolableByteArray.Memory.ToArray();
                 string base64 = Convert.ToBase64String(bytes);
@@ -334,38 +340,23 @@ namespace SceneRuntime.WebClient
 
             // Handle primitive types directly
             if (result is bool boolResult)
-            {
-                // Debug.Log("[SerializeResult] Serializing bool");
                 return boolResult ? "true" : "false";
-            }
 
             if (result is int or long or float or double or decimal)
-            {
-                // Debug.Log("[SerializeResult] Serializing number");
                 return result.ToString()!;
-            }
 
             if (result is string stringResult)
-            {
-                string serialized = JsonConvert.SerializeObject(stringResult);
-
-                // Debug.Log($"[SerializeResult] Serializing string, length={stringResult.Length}, serialized={serialized.Substring(0, Math.Min(100, serialized.Length))}...");
-                return serialized;
-            }
+                return JsonConvert.SerializeObject(stringResult);
 
             // Handle WebClientScriptObject - return the object ID reference
             if (result is WebClientScriptObject scriptObject)
-            {
-                // Debug.Log($"[SerializeResult] Serializing WebClientScriptObject: {scriptObject.ObjectId}");
                 return JsonConvert.SerializeObject(new { __objectRef = scriptObject.ObjectId });
-            }
 
             // Default: JSON serialize the object
-            // Debug.Log($"[SerializeResult] Default serialization for: {result.GetType().Name}");
             try { return JsonConvert.SerializeObject(result); }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[WebClientJavaScriptEngine] Error serializing result: {ex.Message}");
+                ReportHub.LogException(ex, ReportCategory.WEB_CLIENT);
                 return JsonConvert.SerializeObject(new { __type = "Object", toString = result.ToString() });
             }
         }
@@ -382,7 +373,7 @@ namespace SceneRuntime.WebClient
             if (bufferSize < requiredSize)
                 return -requiredSize;
 
-            Span<byte> dest = new Span<byte>(buffer.ToPointer(), bufferSize);
+            var dest = new Span<byte>(buffer.ToPointer(), bufferSize);
             int written = Encoding.UTF8.GetBytes(result.AsSpan(), dest);
             dest[written] = 0; // null terminator
 
@@ -438,7 +429,8 @@ namespace SceneRuntime.WebClient
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
 
-            if (script is WebGLCompiledScript webglScript) { return EvaluateScript(webglScript.ScriptId); }
+            if (script is WebGLCompiledScript webglScript)
+                return EvaluateScript(webglScript.ScriptId);
 
             throw new ArgumentException("Script must be a WebGLCompiledScript", nameof(script));
         }
@@ -486,6 +478,7 @@ namespace SceneRuntime.WebClient
 
         private object EvaluateScript(string scriptId)
         {
+            if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
             IntPtr scriptIdPtr = Utf8Marshal.StringToHGlobalUTF8(scriptId);
 
@@ -539,7 +532,10 @@ namespace SceneRuntime.WebClient
                 int result = JSContext_AddHostObject(contextIdPtr, namePtr, objectIdPtr);
 
                 if (result == 0)
+                {
+                    WebClientHostObjectRegistry.Unregister(contextId, objectId);
                     throw new InvalidOperationException($"Failed to add host object {itemName} to context {contextId}");
+                }
             }
             finally
             {
@@ -701,11 +697,15 @@ namespace SceneRuntime.WebClient
                 // Regular JSON deserialization
                 return JsonConvert.DeserializeObject(json);
             }
-            catch
+            catch (Exception outerEx)
             {
                 // If parsing fails, try simple deserialization or return the raw string
                 try { return JsonConvert.DeserializeObject(json); }
-                catch { return json; }
+                catch (Exception innerEx)
+                {
+                    ReportHub.LogException(new AggregateException(outerEx, innerEx), ReportCategory.WEB_CLIENT);
+                    return json;
+                }
             }
         }
 
@@ -715,7 +715,11 @@ namespace SceneRuntime.WebClient
                 return null;
 
             try { return JsonConvert.DeserializeObject(json); }
-            catch { return json; }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.WEB_CLIENT);
+                return json;
+            }
         }
 
         [DllImport("__Internal")]
@@ -786,10 +790,14 @@ namespace SceneRuntime.WebClient
         private async UniTaskVoid RunAsync(UniTask<T> uniTask)
         {
             try { result = await uniTask; }
+            catch (OperationCanceledException)
+            { /* cancelled tasks are expected; isCompleted set in finally */
+            }
             catch (Exception e)
             {
+                ReportHub.LogException(e, ReportCategory.WEB_CLIENT);
                 isFaulted = true;
-                error = e.Message;
+                error = e.ToString();
             }
             finally { isCompleted = true; }
         }
@@ -825,10 +833,14 @@ namespace SceneRuntime.WebClient
         private async UniTaskVoid RunAsync(UniTask uniTask)
         {
             try { await uniTask; }
+            catch (OperationCanceledException)
+            { /* cancelled tasks are expected; isCompleted set in finally */
+            }
             catch (Exception e)
             {
+                ReportHub.LogException(e, ReportCategory.WEB_CLIENT);
                 isFaulted = true;
-                error = e.Message;
+                error = e.ToString();
             }
             finally { isCompleted = true; }
         }

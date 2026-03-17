@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using DCL.Diagnostics;
 
 namespace SceneRuntime.WebClient
 {
@@ -8,13 +9,13 @@ namespace SceneRuntime.WebClient
     {
         public static unsafe IntPtr StringToHGlobalUTF8(string str)
         {
-            if (str == null)
+            if (string.IsNullOrEmpty(str))
                 return IntPtr.Zero;
 
             int byteCount = Encoding.UTF8.GetByteCount(str);
             IntPtr ptr = Marshal.AllocHGlobal(byteCount + 1);
 
-            Span<byte> dest = new Span<byte>(ptr.ToPointer(), byteCount + 1);
+            var dest = new Span<byte>(ptr.ToPointer(), byteCount + 1);
             Encoding.UTF8.GetBytes(str.AsSpan(), dest);
             dest[byteCount] = 0; // null terminator
 
@@ -36,8 +37,8 @@ namespace SceneRuntime.WebClient
             if (ptr == IntPtr.Zero)
                 return string.Empty;
 
-            byte* p = (byte*)ptr.ToPointer();
-            int length = 0;
+            var p = (byte*)ptr.ToPointer();
+            var length = 0;
 
             while (p[length] != 0)
             {
@@ -45,7 +46,10 @@ namespace SceneRuntime.WebClient
 
                 // Safety limit to prevent infinite loop on malformed data
                 if (length > 1024 * 1024)
+                {
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[Utf8Marshal] PtrToStringUTF8: string exceeded 1 MB safety limit and was truncated at {length} bytes.");
                     break;
+                }
             }
 
             if (length == 0)
