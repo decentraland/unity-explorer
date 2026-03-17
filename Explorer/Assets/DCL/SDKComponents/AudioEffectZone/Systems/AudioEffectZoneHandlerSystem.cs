@@ -12,6 +12,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Transforms.Components;
 using LiveKit.Rooms.Streaming.Audio;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioEffectZone.Systems
@@ -57,41 +58,32 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAudioEffectZone.IsDirty)
-                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
-
-            if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
-                foreach (Collider? collider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
-                {
-                    if (!FindAvatarUtils.TryGetAvatarEntity(globalWorld, collider.transform, out Entity entity)) continue;
-
-                    ref ProximityAudioSourceComponent component = ref World.TryGetRef<ProximityAudioSourceComponent>(entity, out bool exists);
-                    if (exists)
-                    {
-                        component.AudioSource.spatialBlend = 0;
-                        component.AudioSource.spatialize = false;
-                    }
-                }
-
-                triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+                pbAudioEffectZone.IsDirty = false;
+                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
             }
 
-            if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
-            {
-                foreach (Collider? collider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
-                {
-                    if (FindAvatarUtils.TryGetAvatarEntity(globalWorld, collider.transform, out Entity entity))
-                    {
-                        ref ProximityAudioSourceComponent component = ref World.TryGetRef<ProximityAudioSourceComponent>(entity, out bool exists);
-                        if (exists)
-                        {
-                            component.AudioSource.spatialBlend = 1;
-                            component.AudioSource.spatialize = true;
-                        }
-                    }
-                }
+            // ENTER - switch to non-spatial 2d Mono
+            TrySetSpatialization(isSpatial: false, triggerAreaComponent.EnteredEntitiesToBeProcessed, globalWorld);
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
 
-                triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            // EXIT - back to spatial 3d Stereo
+            TrySetSpatialization(isSpatial: true, triggerAreaComponent.ExitedEntitiesToBeProcessed, globalWorld);
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+        }
+
+        private static void TrySetSpatialization(bool isSpatial, IReadOnlyCollection<Collider> collidersSet, World world)
+        {
+            foreach (Collider? collider in collidersSet)
+            {
+                if (!FindAvatarUtils.TryGetAvatarEntity(world, collider.transform, out Entity entity)) return;
+                ref ProximityAudioSourceComponent proximityComponent = ref world.TryGetRef<ProximityAudioSourceComponent>(entity, out bool exists);
+
+                if (exists)
+                {
+                    proximityComponent.AudioSource.spatialBlend = isSpatial ? 1 : 0;
+                    proximityComponent.AudioSource.spatialize = isSpatial;
+                }
             }
         }
 
@@ -101,29 +93,30 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         // {
         //     if (pbAudioEffectZone.IsDirty)
         //         triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
-        //
-        //     if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
-        //     {
-        //         SetAllProximityAudioMutedQuery(globalWorld, true);
-        //         triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
-        //     }
-        //     else if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
+
+        //     EXIT PRIORITY
+        //     if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
         //     {
         //         SetAllProximityAudioMutedQuery(globalWorld, false);
         //         triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
         //     }
+        //     else if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
+        //     {
+        //         SetAllProximityAudioMutedQuery(globalWorld, true);
+        //         triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+        //     }
         // }
-
-        [Query]
-        private void SetAllProximityAudioMuted([Arch.System.Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
-        {
-            if (proximityAudio.AudioSource == null) return;
-            proximityAudio.AudioSource.enabled = !muted;
-            proximityAudio.AudioSource.mute = muted;
-
-            if(proximityAudio.AudioSourceTransform.TryGetComponent(out LivekitAudioSource lkAudioSource))
-                lkAudioSource.enabled = !muted;
-        }
-
+        //
+        // [Query]
+        // private void SetAllProximityAudioMuted([Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
+        // {
+        //     if (proximityAudio.AudioSource == null) return;
+        //
+        //     proximityAudio.AudioSource.enabled = !muted;
+        //     proximityAudio.AudioSource.mute = muted;
+        //
+        //     if(proximityAudio.AudioSourceTransform.TryGetComponent(out LivekitAudioSource lkAudioSource))
+        //         lkAudioSource.enabled = !muted;
+        // }
     }
 }
