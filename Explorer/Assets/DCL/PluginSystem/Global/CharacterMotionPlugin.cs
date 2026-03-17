@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Assets;
@@ -25,6 +25,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using CalculateCharacterVelocitySystem = DCL.Character.CharacterMotion.Systems.CalculateCharacterVelocitySystem;
 using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global
@@ -122,8 +123,9 @@ namespace DCL.PluginSystem.Global
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
+            CharacterVelocityDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
             CalculateSpeedLimitSystem.InjectToWorld(ref builder);
-            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
             CharacterPlatformUpdateSceneTickSystem.InjectToWorld(ref builder, scenesCache);

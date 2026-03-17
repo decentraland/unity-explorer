@@ -1,4 +1,4 @@
-﻿using DCL.SDKComponents.AvatarLocomotion.Components;
+using DCL.SDKComponents.AvatarLocomotion.Components;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
 using UnityEngine;
 
@@ -412,6 +412,30 @@ namespace DCL.CharacterMotion.Settings
         {
             get => impl.PointAtRotationSpeed;
             set => impl.PointAtRotationSpeed = value;
+        }
+
+        public float CharacterMass
+        {
+            get => impl.CharacterMass;
+            set => impl.CharacterMass = value;
+        }
+
+        public float ExternalEnvDrag
+        {
+            get => impl.ExternalEnvDrag;
+            set => impl.ExternalEnvDrag = value;
+        }
+
+        public float ExternalGroundFriction
+        {
+            get => impl.ExternalGroundFriction;
+            set => impl.ExternalGroundFriction = value;
+        }
+
+        public float MaxExternalVelocity
+        {
+            get => impl.MaxExternalVelocity;
+            set => impl.MaxExternalVelocity = value;
         }
 
         public float HeadIKWeightChangeSpeed
