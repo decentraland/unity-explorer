@@ -127,21 +127,31 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
 
+            // Did we hit anything with a collider?
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
             {
                 var remoteCollider = hit.collider.gameObject.GetComponent<RemoteAvatarCollider>();
                 if (remoteCollider != null)
                 {
+                    // If we hit a remote avatar, the user must be far from us (1.5m away) otherwise we interrupt the pointing action to avoid "weird" interactions
                     if ((remoteCollider.transform.position - avatarBase.transform.position).sqrMagnitude <= AVATAR_MAX_DISTANCE_SQR)
                     {
                         result.ForceInterrupt = true;
                         return result;
                     }
+
+                    // Recalculate the ray so that we still aim towards the player, but in reality we hit the far clipping plane using the fallback below
+                    // (if we remove this, the drift caused by the ray angle is too visible on the far clipping plane and leads to a point direction that is not in line with the avatar)
+                    Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
+                    Vector3 dirFromShoulder = (hit.point - shoulderPos).normalized;
+                    ray = new Ray(shoulderPos, dirFromShoulder);
                 }
                 else
+                    // Random scenery -> hit point is valid
                     result.HitPoint = hit.point;
             }
 
+            // Fallback: If we didn't hit anything with a collider (either a mesh without one or the actual sky), we just hit the far clipping plane
             if (result.HitPoint == Vector3.zero)
             {
                 Camera cam = cameraComponent.Camera;
