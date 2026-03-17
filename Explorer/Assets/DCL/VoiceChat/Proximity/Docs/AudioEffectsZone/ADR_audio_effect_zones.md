@@ -38,7 +38,7 @@ Audio Effect Zones по семантике ближе к `AvatarModifierArea` --
 
 ### Proto-определение
 
-> **ID fix:** Изначально планировали ID 1072, но он уже занят `camera_mode.proto`. Используем **1073**.
+> **ID fix:** Изначально планировали ID 1072, но он занят `camera_mode.proto`. ID 1073 тоже занят `avatar_attach.proto`. Используем **1217** (12xx диапазон для main-компонентов).
 >
 > **Nested types:** По рекомендации коллеги все sub-messages и enums вложены внутрь `PBAudioEffectZone`, чтобы при codegen не создавались отдельные top-level типы в namespace.
 >
@@ -51,7 +51,7 @@ package decentraland.sdk.components;
 import "decentraland/sdk/components/common/id.proto";
 import "decentraland/common/vectors.proto";
 
-option (common.ecs_component_id) = 1073;
+option (common.ecs_component_id) = 1217;
 
 // Defines a region of space where audio effects are applied to sound sources inside.
 // The Entity's Transform position determines the center-point of the region.

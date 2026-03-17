@@ -28,7 +28,7 @@ SDK-определяемые зоны, модифицирующие аудио (
 
 1. Создать `protocol/proto/decentraland/sdk/components/audio_effect_zone.proto`
    - Полный proto из ADR (все messages и enums вложены в PBAudioEffectZone), но Unity реализует только `SilenceEffect`
-   - ID: **1073** (1072 занят `camera_mode.proto`)
+   - ID: **1217** (1072 занят `camera_mode.proto`, 1073 занят `avatar_attach.proto`)
 2. Добавить импорт в `protocol/public/sdk-components.proto`:
    ```protobuf
    import public "decentraland/sdk/components/audio_effect_zone.proto";

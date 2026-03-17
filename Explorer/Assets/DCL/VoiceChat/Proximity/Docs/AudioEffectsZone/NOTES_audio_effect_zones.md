@@ -230,9 +230,9 @@ public struct AudioEffectActiveZones
 
 ## Proto Component ID
 
-Выбранный ID: **1073** (main branch).
+Выбранный ID: **1217** (main branch, 12xx диапазон).
 
-> **Исправление:** Изначально планировали 1072, но он уже занят `camera_mode.proto` (`PBCameraMode`). Обнаружено при grep всех `ecs_component_id` в protocol repo.
+> **Исправление:** Изначально планировали 1072 (занят `camera_mode.proto`), затем 1073 (занят `avatar_attach.proto`). Итоговый ID: **1217** — следующий свободный в 12xx диапазоне для main-компонентов.
 
 | ID | Component |
 |----|-----------|
@@ -240,8 +240,9 @@ public struct AudioEffectActiveZones
 | 1061 | PBTriggerAreaResult |
 | 1070 | PBAvatarModifierArea |
 | 1071 | PBCameraModeArea |
-| 1072 | PBCameraMode (ЗАНЯТ!) |
-| **1073** | **PBAudioEffectZone** |
+| 1072 | PBCameraMode (ЗАНЯТ) |
+| 1073 | PBAvatarAttach (ЗАНЯТ) |
+| **1217** | **PBAudioEffectZone** |
 
 ---
 
