@@ -4,18 +4,6 @@ name: Comment Artifact URL on PR
 
 on:
 
-  # TEST ONLY, REMOVE ON MERGE
-  pull_request:
-    paths:
-      - 'Explorer/**'
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-      - labeled
-
-
   workflow_run:
     types:
       - "completed"
