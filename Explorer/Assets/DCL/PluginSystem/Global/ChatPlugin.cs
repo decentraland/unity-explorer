@@ -50,7 +50,6 @@ using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using DCL.Character.Components;
-using DCL.Chat.ChatReactions;
 using DCL.Chat.ChatReactions.Configs;
 using TMPro;
 using UnityEngine;
@@ -101,11 +100,13 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMessagePipesHub messagePipesHub;
+        private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly CurrentChannelService? externalCurrentChannelService;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
+        private ChatMessageReactionService? messageReactionService;
         private ChatSettingsAsset? chatSettingsAsset;
         private ChatSettingsAsset.ChatReactionsEnabledDelegate? onReactionsEnabledChanged;
         private ChatSettingsAsset.ChatBubblesVisibilityDelegate? onBubblesVisibilityChanged;
@@ -148,6 +149,7 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IMessagePipesHub messagePipesHub,
+            DecentralandEnvironment decentralandEnvironment,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -187,6 +189,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.messagePipesHub = messagePipesHub;
+            this.decentralandEnvironment = decentralandEnvironment;
             this.externalCurrentChannelService = externalCurrentChannelService;
 
             pluginCts = new CancellationTokenSource();
@@ -203,6 +206,9 @@ namespace DCL.PluginSystem.Global
                 if (onBubblesVisibilityChanged != null)
                     chatSettingsAsset.BubblesVisibilityChanged -= onBubblesVisibilityChanged;
             }
+
+            if (messageReactionService != null && chatStorage != null)
+                messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
             chatStorage?.Dispose();
             pluginScope.Dispose();
@@ -225,6 +231,16 @@ namespace DCL.PluginSystem.Global
 
             var reactionsConfig = settings.ReactionsConfig;
 
+            string serverEnv = decentralandEnvironment switch
+            {
+                DecentralandEnvironment.Org => "prd",
+                DecentralandEnvironment.Today => "prd",
+                DecentralandEnvironment.Zone => "dev",
+                _ => "local",
+            };
+
+            string routingUser = $"message-router-{serverEnv}-0";
+
             IReactionMessageBus reactionBus;
 
             if (reactionsConfig.MockEnabled)
@@ -240,10 +256,14 @@ namespace DCL.PluginSystem.Global
                     messagePipesHub,
                     userBlockingCacheProxy,
                     web3IdentityCache,
+                    routingUser,
                     reactionsConfig.SelfSendEnabled);
             }
 
             pluginScope.Add(reactionBus);
+
+            messageReactionService = new ChatMessageReactionService(reactionBus, chatHistory, web3IdentityCache);
+            pluginScope.Add(messageReactionService);
 
             var situationalReactionService = new SituationalReactionService(
                 reactionsConfig,
@@ -268,6 +288,8 @@ namespace DCL.PluginSystem.Global
             {
                 string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+
+                messageReactionService.ReactionPersistenceRequested += chatStorage.OnReactionPersistenceRequested;
             }
 
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
@@ -410,7 +432,9 @@ namespace DCL.PluginSystem.Global
                 translationCache,
                 situationalReactionService,
                 settings.ReactionsConfig,
-                settings.ChatSettingsAsset
+                settings.ChatSettingsAsset,
+                messageReactionService,
+                web3IdentityCache
             );
 
             pluginScope.Add(chatPanelPresenter);

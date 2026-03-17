@@ -166,5 +166,112 @@ namespace DCL.Chat.History
             values[ENTRY_USERNAME] =           (entryParts.Length > ENTRY_USERNAME)           ? entryParts[ENTRY_USERNAME] : string.Empty;
             values[ENTRY_TIMESTAMP] =          (entryParts.Length > ENTRY_TIMESTAMP)          ? entryParts[ENTRY_TIMESTAMP] : "0.0";
         }
+
+        // --- Reaction serialization ---
+
+        private const int REACTION_MESSAGE_ID = 0;
+        private const int REACTION_EMOJI_INDEX = 1;
+        private const int REACTION_WALLET = 2;
+        private const int REACTION_ACTION = 3;
+        private const int REACTION_FIELD_COUNT = 4;
+
+        private const string REACTION_ADD = "+";
+        private const string REACTION_REMOVE = "-";
+
+        private readonly string[] reactionValues = new string[REACTION_FIELD_COUNT];
+
+        /// <summary>
+        /// Appends a single reaction entry to an append-only reaction log.
+        /// </summary>
+        public void AppendReactionEntry(string messageId, int emojiIndex, string walletAddress, bool isRemoval, Stream destination)
+        {
+            reactionValues[REACTION_MESSAGE_ID] = messageId;
+            reactionValues[REACTION_EMOJI_INDEX] = emojiIndex.ToString(CultureInfo.InvariantCulture);
+            reactionValues[REACTION_WALLET] = walletAddress;
+            reactionValues[REACTION_ACTION] = isRemoval ? REACTION_REMOVE : REACTION_ADD;
+
+            destination.Write(CreateHistoryEntry(reactionValues));
+            destination.Flush();
+        }
+
+        /// <summary>
+        /// Reads and replays an append-only reaction log, populating the channel with the final state.
+        /// Uses <see cref="ChatChannel.FillReaction"/> (silent — no events fired).
+        /// </summary>
+        public async UniTask ReadAllReactionsAsync(Stream source, ChatChannel channel, CancellationToken ct)
+        {
+            string fullContent;
+
+            using (var reader = new StreamReader(source))
+            {
+                fullContent = await reader.ReadToEndAsync();
+                fullContent = fullContent.Replace("\0", string.Empty);
+            }
+
+            // Replay into a temporary structure to compute final state.
+            // Key: (messageId, emojiIndex) → set of wallet addresses.
+            var state = new Dictionary<(string messageId, int emojiIndex), HashSet<string>>();
+
+            using (var reader = new StringReader(fullContent))
+            {
+                string currentLine = await reader.ReadLineAsync();
+
+                while (currentLine != null)
+                {
+                    if (ct.IsCancellationRequested) break;
+
+                    if (!string.IsNullOrWhiteSpace(currentLine))
+                    {
+                        try
+                        {
+                            string[] parts = currentLine.Split(FIELD_SEPARATOR);
+
+                            if (parts.Length >= REACTION_FIELD_COUNT)
+                            {
+                                string msgId = parts[REACTION_MESSAGE_ID];
+                                string action = parts[REACTION_ACTION];
+
+                                if (int.TryParse(parts[REACTION_EMOJI_INDEX], NumberStyles.Integer, CultureInfo.InvariantCulture, out int emoji))
+                                {
+                                    string wallet = parts[REACTION_WALLET];
+                                    var key = (msgId, emoji);
+
+                                    if (action == REACTION_ADD)
+                                    {
+                                        if (!state.TryGetValue(key, out HashSet<string>? wallets))
+                                        {
+                                            wallets = new HashSet<string>();
+                                            state[key] = wallets;
+                                        }
+
+                                        wallets.Add(wallet);
+                                    }
+                                    else if (action == REACTION_REMOVE)
+                                    {
+                                        if (state.TryGetValue(key, out HashSet<string>? wallets))
+                                        {
+                                            wallets.Remove(wallet);
+
+                                            if (wallets.Count == 0)
+                                                state.Remove(key);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch { ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"Skipping corrupted reaction entry. Line: '{currentLine}'"); }
+                    }
+
+                    currentLine = await reader.ReadLineAsync();
+                }
+            }
+
+            // Apply final state to channel silently.
+            foreach (var kvp in state)
+            {
+                foreach (string wallet in kvp.Value)
+                    channel.FillReaction(kvp.Key.messageId, kvp.Key.emojiIndex, wallet);
+            }
+        }
     }
 }

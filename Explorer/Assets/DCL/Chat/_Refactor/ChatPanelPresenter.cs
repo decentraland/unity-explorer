@@ -22,6 +22,7 @@ using DCL.Emoji;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Web3.Identities;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -68,7 +69,9 @@ namespace DCL.Chat
             ITranslationCache translationCache,
             SituationalReactionService situationalReactionService,
             ChatReactionsConfig reactionsConfig,
-            ChatSettingsAsset chatSettingsAsset)
+            ChatSettingsAsset chatSettingsAsset,
+            ChatMessageReactionService messageReactionService,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -116,6 +119,15 @@ namespace DCL.Chat
                 commandRegistry.OpenConversation,
                 commandRegistry.CreateChannelViewModel);
 
+            var emojiContainer = view.InputView.emojiContainer;
+            var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
+            var emojiPanelPresenter = new EmojiPanelPresenter(
+                emojiContainer.emojiPanel,
+                emojiContainer.emojiPanelConfiguration,
+                emojiMapping,
+                emojiContainer.emojiSectionViewPrefab,
+                emojiContainer.emojiButtonPrefab);
+
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
                 eventBus,
                 chatHistory,
@@ -129,16 +141,13 @@ namespace DCL.Chat
                 commandRegistry.CreateMessageViewModel,
                 commandRegistry.MarkMessagesAsRead,
                 commandRegistry.TranslateMessageCommand,
-                commandRegistry.RevertToOriginalCommand);
+                commandRegistry.RevertToOriginalCommand,
+                emojiPanelPresenter,
+                messageReactionService,
+                reactionsConfig.Atlas);
 
-            var emojiContainer = view.InputView.emojiContainer;
-            var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
-            var emojiPanelPresenter = new EmojiPanelPresenter(
-                emojiContainer.emojiPanel,
-                emojiContainer.emojiPanelConfiguration,
-                emojiMapping,
-                emojiContainer.emojiSectionViewPrefab,
-                emojiContainer.emojiButtonPrefab);
+            string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,

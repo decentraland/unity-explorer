@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.Utilities;
 using DG.Tweening;
@@ -30,6 +31,9 @@ namespace DCL.Chat.ChatMessages
 
         private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
 
+        private ChatReactionsAtlasConfig? reactionsAtlasConfig;
+        private string? ownWalletAddress;
+
         // View models are reused and set
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
@@ -59,6 +63,8 @@ namespace DCL.Chat.ChatMessages
 
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
+        public event Action<string, ChatEntryView>? OnReactionButtonClicked;
+        public event Action<string, int>? OnReactionPillClicked;
 
         private Sequence? _fadeSequenceTween;
 
@@ -83,6 +89,12 @@ namespace DCL.Chat.ChatMessages
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
+        }
+
+        public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress)
+        {
+            reactionsAtlasConfig = atlasConfig;
+            ownWalletAddress = walletAddress;
         }
 
         private void ChatScrollToBottomToBottomClicked()
@@ -246,6 +258,25 @@ namespace DCL.Chat.ChatMessages
                 itemScript.OnTranslateRequested += HandleTranslateRequest;
                 itemScript.OnRevertRequested += HandleRevertRequest;
 
+                if (itemScript.messageReactionsView != null && reactionsAtlasConfig != null)
+                {
+                    itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty);
+                    itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
+                    itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
+
+                    itemScript.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
+                    itemScript.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
+
+                    itemScript.RecalculateHeight();
+                }
+
+                if (itemScript.messageBubbleElement.reactionButton != null)
+                {
+                    itemScript.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
+                    itemScript.messageBubbleElement.reactionButton.onClick.AddListener(() =>
+                        OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, itemScript));
+                }
+
                 float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
@@ -277,6 +308,11 @@ namespace DCL.Chat.ChatMessages
         private void HandleRevertRequest(string messageId)
         {
             OnRevertMessageRequested?.Invoke(messageId);
+        }
+
+        private void HandleReactionPillClicked(string messageId, int emojiIndex)
+        {
+            OnReactionPillClicked?.Invoke(messageId, emojiIndex);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

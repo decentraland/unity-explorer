@@ -5,8 +5,11 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Emoji;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -36,6 +39,9 @@ namespace DCL.Chat.ChatMessages
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
+        private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly ChatMessageReactionService messageReactionService;
+        private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -44,6 +50,7 @@ namespace DCL.Chat.ChatMessages
 
         private readonly ChatMessageViewModel separatorViewModel;
 
+        private string? pendingReactionMessageId;
         private IDisposable? onChannelSelectedSubscription;
 
         private CancellationTokenSource loadChannelCts = new ();
@@ -73,7 +80,10 @@ namespace DCL.Chat.ChatMessages
             CreateMessageViewModelCommand createMessageViewModelCommand,
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
-            RevertToOriginalCommand revertToOriginalCommand)
+            RevertToOriginalCommand revertToOriginalCommand,
+            EmojiPanelPresenter emojiPanelPresenter,
+            ChatMessageReactionService messageReactionService,
+            ChatReactionsAtlasConfig atlasConfig)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -89,6 +99,9 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
+            this.emojiPanelPresenter = emojiPanelPresenter;
+            this.messageReactionService = messageReactionService;
+            this.atlasConfig = atlasConfig;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -149,6 +162,7 @@ namespace DCL.Chat.ChatMessages
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
             translationSettings.OnAutoTranslationSettingsChanged -= OnAutoTranslationSettingsChanged;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
         }
 
         private void OnTranslateMessage(string messageId)
@@ -234,6 +248,7 @@ namespace DCL.Chat.ChatMessages
             }
 
             viewModels.Insert(index, newMessageViewModel);
+            newMessageViewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(newMessageViewModel.Message.MessageId);
             if (viewModelsMap != null)
                 viewModelsMap[newMessageViewModel.Message.MessageId] = newMessageViewModel;
 
@@ -399,13 +414,6 @@ namespace DCL.Chat.ChatMessages
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but User State Service is NOT set. Aborting.");
                 return;
             }
-            else if (currentChannelService.UserStateService == null)
-            {
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,
-                    $"{nameof(UpdateChannelMessages)} called, but {nameof(currentChannelService.UserStateService)} is null. Aborting.");
-
-                return;
-            }
 
             loadChannelCts = loadChannelCts.SafeRestart();
 
@@ -422,6 +430,9 @@ namespace DCL.Chat.ChatMessages
                 {
                     ReleaseAndClearAllModels();
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
+
+                    BindReactionsToViewModels();
+
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
                     RebuildFastIndexIfNeeded();
@@ -478,6 +489,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked += OnReactionButtonClicked;
+            view.OnReactionPillClicked += OnReactionPillClicked;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -490,6 +503,9 @@ namespace DCL.Chat.ChatMessages
 
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
+
+            if (currentChannelService.CurrentChannel != null)
+                currentChannelService.CurrentChannel.ReactionChanged += OnReactionChanged;
         }
 
         private void Unsubscribe()
@@ -499,10 +515,17 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked -= OnReactionButtonClicked;
+            view.OnReactionPillClicked -= OnReactionPillClicked;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            pendingReactionMessageId = null;
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
+
+            if (currentChannelService.CurrentChannel != null)
+                currentChannelService.CurrentChannel.ReactionChanged -= OnReactionChanged;
         }
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
@@ -517,6 +540,15 @@ namespace DCL.Chat.ChatMessages
                 view.RefreshVisibleElements();
         }
 
+        private void OnReactionChanged(string messageId)
+        {
+            var viewModel = FindViewModelById(messageId);
+            if (viewModel == null) return;
+
+            viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            view.ReconstructScrollView(false);
+        }
+
         private void OnRequestScrollAction()
         {
             view.ShowLastMessage(useSmoothScroll: true);
@@ -525,6 +557,61 @@ namespace DCL.Chat.ChatMessages
         private void OnScrollToBottomButtonClicked()
         {
             view.ShowLastMessage(useSmoothScroll: true);
+        }
+
+        private void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
+        {
+            pendingReactionMessageId = messageId;
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            emojiPanelPresenter.EmojiSelected += OnEmojiSelectedForMessageReaction;
+            emojiPanelPresenter.SetPanelVisibility(true);
+        }
+
+        private void OnEmojiSelectedForMessageReaction(string emojiUnicode)
+        {
+            if (string.IsNullOrEmpty(pendingReactionMessageId) || string.IsNullOrEmpty(emojiUnicode))
+                return;
+
+            if (!TryGetSingleCodepoint(emojiUnicode, out uint codepoint))
+                return;
+
+            int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
+
+            if (atlasIndex < 0)
+                return;
+
+            messageReactionService.ToggleReaction(pendingReactionMessageId, atlasIndex);
+
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            emojiPanelPresenter.SetPanelVisibility(false);
+            pendingReactionMessageId = null;
+        }
+
+        private static bool TryGetSingleCodepoint(string text, out uint codepoint)
+        {
+            codepoint = 0;
+
+            if (text.Length == 0)
+                return false;
+
+            if (char.IsHighSurrogate(text[0]))
+            {
+                if (text.Length < 2 || !char.IsLowSurrogate(text[1]))
+                    return false;
+
+                codepoint = (uint)char.ConvertToUtf32(text[0], text[1]);
+            }
+            else
+            {
+                codepoint = text[0];
+            }
+
+            return true;
+        }
+
+        private void OnReactionPillClicked(string messageId, int emojiIndex)
+        {
+            messageReactionService.ToggleReaction(messageId, emojiIndex);
         }
 
         protected override void Activate()
@@ -621,6 +708,22 @@ namespace DCL.Chat.ChatMessages
                 return vm;
 
             return LinearFindViewModelById(messageId); // safe fallback when index is disabled
+        }
+
+        private void BindReactionsToViewModels()
+        {
+            ChatChannel? channel = currentChannelService.CurrentChannel;
+            if (channel == null) return;
+
+            messageReactionService.RegisterChannelMessages(channel);
+
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (ReferenceEquals(vm, separatorViewModel)) continue;
+
+                vm.Reactions = channel.GetReactions(vm.Message.MessageId);
+            }
         }
 
         private void ClearTranslationsForCurrentChannel()

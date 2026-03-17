@@ -1,3 +1,4 @@
+using DCL.Chat.ChatMessages;
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -39,6 +40,9 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
         [field: SerializeField] internal RectTransform dateDividerElement { get; private set; }
         [field: SerializeField] internal TMP_Text dateDividerText { get; private set; }
+
+        [field: Header("Reactions")]
+        [field: SerializeField] internal MessageReactionsView? messageReactionsView { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
@@ -206,10 +210,23 @@ namespace DCL.Chat
         }
 
 
+        /// <summary>
+        /// Recalculates the entry height after reactions have been updated.
+        /// Must be called after UpdateReactions since SetItemData doesn't know about reactions yet.
+        /// </summary>
+        public void RecalculateHeight()
+        {
+            float reactionsHeight = messageReactionsView != null ? messageReactionsView.CurrentHeight : 0f;
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                messageBubbleElement.backgroundRectTransform.sizeDelta.y + reactionsHeight);
+        }
+
         public void Reset()
         {
             if (!isPointerInside)
                 messageBubbleElement.Reset();
+
+            messageReactionsView?.Clear();
         }
 
         private void UpdateTranslationViewVisibility()

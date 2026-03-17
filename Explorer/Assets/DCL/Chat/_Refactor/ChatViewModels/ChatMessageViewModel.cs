@@ -1,5 +1,6 @@
 ﻿using DCL.Chat.History;
 using DCL.Translation;
+
 using DCL.UI.ProfileElements;
 using DCL.Utilities;
 using System;
@@ -29,6 +30,7 @@ namespace DCL.Chat.ChatViewModels
                 viewModel.TranslationState = TranslationState.Original;
                 viewModel.TranslatedText = string.Empty;
                 viewModel.TranslationError = string.Empty;
+                viewModel.Reactions = null;
             });
 
         internal static readonly Action<ChatMessageViewModel> RELEASE = viewModel => POOL.Release(viewModel);
@@ -65,6 +67,8 @@ namespace DCL.Chat.ChatViewModels
         public bool IsSeparator { get; internal set; }
 
         public bool PendingToAnimate { get; internal set; }
+
+        public ReactionSet? Reactions { get; internal set; }
 
         /// <summary>
         ///     Will be fired when the object is released back to the pool.

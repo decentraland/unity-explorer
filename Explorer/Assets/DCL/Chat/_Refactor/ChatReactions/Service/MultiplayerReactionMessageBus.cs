@@ -24,6 +24,7 @@ namespace DCL.Chat.ChatReactions
         private readonly IMessagePipesHub messagePipesHub;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly string routingUser;
         private readonly CancellationTokenSource cts = new ();
         private readonly bool selfSendEnabled;
         private readonly IMessageDeduplication<float> situationalDedup = new MessageDeduplication<float>();
@@ -35,11 +36,13 @@ namespace DCL.Chat.ChatReactions
             IMessagePipesHub messagePipesHub,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IWeb3IdentityCache identityCache,
+            string routingUser,
             bool selfSendEnabled = false)
         {
             this.messagePipesHub = messagePipesHub;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.identityCache = identityCache;
+            this.routingUser = routingUser;
             this.selfSendEnabled = selfSendEnabled;
 
             messagePipesHub.IslandPipe().Subscribe<Reaction>(Packet.MessageOneofCase.Reaction, OnSituationalReactionReceived);
@@ -65,16 +68,29 @@ namespace DCL.Chat.ChatReactions
                 SelfSendSituationalAsync(emojiIndex, timestamp).Forget();
         }
 
-        public void SendMessageReaction(int emojiIndex, string messageId)
+        public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing)
         {
             if (cts.IsCancellationRequested) return;
 
             string address = identityCache.Identity?.Address ?? string.Empty;
 
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Sending chat reaction: emoji={emojiIndex} messageId={messageId}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Sending chat reaction: emoji={emojiIndex} messageId={messageId} channelType={routing.ChannelType}");
 
-            SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.IslandPipe());
-            SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ScenePipe());
+            switch (routing.ChannelType)
+            {
+                case History.ChatChannel.ChatChannelType.NEARBY:
+                    SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.IslandPipe());
+                    SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ScenePipe());
+                    break;
+                case History.ChatChannel.ChatChannelType.USER:
+                    SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ChatPipe(),
+                        topic: routing.ChannelId, recipient: routing.ChannelId);
+                    break;
+                case History.ChatChannel.ChatChannelType.COMMUNITY:
+                    SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ChatPipe(),
+                        topic: routing.ChannelId, recipient: routingUser);
+                    break;
+            }
 
             if (selfSendEnabled)
                 SelfSendChatReactionAsync(emojiIndex, messageId, address).Forget();
@@ -93,9 +109,14 @@ namespace DCL.Chat.ChatReactions
             reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        private void SendChatReactionTo(int emojiIndex, string messageId, string address, IMessagePipe messagePipe)
+        private void SendChatReactionTo(int emojiIndex, string messageId, string address,
+            IMessagePipe messagePipe, string topic = "", string? recipient = null)
         {
-            MessageWrap<ChatReaction> reaction = messagePipe.NewMessage<ChatReaction>();
+            MessageWrap<ChatReaction> reaction = messagePipe.NewMessage<ChatReaction>(topic);
+
+            if (recipient != null)
+                reaction.AddSpecialRecipient(recipient);
+
             reaction.Payload.EmojiIndex = emojiIndex;
             reaction.Payload.MessageId = messageId;
             reaction.Payload.Address = address;
@@ -170,7 +191,9 @@ namespace DCL.Chat.ChatReactions
                 if (cts.IsCancellationRequested || IsUserBlocked(walletId))
                     return;
 
-                if (!chatReactionDedup.TryPass(walletId, receivedMessage.Payload.MessageId))
+                string dedupKey = $"{receivedMessage.Payload.MessageId}:{receivedMessage.Payload.EmojiIndex}";
+
+                if (!chatReactionDedup.TryPass(walletId, dedupKey))
                     return;
 
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={receivedMessage.Payload.EmojiIndex} messageId={receivedMessage.Payload.MessageId} from={walletId}");
