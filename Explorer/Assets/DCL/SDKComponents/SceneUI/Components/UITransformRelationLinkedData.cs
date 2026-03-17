@@ -135,7 +135,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
         {
             // Child could be already removed from the nodes list if its entity was deleted
-            if (!nodes.TryGetValue(child, out Node? nodeToRemove))
+            if (nodes == null || !nodes.TryGetValue(child, out Node? nodeToRemove))
                 return;
 
             if (nodeToRemove == head)
@@ -155,8 +155,8 @@ namespace DCL.SDKComponents.SceneUI.Components
             nodes.Remove(child);
 
             // Update pendingRightOf if necessary
-            pendingRightOf.Remove(child);
-            pendingRightOf.Remove(childData.rightOf);
+            pendingRightOf?.Remove(child);
+            pendingRightOf?.Remove(childData.rightOf);
 
             childData.parent = Entity.Null;
 
