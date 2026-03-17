@@ -80,9 +80,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
-                {
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
-                }
                 else
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
 
@@ -168,7 +166,7 @@ namespace DCL.AvatarRendering.Emotes
         private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
         {
             // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
-            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> _)) return;
 
             promise.LoadingIntention.Dispose();
 
