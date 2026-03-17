@@ -43,9 +43,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         private const int CHILDREN_DEFAULT_CAPACITY = 10;
 
         internal Node? head;
-        private Dictionary<CRDTEntity, Node> nodes;
-        private Dictionary<CRDTEntity, Node> pendingRightOf; // key is the left entity
-        private Dictionary<CRDTEntity, Node> reverseRightOf; // key is the rightOf target, used for O(n) rebuild
+        private Dictionary<CRDTEntity, Node>? nodes;
+        private Dictionary<CRDTEntity, Node>? pendingRightOf; // key is the left entity
+        private Dictionary<CRDTEntity, Node>? reverseRightOf; // key is the rightOf target, used for O(n) rebuild
 
         internal Entity parent;
 
@@ -163,14 +163,6 @@ namespace DCL.SDKComponents.SceneUI.Components
             Node.POOL.Release(nodeToRemove);
         }
 
-        public void ChangeChildRightOf(CRDTEntity oldRightOf, CRDTEntity newChildEntity, ref UITransformRelationLinkedData newChildData)
-        {
-            var thisEntity = newChildData.parent;
-
-            RemoveChild(oldRightOf, ref newChildData);
-            AddChild(thisEntity, newChildEntity, ref newChildData);
-        }
-
         internal void UpdateNodeRightOf(CRDTEntity childEntity, CRDTEntity newRightOf)
         {
             if (nodes != null && nodes.TryGetValue(childEntity, out var node))
@@ -220,15 +212,14 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void Dispose()
         {
-            // Release all nodes
-            while (head != null)
+            if (nodes != null)
             {
-                Node next = head.Next!;
-                Node.POOL.Release(head);
-                head = next;
+                foreach (var kvp in nodes)
+                    Node.POOL.Release(kvp.Value);
+
+                nodes.Clear();
             }
 
-            nodes?.Clear();
             pendingRightOf?.Clear();
             reverseRightOf?.Clear();
             head = null;
