@@ -16,7 +16,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.WebGL;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;

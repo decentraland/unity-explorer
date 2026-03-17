@@ -30,7 +30,6 @@ using DCL.WebRequests;
 using ECS;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.WebGL;
 using ECS.TestSuite;
 using MVC;
 using NSubstitute;
