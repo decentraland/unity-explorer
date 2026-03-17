@@ -15,6 +15,9 @@ namespace DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight
         private static readonly Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers = new ();
         public static readonly HighlightedObjects HIGHLIGHTED_OBJECTS = new (m_HighLightRenderers);
 
+        private static readonly Dictionary<Renderer, ObjectHighlightSettings> m_HighLightRenderers_Avatar = new ();
+        public static readonly HighlightedObjects HighlightedObjects_Avatar = new (m_HighLightRenderers_Avatar);
+
         // Pass Data
         private RenderPass_DrawObjects renderPass_DrawObjects = null!;
         public Material highlightInputMaterial;

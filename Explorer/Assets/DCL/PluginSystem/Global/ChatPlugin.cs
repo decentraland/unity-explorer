@@ -284,7 +284,8 @@ namespace DCL.PluginSystem.Global
                 communitiesEventBus,
                 eventBus,
                 chatHistory,
-                web3IdentityCache);
+                web3IdentityCache,
+                userBlockingCacheProxy);
 
             pluginScope.Add(communityUserStateService);
 

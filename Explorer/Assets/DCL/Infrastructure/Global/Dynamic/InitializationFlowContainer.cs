@@ -61,7 +61,7 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
 #if !UNITY_WEBGL
-            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
 #endif
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
 
@@ -93,7 +93,7 @@ namespace DCL.UserInAppInitializationFlow
 #if UNITY_WEBGL
             IAnalyticsController analyticsForOps = IAnalyticsController.Null;
 #else
-            IAnalyticsController analyticsForOps = bootstrapContainer.Analytics.EnsureNotNull();
+            IAnalyticsController analyticsForOps = bootstrapContainer.Analytics.Controller;
 #endif
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(

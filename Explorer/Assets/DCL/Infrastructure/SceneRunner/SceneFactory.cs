@@ -269,7 +269,8 @@ namespace SceneRunner
                         engineAPIMutexOwner,
 #endif
                     profileRepository,
-                    systemClipboard
+                    systemClipboard,
+                    roomHub
                 );
 
                 sceneRuntime.RegisterAll(
@@ -319,7 +320,8 @@ namespace SceneRunner
                         engineAPIMutexOwner,
 #endif
                     profileRepository,
-                    systemClipboard
+                    systemClipboard,
+                    roomHub
                 );
 
                 sceneRuntime.RegisterAll(

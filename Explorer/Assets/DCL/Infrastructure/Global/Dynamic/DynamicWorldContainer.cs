@@ -534,7 +534,7 @@ namespace Global.Dynamic
             var realmNavigatorContainer = RealmNavigationContainer.Create(
                     staticContainer,
                     bootstrapContainer,
-                    lodContainer,
+                    roadAssetsPool,
                     realmContainer,
 #if !NO_LIVEKIT_MODE
                     remoteEntities,
@@ -677,36 +677,6 @@ namespace Global.Dynamic
                 : coreChatMessageBus;
 #endif
 
-            MinimapController? minimap = null;
-            if (mapRendererContainer != null)
-            {
-                minimap = new MinimapController(
-                    mainUIView.MinimapView.EnsureNotNull(),
-                    mapRendererContainer.MapRenderer,
-                    mvcManager,
-                    placesAPIService,
-                    staticContainer.RealmData,
-                    realmNavigator,
-                    staticContainer.ScenesCache,
-                    mapPathEventBus,
-                    staticContainer.SceneRestrictionBusController,
-                    dynamicWorldParams.StartParcel.Peek(),
-                    sharedSpaceManager,
-                    clipboard,
-                    bootstrapContainer.DecentralandUrlsSource,
-
-#if !NO_LIVEKIT_MODE
-                    chatMessagesBus,
-#endif
-                    reloadSceneChatCommand,
-#if !NO_LIVEKIT_MODE
-                    roomHub,
-#endif
-                    staticContainer.LoadingStatus,
-                    includeBannedUsersFromScene,
-                    homePlaceEventBus
-                );
-            }
 
             IDonationsService donationsService;
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
@@ -867,7 +837,7 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before globalPlugins list", "{\"mapRendererContainerNull\":" + (mapRendererContainer == null).ToString().ToLowerInvariant() + ",\"realmNavigatorContainerNull\":" + (realmNavigatorContainer == null).ToString().ToLowerInvariant() + ",\"minimapNull\":" + (minimap == null).ToString().ToLowerInvariant() + "}", "H1_H4");
+            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before globalPlugins list", "{\"mapRendererContainerNull\":" + (mapRendererContainer == null).ToString().ToLowerInvariant() + ",\"realmNavigatorContainerNull\":" + (realmNavigatorContainer == null).ToString().ToLowerInvariant() + "}", "H1_H4");
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -1277,7 +1247,6 @@ namespace Global.Dynamic
             if (mapRendererContainer != null && mapRendererContainer.MapRenderer != null)
             {
                 globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
-                globalPlugins.Add(new MinimapPlugin(mvcManager, minimap!));
             }
             if (realmNavigatorContainer != null)
                 globalPlugins.Add(realmNavigatorContainer.CreatePlugin());

@@ -269,6 +269,7 @@ namespace SceneRunner
                 IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions,
                 IRealmData realmData,
+                IProfileRepository profileRepository,
                 ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,

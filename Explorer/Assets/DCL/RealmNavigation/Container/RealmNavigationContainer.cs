@@ -76,7 +76,7 @@ namespace DCL.RealmNavigation
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(analytics),
                 new LoadLandscapeTeleportOperation(landscape),
-                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
+                new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
 
@@ -111,7 +111,7 @@ namespace DCL.RealmNavigation
                     exposedGlobalDataContainer.CameraSamplingData,
                     staticContainer.LoadingStatus,
                     landscape,
-                    bootstrapContainer.Analytics,
+                    bootstrapContainer.Analytics.Controller,
                     realmChangeOperations,
                     teleportInSameRealmOperation,
                     worldAccessGate),

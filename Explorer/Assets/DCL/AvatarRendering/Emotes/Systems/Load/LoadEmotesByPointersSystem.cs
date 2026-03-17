@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;

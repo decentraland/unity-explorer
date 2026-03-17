@@ -51,11 +51,10 @@ namespace Global.Dynamic.Landscapes
 
                 if (!genesisTerrain.IsTerrainGenerated)
                     await genesisTerrain.GenerateGenesisTerrainAndShowAsync(
-                        realmController.RealmData.WorldManifest,
                         processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
-                    await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
+                    await genesisTerrain.ShowAsync(landscapeLoadReport);
             }
             else
             {
@@ -119,7 +118,7 @@ namespace Global.Dynamic.Landscapes
 
             if (!worldManifest.IsEmpty)
             {
-                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels().AsReadOnly(), landscapeLoadReport);
                 return;
             }
 

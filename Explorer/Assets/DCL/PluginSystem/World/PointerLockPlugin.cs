@@ -32,8 +32,7 @@ namespace DCL.PluginSystem.World
             List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            ResetDirtyFlagSystem<PBPointerLock>.InjectToWorld(ref builder);
-            UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData, sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY]);
+            UpdatePointerLockSystem.InjectToWorld(ref builder, globalWorld, cameraData, sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY], sharedDependencies.SceneStateProvider);
         }
     }
 }

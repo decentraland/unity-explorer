@@ -245,7 +245,6 @@ namespace Global
 #else
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
 #endif
-            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData, container.DebugContainerBuilder);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 

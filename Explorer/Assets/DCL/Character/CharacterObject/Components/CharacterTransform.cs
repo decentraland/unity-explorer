@@ -43,6 +43,11 @@ namespace DCL.Character.Components
             TrySetDirty(position);
         }
 
+        public void SetRotation(Quaternion rotation)
+        {
+            Transform.rotation = rotation;
+        }
+
         public void ClearDirty()
         {
             IsDirty = false;

@@ -13,11 +13,16 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Networking;
+using WebSocketCloseStatus = Utility.Networking.WebSocketCloseStatus;
+using WebSocketError = Utility.Networking.WebSocketError;
+using WebSocketException = Utility.Networking.WebSocketException;
+using WebSocketMessageType = Utility.Networking.WebSocketMessageType;
+using WebSocketReceiveResult = Utility.Networking.WebSocketReceiveResult;
+using WebSocketState = Utility.Networking.WebSocketState;
 
 namespace DCL.Web3.Authenticators
 {
@@ -510,7 +515,6 @@ namespace DCL.Web3.Authenticators
 
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
         }
 
