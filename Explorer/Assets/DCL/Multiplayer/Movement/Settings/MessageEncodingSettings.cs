@@ -12,8 +12,6 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public const int HEAD_ROTATION_BITS = 6;
 
-        public const int POINT_AT_AXIS_BITS = 20; // 19 magnitude + 1 sign
-
         // int32 - 9 (Anim) - 2 (Tiers) = 21 bits
         [Header("TIMESTAMP [21]")]
         public float TIMESTAMP_QUANTUM = 0.02f;
