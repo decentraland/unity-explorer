@@ -13,6 +13,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Entities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
@@ -24,7 +25,28 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HandPointAtSystem : BaseUnityLoopSystem
     {
-        private const float DRAG_THRESHOLD_SQR = 25f;
+        private struct CursorInfo
+        {
+            public bool isPressed;
+            public Vector2 pointerPos;
+        }
+
+        private struct HitInfo
+        {
+            public bool ForceInterrupt;
+            public Vector3 HitPoint;
+
+            public static HitInfo Empty() => new (false, Vector3.zero);
+
+            public HitInfo(bool forceInterrupt, Vector3 hitPoint)
+            {
+                ForceInterrupt = forceInterrupt;
+                HitPoint = hitPoint;
+            }
+        }
+
+        private const float DRAG_THRESHOLD_SQR = 5f * 5f;
+        private const float AVATAR_MAX_DISTANCE_SQR = 1.5f * 1.5f;
         private static readonly int RAYCAST_LAYER_MASK = PhysicsLayers.CHARACTER_ONLY_MASK | (1 << PhysicsLayers.OTHER_AVATARS_LAYER);
 
         private readonly DCLInput dclInput;
@@ -48,7 +70,7 @@ namespace DCL.Character.CharacterMotion.Systems
             ApplyPointAtIKQuery(World, t);
         }
 
-        private (bool isPressed, Vector2 pointerPos) HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
+        private CursorInfo HandleCursorLogic(ref HandPointAtComponent handPointAtComponent)
         {
             bool isPressed = dclInput.Player.PointAt.IsPressed();
             Vector2 pointerPos = dclInput.UI.Point.ReadValue<Vector2>();
@@ -79,7 +101,10 @@ namespace DCL.Character.CharacterMotion.Systems
 
             handPointAtComponent.WasPressed = isPressed;
 
-            return (isPressed, pointerPos);
+            return new CursorInfo {
+                isPressed = isPressed,
+                pointerPos = pointerPos
+            };
         }
 
         [Query]
@@ -90,6 +115,49 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             if (emoteComponent.IsPlayingEmote)
                 handPointAtComponent.RefreshDuration(0f);
+        }
+
+        private HitInfo PerformRaycast(
+            CursorInfo cursorInfo,
+            in CameraComponent cameraComponent,
+            in ICharacterControllerSettings settings,
+            in AvatarBase avatarBase)
+        {
+            HitInfo result = HitInfo.Empty();
+
+            Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
+
+            if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
+            {
+                var remoteCollider = hit.collider.gameObject.GetComponent<RemoteAvatarCollider>();
+                if (remoteCollider != null)
+                {
+                    if ((remoteCollider.transform.position - avatarBase.transform.position).sqrMagnitude <= AVATAR_MAX_DISTANCE_SQR)
+                    {
+                        result.ForceInterrupt = true;
+                        return result;
+                    }
+                }
+                else
+                    result.HitPoint = hit.point;
+            }
+
+            if (result.HitPoint == Vector3.zero)
+            {
+                Camera cam = cameraComponent.Camera;
+
+                Plane farPlane = new Plane(
+                    -cam.transform.forward,
+                    cam.transform.position + (cam.transform.forward * cam.farClipPlane)
+                );
+
+                if (farPlane.Raycast(ray, out float enter))
+                    result.HitPoint = ray.GetPoint(enter);
+            }
+
+            Debug.DrawLine(ray.origin, result.HitPoint, Color.red);
+
+            return result;
         }
 
         [Query]
@@ -103,7 +171,8 @@ namespace DCL.Character.CharacterMotion.Systems
             in StunComponent stunComponent,
             ref CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent,
-            in ICharacterControllerSettings settings)
+            in ICharacterControllerSettings settings,
+            in AvatarBase avatarBase)
         {
             bool canPointAt = rigidTransform.IsGrounded
                               && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
@@ -120,34 +189,21 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!canPointAt || !cursorInfo.isPressed)
                 return;
 
+            HitInfo hitInfo = PerformRaycast(cursorInfo, cameraComponent, settings, avatarBase);
+
+            if (hitInfo.ForceInterrupt)
+            {
+                handPointAtComponent.RefreshDuration(0f);
+                return;
+            }
+
+            handPointAtComponent.WorldHitPoint = hitInfo.HitPoint;
+            handPointAtComponent.IsPointing = true;
+
             if (emoteComponent.IsPlayingEmote)
                 emoteComponent.StopEmote = true;
 
             handPointAtComponent.RefreshDuration(settings.PointAtDuration);
-
-            Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
-            Vector3 hitPoint = Vector3.zero;
-
-            if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
-                hitPoint = hit.point;
-            else
-            {
-                Camera cam = cameraComponent.Camera;
-
-                Plane farPlane = new Plane(
-                    -cam.transform.forward,
-                    cam.transform.position + (cam.transform.forward * cam.farClipPlane)
-                );
-
-                if (farPlane.Raycast(ray, out float enter))
-                    hitPoint = ray.GetPoint(enter);
-            }
-
-            Debug.DrawLine(ray.origin, hitPoint, Color.red);
-
-            handPointAtComponent.WorldHitPoint = hitPoint;
-
-            handPointAtComponent.IsPointing = true;
         }
 
         [Query]
