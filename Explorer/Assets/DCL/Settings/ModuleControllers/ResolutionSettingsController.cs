@@ -51,6 +51,8 @@ namespace DCL.Settings.ModuleControllers
         {
             view.DropdownView.Dropdown.options.Clear();
 
+            possibleResolutions.Clear();
+
             if (fullScreenEnabled)
             {
                 possibleResolutions.AddRange(NativeWindowManager.AvailableResolutions);
