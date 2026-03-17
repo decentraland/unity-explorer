@@ -143,6 +143,7 @@ jobs:
     if: |
       (github.ref == 'refs/heads/dev') ||
       (github.ref == 'refs/heads/main') ||
+      startsWith(github.ref, 'refs/heads/shape/') ||
       (github.event_name == 'workflow_dispatch') ||
       (
         github.event_name == 'pull_request' &&
@@ -294,7 +295,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ['windows64', 'macos']
+        target: ['windows64', 'macos', 'web']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -387,14 +388,33 @@ jobs:
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
+      - name: Upload artifact for Web
+        id: upload-web-artifact
+        if: matrix.target == 'web'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
+
       - name: Compress the build folder to upload it to S3
         run: |
+          set -euo pipefail
+
           mkdir upload_to_s3/ && \
           if [ "${{ matrix.target }}" == "macos" ]; then
             zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
           elif [ "${{ matrix.target }}" == "windows64" ]; then
             cd build
             zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
+          elif [ "${{ matrix.target }}" == "web" ]; then
+            cp -r build upload_to_s3/build
+          else
+            # throw error
+            exit 1
           fi
 
       - name: Install jq
@@ -402,6 +422,7 @@ jobs:
 
       - name: Enforce artifact size budget
         id: size_check
+        if: matrix.target != 'web'
         env:
           # Per-target absolute caps (MB)
           MAX_MACOS_MB: 370
@@ -540,17 +561,31 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: "${{
-            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
-            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
-          }}"
+          EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
+          set -euo pipefail
+
+          DESTINATION_PATH="${{ inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT) }}"
+
+          # Latest dev build for webgl
+          if [ "${{ matrix.target }}" == "web" ] && [ "${GITHUB_REF_NAME}" == "dev" ]; then
+            DESTINATION_PATH="@dcl/${{ github.event.repository.name }}/dev/webgl-latest"
+          fi
+
+          if [ "${{ matrix.target }}" == "web" ]; then
+            echo "Web build link: $EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL/$DESTINATION_PATH/build/Decentraland/index.html"
+          fi
+
+          echo "Upload artifact to: $DESTINATION_PATH"
+
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
 
+      # web doesn't have debug symbols
       - name: Upload debug symbols
+        if: matrix.target != 'web'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifact_name }}_debug_symbols

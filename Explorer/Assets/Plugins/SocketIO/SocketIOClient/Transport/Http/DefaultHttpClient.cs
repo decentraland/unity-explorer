@@ -40,16 +40,16 @@ namespace SocketIOClient.Transport.Http
             _handler.Proxy = proxy;
         }
 
-        public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            _httpClient.SendAsync(request, cancellationToken);
+        public async UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            await _httpClient.SendAsync(request, cancellationToken);
 
-        public UniTask<HttpResponseMessage> PostAsync(string requestUri,
+        public async UniTask<HttpResponseMessage> PostAsync(string requestUri,
             HttpContent content,
             CancellationToken cancellationToken) =>
-            _httpClient.PostAsync(requestUri, content, cancellationToken);
+            await _httpClient.PostAsync(requestUri, content, cancellationToken);
 
-        public UniTask<string> GetStringAsync(Uri requestUri) =>
-            _httpClient.GetStringAsync(requestUri);
+        public async UniTask<string> GetStringAsync(Uri requestUri) =>
+            await _httpClient.GetStringAsync(requestUri);
 
         public void Dispose()
         {
