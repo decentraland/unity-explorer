@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/DCL/AuthenticationScreenFlow/Assets/Prefabs/Lobby.NewAccount.Screen.prefab.meta
 guid: 0940179db0295a645a270543c7d4bedd
-========
-guid: 902282f4070ec7b469e73bcbdcc0c3dd
->>>>>>>> origin/shape/webgl_client_merge:Explorer/Assets/DCL/AvatarRendering/Emotes/EmbeddedEmotes/CommonEmotes/Clap/Clapping_Particles/Clapping_Particles.glb.prefab.meta
 PrefabImporter:
   externalObjects: {}
   userData: 
