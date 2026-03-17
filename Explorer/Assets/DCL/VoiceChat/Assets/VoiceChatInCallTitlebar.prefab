@@ -2430,7 +2430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.SoftMask
   m_ShowMaskGraphic: 0
-  m_MaskingMode: 0
+  m_MaskingMode: 2
   m_AlphaHitTest: 0
   m_SoftnessRange:
     m_Min: 0
