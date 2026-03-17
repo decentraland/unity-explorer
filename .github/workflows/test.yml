@@ -2,17 +2,6 @@ name: Unity Test
 
 on:
   workflow_dispatch:
-    inputs:
-      testMode:
-        description: 'Test mode'
-        required: false
-        default: 'editmode'
-        type: choice
-        options: [editmode]
-      timeoutMinutes:
-        description: 'Timeout per job (minutes)'
-        required: false
-        default: '10'
   pull_request:
     paths:
       - 'Explorer/**'
@@ -38,7 +27,7 @@ env:
   UNITY_IMAGE_FLAVOR: linux-il2cpp
   UNITY_IMAGE_VERSION: 3.2.0
   GHCR_IMAGE_NAME: unityci-editor
-
+  
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -53,18 +42,13 @@ jobs:
         (github.event.label.name == 'force-build') ||
         (github.event.label.name == 'clean-build')
       )
-    name: Test (${{ matrix.testFilter }})
+    name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false   # keep all namespace jobs running so you see the full picture
       matrix:
-        testFilter:
-          - SceneExceptionHandlerShould   #  6 tests (Scene.Tests)
-          - ECSWorldFacadeShould          #  4 tests (Tests)
-          - SceneFacadeShould             # 38 tests (Tests)
-          - SceneFactoryShould            #  2 tests (Tests)
-
+        testMode: [playmode, editmode]
     steps:
+
       - name: Move Docker data-root to /mnt/docker
         run: |
           sudo systemctl stop docker
@@ -108,19 +92,16 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
-
+          
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      # If these fail, they have been rotated, see: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
-      - name: Add GitHub to SSH known hosts
+          
+      - name: 'Add GitHub to the SSH known hosts file'
         run: |
-          mkdir -p -m 0700 ~/.ssh
-          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
-          echo 'github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=' >> ~/.ssh/known_hosts
-          echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZKAc/NKgzBh2bFNFMR0mVmYeeNR1cb+gZXH6N1gjEHGo2J3qjVg9rBJ0aM5st/22iqkAl7K6d9jMTi6COwJKqFHGmn7gwK+FBnfaYDwdOB8JqGz9eDNi2SegGaKie1jURLEuRPkLqlJrJ3AEdC5v7ibREzMQPGiHlIC5bE0GD/3mPN1Kul4a4EZhIC5RFxewRqDaK7be0wYMbSW7JzfLDMVtRAkKO5GjaKKv4RzGmrgVApFI/j6jJ0sTJZVgmmqODx0P+RcAfGV0RBCjMEdOPj4yr5ObHGjYCdaFEhXGTIlSGeFSEAFGFweZb9t80b8ABbeBRwx/dqI94aaFkMRkzT8VJ9B4yQvbWO7HP64Lxk6rab5Ygwypbcghmms/ATrc0CVh0zGw36VTzV2eBwboRa7G0sxgBudGrJ4BAOI/JrF4BnWcG5fvQewJ1Uc=' >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
 
       - name: Restore Library cache
         uses: actions/cache@v4
@@ -128,6 +109,7 @@ jobs:
           path: Explorer/Library
           key: Library-Explorer-Ubuntu
 
+      # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
         run: |
@@ -144,12 +126,15 @@ jobs:
           echo "version=$ver" >> $GITHUB_OUTPUT
           echo "Detected Unity version: $ver"
 
+      # --- Build image references (GHCR + upstream) ---
       - name: Set image names
         id: img
         run: |
           version="${{ steps.unity-version.outputs.version }}"
           flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
           imgVer="${{ env.UNITY_IMAGE_VERSION }}"
+
+          # ubuntu-<unityVersion>-<flavor>-<gameciVersion>
           tag="ubuntu-$version-$flavor-$imgVer"
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           upstream="unityci/editor:$tag"
@@ -160,6 +145,7 @@ jobs:
           echo "Upstream image: $upstream"
           echo "GHCR image:     $ghcr"
 
+      # --- Log into GHCR ---
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -167,12 +153,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      # --- Restore Unity image from GHCR (fast path) ---
       - name: Restore Unity image from GHCR
         id: restore-image
         continue-on-error: true
         run: |
           docker pull "${{ steps.img.outputs.ghcr }}"
 
+      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
       - name: Download from Docker Hub and upload to GHCR (if missing)
         if: steps.restore-image.outcome == 'failure'
         run: |
@@ -184,38 +172,36 @@ jobs:
           docker push $ghcr
           echo "Seeded GHCR: $ghcr"
 
-      - name: Run tests (${{ matrix.namespace }})
-        uses: game-ci/unity-test-runner@v4.3.1
+      # Configure test runner
+      - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: ${{ fromJSON(inputs.timeoutMinutes || '30') }}
+        timeout-minutes: 80
         continue-on-error: true
         env:
           SHELL: /bin/bash
         with:
           projectPath: Explorer
-          testMode: ${{ inputs.testMode || 'playmode' }}
+          testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: >-
-            -buildTarget StandaloneLinux64
-            -testCategory "!Performance"
-            -testFilter "${{ matrix.namespace }}"
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
         if: always()
         uses: dorny/test-reporter@v2.1.1
         with:
-          name: Unity Tests (${{ matrix.namespace }})
+          name: Unity Tests (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-nunit
           fail-on-error: true
           fail-on-empty: true
           use-actions-summary: true
 
+      # Upload artifact
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Test results (${{ matrix.namespace }})
+          name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
