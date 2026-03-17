@@ -297,8 +297,8 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 if (!tipNotification.SenderProfile.HasValue)
                 {
-                    Profile.CompactInfo? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
-                    tipNotification.SenderProfile = profile;
+                    Profile? profile = await profileRepository.GetProfileAsync(tipNotification.Metadata.SenderAddress, ct);
+                    tipNotification.SenderProfile = profile?.Compact;
                 }
 
                 friendNotificationView.ConfigureFromTipReceivedNotificationData(tipNotification);

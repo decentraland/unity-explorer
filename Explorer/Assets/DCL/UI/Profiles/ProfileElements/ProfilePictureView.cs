@@ -62,6 +62,17 @@ namespace DCL.UI.ProfileElements
             binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
         }
 
+        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp)
+        {
+            // Unbind previous binding if exists
+            binding?.Dispose();
+
+            viewModelProp.TryBind();
+
+            OnThumbnailUpdated(viewModelProp.Value);
+            binding = viewModelProp.Subscribe(OnThumbnailUpdated);
+        }
+
         public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
         {
             // Unbind previous binding if exists
@@ -121,6 +132,14 @@ namespace DCL.UI.ProfileElements
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(userColor);
             LoadThumbnailAsync(faceSnapshotUrl, false).Forget();
+        }
+
+        [Obsolete("Use " + nameof(Bind) + " instead.")]
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, in DCL.Profiles.Profile.CompactInfo profile)
+        {
+            profileRepositoryWrapper = profileDataProvider;
+            SetBackgroundColor(profile.UserNameColor);
+            LoadThumbnailAsync(profile.FaceSnapshotUrl, false).Forget();
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]

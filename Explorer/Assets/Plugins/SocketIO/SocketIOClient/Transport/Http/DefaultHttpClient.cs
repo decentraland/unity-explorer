@@ -41,15 +41,15 @@ namespace SocketIOClient.Transport.Http
         }
 
         public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            _httpClient.SendAsync(request, cancellationToken);
+            _httpClient.SendAsync(request, cancellationToken).AsUniTask();
 
         public UniTask<HttpResponseMessage> PostAsync(string requestUri,
             HttpContent content,
             CancellationToken cancellationToken) =>
-            _httpClient.PostAsync(requestUri, content, cancellationToken);
+            _httpClient.PostAsync(requestUri, content, cancellationToken).AsUniTask();
 
         public UniTask<string> GetStringAsync(Uri requestUri) =>
-            _httpClient.GetStringAsync(requestUri);
+            _httpClient.GetStringAsync(requestUri).AsUniTask();
 
         public void Dispose()
         {

@@ -138,8 +138,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     // Reference must be added only once when the wearable is resolved
                     if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
                     {
-                        // TODO FRAN: DISABLED FOR NOW
-                        // WebGLDebugLog.Log("AB.Wearable", "kept", $"wearableId={visibleWearable.GetUrn()} bodyShape={wearablesByPointersIntention.BodyShape}");
+
                         // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
                         visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
                     }

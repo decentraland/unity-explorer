@@ -22,6 +22,18 @@ namespace DCL.UI.ProfileElements
             verifiedMark.SetActive(profile.HasClaimedName);
         }
 
+        public void Setup(Profile.CompactInfo profile)
+        {
+            userNameText.text = profile.Name;
+            userNameText.color = profile.UserNameColor;
+            userNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
+
+            if (!profile.HasClaimedName)
+                userNameHashtagText.text = profile.WalletId;
+
+            verifiedMark.SetActive(profile.HasClaimedName);
+        }
+
         public void Setup(string username, string walletId, bool hasClaimedName, Color userColor)
         {
             userNameText.text = username;

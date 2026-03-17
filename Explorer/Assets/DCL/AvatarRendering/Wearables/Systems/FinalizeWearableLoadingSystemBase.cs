@@ -54,7 +54,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (!hasLoggedRealmConfiguredAndFinalizing)
                 {
                     hasLoggedRealmConfiguredAndFinalizing = true;
-                    WebGLDebugLog.Log("[FinalizeWearableLoading] realmData.Configured=true, running FinalizeWearableDTOQuery");
                 }
                 FinalizeWearableDTOQuery(World);
             }

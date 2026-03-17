@@ -31,7 +31,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 using Temp.Helper.WebClient;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
@@ -103,7 +103,6 @@ namespace Global.Dynamic
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
-            WebGLDebugLog.Log("Bootstraper.cs", "PreInitializeSetupAsync resolved realm", realm ?? "(null)");
 
             // Initialize .NET logging ASAP since it might be used by another systems
             // Otherwise we might get exceptions in different platforms
@@ -213,13 +212,10 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: start (ECSWorldPlugins then GlobalPlugins)");
             var anyFailure = false;
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: ECSWorldPlugins done");
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: GlobalPlugins done", $"anyFailure={anyFailure}");
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -230,7 +226,7 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
@@ -253,13 +249,11 @@ namespace Global.Dynamic
             Entity playerEntity
         )
         {
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: start WebJsSources");
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
             if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
-                WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: Play mode, CachedWebJsSources");
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
 
@@ -274,7 +268,6 @@ namespace Global.Dynamic
                 webJsSources = new CachedWebJsSources(webJsSources, memoryCache, diskCacheInstance);
             }
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before SceneSharedContainer.Create");
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             WebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
 #endif
@@ -306,9 +299,6 @@ namespace Global.Dynamic
 #endif
             );
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after SceneSharedContainer.Create");
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before GlobalWorldFactory.Create");
-
             GlobalWorld globalWorld;
             try
             {
@@ -321,18 +311,14 @@ namespace Global.Dynamic
             }
             catch (Exception e)
             {
-                WebGLDebugLog.LogError("Bootstraper.cs", $"GlobalWorldFactory.Create THREW: {e.GetType().Name}: {e.Message}", e.StackTrace);
                 throw;
             }
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after GlobalWorldFactory.Create");
-
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             if (debugUiRoot != null)
                 InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: done");
             return globalWorld;
         }
 
@@ -349,7 +335,6 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
-            WebGLDebugLog.Log("Bootstraper.cs", "LoadStartingRealmAsync about to connect", startingRealm.Value.ToString());
             if (realmLaunchSettings.initialRealm is InitialRealm.World)
             {
                 bool isAuthorized = await dynamicWorldContainer.RealmController

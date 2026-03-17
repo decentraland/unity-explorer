@@ -55,6 +55,6 @@ namespace Utility
             int bytesToCopy = Math.Min(maxBytes, srcSpan.Length);
             array.WriteBytes(srcSpan[..bytesToCopy].ToArray(), 0, (ulong)bytesToCopy, byteOffset);
         }
-    }
 #endif
+    }
 }

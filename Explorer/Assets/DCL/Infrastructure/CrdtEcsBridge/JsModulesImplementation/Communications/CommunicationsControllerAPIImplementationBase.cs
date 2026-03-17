@@ -102,9 +102,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 {
                     PoolableByteArray src = eventsToProcess[i];
                     IDCLTypedArray<byte> dst = jsOperations.GetTempUint8Array();
-                    dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
+                    dst.WriteBytes(src.Array, 0ul, (ulong)src.Length, 0ul);
                     src.Dispose();
-                    object subArray = dst.InvokeMethod("subarray", 0, src.Length);
+                    object subArray = ((IDCLScriptObject)dst).InvokeMethod("subarray", 0, src.Length);
                     eventArray.SetProperty(i, subArray);
                 }
 

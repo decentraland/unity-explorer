@@ -3,6 +3,7 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.Profiles;
 using DCL.Optimization.Pools;
 using DCL.Settings.Settings;
 using DCL.Utilities;
@@ -162,14 +163,14 @@ namespace DCL.Chat.ChatServices
                 friendIds.Clear();
                 foreach (var friend in allFriends)
                 {
-                    friendIds.Add(friend.Address);
+                    friendIds.Add(friend.UserId);
                 }
             }
         }
 
-        private async UniTask<List<FriendProfile>> GetAllFriendsAsync(CancellationToken ct)
+        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
         {
-            var allFriends = new List<FriendProfile>();
+            var allFriends = new List<Profile.CompactInfo>();
             if (!friendsService.Configured) return allFriends;
 
             int pageNum = 0;

@@ -101,13 +101,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             try
             {
-            if (!realmData.Configured)
-                WebGLDebugLog.Log("LoadWearablesByParam", "Waiting for realm configured...");
             await realmData.WaitConfiguredAsync();
-            WebGLDebugLog.Log("LoadWearablesByParam", "Realm configured, proceeding with wearable load", $"userId={intention.UserID}");
 
             var url = BuildUrlFromIntention(in intention);
-            WebGLDebugLog.Log("LoadWearablesByParam", "Request URL", url.Value);
 
             if (intention.NeedsBuilderAPISigning)
             {
@@ -130,10 +126,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             GetReportCategory()
                         )
                     );
-
-                WebGLDebugLog.Log("LoadWearablesByParam", "Lambda response received", $"TotalAmount={lambdaResponse.TotalAmount} PageCount={lambdaResponse.Page?.Count ?? 0}");
-                if (lambdaResponse.TotalAmount == 0)
-                    WebGLDebugLog.LogWarning("LoadWearablesByParam", "Lambda returned 0 wearables", $"url={url.Value}");
 
                 var assetBundlesVersions = await GetABVersionsAsync(lambdaResponse, ct);
 
@@ -159,12 +151,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
 
             var result = AssetFromPreparedIntention(in intention);
-            WebGLDebugLog.Log("LoadWearablesByParam", "Wearables load completed", $"userId={intention.UserID} resultCount={result.Wearables?.Count ?? 0}");
             return new StreamableLoadingResult<TAsset>(result);
             }
             catch (Exception ex)
             {
-                WebGLDebugLog.LogError("LoadWearablesByParam", "Wearables load failed", ex.ToString());
                 throw;
             }
         }

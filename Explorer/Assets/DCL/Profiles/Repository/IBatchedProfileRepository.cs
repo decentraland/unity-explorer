@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using System.Collections.Generic;
 
 namespace DCL.Profiles
@@ -10,8 +10,8 @@ namespace DCL.Profiles
         /// <summary>
         ///     Should be called from the background thread
         /// </summary>
-        public Profile? ResolveProfile(string userId, ProfileJsonDto? profileDTO);
+        public ProfileTier? ResolveProfile(string userId, ProfileTier? profile, bool batched);
 
-        public URLAddress PostUrl(URLDomain fromCatalyst);
+        public URLAddress PostUrl(URLDomain? fromCatalyst, ProfileTier.Kind tier);
     }
 }

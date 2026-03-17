@@ -1,6 +1,7 @@
 ﻿using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -19,6 +20,9 @@ namespace DCL.UI.ProfileElements
         {
             this.profileRepository = profileRepository;
         }
+
+        public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, Profile.CompactInfo profile, CancellationToken ct) =>
+            ExecuteAsync(property, fallback, profile.UserId, profile.FaceSnapshotUrl, ct);
 
         public UniTask ExecuteAsync(IReactiveProperty<ProfileThumbnailViewModel> property, Sprite? fallback, string userId, string faceSnapshotUrl,
             CancellationToken ct) =>

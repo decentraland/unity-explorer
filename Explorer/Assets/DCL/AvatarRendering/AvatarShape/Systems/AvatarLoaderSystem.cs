@@ -71,9 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape))]
         private void CreateMainPlayerAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            WebGLDebugLog.Log($"[AvatarLoader] CreateMainPlayerAvatarShapeFromProfile: profile set, creating avatar shape for userId={profile.UserId}");
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
-
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays

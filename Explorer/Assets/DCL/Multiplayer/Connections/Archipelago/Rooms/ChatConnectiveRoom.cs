@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -52,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running // CurrentState will be != Running at start, so we need to connect
-                || Room().Info.ConnectionState == ConnectionState.ConnDisconnected) // If the room was running but our connection was lost at some point, we need to reconnect
+                || Room().Info.ConnectionState == LKConnectionState.ConnDisconnected) // If the room was running but our connection was lost at some point, we need to reconnect
             {
                 string connectionString = await ConnectionStringAsync(token);
                 await TryConnectToRoomAsync(connectionString, token);

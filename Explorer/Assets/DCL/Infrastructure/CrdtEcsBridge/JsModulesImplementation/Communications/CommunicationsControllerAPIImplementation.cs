@@ -4,8 +4,6 @@ using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
-using Unity.Collections.LowLevel.Unsafe;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -23,18 +21,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-            var array = byteArrayPool.GetAPIRawDataPool(
-                IJsOperations.LIVEKIT_MAX_SIZE);
-            string walletId = message.FromWalletId;
-            int dataLength = message.Data.Length;
-            int dataOffset;
-            var array = jsOperations.GetTempUint8Array();
-
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // WebGL has no direct memory access — build the payload in managed memory then bulk-copy to JS
+            var array = jsOperations.GetTempUint8Array();
+            string walletId = message.FromWalletId;
+            int dataLength = message.Data.Length;
+
             byte[] walletIdBytes = Encoding.UTF8.GetBytes(walletId);
             int walletIdByteLength = Math.Min(walletIdBytes.Length, byte.MaxValue);
-            dataOffset = walletIdByteLength + 1;
+            int dataOffset = walletIdByteLength + 1;
 
             if (dataOffset + dataLength > IJsOperations.LIVEKIT_MAX_SIZE)
                 throw new InternalBufferOverflowException("Received a message larger than LIVEKIT_MAX_SIZE");
@@ -46,6 +41,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             array.WriteBytes(buffer, 0, (ulong)(dataOffset + dataLength), 0);
 #else
+            var array = byteArrayPool.GetAPIRawDataPool(
+                IJsOperations.LIVEKIT_MAX_SIZE);
 
             int walletIdLength = Encoding.UTF8.GetBytes(message.FromWalletId,
                 array.Array.AsSpan(1));
@@ -65,6 +62,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             array.SetLength(totalLength);
 
             lock (eventsToProcess) { eventsToProcess.Add(array); }
+#endif
         }
     }
 }

@@ -56,7 +56,7 @@ namespace DCL.UI.ProfileElements
             if (profile == null) return;
 
             nameElementController.Setup(profile);
-            walletAddressElementController.Setup(profile);
+            walletAddressElementController.Setup(profile.Compact);
             viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 

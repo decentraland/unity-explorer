@@ -65,7 +65,7 @@ namespace DCL.ExplorePanel
         public CommunitiesBrowserController CommunitiesBrowserController { get; }
 #endif
         public PlacesController PlacesController { get; }
-        public EventsContlroler EventsController { get; }
+        public EventsController EventsController { get; }
 
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;

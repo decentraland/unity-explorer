@@ -19,11 +19,14 @@ namespace DCL.RealmNavigation
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            bool isWorld = false) =>
+            bool isWorld = false,
+            bool allowsSpawnPointerOverride = false) =>
             UniTask.FromResult(EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.MessageError));
 
         public UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal) =>
             UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "Teleport is not available on WebGL."));
+
+        public bool IsAlreadyOnRealm(URLDomain realm) => false;
 
         public void RemoveCameraSamplingData() { }
     }

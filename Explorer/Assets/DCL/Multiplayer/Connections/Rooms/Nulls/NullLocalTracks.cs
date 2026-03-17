@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
             public StreamState StreamState => StreamState.StateUnknown;
             public bool Muted => true;
             public WeakReference<IRoom> Room => NullRoom.WEAK_INSTANCE;
-            public WeakReference<Participant> Participant => NullParticipantsHub.WEAK_NULL_PARTICIPANT;
+            public WeakReference<LKParticipant> Participant => NullParticipantsHub.WEAK_NULL_PARTICIPANT;
             public FfiHandle? Handle => null;
 
             public void UpdateMuted(bool muted) { }

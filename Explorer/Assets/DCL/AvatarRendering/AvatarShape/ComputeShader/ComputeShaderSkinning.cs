@@ -28,10 +28,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
 
-            if (vertCount == 0)
-                WebGLDebugLog.LogWarning(ReportCategory.AVATAR,
-                    $"Avatar skinning vertCount=0. Wearables={diag.WearableCount}, meshesAdded={diag.MeshesAdded}, skippedInactive={diag.SkippedInactive}, skippedRendererInfosMismatch={diag.SkippedRendererInfosMismatch}, renderersWithNullMesh={diag.RenderersWithNullMesh}. Check: empty/failed wearable load, inactive renderers, or RendererInfos count mismatch.");
-
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 

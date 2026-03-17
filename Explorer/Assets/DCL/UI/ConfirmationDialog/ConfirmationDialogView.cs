@@ -88,10 +88,10 @@ namespace DCL.UI.ConfirmationDialog
             if (!hasProfileImage) return;
 
             profilePictureView.SetDefaultThumbnail();
-            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo);
 
             fromProfilePictureView.SetDefaultThumbnail();
-            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo.Color, dialogData.FromUserInfo.ThumbnailUrl);
+            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo);
 
 
             additonalUrlText.gameObject.SetActive(false);

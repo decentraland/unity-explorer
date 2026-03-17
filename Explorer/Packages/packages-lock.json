@@ -502,7 +502,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       },
-      "hash": "2b43ecc35222c1d4dcad66679f463e6773831653"
+      "hash": "8bf26fd1f54a278b887a7951a3935f1ffff71494"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#4.0.0",

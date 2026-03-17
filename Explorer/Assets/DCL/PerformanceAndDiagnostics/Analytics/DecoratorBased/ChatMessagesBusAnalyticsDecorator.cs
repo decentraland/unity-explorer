@@ -79,11 +79,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             foreach (Match match in matches)
             {
                 //using group 1 to remove the @ symbol
-                Profile? profile = profileCache.GetByUserName(match.Groups[1].Value);
+                ProfileTier? profile = profileCache.GetByUserName(match.Groups[1].Value);
 
                 if (profile != null)
                 {
-                    MENTION_WALLET_IDS.Add(profile.UserId);
+                    MENTION_WALLET_IDS.Add(profile.Value.UserId);
                     //returning a valid mention only if at least one of the mentions are a real user
                     isValidMention = true;
                 }

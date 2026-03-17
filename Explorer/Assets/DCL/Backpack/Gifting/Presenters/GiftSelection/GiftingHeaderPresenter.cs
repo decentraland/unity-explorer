@@ -6,7 +6,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using UnityEngine;
 using Utility;
@@ -34,7 +33,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly IInputBlock inputBlock;
 
         private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> profileThumbnail =
-            new(new ProfileThumbnailViewModel.WithColor());
+            new (ProfileThumbnailViewModel.WithColor.Default());
 
         private CancellationTokenSource? searchCts;
 
@@ -79,22 +78,22 @@ namespace DCL.Backpack.Gifting.Presenters
             {
                 ct.ThrowIfCancellationRequested();
 
-                var profile = await profileRepository.GetAsync(userId, 0, ct: ct);
+                Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(userId, ct: ct);
                 if (profile == null || ct.IsCancellationRequested)
                     return;
 
-                walletAddressController.Setup(profile);
-                var userNameColor = profile.UserNameColor;
+                walletAddressController.Setup(profile.Value);
+                Color userNameColor = profile.Value.UserNameColor;
                 string userNameColorHex = ColorUtility.ToHtmlStringRGB(userNameColor);
 
                 if (ct.IsCancellationRequested)
                     return;
 
-                view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Name);
+                view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Value.Name);
 
                 profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
 
-                string faceUrl = profile.Avatar.FaceSnapshotUrl;
+                string faceUrl = profile.Value.FaceSnapshotUrl;
 
                 if (!string.IsNullOrEmpty(faceUrl))
                 {
@@ -112,7 +111,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 if (profileThumbnail.Value.Thumbnail.Sprite != null)
                     CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
 
-                walletAddressController.Setup(profile);
+                walletAddressController.Setup(profile.Value);
             }
             catch (OperationCanceledException)
             {

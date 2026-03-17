@@ -73,7 +73,7 @@ namespace DCL.Landscape
         {
             if (!IsInitialized) return;
 
-            TerrainModel = new TerrainModel(ParcelSize, ownedParcels, terrainGenData.borderPadding, true);
+            TerrainModel = new TerrainModel(ParcelSize, new WorldModel(ownedParcels), terrainGenData.borderPadding, true);
 
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);

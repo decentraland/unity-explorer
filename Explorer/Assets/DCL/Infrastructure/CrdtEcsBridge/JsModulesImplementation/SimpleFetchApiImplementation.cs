@@ -1,10 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.ScenePermissions;
@@ -32,7 +32,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly IProfileRepository profileRepository;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider, IProfileRepository profileRepository)
         {
             this.sceneShortInfo = sceneShortInfo;
             this.permissionsProvider = permissionsProvider;

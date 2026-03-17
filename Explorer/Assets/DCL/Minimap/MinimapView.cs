@@ -89,7 +89,7 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal GameObject ownPlayerBannedTooltip { get; private set; }
 
-        [SerializeField] internal ContextMenuConfig contextMenuConfig;
+        [SerializeField] internal Button contextMenuButton;
 
         private void Start()
         {

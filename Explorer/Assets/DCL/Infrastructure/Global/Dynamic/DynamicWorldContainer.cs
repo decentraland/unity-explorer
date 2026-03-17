@@ -546,7 +546,6 @@ namespace Global.Dynamic
                     loadingScreen,
                     placesAPIService,
                     worldAccessGate);
-                    );
 
 
 #if !NO_LIVEKIT_MODE

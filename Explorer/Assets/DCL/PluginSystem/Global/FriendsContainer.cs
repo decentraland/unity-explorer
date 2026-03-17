@@ -101,10 +101,9 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
 
 #if !NO_LIVEKIT_MODE
-            IVoiceChatOrchestrator voiceChatOrchestrator
+            IVoiceChatOrchestrator voiceChatOrchestrator,
 #endif
-                IDecentralandUrlsSource decentralandUrlsSource)
-            )
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;

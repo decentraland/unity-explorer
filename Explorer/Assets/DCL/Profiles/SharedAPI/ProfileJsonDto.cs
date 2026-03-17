@@ -230,7 +230,7 @@ namespace DCL.Profiles
         {
             profile.UserId = userId;
             profile.Name = name;
-            profile.UnclaimedName = unclaimedName;
+            profile.GetCompact().UnclaimedName = unclaimedName;
             profile.HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
             profile.Description = description;

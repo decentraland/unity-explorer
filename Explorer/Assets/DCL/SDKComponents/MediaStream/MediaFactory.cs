@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.MediaStream
                 World world,
                 IWebRequestController webRequestController,
                 IPerformanceBudget frameBudget,
-                AssetPreLoadCache assetPreLoadCache))
+                AssetPreLoadCache assetPreLoadCache)
         {
             this.sceneData = sceneData;
 

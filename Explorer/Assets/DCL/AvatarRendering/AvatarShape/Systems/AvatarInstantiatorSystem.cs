@@ -147,9 +147,6 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
 
-            if (avatarBase == null)
-                WebGLDebugLog.Log("AvatarInstantiator", "Main player: InstantiateNewAvatar returned null (wearables not ready or budget exhausted)");
-
             if (avatarBase != null)
             {
                 // Re-enable rigs since by default we disable them when instantiating new avatars
@@ -157,9 +154,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarBase.HandsIKRig.enabled = true;
                 avatarBase.FeetIKRig.enabled = true;
 
-                WebGLDebugLog.Log("AvatarInstantiator", "Main player avatar instantiated, setting mainPlayerAvatarBaseProxy");
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
-                WebGLDebugLog.Log("AvatarInstantiator", "mainPlayerAvatarBaseProxy.Configured is now true");
             }
         }
 

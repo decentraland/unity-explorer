@@ -311,7 +311,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.DuplicateIdentity)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();

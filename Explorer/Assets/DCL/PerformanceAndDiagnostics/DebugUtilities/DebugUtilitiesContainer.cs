@@ -63,6 +63,7 @@ namespace DCL.DebugUtilities
                     () => viewsCatalog.ControlContainer.InstantiateForElement<DebugControl>(),
                     new Dictionary<Type, IDebugElementFactory>
                     {
+                        { typeof(DebugOngoingWebRequestDef), new DebugElementBase<DebugOngoingWebRequestWidget, DebugOngoingWebRequestDef>.Factory(viewsCatalog.OngoingRequestsWidget) },
                         { typeof(AverageFpsBannerDef), new DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>.Factory(viewsCatalog.AverageFpsBanner) },
                         { typeof(DebugButtonDef), new DebugElementBase<DebugButtonElement, DebugButtonDef>.Factory(viewsCatalog.Button) },
                         { typeof(DebugConstLabelDef), new DebugElementBase<DebugConstLabelElement, DebugConstLabelDef>.Factory(viewsCatalog.ConstLabel) },

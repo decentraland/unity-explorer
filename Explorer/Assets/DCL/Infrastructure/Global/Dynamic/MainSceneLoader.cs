@@ -262,13 +262,6 @@ namespace Global.Dynamic
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
-                    bootstrapContainer.DecentralandUrlsSource, ct);
-
-                bootstrap.InitializeFeaturesRegistry();
-
-                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
-
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
@@ -656,7 +649,6 @@ namespace Global.Dynamic
 
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
-#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)

@@ -32,6 +32,57 @@ namespace DCL.Landscape
         public readonly int ChunkSizeInParcels; //  in [parcels]
         public readonly int SizeInChunks; // Number of chunks along one side of the square terrain
 
+        public TerrainModel(int parcelSize, WorldModel world, int paddingInParcels, bool addExtraPadding = false)
+        {
+            this.parcelSize = parcelSize;
+
+            ChunkSizeInUnits = 0;
+            ChunkSizeInParcels = 0;
+
+            PaddingInParcels = paddingInParcels;
+            int2 sizeInParcels = world.SizeInParcels;
+
+            if (addExtraPadding)
+                PaddingInParcels += Mathf.RoundToInt(0.1f * (sizeInParcels.x + sizeInParcels.y) / 2f);
+
+            int2 sizeInParcelsWithPadding = sizeInParcels + (2 * PaddingInParcels);
+            int2 centerInParcels = world.CenterInParcels;
+            MinParcel = centerInParcels - (sizeInParcelsWithPadding / 2);
+            MaxParcel = MinParcel + (sizeInParcelsWithPadding - 1); // last parcel is inclusive
+
+            SizeInUnits = sizeInParcelsWithPadding * parcelSize;
+            MinInUnits = MinParcel * parcelSize;
+            MaxInUnits = MinInUnits + SizeInUnits;
+
+            (SizeInChunks, ChunkSizeInParcels) = CalculateChunkSizeAndCount();
+
+            // Generate chunk models
+            {
+                ChunkModels = new ChunkModel[SizeInChunks * SizeInChunks];
+
+                for (var x = 0; x < SizeInChunks; x++)
+                for (var y = 0; y < SizeInChunks; y++)
+                {
+                    int2 minChunkParcel = MinParcel + new int2(x * ChunkSizeInParcels, y * ChunkSizeInParcels);
+                    int2 maxParcelPosition = minChunkParcel + new int2(ChunkSizeInParcels, ChunkSizeInParcels) - new int2(1, 1);
+                    var model = new ChunkModel(minChunkParcel, maxParcelPosition);
+
+                    if (TryOverlap(model, out int2 overlap))
+                        model.ProcessOverlap(overlap);
+
+                    ChunkModels[x + (y * SizeInChunks)] = model;
+                }
+
+                foreach (int2 parcel in world.OwnedParcels)
+                foreach (ChunkModel chunk in ChunkModels)
+                    if (ChunkContains(chunk, parcel))
+                    {
+                        chunk.AddOccupiedParcel(parcel);
+                        break;
+                    }
+            }
+        }
+
         public TerrainModel(int parcelSize, NativeHashSet<int2> ownedParcels, int paddingInParcels, bool addExtraPadding = false)
         {
             this.parcelSize = parcelSize;

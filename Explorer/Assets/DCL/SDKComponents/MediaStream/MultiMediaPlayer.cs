@@ -121,9 +121,10 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool WaitingForProperties => Match(
             static avPro => avPro.WaitingForProperties
-#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+#if !NO_LIVEKIT_MODE && (!UNITY_WEBGL || EDITOR_DEBUG_WEBGL)
           , static _ => false
-#endif        );
+#endif
+            );
 
         public Vector2 GetTexureScale => Match(static avPro =>
             {
@@ -164,7 +165,7 @@ namespace DCL.SDKComponents.MediaStream
                 onAvProPlayer: static (address, avPro) =>
                 {
                     if (address.IsUrlMediaAddress(out var url))
-                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Value.Url, avPro.AvProMediaPlayer);
+                        avPro.MediaPlayerCustomPool.ReleaseMediaPlayer(url!.Url, avPro.AvProMediaPlayer);
                 }
 #if !NO_LIVEKIT_MODE && !UNITY_WEBGL
                 , onLivekitPlayer: static (_, livekitPlayer) => livekitPlayer.Dispose()
@@ -232,7 +233,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (IsAvProPlayer(out var avProPlayer))
             {
-                var mediaPlayer = avProPlayer!.Value.AvProMediaPlayer;
+                var mediaPlayer = avProPlayer!.AvProMediaPlayer;
                 if (!mediaPlayer.MediaOpened) return;
                 mediaPlayer.UpdatePlaybackProperties(sdkVideoPlayer);
             }
@@ -264,7 +265,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
-                var avProPlayer = mediaPlayer!.Value.AvProMediaPlayer;
+                var avProPlayer = mediaPlayer!.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 mediaPlayer.WaitingForProperties = true;
                 await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer);
@@ -297,7 +298,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (ctx.player.IsAvProPlayer(out var avProPlayer) == false)
                         return false;
 
-                    var player = avProPlayer!.Value.AvProMediaPlayer;
+                    var player = avProPlayer!.AvProMediaPlayer;
 
                     //VideoPlayer may be reused
                     if (player.MediaOpened)
@@ -334,7 +335,7 @@ namespace DCL.SDKComponents.MediaStream
         public void TrySeek(double seekTime)
         {
             if (IsAvProPlayer(out var avProPlayer))
-                avProPlayer!.Value.AvProMediaPlayer.Control.Seek(seekTime);
+                avProPlayer!.AvProMediaPlayer.Control.Seek(seekTime);
 
             // Livekit streaming doesn't support seeking
         }

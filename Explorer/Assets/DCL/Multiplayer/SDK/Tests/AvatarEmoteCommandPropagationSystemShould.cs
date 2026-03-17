@@ -176,6 +176,11 @@ namespace DCL.Multiplayer.SDK.Tests
             }
 
             public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
+
+            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
+
+            public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
+                throw new NotImplementedException();
         }
     }
 }

@@ -8,9 +8,10 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Net.WebSockets;
 using Utility.Multithreading;
-using Utility.Networking;
 using RpcClient = rpc_csharp.RpcClient;
+using Utility;
 
 namespace DCL.SocialService
 {

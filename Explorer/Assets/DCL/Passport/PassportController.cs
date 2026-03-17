@@ -666,7 +666,8 @@ namespace DCL.Passport
 #endif
 
                         ct,
-                        batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET
+                        getFromCacheIfPossible: false,
+                        batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED
                         );
 
                 if (profile == null)
@@ -952,7 +953,7 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Compact, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
         private void GiftUserClicked()
@@ -1024,8 +1025,8 @@ namespace DCL.Passport
                     bool friendExists = i < mutualFriendsResult.Friends.Count;
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
-                    FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend);
                 }
             }
         }

@@ -29,10 +29,6 @@ namespace ECS.Unity.Visibility.Systems
             {
                 if (renderers[i] != null)
                     renderers[i].enabled = visible;
-                else
-                {
-                    WebGLDebugLog.LogWarning($"[Visibility] GltfContainerVisibilitySystem: Renderer[{i}] is null!");
-                }
             }
         }
     }

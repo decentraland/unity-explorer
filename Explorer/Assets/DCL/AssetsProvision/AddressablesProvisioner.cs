@@ -11,16 +11,8 @@ namespace DCL.AssetsProvision
 {
     public class AddressablesProvisioner : IAssetsProvisioner
     {
-        private static void LogAssetRequest(string op, string assetKey, string typeName)
-        {
-            //TODO WEBGL: DISABLED FOR NOW
-            //WebGLDebugLog.Log(op, assetKey, typeName);
-        }
-
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
         {
-            LogAssetRequest("ProvideMainAssetAsync", assetReferenceT?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
-
             // if the main asset was already loaded just return it
             if (assetReferenceT.OperationHandle.IsValid())
                 return new ProvidedAsset<T>(assetReferenceT.OperationHandle.Convert<T>());
@@ -33,8 +25,6 @@ namespace DCL.AssetsProvision
 
         public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(ComponentReference<T> componentReference, CancellationToken ct) where T: Object
         {
-            LogAssetRequest("ProvideMainAssetAsync", componentReference?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
-
             // if the main asset was already loaded just return it
             if (componentReference.OperationHandle.IsValid())
                 return new ProvidedAsset<T>(componentReference.OperationHandle.Convert<T>());
@@ -60,7 +50,6 @@ namespace DCL.AssetsProvision
 
         public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Vector3 position, Quaternion rotation, Transform parent = null, CancellationToken ct = default) where T: Object
         {
-            LogAssetRequest("ProvideInstanceAsync", componentReference?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
             AsyncOperationHandle<T> asyncOp = componentReference.InstantiateAsync(position, rotation, parent);
             await asyncOp.WithCancellation(ct);
             return new ProvidedInstance<T>(asyncOp);
@@ -68,7 +57,6 @@ namespace DCL.AssetsProvision
 
         public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Transform parent = null, bool instantiateInWorldSpace = false, CancellationToken ct = default) where T: Object
         {
-            LogAssetRequest("ProvideInstanceAsync", componentReference?.RuntimeKey?.ToString() ?? "null", typeof(T).Name);
             AsyncOperationHandle<T> asyncOp = componentReference.InstantiateAsync(parent, instantiateInWorldSpace);
             await asyncOp.WithCancellation(ct);
             return new ProvidedInstance<T>(asyncOp);

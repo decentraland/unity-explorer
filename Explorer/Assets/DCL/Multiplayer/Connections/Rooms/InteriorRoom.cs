@@ -200,7 +200,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
 
 #if !UNITY_WEBGL || UNITY_EDITOR
-       previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
+            previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
             previous.TrackUnpublished -= RoomOnTrackUnpublished;
@@ -208,6 +208,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.TrackUnsubscribed -= RoomOnTrackUnsubscribed;
             previous.TrackMuted -= RoomOnTrackMuted;
             previous.TrackUnmuted -= RoomOnTrackUnmuted;
+#endif
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;

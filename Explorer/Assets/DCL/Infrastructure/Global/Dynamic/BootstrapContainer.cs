@@ -26,7 +26,7 @@ using Temp.Helper.WebClient;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -110,12 +110,10 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
-                WebGLDebugLog.Log("BootstrapContainer.cs", "createDependencies START");
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
-                WebGLDebugLog.Log("BootstrapContainer.cs", "createDependencies END");
 
                 if (container.IdentityCache.Identity != null)
                     UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
@@ -140,7 +138,6 @@ namespace Global.Dynamic
                 }
             });
 
-            WebGLDebugLog.Log("BootstrapContainer.cs", "CreateAsync returning");
             return bootstrapContainer;
         }
 

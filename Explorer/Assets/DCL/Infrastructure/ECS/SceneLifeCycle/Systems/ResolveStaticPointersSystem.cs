@@ -62,7 +62,6 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    WebGLDebugLog.Log("ResolveStaticPointersSystem", "CreateSceneFacadePromise", $"parcel=({parcel.x},{parcel.y})", "H5");
                     CreateSceneFacadePromise.Execute(World, entity, in definition, partitionComponent);
                     return;
                 }

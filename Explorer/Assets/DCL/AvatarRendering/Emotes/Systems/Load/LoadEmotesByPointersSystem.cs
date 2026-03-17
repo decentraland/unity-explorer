@@ -75,9 +75,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 GetEmotesByPointersInternal(dt, entity, ref intention, ref partitionComponent);
             }
             catch (NullReferenceException ex)
-            {
-                WebGLDebugLog.LogError(GetReportCategory(), $"LoadEmotesByPointers NRE: {ex.Message}\n{ex.StackTrace}");
-            }
+            { }
         }
 
         private void GetEmotesByPointersInternal(float dt, in Entity entity,
