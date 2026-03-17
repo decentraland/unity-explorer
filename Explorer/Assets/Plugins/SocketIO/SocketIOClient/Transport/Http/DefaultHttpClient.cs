@@ -43,7 +43,7 @@ namespace SocketIOClient.Transport.Http
         public UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             _httpClient.SendAsync(request, cancellationToken).AsUniTask();
 
-        public async UniTask<HttpResponseMessage> PostAsync(string requestUri,
+        public UniTask<HttpResponseMessage> PostAsync(string requestUri,
             HttpContent content,
             CancellationToken cancellationToken) =>
             _httpClient.PostAsync(requestUri, content, cancellationToken).AsUniTask();
