@@ -23,13 +23,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly bool isLocalSceneDevelopment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, string installSource, DCLVersion dclVersion)
         {
             this.sessionId = sessionId;
             this.launcherAnonymousId = launcherAnonymousId;
 
             runtime = ChooseRuntime(appArgs);
-            installSource = buildData.InstallSource;
+            this.installSource = installSource;
             rendererVersion = dclVersion.Version;
             isLocalSceneDevelopment = appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
         }
