@@ -98,7 +98,8 @@ namespace DCL.Chat.ChatMessages
             view.Initialize(viewModels,
                 translationSettings.IsTranslationFeatureActive,
                 IsAutoTranslationEnabled,
-                IsTranslationMemoryForMessageAvailable);
+                IsTranslationMemoryForMessageAvailable,
+                () => isFocused);
 
             view.OnTranslateMessageRequested += OnTranslateMessage;
             view.OnRevertMessageRequested += OnRevertMessage;
@@ -132,13 +133,13 @@ namespace DCL.Chat.ChatMessages
             loadChannelCts.SafeCancelAndDispose();
 
             ReleaseAndClearAllModels();
+            view.StopChatEntriesFadeout();
             view.Clear();
             viewModelsMap = null;
 
             scrollToBottomPresenter.OnChannelChanged();
             separatorFixedIndexFromBottom = -1;
             messageCountWhenSeparatorViewed = null;
-            isFocused = false;
         }
 
         public void Dispose()
