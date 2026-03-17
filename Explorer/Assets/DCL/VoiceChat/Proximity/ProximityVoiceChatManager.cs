@@ -152,7 +152,7 @@ namespace DCL.VoiceChat
 
             string participantName = islandRoom.Participants.LocalParticipant().Name;
 
-            localTrack = islandRoom.AudioTracks.CreateAudioTrack(
+            localTrack = islandRoom.LocalTracks.CreateAudioTrack(
                 $"proximity_{participantName}",
                 rtcAudioSource
             );
