@@ -9,6 +9,8 @@ namespace DCL.Character.CharacterMotion.Systems
 {
     public static class HandPointAtHelper
     {
+        private const float MAX_ROTATION_SPEED_MULTIPLIER = 3;
+
         public struct RotationInfo
         {
             public float dot;
@@ -44,7 +46,7 @@ namespace DCL.Character.CharacterMotion.Systems
                 pointAt.RotationAnimationWeight, needToRotate ? 1f : 0f, settings.HandsIKWeightSpeed * dt);
 
             float angularSpeed = needToRotate ? Mathf.Abs(crossY) * settings.PointAtRotationSpeedAnimMultiplier : 0f;
-            SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && crossY <= 0, needToRotate && crossY > 0, angularSpeed);
+            SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && crossY <= 0, needToRotate && crossY > 0, Mathf.Clamp(angularSpeed, 0, MAX_ROTATION_SPEED_MULTIPLIER));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
