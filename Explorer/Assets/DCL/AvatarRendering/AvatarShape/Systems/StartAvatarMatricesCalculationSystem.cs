@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 
@@ -26,15 +27,24 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            ExecuteQuery(World);
+            RegisterMainPlayerQuery(World);
+            RegisterRemoteAvatarsQuery(World);
             avatarTransformMatrixBatchJob.ScheduleBoneMatrixCalculation();
         }
 
         [Query]
+        [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void Execute(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        private void RegisterMainPlayer(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            avatarTransformMatrixBatchJob.UpdateAvatar(avatarBase, ref transformMatrixComponent);
+            avatarTransformMatrixBatchJob.RegisterMainPlayerAvatar(avatarBase, ref transformMatrixComponent);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        private void RegisterRemoteAvatars(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        {
+            avatarTransformMatrixBatchJob.RegisterAvatar(avatarBase, ref transformMatrixComponent);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -19,7 +19,8 @@ namespace DCL.AvatarRendering.AvatarShape
     {
         private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
-        private NativeArray<float4x4> currentResult;
+        private NativeArray<float4x4> remoteResult;
+        private NativeArray<float4x4> mainPlayerResult;
 
         internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
             AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
@@ -31,7 +32,11 @@ namespace DCL.AvatarRendering.AvatarShape
         protected override void Update(float t)
         {
             jobWrapper.CompleteBoneMatrixCalculations();
-            currentResult = jobWrapper.job.BonesMatricesResult;
+            remoteResult = jobWrapper.job.BonesMatricesResult;
+
+            if (jobWrapper.HasMainPlayer)
+                mainPlayerResult = jobWrapper.MainPlayerBonesResult;
+
             ExecuteQuery(World);
         }
 
@@ -43,7 +48,12 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarCustomSkinningComponent computeShaderSkinning
         )
         {
-            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+            NativeArray<float4x4> bonesResult = avatarTransformMatrixComponent.IsMainPlayer
+                ? mainPlayerResult
+                : remoteResult;
+
+            Result result = computeShaderSkinning.ComputeSkinning(bonesResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+
             if (result.Success == false)
                 ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
         }
