@@ -567,16 +567,23 @@ jobs:
 
           DESTINATION_PATH="${{ inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version) || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT) }}"
 
+          # Latest dev build for webgl
+          # if [ "${{ matrix.target }}" == "web" ] && [ "${GITHUB_REF_NAME}" == "dev" ]; then
+          # TODO Test only without the conditon
+          if [ "${{ matrix.target }}" == "web" ]; then 
+            DESTINATION_PATH="@dcl/${{ github.event.repository.name }}/dev/webgl-latest"
+          fi
+
+          if [ "${{ matrix.target }}" == "web" ]; then
+            echo "Web build link: $EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL/$DESTINATION_PATH/build/Decentraland/index.html"
+          fi
+
           echo "Upload artifact to: $DESTINATION_PATH"
 
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
-
-          if [ "${{ matrix.target }}" == "web" ]; then
-            echo "Web build link: $EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL/$DESTINATION_PATH/build/Decentraland/index.html"
-          fi
 
       # web doesn't have debug symbols
       - name: Upload debug symbols
