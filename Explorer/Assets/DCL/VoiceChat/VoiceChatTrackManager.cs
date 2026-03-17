@@ -131,7 +131,7 @@ namespace DCL.VoiceChat
                 MicrophoneRtcAudioSource rtcAudioSource = result.Value;
                 rtcAudioSource.Start();
 
-                ITrack livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
                     rtcAudioSource
                 );
