@@ -110,26 +110,26 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private void ResolvePending(CRDTEntity newlyAddedEntityId, Node leftNode)
         {
-            if (pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+            if (pendingRightOf == null || !pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+                return;
+
+            if (leftNode.Next != null)
+                leftNode.Next.Previous = rightNode;
+
+            leftNode.Next = rightNode;
+            rightNode.Previous = leftNode;
+
+            Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
+            if (rightNode == head)
             {
-                if (leftNode.Next != null)
-                    leftNode.Next.Previous = rightNode;
-
-                leftNode.Next = rightNode;
-                rightNode.Previous = leftNode;
-
-                Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
-
-                if (rightNode == head)
+                // if the current head is the right node then the left-most becomes the new head
+                for (head = rightNode; head.Previous != null; head = head.Previous)
                 {
-                    // if the current head is the right node then the left-most becomes the new head
-                    for (head = rightNode; head.Previous != null; head = head.Previous)
-                    {
-                    }
                 }
-
-                pendingRightOf.Remove(newlyAddedEntityId);
             }
+
+            pendingRightOf?.Remove(newlyAddedEntityId);
         }
 
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
