@@ -26,6 +26,7 @@ namespace DCL.CharacterMotion.Systems
         private readonly IComponentPoolsRegistry poolsRegistry;
 
         private GameObjectPool<GliderPropView>? propPool;
+        private GameObjectPool<OneShotAudioSource> oneShotAudioPool;
         private SingleInstanceEntity tickEntity;
 
         public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GliderPropView gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -47,6 +48,16 @@ namespace DCL.CharacterMotion.Systems
 #if !UNITY_EDITOR
             }
 #endif
+
+            Transform poolRoot = poolsRegistry.RootContainerTransform();
+            oneShotAudioPool = new GameObjectPool<OneShotAudioSource>(poolRoot, () =>
+            {
+                var go = new GameObject("GliderOneShotAudio");
+                go.AddComponent<AudioSource>();
+                var component = go.AddComponent<OneShotAudioSource>();
+                component.Initialize(oneShotAudioPool);
+                return component;
+            });
 
             tickEntity = World.CachePhysicsTick();
         }
@@ -94,6 +105,7 @@ namespace DCL.CharacterMotion.Systems
                 ? propPool!.Get()
                 : Object.Instantiate(gliderPrefab);
             prop.PlayOpenAndCloseSounds = isLocalPlayer;
+            prop.OneShotAudioPool = oneShotAudioPool;
             prop.gameObject.SetActive(false);
 
             var transform = prop.transform;
@@ -138,7 +150,7 @@ namespace DCL.CharacterMotion.Systems
 
             gliderProp.View.PrepareForNextActivation();
             gliderProp.View.gameObject.SetActive(false);
-            
+
             World.Remove<GliderPropEnabled>(entity);
         }
 
