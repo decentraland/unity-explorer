@@ -1,11 +1,8 @@
 using Cysharp.Threading.Tasks;
-using System;
 using System.Threading;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Object = UnityEngine.Object;
 
 namespace DCL.AssetsProvision
 {
@@ -19,7 +16,6 @@ namespace DCL.AssetsProvision
 
             AsyncOperationHandle<T> asyncOp = assetReferenceT.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
-            EnsureLoadSucceeded(asyncOp, assetReferenceT?.RuntimeKey?.ToString(), typeof(T).Name);
             return new ProvidedAsset<T>(asyncOp);
         }
 
@@ -31,21 +27,7 @@ namespace DCL.AssetsProvision
 
             AsyncOperationHandle<T> asyncOp = componentReference.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
-            EnsureLoadSucceeded(asyncOp, componentReference?.RuntimeKey?.ToString(), typeof(T).Name);
             return new ProvidedAsset<T>(asyncOp);
-        }
-
-        private static void EnsureLoadSucceeded<T>(AsyncOperationHandle<T> handle, string? assetKey, string typeName) where T: Object
-        {
-            if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
-                return;
-
-            var msg = $"Addressables load failed: key={assetKey} type={typeName} status={handle.Status}";
-
-            if (handle.OperationException != null)
-                throw new InvalidOperationException(msg, handle.OperationException);
-
-            throw new InvalidOperationException(msg + " (Result is null or status not Succeeded).");
         }
 
         public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Vector3 position, Quaternion rotation, Transform parent = null, CancellationToken ct = default) where T: Object
