@@ -20,6 +20,8 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     public partial class RemoteHandPointAtSystem : BaseUnityLoopSystem
     {
+        private const float ROTATION_FACTOR_MULTIPLIER = 500f;
+
         private readonly ICharacterControllerSettings localSettings;
 
         private RemoteHandPointAtSystem(
@@ -66,7 +68,7 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 Vector3 cross = Vector3.Cross(avatarBase.transform.forward, pointAt.PreviousLookDirection);
                 float dot  = Vector3.Dot(avatarBase.transform.forward, pointAt.PreviousLookDirection);
-                HandPointAtHelper.PlayerRotationAnimation(localSettings, ref avatarBase, ref pointAt, !Mathf.Approximately(dot, 1f), dt, cross.y);
+                HandPointAtHelper.PlayerRotationAnimation(localSettings, ref avatarBase, ref pointAt, !Mathf.Approximately(dot, 1f), dt, cross.y * ROTATION_FACTOR_MULTIPLIER);
             }
 
             pointAt.IsDragging = false;
