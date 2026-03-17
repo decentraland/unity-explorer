@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             SpriteRenderer.color = color;
 
             fadeCts = fadeCts.SafeRestart();
-            AnimateColor(1f, fadeCts.Token).Forget();
+            AnimateColorAsync(1f, fadeCts.Token).Forget();
         }
 
         public void FadeOutAndRelease(IObjectPool<PointAtMarkerHolder> pool)
@@ -53,10 +53,10 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             SpriteRenderer.color = color;
 
             fadeCts = fadeCts.SafeRestart();
-            AnimateColor(0f, fadeCts.Token, pool).Forget();
+            AnimateColorAsync(0f, fadeCts.Token, pool).Forget();
         }
 
-        private async UniTaskVoid AnimateColor(float endAlpha, CancellationToken ct, IObjectPool<PointAtMarkerHolder>? pool = null)
+        private async UniTaskVoid AnimateColorAsync(float endAlpha, CancellationToken ct, IObjectPool<PointAtMarkerHolder>? pool = null)
         {
             Color color = SpriteRenderer.color;
             float startAlpha = color.a;

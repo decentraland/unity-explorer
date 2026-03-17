@@ -238,7 +238,7 @@ namespace DCL.PluginSystem.Global
 
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
-            LaunchSubscriptions(friendServiceSubscriptionCts.Token);
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token);
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -247,14 +247,14 @@ namespace DCL.PluginSystem.Global
             async UniTaskVoid PrewarmAsync(CancellationToken ct)
             {
                 await friendsPanelController.InitAsync(ct);
-                await PreWarmFriendsCache(ct);
+                await PreWarmFriendsCacheAsync(ct);
 
                 // TODO should not unsubscribe as the user can re-login with another account, and thus, pre-warming will be skipped
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
         }
 
-        private async UniTask PreWarmFriendsCache(CancellationToken ct)
+        private async UniTask PreWarmFriendsCacheAsync(CancellationToken ct)
         {
             friendsCache.Clear();
             await friendsService.GetFriendsAsync(0, 1000, ct)
@@ -292,14 +292,14 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
             {
-                await LaunchSubscriptions(ct);
-                await PreWarmFriendsCache(ct);
+                await LaunchSubscriptionsAsync(ct);
+                await PreWarmFriendsCacheAsync(ct);
 
                 friendsPanelController?.Reset();
             }
         }
 
-        private async UniTask LaunchSubscriptions(CancellationToken ct)
+        private async UniTask LaunchSubscriptionsAsync(CancellationToken ct)
         {
             subscriptions[0] = rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct);
             subscriptions[1] = IsConnectivityStatusEnabled() ? rpcFriendsService.SubscribeToConnectivityStatusAsync(ct) : UniTask.CompletedTask;
