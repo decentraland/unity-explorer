@@ -20,7 +20,10 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     public partial class RemoteHandPointAtSystem : BaseUnityLoopSystem
     {
-        private const float ROTATION_FACTOR_MULTIPLIER = 500f;
+        private const float MAC_ROTATION_FACTOR_MULTIPLIER = 500f;
+        private const float WIN_ROTATION_FACTOR_MULTIPLIER = 10f;
+
+        private readonly float rotationFactorMultiplier;
 
         private readonly ICharacterControllerSettings localSettings;
 
@@ -29,6 +32,11 @@ namespace DCL.Character.CharacterMotion.Systems
             ICharacterControllerSettings localSettings) : base(world)
         {
             this.localSettings = localSettings;
+
+            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                rotationFactorMultiplier = MAC_ROTATION_FACTOR_MULTIPLIER;
+            else
+                rotationFactorMultiplier = WIN_ROTATION_FACTOR_MULTIPLIER;
         }
 
         protected override void Update(float t)
@@ -68,7 +76,7 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 Vector3 cross = Vector3.Cross(avatarBase.transform.forward, pointAt.PreviousLookDirection);
                 float dot  = Vector3.Dot(avatarBase.transform.forward, pointAt.PreviousLookDirection);
-                HandPointAtHelper.PlayerRotationAnimation(localSettings, ref avatarBase, ref pointAt, !Mathf.Approximately(dot, 1f), dt, cross.y * ROTATION_FACTOR_MULTIPLIER);
+                HandPointAtHelper.PlayerRotationAnimation(localSettings, ref avatarBase, ref pointAt, !Mathf.Approximately(dot, 1f), dt, cross.y * rotationFactorMultiplier);
             }
 
             pointAt.IsDragging = false;
