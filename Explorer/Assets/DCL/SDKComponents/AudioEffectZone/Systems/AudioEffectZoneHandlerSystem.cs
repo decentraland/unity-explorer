@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AudioEffectZone.Components;
@@ -55,6 +54,8 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         [All(typeof(TransformComponent))]
         private void SetupAudioEffectZone(in Entity entity, ref PBAudioEffectZone pbAudioEffectZone)
         {
+            Debug.Log("VVV Adding AudioEffectZone component +");
+
             World!.Add(entity,
                 new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
                 new AudioEffectZoneComponent()
@@ -63,9 +64,10 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
 
         [Query]
         [All(typeof(TransformComponent))]
-        private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone,
-            ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
+            Debug.Log("VVV Processing AudioEffectZone component ...");
+
             if (pbAudioEffectZone.IsDirty)
             {
                 pbAudioEffectZone.IsDirty = false;
@@ -91,7 +93,11 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
                         continue;
 
                     if (proximityAudio.AudioSource != null)
+                    {
+                        Debug.Log("VVV Muting");
                         proximityAudio.AudioSource.mute = true;
+                        proximityAudio.AudioSource.volume = 0f;
+                    }
                 }
             }
 
