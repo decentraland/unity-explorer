@@ -39,14 +39,15 @@ namespace DCL.UserInAppInitializationFlow
             IRoomHub roomHub,
             bool localSceneDevelopment,
             CharacterContainer characterContainer,
-            PulseMultiplayerService pulseMultiplayerService)
+            PulseMultiplayerService pulseMultiplayerService,
+            IProfilePropagation profilePropagation)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
-            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);

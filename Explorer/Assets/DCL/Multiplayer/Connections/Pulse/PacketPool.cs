@@ -26,6 +26,8 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             [ClientMessage.MessageOneofCase.Handshake] = CreatePool<HandshakeRequest>((packet, mes) => packet.Handshake = mes),
             [ClientMessage.MessageOneofCase.Input] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
+            [ClientMessage.MessageOneofCase.Resync] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
+            [ClientMessage.MessageOneofCase.ProfileAnnouncement] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
         };
 
         public ClientMessage Get(ClientMessage.MessageOneofCase kind) =>

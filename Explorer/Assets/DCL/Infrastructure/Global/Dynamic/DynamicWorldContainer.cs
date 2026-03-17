@@ -517,7 +517,8 @@ namespace Global.Dynamic
                 roomHub,
                 localSceneDevelopment,
                 staticContainer.CharacterContainer,
-                pulseContainer.pulseMultiplayerService);
+                pulseContainer.pulseMultiplayerService!,
+                pulseContainer.pulseProfilePropagationBus!);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
