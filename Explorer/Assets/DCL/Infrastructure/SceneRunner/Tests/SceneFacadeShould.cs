@@ -102,18 +102,21 @@ namespace SceneRunner.Tests
                 Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
-                Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.DEFAULT,
+#if !NO_LIVEKIT_MODE
                 NullRoomHub.INSTANCE,
+#endif
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
+#if !NO_LIVEKIT_MODE
                 Substitute.For<IRemoteMetadata>(),
+#endif
                 DecentralandEnvironment.Org,
                 Substitute.For<DCL.Clipboard.ISystemClipboard>()
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-,
+                ,
                 new WebGLSceneUpdateQueue()
 #endif
                 );

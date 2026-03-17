@@ -10,10 +10,6 @@ using Global;
 using Global.Dynamic;
 using System.Collections.Generic;
 using System.Threading;
-using CommunicationData.URLHelpers;
-using DCL.Browser.DecentralandUrls;
-using DCL.FeatureFlags;
-using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.Prefs;
@@ -50,7 +46,6 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var realmController = new RealmController(
-                identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 teleportController,
                 retrieveSceneFromFixedRealm,

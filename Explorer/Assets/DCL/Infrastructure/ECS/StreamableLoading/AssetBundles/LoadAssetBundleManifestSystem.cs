@@ -76,7 +76,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version missing for {hash}");
 
             var intVersion = int.Parse(version.AsSpan().Slice(1));
-            //TODO WEBGL: ADD AN #IF UNITY_WEB GL HERE TO AVOID THE IF
+
             int supportedVersion = IPlatform.DEFAULT.Is(IPlatform.Kind.WebGL) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WEBGL
                 : IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_WINDOWS
                 : AssetBundleManifestVersion.AB_MIN_SUPPORTED_VERSION_MAC;

@@ -15,7 +15,6 @@ using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
 using SceneRunner.Scene;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;

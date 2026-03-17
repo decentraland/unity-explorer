@@ -123,10 +123,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         return CRDTReconciliationEffect.NoChanges;
                     }
 
-                    //TODO WEBGL: Disabled for now, we can use this to find when we receive specific Components Ids to debug scene issues on WebGL
-                    //if (message.ComponentId == 1081)
-                        //UnityEngine.Debug.Log($"[Visibility] [WorldSyncBuffer] Received PBVisibilityComponent for Entity={message.EntityId}, Effect={reconciliationEffect}");
-
                     // Store the first and the last result
                     bool componentBatchExists;
 

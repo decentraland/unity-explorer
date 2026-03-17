@@ -17,7 +17,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
-using Temp.Helper.WebClient;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;

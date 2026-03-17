@@ -37,7 +37,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
@@ -59,7 +58,6 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
-using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
@@ -96,7 +94,6 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
-using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -107,7 +104,6 @@ using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -129,7 +125,6 @@ using DCL.Settings.ScreenMode;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PrivateWorlds;
 using DCL.Translation;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -330,11 +325,9 @@ namespace Global.Dynamic
 #endif
             }
 
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before InitializeContainersAsync", "{}", "H2_H3");
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync after InitializeContainersAsync", "{}", "H2_H3");
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
             ProvidedAsset<Texture2D> interactionCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.InteractionCursor, ct);
@@ -342,16 +335,13 @@ namespace Global.Dynamic
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value, cursorSettings.NormalCursorHotspot, cursorSettings.InteractionCursorHotspot);
 
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before AddDebugViews", "{}", "H2");
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync after AddDebugViews", "{}", "H2");
             var realmSamplingData = new RealmSamplingData();
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
             MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "after_mainUIView", "{}", "H5");
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
@@ -363,8 +353,6 @@ namespace Global.Dynamic
                 ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller)
                 : coreMvcManager;
 #endif
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "after_mvcManager", "{}", "H5");
-
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
 
@@ -424,7 +412,6 @@ namespace Global.Dynamic
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "before_realmContainer", "{}", "H5");
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
@@ -837,8 +824,6 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
-            WebGLDebugLog.Log("DynamicWorldContainer.cs", "CreateAsync before globalPlugins list", "{\"mapRendererContainerNull\":" + (mapRendererContainer == null).ToString().ToLowerInvariant() + ",\"realmNavigatorContainerNull\":" + (realmNavigatorContainer == null).ToString().ToLowerInvariant() + "}", "H1_H4");
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
 #if !UNITY_WEBGL
@@ -1244,10 +1229,8 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
                 globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
-            if (mapRendererContainer != null && mapRendererContainer.MapRenderer != null)
-            {
-                globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
-            }
+            globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
+
             if (realmNavigatorContainer != null)
                 globalPlugins.Add(realmNavigatorContainer.CreatePlugin());
 

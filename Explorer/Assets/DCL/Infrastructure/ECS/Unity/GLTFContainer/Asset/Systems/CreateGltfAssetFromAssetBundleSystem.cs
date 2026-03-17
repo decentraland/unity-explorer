@@ -9,8 +9,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
-using Temp.Helper.WebClient;
-using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {

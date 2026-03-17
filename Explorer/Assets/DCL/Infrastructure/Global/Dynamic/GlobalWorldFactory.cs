@@ -44,7 +44,6 @@ using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using OwnAvatarLoaderFromDebugMenuSystem = DCL.AvatarRendering.AvatarShape.OwnAvatarLoaderFromDebugMenuSystem;
-using Temp.Helper.WebClient;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
@@ -153,15 +152,12 @@ namespace Global.Dynamic
 #endif
         )
         {
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: start");
-
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
             globalSceneStateProvider.State.Set(SceneState.Running);
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after builder ctor");
 
             AddShortInfo(world);
 
@@ -211,10 +207,7 @@ namespace Global.Dynamic
             ProcessWebGLSceneUpdatesSystem.InjectToWorld(ref builder, webglSceneUpdateQueue);
 #endif
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
-
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before partition pool");
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after partition pool");
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
@@ -238,24 +231,12 @@ namespace Global.Dynamic
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);
 
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before pluginArgs");
             var pluginArgs = new GlobalPluginArguments(playerEntity, world.Create());
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before foreach plugins");
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
             {
-                if (plugin == null)
-                {
-                    WebGLDebugLog.LogError("GlobalWorldFactory.cs", "null plugin in globalPlugins list");
-                    continue;
-                }
-
-                string pluginName = plugin.GetType().Name;
-                WebGLDebugLog.Log("GlobalWorldFactory.cs", "InjectToWorld", pluginName);
-                plugin.InjectToWorld(ref builder, pluginArgs);
+                plugin?.InjectToWorld(ref builder, pluginArgs);
             }
-
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: before finalizeWorldSystems");
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
@@ -266,20 +247,13 @@ namespace Global.Dynamic
                 ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, playerEntity, new VisualSceneStateResolver(lodSettingsAsset), sceneLoadingLimit),
             };
 
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after finalizeWorldSystems array");
-
             SystemGroupWorld worldSystems = builder.Finish();
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after builder.Finish");
             worldSystems.Initialize();
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after worldSystems.Initialize");
 
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: after new GlobalWorld");
-
             sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
-            WebGLDebugLog.Log("GlobalWorldFactory.cs", "Create: done");
 
             return globalWorld;
         }

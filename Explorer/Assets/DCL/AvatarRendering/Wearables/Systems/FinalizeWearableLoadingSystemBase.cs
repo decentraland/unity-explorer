@@ -19,7 +19,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems

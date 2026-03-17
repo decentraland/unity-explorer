@@ -22,7 +22,6 @@ using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
-using Temp.Helper.WebClient;
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
@@ -73,27 +72,19 @@ namespace Global
 #endif
         )
         {
-            WebGLDebugLog.Log("SceneSharedContainer.Create: start");
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
-
-            WebGLDebugLog.Log("SceneSharedContainer.Create: before ECSWorldFactory");
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
-            WebGLDebugLog.Log("SceneSharedContainer.Create: after ECSWorldFactory");
-
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
 #endif
-
-            WebGLDebugLog.Log("SceneSharedContainer.Create: before SceneFactory ctor");
-
             var sceneFactory = new SceneFactory(
                 ecsWorldFactory,
                 new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
@@ -107,7 +98,6 @@ namespace Global
                 mvcManager,
                 profileRepository,
                 web3IdentityCache,
-                decentralandUrlsSource,
                 webRequestController,
 #if !NO_LIVEKIT_MODE
                 roomHub,
@@ -117,7 +107,6 @@ namespace Global
                 staticContainer.StaticSettings.SkyboxSettings,
                 new SceneCommunicationPipe(
                     messagePipesHub
-
 #if !NO_LIVEKIT_MODE
                   , roomHub.SceneRoom()
 #endif
@@ -125,7 +114,6 @@ namespace Global
 #if !NO_LIVEKIT_MODE
                 remoteMetadata,
 #endif
-
                 dclEnvironment,
                 systemClipboard
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -133,8 +121,6 @@ namespace Global
                 webglSceneUpdateQueue
 #endif
             );
-
-            WebGLDebugLog.Log("SceneSharedContainer.Create: after SceneFactory ctor");
             return new SceneSharedContainer { SceneFactory = sceneFactory };
         }
     }

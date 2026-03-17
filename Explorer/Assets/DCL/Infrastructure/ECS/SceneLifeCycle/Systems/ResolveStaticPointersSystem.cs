@@ -13,8 +13,6 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using Temp.Helper.WebClient;
 using UnityEngine;
 using Utility;
 

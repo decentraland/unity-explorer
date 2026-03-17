@@ -10,7 +10,6 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using Temp.Helper.WebClient;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS;
 using ECS.Abstract;

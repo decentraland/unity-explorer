@@ -241,10 +241,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
                 ReportHub.LogWarning(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
                 ReportHub.LogWarning(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
 
-                /* TODO WEBGL: DISABLED FOR NOW, this spams the console and there is nothing we can do.
                 foreach (URN pointer in wearable.Pointers)
                     ReportHub.LogWarning(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
-                }*/
 
                 cachedHeadWearableOffset = nametagBoundedOffset;
             }

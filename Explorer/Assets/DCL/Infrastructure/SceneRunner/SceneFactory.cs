@@ -35,9 +35,6 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using DCL.Clipboard;
-using DCL.Infrastructure.Global;
-using Temp.Helper.WebClient;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
@@ -59,7 +56,6 @@ namespace SceneRunner
         private readonly IEthereumApi ethereumApi;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebRequestController webRequestController;
 
 #if !NO_LIVEKIT_MODE
@@ -100,7 +96,6 @@ namespace SceneRunner
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
-            IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
 #if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
@@ -109,11 +104,9 @@ namespace SceneRunner
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
-
 #if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
 #endif
-
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
@@ -133,7 +126,6 @@ namespace SceneRunner
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
-            this.decentralandUrlsSource = decentralandUrlsSource;
             this.webRequestController = webRequestController;
 
 #if !NO_LIVEKIT_MODE
@@ -208,8 +200,6 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            WebGLDebugLog.Log("SceneFactory.CreateSceneAsync", "start", $"name={sceneData.SceneShortInfo.Name} parcels=[{string.Join(",", sceneData.Parcels)}] t={Time.realtimeSinceStartup:F1}", "LOAD");
-
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                ,
@@ -219,17 +209,12 @@ namespace SceneRunner
 
             // Try to create scene runtime
             ISceneRuntime sceneRuntime;
-
-            WebGLDebugLog.Log($"[SceneFactory] CreateSceneAsync - Calling CreateByPathAsync with URL: {deps.SceneCodeUrl.Value}");
-
             try
             {
                 sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SWITCH_TO_THREAD_POOL);
-                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - CreateByPathAsync completed successfully");
             }
             catch (Exception e)
             {
-                WebGLDebugLog.LogError($"[SceneFactory] CreateSceneAsync - CreateByPathAsync failed: {e.GetType().Name}: {e.Message}");
                 await ReportExceptionAsync(e, deps, deps.ExceptionsHandler);
                 throw;
             }
@@ -300,7 +285,6 @@ namespace SceneRunner
 #if !NO_LIVEKIT_MODE
                   , remoteMetadata
 #endif
-
                 );
             }
             else
@@ -331,7 +315,6 @@ namespace SceneRunner
 #if !NO_LIVEKIT_MODE
                     roomHub,
 #endif
-
                     profileRepository,
                     runtimeDeps.SceneApiImplementation,
                     webRequestController,
@@ -355,33 +338,23 @@ namespace SceneRunner
                 );
             }
 
-            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Executing scene JSON");
-
             try
             {
                 sceneRuntime.ExecuteSceneJson();
-                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Scene JSON executed successfully");
             }
             catch (Exception e)
             {
-                WebGLDebugLog.LogError($"[SceneFactory] CreateSceneAsync - ExecuteSceneJson failed: {e.GetType().Name}: {e.Message}");
                 await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);
                 throw;
             }
 
-            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating SceneFacade");
-
             if (sceneData.IsPortableExperience())
             {
-                WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating PortableExperienceSceneFacade");
-
                 return new PortableExperienceSceneFacade(
                     sceneData,
                     runtimeDeps
                 );
             }
-
-            WebGLDebugLog.Log("[SceneFactory] CreateSceneAsync - Creating regular SceneFacade");
 
             return new SceneFacade(
                 sceneData,

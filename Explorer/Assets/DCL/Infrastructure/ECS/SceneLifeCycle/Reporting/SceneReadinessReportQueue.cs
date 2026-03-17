@@ -1,7 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using System.Collections.Generic;
-using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Reporting

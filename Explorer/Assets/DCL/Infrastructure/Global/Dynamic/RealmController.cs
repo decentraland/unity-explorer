@@ -8,10 +8,8 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -29,10 +27,8 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
-using Temp.Helper.WebClient;
 using Unity.Mathematics;
 using DCL.PrivateWorlds;
-using UnityEngine;
 using Utility;
 
 namespace Global.Dynamic
@@ -54,7 +50,6 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
@@ -91,7 +86,6 @@ namespace Global.Dynamic
         }
 
         public RealmController(
-            IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
@@ -109,7 +103,6 @@ namespace Global.Dynamic
             WorldManifestProvider worldManifestProvider,
             IWorldPermissionsService worldPermissionsService)
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
@@ -130,7 +123,6 @@ namespace Global.Dynamic
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
-            WebGLDebugLog.Log("RealmController.cs", "SetRealmAsync start", realm.ToString());
             World world = globalWorld!.EcsWorld;
 
             try { await UnloadCurrentRealmAsync(); }
@@ -198,7 +190,6 @@ namespace Global.Dynamic
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                WebGLDebugLog.LogError("RealmController.cs", $"SetRealmAsync failed: {e.GetType().Name}", $"{e.Message}\n{e.StackTrace}");
                 ReportHub.LogError(ReportCategory.REALM, $"Failed to connect to '{url}': {e.Message}");
                 throw new RealmChangeException($"Failed to connect to '{url}'", e);
             }

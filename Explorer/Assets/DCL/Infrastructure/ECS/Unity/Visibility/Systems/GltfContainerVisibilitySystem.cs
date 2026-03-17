@@ -5,7 +5,6 @@ using ECS.Abstract;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Components;
 using System.Collections.Generic;
-using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace ECS.Unity.Visibility.Systems
