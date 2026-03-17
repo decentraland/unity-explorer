@@ -1,5 +1,5 @@
 using DCL.Platforms;
-using DCL.Prefs;
+using DCL.Quality.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -9,9 +9,6 @@ namespace DCL.Utilities
 {
     public class UpscalingController
     {
-        // Used when system doesn't meet minimum specs
-        public const float MIN_SPECS_UPSCALER_VALUE = 0.8f;
-
         private const float STP_VALUE_FOR_UI_OPEN = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
@@ -77,12 +74,7 @@ namespace DCL.Utilities
 
         private void SetUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
         {
-            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-            {
-                var renderPipeline = ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline);
-                renderPipeline.renderScale = renderScale;
-                renderPipeline.upscalingFilter = filterSelection;
-            }
+            URPSettingsApplier.ApplyUpscaling(renderScale, filterSelection);
         }
 
         //This UIs should force an upscaling reset.

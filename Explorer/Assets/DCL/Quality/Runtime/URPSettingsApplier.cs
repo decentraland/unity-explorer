@@ -11,26 +11,16 @@ namespace DCL.Quality.Runtime
     /// </summary>
     internal static class URPSettingsApplier
     {
-        public static void ApplyMsaa(UniversalRenderPipelineAsset urpAsset, MsaaLevel level)
-        {
-            urpAsset.msaaSampleCount = level.ToSampleCount();
-        }
-
         public static void ApplyMsaa(MsaaLevel level)
         {
-            foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ApplyMsaa((UniversalRenderPipelineAsset)pipeline, level);
-        }
-
-        public static void ApplyHdr(UniversalRenderPipelineAsset urpAsset, bool enabled)
-        {
-            urpAsset.supportsHDR = enabled;
+            var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+            urpAsset.msaaSampleCount = level.ToSampleCount();
         }
 
         public static void ApplyHdr(bool enabled)
         {
-            foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ApplyHdr((UniversalRenderPipelineAsset)pipeline, enabled);
+            var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+            urpAsset.supportsHDR = enabled;
         }
 
         public static void ApplyBloom(bool enabled)
@@ -42,15 +32,11 @@ namespace DCL.Quality.Runtime
                 bloom.active = enabled;
         }
 
-        public static void ApplyResolutionScale(UniversalRenderPipelineAsset urpAsset, float scale)
+        public static void ApplyUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
         {
-            urpAsset.renderScale = scale;
-        }
-
-        public static void ApplyResolutionScale(float scale)
-        {
-            foreach (RenderPipelineAsset pipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ApplyResolutionScale((UniversalRenderPipelineAsset)pipeline, scale);
+            var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+            urpAsset.renderScale = renderScale;
+            urpAsset.upscalingFilter = filterSelection;
         }
 
         public static void ApplyVSync(bool enabled, int fpsLimit)
