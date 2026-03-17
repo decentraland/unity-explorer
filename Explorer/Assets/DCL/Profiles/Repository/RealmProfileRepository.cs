@@ -37,8 +37,11 @@ namespace DCL.Profiles
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
 
+        private static readonly TimeSpan DEPLOY_WINDOW = TimeSpan.FromSeconds(3);
+
         private UniTaskCompletionSource? currentProfileResolutionTask;
         private Profile? currentProfile;
+        private DateTime lastDeployTime = DateTime.MinValue;
 
         public RealmProfileRepository(
             IWebRequestController webRequestController,
@@ -76,6 +79,7 @@ namespace DCL.Profiles
                 throw new ArgumentException("Can't set a profile with an empty UserId");
 
             currentProfile = profile;
+            profileCache.Set(profile.UserId, profile);
 
             if (currentProfileResolutionTask != null)
             {
@@ -88,6 +92,11 @@ namespace DCL.Profiles
 
             try
             {
+                TimeSpan elapsed = DateTime.UtcNow - lastDeployTime;
+
+                if (elapsed < DEPLOY_WINDOW)
+                    await UniTask.Delay(DEPLOY_WINDOW - elapsed, cancellationToken: CancellationToken.None);
+
                 Profile localCurrent;
                 do
                 {
@@ -97,10 +106,10 @@ namespace DCL.Profiles
                     IpfsProfileEntity entity = NewPublishProfileEntity(localCurrent);
 
                     await publishIpfsEntityCommand.ExecuteAsync(entity, CancellationToken.None, SERIALIZER_SETTINGS);
+                    lastDeployTime = DateTime.UtcNow;
                 }
                 while (!currentProfile.IsSameProfile(localCurrent));
 
-                profileCache.Set(localCurrent.UserId, currentProfile);
                 currentProfileResolutionTask.TrySetResult();
             }
             catch (Exception e)
