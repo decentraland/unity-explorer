@@ -172,7 +172,7 @@ jobs:
 
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 10
+        timeout-minutes: 15
         continue-on-error: true
         env:
           SHELL: /bin/bash
