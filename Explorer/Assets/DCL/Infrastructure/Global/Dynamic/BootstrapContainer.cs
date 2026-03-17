@@ -25,7 +25,6 @@ using Global.AppArgs;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
-using DCL.Utility;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;

@@ -59,6 +59,10 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
 
+#if UNITY_WEBGL
+using ECS.SceneLifeCycle.WebGL;
+#endif
+
 namespace SceneRunner.Tests
 {
     [TestFixture]

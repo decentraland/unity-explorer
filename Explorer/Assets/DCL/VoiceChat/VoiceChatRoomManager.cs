@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks;

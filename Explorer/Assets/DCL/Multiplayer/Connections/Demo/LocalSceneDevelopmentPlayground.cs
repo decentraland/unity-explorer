@@ -13,7 +13,6 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using Global.AppArgs;
