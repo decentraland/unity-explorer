@@ -85,6 +85,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
         {
+#if UNITY_WEBGL
+            // WebGL doesn't support native Rust libraries, use debug analytics
+            ReportHub.Log(ReportCategory.ANALYTICS, $"WebGL platform detected. Using {nameof(DebugAnalyticsService)} instead of RustSegment.");
+            return new DebugAnalyticsService();
+#else
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
                 return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
                    .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
@@ -92,6 +97,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             // Fall back to debug if segment is not configured
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
             return new DebugAnalyticsService();
+#endif
         }
 
         [Serializable]
