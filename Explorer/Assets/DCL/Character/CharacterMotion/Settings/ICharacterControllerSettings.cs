@@ -102,6 +102,7 @@ namespace DCL.CharacterMotion.Settings
         float PointAtRotationVerticalUpThreshold { get; set; }
         float PointAtRotationVerticalDownThreshold { get; set; }
         float PointAtRotationSpeed { get; set; }
+        float PointAtRotationSpeedAnimMultiplier { get; set; }
 
         // Impulse / External Velocity settings
         float CharacterMass { get; set; }

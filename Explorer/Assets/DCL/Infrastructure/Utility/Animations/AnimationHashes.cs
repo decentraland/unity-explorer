@@ -27,5 +27,6 @@ namespace Utility.Animations
         public static readonly int JUMP_VARIATION = Animator.StringToHash("JumpVariation");
         public static readonly int ROTATING_LEFT = Animator.StringToHash("RotatingLeft");
         public static readonly int ROTATING_RIGHT = Animator.StringToHash("RotatingRight");
+        public static readonly int ROTATION_SPEED = Animator.StringToHash("RotationSpeed");
     }
 }

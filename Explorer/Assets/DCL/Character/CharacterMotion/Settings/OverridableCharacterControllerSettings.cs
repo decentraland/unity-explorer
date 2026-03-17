@@ -414,6 +414,12 @@ namespace DCL.CharacterMotion.Settings
             set => impl.PointAtRotationSpeed = value;
         }
 
+        public float PointAtRotationSpeedAnimMultiplier
+        {
+            get => impl.PointAtRotationSpeedAnimMultiplier;
+            set => impl.PointAtRotationSpeedAnimMultiplier = value;
+        }
+
         public float CharacterMass
         {
             get => impl.CharacterMass;

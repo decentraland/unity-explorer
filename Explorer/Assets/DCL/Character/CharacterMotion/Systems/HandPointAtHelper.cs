@@ -43,15 +43,17 @@ namespace DCL.Character.CharacterMotion.Systems
             pointAt.RotationAnimationWeight = Mathf.MoveTowards(
                 pointAt.RotationAnimationWeight, needToRotate ? 1f : 0f, settings.HandsIKWeightSpeed * dt);
 
-            SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && crossY <= 0, needToRotate && crossY > 0);
+            float angularSpeed = needToRotate ? Mathf.Abs(crossY) * settings.PointAtRotationSpeedAnimMultiplier : 0f;
+            SetPlayerRotationAnimation(ref avatarBase, pointAt.RotationAnimationWeight, needToRotate && crossY <= 0, needToRotate && crossY > 0, angularSpeed);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetPlayerRotationAnimation(ref AvatarBase avatarBase, float weight, bool left, bool right)
+        public static void SetPlayerRotationAnimation(ref AvatarBase avatarBase, float weight, bool left, bool right, float angularSpeed = 0f)
         {
             avatarBase.SetRotationLayerWeight(weight);
             avatarBase.SetAnimatorBool(AnimationHashes.ROTATING_LEFT, left);
             avatarBase.SetAnimatorBool(AnimationHashes.ROTATING_RIGHT, right);
+            avatarBase.SetAnimatorFloat(AnimationHashes.ROTATION_SPEED, angularSpeed);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
