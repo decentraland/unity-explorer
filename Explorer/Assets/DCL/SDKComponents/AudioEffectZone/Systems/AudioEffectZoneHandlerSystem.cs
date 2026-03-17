@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AudioEffectZone.Components;
@@ -10,9 +9,8 @@ using DCL.VoiceChat;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
+using LiveKit.Rooms.Streaming.Audio;
 
 namespace DCL.SDKComponents.AudioEffectZone.Systems
 {
@@ -20,6 +18,9 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
     [LogCategory(ReportCategory.VOICE_CHAT)]
     public partial class AudioEffectZoneHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private static readonly QueryDescription PROXIMITY_AUDIO_QUERY = new QueryDescription()
+            .WithAll<ProximityAudioSourceComponent>();
+
         private readonly World globalWorld;
 
         internal AudioEffectZoneHandlerSystem(World world, World globalWorld) : base(world)
@@ -31,113 +32,51 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         {
             UpdateAudioEffectZoneQuery(World!);
             SetupAudioEffectZoneQuery(World!);
-
-            HandleEntityDestructionQuery(World!);
-            HandleComponentRemovalQuery(World!);
         }
 
-        public void FinalizeComponents(in Query query)
-        {
-            ResetAffectedEntitiesQuery(World!);
-        }
+        public void FinalizeComponents(in Query query) { }
 
         [Query]
-        [All(typeof(AudioEffectZoneComponent))]
-        private void ResetAffectedEntities(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
-        {
-            UnmuteAll(ref triggerAreaComponent);
-            World!.Remove<AudioEffectZoneComponent>(entity);
-        }
-
-        [Query]
-        [None(typeof(SDKEntityTriggerAreaComponent), typeof(AudioEffectZoneComponent))]
+        [None(typeof(SDKEntityTriggerAreaComponent))]
         [All(typeof(TransformComponent))]
         private void SetupAudioEffectZone(in Entity entity, ref PBAudioEffectZone pbAudioEffectZone)
         {
-            Debug.Log("VVV Adding AudioEffectZone component +");
-
-            World!.Add(entity,
-                new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
-                new AudioEffectZoneComponent()
-            );
+            if (pbAudioEffectZone.EffectCase == PBAudioEffectZone.EffectOneofCase.Silence)
+                World!.Add(entity,
+                    new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: true),
+                    new SilenceZoneComponent()
+                );
         }
 
         [Query]
-        [All(typeof(TransformComponent))]
+        [All(typeof(TransformComponent), typeof(SilenceZoneComponent))]
         private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
-            Debug.Log("VVV Processing AudioEffectZone component ...");
-
             if (pbAudioEffectZone.IsDirty)
-            {
-                pbAudioEffectZone.IsDirty = false;
                 triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
-            }
 
-            foreach (Collider avatarCollider in triggerAreaComponent.ExitedEntitiesToBeProcessed)
+            if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
             {
-                if (!TryGetProximityAudioSource(avatarCollider.transform, out ProximityAudioSourceComponent proximityAudio))
-                    continue;
-
-                if (proximityAudio.AudioSource != null)
-                    proximityAudio.AudioSource.mute = false;
+                SetAllProximityAudioMutedQuery(globalWorld, true);
+                triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
             }
-
-            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
-
-            if (pbAudioEffectZone.EffectCase == PBAudioEffectZone.EffectOneofCase.Silence)
+            else if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
             {
-                foreach (Collider avatarCollider in triggerAreaComponent.EnteredEntitiesToBeProcessed)
-                {
-                    if (!TryGetProximityAudioSource(avatarCollider.transform, out ProximityAudioSourceComponent proximityAudio))
-                        continue;
-
-                    if (proximityAudio.AudioSource != null)
-                    {
-                        Debug.Log("VVV Muting");
-                        proximityAudio.AudioSource.mute = true;
-                        proximityAudio.AudioSource.volume = 0f;
-                    }
-                }
+                SetAllProximityAudioMutedQuery(globalWorld, false);
+                triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
             }
-
-            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(PBAudioEffectZone))]
-        private void HandleEntityDestruction(ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        private void SetAllProximityAudioMuted([Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
         {
-            UnmuteAll(ref triggerAreaComponent);
+            if (proximityAudio.AudioSource == null) return;
+            proximityAudio.AudioSource.enabled = !muted;
+            proximityAudio.AudioSource.mute = muted;
+
+            if(proximityAudio.AudioSourceTransform.TryGetComponent(out LivekitAudioSource lkAudioSource))
+                lkAudioSource.enabled = !muted;
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBAudioEffectZone))]
-        private void HandleComponentRemoval(in Entity entity, ref SDKEntityTriggerAreaComponent triggerAreaComponent,
-            ref AudioEffectZoneComponent _)
-        {
-            UnmuteAll(ref triggerAreaComponent);
-            World!.Remove<AudioEffectZoneComponent>(entity);
-        }
-
-        private void UnmuteAll(ref SDKEntityTriggerAreaComponent triggerAreaComponent)
-        {
-            foreach (Collider avatarCollider in triggerAreaComponent.CurrentEntitiesInside)
-            {
-                if (!TryGetProximityAudioSource(avatarCollider.transform, out ProximityAudioSourceComponent proximityAudio))
-                    continue;
-
-                if (proximityAudio.AudioSource != null)
-                    proximityAudio.AudioSource.mute = false;
-            }
-        }
-
-        private bool TryGetProximityAudioSource(Transform transform, out ProximityAudioSourceComponent proximityAudio)
-        {
-            proximityAudio = default;
-            var result = FindAvatarUtils.AvatarWithTransform(globalWorld, transform);
-            if (!result.Success) return false;
-            return globalWorld.TryGet(result.Result, out proximityAudio);
-        }
     }
 }
