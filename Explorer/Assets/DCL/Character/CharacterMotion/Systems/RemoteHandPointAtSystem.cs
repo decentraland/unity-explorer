@@ -20,8 +20,8 @@ namespace DCL.Character.CharacterMotion.Systems
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     public partial class RemoteHandPointAtSystem : BaseUnityLoopSystem
     {
-        private const float MAC_ROTATION_FACTOR_MULTIPLIER = 500f;
-        private const float WIN_ROTATION_FACTOR_MULTIPLIER = 10f;
+        private const float MAC_ROTATION_FACTOR_MULTIPLIER = 200f;
+        private const float WIN_ROTATION_FACTOR_MULTIPLIER = 50f;
 
         private readonly float rotationFactorMultiplier;
 
