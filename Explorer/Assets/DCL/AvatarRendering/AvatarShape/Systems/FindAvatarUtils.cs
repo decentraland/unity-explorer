@@ -46,6 +46,20 @@ namespace DCL.AvatarRendering.AvatarShape
                 : new LightResult<AvatarBase>(foundEntity!);
         }
 
+        public static bool TryGetAvatarEntity(World globalWorld, Transform transform, out Entity entity)
+        {
+            var result = AvatarWithTransform(globalWorld, transform);
+
+            if (result.Success)
+            {
+                entity = result.Result;
+                return true;
+            }
+
+            entity = Entity.Null;
+            return false;
+        }
+
         public static LightResult<Entity> AvatarWithTransform(World globalWorld, Transform avatarTransform)
         {
             AssertMainThread();

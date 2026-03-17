@@ -5,6 +5,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Components
     /// Tracks that the zone has been initialized and its trigger area created.
     /// </summary>
     public struct AudioEffectZoneComponent { }
+    public struct MicrophoneAudioZoneComponent { }
 
     public struct SilenceZoneComponent { }
 }

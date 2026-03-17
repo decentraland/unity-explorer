@@ -122,7 +122,7 @@ namespace DCL.VoiceChat
                 localHeadPos = playerComp.CameraFocus.position;
 
             SyncPositionsQuery(World, cameraPos, localHeadPos);
-            ApplySettingsQuery(World);
+            // ApplySettingsQuery(World);
 
             SetupPendingLipSync();
 
