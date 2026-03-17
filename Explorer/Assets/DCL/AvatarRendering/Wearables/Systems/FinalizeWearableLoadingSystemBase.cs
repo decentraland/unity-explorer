@@ -19,7 +19,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -31,7 +30,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
         private SingleInstanceEntity defaultWearablesState;
-        private bool hasLoggedRealmConfiguredAndFinalizing;
 
         public FinalizeWearableLoadingSystemBase(
             World world,
@@ -49,13 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             // Only DTO loading requires realmData
             if (realmData.Configured)
-            {
-                if (!hasLoggedRealmConfiguredAndFinalizing)
-                {
-                    hasLoggedRealmConfiguredAndFinalizing = true;
-                }
                 FinalizeWearableDTOQuery(World);
-            }
         }
 
         [Query]
@@ -122,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // the destination array might be not created if DTO itself has failed to load
                 ref var result = ref wearable.WearableAssetResults[bs];
                 result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[2]; // We need to set failed result for both slots, to handle facial features failure
-                for (int i = 0; i < result.Results.Length; i++)
+                for (var i = 0; i < result.Results.Length; i++)
                     result.Results[i] = failedResult;
             }
         }
