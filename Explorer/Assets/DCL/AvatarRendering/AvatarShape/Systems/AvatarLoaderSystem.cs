@@ -14,7 +14,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
-using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -125,7 +124,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateMainPlayerAvatarFromProfile(in Entity _, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             UpdateAvatarFromProfile(ref profile, ref avatarShapeComponent, ref partition);
 
@@ -140,14 +139,13 @@ namespace DCL.AvatarRendering.AvatarShape
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
-        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition)
-        {
+        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
+
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
-            // there is not need to convert
-            return WearablePromise.Create(World,
+            // there is no need to convert
+            WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
-        }
 
         private void LoadAllEmotes(Profile profile, PartitionComponent partition)
         {
