@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            system = new AudioEffectZoneHandlerSystem(world, globalWorld);
+            system = new AudioEffectZoneHandlerSystem(world, globalWorld, null);
 
             fakeTriggerAreaGO = new GameObject("fake trigger area");
             sdkEntityTriggerArea = fakeTriggerAreaGO.AddComponent<SDKEntityTriggerArea.SDKEntityTriggerArea>();

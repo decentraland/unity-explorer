@@ -14,6 +14,7 @@ using ECS.Unity.Transforms.Components;
 using LiveKit.Rooms.Streaming.Audio;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.SDKComponents.AudioEffectZone.Systems
 {
@@ -21,11 +22,18 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
     [LogCategory(ReportCategory.VOICE_CHAT)]
     public partial class AudioEffectZoneHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly World globalWorld;
+        private const string REVERB_ROOM_PARAM = "Reverb_Room";
+        private const string REVERB_DECAY_TIME_PARAM = "Reverb_DecayTime";
+        private const string REVERB_HF_RATIO_PARAM = "Reverb_HFRatio";
+        private const float REVERB_OFF_ROOM = -10000f;
 
-        internal AudioEffectZoneHandlerSystem(World world, World globalWorld) : base(world)
+        private readonly World globalWorld;
+        private readonly AudioMixerGroup proximityMixerGroup;
+
+        internal AudioEffectZoneHandlerSystem(World world, World globalWorld, AudioMixerGroup proximityMixerGroup) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.proximityMixerGroup = proximityMixerGroup;
         }
 
         protected override void Update(float t)
@@ -33,6 +41,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
             UpdateDespatializeZoneQuery(World!);
             UpdateSilenceZoneQuery(World!);
             UpdateAmplifyZoneQuery(World!);
+            UpdateReverbZoneQuery(World!);
 
             SetupAudioEffectZoneQuery(World!);
         }
@@ -143,6 +152,55 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
                     proximityComponent.AudioSource.spatialize = isSpatial;
                 }
             }
+        }
+
+        [Query]
+        [All(typeof(TransformComponent), typeof(ReverbAudioZoneComponent))]
+        private void UpdateReverbZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent, ref ReverbAudioZoneComponent reverbZone)
+        {
+            if (pbAudioEffectZone.IsDirty)
+            {
+                pbAudioEffectZone.IsDirty = false;
+                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
+            }
+
+            if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
+            {
+                DisableReverbOnMixer();
+                triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            }
+            else if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
+            {
+                ApplyReverbPresetToMixer(reverbZone.Preset);
+                triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            }
+        }
+
+        private void ApplyReverbPresetToMixer(PBAudioEffectZone.Types.ReverbPreset preset)
+        {
+            if (proximityMixerGroup == null) return;
+
+            AudioMixer mixer = proximityMixerGroup.audioMixer;
+
+            (float room, float decayTime, float hfRatio) = preset switch
+            {
+                PBAudioEffectZone.Types.ReverbPreset.RpRoom => (-1000f, 0.4f, 0.83f),
+                PBAudioEffectZone.Types.ReverbPreset.RpArena => (-698f, 7.24f, 0.33f),
+                PBAudioEffectZone.Types.ReverbPreset.RpCave => (-602f, 2.91f, 1.3f),
+                PBAudioEffectZone.Types.ReverbPreset.RpAuditotrium => (-1100f, 4.32f, 0.59f),
+                _ => (-1000f, 0.4f, 0.83f),
+            };
+
+            mixer.SetFloat(REVERB_ROOM_PARAM, room);
+            mixer.SetFloat(REVERB_DECAY_TIME_PARAM, decayTime);
+            mixer.SetFloat(REVERB_HF_RATIO_PARAM, hfRatio);
+        }
+
+        private void DisableReverbOnMixer()
+        {
+            if (proximityMixerGroup == null) return;
+
+            proximityMixerGroup.audioMixer.SetFloat(REVERB_ROOM_PARAM, REVERB_OFF_ROOM);
         }
 
         [Query]

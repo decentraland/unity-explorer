@@ -13,6 +13,7 @@ using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AudioEffectZone.Systems;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
+using DCL.VoiceChat;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.SDKComponents.TriggerArea.Systems;
 using DCL.Utilities;
@@ -43,6 +44,7 @@ namespace DCL.PluginSystem.World
 
         private IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>? sdkEntityTriggerAreaPoolRegistry;
         private IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
+        private VoiceChatConfiguration voiceChatConfiguration;
 
         public SDKEntityTriggerAreaPlugin(
             Arch.Core.World globalWorld,
@@ -78,6 +80,7 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(SDKEntityTriggerAreaSettings settings, CancellationToken ct)
         {
             await CreateSDKEntityTriggerAreaPoolAsync(settings, ct);
+            voiceChatConfiguration = settings.VoiceChatConfiguration;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -87,7 +90,7 @@ namespace DCL.PluginSystem.World
 
             sceneIsCurrentListeners.Add(SDKEntityTriggerAreaHandlerSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject));
 
-            finalizeWorldSystems.Add(AudioEffectZoneHandlerSystem.InjectToWorld(ref builder, globalWorld));
+            finalizeWorldSystems.Add(AudioEffectZoneHandlerSystem.InjectToWorld(ref builder, globalWorld, voiceChatConfiguration != null ? voiceChatConfiguration.ProximityChatAudioMixerGroup : null));
             finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, sceneRestrictionBusController, web3IdentityCache));
             finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorld, cameraEntityProxy, cameraData, sceneRestrictionBusController));
             finalizeWorldSystems.Add(TriggerAreaHandlerSystem.InjectToWorld(
@@ -123,5 +126,8 @@ namespace DCL.PluginSystem.World
         [field: Space]
         [field: SerializeField]
         public AssetReferenceGameObject TriggerAreaPrefab;
+
+        [field: SerializeField]
+        public VoiceChatConfiguration VoiceChatConfiguration;
     }
 }

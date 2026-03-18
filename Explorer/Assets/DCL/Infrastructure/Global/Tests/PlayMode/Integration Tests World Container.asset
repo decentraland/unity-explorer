@@ -81,6 +81,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        VoiceChatConfiguration: {fileID: 11400000, guid: 96f7b8dc6c27e3047a1b56bcf3779c47, type: 2}
     - rid: 4753057106328551425
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
