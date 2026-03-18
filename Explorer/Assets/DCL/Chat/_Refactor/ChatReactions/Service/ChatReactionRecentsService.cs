@@ -102,20 +102,12 @@ namespace DCL.Chat.ChatReactions
         private void Load()
         {
             usageEntries.Clear();
-            CleanupLegacyPrefKey();
 
             string saved = ReadSavedFavorites();
 
             if (saved != null)
                 ParseSavedEntries(saved);
         }
-
-        private static void CleanupLegacyPrefKey()
-        {
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_SELECTED))
-                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_SELECTED);
-        }
-
         private static string ReadSavedFavorites()
         {
             if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_FAVORITES))

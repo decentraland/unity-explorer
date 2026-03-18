@@ -60,7 +60,6 @@ namespace DCL.Chat.ChatReactions.Configs
         [ShowOnly] [SerializeField] private bool isUIStreaming;
         [ShowOnly] [SerializeField] private bool isWorldStreaming;
         [ShowOnly] [SerializeField] private bool isDebugNearbyActive;
-
         /// <summary>Called by the presenter each frame to push live data into the config for Inspector display.</summary>
         public void UpdateStats(int uiAlive, int uiCapacity,
             int worldAlive, int worldCapacity,

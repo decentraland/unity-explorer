@@ -82,6 +82,5 @@ namespace DCL.Prefs
 
         public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
         public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
-        public const string CHAT_REACTION_SELECTED = "ChatReaction_Selected";
     }
 }
