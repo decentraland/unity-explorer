@@ -57,13 +57,13 @@ namespace DCL.LOD.Components
             }
 
             Assets.Clear();
-            UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
         public void Dispose(World world)
         {
             AssetBundlePromise.ForgetLoading(world);
             Clear();
+            UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
         public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>
@@ -83,6 +83,7 @@ namespace DCL.LOD.Components
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
+            UnityObjectUtils.SafeDestroy(ParentContainer);
             ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
             AssetBundleData = resultAsset;
