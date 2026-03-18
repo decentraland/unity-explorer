@@ -4,6 +4,8 @@ namespace DCL.Chat.ChatReactions
 {
     public struct ChatReactionsParticle
     {
+        public const byte ANCHOR_NONE = 255;
+
         public Vector3 pos;
         public Vector3 vel;
         public float age;
@@ -13,6 +15,7 @@ namespace DCL.Chat.ChatReactions
         public int emojiIndex;
         public float zigZagPhase;
         public byte alive;
+        public byte anchorIndex;
     }
 
     /// <summary>
@@ -34,7 +37,14 @@ namespace DCL.Chat.ChatReactions
             particles = new ChatReactionsParticle[Mathf.Max(64, capacity)];
         }
 
-        public void Spawn(Vector3 pos, Vector3 vel, float lifetime, float startSize, float endSize, int emojiIndex, float zigZagPhase = 0f)
+        public void Spawn(Vector3 pos, Vector3 vel, float lifetime, float startSize, float endSize,
+            int emojiIndex, float zigZagPhase = 0f)
+        {
+            Spawn(pos, vel, lifetime, startSize, endSize, emojiIndex, zigZagPhase, ChatReactionsParticle.ANCHOR_NONE);
+        }
+
+        public void Spawn(Vector3 pos, Vector3 vel, float lifetime, float startSize, float endSize,
+            int emojiIndex, float zigZagPhase, byte anchorIndex)
         {
             int i = cursor;
             cursor = (cursor + 1) % particles.Length;
@@ -50,6 +60,7 @@ namespace DCL.Chat.ChatReactions
                 emojiIndex = emojiIndex,
                 zigZagPhase = zigZagPhase,
                 alive = 1,
+                anchorIndex = anchorIndex,
             };
         }
 

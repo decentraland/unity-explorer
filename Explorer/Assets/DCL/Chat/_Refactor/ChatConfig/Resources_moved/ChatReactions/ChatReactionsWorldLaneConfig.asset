@@ -18,6 +18,32 @@ MonoBehaviour:
   <SizeRange>k__BackingField: {x: 0.16, y: 0.25}
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
+  <TetherStrength>k__BackingField: 30
+  <TetherDamping>k__BackingField: 20
+  <TetherOverLifetime>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.0041656494
+      value: 1.0047607
+      inSlope: -3.570354
+      outSlope: -3.570354
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.10655229
+    - serializedVersion: 3
+      time: 1.003461
+      value: 0.0017640591
+      inSlope: -0.1587716
+      outSlope: -0.1587716
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   <BurstCount>k__BackingField: 1
   <StreamRatePerSecond>k__BackingField: 10
   <DebugRatePerSecond>k__BackingField: 3

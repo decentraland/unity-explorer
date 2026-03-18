@@ -25,6 +25,8 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly System.Random rng;
         private readonly int atlasTotalTiles;
+        private readonly AvatarAnchorTable anchorTable = new ();
+        private readonly IAvatarReactionPosition? avatarPosition;
 
         private int aliveCount;
 
@@ -32,6 +34,7 @@ namespace DCL.Chat.ChatReactions
         private bool isStreaming;
         private Func<Vector3?>? streamPositionGetter;
         private int streamEmojiIndex;
+        private string? streamWalletId;
 
         private float debugAccumulator;
         private bool debugActive;
@@ -42,9 +45,12 @@ namespace DCL.Chat.ChatReactions
         public bool IsStreaming => isStreaming;
         public bool IsDebugNearbyActive => debugActive;
 
-        public ChatReactionWorldSimulation(ChatReactionsConfig config)
+        public bool HasAliveParticles() => aliveCount > 0;
+
+        public ChatReactionWorldSimulation(ChatReactionsConfig config, IAvatarReactionPosition? avatarPosition = null)
         {
             this.config = config;
+            this.avatarPosition = avatarPosition;
             rng = new System.Random();
             atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
 
@@ -63,8 +69,14 @@ namespace DCL.Chat.ChatReactions
 
         public void Tick(float dt)
         {
+            if (HasAliveParticles())
+            {
+                RefreshAnchorPositions();
+                ApplyAvatarTether(dt);
+                ApplyLateralOscillation(dt);
+            }
+
             SimulateParticlePhysics(dt);
-            ApplyLateralOscillation(dt);
             EmitStreamParticles(dt);
             EmitDebugNearbyParticles(dt);
         }
@@ -81,6 +93,7 @@ namespace DCL.Chat.ChatReactions
         /// <summary>
         /// Spawns a burst of emoji particles rising upward from <paramref name="headPos"/>
         /// (typically <c>AvatarBase.GetAdaptiveNametagPosition()</c>).
+        /// Particles are unanchored and will not follow any avatar.
         /// </summary>
         public void TriggerWorldReaction(Vector3 headPos, int emojiIndex, int count)
         {
@@ -90,12 +103,38 @@ namespace DCL.Chat.ChatReactions
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane);
         }
 
-        public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex)
+        /// <summary>
+        /// Spawns a burst anchored to the avatar identified by <paramref name="walletId"/>.
+        /// Particles will follow the avatar's position via the tether system.
+        /// </summary>
+        public void TriggerAnchoredReaction(Vector3 headPos, string walletId, int emojiIndex, int count)
+        {
+            byte anchor = anchorTable.Allocate(walletId, headPos);
+            var lane = config.WorldLane;
+
+            for (int i = 0; i < Mathf.Max(1, count); i++)
+                SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
+        }
+
+        /// <summary>
+        /// Spawns a burst anchored to the local player's avatar.
+        /// </summary>
+        public void TriggerAnchoredReactionLocalPlayer(Vector3 headPos, int emojiIndex, int count)
+        {
+            byte anchor = anchorTable.Allocate(AvatarAnchorTable.LOCAL_PLAYER_ID, headPos);
+            var lane = config.WorldLane;
+
+            for (int i = 0; i < Mathf.Max(1, count); i++)
+                SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
+        }
+
+        public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex, string? walletId = null)
         {
             isStreaming = true;
             streamPositionGetter = positionGetter;
             streamEmojiIndex = emojiIndex;
             streamAccumulator = 1f;
+            streamWalletId = walletId;
         }
 
         public void EndStream()
@@ -103,6 +142,7 @@ namespace DCL.Chat.ChatReactions
             isStreaming = false;
             streamPositionGetter = null;
             streamAccumulator = 0f;
+            streamWalletId = null;
         }
 
         public void BeginDebugNearby(Func<List<Vector3>> positionsGetter)
@@ -117,6 +157,18 @@ namespace DCL.Chat.ChatReactions
             debugActive = false;
             debugPositionsGetter = null;
             debugAccumulator = 0f;
+        }
+
+        private void RefreshAnchorPositions()
+        {
+            anchorTable.Refresh(avatarPosition);
+        }
+
+        private void ApplyAvatarTether(float dt)
+        {
+            AvatarTetherHelper.ApplyTetherForces(worldPool.Raw, anchorTable,
+                config.WorldLane.TetherStrength, config.WorldLane.TetherDamping,
+                config.WorldLane.TetherOverLifetime, dt);
         }
 
         private void SimulateParticlePhysics(float dt)
@@ -181,9 +233,8 @@ namespace DCL.Chat.ChatReactions
             Profiler.EndSample();
         }
 
-        // ── Spawn Helpers ─────────────────────────────────────────
-
-        private void SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex, ChatReactionsWorldLaneConfig lane)
+        private void SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,
+            ChatReactionsWorldLaneConfig lane, byte anchorIndex = ChatReactionsParticle.ANCHOR_NONE)
         {
             float endSize = Rand(lane.SizeRange.x, lane.SizeRange.y);
             float startSize = endSize * Rand(SPAWN_SIZE_MIN_RATIO, SPAWN_SIZE_MAX_RATIO);
@@ -194,7 +245,7 @@ namespace DCL.Chat.ChatReactions
             Vector3 velocity = RandomUpwardVelocity(speed);
             float phase = Rand(0f, TWO_PI);
 
-            worldPool.Spawn(spawnPos, velocity, lifetime, startSize, endSize, emojiIndex, phase);
+            worldPool.Spawn(spawnPos, velocity, lifetime, startSize, endSize, emojiIndex, phase, anchorIndex);
         }
 
         private void EmitSingleStreamBurst()
@@ -203,7 +254,11 @@ namespace DCL.Chat.ChatReactions
             if (!pos.HasValue) return;
 
             int emoji = ResolveStreamEmojiIndex();
-            TriggerWorldReaction(pos.Value, emoji, config.WorldLane.BurstCount);
+
+            if (streamWalletId != null)
+                TriggerAnchoredReaction(pos.Value, streamWalletId, emoji, config.WorldLane.BurstCount);
+            else
+                TriggerWorldReaction(pos.Value, emoji, config.WorldLane.BurstCount);
         }
 
         private void EmitDebugBurstAtAllPositions()

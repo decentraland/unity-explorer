@@ -37,7 +37,7 @@ namespace DCL.Chat.ChatReactions
             this.reactionBus = reactionBus;
 
             chatReactionSimulation = new ChatReactionSimulation(config, laneRect);
-            worldReactionSimulation = new ChatReactionWorldSimulation(config);
+            worldReactionSimulation = new ChatReactionWorldSimulation(config, avatarPosition);
 
             if (avatarPosition != null)
             {
@@ -93,7 +93,7 @@ namespace DCL.Chat.ChatReactions
 
             Vector3? headPos = avatarPosition.GetHeadPosition(walletId);
             if (headPos.HasValue)
-                worldReactionSimulation.TriggerWorldReaction(headPos.Value, emojiIndex, count);
+                worldReactionSimulation.TriggerAnchoredReaction(headPos.Value, walletId, emojiIndex, count);
         }
 
         public void TriggerUIReaction(int emojiIndex, int count)
@@ -127,7 +127,7 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.BeginUIStream(sourceRect);
 
             if (cachedLocalHeadGetter != null && WorldReactionsEnabled)
-                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex);
+                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
         }
 
         public void EndUIStream()
@@ -143,7 +143,7 @@ namespace DCL.Chat.ChatReactions
             if (cachedLocalHeadGetter != null)
             {
                 if (chatReactionSimulation.IsStreaming && WorldReactionsEnabled)
-                    worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex);
+                    worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
                 else
                     worldReactionSimulation.EndStream();
             }
@@ -162,7 +162,7 @@ namespace DCL.Chat.ChatReactions
         public void BeginDebugLocalStream()
         {
             if (cachedLocalHeadGetter != null)
-                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex);
+                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
         }
 
         public void EndDebugLocalStream()
@@ -219,7 +219,7 @@ namespace DCL.Chat.ChatReactions
             if (!headPos.HasValue) return;
 
             if (WorldReactionsEnabled)
-                worldReactionSimulation.TriggerWorldReaction(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
+                worldReactionSimulation.TriggerAnchoredReactionLocalPlayer(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
 
             reactionBus?.SendSituationalReaction(emojiIndex);
         }
