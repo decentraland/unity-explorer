@@ -89,7 +89,6 @@ namespace SceneRuntime.V8
         void IDCLScriptObject.SetProperty(int index, object value) =>
             ScriptObject.SetProperty(index, value);
 
-        //TODO FRAN: Check this logic
         object IDCLScriptObject.Invoke(bool asConstructor, params object[] args)
         {
             object result = ScriptObject.Invoke(asConstructor, args);
@@ -103,21 +102,22 @@ namespace SceneRuntime.V8
             return result;
         }
 
-        //TODO FRAN: Check this logic
         object IDCLScriptObject.InvokeMethod(string name, params object[] args)
         {
             object result = ScriptObject.InvokeMethod(name, args);
 
-            if (result is ITypedArray<byte> ta) { return new V8TypedArrayAdapter(ta); }
+            if (result is ITypedArray<byte> ta)
+                return new V8TypedArrayAdapter(ta);
 
-            if (result is not ScriptObject so) return result;
-
-            try
+            if (result is ScriptObject so)
             {
-                var typedArray = (ITypedArray<byte>)so;
-                return new V8TypedArrayAdapter(typedArray);
+                if (so is ITypedArray<byte> soAsTypedArray)
+                    return new V8TypedArrayAdapter(soAsTypedArray);
+
+                return new V8ScriptObjectAdapter(so);
             }
-            catch { return new V8ScriptObjectAdapter(so); }
+
+            return result;
         }
 
         object IDCLScriptObject.InvokeAsFunction(params object[] args) =>

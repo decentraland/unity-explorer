@@ -25,6 +25,9 @@ namespace SceneRuntime.WebClient
 
         // Static flag to track if callback is registered
         private static bool s_callbackRegistered;
+
+        // Cache of (type, methodName, argCount) → MethodInfo to avoid repeated GetMethods() allocations
+        private static readonly Dictionary<(Type, string, int), MethodInfo?> s_methodCache = new ();
         internal readonly string contextId;
         private bool disposed;
         internal bool IsDisposed => disposed;
@@ -79,9 +82,15 @@ namespace SceneRuntime.WebClient
         /// <summary>
         ///     Finds a method by name, handling overloads by matching argument count.
         ///     Uses GetMethods() to avoid AmbiguousMatchException from GetMethod().
+        ///     Results are cached by (type, methodName, argCount) to avoid repeated allocations.
         /// </summary>
         private static MethodInfo? FindMethod(Type type, string methodName, int argCount)
         {
+            var cacheKey = (type, methodName, argCount);
+
+            if (s_methodCache.TryGetValue(cacheKey, out MethodInfo? cached))
+                return cached;
+
             MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
             MethodInfo? exactMatch = null;
             MethodInfo? zeroParamFallback = null;
@@ -93,30 +102,36 @@ namespace SceneRuntime.WebClient
 
                 ParameterInfo[] parameters = method.GetParameters();
 
-                // Exact match on parameter count - return immediately
+                // Exact match on parameter count
                 if (parameters.Length == argCount)
+                {
+                    s_methodCache[cacheKey] = method;
                     return method;
+                }
 
                 // Keep zero-param method as fallback only if we're looking for zero args
-                // This handles cases where JS passes empty array but method has no params
                 if (parameters.Length == 0 && zeroParamFallback == null)
                     zeroParamFallback = method;
 
-                // Keep first exact match by name
+                // Keep first method found by name as last resort
                 if (exactMatch == null)
                     exactMatch = method;
             }
 
-            // Only return fallback if arg count is 0 and we have a zero-param method
+            MethodInfo? result;
+
             if (argCount == 0 && zeroParamFallback != null)
-                return zeroParamFallback;
+                result = zeroParamFallback;
+            else
+            {
+                if (exactMatch != null)
+                    ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Method {methodName} found but param count mismatch. Expected: {exactMatch.GetParameters().Length}, Got: {argCount}");
 
-            // If we have a method by name but wrong param count, log and return it
-            // The caller will get a more helpful error
-            if (exactMatch != null)
-                ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientJavaScriptEngine] Method {methodName} found but param count mismatch. Expected: {exactMatch.GetParameters().Length}, Got: {argCount}");
+                result = exactMatch;
+            }
 
-            return exactMatch;
+            s_methodCache[cacheKey] = result;
+            return result;
         }
 
         /// <summary>
@@ -314,7 +329,6 @@ namespace SceneRuntime.WebClient
                     sb.Append(parameters[i].ParameterType.Name);
                 }
 
-                ReportHub.LogException(new InvalidOperationException(sb.ToString(), ex), ReportCategory.WEB_CLIENT);
                 throw new InvalidOperationException(sb.ToString(), ex);
             }
         }
@@ -520,7 +534,11 @@ namespace SceneRuntime.WebClient
         public void AddHostObject(string itemName, object target)
         {
             if (disposed) throw new ObjectDisposedException(nameof(WebClientJavaScriptEngine));
-            var objectId = Guid.NewGuid().ToString();
+            AddHostObjectWithId(itemName, Guid.NewGuid().ToString(), target);
+        }
+
+        private void AddHostObjectWithId(string itemName, string objectId, object target)
+        {
             WebClientHostObjectRegistry.Register(contextId, objectId, target);
 
             IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(contextId);
@@ -581,8 +599,18 @@ namespace SceneRuntime.WebClient
             var resolver = new JSUniTaskPromiseResolver<T>(uniTask);
             var resolverId = Guid.NewGuid().ToString("N"); // "N" format = no dashes, valid JS identifier
             var resolverName = $"__promiseResolver_{resolverId}";
+            var resolverObjectId = Guid.NewGuid().ToString();
 
-            AddHostObject(resolverName, resolver);
+            AddHostObjectWithId(resolverName, resolverObjectId, resolver);
+
+            // Clean up the host object and globalThis entry once the promise settles
+            resolver.SetCleanupAction(() =>
+            {
+                WebClientHostObjectRegistry.Unregister(contextId, resolverObjectId);
+
+                if (!disposed)
+                    Execute($"try{{delete globalThis['{resolverName}']}}catch(_){{}}");
+            });
 
             // IMPORTANT: Expression must start with '(' immediately (no leading whitespace/newline)
             // to avoid JavaScript ASI treating 'return\n(...)' as 'return; (...)'
@@ -620,8 +648,18 @@ namespace SceneRuntime.WebClient
             var resolver = new JSUniTaskPromiseResolver(uniTask);
             var resolverId = Guid.NewGuid().ToString("N"); // "N" format = no dashes, valid JS identifier
             var resolverName = $"__promiseResolver_{resolverId}";
+            var resolverObjectId = Guid.NewGuid().ToString();
 
-            AddHostObject(resolverName, resolver);
+            AddHostObjectWithId(resolverName, resolverObjectId, resolver);
+
+            // Clean up the host object and globalThis entry once the promise settles
+            resolver.SetCleanupAction(() =>
+            {
+                WebClientHostObjectRegistry.Unregister(contextId, resolverObjectId);
+
+                if (!disposed)
+                    Execute($"try{{delete globalThis['{resolverName}']}}catch(_){{}}");
+            });
 
             // IMPORTANT: Expression must start with '(' immediately (no leading whitespace/newline)
             // to avoid JavaScript ASI treating 'return\n(...)' as 'return; (...)'
@@ -709,19 +747,6 @@ namespace SceneRuntime.WebClient
             }
         }
 
-        private static object? DeserializeResult(string json)
-        {
-            if (string.IsNullOrEmpty(json) || json == "null")
-                return null;
-
-            try { return JsonConvert.DeserializeObject(json); }
-            catch (Exception ex)
-            {
-                ReportHub.LogException(ex, ReportCategory.WEB_CLIENT);
-                return json;
-            }
-        }
-
         [DllImport("__Internal")]
         private static extern int JSContext_Create(IntPtr contextId);
 
@@ -781,11 +806,15 @@ namespace SceneRuntime.WebClient
         private string? error;
         private bool isCompleted;
         private bool isFaulted;
+        private Action? cleanupAction;
 
         public JSUniTaskPromiseResolver(UniTask<T> uniTask)
         {
             RunAsync(uniTask).Forget();
         }
+
+        public void SetCleanupAction(Action action) =>
+            cleanupAction = action;
 
         private async UniTaskVoid RunAsync(UniTask<T> uniTask)
         {
@@ -799,7 +828,11 @@ namespace SceneRuntime.WebClient
                 isFaulted = true;
                 error = e.ToString();
             }
-            finally { isCompleted = true; }
+            finally
+            {
+                isCompleted = true;
+                cleanupAction?.Invoke();
+            }
         }
 
         [UsedImplicitly]
@@ -824,11 +857,15 @@ namespace SceneRuntime.WebClient
         private string? error;
         private bool isCompleted;
         private bool isFaulted;
+        private Action? cleanupAction;
 
         public JSUniTaskPromiseResolver(UniTask uniTask)
         {
             RunAsync(uniTask).Forget();
         }
+
+        public void SetCleanupAction(Action action) =>
+            cleanupAction = action;
 
         private async UniTaskVoid RunAsync(UniTask uniTask)
         {
@@ -842,7 +879,11 @@ namespace SceneRuntime.WebClient
                 isFaulted = true;
                 error = e.ToString();
             }
-            finally { isCompleted = true; }
+            finally
+            {
+                isCompleted = true;
+                cleanupAction?.Invoke();
+            }
         }
 
         [UsedImplicitly]

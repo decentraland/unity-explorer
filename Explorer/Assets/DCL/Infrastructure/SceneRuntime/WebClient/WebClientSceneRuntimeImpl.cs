@@ -19,7 +19,7 @@ namespace SceneRuntime.WebClient
     {
         private readonly IJavaScriptEngine engine;
         private readonly WebClientScriptObject arrayCtor;
-        private readonly WebClientScriptObject unit8ArrayCtor;
+        private readonly WebClientScriptObject uint8ArrayCtor;
         private WebClientScriptObject updateFunc;
         private WebClientScriptObject startFunc;
         private readonly List<IDCLTypedArray<byte>> uint8Arrays;
@@ -80,7 +80,7 @@ namespace SceneRuntime.WebClient
             engine.AddHostObject("__resetableSource", resetableSource);
 
             arrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Array");
-            unit8ArrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Uint8Array");
+            uint8ArrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Uint8Array");
             uint8Arrays = new List<IDCLTypedArray<byte>>();
             nextUint8Array = 0;
         }
@@ -139,6 +139,12 @@ namespace SceneRuntime.WebClient
 
         public void Dispose()
         {
+            if (!isDisposingTokenSource.IsCancellationRequested)
+            {
+                isDisposingTokenSource.Cancel();
+                isDisposingTokenSource.Dispose();
+            }
+
             engine.Dispose();
             jsApiBunch.Dispose();
         }
@@ -237,7 +243,7 @@ namespace SceneRuntime.WebClient
 
         IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length)
         {
-            object result = unit8ArrayCtor.Invoke(true, length);
+            object result = uint8ArrayCtor.Invoke(true, length);
             if (result is WebClientScriptObject webglScriptObject)
                 return new WebClientTypedArrayAdapter(webglScriptObject);
             throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
@@ -247,7 +253,7 @@ namespace SceneRuntime.WebClient
         {
             if (nextUint8Array >= uint8Arrays.Count)
             {
-                object result = unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
+                object result = uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE);
                 if (result is WebClientScriptObject webglScriptObject)
                     uint8Arrays.Add(new WebClientTypedArrayAdapter(webglScriptObject));
                 else

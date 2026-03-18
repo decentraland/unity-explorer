@@ -206,12 +206,10 @@ namespace SceneRuntime.WebClient
                                     return JsonConvert.DeserializeObject(resultStr);
                                 }
 
-                                ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}' even after buffer resize to {newSize}");
-                                return null;
+                                throw new InvalidOperationException($"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}' even after buffer resize to {newSize}");
                             }
 
-                            ReportHub.Log(ReportCategory.WEB_CLIENT, $"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}'");
-                            return null;
+                            throw new InvalidOperationException($"[WebClientScriptObject] InvokeAsFunction failed for function '{ObjectId}'");
                         }
                         finally { Marshal.FreeHGlobal(contextIdPtr); }
                     }
