@@ -54,243 +54,249 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
-        private void ApplyParticleSystemProperties(ref PBParticleSystem pb, ref ParticleSystemComponent component)
+        private void ApplyParticleSystemProperties(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
-            if (!pb.IsDirty) return;
+            if (!particleSystemData.IsDirty) return;
 
-            var ps = component.ParticleSystemInstance;
+            var particleSystem = component.ParticleSystemInstance;
 
-            ApplyMain(pb, ps);
-            ApplyEmission(pb, ps);
-            ApplyShape(pb, ps);
-            ApplySizeOverLifetime(pb, ps);
-            ApplyRotationOverLifetime(pb, ps);
-            ApplyColorOverLifetime(pb, ps);
-            ApplyForceOverLifetime(pb, ps);
-            ApplyLimitVelocityOverLifetime(pb, ps);
-            ApplySpriteSheet(pb, ps);
-            ApplyRenderer(pb, ref component);
+            ApplyMain(particleSystemData, particleSystem);
+            ApplyEmission(particleSystemData, particleSystem);
+            ApplyShape(particleSystemData, particleSystem);
+            ApplySizeOverLifetime(particleSystemData, particleSystem);
+            ApplyRotationOverLifetime(particleSystemData, particleSystem);
+            ApplyColorOverLifetime(particleSystemData, particleSystem);
+            ApplyForceOverLifetime(particleSystemData, particleSystem);
+            ApplyLimitVelocityOverLifetime(particleSystemData, particleSystem);
+            ApplySpriteSheet(particleSystemData, particleSystem);
+            ApplyRenderer(particleSystemData, ref component);
         }
 
-        private static void ApplyMain(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyMain(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var main = ps.main;
+            var mainModule = particleSystem.main;
 
-            main.loop = !pb.HasLoop || pb.Loop;
-            main.prewarm = main.loop && pb.HasPrewarm && pb.Prewarm;
+            mainModule.loop = !particleSystemData.HasLoop || particleSystemData.Loop;
+            mainModule.prewarm = mainModule.loop && particleSystemData.HasPrewarm && particleSystemData.Prewarm;
 
-            if (pb.HasLifetime)
-                main.startLifetime = pb.Lifetime;
+            mainModule.simulationSpace = particleSystemData.HasSimulationSpace
+                && particleSystemData.SimulationSpace == PBParticleSystem.Types.SimulationSpace.PssWorld
+                ? ParticleSystemSimulationSpace.World
+                : ParticleSystemSimulationSpace.Local;
 
-            if (pb.HasMaxParticles)
-                main.maxParticles = (int)pb.MaxParticles;
+            if (particleSystemData.HasLifetime)
+                mainModule.startLifetime = particleSystemData.Lifetime;
 
-            if (pb.HasGravity)
-                main.gravityModifier = pb.Gravity;
+            if (particleSystemData.HasMaxParticles)
+                mainModule.maxParticles = (int)particleSystemData.MaxParticles;
+
+            if (particleSystemData.HasGravity)
+                mainModule.gravityModifier = particleSystemData.Gravity;
 
             // Initial size: random between start and end
-            if (pb.InitialSize != null)
-                main.startSize = new UnityEngine.ParticleSystem.MinMaxCurve(pb.InitialSize.Start, pb.InitialSize.End);
+            if (particleSystemData.InitialSize != null)
+                mainModule.startSize = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialSize.Start, particleSystemData.InitialSize.End);
 
             // Initial rotation: random between start and end (convert degrees to radians for Unity)
-            if (pb.InitialRotation != null)
-                main.startRotation = new UnityEngine.ParticleSystem.MinMaxCurve(
-                    pb.InitialRotation.Start * Mathf.Deg2Rad,
-                    pb.InitialRotation.End * Mathf.Deg2Rad);
+            if (particleSystemData.InitialRotation != null)
+                mainModule.startRotation = new UnityEngine.ParticleSystem.MinMaxCurve(
+                    particleSystemData.InitialRotation.Start * Mathf.Deg2Rad,
+                    particleSystemData.InitialRotation.End * Mathf.Deg2Rad);
 
             // Initial color: random between start and end
-            if (pb.InitialColor != null)
+            if (particleSystemData.InitialColor != null)
             {
-                var startColor = ToUnityColor(pb.InitialColor.Start);
-                var endColor = ToUnityColor(pb.InitialColor.End);
-                main.startColor = new UnityEngine.ParticleSystem.MinMaxGradient(startColor, endColor);
+                var startColor = ToUnityColor(particleSystemData.InitialColor.Start);
+                var endColor = ToUnityColor(particleSystemData.InitialColor.End);
+                mainModule.startColor = new UnityEngine.ParticleSystem.MinMaxGradient(startColor, endColor);
             }
 
             // Initial speed: random between start and end
-            if (pb.InitialVelocitySpeed != null)
-                main.startSpeed = new UnityEngine.ParticleSystem.MinMaxCurve(pb.InitialVelocitySpeed.Start, pb.InitialVelocitySpeed.End);
+            if (particleSystemData.InitialVelocitySpeed != null)
+                mainModule.startSpeed = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialVelocitySpeed.Start, particleSystemData.InitialVelocitySpeed.End);
         }
 
-        private static void ApplyEmission(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyEmission(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var emission = ps.emission;
-            bool active = !pb.HasActive || pb.Active;
-            emission.enabled = active;
+            var emissionModule = particleSystem.emission;
+            bool active = !particleSystemData.HasActive || particleSystemData.Active;
+            emissionModule.enabled = active;
 
-            if (pb.HasRate)
-                emission.rateOverTime = pb.Rate;
+            if (particleSystemData.HasRate)
+                emissionModule.rateOverTime = particleSystemData.Rate;
         }
 
-        private static void ApplyShape(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyShape(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var shape = ps.shape;
-            shape.enabled = true;
+            var shapeModule = particleSystem.shape;
+            shapeModule.enabled = true;
 
-            if (pb.ShapeCase == PBParticleSystem.ShapeOneofCase.None)
+            if (particleSystemData.ShapeCase == PBParticleSystem.ShapeOneofCase.None)
             {
                 // Default: point emitter
-                shape.shapeType = ParticleSystemShapeType.Sphere;
-                shape.radius = 0f;
+                shapeModule.shapeType = ParticleSystemShapeType.Sphere;
+                shapeModule.radius = 0f;
                 return;
             }
 
-            switch (pb.ShapeCase)
+            switch (particleSystemData.ShapeCase)
             {
                 case PBParticleSystem.ShapeOneofCase.Point:
-                    shape.shapeType = ParticleSystemShapeType.Sphere;
-                    shape.radius = 0f;
+                    shapeModule.shapeType = ParticleSystemShapeType.Sphere;
+                    shapeModule.radius = 0f;
                     break;
 
                 case PBParticleSystem.ShapeOneofCase.Sphere:
-                    shape.shapeType = ParticleSystemShapeType.Sphere;
-                    shape.radius = pb.Sphere.HasRadius ? pb.Sphere.Radius : 1f;
+                    shapeModule.shapeType = ParticleSystemShapeType.Sphere;
+                    shapeModule.radius = particleSystemData.Sphere.HasRadius ? particleSystemData.Sphere.Radius : 1f;
                     break;
 
                 case PBParticleSystem.ShapeOneofCase.Cone:
-                    shape.shapeType = ParticleSystemShapeType.Cone;
-                    shape.angle = pb.Cone.HasAngle ? pb.Cone.Angle : 25f;
-                    shape.radius = pb.Cone.HasRadius ? pb.Cone.Radius : 1f;
+                    shapeModule.shapeType = ParticleSystemShapeType.Cone;
+                    shapeModule.angle = particleSystemData.Cone.HasAngle ? particleSystemData.Cone.Angle : 25f;
+                    shapeModule.radius = particleSystemData.Cone.HasRadius ? particleSystemData.Cone.Radius : 1f;
                     break;
 
                 case PBParticleSystem.ShapeOneofCase.Box:
-                    shape.shapeType = ParticleSystemShapeType.Box;
-                    if (pb.Box.Size != null)
-                        shape.scale = new Vector3(pb.Box.Size.X, pb.Box.Size.Y, pb.Box.Size.Z);
+                    shapeModule.shapeType = ParticleSystemShapeType.Box;
+                    if (particleSystemData.Box.Size != null)
+                        shapeModule.scale = new Vector3(particleSystemData.Box.Size.X, particleSystemData.Box.Size.Y, particleSystemData.Box.Size.Z);
                     break;
             }
         }
 
-        private static void ApplySizeOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplySizeOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var sol = ps.sizeOverLifetime;
+            var sizeOverLifetimeModule = particleSystem.sizeOverLifetime;
 
-            if (pb.SizeOverTime == null)
+            if (particleSystemData.SizeOverTime == null)
             {
-                sol.enabled = false;
+                sizeOverLifetimeModule.enabled = false;
                 return;
             }
 
-            sol.enabled = true;
-            sol.separateAxes = false;
+            sizeOverLifetimeModule.enabled = true;
+            sizeOverLifetimeModule.separateAxes = false;
 
             // Linear lerp from start to end over particle lifetime using a two-key curve
-            sol.size = BuildLinearCurve(pb.SizeOverTime.Start, pb.SizeOverTime.End);
+            sizeOverLifetimeModule.size = BuildLinearCurve(particleSystemData.SizeOverTime.Start, particleSystemData.SizeOverTime.End);
         }
 
-        private static void ApplyRotationOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyRotationOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var rol = ps.rotationOverLifetime;
+            var rotationOverLifetimeModule = particleSystem.rotationOverLifetime;
 
-            if (pb.RotationOverTime == null)
+            if (particleSystemData.RotationOverTime == null)
             {
-                rol.enabled = false;
+                rotationOverLifetimeModule.enabled = false;
                 return;
             }
 
-            rol.enabled = true;
-            rol.separateAxes = false;
+            rotationOverLifetimeModule.enabled = true;
+            rotationOverLifetimeModule.separateAxes = false;
             // Degrees/sec → radians/sec
-            rol.z = new UnityEngine.ParticleSystem.MinMaxCurve(
-                pb.RotationOverTime.Start * Mathf.Deg2Rad,
-                pb.RotationOverTime.End * Mathf.Deg2Rad);
+            rotationOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(
+                particleSystemData.RotationOverTime.Start * Mathf.Deg2Rad,
+                particleSystemData.RotationOverTime.End * Mathf.Deg2Rad);
         }
 
-        private static void ApplyColorOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyColorOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var col = ps.colorOverLifetime;
+            var colorOverLifetimeModule = particleSystem.colorOverLifetime;
 
-            if (pb.ColorOverTime == null)
+            if (particleSystemData.ColorOverTime == null)
             {
-                col.enabled = false;
+                colorOverLifetimeModule.enabled = false;
                 return;
             }
 
-            col.enabled = true;
+            colorOverLifetimeModule.enabled = true;
 
             var gradient = new Gradient();
             gradient.SetKeys(
-                new[] { new GradientColorKey(ToUnityColor(pb.ColorOverTime.Start), 0f), new GradientColorKey(ToUnityColor(pb.ColorOverTime.End), 1f) },
-                new[] { new GradientAlphaKey(pb.ColorOverTime.Start.A, 0f), new GradientAlphaKey(pb.ColorOverTime.End.A, 1f) }
+                new[] { new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.Start), 0f), new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.End), 1f) },
+                new[] { new GradientAlphaKey(particleSystemData.ColorOverTime.Start.A, 0f), new GradientAlphaKey(particleSystemData.ColorOverTime.End.A, 1f) }
             );
 
-            col.color = new UnityEngine.ParticleSystem.MinMaxGradient(gradient);
+            colorOverLifetimeModule.color = new UnityEngine.ParticleSystem.MinMaxGradient(gradient);
         }
 
-        private static void ApplyForceOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyForceOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var fol = ps.forceOverLifetime;
+            var forceOverLifetimeModule = particleSystem.forceOverLifetime;
 
-            if (pb.AdditionalForce == null)
+            if (particleSystemData.AdditionalForce == null)
             {
-                fol.enabled = false;
+                forceOverLifetimeModule.enabled = false;
                 return;
             }
 
-            fol.enabled = true;
-            fol.space = ParticleSystemSimulationSpace.World;
-            fol.x = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.X);
-            fol.y = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.Y);
-            fol.z = new UnityEngine.ParticleSystem.MinMaxCurve(pb.AdditionalForce.Z);
+            forceOverLifetimeModule.enabled = true;
+            forceOverLifetimeModule.space = ParticleSystemSimulationSpace.World;
+            forceOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.X);
+            forceOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.Y);
+            forceOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.Z);
         }
 
-        private static void ApplyLimitVelocityOverLifetime(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplyLimitVelocityOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var lvol = ps.limitVelocityOverLifetime;
+            var limitVelocityModule = particleSystem.limitVelocityOverLifetime;
 
-            if (pb.LimitVelocity == null)
+            if (particleSystemData.LimitVelocity == null)
             {
-                lvol.enabled = false;
+                limitVelocityModule.enabled = false;
                 return;
             }
 
-            lvol.enabled = true;
-            lvol.separateAxes = false;
-            lvol.space = ParticleSystemSimulationSpace.Local;
-            lvol.limit = new UnityEngine.ParticleSystem.MinMaxCurve(pb.LimitVelocity.Speed);
-            lvol.dampen = pb.LimitVelocity.HasDampen ? pb.LimitVelocity.Dampen : 1f;
+            limitVelocityModule.enabled = true;
+            limitVelocityModule.separateAxes = false;
+            limitVelocityModule.space = ParticleSystemSimulationSpace.Local;
+            limitVelocityModule.limit = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.LimitVelocity.Speed);
+            limitVelocityModule.dampen = particleSystemData.LimitVelocity.HasDampen ? particleSystemData.LimitVelocity.Dampen : 1f;
         }
 
-        private static void ApplySpriteSheet(PBParticleSystem pb, UnityEngine.ParticleSystem ps)
+        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
-            var tsa = ps.textureSheetAnimation;
+            var textureSheetAnimationModule = particleSystem.textureSheetAnimation;
 
-            if (pb.SpriteSheet == null)
+            if (particleSystemData.SpriteSheet == null)
             {
-                tsa.enabled = false;
+                textureSheetAnimationModule.enabled = false;
                 return;
             }
 
-            tsa.enabled = true;
-            tsa.mode = ParticleSystemAnimationMode.Grid;
+            textureSheetAnimationModule.enabled = true;
+            textureSheetAnimationModule.mode = ParticleSystemAnimationMode.Grid;
 
-            int tilesX = pb.SpriteSheet.TilesX > 0 ? (int)pb.SpriteSheet.TilesX : 1;
-            int tilesY = pb.SpriteSheet.TilesY > 0 ? (int)pb.SpriteSheet.TilesY : 1;
-            tsa.numTilesX = tilesX;
-            tsa.numTilesY = tilesY;
+            int tilesX = particleSystemData.SpriteSheet.TilesX > 0 ? (int)particleSystemData.SpriteSheet.TilesX : 1;
+            int tilesY = particleSystemData.SpriteSheet.TilesY > 0 ? (int)particleSystemData.SpriteSheet.TilesY : 1;
+            textureSheetAnimationModule.numTilesX = tilesX;
+            textureSheetAnimationModule.numTilesY = tilesY;
 
             int totalFrames = tilesX * tilesY;
-            int startFrame = (int)pb.SpriteSheet.StartFrame;
-            int endFrame = pb.SpriteSheet.EndFrame > 0 ? (int)pb.SpriteSheet.EndFrame : totalFrames - 1;
+            int startFrame = (int)particleSystemData.SpriteSheet.StartFrame;
+            int endFrame = particleSystemData.SpriteSheet.EndFrame > 0 ? (int)particleSystemData.SpriteSheet.EndFrame : totalFrames - 1;
 
-            tsa.frameOverTime = BuildLinearCurve(startFrame, endFrame);
+            textureSheetAnimationModule.frameOverTime = BuildLinearCurve(startFrame, endFrame);
 
-            float cycles = pb.SpriteSheet.HasCyclesPerLifetime ? pb.SpriteSheet.CyclesPerLifetime : 1f;
-            tsa.cycleCount = Mathf.RoundToInt(cycles);
+            float framesPerSecond = particleSystemData.SpriteSheet.HasFramesPerSecond ? particleSystemData.SpriteSheet.FramesPerSecond : 30f;
+            textureSheetAnimationModule.timeMode = ParticleSystemAnimationTimeMode.FPS;
+            textureSheetAnimationModule.fps = framesPerSecond;
         }
 
-        private void ApplyRenderer(PBParticleSystem pb, ref ParticleSystemComponent component)
+        private void ApplyRenderer(PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
-            var renderer = component.ParticleSystemInstance.GetComponent<ParticleSystemRenderer>();
+            var particleRenderer = component.ParticleSystemInstance.GetComponent<ParticleSystemRenderer>();
 
-            bool billboard = !pb.HasBillboard || pb.Billboard;
-            renderer.renderMode = billboard ? ParticleSystemRenderMode.Billboard : ParticleSystemRenderMode.Mesh;
+            bool billboard = !particleSystemData.HasBillboard || particleSystemData.Billboard;
+            particleRenderer.renderMode = billboard ? ParticleSystemRenderMode.Billboard : ParticleSystemRenderMode.Mesh;
 
-            var blendMode = pb.HasBlendMode ? pb.BlendMode : PBParticleSystem.Types.BlendMode.PsbAlpha;
+            var blendMode = particleSystemData.HasBlendMode ? particleSystemData.BlendMode : PBParticleSystem.Types.BlendMode.PsbAlpha;
             EnsureMaterial(ref component, blendMode);
-            renderer.material = component.ParticleMaterial;
+            particleRenderer.material = component.ParticleMaterial;
 
-            if (pb.Texture != null)
-                PrepareTexture(pb.Texture, ref component);
+            if (particleSystemData.Texture != null)
+                PrepareTexture(particleSystemData.Texture, ref component);
             else
                 component.CleanUpTexture(World);
         }
@@ -303,32 +309,32 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyBlendMode(component.ParticleMaterial, blendMode);
         }
 
-        private static void ApplyBlendMode(Material mat, PBParticleSystem.Types.BlendMode blendMode)
+        private static void ApplyBlendMode(Material material, PBParticleSystem.Types.BlendMode blendMode)
         {
             // All particle blend modes require a transparent surface in URP
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.SetInt(SURFACE_ID, 1);
-            mat.SetInt(ZWRITE_ID, 0);
-            mat.renderQueue = (int)RenderQueue.Transparent;
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetInt(SURFACE_ID, 1);
+            material.SetInt(ZWRITE_ID, 0);
+            material.renderQueue = (int)RenderQueue.Transparent;
 
             switch (blendMode)
             {
                 case PBParticleSystem.Types.BlendMode.PsbAdd:
-                    mat.SetInt(BLEND_MODE_ID, 2); // Additive
-                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
-                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.One);
+                    material.SetInt(BLEND_MODE_ID, 2); // Additive
+                    material.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
+                    material.SetInt(DST_BLEND_ID, (int)BlendMode.One);
                     break;
 
                 case PBParticleSystem.Types.BlendMode.PsbMultiply:
-                    mat.SetInt(BLEND_MODE_ID, 3); // Multiply
-                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.DstColor);
-                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.Zero);
+                    material.SetInt(BLEND_MODE_ID, 3); // Multiply
+                    material.SetInt(SRC_BLEND_ID, (int)BlendMode.DstColor);
+                    material.SetInt(DST_BLEND_ID, (int)BlendMode.Zero);
                     break;
 
                 default: // PSB_ALPHA
-                    mat.SetInt(BLEND_MODE_ID, 0); // Alpha
-                    mat.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
-                    mat.SetInt(DST_BLEND_ID, (int)BlendMode.OneMinusSrcAlpha);
+                    material.SetInt(BLEND_MODE_ID, 0); // Alpha
+                    material.SetInt(SRC_BLEND_ID, (int)BlendMode.SrcAlpha);
+                    material.SetInt(DST_BLEND_ID, (int)BlendMode.OneMinusSrcAlpha);
                     break;
             }
         }
@@ -386,7 +392,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             return new UnityEngine.ParticleSystem.MinMaxCurve(1f, curve);
         }
 
-        private static Color ToUnityColor(global::Decentraland.Common.Color4 c) =>
-            new Color(c.R, c.G, c.B, c.A);
+        private static Color ToUnityColor(global::Decentraland.Common.Color4 protoColor) =>
+            new Color(protoColor.R, protoColor.G, protoColor.B, protoColor.A);
     }
 }

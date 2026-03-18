@@ -28,7 +28,7 @@ namespace DCL.ECSComponents {
             "LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJh",
             "bGFuZC9jb21tb24vY29sb3JzLnByb3RvGiFkZWNlbnRyYWxhbmQvY29tbW9u",
             "L3RleHR1cmUucHJvdG8aIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5w",
-            "cm90byLMFAoQUEJQYXJ0aWNsZVN5c3RlbRITCgZhY3RpdmUYASABKAhIAYgB",
+            "cm90byLsFQoQUEJQYXJ0aWNsZVN5c3RlbRITCgZhY3RpdmUYASABKAhIAYgB",
             "ARIRCgRyYXRlGAIgASgCSAKIAQESGgoNbWF4X3BhcnRpY2xlcxgDIAEoDUgD",
             "iAEBEhUKCGxpZmV0aW1lGAQgASgCSASIAQESFAoHZ3Jhdml0eRgFIAEoAkgF",
             "iAEBEjsKEGFkZGl0aW9uYWxfZm9yY2UYBiABKAsyHC5kZWNlbnRyYWxhbmQu",
@@ -58,19 +58,21 @@ namespace DCL.ECSComponents {
             "EkIKBGNvbmUYFCABKAsyMi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
             "UEJQYXJ0aWNsZVN5c3RlbS5Db25lSAASQAoDYm94GBUgASgLMjEuZGVjZW50",
             "cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0ZW0uQm94SAAS",
-            "EQoEbG9vcBgYIAEoCEgSiAEBEhQKB3ByZXdhcm0YGSABKAhIE4gBARJYCg5s",
-            "aW1pdF92ZWxvY2l0eRgaIAEoCzI7LmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
-            "ZW50cy5QQlBhcnRpY2xlU3lzdGVtLkxpbWl0VmVsb2NpdHlIFIgBARJYCg5w",
-            "bGF5YmFja19zdGF0ZRgWIAEoDjI7LmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
-            "ZW50cy5QQlBhcnRpY2xlU3lzdGVtLlBsYXliYWNrU3RhdGVIFYgBARIaCg1y",
-            "ZXN0YXJ0X2NvdW50GBcgASgNSBaIAQEaKAoKRmxvYXRSYW5nZRINCgVzdGFy",
-            "dBgBIAEoAhILCgNlbmQYAiABKAIaYgoKQ29sb3JSYW5nZRIqCgVzdGFydBgB",
-            "IAEoCzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0EigKA2VuZBgCIAEo",
-            "CzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0GpoBChRTcHJpdGVTaGVl",
-            "dEFuaW1hdGlvbhIPCgd0aWxlc194GAEgASgNEg8KB3RpbGVzX3kYAiABKA0S",
-            "EwoLc3RhcnRfZnJhbWUYAyABKA0SEQoJZW5kX2ZyYW1lGAQgASgNEiAKE2N5",
-            "Y2xlc19wZXJfbGlmZXRpbWUYBSABKAJIAIgBAUIWChRfY3ljbGVzX3Blcl9s",
-            "aWZldGltZRo+Cg1MaW1pdFZlbG9jaXR5Eg0KBXNwZWVkGAEgASgCEhMKBmRh",
+            "EQoEbG9vcBgYIAEoCEgSiAEBEhQKB3ByZXdhcm0YGSABKAhIE4gBARJcChBz",
+            "aW11bGF0aW9uX3NwYWNlGBsgASgOMj0uZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLlBCUGFydGljbGVTeXN0ZW0uU2ltdWxhdGlvblNwYWNlSBSIAQES",
+            "WAoObGltaXRfdmVsb2NpdHkYGiABKAsyOy5kZWNlbnRyYWxhbmQuc2RrLmNv",
+            "bXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5MaW1pdFZlbG9jaXR5SBWIAQES",
+            "WAoOcGxheWJhY2tfc3RhdGUYFiABKA4yOy5kZWNlbnRyYWxhbmQuc2RrLmNv",
+            "bXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBaIAQES",
+            "GgoNcmVzdGFydF9jb3VudBgXIAEoDUgXiAEBGigKCkZsb2F0UmFuZ2USDQoF",
+            "c3RhcnQYASABKAISCwoDZW5kGAIgASgCGmIKCkNvbG9yUmFuZ2USKgoFc3Rh",
+            "cnQYASABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNBIoCgNlbmQY",
+            "AiABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNBqWAQoUU3ByaXRl",
+            "U2hlZXRBbmltYXRpb24SDwoHdGlsZXNfeBgBIAEoDRIPCgd0aWxlc195GAIg",
+            "ASgNEhMKC3N0YXJ0X2ZyYW1lGAMgASgNEhEKCWVuZF9mcmFtZRgEIAEoDRIe",
+            "ChFmcmFtZXNfcGVyX3NlY29uZBgFIAEoAkgAiAEBQhQKEl9mcmFtZXNfcGVy",
+            "X3NlY29uZBo+Cg1MaW1pdFZlbG9jaXR5Eg0KBXNwZWVkGAEgASgCEhMKBmRh",
             "bXBlbhgCIAEoAkgAiAEBQgkKB19kYW1wZW4aBwoFUG9pbnQaKAoGU3BoZXJl",
             "EhMKBnJhZGl1cxgBIAEoAkgAiAEBQgkKB19yYWRpdXMaRAoEQ29uZRISCgVh",
             "bmdsZRgBIAEoAkgAiAEBEhMKBnJhZGl1cxgCIAEoAkgBiAEBQggKBl9hbmds",
@@ -78,22 +80,23 @@ namespace DCL.ECSComponents {
             "YW5kLmNvbW1vbi5WZWN0b3IzSACIAQFCBwoFX3NpemUiOQoJQmxlbmRNb2Rl",
             "Eg0KCVBTQl9BTFBIQRAAEgsKB1BTQl9BREQQARIQCgxQU0JfTVVMVElQTFkQ",
             "AiI+Cg1QbGF5YmFja1N0YXRlEg4KClBTX1BMQVlJTkcQABINCglQU19QQVVT",
-            "RUQQARIOCgpQU19TVE9QUEVEEAJCBwoFc2hhcGVCCQoHX2FjdGl2ZUIHCgVf",
-            "cmF0ZUIQCg5fbWF4X3BhcnRpY2xlc0ILCglfbGlmZXRpbWVCCgoIX2dyYXZp",
-            "dHlCEwoRX2FkZGl0aW9uYWxfZm9yY2VCDwoNX2luaXRpYWxfc2l6ZUIRCg9f",
-            "c2l6ZV9vdmVyX3RpbWVCEwoRX2luaXRpYWxfcm90YXRpb25CFQoTX3JvdGF0",
-            "aW9uX292ZXJfdGltZUIQCg5faW5pdGlhbF9jb2xvckISChBfY29sb3Jfb3Zl",
-            "cl90aW1lQhkKF19pbml0aWFsX3ZlbG9jaXR5X3NwZWVkQgoKCF90ZXh0dXJl",
-            "Qg0KC19ibGVuZF9tb2RlQgwKCl9iaWxsYm9hcmRCDwoNX3Nwcml0ZV9zaGVl",
-            "dEIHCgVfbG9vcEIKCghfcHJld2FybUIRCg9fbGltaXRfdmVsb2NpdHlCEQoP",
-            "X3BsYXliYWNrX3N0YXRlQhAKDl9yZXN0YXJ0X2NvdW50QhSqAhFEQ0wuRUNT",
-            "Q29tcG9uZW50c2IGcHJvdG8z"));
+            "RUQQARIOCgpQU19TVE9QUEVEEAIiLwoPU2ltdWxhdGlvblNwYWNlEg0KCVBT",
+            "U19MT0NBTBAAEg0KCVBTU19XT1JMRBABQgcKBXNoYXBlQgkKB19hY3RpdmVC",
+            "BwoFX3JhdGVCEAoOX21heF9wYXJ0aWNsZXNCCwoJX2xpZmV0aW1lQgoKCF9n",
+            "cmF2aXR5QhMKEV9hZGRpdGlvbmFsX2ZvcmNlQg8KDV9pbml0aWFsX3NpemVC",
+            "EQoPX3NpemVfb3Zlcl90aW1lQhMKEV9pbml0aWFsX3JvdGF0aW9uQhUKE19y",
+            "b3RhdGlvbl9vdmVyX3RpbWVCEAoOX2luaXRpYWxfY29sb3JCEgoQX2NvbG9y",
+            "X292ZXJfdGltZUIZChdfaW5pdGlhbF92ZWxvY2l0eV9zcGVlZEIKCghfdGV4",
+            "dHVyZUINCgtfYmxlbmRfbW9kZUIMCgpfYmlsbGJvYXJkQg8KDV9zcHJpdGVf",
+            "c2hlZXRCBwoFX2xvb3BCCgoIX3ByZXdhcm1CEwoRX3NpbXVsYXRpb25fc3Bh",
+            "Y2VCEQoPX2xpbWl0X3ZlbG9jaXR5QhEKD19wbGF5YmFja19zdGF0ZUIQCg5f",
+            "cmVzdGFydF9jb3VudEIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange), global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "RestartCount" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange), global::DCL.ECSComponents.PBParticleSystem.Types.FloatRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.ColorRange), global::DCL.ECSComponents.PBParticleSystem.Types.ColorRange.Parser, new[]{ "Start", "End" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "StartFrame", "EndFrame", "CyclesPerLifetime" }, new[]{ "CyclesPerLifetime" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "StartFrame", "EndFrame", "FramesPerSecond" }, new[]{ "FramesPerSecond" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity), global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity.Parser, new[]{ "Speed", "Dampen" }, new[]{ "Dampen" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Point), global::DCL.ECSComponents.PBParticleSystem.Types.Point.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Sphere), global::DCL.ECSComponents.PBParticleSystem.Types.Sphere.Parser, new[]{ "Radius" }, new[]{ "Radius" }, null, null, null),
@@ -160,6 +163,7 @@ namespace DCL.ECSComponents {
       spriteSheet_ = other.spriteSheet_ != null ? other.spriteSheet_.Clone() : null;
       loop_ = other.loop_;
       prewarm_ = other.prewarm_;
+      simulationSpace_ = other.simulationSpace_;
       limitVelocity_ = other.limitVelocity_ != null ? other.limitVelocity_.Clone() : null;
       playbackState_ = other.playbackState_;
       restartCount_ = other.restartCount_;
@@ -637,6 +641,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~1024;
     }
 
+    /// <summary>Field number for the "simulation_space" field.</summary>
+    public const int SimulationSpaceFieldNumber = 27;
+    private global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace simulationSpace_;
+    /// <summary>
+    /// default = PSS_LOCAL. Controls whether particles simulate in local or world space.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace SimulationSpace {
+      get { if ((_hasBits0 & 2048) != 0) { return simulationSpace_; } else { return global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace.PssLocal; } }
+      set {
+        _hasBits0 |= 2048;
+        simulationSpace_ = value;
+      }
+    }
+    /// <summary>Gets whether the "simulation_space" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasSimulationSpace {
+      get { return (_hasBits0 & 2048) != 0; }
+    }
+    /// <summary>Clears the value of the "simulation_space" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearSimulationSpace() {
+      _hasBits0 &= ~2048;
+    }
+
     /// <summary>Field number for the "limit_velocity" field.</summary>
     public const int LimitVelocityFieldNumber = 26;
     private global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity limitVelocity_;
@@ -769,6 +801,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(Box, other.Box)) return false;
       if (Loop != other.Loop) return false;
       if (Prewarm != other.Prewarm) return false;
+      if (SimulationSpace != other.SimulationSpace) return false;
       if (!object.Equals(LimitVelocity, other.LimitVelocity)) return false;
       if (PlaybackState != other.PlaybackState) return false;
       if (RestartCount != other.RestartCount) return false;
@@ -803,6 +836,7 @@ namespace DCL.ECSComponents {
       if (shapeCase_ == ShapeOneofCase.Box) hash ^= Box.GetHashCode();
       if (HasLoop) hash ^= Loop.GetHashCode();
       if (HasPrewarm) hash ^= Prewarm.GetHashCode();
+      if (HasSimulationSpace) hash ^= SimulationSpace.GetHashCode();
       if (limitVelocity_ != null) hash ^= LimitVelocity.GetHashCode();
       if (HasPlaybackState) hash ^= PlaybackState.GetHashCode();
       if (HasRestartCount) hash ^= RestartCount.GetHashCode();
@@ -929,6 +963,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(210, 1);
         output.WriteMessage(LimitVelocity);
       }
+      if (HasSimulationSpace) {
+        output.WriteRawTag(216, 1);
+        output.WriteEnum((int) SimulationSpace);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1043,6 +1081,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(210, 1);
         output.WriteMessage(LimitVelocity);
       }
+      if (HasSimulationSpace) {
+        output.WriteRawTag(216, 1);
+        output.WriteEnum((int) SimulationSpace);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1121,6 +1163,9 @@ namespace DCL.ECSComponents {
       }
       if (HasPrewarm) {
         size += 2 + 1;
+      }
+      if (HasSimulationSpace) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) SimulationSpace);
       }
       if (limitVelocity_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(LimitVelocity);
@@ -1229,6 +1274,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasPrewarm) {
         Prewarm = other.Prewarm;
+      }
+      if (other.HasSimulationSpace) {
+        SimulationSpace = other.SimulationSpace;
       }
       if (other.limitVelocity_ != null) {
         if (limitVelocity_ == null) {
@@ -1441,6 +1489,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(LimitVelocity);
             break;
           }
+          case 216: {
+            SimulationSpace = (global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) input.ReadEnum();
+            break;
+          }
         }
       }
     #endif
@@ -1613,6 +1665,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(LimitVelocity);
             break;
           }
+          case 216: {
+            SimulationSpace = (global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) input.ReadEnum();
+            break;
+          }
         }
       }
     }
@@ -1651,6 +1707,17 @@ namespace DCL.ECSComponents {
         /// Simulation stopped and existing particles cleared.
         /// </summary>
         [pbr::OriginalName("PS_STOPPED")] PsStopped = 2,
+      }
+
+      public enum SimulationSpace {
+        /// <summary>
+        /// Particles move with the entity transform.
+        /// </summary>
+        [pbr::OriginalName("PSS_LOCAL")] PssLocal = 0,
+        /// <summary>
+        /// Particles stay in world position after emission.
+        /// </summary>
+        [pbr::OriginalName("PSS_WORLD")] PssWorld = 1,
       }
 
       /// <summary>
@@ -2172,7 +2239,7 @@ namespace DCL.ECSComponents {
           tilesY_ = other.tilesY_;
           startFrame_ = other.startFrame_;
           endFrame_ = other.endFrame_;
-          cyclesPerLifetime_ = other.cyclesPerLifetime_;
+          framesPerSecond_ = other.framesPerSecond_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -2242,31 +2309,31 @@ namespace DCL.ECSComponents {
           }
         }
 
-        /// <summary>Field number for the "cycles_per_lifetime" field.</summary>
-        public const int CyclesPerLifetimeFieldNumber = 5;
-        private float cyclesPerLifetime_;
+        /// <summary>Field number for the "frames_per_second" field.</summary>
+        public const int FramesPerSecondFieldNumber = 5;
+        private float framesPerSecond_;
         /// <summary>
-        /// default = 1. How many animation cycles to play over a particle's lifetime.
+        /// default = 30. Playback speed in frames per second.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public float CyclesPerLifetime {
-          get { if ((_hasBits0 & 1) != 0) { return cyclesPerLifetime_; } else { return 0F; } }
+        public float FramesPerSecond {
+          get { if ((_hasBits0 & 1) != 0) { return framesPerSecond_; } else { return 0F; } }
           set {
             _hasBits0 |= 1;
-            cyclesPerLifetime_ = value;
+            framesPerSecond_ = value;
           }
         }
-        /// <summary>Gets whether the "cycles_per_lifetime" field is set</summary>
+        /// <summary>Gets whether the "frames_per_second" field is set</summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasCyclesPerLifetime {
+        public bool HasFramesPerSecond {
           get { return (_hasBits0 & 1) != 0; }
         }
-        /// <summary>Clears the value of the "cycles_per_lifetime" field</summary>
+        /// <summary>Clears the value of the "frames_per_second" field</summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearCyclesPerLifetime() {
+        public void ClearFramesPerSecond() {
           _hasBits0 &= ~1;
         }
 
@@ -2289,7 +2356,7 @@ namespace DCL.ECSComponents {
           if (TilesY != other.TilesY) return false;
           if (StartFrame != other.StartFrame) return false;
           if (EndFrame != other.EndFrame) return false;
-          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(CyclesPerLifetime, other.CyclesPerLifetime)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(FramesPerSecond, other.FramesPerSecond)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -2301,7 +2368,7 @@ namespace DCL.ECSComponents {
           if (TilesY != 0) hash ^= TilesY.GetHashCode();
           if (StartFrame != 0) hash ^= StartFrame.GetHashCode();
           if (EndFrame != 0) hash ^= EndFrame.GetHashCode();
-          if (HasCyclesPerLifetime) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(CyclesPerLifetime);
+          if (HasFramesPerSecond) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(FramesPerSecond);
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -2336,9 +2403,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(32);
             output.WriteUInt32(EndFrame);
           }
-          if (HasCyclesPerLifetime) {
+          if (HasFramesPerSecond) {
             output.WriteRawTag(45);
-            output.WriteFloat(CyclesPerLifetime);
+            output.WriteFloat(FramesPerSecond);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
@@ -2366,9 +2433,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(32);
             output.WriteUInt32(EndFrame);
           }
-          if (HasCyclesPerLifetime) {
+          if (HasFramesPerSecond) {
             output.WriteRawTag(45);
-            output.WriteFloat(CyclesPerLifetime);
+            output.WriteFloat(FramesPerSecond);
           }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
@@ -2392,7 +2459,7 @@ namespace DCL.ECSComponents {
           if (EndFrame != 0) {
             size += 1 + pb::CodedOutputStream.ComputeUInt32Size(EndFrame);
           }
-          if (HasCyclesPerLifetime) {
+          if (HasFramesPerSecond) {
             size += 1 + 4;
           }
           if (_unknownFields != null) {
@@ -2419,8 +2486,8 @@ namespace DCL.ECSComponents {
           if (other.EndFrame != 0) {
             EndFrame = other.EndFrame;
           }
-          if (other.HasCyclesPerLifetime) {
-            CyclesPerLifetime = other.CyclesPerLifetime;
+          if (other.HasFramesPerSecond) {
+            FramesPerSecond = other.FramesPerSecond;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -2454,7 +2521,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 45: {
-                CyclesPerLifetime = input.ReadFloat();
+                FramesPerSecond = input.ReadFloat();
                 break;
               }
             }
@@ -2489,7 +2556,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 45: {
-                CyclesPerLifetime = input.ReadFloat();
+                FramesPerSecond = input.ReadFloat();
                 break;
               }
             }

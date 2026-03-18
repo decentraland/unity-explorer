@@ -24,36 +24,36 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         }
 
         [Query]
-        private void UpdatePlayback(ref PBParticleSystem pb, ref ParticleSystemComponent component)
+        private void UpdatePlayback(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
-            var ps = component.ParticleSystemInstance;
+            var particleSystem = component.ParticleSystemInstance;
 
             // Handle restart: any increment to restart_count triggers stop+clear+play
-            if (pb.RestartCount > component.LastRestartCount)
+            if (particleSystemData.RestartCount > component.LastRestartCount)
             {
-                component.LastRestartCount = pb.RestartCount;
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                ps.Play();
+                component.LastRestartCount = particleSystemData.RestartCount;
+                particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                particleSystem.Play();
                 return;
             }
 
-            if (!pb.IsDirty) return;
+            if (!particleSystemData.IsDirty) return;
 
-            var state = pb.HasPlaybackState ? pb.PlaybackState : PBParticleSystem.Types.PlaybackState.PsPlaying;
+            var state = particleSystemData.HasPlaybackState ? particleSystemData.PlaybackState : PBParticleSystem.Types.PlaybackState.PsPlaying;
 
             switch (state)
             {
                 case PBParticleSystem.Types.PlaybackState.PsPlaying:
-                    if (!ps.isPlaying) ps.Play();
+                    if (!particleSystem.isPlaying) particleSystem.Play();
                     break;
 
                 case PBParticleSystem.Types.PlaybackState.PsPaused:
-                    if (!ps.isPaused) ps.Pause();
+                    if (!particleSystem.isPaused) particleSystem.Pause();
                     break;
 
                 case PBParticleSystem.Types.PlaybackState.PsStopped:
-                    if (ps.isPlaying || ps.isPaused)
-                        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    if (particleSystem.isPlaying || particleSystem.isPaused)
+                        particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                     break;
             }
         }

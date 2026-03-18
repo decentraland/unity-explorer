@@ -77,17 +77,17 @@ namespace DCL.PluginSystem.World
 
             particleMaterialPool = new ObjectPool<Material>(
                 createFunc: () => new Material(settings.ParticleMaterial),
-                actionOnRelease: m => m.CopyPropertiesFromMaterial(settings.ParticleMaterial),
+                actionOnRelease: releasedMaterial => releasedMaterial.CopyPropertiesFromMaterial(settings.ParticleMaterial),
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,
                 defaultCapacity: 64,
                 maxSize: 512);
         }
 
-        private static void OnPoolRelease(ParticleSystem ps)
+        private static void OnPoolRelease(ParticleSystem particleSystem)
         {
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            ps.transform.SetParent(null);
-            ps.gameObject.SetActive(false);
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleSystem.transform.SetParent(null);
+            particleSystem.gameObject.SetActive(false);
         }
 
         [Serializable]

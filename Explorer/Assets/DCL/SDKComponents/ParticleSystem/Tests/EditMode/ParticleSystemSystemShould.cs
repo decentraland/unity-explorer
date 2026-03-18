@@ -31,9 +31,9 @@ namespace DCL.Tests
             pool = Substitute.For<IComponentPool<UnityEngine.ParticleSystem>>();
             materialPool = Substitute.For<IObjectPool<Material>>();
 
-            var go = new GameObject("TestParticleSystem");
-            var ps = go.AddComponent<UnityEngine.ParticleSystem>();
-            pool.Get().Returns(ps);
+            var testGameObject = new GameObject("TestParticleSystem");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            pool.Get().Returns(testParticleSystem);
 
             system = new ParticleSystemLifecycleSystem(world, sceneStateProvider, pool, materialPool);
         }
@@ -107,9 +107,9 @@ namespace DCL.Tests
             Entity e1 = world.Create(new PBParticleSystem(), new TransformComponent());
             Entity e2 = world.Create(new PBParticleSystem(), new TransformComponent());
 
-            var go2 = new GameObject("TestPS2");
-            var ps2 = go2.AddComponent<UnityEngine.ParticleSystem>();
-            pool.Get().Returns(ps2);
+            var secondGameObject = new GameObject("TestPS2");
+            var secondParticleSystem = secondGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            pool.Get().Returns(secondParticleSystem);
 
             system.Update(0);
 
@@ -124,8 +124,8 @@ namespace DCL.Tests
             Entity entity = world.Create(new PBParticleSystem { Rate = 10 }, new TransformComponent());
             system.Update(0);
 
-            ref var pb = ref world.Get<PBParticleSystem>(entity);
-            Assert.IsTrue(pb.IsDirty);
+            ref var particleSystemData = ref world.Get<PBParticleSystem>(entity);
+            Assert.IsTrue(particleSystemData.IsDirty);
         }
     }
 
@@ -140,21 +140,21 @@ namespace DCL.Tests
         [Test]
         public void TriggerRestartOnRestartCountIncrement()
         {
-            var go = new GameObject("TestPS");
-            var ps = go.AddComponent<UnityEngine.ParticleSystem>();
-            var component = new ParticleSystemComponent(ps, go);
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
             component.LastRestartCount = 0;
 
-            var pb = new PBParticleSystem { RestartCount = 1, IsDirty = true };
+            var particleSystemData = new PBParticleSystem { RestartCount = 1, IsDirty = true };
 
-            Entity entity = world.Create(pb, component);
+            Entity entity = world.Create(particleSystemData, component);
             system.Update(0);
 
             // After update, LastRestartCount should match RestartCount
             ref var updatedComponent = ref world.Get<ParticleSystemComponent>(entity);
             Assert.AreEqual(1u, updatedComponent.LastRestartCount);
 
-            Object.DestroyImmediate(go);
+            Object.DestroyImmediate(testGameObject);
         }
     }
 }
