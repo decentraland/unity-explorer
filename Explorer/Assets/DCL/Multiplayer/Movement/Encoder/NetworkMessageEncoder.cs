@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
-                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch)
+                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch, message.eyebrowsExpressionIndex, message.eyesExpressionIndex, message.mouthExpressionIndex)
             };
 
         private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
@@ -88,19 +88,41 @@ namespace DCL.Multiplayer.Movement
                    | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
         }
 
-        private int CompressHeadSyncData(bool yawEnabled, bool pitchEnabled, Vector2 headLookAt)
+        // headSyncData bit layout:
+        //  0- 5: pitch       (HEAD_ROTATION_BITS = 6)
+        //  6-11: yaw         (HEAD_ROTATION_BITS = 6)
+        //    12: pitchEnabled
+        //    13: yawEnabled
+        // 14-17: eyebrows index (4 bits, values 0-15)
+        // 18-21: eyes index     (4 bits, values 0-15)
+        // 22-25: mouth index    (4 bits, values 0-15)
+        // 26-31: unused
+        private const int FACE_EXPRESSION_BITS = 4;
+        private const int FACE_EXPRESSION_MASK = (1 << FACE_EXPRESSION_BITS) - 1;
+        private const int EYEBROWS_START_BIT = 14;
+        private const int EYES_START_BIT = 18;
+        private const int MOUTH_START_BIT = 22;
+
+        private int CompressHeadSyncData(bool yawEnabled, bool pitchEnabled, Vector2 headLookAt,
+            byte eyebrowsIndex, byte eyesIndex, byte mouthIndex)
         {
             int value = 0;
-            if (!yawEnabled && !pitchEnabled) return value;
 
-            const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
-            int yaw = FloatQuantizer.Compress(NormalizeAngle(headLookAt.x), 0, 360, ROTATION_BITS);
-            int pitch = FloatQuantizer.Compress(NormalizeAngle(headLookAt.y), 0, 360, ROTATION_BITS);
+            if (yawEnabled || pitchEnabled)
+            {
+                const int ROTATION_BITS = MessageEncodingSettings.HEAD_ROTATION_BITS;
+                int yaw = FloatQuantizer.Compress(NormalizeAngle(headLookAt.x), 0, 360, ROTATION_BITS);
+                int pitch = FloatQuantizer.Compress(NormalizeAngle(headLookAt.y), 0, 360, ROTATION_BITS);
 
-            value = pitch;
-            value |= yaw << ROTATION_BITS;
-            if (pitchEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS);
-            if (yawEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS + 1);
+                value = pitch;
+                value |= yaw << ROTATION_BITS;
+                if (pitchEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS);
+                if (yawEnabled) value |= 1 << (ROTATION_BITS + ROTATION_BITS + 1);
+            }
+
+            value |= (eyebrowsIndex & FACE_EXPRESSION_MASK) << EYEBROWS_START_BIT;
+            value |= (eyesIndex & FACE_EXPRESSION_MASK) << EYES_START_BIT;
+            value |= (mouthIndex & FACE_EXPRESSION_MASK) << MOUTH_START_BIT;
 
             return value;
         }
@@ -153,6 +175,11 @@ namespace DCL.Multiplayer.Movement
                 headIKYawEnabled = headIKYawEnabled,
                 headIKPitchEnabled = headIKPitchEnabled,
                 headYawAndPitch = headYawAndPitch,
+
+                // Decompressed facial expression data
+                eyebrowsExpressionIndex = (byte)((compressedMessage.headSyncData >> EYEBROWS_START_BIT) & FACE_EXPRESSION_MASK),
+                eyesExpressionIndex = (byte)((compressedMessage.headSyncData >> EYES_START_BIT) & FACE_EXPRESSION_MASK),
+                mouthExpressionIndex = (byte)((compressedMessage.headSyncData >> MOUTH_START_BIT) & FACE_EXPRESSION_MASK),
             };
         }
 

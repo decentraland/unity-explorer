@@ -28,6 +28,10 @@ namespace DCL.Multiplayer.Movement
 
         public byte velocityTier;
 
+        public byte eyebrowsExpressionIndex;
+        public byte eyesExpressionIndex;
+        public byte mouthExpressionIndex;
+
         public override string ToString() =>
             JsonUtility.ToJson(this)!;
 
@@ -49,6 +53,9 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(headIKYawEnabled);
             hashCode.Add(headIKPitchEnabled);
             hashCode.Add(headYawAndPitch);
+            hashCode.Add(eyebrowsExpressionIndex);
+            hashCode.Add(eyesExpressionIndex);
+            hashCode.Add(mouthExpressionIndex);
             return hashCode.ToHashCode();
         }
 
@@ -67,7 +74,10 @@ namespace DCL.Multiplayer.Movement
             && isEmoting == other.isEmoting
             && headIKYawEnabled == other.headIKYawEnabled
             && headIKPitchEnabled == other.headIKPitchEnabled
-            && headYawAndPitch.Equals(other.headYawAndPitch);
+            && headYawAndPitch.Equals(other.headYawAndPitch)
+            && eyebrowsExpressionIndex == other.eyebrowsExpressionIndex
+            && eyesExpressionIndex == other.eyesExpressionIndex
+            && mouthExpressionIndex == other.mouthExpressionIndex;
 
         public override bool Equals(object obj) =>
             obj is NetworkMovementMessage other && Equals(other);

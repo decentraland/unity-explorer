@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Movement.Settings;
@@ -84,6 +85,7 @@ namespace DCL.PluginSystem.Global
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings, debugSettings);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
+            RemoteFacialExpressionSystem.InjectToWorld(ref builder);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings, settings, entityParticipantTable, remoteMetadata);
