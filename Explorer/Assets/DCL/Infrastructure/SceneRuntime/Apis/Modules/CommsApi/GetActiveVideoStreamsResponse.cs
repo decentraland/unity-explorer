@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
@@ -36,7 +37,11 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                     if (!string.IsNullOrEmpty(displayName))
                         return displayName;
                 }
-                catch (JsonException) { }
+                catch (JsonException ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.LIVEKIT,
+                        $"Failed to parse display name from participant metadata for '{participant.Identity}': {ex.Message}");
+                }
             }
 
             return !string.IsNullOrEmpty(participant.Name) ? participant.Name : participant.Identity;
