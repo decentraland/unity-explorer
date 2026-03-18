@@ -2,6 +2,7 @@
   "dependencies": {
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
     "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+    "com.alttester.sdk": "2.3.0",
     "com.arch.systemgroups": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
     "com.atteneder.draco": "4.0.2",
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
@@ -83,11 +84,13 @@
         "com.atteneder.draco",
         "com.madsbangh.easybuttons",
         "com.brunomikoski",
-        "com.mackysoft"
+        "com.mackysoft",
+        "com.alttester.sdk"
       ]
     }
   ],
   "testables": [
-    "org.decentraland.clearscript"
+    "org.decentraland.clearscript",
+    "com.unity.inputsystem"
   ]
 }
