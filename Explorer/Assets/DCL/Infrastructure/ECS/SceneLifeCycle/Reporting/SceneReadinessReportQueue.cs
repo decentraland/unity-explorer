@@ -20,10 +20,8 @@ namespace ECS.SceneLifeCycle.Reporting
 
         public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
         {
-            bool inCache = scenesCache.Contains(parcel);
-
             // Shortcut
-            if (inCache)
+            if (scenesCache.Contains(parcel))
             {
                 // conclude immediately
                 report.SetProgress(1f);

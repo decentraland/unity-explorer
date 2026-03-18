@@ -1,4 +1,4 @@
-using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.Collections.Generic;
 using System.IO;
