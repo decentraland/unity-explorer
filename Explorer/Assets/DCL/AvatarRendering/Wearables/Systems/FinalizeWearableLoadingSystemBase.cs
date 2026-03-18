@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // the destination array might be not created if DTO itself has failed to load
                 ref var result = ref wearable.WearableAssetResults[bs];
                 result.Results ??= new StreamableLoadingResult<AttachmentAssetBase>?[2]; // We need to set failed result for both slots, to handle facial features failure
-                for (var i = 0; i < result.Results.Length; i++)
+                for (int i = 0; i < result.Results.Length; i++)
                     result.Results[i] = failedResult;
             }
         }

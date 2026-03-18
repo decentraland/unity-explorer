@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
@@ -30,7 +31,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
             return resultList;
         }
 
-        public string GetPersistentDataPath() =>
-            Application.persistentDataPath;
+        public string GetPersistentDataPath()
+        {
+            return Application.persistentDataPath;
+        }
     }
 }

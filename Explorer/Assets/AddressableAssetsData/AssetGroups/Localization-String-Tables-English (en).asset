@@ -26,7 +26,7 @@ MonoBehaviour:
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
-    FlaggedDuringContentUpdateRestriction: 0        
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b983fc3744bd749df80bbb972f615bc9
     m_Address: UI Text Localization Table_en
     m_ReadOnly: 1

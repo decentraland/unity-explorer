@@ -1,4 +1,4 @@
-using DCL.Audio;
+﻿using DCL.Audio;
 using DCL.Prefs;
 using System;
 

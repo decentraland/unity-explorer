@@ -6,6 +6,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using UnityEngine;
 using Utility;
@@ -32,8 +33,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly UserWalletAddressElementController walletAddressController;
         private readonly IInputBlock inputBlock;
 
-        private readonly ReactiveProperty<ProfileThumbnailViewModel.WithColor> profileThumbnail =
-            new (ProfileThumbnailViewModel.WithColor.Default());
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> profileThumbnail =
+            new (ProfileThumbnailViewModel.Default());
 
         private CancellationTokenSource? searchCts;
 
@@ -91,7 +92,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
                 view.Title.text = string.Format(TITLE_FORMAT, userNameColorHex, profile.Value.Name);
 
-                profileThumbnail.UpdateValue(profileThumbnail.Value.SetLoading(userNameColor));
+                profileThumbnail.SetLoading(userNameColor);
 
                 string faceUrl = profile.Value.FaceSnapshotUrl;
 
@@ -108,8 +109,8 @@ namespace DCL.Backpack.Gifting.Presenters
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (profileThumbnail.Value.Thumbnail.Sprite != null)
-                    CurrentRecipientAvatarSprite = profileThumbnail.Value.Thumbnail.Sprite;
+                if (profileThumbnail.Value.Sprite != null)
+                    CurrentRecipientAvatarSprite = profileThumbnail.Value.Sprite;
 
                 walletAddressController.Setup(profile.Value);
             }

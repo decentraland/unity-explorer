@@ -2,9 +2,12 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -20,6 +23,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             in FacialFeaturesTextures facialFeatureTexture)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
+
+            CreateMeshData(meshesData, gameObjects);
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
 
@@ -104,7 +109,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects,
-            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture)
+            IAvatarMaterialPoolHandler avatarMaterial, AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facilFeatureTexture)
         {
             var auxVertCounter = 0;
 
@@ -114,7 +119,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 MeshData meshData = gameObjects[i];
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
-                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facialFeatureTexture));
+                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
                 auxVertCounter += currentVertexCount;
 
                 if (avatarShapeComponent.ShowOnlyWearables)
@@ -130,6 +135,53 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             }
 
             return list;
+        }
+
+        private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
+        {
+            for (var i = 0; i < wearables.Count; i++)
+            {
+                CachedAttachment cachedWearable = wearables[i];
+                GameObject instance = cachedWearable.Instance;
+
+                using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
+                {
+                    for (var j = 0; j < pooledList.Value.Count; j++)
+                    {
+                        Renderer meshRenderer = pooledList.Value[j];
+                        if (!meshRenderer.gameObject.activeSelf) continue;
+
+                        if (j < 0 || j >= cachedWearable.OriginalAsset.RendererInfos.Count)
+                        {
+                            ReportHub.LogError(ReportCategory.AVATAR, $"RendererInfos.Count ({pooledList.Value.Count}) is different than pooledList.Value.Count ({pooledList.Value.Count})");
+                            continue;
+                        }
+
+                        Material originalMaterial = cachedWearable.OriginalAsset.RendererInfos[j].Material;
+
+                        if (meshRenderer is SkinnedMeshRenderer renderer)
+                        {
+                            // From Asset Bundle
+                            (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
+
+                            cachedWearable.Renderers.Add(tuple.Item1);
+
+                            targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
+                                originalMaterial));
+                        }
+                        else
+                        {
+                            cachedWearable.Renderers.Add(meshRenderer);
+
+                            // From Pooled Object
+                            targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
+                                originalMaterial));
+                        }
+                    }
+                }
+
+                wearables[i] = cachedWearable;
+            }
         }
 
         private (MeshRenderer, MeshFilter) SetupMesh(SkinnedMeshRenderer skin)
@@ -160,7 +212,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             Vector3 maxCorner = new Vector3(float.MinValue, float.MinValue, float.MinValue);
             Vector3 minCorner = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
-            for (var i = 0; i < meshes.Count; ++i)
+            for (int i = 0; i < meshes.Count; ++i)
             {
                 Bounds meshBounds = meshes[i].Mesh.mesh.bounds;
 
@@ -184,7 +236,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             }
 
             Vector3 size = maxCorner - minCorner;
-            return new Bounds(minCorner + (size * 0.5f), size);
+            return new Bounds(minCorner + size * 0.5f, size);
         }
     }
 }

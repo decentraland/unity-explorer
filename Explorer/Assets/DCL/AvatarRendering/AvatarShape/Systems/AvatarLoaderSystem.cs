@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -70,6 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void CreateMainPlayerAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
+
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
@@ -124,7 +125,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(in Entity _, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             UpdateAvatarFromProfile(ref profile, ref avatarShapeComponent, ref partition);
 
@@ -139,13 +140,14 @@ namespace DCL.AvatarRendering.AvatarShape
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
-        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
-
+        private WearablePromise CreateWearablePromise(Profile profile, PartitionComponent partition)
+        {
             // profile.Avatar.Wearables should be shortened, but since GetWearablesByPointers already retrieves shortened-urns,
-            // there is no need to convert
-            WearablePromise.Create(World,
+            // there is not need to convert
+            return WearablePromise.Create(World,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Wearables, profile.Avatar.ForceRender),
                 partition);
+        }
 
         private void LoadAllEmotes(Profile profile, PartitionComponent partition)
         {

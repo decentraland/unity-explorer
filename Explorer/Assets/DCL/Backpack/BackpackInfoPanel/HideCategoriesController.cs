@@ -42,13 +42,7 @@ namespace DCL.Backpack
 
         public async UniTask InitializeAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            if (view?.HideCategory == null)
-                return;
-
-            var provided = await assetsProvisioner.ProvideMainAssetAsync(view.HideCategory, ct: ct);
-            HideCategoryView? hideCategoryView = provided.Value;
-            if (hideCategoryView == null)
-                return;
+            HideCategoryView hideCategoryView = (await assetsProvisioner.ProvideMainAssetAsync(view.HideCategory, ct: ct)).Value;
 
             hidesPool = new ObjectPool<HideCategoryView>(
                 () => CreateCategoryHide(hideCategoryView),
