@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.MediaStream
             });
 
         private readonly IRoom room;
-        private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
+        private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream, StreamKey key)> audioSources = new ();
         private readonly List<StreamKey> tempStreamKeys = new ();
         private Weak<IVideoStream>? currentVideoStream;
         private PlayerState playerState;
@@ -35,11 +35,11 @@ namespace DCL.SDKComponents.MediaStream
         private Vector3 audioPosition;
 
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
-        private const float EMPTY_AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
+        private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
         private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
-        private float lastEmptyAudioScanTime;
+        private float lastAudioScanTime;
 
         private bool disposed;
 
@@ -70,17 +70,19 @@ namespace DCL.SDKComponents.MediaStream
             {
                 // If a specific user stream died, fallback to current-stream (first available track)
                 if (playingAddress.Value.IsUserStream(out _))
-                {
                     ReopenVideoStream(LivekitAddress.CurrentStream());
-                    return;
-                }
-
-                ReopenVideoStream(playingAddress.Value);
-                return;
+                else
+                    ReopenVideoStream(playingAddress.Value);
+            }
+            else
+            {
+                // Video is alive — try to follow the active speaker (CurrentStream only)
+                TryFollowActiveSpeaker();
             }
 
-            // Video is alive — try to follow the active speaker (CurrentStream only)
-            TryFollowActiveSpeaker();
+            // PBVideoPlayer entities don't have a PBAudioStream component, so EnsureAudioIsPlaying
+            // is never called from UpdateAudioStream for them. Handle audio discovery here.
+            EnsureAudioIsPlaying();
         }
 
         public void EnsureAudioIsPlaying()
@@ -88,38 +90,39 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
-            // Check if any audio stream died — if so, refresh all audio
+            // Remove dead audio sources immediately (no lock needed).
             bool anyDied = false;
 
-            foreach (var (_, stream) in audioSources)
+            for (int i = audioSources.Count - 1; i >= 0; i--)
             {
-                if (!stream.Resource.Has)
+                if (!audioSources[i].stream.Resource.Has)
                 {
                     anyDied = true;
-                    break;
+                    var source = audioSources[i].source;
+
+                    if (source != null)
+                        OBJECT_POOL.Release(source);
+
+                    audioSources.RemoveAt(i);
                 }
             }
 
-            if (!anyDied && audioSources.Count > 0) return;
-
-            // Throttle rescanning when no audio sources exist to avoid per-frame lock acquisition.
-            if (!anyDied && audioSources.Count == 0)
+            // When a stream died, rescan immediately to replace it.
+            // Otherwise, throttle rescans to discover new participants without per-frame lock acquisition.
+            if (!anyDied)
             {
-                if (UnityEngine.Time.realtimeSinceStartup - lastEmptyAudioScanTime < EMPTY_AUDIO_RESCAN_INTERVAL_SECONDS)
+                if (UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
                     return;
-
-                lastEmptyAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
             }
 
-            // Release dead sources and re-collect all audio
-            ReleaseAllAudioSources();
+            lastAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
             OpenAllAudioStreams();
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
         {
             CloseCurrentStream();
-            lastEmptyAudioScanTime = 0f;
+            lastAudioScanTime = 0f;
 
             currentVideoIdentity = null;
 
@@ -164,6 +167,9 @@ namespace DCL.SDKComponents.MediaStream
 
             foreach (StreamKey key in tempStreamKeys)
             {
+                if (HasAudioSourceForKey(key))
+                    continue;
+
                 Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
 
                 if (!audioStream.Resource.Has)
@@ -174,8 +180,16 @@ namespace DCL.SDKComponents.MediaStream
                 source.SetVolume(Volume);
                 source.transform.position = audioPosition;
                 source.Play();
-                audioSources.Add((source, audioStream));
+                audioSources.Add((source, audioStream, key));
             }
+        }
+
+        private bool HasAudioSourceForKey(StreamKey key)
+        {
+            foreach (var (_, _, existingKey) in audioSources)
+                if (existingKey.Equals(key)) return true;
+
+            return false;
         }
 
         private void CollectAllAudioTracks(List<StreamKey> output)
@@ -324,7 +338,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void ReleaseAllAudioSources()
         {
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
             {
                 // Source might already be destroyed when closing the game with a running livekit stream.
                 if (source != null)
@@ -369,7 +383,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             playerState = PlayerState.PLAYING;
 
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
                 source.Play();
         }
 
@@ -378,7 +392,7 @@ namespace DCL.SDKComponents.MediaStream
             playerState = PlayerState.PAUSED;
 
             // There is no "pause" for a streaming source.
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
                 source.Stop();
         }
 
@@ -386,7 +400,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             playerState = PlayerState.STOPPED;
 
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
                 source.Stop();
         }
 
@@ -394,7 +408,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             Volume = target;
 
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
                 source.SetVolume(target);
         }
 
@@ -409,7 +423,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             audioPosition = position;
 
-            foreach (var (source, _) in audioSources)
+            foreach (var (source, _, _) in audioSources)
                 source.transform.position = position;
         }
 
