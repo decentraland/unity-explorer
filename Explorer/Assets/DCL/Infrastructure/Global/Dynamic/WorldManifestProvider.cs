@@ -90,31 +90,38 @@ namespace Global.Dynamic
 
         private async UniTask<WorldManifest> FetchGenesisManifestAsync(DecentralandEnvironment environment, CancellationToken ct)
         {
-            if (cachedMainManifest.HasValue)
-                return cachedMainManifest.Value;
-
-            ProvidedAsset<ParcelData> fallbackParcelData = await assetsProvisioner.ProvideMainAssetAsync(parsedParcels, ct);
-            URLAddress manifestURL = URLAddress.EMPTY;
-
-            if (environment == DecentralandEnvironment.Zone)
-                manifestURL = ZONE_MANIFEST_URL;
-            else
-                manifestURL = ORG_MANIFEST_URL;
-
-            var result = await webRequestController
-                              .GetAsync(new CommonArguments(manifestURL), ct,
-                                   ReportCategory.REALM)
-                              .StoreTextAsync();
-
-            if (!string.IsNullOrEmpty(result))
+            try
             {
+                if (cachedMainManifest.HasValue)
+                    return cachedMainManifest.Value;
+
+                ProvidedAsset<ParcelData> fallbackParcelData = await assetsProvisioner.ProvideMainAssetAsync(parsedParcels, ct);
+
+                URLAddress manifestURL = environment == DecentralandEnvironment.Zone ? ZONE_MANIFEST_URL : ORG_MANIFEST_URL;
+
+                string? result = await webRequestController
+                                      .GetAsync(new CommonArguments(manifestURL), ct,
+                                           ReportCategory.REALM)
+                                      .StoreTextAsync();
+
+                if (string.IsNullOrEmpty(result))
+                    return WorldManifest.Create(fallbackParcelData.Value.ownedParcels, true);
+
                 var settings = new JsonSerializerSettings();
                 WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
                 cachedMainManifest = WorldManifest.Create(dto, true);
                 return cachedMainManifest.Value;
-            }
 
-            return  WorldManifest.Create(fallbackParcelData.Value.ownedParcels, true);
+            }
+            catch (OperationCanceledException)
+            {
+                return WorldManifest.Empty;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"World manifest fetch failed for genesis: {e.Message}");
+                return WorldManifest.Empty;
+            }
         }
     }
 
