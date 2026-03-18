@@ -26,7 +26,7 @@ namespace Global.Dynamic
 
         private static URLAddress ORG_MANIFEST_URL = URLAddress.FromString("https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json");
         private static URLAddress ZONE_MANIFEST_URL = URLAddress.FromString("https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json");
-        private const string mainRealmName = "main";
+        private static readonly string[] MAIN_REALM_NAMES = { "main", "shiva", "hela", "heimdallr", "baldr", "artemis", "loki", "dg", "hephaestus", "unicorn", "marvel", "nftworld" };
         private const string dclWorldName = "dcl.eth";
 
         private WorldManifest? cachedMainManifest;
@@ -45,7 +45,7 @@ namespace Global.Dynamic
         {
             try
             {
-                if(realmName.StartsWith(mainRealmName))
+                if(MAIN_REALM_NAMES.Contains(realmName))
                     return await FetchGenesisManifestAsync(environment, ct);
 
                 if(realmName.EndsWith(dclWorldName))
