@@ -468,7 +468,8 @@ namespace Global.Dynamic
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 queuePoolFullMovementMessage,
-                staticContainer.EntityCollidersGlobalCache
+                staticContainer.EntityCollidersGlobalCache,
+                movementInbox
             );
 
             var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
