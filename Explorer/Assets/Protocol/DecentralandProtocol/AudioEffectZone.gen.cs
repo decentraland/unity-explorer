@@ -26,16 +26,38 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjNkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXVkaW9fZWZmZWN0X3pv",
             "bmUucHJvdG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cxohZGVjZW50",
-            "cmFsYW5kL2NvbW1vbi92ZWN0b3JzLnByb3RvIqsBChFQQkF1ZGlvRWZmZWN0",
+            "cmFsYW5kL2NvbW1vbi92ZWN0b3JzLnByb3RvIr0HChFQQkF1ZGlvRWZmZWN0",
             "Wm9uZRIqCgRhcmVhGAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
             "b3IzEk8KB3NpbGVuY2UYCiABKAsyPC5kZWNlbnRyYWxhbmQuc2RrLmNvbXBv",
-            "bmVudHMuUEJBdWRpb0VmZmVjdFpvbmUuU2lsZW5jZUVmZmVjdEgAGg8KDVNp",
-            "bGVuY2VFZmZlY3RCCAoGZWZmZWN0QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IG",
-            "cHJvdG8z"));
+            "bmVudHMuUEJBdWRpb0VmZmVjdFpvbmUuU2lsZW5jZUVmZmVjdEgAEl0KDGRl",
+            "c3BhdGlhbGl6ZRgLIAEoCzJFLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5QQkF1ZGlvRWZmZWN0Wm9uZS5EZVNwYXRpYWxpemF0aW9uRWZmZWN0SAAS",
+            "VQoHYW1wbGlmeRgMIAEoCzJCLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
+            "cy5QQkF1ZGlvRWZmZWN0Wm9uZS5BbXBsaWZpY2F0aW9uRWZmZWN0SAASTQoG",
+            "cmV2ZXJiGA0gASgLMjsuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBC",
+            "QXVkaW9FZmZlY3Rab25lLlJldmVyYkVmZmVjdEgAEkkKBGVjaG8YDiABKAsy",
+            "OS5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJBdWRpb0VmZmVjdFpv",
+            "bmUuRWNob0VmZmVjdEgAGjkKDVNpbGVuY2VFZmZlY3QSGAoLZXhjbHVkZV9p",
+            "ZHMYASABKAlIAIgBAUIOCgxfZXhjbHVkZV9pZHMaGAoWRGVTcGF0aWFsaXph",
+            "dGlvbkVmZmVjdBqFAQoTQW1wbGlmaWNhdGlvbkVmZmVjdBIeChF2b2x1bWVf",
+            "bXVsdGlwbGllchgBIAEoAkgAiAEBEiAKE2Rpc3RhbmNlX211bHRpcGxpZXIY",
+            "AiABKAJIAYgBAUIUChJfdm9sdW1lX211bHRpcGxpZXJCFgoUX2Rpc3RhbmNl",
+            "X211bHRpcGxpZXIaDAoKRWNob0VmZmVjdBprCgxSZXZlcmJFZmZlY3QSUAoG",
+            "cHJlc2V0GAEgASgOMjsuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBC",
+            "QXVkaW9FZmZlY3Rab25lLlJldmVyYlByZXNldEgAiAEBQgkKB19wcmVzZXQa",
+            "LQoLUGl0Y2hFZmZlY3QSEwoGYW1vdW50GAEgASgCSACIAQFCCQoHX2Ftb3Vu",
+            "dCJKCgxSZXZlcmJQcmVzZXQSCwoHUlBfUk9PTRAAEgwKCFJQX0FSRU5BEAES",
+            "CwoHUlBfQ0FWRRACEhIKDlJQX0FVRElUT1RSSVVNEANCCAoGZWZmZWN0QhSq",
+            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone), global::DCL.ECSComponents.PBAudioEffectZone.Parser, new[]{ "Area", "Silence" }, new[]{ "Effect" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.SilenceEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.SilenceEffect.Parser, null, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone), global::DCL.ECSComponents.PBAudioEffectZone.Parser, new[]{ "Area", "Silence", "Despatialize", "Amplify", "Reverb", "Echo" }, new[]{ "Effect" }, new[]{ typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.SilenceEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.SilenceEffect.Parser, new[]{ "ExcludeIds" }, new[]{ "ExcludeIds" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect.Parser, new[]{ "VolumeMultiplier", "DistanceMultiplier" }, new[]{ "VolumeMultiplier", "DistanceMultiplier" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect.Parser, new[]{ "Preset" }, new[]{ "Preset" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAudioEffectZone.Types.PitchEffect), global::DCL.ECSComponents.PBAudioEffectZone.Types.PitchEffect.Parser, new[]{ "Amount" }, new[]{ "Amount" }, null, null, null)})
           }));
     }
     #endregion
@@ -81,6 +103,18 @@ namespace DCL.ECSComponents {
         case EffectOneofCase.Silence:
           Silence = other.Silence.Clone();
           break;
+        case EffectOneofCase.Despatialize:
+          Despatialize = other.Despatialize.Clone();
+          break;
+        case EffectOneofCase.Amplify:
+          Amplify = other.Amplify.Clone();
+          break;
+        case EffectOneofCase.Reverb:
+          Reverb = other.Reverb.Clone();
+          break;
+        case EffectOneofCase.Echo:
+          Echo = other.Echo.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -119,11 +153,63 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "despatialize" field.</summary>
+    public const int DespatializeFieldNumber = 11;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect Despatialize {
+      get { return effectCase_ == EffectOneofCase.Despatialize ? (global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect) effect_ : null; }
+      set {
+        effect_ = value;
+        effectCase_ = value == null ? EffectOneofCase.None : EffectOneofCase.Despatialize;
+      }
+    }
+
+    /// <summary>Field number for the "amplify" field.</summary>
+    public const int AmplifyFieldNumber = 12;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect Amplify {
+      get { return effectCase_ == EffectOneofCase.Amplify ? (global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect) effect_ : null; }
+      set {
+        effect_ = value;
+        effectCase_ = value == null ? EffectOneofCase.None : EffectOneofCase.Amplify;
+      }
+    }
+
+    /// <summary>Field number for the "reverb" field.</summary>
+    public const int ReverbFieldNumber = 13;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect Reverb {
+      get { return effectCase_ == EffectOneofCase.Reverb ? (global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect) effect_ : null; }
+      set {
+        effect_ = value;
+        effectCase_ = value == null ? EffectOneofCase.None : EffectOneofCase.Reverb;
+      }
+    }
+
+    /// <summary>Field number for the "echo" field.</summary>
+    public const int EchoFieldNumber = 14;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect Echo {
+      get { return effectCase_ == EffectOneofCase.Echo ? (global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect) effect_ : null; }
+      set {
+        effect_ = value;
+        effectCase_ = value == null ? EffectOneofCase.None : EffectOneofCase.Echo;
+      }
+    }
+
     private object effect_;
     /// <summary>Enum of possible cases for the "effect" oneof.</summary>
     public enum EffectOneofCase {
       None = 0,
       Silence = 10,
+      Despatialize = 11,
+      Amplify = 12,
+      Reverb = 13,
+      Echo = 14,
     }
     private EffectOneofCase effectCase_ = EffectOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -156,6 +242,10 @@ namespace DCL.ECSComponents {
       }
       if (!object.Equals(Area, other.Area)) return false;
       if (!object.Equals(Silence, other.Silence)) return false;
+      if (!object.Equals(Despatialize, other.Despatialize)) return false;
+      if (!object.Equals(Amplify, other.Amplify)) return false;
+      if (!object.Equals(Reverb, other.Reverb)) return false;
+      if (!object.Equals(Echo, other.Echo)) return false;
       if (EffectCase != other.EffectCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -166,6 +256,10 @@ namespace DCL.ECSComponents {
       int hash = 1;
       if (area_ != null) hash ^= Area.GetHashCode();
       if (effectCase_ == EffectOneofCase.Silence) hash ^= Silence.GetHashCode();
+      if (effectCase_ == EffectOneofCase.Despatialize) hash ^= Despatialize.GetHashCode();
+      if (effectCase_ == EffectOneofCase.Amplify) hash ^= Amplify.GetHashCode();
+      if (effectCase_ == EffectOneofCase.Reverb) hash ^= Reverb.GetHashCode();
+      if (effectCase_ == EffectOneofCase.Echo) hash ^= Echo.GetHashCode();
       hash ^= (int) effectCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -193,6 +287,22 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(82);
         output.WriteMessage(Silence);
       }
+      if (effectCase_ == EffectOneofCase.Despatialize) {
+        output.WriteRawTag(90);
+        output.WriteMessage(Despatialize);
+      }
+      if (effectCase_ == EffectOneofCase.Amplify) {
+        output.WriteRawTag(98);
+        output.WriteMessage(Amplify);
+      }
+      if (effectCase_ == EffectOneofCase.Reverb) {
+        output.WriteRawTag(106);
+        output.WriteMessage(Reverb);
+      }
+      if (effectCase_ == EffectOneofCase.Echo) {
+        output.WriteRawTag(114);
+        output.WriteMessage(Echo);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -211,6 +321,22 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(82);
         output.WriteMessage(Silence);
       }
+      if (effectCase_ == EffectOneofCase.Despatialize) {
+        output.WriteRawTag(90);
+        output.WriteMessage(Despatialize);
+      }
+      if (effectCase_ == EffectOneofCase.Amplify) {
+        output.WriteRawTag(98);
+        output.WriteMessage(Amplify);
+      }
+      if (effectCase_ == EffectOneofCase.Reverb) {
+        output.WriteRawTag(106);
+        output.WriteMessage(Reverb);
+      }
+      if (effectCase_ == EffectOneofCase.Echo) {
+        output.WriteRawTag(114);
+        output.WriteMessage(Echo);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -226,6 +352,18 @@ namespace DCL.ECSComponents {
       }
       if (effectCase_ == EffectOneofCase.Silence) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Silence);
+      }
+      if (effectCase_ == EffectOneofCase.Despatialize) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Despatialize);
+      }
+      if (effectCase_ == EffectOneofCase.Amplify) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Amplify);
+      }
+      if (effectCase_ == EffectOneofCase.Reverb) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Reverb);
+      }
+      if (effectCase_ == EffectOneofCase.Echo) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Echo);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -251,6 +389,30 @@ namespace DCL.ECSComponents {
             Silence = new global::DCL.ECSComponents.PBAudioEffectZone.Types.SilenceEffect();
           }
           Silence.MergeFrom(other.Silence);
+          break;
+        case EffectOneofCase.Despatialize:
+          if (Despatialize == null) {
+            Despatialize = new global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect();
+          }
+          Despatialize.MergeFrom(other.Despatialize);
+          break;
+        case EffectOneofCase.Amplify:
+          if (Amplify == null) {
+            Amplify = new global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect();
+          }
+          Amplify.MergeFrom(other.Amplify);
+          break;
+        case EffectOneofCase.Reverb:
+          if (Reverb == null) {
+            Reverb = new global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect();
+          }
+          Reverb.MergeFrom(other.Reverb);
+          break;
+        case EffectOneofCase.Echo:
+          if (Echo == null) {
+            Echo = new global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect();
+          }
+          Echo.MergeFrom(other.Echo);
           break;
       }
 
@@ -285,6 +447,42 @@ namespace DCL.ECSComponents {
             Silence = subBuilder;
             break;
           }
+          case 90: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect();
+            if (effectCase_ == EffectOneofCase.Despatialize) {
+              subBuilder.MergeFrom(Despatialize);
+            }
+            input.ReadMessage(subBuilder);
+            Despatialize = subBuilder;
+            break;
+          }
+          case 98: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect();
+            if (effectCase_ == EffectOneofCase.Amplify) {
+              subBuilder.MergeFrom(Amplify);
+            }
+            input.ReadMessage(subBuilder);
+            Amplify = subBuilder;
+            break;
+          }
+          case 106: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect();
+            if (effectCase_ == EffectOneofCase.Reverb) {
+              subBuilder.MergeFrom(Reverb);
+            }
+            input.ReadMessage(subBuilder);
+            Reverb = subBuilder;
+            break;
+          }
+          case 114: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect();
+            if (effectCase_ == EffectOneofCase.Echo) {
+              subBuilder.MergeFrom(Echo);
+            }
+            input.ReadMessage(subBuilder);
+            Echo = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -316,6 +514,42 @@ namespace DCL.ECSComponents {
             Silence = subBuilder;
             break;
           }
+          case 90: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.DeSpatializationEffect();
+            if (effectCase_ == EffectOneofCase.Despatialize) {
+              subBuilder.MergeFrom(Despatialize);
+            }
+            input.ReadMessage(subBuilder);
+            Despatialize = subBuilder;
+            break;
+          }
+          case 98: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.AmplificationEffect();
+            if (effectCase_ == EffectOneofCase.Amplify) {
+              subBuilder.MergeFrom(Amplify);
+            }
+            input.ReadMessage(subBuilder);
+            Amplify = subBuilder;
+            break;
+          }
+          case 106: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbEffect();
+            if (effectCase_ == EffectOneofCase.Reverb) {
+              subBuilder.MergeFrom(Reverb);
+            }
+            input.ReadMessage(subBuilder);
+            Reverb = subBuilder;
+            break;
+          }
+          case 114: {
+            global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect subBuilder = new global::DCL.ECSComponents.PBAudioEffectZone.Types.EchoEffect();
+            if (effectCase_ == EffectOneofCase.Echo) {
+              subBuilder.MergeFrom(Echo);
+            }
+            input.ReadMessage(subBuilder);
+            Echo = subBuilder;
+            break;
+          }
         }
       }
     }
@@ -326,6 +560,16 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static partial class Types {
+      public enum ReverbPreset {
+        [pbr::OriginalName("RP_ROOM")] RpRoom = 0,
+        [pbr::OriginalName("RP_ARENA")] RpArena = 1,
+        [pbr::OriginalName("RP_CAVE")] RpCave = 2,
+        [pbr::OriginalName("RP_AUDITOTRIUM")] RpAuditotrium = 3,
+      }
+
+      /// <summary>
+      /// All audio sources will be muted while Listener is in zone.
+      /// </summary>
       public sealed partial class SilenceEffect : pb::IMessage<SilenceEffect>
       #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           , pb::IBufferMessage
@@ -360,6 +604,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public SilenceEffect(SilenceEffect other) : this() {
+          excludeIds_ = other.excludeIds_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -367,6 +612,30 @@ namespace DCL.ECSComponents {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public SilenceEffect Clone() {
           return new SilenceEffect(this);
+        }
+
+        /// <summary>Field number for the "exclude_ids" field.</summary>
+        public const int ExcludeIdsFieldNumber = 1;
+        private string excludeIds_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public string ExcludeIds {
+          get { return excludeIds_ ?? ""; }
+          set {
+            excludeIds_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+        /// <summary>Gets whether the "exclude_ids" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasExcludeIds {
+          get { return excludeIds_ != null; }
+        }
+        /// <summary>Clears the value of the "exclude_ids" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearExcludeIds() {
+          excludeIds_ = null;
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -378,6 +647,182 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool Equals(SilenceEffect other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (ExcludeIds != other.ExcludeIds) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasExcludeIds) hash ^= ExcludeIds.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasExcludeIds) {
+            output.WriteRawTag(10);
+            output.WriteString(ExcludeIds);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasExcludeIds) {
+            output.WriteRawTag(10);
+            output.WriteString(ExcludeIds);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasExcludeIds) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(ExcludeIds);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(SilenceEffect other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasExcludeIds) {
+            ExcludeIds = other.ExcludeIds;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                ExcludeIds = input.ReadString();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                ExcludeIds = input.ReadString();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class DeSpatializationEffect : pb::IMessage<DeSpatializationEffect>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<DeSpatializationEffect> _parser = new pb::MessageParser<DeSpatializationEffect>(() => new DeSpatializationEffect());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<DeSpatializationEffect> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAudioEffectZone.Descriptor.NestedTypes[1]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeSpatializationEffect() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeSpatializationEffect(DeSpatializationEffect other) : this() {
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeSpatializationEffect Clone() {
+          return new DeSpatializationEffect(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as DeSpatializationEffect);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(DeSpatializationEffect other) {
           if (ReferenceEquals(other, null)) {
             return false;
           }
@@ -437,7 +882,7 @@ namespace DCL.ECSComponents {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void MergeFrom(SilenceEffect other) {
+        public void MergeFrom(DeSpatializationEffect other) {
           if (other == null) {
             return;
           }
@@ -471,6 +916,829 @@ namespace DCL.ECSComponents {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class AmplificationEffect : pb::IMessage<AmplificationEffect>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<AmplificationEffect> _parser = new pb::MessageParser<AmplificationEffect>(() => new AmplificationEffect());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<AmplificationEffect> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAudioEffectZone.Descriptor.NestedTypes[2]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AmplificationEffect() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AmplificationEffect(AmplificationEffect other) : this() {
+          _hasBits0 = other._hasBits0;
+          volumeMultiplier_ = other.volumeMultiplier_;
+          distanceMultiplier_ = other.distanceMultiplier_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AmplificationEffect Clone() {
+          return new AmplificationEffect(this);
+        }
+
+        /// <summary>Field number for the "volume_multiplier" field.</summary>
+        public const int VolumeMultiplierFieldNumber = 1;
+        private float volumeMultiplier_;
+        /// <summary>
+        /// default 2.0
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float VolumeMultiplier {
+          get { if ((_hasBits0 & 1) != 0) { return volumeMultiplier_; } else { return 0F; } }
+          set {
+            _hasBits0 |= 1;
+            volumeMultiplier_ = value;
+          }
+        }
+        /// <summary>Gets whether the "volume_multiplier" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasVolumeMultiplier {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "volume_multiplier" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearVolumeMultiplier() {
+          _hasBits0 &= ~1;
+        }
+
+        /// <summary>Field number for the "distance_multiplier" field.</summary>
+        public const int DistanceMultiplierFieldNumber = 2;
+        private float distanceMultiplier_;
+        /// <summary>
+        /// default 2.0
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float DistanceMultiplier {
+          get { if ((_hasBits0 & 2) != 0) { return distanceMultiplier_; } else { return 0F; } }
+          set {
+            _hasBits0 |= 2;
+            distanceMultiplier_ = value;
+          }
+        }
+        /// <summary>Gets whether the "distance_multiplier" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasDistanceMultiplier {
+          get { return (_hasBits0 & 2) != 0; }
+        }
+        /// <summary>Clears the value of the "distance_multiplier" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearDistanceMultiplier() {
+          _hasBits0 &= ~2;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as AmplificationEffect);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(AmplificationEffect other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(VolumeMultiplier, other.VolumeMultiplier)) return false;
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(DistanceMultiplier, other.DistanceMultiplier)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasVolumeMultiplier) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(VolumeMultiplier);
+          if (HasDistanceMultiplier) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(DistanceMultiplier);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasVolumeMultiplier) {
+            output.WriteRawTag(13);
+            output.WriteFloat(VolumeMultiplier);
+          }
+          if (HasDistanceMultiplier) {
+            output.WriteRawTag(21);
+            output.WriteFloat(DistanceMultiplier);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasVolumeMultiplier) {
+            output.WriteRawTag(13);
+            output.WriteFloat(VolumeMultiplier);
+          }
+          if (HasDistanceMultiplier) {
+            output.WriteRawTag(21);
+            output.WriteFloat(DistanceMultiplier);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasVolumeMultiplier) {
+            size += 1 + 4;
+          }
+          if (HasDistanceMultiplier) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(AmplificationEffect other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasVolumeMultiplier) {
+            VolumeMultiplier = other.VolumeMultiplier;
+          }
+          if (other.HasDistanceMultiplier) {
+            DistanceMultiplier = other.DistanceMultiplier;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                VolumeMultiplier = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                DistanceMultiplier = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                VolumeMultiplier = input.ReadFloat();
+                break;
+              }
+              case 21: {
+                DistanceMultiplier = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class EchoEffect : pb::IMessage<EchoEffect>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<EchoEffect> _parser = new pb::MessageParser<EchoEffect>(() => new EchoEffect());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<EchoEffect> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAudioEffectZone.Descriptor.NestedTypes[3]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EchoEffect() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EchoEffect(EchoEffect other) : this() {
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public EchoEffect Clone() {
+          return new EchoEffect(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as EchoEffect);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(EchoEffect other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(EchoEffect other) {
+          if (other == null) {
+            return;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class ReverbEffect : pb::IMessage<ReverbEffect>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<ReverbEffect> _parser = new pb::MessageParser<ReverbEffect>(() => new ReverbEffect());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<ReverbEffect> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAudioEffectZone.Descriptor.NestedTypes[4]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ReverbEffect() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ReverbEffect(ReverbEffect other) : this() {
+          _hasBits0 = other._hasBits0;
+          preset_ = other.preset_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ReverbEffect Clone() {
+          return new ReverbEffect(this);
+        }
+
+        /// <summary>Field number for the "preset" field.</summary>
+        public const int PresetFieldNumber = 1;
+        private global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset preset_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset Preset {
+          get { if ((_hasBits0 & 1) != 0) { return preset_; } else { return global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset.RpRoom; } }
+          set {
+            _hasBits0 |= 1;
+            preset_ = value;
+          }
+        }
+        /// <summary>Gets whether the "preset" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasPreset {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "preset" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearPreset() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as ReverbEffect);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(ReverbEffect other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (Preset != other.Preset) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasPreset) hash ^= Preset.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasPreset) {
+            output.WriteRawTag(8);
+            output.WriteEnum((int) Preset);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasPreset) {
+            output.WriteRawTag(8);
+            output.WriteEnum((int) Preset);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasPreset) {
+            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Preset);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(ReverbEffect other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasPreset) {
+            Preset = other.Preset;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 8: {
+                Preset = (global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset) input.ReadEnum();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 8: {
+                Preset = (global::DCL.ECSComponents.PBAudioEffectZone.Types.ReverbPreset) input.ReadEnum();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class PitchEffect : pb::IMessage<PitchEffect>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<PitchEffect> _parser = new pb::MessageParser<PitchEffect>(() => new PitchEffect());
+        private pb::UnknownFieldSet _unknownFields;
+        private int _hasBits0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<PitchEffect> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBAudioEffectZone.Descriptor.NestedTypes[5]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public PitchEffect() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public PitchEffect(PitchEffect other) : this() {
+          _hasBits0 = other._hasBits0;
+          amount_ = other.amount_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public PitchEffect Clone() {
+          return new PitchEffect(this);
+        }
+
+        /// <summary>Field number for the "amount" field.</summary>
+        public const int AmountFieldNumber = 1;
+        private float amount_;
+        /// <summary>
+        /// default 2.0
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Amount {
+          get { if ((_hasBits0 & 1) != 0) { return amount_; } else { return 0F; } }
+          set {
+            _hasBits0 |= 1;
+            amount_ = value;
+          }
+        }
+        /// <summary>Gets whether the "amount" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasAmount {
+          get { return (_hasBits0 & 1) != 0; }
+        }
+        /// <summary>Clears the value of the "amount" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearAmount() {
+          _hasBits0 &= ~1;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as PitchEffect);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(PitchEffect other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Amount, other.Amount)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (HasAmount) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Amount);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (HasAmount) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Amount);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (HasAmount) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Amount);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (HasAmount) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(PitchEffect other) {
+          if (other == null) {
+            return;
+          }
+          if (other.HasAmount) {
+            Amount = other.Amount;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                Amount = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                Amount = input.ReadFloat();
+                break;
+              }
             }
           }
         }
