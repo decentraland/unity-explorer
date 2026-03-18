@@ -136,9 +136,6 @@ namespace DCL.Landscape
 
         private static (int2 min,int2 max) CalculateMinMaxParcels(NativeHashSet<int2> ownedParcels)
         {
-            if (ownedParcels.IsEmpty)
-                return (int2.zero, int2.zero);
-
             var minParcel = new int2(int.MaxValue, int.MaxValue);
             var maxParcel = new int2(int.MinValue, int.MinValue);
 
