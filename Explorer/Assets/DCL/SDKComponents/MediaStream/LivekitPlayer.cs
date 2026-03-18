@@ -34,9 +34,12 @@ namespace DCL.SDKComponents.MediaStream
         private LivekitAddress? playingAddress;
         private Vector3 audioPosition;
 
+        private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
+        private const float EMPTY_AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
+
         private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
-        private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
+        private float lastEmptyAudioScanTime;
 
         private bool disposed;
 
@@ -68,11 +71,11 @@ namespace DCL.SDKComponents.MediaStream
                 // If a specific user stream died, fallback to current-stream (first available track)
                 if (playingAddress.Value.IsUserStream(out _))
                 {
-                    OpenMedia(LivekitAddress.CurrentStream());
+                    ReopenVideoStream(LivekitAddress.CurrentStream());
                     return;
                 }
 
-                OpenMedia(playingAddress.Value);
+                ReopenVideoStream(playingAddress.Value);
                 return;
             }
 
@@ -99,6 +102,15 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!anyDied && audioSources.Count > 0) return;
 
+            // Throttle rescanning when no audio sources exist to avoid per-frame lock acquisition.
+            if (!anyDied && audioSources.Count == 0)
+            {
+                if (UnityEngine.Time.realtimeSinceStartup - lastEmptyAudioScanTime < EMPTY_AUDIO_RESCAN_INTERVAL_SECONDS)
+                    return;
+
+                lastEmptyAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
+            }
+
             // Release dead sources and re-collect all audio
             ReleaseAllAudioSources();
             OpenAllAudioStreams();
@@ -107,6 +119,7 @@ namespace DCL.SDKComponents.MediaStream
         public void OpenMedia(LivekitAddress livekitAddress)
         {
             CloseCurrentStream();
+            lastEmptyAudioScanTime = 0f;
 
             currentVideoIdentity = null;
 
@@ -123,6 +136,24 @@ namespace DCL.SDKComponents.MediaStream
             OpenAllAudioStreams();
 
             playerState = PlayerState.PLAYING;
+            playingAddress = livekitAddress;
+            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
+        }
+
+        private void ReopenVideoStream(LivekitAddress livekitAddress)
+        {
+            currentVideoIdentity = null;
+
+            currentVideoStream = livekitAddress.Match(
+                this,
+                onUserStream: static (self, userStream) =>
+                {
+                    self.currentVideoIdentity = userStream.Identity;
+                    return self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
+                },
+                onCurrentStream: static self => self.FirstVideoTrackingIdentity()
+            );
+
             playingAddress = livekitAddress;
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
