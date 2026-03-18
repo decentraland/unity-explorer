@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -37,6 +38,7 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void ApplyPointAtIK(
             [Data] float dt,
             in HandPointAtComponent handPointAtComponent,

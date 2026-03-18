@@ -48,7 +48,7 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         private const float DRAG_THRESHOLD_SQR = 5f * 5f;
-        private const float AVATAR_MAX_DISTANCE_SQR = 1.5f * 1.5f;
+        private const float AVATAR_MAX_DISTANCE_SQR = 2f * 2f;
         private static readonly int RAYCAST_LAYER_MASK = PhysicsLayers.CHARACTER_ONLY_MASK | (1 << PhysicsLayers.OTHER_AVATARS_LAYER);
 
         private readonly DCLInput dclInput;
@@ -139,14 +139,14 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
 
+            bool needRaycastFallback = true;
             // Did we hit anything with a collider?
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
             {
-                var remoteCollider = hit.collider.gameObject.GetComponent<RemoteAvatarCollider>();
-                if (remoteCollider != null)
+                if (hit.collider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
                 {
                     // If we hit a remote avatar, the user must be far from us (1.5m away) otherwise we interrupt the pointing action to avoid "weird" interactions
-                    if ((remoteCollider.transform.position - avatarBase.transform.position).sqrMagnitude <= AVATAR_MAX_DISTANCE_SQR)
+                    if ((hit.point - avatarBase.transform.position).sqrMagnitude <= AVATAR_MAX_DISTANCE_SQR)
                     {
                         result.ForceInterrupt = true;
                         return result;
@@ -159,12 +159,15 @@ namespace DCL.Character.CharacterMotion.Systems
                     ray = new Ray(shoulderPos, dirFromShoulder);
                 }
                 else
+                {
                     // Random scenery -> hit point is valid
                     result.HitPoint = hit.point;
+                    needRaycastFallback = false;
+                }
             }
 
             // Fallback: If we didn't hit anything with a collider (either a mesh without one or the actual sky), we just hit the far clipping plane
-            if (result.HitPoint == Vector3.zero)
+            if (needRaycastFallback)
             {
                 Camera cam = cameraComponent.Camera;
 
@@ -177,8 +180,9 @@ namespace DCL.Character.CharacterMotion.Systems
                     result.HitPoint = ray.GetPoint(enter);
             }
 
+#if UNITY_EDITOR
             Debug.DrawLine(ray.origin, result.HitPoint, Color.red);
-
+#endif
             return result;
         }
 

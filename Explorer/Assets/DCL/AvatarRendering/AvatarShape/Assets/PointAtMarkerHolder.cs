@@ -110,6 +110,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         {
             lastProfileId = null;
             SpriteRenderer.sprite = null;
+            fadeCts?.SafeCancelAndDispose();
         }
 
         private static Vector4 ComputeUVRect(Sprite sprite)
