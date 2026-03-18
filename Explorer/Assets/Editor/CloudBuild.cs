@@ -1,3 +1,5 @@
+using AltTester.AltTesterSDK.Driver;
+using AltTester.AltTesterUnitySDK.Editor;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using JetBrains.Annotations;
 using System;
@@ -59,6 +61,17 @@ namespace Editor
             else
             {
                 Debug.Log($"[INSTALL_SOURCE]: write key not found");
+            }
+
+            if (Parameters.TryGetValue("ALTTESTER_BUILD", out object altTesterBuild)
+                && (altTesterBuild as string) == "true")
+            {
+                Debug.Log("[ALTTESTER]: Instrumenting build with AltTester");
+                AltBuilder.AddAltTesterInScriptingDefineSymbolsGroup(BuildTargetGroup.Standalone);
+                AltBuilder.CreateJsonFileForInputMappingOfAxis();
+                var instrumentationSettings = new AltInstrumentationSettings();
+                AltBuilder.InsertAltInScene("Assets/Scenes/Main.unity", instrumentationSettings);
+                Debug.Log("[ALTTESTER]: Build instrumented successfully");
             }
 
         }
