@@ -17,20 +17,21 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/Atlas Config")]
     public class ChatReactionsAtlasConfig : ScriptableObject
     {
-        [field: Tooltip("The emoji sprite sheet. Must be readable (Read/Write enabled in import settings).")]
+        [field: Note("The emoji sprite sheet texture. Must have Read/Write enabled in import settings.")]
         [field: SerializeField] public Texture2D Atlas { get; private set; }
 
-        [field: Min(1)]
-        [field: Tooltip("Side length of a single emoji tile in the atlas (pixels).")]
+        [field: Note("Side length of one emoji tile in the atlas (pixels). " +
+                     "Cols and Rows are derived from atlas dimensions / tile size.")]
+        [field: Range(8, 128)]
         [field: SerializeField] public int TileSizePx { get; private set; } = 32;
 
-        [field: Tooltip("Flip atlas rows so row 0 is at the bottom of the texture. " +
-                        "Enable when your texture importer has 'Flip Green Channel' or stores rows top-to-bottom.")]
+        [field: Note("Flip atlas rows so row 0 is at the bottom. " +
+                     "Enable when the texture stores rows top-to-bottom (most PNG exports do).")]
         [field: SerializeField] public bool FlipY { get; private set; } = true;
 
         [field: Header("Unicode Mapping")]
-        [field: Tooltip("TMP Sprite Asset used by the emoji panel. Required for mapping Unicode emoji " +
-                        "to atlas tile indices when adding reactions from the emoji panel.")]
+        [field: Note("TMP Sprite Asset used by the emoji panel. Maps Unicode codepoints to atlas tile indices. " +
+                     "Use context menu 'Log All Unicode → Tile Mappings' to inspect.")]
         [field: SerializeField] public TMP_SpriteAsset SpriteAsset { get; private set; }
 
         public int Cols => Atlas != null ? Mathf.Max(1, Atlas.width / TileSizePx) : 1;

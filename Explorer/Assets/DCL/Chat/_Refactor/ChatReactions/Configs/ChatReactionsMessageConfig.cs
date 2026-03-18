@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
@@ -11,49 +12,47 @@ namespace DCL.Chat.ChatReactions.Configs
     public class ChatReactionsMessageConfig : ScriptableObject
     {
         [field: Header("Picker")]
-        [field: Tooltip("Atlas tile indices of the emojis available in the reaction picker. " +
-                        "Must be the same length as ReactionPickerIcons.")]
+        [field: Note("NOT YET WIRED UP — atlas tile indices for the reaction picker. " +
+                     "Must match ReactionPickerIcons length.")]
         [field: SerializeField] public int[] AvailableEmojiIndices { get; private set; } = System.Array.Empty<int>();
 
-        [field: Tooltip("Sprite icons shown in the reaction picker UI, one per available emoji. " +
-                        "Must be the same length as AvailableEmojiIndices.")]
+        [field: Note("NOT YET WIRED UP — sprite icons for the reaction picker, one per emoji.")]
         [field: SerializeField] public Sprite[] ReactionPickerIcons { get; private set; } = System.Array.Empty<Sprite>();
 
         [field: Header("Situational Shortcuts Bar")]
-        [field: Tooltip("Unicode codepoints of the fixed emojis always shown in the shortcuts bar. " +
-                        "These are converted to atlas tile indices at runtime via ChatReactionsAtlasConfig.")]
+        [field: Note("Unicode codepoints of the fixed emojis in the shortcuts bar. " +
+                     "Resolved to atlas tile indices at init via ChatReactionsAtlasConfig.")]
         [field: SerializeField] public uint[] FixedDefaultEmojiUnicodes { get; private set; } = System.Array.Empty<uint>();
 
-        [field: Min(1)]
-        [field: Tooltip("Maximum number of recently-used emoji slots shown after the divider in the shortcuts bar.")]
+        [field: Note("How many recently-used emoji slots appear after the divider in the shortcuts bar.")]
+        [field: Range(1, 10)]
         [field: SerializeField] public int MaxRecentEmojis { get; private set; } = 3;
 
         [field: Header("Behaviour")]
-        [field: Min(1)]
-        [field: Tooltip("Maximum number of distinct reaction types displayed on a single message.")]
+        [field: Note("NOT YET WIRED UP — max distinct reaction types shown on a single message.")]
+        [field: Range(1, 20)]
         [field: SerializeField] public int MaxReactionTypesPerMessage { get; private set; } = 6;
 
-        [field: Min(0f)]
-        [field: Tooltip("Seconds to wait after the last reaction toggle before sending an update to the network. " +
-                        "Prevents flooding the backend with rapid taps.")]
+        [field: Note("NOT YET WIRED UP — debounce delay (seconds) before sending reaction updates to the network. " +
+                     "Prevents flooding the backend with rapid taps.")]
+        [field: Range(0f, 2f)]
         [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0.5f;
 
         [field: Header("Animations")]
-        [field: Min(0f)]
-        [field: Tooltip("Duration of the reaction bubble appear animation (seconds).")]
+        [field: Note("NOT YET WIRED UP — reaction bubble appear animation duration (seconds).")]
+        [field: Range(0f, 1f)]
         [field: SerializeField] public float AppearDuration { get; private set; } = 0.15f;
 
-        [field: Min(0f)]
-        [field: Tooltip("Duration of the reaction bubble disappear animation (seconds).")]
+        [field: Note("NOT YET WIRED UP — reaction bubble disappear animation duration (seconds).")]
+        [field: Range(0f, 1f)]
         [field: SerializeField] public float DisappearDuration { get; private set; } = 0.1f;
 
-        [field: Min(0f)]
-        [field: Tooltip("Duration of the bounce/pop animation played when a reaction count increments (seconds).")]
+        [field: Note("NOT YET WIRED UP — bounce/pop animation when a reaction count increments (seconds).")]
+        [field: Range(0f, 1f)]
         [field: SerializeField] public float CountIncrementBounceDuration { get; private set; } = 0.12f;
 
         [field: Header("Emoji Panel Positioning")]
-        [field: Tooltip("World-space offset applied to the anchor position when opening the emoji panel " +
-                        "from a message reaction button.")]
+        [field: Note("Screen-space offset applied when opening the emoji panel from a message reaction button.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 100f);
     }
 }

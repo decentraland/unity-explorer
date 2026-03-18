@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
@@ -12,15 +13,16 @@ namespace DCL.Chat.ChatReactions.Configs
     public class ChatReactionsConfig : ScriptableObject
     {
         [field: Header("Shared")]
-        [field: Tooltip("Atlas descriptor. The controller reads this at init and applies the texture " +
-                        "and tile layout to the material — overwriting any values baked into the material asset.")]
+        [field: Note("INIT-ONLY — atlas descriptor. Texture and tile layout are applied to the material at init, " +
+                     "overwriting any values baked into the material asset.")]
         [field: SerializeField] public ChatReactionsAtlasConfig Atlas { get; private set; }
 
-        [field: Tooltip("GPU-instanced unlit material. Per-frame properties (GlobalAlpha) are always " +
-                        "pushed via MaterialPropertyBlock — the material itself is never mutated at runtime.")]
+        [field: Note("INIT-ONLY — GPU-instanced unlit material cloned at init. " +
+                     "The source material is never mutated at runtime.")]
         [field: SerializeField] public Material EmojiMaterial { get; private set; }
 
         [field: Header("Lanes")]
+        [field: Note("Per-lane tuning ScriptableObjects. Click to expand each sub-config.")]
         [field: SerializeField] public ChatReactionsUILaneConfig UILane { get; private set; }
         [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; private set; }
 
@@ -28,35 +30,36 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; private set; }
 
         [Header("Debug — Networking")]
-        [Tooltip("Use mock reaction simulation instead of LiveKit. " +
-                 "Nearby avatars will appear to send random reactions without a real connection.")]
+        [Note("Use mock reaction simulation instead of LiveKit. " +
+              "Nearby avatars will appear to send random reactions without a real connection.")]
         public bool MockEnabled;
 
-        [Tooltip("Echo your own reactions back to yourself for testing without a second client.")]
+        [Note("Echo your own reactions back to yourself for testing without a second client.")]
         public bool SelfSendEnabled;
 
         [Header("Debug — Streaming")]
-        [Tooltip("Enable Inspector-driven debug toggles and live stats. Disable in production.")]
+        [Note("Master toggle — enables Inspector-driven debug toggles and live stats below. " +
+              "Disable in production.")]
         public bool DebugEnabled;
 
-        [Tooltip("Continuously stream UI particles from the lane bottom.")]
+        [Note("Continuously stream UI particles from the lane bottom.")]
         public bool StreamUILane;
 
-        [Tooltip("Continuously stream world particles above the local player's head.")]
+        [Note("Continuously stream world particles above the local player's head.")]
         public bool StreamLocalPlayer;
 
-        [Tooltip("Continuously spawn random reactions above all nearby remote avatars.")]
+        [Note("Continuously spawn random reactions above all nearby remote avatars.")]
         public bool StreamRemotePlayers;
 
         [Header("Debug Stats (read-only at runtime)")]
-        [SerializeField] private int uiAliveCount;
-        [SerializeField] private int uiPoolCapacity;
-        [SerializeField] private int worldAliveCount;
-        [SerializeField] private int worldPoolCapacity;
-        [SerializeField] private int nearbyAvatarCount;
-        [SerializeField] private bool isUIStreaming;
-        [SerializeField] private bool isWorldStreaming;
-        [SerializeField] private bool isDebugNearbyActive;
+        [ShowOnly] [SerializeField] private int uiAliveCount;
+        [ShowOnly] [SerializeField] private int uiPoolCapacity;
+        [ShowOnly] [SerializeField] private int worldAliveCount;
+        [ShowOnly] [SerializeField] private int worldPoolCapacity;
+        [ShowOnly] [SerializeField] private int nearbyAvatarCount;
+        [ShowOnly] [SerializeField] private bool isUIStreaming;
+        [ShowOnly] [SerializeField] private bool isWorldStreaming;
+        [ShowOnly] [SerializeField] private bool isDebugNearbyActive;
 
         /// <summary>Called by the presenter each frame to push live data into the config for Inspector display.</summary>
         public void UpdateStats(int uiAlive, int uiCapacity,
