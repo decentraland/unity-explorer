@@ -110,7 +110,7 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    if (creationHelper.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.UNINITIALIZED
+                    if (creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
                         && creationHelper.InitialSceneStateLOD.ParentContainer != null)
                     {
                         if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
@@ -163,10 +163,12 @@ namespace DCL.LOD.Systems
             InitialSceneStateLOD = initialSceneStateLOD;
             AssetHash = assetHash;
             IndexToCreate = indexToCreate;
+            Generation = initialSceneStateLOD.Generation;
         }
 
-        public InitialSceneStateLOD InitialSceneStateLOD { get;  }
-        public string AssetHash { get;  }
+        public InitialSceneStateLOD InitialSceneStateLOD { get; }
+        public string AssetHash { get; }
         public int IndexToCreate { get; }
+        public int Generation { get; }
     }
 }
