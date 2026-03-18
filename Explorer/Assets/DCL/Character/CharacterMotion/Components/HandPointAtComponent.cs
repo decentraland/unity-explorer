@@ -14,12 +14,20 @@ namespace DCL.Character.CharacterMotion.Components
         public bool RotationCompleted;
         public float RotationAnimationWeight;
         public Vector3 PreviousLookDirection;
+        public bool ForceStop;
+        public bool StoppedEmote;
 
         private float duration;
 
         public void RefreshDuration(float newDuration)
         {
             duration = newDuration;
+        }
+
+        public void ForceStopAction()
+        {
+            RefreshDuration(0f);
+            ForceStop = true;
         }
 
         public void TickDuration(float deltaTime)

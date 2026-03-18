@@ -16,6 +16,7 @@ using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Entities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -28,6 +29,7 @@ namespace DCL.Character.CharacterMotion.Systems
         private struct CursorInfo
         {
             public bool isPressed;
+            public bool isFreshPress;
             public Vector2 pointerPos;
         }
 
@@ -74,8 +76,9 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             bool isPressed = dclInput.Player.PointAt.IsPressed();
             Vector2 pointerPos = dclInput.UI.Point.ReadValue<Vector2>();
+            bool isFreshPress = isPressed && !handPointAtComponent.WasPressed;
 
-            if (isPressed && !handPointAtComponent.WasPressed)
+            if (isFreshPress)
             {
                 handPointAtComponent.PressOrigin = pointerPos;
                 handPointAtComponent.IsDragging = false;
@@ -101,8 +104,17 @@ namespace DCL.Character.CharacterMotion.Systems
 
             handPointAtComponent.WasPressed = isPressed;
 
+            if (handPointAtComponent.ForceStop)
+            {
+                isPressed = false;
+
+                if (!dclInput.Player.PointAt.IsPressed())
+                    handPointAtComponent.ForceStop = false;
+            }
+
             return new CursorInfo {
                 isPressed = isPressed,
+                isFreshPress = isFreshPress,
                 pointerPos = pointerPos
             };
         }
@@ -113,8 +125,8 @@ namespace DCL.Character.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent,
             ref HandPointAtComponent handPointAtComponent)
         {
-            if (emoteComponent.IsPlayingEmote)
-                handPointAtComponent.RefreshDuration(0f);
+            if (emoteComponent.IsPlayingEmote && handPointAtComponent is { StoppedEmote: false, IsPointing: true })
+                handPointAtComponent.ForceStopAction();
         }
 
         private HitInfo PerformRaycast(
@@ -170,6 +182,22 @@ namespace DCL.Character.CharacterMotion.Systems
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void TryStopEmote(ref HandPointAtComponent handPointAtComponent,
+            ref CharacterEmoteComponent emoteComponent,
+            CursorInfo cursorInfo)
+        {
+            if (cursorInfo.isFreshPress && emoteComponent.IsPlayingEmote)
+            {
+                emoteComponent.StopEmote = true;
+                handPointAtComponent.ForceStop = false;
+                handPointAtComponent.StoppedEmote = true;
+            }
+
+            if (handPointAtComponent.StoppedEmote && !emoteComponent.IsPlayingEmote)
+                handPointAtComponent.StoppedEmote = false;
+        }
+
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
@@ -196,6 +224,8 @@ namespace DCL.Character.CharacterMotion.Systems
 
             var cursorInfo = HandleCursorLogic(ref handPointAtComponent);
 
+            TryStopEmote(ref handPointAtComponent, ref emoteComponent, cursorInfo);
+
             if (!canPointAt || !cursorInfo.isPressed)
                 return;
 
@@ -203,16 +233,12 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (hitInfo.ForceInterrupt)
             {
-                handPointAtComponent.RefreshDuration(0f);
+                handPointAtComponent.ForceStopAction();
                 return;
             }
 
             handPointAtComponent.WorldHitPoint = hitInfo.HitPoint;
             handPointAtComponent.IsPointing = true;
-
-            if (emoteComponent.IsPlayingEmote)
-                emoteComponent.StopEmote = true;
-
             handPointAtComponent.RefreshDuration(settings.PointAtDuration);
         }
 
