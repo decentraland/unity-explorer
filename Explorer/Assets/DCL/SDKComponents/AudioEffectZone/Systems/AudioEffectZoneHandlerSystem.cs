@@ -42,6 +42,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
             UpdateSilenceZoneQuery(World!);
             UpdateAmplifyZoneQuery(World!);
             UpdateReverbZoneQuery(World!);
+            UpdateEchoZoneQuery(World!);
 
             SetupAudioEffectZoneQuery(World!);
         }
@@ -201,6 +202,47 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
             if (proximityMixerGroup == null) return;
 
             proximityMixerGroup.audioMixer.SetFloat(REVERB_ROOM_PARAM, REVERB_OFF_ROOM);
+        }
+
+        [Query]
+        [All(typeof(TransformComponent), typeof(EchoZoneComponent))]
+        private void UpdateEchoZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
+            if (pbAudioEffectZone.IsDirty)
+            {
+                pbAudioEffectZone.IsDirty = false;
+                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
+            }
+
+            if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
+            {
+                RemoveEchoFilterFromListener();
+                triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            }
+            else if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
+            {
+                AddEchoFilterToListener();
+                triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            }
+        }
+
+        private static void AddEchoFilterToListener()
+        {
+            AudioListener listener = Object.FindAnyObjectByType<AudioListener>();
+            if (listener == null || listener.GetComponent<AudioEchoFilter>() != null) return;
+
+            listener.gameObject.AddComponent<AudioEchoFilter>();
+        }
+
+        private static void RemoveEchoFilterFromListener()
+        {
+            AudioListener listener = Object.FindAnyObjectByType<AudioListener>();
+            if (listener == null) return;
+
+            AudioEchoFilter echoFilter = listener.GetComponent<AudioEchoFilter>();
+
+            if (echoFilter != null)
+                Object.Destroy(echoFilter);
         }
 
         [Query]
