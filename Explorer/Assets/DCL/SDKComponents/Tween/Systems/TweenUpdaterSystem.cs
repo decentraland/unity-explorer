@@ -35,8 +35,12 @@ namespace DCL.SDKComponents.Tween
             this.sceneStateProvider = sceneStateProvider;
         }
 
+        // Per-frame cache set at the start of Update — not persistent state
+        private bool isCurrentScene;
+
         protected override void Update(float t)
         {
+            isCurrentScene = sceneStateProvider.IsCurrent;
             UpdatePBTweenQuery(World);
             UpdateTweenTransformQuery(World);
             UpdateTweenTextureQuery(World);
@@ -45,13 +49,13 @@ namespace DCL.SDKComponents.Tween
         [Query]
         private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
-            TweenSDKComponentHelper.UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent, tweenerPool, ecsToCRDTWriter, sceneStateProvider);
+            TweenSDKComponentHelper.UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
 
         [Query]
         private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
-            TweenSDKComponentHelper.UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent, tweenerPool, ecsToCRDTWriter, sceneStateProvider);
+            TweenSDKComponentHelper.UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
 
         [Query]
