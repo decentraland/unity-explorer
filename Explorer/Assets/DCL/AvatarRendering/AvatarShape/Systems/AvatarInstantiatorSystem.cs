@@ -119,10 +119,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarTransform.ResetLocalTRS();
 
-            var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
+            var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
 
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, boneArray.Count);
+            (AvatarCustomSkinningComponent skinningComponent, BoneArray finalBoneArray) =
+                InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(finalBoneArray);
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
 
@@ -172,13 +174,18 @@ namespace DCL.AvatarRendering.AvatarShape
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
-            // Override by ref
-            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, avatarTransformMatrixComponent.bones.Count);
+            // Re-derive base bone array and extend with spring bones from new wearables
+            var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
+
+            BoneArray finalBoneArray;
+            (skinningComponent, finalBoneArray) = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+
+            avatarTransformMatrixComponent.bones = finalBoneArray;
         }
 
-        private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
+        private (AvatarCustomSkinningComponent skinning, BoneArray finalBones) InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
             in WearablesLoadResult wearablesResult,
-            AvatarBase avatarBase, int boneCount)
+            AvatarBase avatarBase, BoneArray baseBoneArray)
         {
             GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
@@ -226,8 +233,13 @@ namespace DCL.AvatarRendering.AvatarShape
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
+            // Collect spring bone transforms from wearable SMRs before Initialize destroys them
+            Transform[] springBones = ComputeShaderSkinning.CollectSpringBones(avatarShapeComponent.InstantiatedWearables);
+            ReparentSpringBonesToAvatarSkeleton(avatarShapeComponent.InstantiatedWearables, baseBoneArray);
+            BoneArray finalBoneArray = BoneArray.WithAppendedBones(baseBoneArray, springBones, GetReportCategory());
+
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTextures, boneCount);
+                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTextures, finalBoneArray.Count);
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -246,10 +258,48 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarShapeComponent.IsDirty = false;
 
-            return skinningComponent;
+            return (skinningComponent, finalBoneArray);
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+
+        /// <summary>
+        ///     Reparents spring bone chain roots from the wearable hierarchy to the avatar skeleton
+        ///     so they follow animation. Only chain roots (spring bones whose parent is a skeleton bone
+        ///     like Neck) are reparented — chain children follow automatically as transform children.
+        ///     Uses worldPositionStays:false to preserve the local offset for correct bind-pose alignment.
+        /// </summary>
+        private static void ReparentSpringBonesToAvatarSkeleton(IList<CachedAttachment> wearables, BoneArray baseBoneArray)
+        {
+            Transform[] avatarBones = baseBoneArray.Inner;
+            Dictionary<string, Transform> bonesByName = DictionaryPool<string, Transform>.Get();
+
+            for (var i = 0; i < avatarBones.Length; i++)
+            {
+                Transform bone = avatarBones[i];
+
+                if (bone != null)
+                    bonesByName.TryAdd(bone.name, bone);
+            }
+
+            for (var w = 0; w < wearables.Count; w++)
+            {
+                SpringBoneData[] springBones = wearables[w].SpringBones;
+
+                for (var i = 0; i < springBones.Length; i++)
+                {
+                    if (!springBones[i].IsChainRoot)
+                        continue;
+
+                    if (bonesByName.TryGetValue(springBones[i].SkeletonParentName, out Transform targetBone))
+                        springBones[i].Transform.SetParent(targetBone, false);
+                    else
+                        ReportHub.LogWarning(ReportCategory.AVATAR, $"Spring bone '{springBones[i].Transform.name}' could not find avatar skeleton bone '{springBones[i].SkeletonParentName}', leaving in wearable hierarchy");
+                }
+            }
+
+            DictionaryPool<string, Transform>.Release(bonesByName);
+        }
     }
 }

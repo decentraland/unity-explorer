@@ -74,17 +74,66 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
         }
 
-        public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, int boneCount)
+        public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, int boneCount, int springBoneOffset = 0)
         {
             List<Matrix4x4> bindPosesList = MATRIX4X4_POOL.Get();
             mesh.GetBindposes(bindPosesList);
-            NativeArray<Matrix4x4>.Copy(UnsafeUtility.As<List<Matrix4x4>, ListPrivateFieldAccess<Matrix4x4>>(ref bindPosesList)._items, 0, bindPosesMatrix, boneCount * skinnedMeshCounter, boneCount);
+
+            int bindPoseCount = bindPosesList.Count;
+            int destOffset = boneCount * skinnedMeshCounter;
+            Matrix4x4[] bindPosesItems = UnsafeUtility.As<List<Matrix4x4>, ListPrivateFieldAccess<Matrix4x4>>(ref bindPosesList)._items;
+
+            // Initialize all slots to identity, then overwrite with actual bind poses.
+            // Spring bone bind poses are placed at the offset position to match the offset BoneWeight indices,
+            // since the compute shader uses the same index for both g_mBones[idx] and g_BindPoses[baseIndex+idx].
+            for (int i = 0; i < boneCount; i++)
+                bindPosesMatrix[destOffset + i] = Matrix4x4.identity;
+
+            // Copy base skeleton bind poses (indices 0..BASE_BONE_COUNT-1) as-is
+            int baseCopyCount = Math.Min(bindPoseCount, ComputeShaderConstants.BASE_BONE_COUNT);
+            NativeArray<Matrix4x4>.Copy(bindPosesItems, 0, bindPosesMatrix, destOffset, baseCopyCount);
+
+            // Copy spring bone bind poses to the offset position so they align with the offset BoneWeight indices
+            int springBindPoseStart = ComputeShaderConstants.BASE_BONE_COUNT;
+
+            if (bindPoseCount > springBindPoseStart)
+            {
+                int springBindPoseCount = bindPoseCount - springBindPoseStart;
+                int springDestIndex = destOffset + springBindPoseStart + springBoneOffset;
+
+                int maxCopy = boneCount - (springBindPoseStart + springBoneOffset);
+
+                if (maxCopy > 0)
+                {
+                    int copyCount = Math.Min(springBindPoseCount, maxCopy);
+                    NativeArray<Matrix4x4>.Copy(bindPosesItems, springBindPoseStart, bindPosesMatrix, springDestIndex, copyCount);
+                }
+            }
+
             MATRIX4X4_POOL.Release(bindPosesList);
 
             List<BoneWeight> boneWeightPool = BONE_WEIGHT_POOL.Get();
             mesh.GetBoneWeights(boneWeightPool);
             NativeArray<BoneWeight>.Copy(UnsafeUtility.As<List<BoneWeight>, ListPrivateFieldAccess<BoneWeight>>(ref boneWeightPool)._items, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
             BONE_WEIGHT_POOL.Release(boneWeightPool);
+
+            // Offset spring bone indices so each wearable's spring bones map to the correct
+            // slot in the global bone matrix buffer (g_mBones). Without this, multiple wearables
+            // with spring bones would all reference the same bone indices (starting at BASE_BONE_COUNT).
+            if (springBoneOffset > 0)
+            {
+                for (int i = 0; i < currentMeshVertexCount; i++)
+                {
+                    BoneWeight bw = totalSkinIn[vertexCounter + i];
+
+                    if (bw.boneIndex0 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex0 += springBoneOffset;
+                    if (bw.boneIndex1 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex1 += springBoneOffset;
+                    if (bw.boneIndex2 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex2 += springBoneOffset;
+                    if (bw.boneIndex3 >= ComputeShaderConstants.BASE_BONE_COUNT) bw.boneIndex3 += springBoneOffset;
+
+                    totalSkinIn[vertexCounter + i] = bw;
+                }
+            }
 
             List<Vector3> verticesPool = VECTOR3_POOL.Get();
             mesh.GetVertices(verticesPool);

@@ -9,19 +9,41 @@ namespace DCL.AvatarRendering.Loading.Assets
     /// <summary>
     ///     We need to store the original asset to be able to release it later
     /// </summary>
+    /// <summary>
+    ///     Per-spring-bone data. Chain roots have a non-null <see cref="SkeletonParentName"/> identifying
+    ///     the avatar skeleton bone they attach to (e.g. "Neck"). Chain children have null — they follow
+    ///     their parent spring bone automatically.
+    /// </summary>
+    public readonly struct SpringBoneData
+    {
+        public readonly Transform Transform;
+        public readonly string SkeletonParentName;
+
+        public SpringBoneData(Transform transform, string skeletonParentName)
+        {
+            Transform = transform;
+            SkeletonParentName = skeletonParentName;
+        }
+
+        public bool IsChainRoot => SkeletonParentName != null;
+    }
+
     public readonly struct CachedAttachment : IDisposable
     {
         public readonly AttachmentRegularAsset OriginalAsset;
         public readonly GameObject Instance;
         public readonly List<Renderer> Renderers;
         public readonly bool OutlineCompatible;
+        public readonly SpringBoneData[] SpringBones;
 
-        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible)
+        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible,
+            SpringBoneData[] springBones = null)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
             Renderers = new List<Renderer>();
             OutlineCompatible = outlineCompatible;
+            SpringBones = springBones ?? Array.Empty<SpringBoneData>();
 
             ProfilingCounters.CachedWearablesAmount.Value++;
         }

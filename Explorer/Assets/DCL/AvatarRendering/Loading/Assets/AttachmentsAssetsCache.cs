@@ -92,6 +92,17 @@ namespace DCL.AvatarRendering.Loading.Assets
             // This logic should not be executed if the application is quitting
             if (!UnityObjectUtils.IsQuitting)
             {
+                // Reparent spring bone chain roots back to wearable root so they travel with the cached instance.
+                // Only roots need reparenting — chain children follow automatically.
+                Transform wearableRoot = cachedAttachment.Instance.transform;
+                SpringBoneData[] springBones = cachedAttachment.SpringBones;
+
+                for (var i = 0; i < springBones.Length; i++)
+                {
+                    if (springBones[i].IsChainRoot && springBones[i].Transform != null)
+                        springBones[i].Transform.SetParent(wearableRoot, false);
+                }
+
                 cachedAttachment.Instance.SetActive(false);
 
                 foreach (Renderer renderer in cachedAttachment.Renderers)

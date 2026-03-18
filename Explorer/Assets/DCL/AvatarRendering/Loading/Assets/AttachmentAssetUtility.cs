@@ -1,7 +1,10 @@
 ﻿using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Loading.Assets
 {
@@ -30,10 +33,11 @@ namespace DCL.AvatarRendering.Loading.Assets
                 for (var i = 0; i < meshRenderers.Value.Count; i++)
                     Object.DestroyImmediate(meshRenderers.Value[i].gameObject);
 
-                // Remove unused bone GameObjects from the wearable hierarchies as we don't need them anymore
+                // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
                 RemoveBonesGameObjects(instantiatedWearable.transform);
 
-                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
+                SpringBoneData[] springBones = CollectSpringBonesFromSMRs(instantiatedWearable);
+                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
             }
 
             cachedWearable.Instance.transform.ResetLocalTRS();
@@ -55,8 +59,6 @@ namespace DCL.AvatarRendering.Loading.Assets
             return cachedWearable;
         }
 
-        // TODO: Spring bones — this method destroys all children without a Renderer, which would delete spring bone transforms.
-        // Before spring bones can work, preserve transforms that are spring bone nodes
         private static void RemoveBonesGameObjects(Transform wearableRoot)
         {
             using PoolExtensions.Scope<List<Renderer>> pooledList =
@@ -69,7 +71,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 Transform child = wearableRoot.GetChild(i);
 
-                if (!HasRendererInHierarchy(child))
+                if (!HasRendererInHierarchy(child) && !HasSpringBoneInHierarchy(child))
                     Object.Destroy(child.gameObject);
             }
         }
@@ -86,6 +88,64 @@ namespace DCL.AvatarRendering.Loading.Assets
             }
 
             return false;
+        }
+
+        private static bool HasSpringBoneInHierarchy(Transform transform)
+        {
+            if (transform.name.Contains("springbone", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (HasSpringBoneInHierarchy(transform.GetChild(i)))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Collects spring bone transforms from all SMRs in the wearable.
+        ///     Each entry stores the transform and, for chain roots, the parent skeleton bone name.
+        ///     A chain root is a spring bone whose parent is NOT another spring bone (e.g. parented to Neck).
+        ///     Only chain roots need reparenting during avatar assembly — chain children follow automatically.
+        /// </summary>
+        private static SpringBoneData[] CollectSpringBonesFromSMRs(GameObject wearableRoot)
+        {
+            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> smrs =
+                wearableRoot.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true);
+
+            if (smrs.Value.Count == 0)
+                return Array.Empty<SpringBoneData>();
+
+            HashSet<Transform> seen = HashSetPool<Transform>.Get();
+            List<SpringBoneData> result = ListPool<SpringBoneData>.Get();
+
+            for (var i = 0; i < smrs.Value.Count; i++)
+            {
+                Transform[] bones = smrs.Value[i].bones;
+
+                for (var j = 0; j < bones.Length; j++)
+                {
+                    Transform t = bones[j];
+
+                    if (t != null
+                        && t.name.Contains("springbone", StringComparison.OrdinalIgnoreCase)
+                        && seen.Add(t))
+                    {
+                        Transform parent = t.parent;
+                        bool isChainRoot = parent != null && !parent.name.Contains("springbone", StringComparison.OrdinalIgnoreCase);
+                        result.Add(new SpringBoneData(t, isChainRoot ? parent.name : null));
+                    }
+                }
+            }
+
+            SpringBoneData[] output = result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
+
+            HashSetPool<Transform>.Release(seen);
+            ListPool<SpringBoneData>.Release(result);
+
+            return output;
         }
     }
 }

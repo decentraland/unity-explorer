@@ -115,5 +115,27 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             for (int i = 0; i < ComputeShaderConstants.BASE_BONE_COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
             return new BoneArray(inner);
         }
+
+        public static BoneArray WithAppendedBones(BoneArray baseArray, Transform[] extraBones, ReportData reportData)
+        {
+            if (extraBones.Length == 0)
+                return baseArray;
+
+            int totalCount = baseArray.Count + extraBones.Length;
+
+            if (totalCount > ComputeShaderConstants.MAX_BONE_COUNT)
+            {
+                ReportHub.LogWarning(reportData, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {totalCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
+                totalCount = ComputeShaderConstants.MAX_BONE_COUNT;
+            }
+
+            var combined = new Transform[totalCount];
+            Array.Copy(baseArray.Inner, 0, combined, 0, baseArray.Count);
+
+            int extraCount = totalCount - baseArray.Count;
+            Array.Copy(extraBones, 0, combined, baseArray.Count, extraCount);
+
+            return new BoneArray(combined);
+        }
     }
 }

@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer, boneCount, meshData.SpringBoneOffset);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
@@ -82,12 +82,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount)
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer, int boneCount, int springBoneOffset)
         {
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
 
-            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount);
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter, boneCount, springBoneOffset);
         }
 
         private (int vertCount, int totalBoneBufferCount) SetupCounters(IReadOnlyList<MeshData> meshesData, int boneCount)
@@ -137,8 +137,43 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return list;
         }
 
+        /// <summary>
+        /// Aggregates pre-collected spring bone transforms from all cached wearables.
+        /// Spring bones are collected in SMR.bones order during InstantiateWearable to ensure
+        /// bone indices match the mesh's BoneWeight references.
+        /// </summary>
+        public static Transform[] CollectSpringBones(IList<CachedAttachment> wearables)
+        {
+            int totalCount = 0;
+
+            for (var i = 0; i < wearables.Count; i++)
+                totalCount += wearables[i].SpringBones.Length;
+
+            if (totalCount == 0)
+                return Array.Empty<Transform>();
+
+            var result = new Transform[totalCount];
+            int offset = 0;
+
+            for (var i = 0; i < wearables.Count; i++)
+            {
+                SpringBoneData[] bones = wearables[i].SpringBones;
+
+                for (var j = 0; j < bones.Length; j++)
+                    result[offset + j] = bones[j].Transform;
+
+                offset += bones.Length;
+            }
+
+            return result;
+        }
+
         private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
         {
+            // Track cumulative spring bone count so each wearable's BoneWeight indices
+            // can be offset to the correct slot in the global bone matrix buffer.
+            var springBoneOffset = 0;
+
             for (var i = 0; i < wearables.Count; i++)
             {
                 CachedAttachment cachedWearable = wearables[i];
@@ -167,7 +202,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             cachedWearable.Renderers.Add(tuple.Item1);
 
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                originalMaterial));
+                                originalMaterial, springBoneOffset));
                         }
                         else
                         {
@@ -175,11 +210,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                originalMaterial));
+                                originalMaterial, springBoneOffset));
                         }
                     }
                 }
 
+                springBoneOffset += cachedWearable.SpringBones.Length;
                 wearables[i] = cachedWearable;
             }
         }
