@@ -67,13 +67,25 @@ namespace Global.Dynamic
 
         private async Task<WorldManifest> FetchNonGenesisManifestAsync(URLDomain assetBundleRegistry, string worldURL, CancellationToken ct)
         {
-            var result = await webRequestController
-                              .GetAsync(new CommonArguments(assetBundleRegistry.Append(URLPath.FromString($"worlds/{worldURL}/manifest"))), ct,
-                                   ReportCategory.REALM)
-                              .StoreTextAsync();
+            try
+            {
+                var result = await webRequestController
+                                  .GetAsync(new CommonArguments(assetBundleRegistry.Append(URLPath.FromString($"worlds/{worldURL}/manifest"))), ct,
+                                       ReportCategory.REALM)
+                                  .StoreTextAsync();
 
-            WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result);
-            return WorldManifest.Create(dto);
+                WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result);
+                return WorldManifest.Create(dto);
+            }
+            catch (OperationCanceledException)
+            {
+                return WorldManifest.Empty;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM, $"World manifest fetch failed for '{worldURL}': {e.Message}");
+                return WorldManifest.Empty;
+            }
         }
 
         private async UniTask<WorldManifest> FetchGenesisManifestAsync(DecentralandEnvironment environment, CancellationToken ct)
