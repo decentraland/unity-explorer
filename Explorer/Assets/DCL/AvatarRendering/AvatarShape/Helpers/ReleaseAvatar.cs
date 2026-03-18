@@ -13,12 +13,13 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool,
             in AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            AvatarTransformMatrixJobWrapper jobWrapper)
+            AvatarTransformMatrixJobWrapper jobWrapper, bool releaseFromPipeline = true)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
             skinningComponent.Dispose(avatarMaterialPoolHandler, computeShaderSkinningPool);
 
-            jobWrapper.ReleaseAvatar(ref avatarTransformMatrixComponent);
+            if (releaseFromPipeline)
+                jobWrapper.ReleaseAvatar(ref avatarTransformMatrixComponent);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
             {

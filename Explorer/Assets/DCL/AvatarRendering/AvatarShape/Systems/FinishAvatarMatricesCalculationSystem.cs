@@ -17,22 +17,19 @@ namespace DCL.AvatarRendering.AvatarShape
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
-        private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
         private NativeArray<float4x4> remoteResult;
         private NativeArray<float4x4> mainPlayerResult;
 
-        internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
-            AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
+        internal FinishAvatarMatricesCalculationSystem(World world, AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
         {
-            this.skinningStrategy = skinningStrategy;
             this.jobWrapper = jobWrapper;
         }
 
         protected override void Update(float t)
         {
             jobWrapper.CompleteBoneMatrixCalculations();
-            remoteResult = jobWrapper.job.BonesMatricesResult;
+            remoteResult = jobWrapper.RemoteAvatarsBonesResult;
 
             if (jobWrapper.HasMainPlayer)
                 mainPlayerResult = jobWrapper.MainPlayerBonesResult;
