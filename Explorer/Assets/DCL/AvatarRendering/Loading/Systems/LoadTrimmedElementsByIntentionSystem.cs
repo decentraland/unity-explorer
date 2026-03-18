@@ -19,7 +19,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
@@ -98,8 +97,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
             StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            try
-            {
             await realmData.WaitConfiguredAsync();
 
             var url = BuildUrlFromIntention(in intention);
@@ -149,13 +146,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 }
             }
 
-            var result = AssetFromPreparedIntention(in intention);
-            return new StreamableLoadingResult<TAsset>(result);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
 
         private async UniTask<AssetBundlesVersions> GetABVersionsAsync(IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>> lambdaResponse, CancellationToken ct)
@@ -214,12 +205,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             // Run the asset bundle fallback check in parallel
             if (assetBundlesVersions.versions.TryGetValue(elementDTO.Metadata.id, out var wearableVersions))
-            {
-                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(
-                    wearableVersions.mac.version, wearableVersions.mac.buildDate,
-                    wearableVersions.windows.version, wearableVersions.windows.buildDate,
-                    wearableVersions.webgl.version, wearableVersions.webgl.buildDate);
-            }
+                wearable.TrimmedDTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
             else
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, wearable.TrimmedDTO, partition, ct);
 

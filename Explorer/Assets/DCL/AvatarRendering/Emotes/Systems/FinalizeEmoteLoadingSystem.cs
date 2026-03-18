@@ -166,7 +166,7 @@ namespace DCL.AvatarRendering.Emotes
         private void ConsumeAndDisposeFinishedEmotePromise(in Entity entity, ref EmotePromise promise)
         {
             // The result is added into the emote storage at FinalizeEmoteDTO already, no need to do anything else
-            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> _)) return;
+            if (!promise.SafeTryConsume(World, GetReportData(), out StreamableLoadingResult<EmotesResolution> result)) return;
 
             promise.LoadingIntention.Dispose();
 

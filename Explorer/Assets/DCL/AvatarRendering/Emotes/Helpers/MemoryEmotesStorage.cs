@@ -1,8 +1,10 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using DCL.AvatarRendering.Wearables.Registry;
 using Utility.Multithreading;

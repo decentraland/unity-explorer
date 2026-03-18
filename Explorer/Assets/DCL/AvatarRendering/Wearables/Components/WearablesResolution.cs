@@ -14,13 +14,13 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// <summary>
         ///     This list is calculated on wearables resolution and it's used on avatar instantiation, poolable
         /// </summary>
-        public readonly HashSet<string>? HiddenCategories;
+        public readonly HashSet<string> HiddenCategories;
         /// <summary>
         ///     Poolable collection of result wearables
         /// </summary>
         public readonly List<IWearable> Wearables;
 
-        public WearablesResolution(List<IWearable> wearables, HashSet<string>? hiddenCategories = null)
+        public WearablesResolution(List<IWearable> wearables, HashSet<string> hiddenCategories = null)
         {
             HiddenCategories = hiddenCategories;
             Wearables = wearables;

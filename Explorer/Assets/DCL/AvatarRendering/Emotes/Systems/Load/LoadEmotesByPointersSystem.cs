@@ -17,9 +17,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
@@ -67,18 +65,6 @@ namespace DCL.AvatarRendering.Emotes.Load
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesByPointers([Data] float dt, in Entity entity,
-            ref GetEmotesByPointersIntention intention,
-            ref IPartitionComponent partitionComponent)
-        {
-            try
-            {
-                GetEmotesByPointersInternal(dt, entity, ref intention, ref partitionComponent);
-            }
-            catch (NullReferenceException ex)
-            { }
-        }
-
-        private void GetEmotesByPointersInternal(float dt, in Entity entity,
             ref GetEmotesByPointersIntention intention,
             ref IPartitionComponent partitionComponent)
         {
