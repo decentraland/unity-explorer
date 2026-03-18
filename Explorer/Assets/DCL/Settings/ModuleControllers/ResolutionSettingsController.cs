@@ -21,7 +21,6 @@ namespace DCL.Settings.ModuleControllers
         public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController, IAppArgs appParameters)
         {
             // Random change
-            breaking change
             this.view = view;
             this.upscalingController = upscalingController;
             this.appParameters = appParameters;
