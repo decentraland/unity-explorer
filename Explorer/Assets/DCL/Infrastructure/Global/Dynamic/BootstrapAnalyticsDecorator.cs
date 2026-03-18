@@ -68,7 +68,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "1 - static container loaded" },
+                { STAGE_KEY, "2 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
@@ -123,7 +123,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "2 - feature flag initialized" },
+                { STAGE_KEY, "1 - feature flag initialized" },
             });
         }
 

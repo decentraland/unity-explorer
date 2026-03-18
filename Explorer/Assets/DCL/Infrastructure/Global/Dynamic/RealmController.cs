@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -8,8 +8,10 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -50,6 +52,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
@@ -86,6 +89,7 @@ namespace Global.Dynamic
         }
 
         public RealmController(
+            IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
@@ -103,6 +107,7 @@ namespace Global.Dynamic
             WorldManifestProvider worldManifestProvider,
             IWorldPermissionsService worldPermissionsService)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
@@ -138,13 +143,9 @@ namespace Global.Dynamic
                 serverAbout.Clear();
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-                // Unity JsonParser sometimes NREs on WebGL
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Newtonsoft);
-#else
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-#endif
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
+
                 string hostname = ResolveHostname(realm, result);
 
                 float? skyboxFixedHour = result.configurations.skybox is { fixedHour: >= 0 }

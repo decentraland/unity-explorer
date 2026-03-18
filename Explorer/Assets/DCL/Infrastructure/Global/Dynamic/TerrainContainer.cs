@@ -25,11 +25,7 @@ namespace Global.Dynamic
                 debugBuilder, mapRendererContainer.TextureContainer, landscapeEnabled,
                 (Landscape)Landscape);
 
-        public static TerrainContainer Create(
-                StaticContainer staticContainer,
-                RealmContainer realmContainer,
-                bool enableLandscape,
-                bool localSceneDevelopemnt)
+        public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
         {
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();

@@ -51,10 +51,11 @@ namespace Global.Dynamic.Landscapes
 
                 if (!genesisTerrain.IsTerrainGenerated)
                     await genesisTerrain.GenerateGenesisTerrainAndShowAsync(
+                        realmController.RealmData.WorldManifest,
                         processReport: landscapeLoadReport,
                         cancellationToken: ct);
                 else
-                    await genesisTerrain.ShowAsync(landscapeLoadReport);
+                    await genesisTerrain.ShowAsync(landscapeLoadReport, ct);
             }
             else
             {
@@ -107,7 +108,7 @@ namespace Global.Dynamic.Landscapes
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
-                worldsTerrain.GenerateTerrain(parcels.AsReadOnly(), landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
 
@@ -118,7 +119,7 @@ namespace Global.Dynamic.Landscapes
 
             if (!worldManifest.IsEmpty)
             {
-                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels().AsReadOnly(), landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
                 return;
             }
 
@@ -137,7 +138,7 @@ namespace Global.Dynamic.Landscapes
                         parcels.Add(parcel.ToInt2());
                 }
 
-                worldsTerrain.GenerateTerrain(parcels.AsReadOnly(), landscapeLoadReport);
+                worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
         }
     }

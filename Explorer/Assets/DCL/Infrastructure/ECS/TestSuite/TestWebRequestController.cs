@@ -2,7 +2,6 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
-using DCL.Utility.Types;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;

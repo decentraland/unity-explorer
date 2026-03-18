@@ -14,7 +14,6 @@ namespace Global.AppArgs
     public class ApplicationParametersParser : IAppArgs
     {
         private const string WORLD_QUERY_PARAM = "world";
-        private const string GENESIS_SCENE_QUERY_PARAM = "genesisScene";
 
         private readonly Dictionary<string, string> appParameters = new ();
 
@@ -51,16 +50,17 @@ namespace Global.AppArgs
             if (appParameters.ContainsKey(AppArgsFlags.REALM))
                 return;
 
+            string? currentUrl = Application.absoluteURL;
+            if (string.IsNullOrEmpty(currentUrl))
+                return;
+
+            if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
+                return;
+
+            NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+
             try
             {
-                string? currentUrl = Application.absoluteURL;
-                if (string.IsNullOrEmpty(currentUrl))
-                    return;
-
-                if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
-                    return;
-
-                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
                 string? world = query[WORLD_QUERY_PARAM];
                 if (!string.IsNullOrEmpty(world))
                 {
@@ -77,20 +77,12 @@ namespace Global.AppArgs
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.STARTUP,$"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
             }
 
             try
             {
-                string? currentUrl = Application.absoluteURL;
-                if (string.IsNullOrEmpty(currentUrl))
-                    return;
-
-                if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
-                    return;
-
-                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
-                string? genesisScene = query[GENESIS_SCENE_QUERY_PARAM];
+                string? genesisScene = query[AppArgsFlags.GENESIS_SCENE];
                 if (string.IsNullOrEmpty(genesisScene))
                     return;
 
@@ -105,7 +97,7 @@ namespace Global.AppArgs
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.STARTUP,$"[WebGL] Failed to parse URL query for '{GENESIS_SCENE_QUERY_PARAM}': {e.Message}");
+                ReportHub.LogWarning(ReportCategory.STARTUP, $"[WebGL] Failed to parse URL query for '{AppArgsFlags.GENESIS_SCENE}': {e.Message}");
             }
         }
 #endif

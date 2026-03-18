@@ -1,11 +1,10 @@
-using System;
+﻿using System;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using DCL.ECSComponents;
-using DCL.Infrastructure.Global;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -15,7 +14,6 @@ using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
 using SceneRunner.Scene;
-using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
@@ -66,12 +64,10 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
                 var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
-
                 component = new GltfContainerComponent(
                     sdkComponent.GetVisibleMeshesCollisionMask(),
                     sdkComponent.GetInvisibleMeshesCollisionMask(),
                     promise);
-
                 component.State = LoadingState.Loading;
                 World.Add(entity, component);
             }
@@ -117,7 +113,6 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 // if promise was unsuccessful nothing to do
                 StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result!.Value;
-
                 if (!result.Succeeded)
                     return;
 

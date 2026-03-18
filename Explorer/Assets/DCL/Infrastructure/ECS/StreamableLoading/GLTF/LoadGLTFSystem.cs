@@ -1,6 +1,3 @@
-// GLTF is not supported at the moment
-#if !UNITY_WEBGL
-
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -11,13 +8,13 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using GLTFast;
 using GLTFast.Materials;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using ECS.StreamableLoading.GLTF.DownloadProvider;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -31,19 +28,15 @@ namespace ECS.StreamableLoading.GLTF
         private readonly bool patchTexturesFormat;
         private readonly bool importFilesByHash;
         private readonly bool isLocalSceneDevelopment;
-#if !UNITY_WEBGL
         private readonly IGltFastDownloadStrategy downloadStrategy;
-#endif
 
-        internal LoadGLTFSystem(
-                World world,
-                IStreamableCache<GLTFData, GetGLTFIntention> cache,
-                IWebRequestController webRequestController,
-                bool patchTexturesFormat,
-                bool importFilesByHash,
-                bool isLocalSceneDevelopment,
-                IGltFastDownloadStrategy downloadStrategy
-            ) : base(world, cache)
+        internal LoadGLTFSystem(World world,
+            IStreamableCache<GLTFData, GetGLTFIntention> cache,
+            IWebRequestController webRequestController,
+            bool patchTexturesFormat,
+            bool importFilesByHash,
+            bool isLocalSceneDevelopment,
+            IGltFastDownloadStrategy downloadStrategy) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.patchTexturesFormat = patchTexturesFormat;
@@ -200,5 +193,3 @@ namespace ECS.StreamableLoading.GLTF
         }
     }
 }
-
-#endif
