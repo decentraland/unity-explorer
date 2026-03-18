@@ -1,4 +1,4 @@
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using System;
 using System.Collections.Generic;

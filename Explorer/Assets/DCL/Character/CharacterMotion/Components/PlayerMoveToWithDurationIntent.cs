@@ -45,3 +45,4 @@ namespace DCL.CharacterMotion.Components
         public bool IsComplete => ElapsedTime >= Duration;
     }
 }
+
