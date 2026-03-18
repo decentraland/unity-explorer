@@ -30,7 +30,9 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
 
         protected override void Update(float t)
         {
-            UpdateAudioEffectZoneQuery(World!);
+            UpdateDespatializeZoneQuery(World!);
+            UpdateSilenceZoneQuery(World!);
+
             SetupAudioEffectZoneQuery(World!);
         }
 
@@ -41,21 +43,29 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         [All(typeof(TransformComponent))]
         private void SetupAudioEffectZone(in Entity entity, ref PBAudioEffectZone pbAudioEffectZone)
         {
-            if (pbAudioEffectZone.EffectCase == PBAudioEffectZone.EffectOneofCase.Silence)
-                World!.Add(entity,
-                    new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
-                    new MicrophoneAudioZoneComponent()
-                );
-
-                // World!.Add(entity,
-                //     new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: true),
-                //     new SilenceZoneComponent()
-                // );
+            switch (pbAudioEffectZone.EffectCase)
+            {
+                case PBAudioEffectZone.EffectOneofCase.Silence:
+                    World!.Add(entity,
+                        new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
+                        new SilenceZoneComponent()
+                    ); break;
+                case PBAudioEffectZone.EffectOneofCase.Despatialize:
+                    World!.Add(entity,
+                        new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
+                        new DespatializationAudioZoneComponent()
+                    ); break;
+                // case PBAudioEffectZone.EffectOneofCase.Reverb:
+                //     World!.Add(entity,
+                //         new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
+                //         new ReverbAudioZoneComponent()
+                //     ); break;
+            }
         }
 
         [Query]
-        [All(typeof(TransformComponent), typeof(MicrophoneAudioZoneComponent))]
-        private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        [All(typeof(TransformComponent), typeof(DespatializationAudioZoneComponent))]
+        private void UpdateDespatializeZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAudioEffectZone.IsDirty)
             {
@@ -87,36 +97,36 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
             }
         }
 
-        // [Query]
-        // [All(typeof(TransformComponent), typeof(SilenceZoneComponent))]
-        // private void UpdateAudioEffectZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
-        // {
-        //     if (pbAudioEffectZone.IsDirty)
-        //         triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
+        [Query]
+        [All(typeof(TransformComponent), typeof(SilenceZoneComponent))]
+        private void UpdateSilenceZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
+        {
+            if (pbAudioEffectZone.IsDirty)
+                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
 
-        //     EXIT PRIORITY
-        //     if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
-        //     {
-        //         SetAllProximityAudioMutedQuery(globalWorld, false);
-        //         triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
-        //     }
-        //     else if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
-        //     {
-        //         SetAllProximityAudioMutedQuery(globalWorld, true);
-        //         triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
-        //     }
-        // }
-        //
-        // [Query]
-        // private void SetAllProximityAudioMuted([Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
-        // {
-        //     if (proximityAudio.AudioSource == null) return;
-        //
-        //     proximityAudio.AudioSource.enabled = !muted;
-        //     proximityAudio.AudioSource.mute = muted;
-        //
-        //     if(proximityAudio.AudioSourceTransform.TryGetComponent(out LivekitAudioSource lkAudioSource))
-        //         lkAudioSource.enabled = !muted;
-        // }
+            // EXIT PRIORITY
+            if (triggerAreaComponent.ExitedEntitiesToBeProcessed.Count > 0)
+            {
+                SetAllProximityAudioMutedQuery(globalWorld, false);
+                triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+            }
+            else if (triggerAreaComponent.EnteredEntitiesToBeProcessed.Count > 0)
+            {
+                SetAllProximityAudioMutedQuery(globalWorld, true);
+                triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+            }
+        }
+
+        [Query]
+        private void SetAllProximityAudioMuted([Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
+        {
+            if (proximityAudio.AudioSource == null) return;
+
+            proximityAudio.AudioSource.enabled = !muted;
+            proximityAudio.AudioSource.mute = muted;
+
+            if(proximityAudio.AudioSourceTransform.TryGetComponent(out LivekitAudioSource lkAudioSource))
+                lkAudioSource.enabled = !muted;
+        }
     }
 }
