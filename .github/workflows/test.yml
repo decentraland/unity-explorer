@@ -48,10 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         testFilter:
-          - SceneExceptionHandlerShould   #  6 tests (Scene.Tests)
-          - ECSWorldFacadeShould          #  4 tests (Tests)
-          - SceneFacadeShould             # 38 tests (Tests)
-          - SceneFactoryShould            #  2 tests (Tests)
+          - SceneRunner   # 50 tests
     steps:
 
       - name: Move Docker data-root to /mnt/docker
@@ -102,7 +99,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           
-      # If these fail, they have been rotated, see: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
       - name: 'Add GitHub to the SSH known hosts file'
         run: |
           mkdir -p -m 0700 ~/.ssh
