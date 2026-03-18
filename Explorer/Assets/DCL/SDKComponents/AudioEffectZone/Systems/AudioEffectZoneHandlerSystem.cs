@@ -32,6 +32,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         {
             UpdateDespatializeZoneQuery(World!);
             UpdateSilenceZoneQuery(World!);
+            UpdateAmplifyZoneQuery(World!);
 
             SetupAudioEffectZoneQuery(World!);
         }
@@ -95,6 +96,38 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
             // EXIT - back to spatial 3d Stereo
             TrySetSpatialization(isSpatial: true, triggerAreaComponent.ExitedEntitiesToBeProcessed, globalWorld);
             triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+        }
+
+        [Query]
+        [All(typeof(TransformComponent), typeof(AmplificationZoneComponent))]
+        private void UpdateAmplifyZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent, ref AmplificationZoneComponent amplificationZone)
+        {
+            if (pbAudioEffectZone.IsDirty)
+            {
+                pbAudioEffectZone.IsDirty = false;
+                triggerAreaComponent.UpdateAreaSize(pbAudioEffectZone.Area);
+            }
+
+            TrySetAmplification(amplificationZone.VolumeMultiplier, amplificationZone.DistanceMultiplier, triggerAreaComponent.EnteredEntitiesToBeProcessed, globalWorld);
+            triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
+
+            TrySetAmplification(1f / amplificationZone.VolumeMultiplier, 1f / amplificationZone.DistanceMultiplier, triggerAreaComponent.ExitedEntitiesToBeProcessed, globalWorld);
+            triggerAreaComponent.TryClearExitedAvatarsToBeProcessed();
+        }
+
+        private static void TrySetAmplification(float volumeMultiplier, float distanceMultiplier, IReadOnlyCollection<Collider> collidersSet, World world)
+        {
+            foreach (Collider? collider in collidersSet)
+            {
+                if (!FindAvatarUtils.TryGetAvatarEntity(world, collider.transform, out Entity entity)) return;
+                ref ProximityAudioSourceComponent proximityComponent = ref world.TryGetRef<ProximityAudioSourceComponent>(entity, out bool exists);
+
+                if (exists)
+                {
+                    proximityComponent.AudioSource.volume *= volumeMultiplier;
+                    proximityComponent.AudioSource.maxDistance *= distanceMultiplier;
+                }
+            }
         }
 
         private static void TrySetSpatialization(bool isSpatial, IReadOnlyCollection<Collider> collidersSet, World world)
