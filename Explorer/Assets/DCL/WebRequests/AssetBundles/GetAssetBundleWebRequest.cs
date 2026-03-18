@@ -35,13 +35,19 @@ namespace DCL.WebRequests
         {
             public async UniTask<AssetBundleLoadingResult> ExecuteAsync(GetAssetBundleWebRequest webRequest, CancellationToken ct)
             {
+                ulong downloadedBytes = webRequest.UnityWebRequest.downloadedBytes;
+
+                // GetResponseHeader returns null when the header is absent; TryParse handles null safely
+                string contentLengthHeader = webRequest.UnityWebRequest.GetResponseHeader("Content-Length");
+                long contentLength = long.TryParse(contentLengthHeader, out long cl) ? cl : -1;
+
                 AssetBundle assetBundle;
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await webRequest.assetBundleLoadingMutex.AcquireAsync(ct))
                     assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest.UnityWebRequest);
 
                 string? error = assetBundle == null ? webRequest.UnityWebRequest.downloadHandler.error : null;
-                return new AssetBundleLoadingResult(assetBundle, error);
+                return new AssetBundleLoadingResult(assetBundle, error, downloadedBytes, contentLength);
             }
         }
     }

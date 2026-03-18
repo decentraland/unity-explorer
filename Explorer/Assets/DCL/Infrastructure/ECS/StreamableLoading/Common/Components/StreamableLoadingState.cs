@@ -46,6 +46,8 @@ namespace ECS.StreamableLoading.Common.Components
             {
                 state.disposed = false;
                 state.Value = Status.NotStarted;
+                state.ContentLength = -1;
+                state.CompletedDownloadBytes = 0;
             },
             actionOnRelease: state =>
             {
@@ -70,6 +72,16 @@ namespace ECS.StreamableLoading.Common.Components
         ///     Budget is not null if Status is Allowed or InProgress
         /// </summary>
         public IAcquiredBudget? AcquiredBudget { get; private set; }
+
+        /// <summary>
+        ///     Total expected bytes from Content-Length header. -1 if unknown.
+        /// </summary>
+        public long ContentLength { get; internal set; } = -1;
+
+        /// <summary>
+        ///     Bytes downloaded when the request completed.
+        /// </summary>
+        public ulong CompletedDownloadBytes { get; internal set; }
 
         /// <summary>
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started

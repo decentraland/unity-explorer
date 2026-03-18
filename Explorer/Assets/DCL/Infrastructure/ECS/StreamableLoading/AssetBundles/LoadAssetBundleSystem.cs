@@ -67,6 +67,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 
+            state.CompletedDownloadBytes = assetBundleResult.DownloadedBytes;
+            state.ContentLength = assetBundleResult.ContentLength;
+
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
 

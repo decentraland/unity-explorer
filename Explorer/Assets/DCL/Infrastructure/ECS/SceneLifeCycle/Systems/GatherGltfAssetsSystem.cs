@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -7,6 +7,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -43,6 +44,13 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
+        // Byte-weighted progress tracking
+        private Dictionary<Entity, (ulong completed, long expected)>? byteDataCache;
+        private HashSet<Entity>? knownSizeEntities;
+        private ulong totalBytesResolved;
+        private long totalBytesExpected;
+        private int entitiesWithKnownSize;
+
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
@@ -63,6 +71,8 @@ namespace ECS.SceneLifeCycle.Systems
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
+            byteDataCache = DictionaryPool<Entity, (ulong, long)>.Get();
+            knownSizeEntities = HashSetPool<Entity>.Get();
             startTime = Time.time;
         }
 
@@ -73,6 +83,19 @@ namespace ECS.SceneLifeCycle.Systems
                 HashSetPool<Entity>.Release(entitiesUnderObservation);
                 entitiesUnderObservation = null;
             }
+
+            if (byteDataCache != null)
+            {
+                DictionaryPool<Entity, (ulong, long)>.Release(byteDataCache);
+                byteDataCache = null;
+            }
+
+            if (knownSizeEntities != null)
+            {
+                HashSetPool<Entity>.Release(knownSizeEntities);
+                knownSizeEntities = null;
+            }
+
             sceneData.SceneLoadingConcluded = true;
         }
 
@@ -111,6 +134,9 @@ namespace ECS.SceneLifeCycle.Systems
                         continue;
                     }
 
+                    // Cache byte data from promise entity while it's still alive
+                    CacheByteData(entityRef, in gltfContainerComponent);
+
                     // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
                     if (gltfContainerComponent.State == LoadingState.Loading)
                         // if at least one entity is still loading, we are not done.
@@ -120,8 +146,23 @@ namespace ECS.SceneLifeCycle.Systems
                         toDelete.Add(entityRef);
                 }
 
+                // Accumulate resolved bytes from entities leaving observation
+                for (var i = 0; i < toDelete.Count; i++)
+                {
+                    Entity entity = toDelete[i];
+
+                    if (byteDataCache!.TryGetValue(entity, out (ulong completed, long expected) data))
+                    {
+                        totalBytesResolved += data.completed > 0
+                            ? data.completed
+                            : (ulong)Math.Max(0, data.expected);
+
+                        byteDataCache.Remove(entity);
+                    }
+                }
+
                 assetsResolved += toDelete.Count;
-                float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+                float progress = ComputeProgress();
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
@@ -166,6 +207,40 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
                     sceneData.Geometry.BaseParcelPosition;
             }
+        }
+
+        private void CacheByteData(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
+        {
+            Entity promiseEntity = gltfContainerComponent.Promise.Entity;
+
+            if (!World.IsAlive(promiseEntity)
+                || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
+                return;
+
+            byteDataCache![entityRef] = (loadingState.CompletedDownloadBytes, loadingState.ContentLength);
+
+            // Track expected bytes once per entity
+            if (loadingState.ContentLength > 0 && knownSizeEntities!.Add(entityRef))
+            {
+                totalBytesExpected += loadingState.ContentLength;
+                entitiesWithKnownSize++;
+            }
+        }
+
+        private float ComputeProgress()
+        {
+            // Fallback: count-based progress when no byte data is available
+            if (entitiesWithKnownSize <= 0 || totalBytesExpected <= 0)
+                return totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+
+            // Estimate unknown assets using average size of known assets
+            long avgSize = totalBytesExpected / entitiesWithKnownSize;
+            int unknownCount = totalAssetsToResolve - entitiesWithKnownSize;
+            long effectiveTotal = totalBytesExpected + (avgSize * Math.Max(0, unknownCount));
+
+            return effectiveTotal > 0
+                ? Mathf.Clamp01((float)totalBytesResolved / effectiveTotal)
+                : 0f;
         }
 
         private void GatherEntities(Entity entity, GltfContainerComponent component)
