@@ -147,7 +147,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     batchState.reconciliationState = new ReconciliationState(reconciliationEffect, reconciliationEffect);
                     batchState.sdkComponentBridge = sdkComponentBridge;
                     componentsBatch[message.ComponentId] = batchState;
-                    return reconciliationEffect;
             }
 
             return reconciliationEffect;
@@ -231,20 +230,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     bool isNewEntity = !entitiesMap.TryGetValue(entity, out Entity realEntity);
                     if (isNewEntity)
-                    {
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
-                        //UnityEngine.Debug.Log($"[WorldSyncBuffer] Created NEW entity: CRDTEntity={entity} -> ArchEntity={realEntity}");
-                    }
 
                     foreach (BatchState batchState in componentsBatch.Values)
                     {
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
-
-                        // Skip logging for Transform (1)
-                        //if (batchState.crdtMessage.ComponentId != 1)
-                        // Commented log for now, we might need it to debug scene issues in the future.
-                            //UnityEngine.Debug.Log($"[WorldSyncBuffer] Applying component {batchState.crdtMessage.ComponentId} to entity {realEntity}, effect={batchState.reconciliationState.Last}");
 
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
