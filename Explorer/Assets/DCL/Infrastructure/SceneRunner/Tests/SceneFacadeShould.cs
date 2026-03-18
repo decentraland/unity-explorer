@@ -118,7 +118,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRemoteMetadata>(),
 #endif
                 DecentralandEnvironment.Org,
-                Substitute.For<DCL.Clipboard.ISystemClipboard>()
+                Substitute.For<DCL.Clipboard.ISystemClipboard>(),
+                string.Empty
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 ,
                 new WebGLSceneUpdateQueue()

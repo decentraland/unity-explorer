@@ -77,6 +77,7 @@ namespace SceneRunner
 
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
+        private readonly string installSource;
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         private readonly WebGLSceneUpdateQueue webglSceneUpdateQueue;
@@ -108,7 +109,8 @@ namespace SceneRunner
             IRemoteMetadata remoteMetadata,
 #endif
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard
+            ISystemClipboard systemClipboard,
+            string installSource
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
            ,
             WebGLSceneUpdateQueue webglSceneUpdateQueue
@@ -146,6 +148,7 @@ namespace SceneRunner
 #endif
 
             this.dclEnvironment = dclEnvironment;
+            this.installSource = installSource;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -255,7 +258,8 @@ namespace SceneRunner
 #endif
                     profileRepository,
                     systemClipboard,
-                    roomHub
+                    roomHub,
+                    installSource
                 );
 
                 sceneRuntime.RegisterAll(
@@ -305,7 +309,8 @@ namespace SceneRunner
 #endif
                     profileRepository,
                     systemClipboard,
-                    roomHub
+                    roomHub,
+                    installSource
                 );
 
                 sceneRuntime.RegisterAll(

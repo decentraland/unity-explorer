@@ -5,15 +5,12 @@ using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Velocity
 {
-    public static class ApplyConditionalRotation
+    public static class ApplySlopeConditionalRotation
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterRigidTransform rigidTransform, in ICharacterControllerSettings settings)
         {
             if (rigidTransform.IsStuck)
-                return;
-
-            if (!settings.EnableCharacterRotationBySlope)
                 return;
 
             bool isTimeToRotate = rigidTransform.SteepSlopeTime >= settings.SlopeCharacterRotationDelay;

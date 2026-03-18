@@ -3,12 +3,10 @@ using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 #endif
-
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Clipboard;
 using MVC;
@@ -26,7 +24,6 @@ using SceneRuntime.Factory.WebSceneSource;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 using SceneRuntime.WebClient;
-
 #else
 using SceneRuntime.V8;
 #endif
@@ -34,14 +31,14 @@ using SceneRuntime.V8;
 namespace Global
 {
     /// <summary>
-    ///     This class is never stored in a field and goes out of scope at the end of
-    ///     <see cref="Bootstrap.CreateGlobalWorld" />. Consequently, it does not own any code and is not in
-    ///     fact a container.
+    /// This class is never stored in a field and goes out of scope at the end of
+    /// <see cref="Bootstrap.CreateGlobalWorld"/>. Consequently, it does not own any code and is not in
+    /// fact a container.
     /// </summary>
     public class SceneSharedContainer
     {
         /// <summary>
-        ///     Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem" />
+        /// Is actually owned by <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystem"/>
         /// </summary>
         public ISceneFactory? SceneFactory { get; private set; }
 
@@ -51,18 +48,14 @@ namespace Global
             IWebRequestController webRequestController,
             IRealmData realmData,
             IProfileRepository profileRepository,
-
 #if !NO_LIVEKIT_MODE
             IRoomHub roomHub,
 #endif
-
             IMVCManager mvcManager,
             IMessagePipesHub messagePipesHub,
-
 #if !NO_LIVEKIT_MODE
             IRemoteMetadata remoteMetadata,
 #endif
-
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
@@ -87,7 +80,10 @@ namespace Global
 #endif
             var sceneFactory = new SceneFactory(
                 ecsWorldFactory,
-                new SceneRuntimeFactory(realmData ?? new IRealmData.Fake(), engineFactory,
+                new SceneRuntimeFactory(
+                    realmData ??
+                    new IRealmData.Fake(),
+                    engineFactory,
                     webJsSources),
                 new SharedPoolsProvider(),
                 new CRDTSerializer(),
@@ -98,6 +94,7 @@ namespace Global
                 mvcManager,
                 profileRepository,
                 web3IdentityCache,
+                decentralandUrlsSource,
                 webRequestController,
 #if !NO_LIVEKIT_MODE
                 roomHub,
@@ -105,17 +102,11 @@ namespace Global
                 realmData,
                 staticContainer.PortableExperiencesController,
                 staticContainer.StaticSettings.SkyboxSettings,
-                new SceneCommunicationPipe(
-                    messagePipesHub
-#if !NO_LIVEKIT_MODE
-                  , roomHub.SceneRoom()
-#endif
-                ),
-#if !NO_LIVEKIT_MODE
+                new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
                 remoteMetadata,
-#endif
                 dclEnvironment,
-                systemClipboard
+                systemClipboard,
+                staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                ,
                 webglSceneUpdateQueue

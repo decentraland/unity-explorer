@@ -6,7 +6,6 @@ using DCL.PluginSystem;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using Global.AppArgs;
-using Global.Dynamic;
 using Global.Versioning;
 using Plugins.RustSegment.SegmentServerWrap;
 using System;
@@ -31,7 +30,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             IWeb3IdentityCache identityCache,
             ILaunchMode realmLaunchSettings,
             IDebugContainerBuilder debugBuilder,
-            BuildData buildData,
+            string installSource,
             IPluginSettingsContainer settingsContainer,
             DCLVersion dclVersion,
             CancellationToken ct)
@@ -51,7 +50,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment,
                         ct);
 
-                    var analyticsController = new AnalyticsController(service, appArgs, container.settings.AnalyticsConfig, launcherTraits, buildData, dclVersion, identityCache?.Identity);
+                    var analyticsController = new AnalyticsController(service, appArgs, container.settings.AnalyticsConfig, launcherTraits, installSource, dclVersion, identityCache?.Identity);
                     CrashDetector.Initialize(analyticsController);
 
                     container.Controller = analyticsController;
