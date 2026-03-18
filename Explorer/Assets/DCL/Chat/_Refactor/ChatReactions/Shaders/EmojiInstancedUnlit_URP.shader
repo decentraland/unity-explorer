@@ -16,15 +16,15 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "Queue"          = "Transparent"
-            "RenderType"     = "Transparent"
+            "Queue"          = "Geometry"
+            "RenderType"     = "Opaque"
             "IgnoreProjector"= "True"
         }
 
-        ZWrite Off
+        ZWrite On
         ZTest  Always
         Cull   Off
-        Blend  SrcAlpha OneMinusSrcAlpha
+        AlphaToMask On
 
         Pass
         {
@@ -110,6 +110,14 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
                 float fout = 1.0 - smoothstep(_FadeOut, 1.0, t);
                 return saturate(fin * fout);
             }
+
+            // Interleaved gradient noise (Jorge Jimenez, 2014).
+            // Produces an organic, non-repeating pattern — much less visible than Bayer 4x4.
+            void DitherIGN(float2 screenPos, float alpha)
+            {
+                float noise = frac(52.9829189 * frac(dot(screenPos, float2(0.06711056, 0.00583715))));
+                clip(alpha - noise);
+            }
             
             Varyings vert(Attributes IN)
             {
@@ -143,7 +151,15 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
             half4 frag(Varyings IN) : SV_Target
             {
                 half4 c = SAMPLE_TEXTURE2D(_AtlasTex, sampler_AtlasTex, IN.uv);
-                c.a    *= IN.alpha;
+
+                // Discard fully transparent background pixels.
+                clip(c.a - 0.01);
+
+                // Dithering for fade-in/fade-out (replaces alpha blending).
+                DitherIGN(IN.positionCS.xy, saturate(IN.alpha));
+
+                // Output texture alpha for AlphaToMask — MSAA converts alpha to coverage
+                // for smooth anti-aliased edges on emoji outlines.
                 return c;
             }
 

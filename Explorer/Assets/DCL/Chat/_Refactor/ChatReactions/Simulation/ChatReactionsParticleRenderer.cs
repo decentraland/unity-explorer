@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Drives <c>Graphics.DrawMeshInstanced</c> for GPU-instanced emoji particle rendering.
+    /// Drives <c>Graphics.RenderMeshInstanced</c> for GPU-instanced emoji particle rendering.
     /// Converts screen-space particle positions to world space each frame so particles
     /// stay fixed on screen when the camera moves. Batches up to 1023 particles per draw call.
     /// </summary>
@@ -31,6 +31,8 @@ namespace DCL.Chat.ChatReactions
         private static readonly int LifeTId = Shader.PropertyToID("_LifeT");
         private static readonly int GlobalAlphaId = Shader.PropertyToID("_GlobalAlpha");
 
+        private static readonly Bounds WORLD_BOUNDS = new (Vector3.zero, Vector3.one * 10000f);
+
         /// <param name="material">Shared emoji instanced material.</param>
         /// <param name="sizeOverLifetime">Optional curve (normalised lifetime [0,1] → size multiplier).
         /// Used for the pop-on-death effect. Pass <c>null</c> to use raw particle sizes.</param>
@@ -41,8 +43,7 @@ namespace DCL.Chat.ChatReactions
             sharedQuad ??= CreateQuadMesh();
             this.sizeOverLifetime = sizeOverLifetime;
 
-            // DrawMeshInstanced uses matrices for frustum culling; identity keeps the
-            // oversized mesh bounds visible while the shader repositions vertices via _PosSize.
+            // RenderMeshInstanced uses identity matrices; the shader repositions vertices via _PosSize.
             for (int i = 0; i < BATCH_SIZE; i++)
                 matrices[i] = Matrix4x4.identity;
         }
@@ -146,7 +147,7 @@ namespace DCL.Chat.ChatReactions
         }
 
         private void Flush(int layer, int count, float globalAlpha)
-        {
+        { 
             Profiler.BeginSample("ChatReactions.Flush");
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
             mpb.SetVectorArray(PosSizeId, posSize);
@@ -154,8 +155,16 @@ namespace DCL.Chat.ChatReactions
             mpb.SetVectorArray(EmojiId, emoji);
             mpb.SetVectorArray(LifeTId, lifeT);
 
-            Graphics.DrawMeshInstanced(sharedQuad, 0, mat, matrices, count, mpb,
-                ShadowCastingMode.Off, false, layer, null);
+            var renderParams = new RenderParams(mat)
+            {
+                layer = layer,
+                matProps = mpb,
+                shadowCastingMode = ShadowCastingMode.Off,
+                receiveShadows = false,
+                worldBounds = WORLD_BOUNDS,
+            };
+
+            Graphics.RenderMeshInstanced(renderParams, sharedQuad, 0, matrices, count);
             Profiler.EndSample();
         }
 
