@@ -37,6 +37,10 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention))]
         private void RegisterMainPlayer(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
+            //Already registered
+            if (transformMatrixComponent.IndexInGlobalJobArray.IsValid())
+                return;
+
             avatarTransformMatrixBatchJob.RegisterMainPlayerAvatar(avatarBase, ref transformMatrixComponent);
         }
 
@@ -44,6 +48,10 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void RegisterRemoteAvatars(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
+            //Already registered
+            if (transformMatrixComponent.IndexInGlobalJobArray.IsValid())
+                return;
+
             avatarTransformMatrixBatchJob.RegisterAvatar(avatarBase, ref transformMatrixComponent);
         }
     }

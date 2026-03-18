@@ -17,17 +17,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private readonly int bonesArrayLength;
 
         private bool registered;
-        private Transform[] bones;
-        private Transform root;
         private TransformAccessArray bonesTA;
         private TransformAccessArray rootTA;
         private NativeArray<float4x4> bonesCombined;
         private NativeArray<float4x4> avatarMatrix;
         private NativeArray<bool> updateFlag;
-        private bool dirty;
 
         public BoneMatrixCalculationJob Job;
-        public bool IsRegistered => registered;
 
         internal MainPlayerPipeline(int bonesArrayLength)
         {
@@ -41,32 +37,22 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Register(Transform rootTransform, Transform[] boneTransforms)
         {
-            registered = true;
-            bones = boneTransforms;
-            root = rootTransform;
             updateFlag[0] = true;
-            dirty = true;
+
+            var boneArray = new Transform[bonesArrayLength];
+
+            for (int i = 0; i < bonesArrayLength; i++)
+                boneArray[i] = boneTransforms[i];
+
+            bonesTA = new TransformAccessArray(boneArray);
+            rootTA = new TransformAccessArray(new[] { rootTransform });
+            registered = true;
         }
 
-        public void Release(ref AvatarTransformMatrixComponent component)
-        {
-            registered = false;
-            bones = null;
-            root = null;
-            updateFlag[0] = false;
-            dirty = true;
-
-            component.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
-            component.IsMainPlayer = false;
-        }
-
-        public void ScheduleAndComplete(Transform dummyTransform)
+        public void ScheduleAndComplete()
         {
             if (!registered)
                 return;
-
-            if (dirty)
-                RebuildTAAs(dummyTransform);
 
             var boneGather = new BoneGatherJob { BonesCombined = bonesCombined };
             var boneGatherHandle = boneGather.Schedule(bonesTA);
@@ -80,21 +66,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job.UpdateAvatar = updateFlag;
             var calcHandle = Job.Schedule(1, 1, gatherHandle);
             calcHandle.Complete(); // Fast — 1 avatar, 62 bones. Unlocks main player transforms.
-        }
-
-        private void RebuildTAAs(Transform dummyTransform)
-        {
-            if (bonesTA.isCreated) bonesTA.Dispose();
-            if (rootTA.isCreated) rootTA.Dispose();
-
-            var boneArray = new Transform[bonesArrayLength];
-
-            for (int i = 0; i < bonesArrayLength; i++)
-                boneArray[i] = bones != null && bones[i] != null ? bones[i] : dummyTransform;
-
-            bonesTA = new TransformAccessArray(boneArray);
-            rootTA = new TransformAccessArray(new[] { root != null ? root : dummyTransform });
-            dirty = false;
         }
 
         public void Dispose()

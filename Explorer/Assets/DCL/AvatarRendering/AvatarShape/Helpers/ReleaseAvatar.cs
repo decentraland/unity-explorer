@@ -1,7 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Helpers;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
@@ -13,13 +12,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool,
             in AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            AvatarTransformMatrixJobWrapper jobWrapper, bool releaseFromPipeline = true)
+            AvatarTransformMatrixJobWrapper jobWrapper)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
             skinningComponent.Dispose(avatarMaterialPoolHandler, computeShaderSkinningPool);
 
-            if (releaseFromPipeline)
-                jobWrapper.ReleaseAvatar(ref avatarTransformMatrixComponent);
+            jobWrapper.ReleaseAvatar(ref avatarTransformMatrixComponent);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
             {

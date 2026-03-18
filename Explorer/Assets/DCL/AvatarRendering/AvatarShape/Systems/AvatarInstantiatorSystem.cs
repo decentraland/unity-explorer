@@ -171,8 +171,7 @@ namespace DCL.AvatarRendering.AvatarShape
             // Main player bones are stable across wearable changes — no need to release/re-register the pipeline
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
-                ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob,
-                releaseFromPipeline: !avatarTransformMatrixComponent.IsMainPlayer);
+                ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);

@@ -30,9 +30,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             jobWrapper.CompleteBoneMatrixCalculations();
             remoteResult = jobWrapper.RemoteAvatarsBonesResult;
-
-            if (jobWrapper.HasMainPlayer)
-                mainPlayerResult = jobWrapper.MainPlayerBonesResult;
+            mainPlayerResult = jobWrapper.MainPlayerBonesResult;
 
             ExecuteQuery(World);
         }

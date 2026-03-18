@@ -25,7 +25,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private readonly MainPlayerPipeline mainPlayerAvatar;
         private readonly RemoteAvatarPipeline remoteAvatars;
 
-        public bool HasMainPlayer => mainPlayerAvatar.IsRegistered;
         public NativeArray<float4x4> MainPlayerBonesResult => mainPlayerAvatar.Job.BonesMatricesResult;
 
         public NativeArray<float4x4> RemoteAvatarsBonesResult  => remoteAvatars.Job.BonesMatricesResult;
@@ -52,7 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public void ScheduleBoneMatrixCalculation()
         {
-            mainPlayerAvatar.ScheduleAndComplete(dummyTransform);
+            mainPlayerAvatar.ScheduleAndComplete();
             remoteAvatars.Schedule(dummyTransform, BONE_MATRIX_BATCH_COUNT);
         }
 
@@ -72,9 +71,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public void RegisterMainPlayerAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            if (transformMatrixComponent.IndexInGlobalJobArray.IsValid())
-                return;
-
             transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(0);
             transformMatrixComponent.IsMainPlayer = true;
 
@@ -87,9 +83,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public void RegisterAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            if (transformMatrixComponent.IndexInGlobalJobArray.IsValid())
-                return;
-
             remoteAvatars.Register(avatarBase, ref transformMatrixComponent);
         }
 
@@ -110,11 +103,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             if (disposed) return;
 
+            //Main player avatar never gets released
             if (avatarTransformMatrixComponent.IsMainPlayer)
-            {
-                mainPlayerAvatar.Release(ref avatarTransformMatrixComponent);
                 return;
-            }
 
             remoteAvatars.Release(ref avatarTransformMatrixComponent);
         }
