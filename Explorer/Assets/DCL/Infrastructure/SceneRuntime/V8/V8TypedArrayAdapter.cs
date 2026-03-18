@@ -2,6 +2,7 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Utility;
 
 namespace SceneRuntime.V8
@@ -54,24 +55,29 @@ namespace SceneRuntime.V8
         void IDCLTypedArray<byte>.ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex) =>
             TypedArray.Read(offset, count, destination, destinationIndex);
 
-        void IDCLTypedArray<byte>.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+        void IDCLTypedArray<byte>.WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
         {
             if (count == 0)
                 return;
 
-            TypedArray.InvokeWithDirectAccess(pData =>
+            // ReadOnlySpan is a ref struct and cannot be captured in a lambda.
+            // Pin the data here and pass it as IntPtr so the lambda can use it safely.
+            unsafe
             {
-                unsafe
+                fixed (byte* srcPtr = &MemoryMarshal.GetReference(source))
                 {
-                    byte* destPtr = (byte*)pData.ToPointer() + offset;
+                    IntPtr srcIntPtr = new IntPtr(srcPtr + sourceIndex);
 
-                    fixed (byte* srcPtr = source)
+                    TypedArray.InvokeWithDirectAccess(pData =>
                     {
-                        byte* src = srcPtr + sourceIndex;
-                        Buffer.MemoryCopy(src, destPtr, count, count);
-                    }
+                        unsafe
+                        {
+                            byte* destPtr = (byte*)pData.ToPointer() + offset;
+                            Buffer.MemoryCopy(srcIntPtr.ToPointer(), destPtr, count, count);
+                        }
+                    });
                 }
-            });
+            }
         }
 
         object IDCLScriptObject.GetProperty(string name, params object[] args) =>

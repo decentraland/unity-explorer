@@ -1,4 +1,4 @@
-using DCL.Communities.CommunitiesDataProvider.DTOs;
+﻿using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Profiles;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

@@ -120,12 +120,12 @@ namespace SceneRuntime.WebClient
             }
         }
 
-        void IDCLTypedArray<byte>.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+        void IDCLTypedArray<byte>.WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
         {
             if (count == 0)
                 return;
 
-            ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
+            ulong actualCount = Math.Min(count, (ulong)source.Length - sourceIndex);
             actualCount = Math.Min(actualCount, Length - offset);
 
             if (actualCount > int.MaxValue)
@@ -133,7 +133,7 @@ namespace SceneRuntime.WebClient
 
             unsafe
             {
-                fixed (byte* srcPtr = source)
+                fixed (byte* srcPtr = &MemoryMarshal.GetReference(source))
                 {
                     IntPtr contextIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ContextId);
                     IntPtr objectIdPtr = Utf8Marshal.StringToHGlobalUTF8(ScriptObject.ObjectId);

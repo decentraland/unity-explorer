@@ -33,6 +33,6 @@ namespace Utility
 
         void ReadBytes(ulong @ulong, ulong eventBytesLength, byte[] eventBytes, ulong ulong1);
 
-        void WriteBytes(byte[] resultArray, ulong @ulong, ulong resultLength, ulong ulong1);
+        void WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset);
     }
 }

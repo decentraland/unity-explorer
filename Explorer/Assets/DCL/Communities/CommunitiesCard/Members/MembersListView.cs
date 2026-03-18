@@ -212,8 +212,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                              false, false,
                              subText: TRANSFER_OWNERSHIP_SUB_TEXT_FORMAT,
                              userInfo: profile.Profile,
-                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)),
-                         ct)
+                             fromUserInfo: ownProfile?.Compact ?? default(Profile.CompactInfo)), ct)
                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;

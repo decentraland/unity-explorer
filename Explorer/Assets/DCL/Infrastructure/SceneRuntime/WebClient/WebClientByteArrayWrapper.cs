@@ -47,16 +47,16 @@ namespace SceneRuntime.WebClient
             Array.Copy(data, (long)offset, destination, (long)destinationIndex, (long)actualCount);
         }
 
-        public void WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+        public void WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
         {
             if (count == 0) return;
-            if (sourceIndex >= (ulong)source.LongLength) return;
+            if (sourceIndex >= (ulong)source.Length) return;
             if (offset >= (ulong)data.Length) return;
 
-            ulong actualCount = Math.Min(count, (ulong)source.LongLength - sourceIndex);
+            ulong actualCount = Math.Min(count, (ulong)source.Length - sourceIndex);
             actualCount = Math.Min(actualCount, (ulong)data.Length - offset);
 
-            Array.Copy(source, (long)sourceIndex, data, (long)offset, (long)actualCount);
+            source.Slice((int)sourceIndex, (int)actualCount).CopyTo(new Span<byte>(data, (int)offset, (int)actualCount));
         }
 
         public void InvokeWithDirectAccess(Action<IntPtr> action) =>
