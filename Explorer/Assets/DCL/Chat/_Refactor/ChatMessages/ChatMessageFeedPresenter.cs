@@ -452,6 +452,11 @@ namespace DCL.Chat.ChatMessages
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
 
+                    view.SetDmPartnerWallet(
+                        currentChannelService.CurrentChannel?.ChannelType == ChatChannel.ChatChannelType.USER
+                            ? currentChannelService.CurrentChannelId.Id
+                            : null);
+
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();
 

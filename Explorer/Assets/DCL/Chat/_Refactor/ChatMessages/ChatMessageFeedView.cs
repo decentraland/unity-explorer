@@ -33,6 +33,7 @@ namespace DCL.Chat.ChatMessages
 
         private ChatReactionsAtlasConfig? reactionsAtlasConfig;
         private string? ownWalletAddress;
+        private string? dmPartnerWallet;
 
         // View models are reused and set
         // by reference from the presenter
@@ -89,6 +90,16 @@ namespace DCL.Chat.ChatMessages
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
+        }
+
+        /// <summary>
+        /// For DM channels, set the other user's wallet so own-message reactions
+        /// can be disabled when the DM partner is offline.
+        /// Pass null for non-DM channels (nearby, community).
+        /// </summary>
+        public void SetDmPartnerWallet(string? wallet)
+        {
+            dmPartnerWallet = wallet;
         }
 
         public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress)
@@ -282,10 +293,21 @@ namespace DCL.Chat.ChatMessages
 
                 // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
                 // for shown elements only
-                itemScript.GreyOut(prefabIndex == ChatItemPrefabIndex.ChatEntry &&
-                                   !onlineParticipants.Contains(chatMessage.SenderWalletAddress)
-                    ? entryGreyOutOpacity
-                    : 0.0f);
+                bool senderIsOffline = prefabIndex == ChatItemPrefabIndex.ChatEntry
+                                      && !onlineParticipants.Contains(chatMessage.SenderWalletAddress);
+
+                // In DMs with offline partner, own message reactions won't reach them either
+                bool noOnlineRecipients = prefabIndex == ChatItemPrefabIndex.ChatEntryOwn
+                                          && dmPartnerWallet != null
+                                          && !onlineParticipants.Contains(dmPartnerWallet);
+
+                bool reactionsDisabled = senderIsOffline || noOnlineRecipients;
+
+                itemScript.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
+                itemScript.messageBubbleElement.SetReactionButtonEnabled(!reactionsDisabled);
+
+                if (itemScript.messageReactionsView != null)
+                    itemScript.messageReactionsView.SetInteractable(!reactionsDisabled);
 
                 if (viewModel.PendingToAnimate)
                 {

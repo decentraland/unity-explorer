@@ -87,6 +87,12 @@ namespace DCL.Chat.ChatMessages
             CurrentHeight = needsSecondRow ? doubleRowHeight : singleRowHeight;
         }
 
+        public void SetInteractable(bool interactable)
+        {
+            for (int i = 0; i < activeItems.Count; i++)
+                activeItems[i].SetInteractable(interactable);
+        }
+
         private void OnItemClicked(int emojiIndex)
         {
             if (CurrentMessageId != null)

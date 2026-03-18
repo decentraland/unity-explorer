@@ -20,6 +20,11 @@ namespace DCL.Chat.ChatMessages
 
         public int EmojiIndex => emojiIndex;
 
+        public void SetInteractable(bool interactable)
+        {
+            button.interactable = interactable;
+        }
+
         private void Awake()
         {
             button.onClick.AddListener(() => OnClicked?.Invoke(emojiIndex));

@@ -38,6 +38,7 @@ namespace DCL.Chat
 
         private Vector2 backgroundSize;
         private bool popupOpen;
+        private bool reactionsEnabled = true;
 
         private void Awake()
         {
@@ -48,7 +49,10 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton.gameObject.SetActive(true);
-            reactionButton?.gameObject.SetActive(true);
+
+            if (reactionsEnabled)
+                reactionButton?.gameObject.SetActive(true);
+
             OnPointerEnterEvent?.Invoke();
         }
 
@@ -69,6 +73,15 @@ namespace DCL.Chat
         {
             messageOptionsButton.gameObject.SetActive(false);
             reactionButton?.gameObject.SetActive(false);
+            reactionsEnabled = true;
+        }
+
+        public void SetReactionButtonEnabled(bool enabled)
+        {
+            reactionsEnabled = enabled;
+
+            if (!enabled)
+                reactionButton?.gameObject.SetActive(false);
         }
 
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)
