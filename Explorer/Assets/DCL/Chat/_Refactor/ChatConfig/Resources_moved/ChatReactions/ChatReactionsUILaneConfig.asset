@@ -21,9 +21,6 @@ MonoBehaviour:
   <Gravity>k__BackingField: {x: 1, y: 1}
   <StreamRatePerSecond>k__BackingField: 10
   <StreamBurst>k__BackingField: 1
-  <DefaultEmojiIndex>k__BackingField: 500
-  <RandomEmoji>k__BackingField: 1
-  <RenderLayer>k__BackingField: 0
   <UseFlightPath>k__BackingField: 1
   <KickSpeedRange>k__BackingField: {x: 110, y: 140}
   <InitialUpRange>k__BackingField: {x: 20, y: 30}

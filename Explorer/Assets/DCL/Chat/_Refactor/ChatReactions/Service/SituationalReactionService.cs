@@ -110,14 +110,16 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerDefaultUIReaction()
         {
-            chatReactionSimulation.TriggerDefaultUIReaction();
-            TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
+            int emojiIndex = chatReactionSimulation.GetRandomEmojiIndex();
+            chatReactionSimulation.TriggerUIReaction(emojiIndex, config.UILane.StreamBurst);
+            TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
         {
-            chatReactionSimulation.TriggerDefaultUIReactionFromRect(sourceRect);
-            TriggerWorldForLocalPlayer(config.UILane.DefaultEmojiIndex);
+            int emojiIndex = chatReactionSimulation.GetRandomEmojiIndex();
+            chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, config.UILane.StreamBurst);
+            TriggerWorldForLocalPlayer(emojiIndex);
         }
 
         public void BeginUIStream(RectTransform sourceRect)
@@ -196,7 +198,7 @@ namespace DCL.Chat.ChatReactions
         public bool IsDebugNearbyActive => debugActive;
         public int NearbyAvatarCount => avatarPosition?.LastNearbyCount ?? 0;
 
-        private int StreamEmojiIndex => config.UILane.RandomEmoji ? -1 : config.UILane.DefaultEmojiIndex;
+        private int StreamEmojiIndex => -1;
 
         private void OnRemoteReaction(ReactionReceivedArgs args)
         {

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
@@ -12,77 +13,76 @@ namespace DCL.Chat.ChatReactions.Configs
     public class ChatReactionsUILaneConfig : ScriptableObject
     {
         [field: Header("Pool")]
-        [field: Min(64)]
-        [field: Tooltip("Ring-buffer capacity — the maximum number of simultaneously live particles. " +
-                        "Keep at or below 1023 to stay within a single DrawMeshInstanced call.")]
+        [field: Note("INIT-ONLY — read once to allocate the particle ring-buffer. " +
+                     "Changing at runtime has no effect.")]
+        [field: Range(64, 1023)]
         [field: SerializeField] public int MaxParticles { get; private set; } = 1023;
 
         [field: Header("Placement")]
-        [field: Min(0.1f)]
-        [field: Tooltip("Distance in front of the camera (world units) at which particles are rendered.")]
+        [field: Note("How far in front of the camera (world units) the particle quads are rendered. " +
+                     "Too close clips through UI; too far gets occluded by geometry.")]
+        [field: Range(0.1f, 10f)]
         [field: SerializeField] public float DepthFromCamera { get; private set; } = 1.0f;
 
         [field: Header("Physics (screen space — pixels, px/sec, px/sec²)")]
-        [field: Tooltip("Particle lifetime in seconds (min, max).")]
+        [field: Note("How long each particle lives (seconds). Randomised per particle between min and max.")]
+        [field: MinMaxRange(0f, 5f)]
         [field: SerializeField] public Vector2 LifetimeRange { get; private set; } = new(1.0f, 1.8f);
 
-        [field: Tooltip("Initial upward speed in pixels/sec (min, max).")]
+        [field: Note("Upward launch speed when UseFlightPath is OFF (simple straight-up mode). " +
+                     "Ignored when flight path is ON — InitialUpRange is used instead.")]
+        [field: MinMaxRange(0f, 500f)]
         [field: SerializeField] public Vector2 SpeedRange { get; private set; } = new(80f, 200f);
 
-        [field: Tooltip("Particle size at death in pixels (min, max). Spawn size is 20–50% of this.")]
+        [field: Note("Final particle size in pixels. Each particle spawns at 20-50% of this and grows to full size.")]
+        [field: MinMaxRange(0f, 200f)]
         [field: SerializeField] public Vector2 SizeRange { get; private set; } = new(40f, 80f);
 
-        [field: Min(0f)]
-        [field: Tooltip("Linear drag coefficient. Higher values slow particles faster.")]
+        [field: Note("Linear drag — 0 = no slowdown, higher = particles decelerate faster.")]
+        [field: Range(0f, 5f)]
         [field: SerializeField] public float Drag { get; private set; } = 1.2f;
 
-        [field: Tooltip("Acceleration in screen space (pixels/sec²). Keep at zero for floating-upward look.")]
+        [field: Note("Constant acceleration (px/sec²). X = horizontal drift, Y = vertical. " +
+                     "Zero = floating-upward feel; negative Y = confetti falling down.")]
         [field: SerializeField] public Vector2 Gravity { get; private set; } = Vector2.zero;
 
         [field: Header("Streaming (hold-to-emit)")]
-        [field: Min(0f)]
-        [field: Tooltip("Particles emitted per second while a stream is active (button held down).")]
+        [field: Note("Emission ticks per second while holding the reaction button. Each tick spawns StreamBurst particles.")]
+        [field: Range(0f, 30f)]
         [field: SerializeField] public float StreamRatePerSecond { get; private set; } = 8f;
 
-        [field: Min(1)]
-        [field: Tooltip("How many particles to spawn per stream tick.")]
+        [field: Note("Particles per emission tick. Also the default burst count for single-tap reactions.")]
+        [field: Range(1, 10)]
         [field: SerializeField] public int StreamBurst { get; private set; } = 1;
 
-        [field: Header("Defaults")]
-        [field: Min(0)]
-        [field: Tooltip("Atlas tile index used when no specific emoji is requested.")]
-        [field: SerializeField] public int DefaultEmojiIndex { get; private set; } = 500;
-
-        [field: Tooltip("Pick a random atlas tile on each emission instead of DefaultEmojiIndex.")]
-        [field: SerializeField] public bool RandomEmoji { get; private set; } = true;
-
-        [field: Header("Rendering")]
-        [field: Tooltip("Unity rendering layer for UI particles. Must be included in the main camera's culling mask.")]
-        [field: SerializeField] public int RenderLayer { get; private set; } = 0;
-
         [field: Header("Flight Path")]
-        [field: Tooltip("Enable balloon-style flight path with horizontal kick and zig-zag oscillation. " +
-                        "When disabled, particles float straight upward using SpeedRange.")]
+        [field: Note("INIT-ONLY — switches motion modes. " +
+                     "ON = balloon-style (kick + float + zig-zag). OFF = simple straight-up (uses SpeedRange). " +
+                     "Toggling at runtime has no effect.")]
         [field: SerializeField] public bool UseFlightPath { get; private set; }
 
-        [field: Tooltip("Horizontal kick speed range at spawn (px/sec). Only used when UseFlightPath is true.")]
+        [field: Note("Horizontal kick at spawn (px/sec) — creates the initial sideways arc. Flight path only.")]
+        [field: MinMaxRange(0f, 500f)]
         [field: SerializeField] public Vector2 KickSpeedRange { get; private set; } = new(120f, 220f);
 
-        [field: Tooltip("Initial upward speed range at spawn (px/sec). Overrides SpeedRange when UseFlightPath is true.")]
+        [field: Note("Gentle upward speed at spawn (px/sec). Much lower than kick so particles arc out first. Flight path only.")]
+        [field: MinMaxRange(0f, 200f)]
         [field: SerializeField] public Vector2 InitialUpRange { get; private set; } = new(10f, 40f);
 
-        [field: Tooltip("Upward acceleration in px/sec² applied every frame for sustained buoyancy.")]
+        [field: Note("Sustained upward push every frame (px/sec²). Makes particles keep rising after the kick fades. Flight path only.")]
+        [field: Range(0f, 200f)]
         [field: SerializeField] public float FloatUpAcceleration { get; private set; } = 60f;
 
-        [field: Tooltip("Peak lateral acceleration in px/sec² for sinusoidal zig-zag oscillation.")]
+        [field: Note("Peak sideways acceleration of the zig-zag (px/sec²). Higher = wider lateral swings. 0 = straight. Flight path only.")]
+        [field: Range(0f, 200f)]
         [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 50f;
 
-        [field: Min(0.1f)]
-        [field: Tooltip("Zig-zag oscillation frequency in Hz.")]
+        [field: Note("Zig-zag speed (Hz). 1 = one full left-right cycle per second. Higher = tighter weaving. Flight path only.")]
+        [field: Range(0.1f, 5f)]
         [field: SerializeField] public float ZigZagFrequency { get; private set; } = 1.2f;
 
-        [field: Tooltip("Size multiplier curve over normalised lifetime [0,1]. " +
-                        "Used when UseFlightPath is true for pop/shrink effects.")]
+        [field: Note("INIT-ONLY — size multiplier curve over lifetime [0,1]. " +
+                     "Default: pop in, hold, slight overshoot, shrink to zero. Flight path only.")]
         [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; } = DefaultFlightSizeCurve();
 
         private static AnimationCurve DefaultFlightSizeCurve() =>

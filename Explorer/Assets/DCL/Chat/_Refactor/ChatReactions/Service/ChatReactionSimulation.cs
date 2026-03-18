@@ -76,7 +76,7 @@ namespace DCL.Chat.ChatReactions
             if (cam == null) return;
 
             Profiler.BeginSample("ChatReactions.UI.Draw");
-            renderer.Draw(cam, uiPool.Raw, config.UILane.RenderLayer, config.UILane.DepthFromCamera);
+            renderer.Draw(cam, uiPool.Raw, 0, config.UILane.DepthFromCamera);
             Profiler.EndSample();
         }
 
@@ -90,16 +90,6 @@ namespace DCL.Chat.ChatReactions
         {
             Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect);
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
-        }
-
-        public void TriggerDefaultUIReaction()
-        {
-            TriggerUIReaction(ResolveDefaultEmojiIndex(), config.UILane.StreamBurst);
-        }
-
-        public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
-        {
-            TriggerUIReactionFromRect(sourceRect, ResolveDefaultEmojiIndex(), config.UILane.StreamBurst);
         }
 
         public void BeginUIStream(RectTransform sourceRect) =>
@@ -149,7 +139,7 @@ namespace DCL.Chat.ChatReactions
 
             for (int t = 0; t < ticks; t++)
             {
-                int index = ResolveDefaultEmojiIndex();
+                int index = GetRandomEmojiIndex();
                 RectTransform? source = streamEmitter.Source;
 
                 if (source != null)
@@ -198,10 +188,8 @@ namespace DCL.Chat.ChatReactions
                 ? spawnResolver.GetSpawnPxFromRectCenter(defaultSpawnRect)
                 : spawnResolver.GetSpawnPxBottomCenter();
 
-        private int ResolveDefaultEmojiIndex() =>
-            config.UILane.RandomEmoji
-                ? rng.Next(0, atlasTotalTiles)
-                : config.UILane.DefaultEmojiIndex;
+        public int GetRandomEmojiIndex() =>
+            rng.Next(0, atlasTotalTiles);
 
         private static Material CreateRuntimeMaterial(ChatReactionsConfig config)
         {
