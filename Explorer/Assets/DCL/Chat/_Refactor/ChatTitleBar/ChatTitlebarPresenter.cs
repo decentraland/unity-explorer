@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -401,10 +399,7 @@ namespace DCL.Chat
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
-                {
-                    Username = "Error"
-                });
+                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel("Error"));
 
                 ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
             }
@@ -494,5 +489,3 @@ namespace DCL.Chat
         }
     }
 }
-
-#endif

@@ -1,19 +1,19 @@
-﻿#if !NO_LIVEKIT_MODE
+﻿using MVC;
 
 namespace DCL.Chat.ChatStates
 {
-    public class HiddenChatState : ChatState
+    public class HiddenChatState : ChatState, IState
     {
-        public override void Begin()
+        private readonly ChatUIMediator mediator;
+
+        public HiddenChatState(ChatUIMediator mediator)
         {
-            context.UIMediator.SetupForHiddenState();
+            this.mediator = mediator;
         }
 
-        public override void End()
+        public void Enter()
         {
-            
+            mediator.SetupForHiddenState();
         }
     }
 }
-
-#endif

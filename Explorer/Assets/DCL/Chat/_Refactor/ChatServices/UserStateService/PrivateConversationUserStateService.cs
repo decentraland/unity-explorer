@@ -311,7 +311,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouUnblockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Address);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId);
 
         private void OnYouBlockedByUser(string userId)
         {
@@ -321,7 +321,7 @@ namespace DCL.Chat.ChatServices
         }
 
         private void OnYouBlockedProfile(BlockedProfile profile) =>
-            CheckOnlineStatusAndNotify(profile.Address);
+            CheckOnlineStatusAndNotify(profile.Profile.UserId);
 
         /// <summary>
         /// Determines if a given user should be considered "online"

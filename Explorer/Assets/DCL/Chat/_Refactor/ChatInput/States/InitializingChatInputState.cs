@@ -1,22 +1,29 @@
-﻿#if !NO_LIVEKIT_MODE
+﻿using MVC;
 
 namespace DCL.Chat.ChatInput
 {
     /// <summary>
     ///     Denotes the state when the capability to send messages is being resolved
     /// </summary>
-    public class InitializingChatInputState : ChatInputState
+    public class InitializingChatInputState : ChatInputState, IState
     {
+        private readonly MVCStateMachine<ChatInputState> chatInputStateMachine;
+
+        public InitializingChatInputState(MVCStateMachine<ChatInputState> chatInputStateMachine)
+        {
+            this.chatInputStateMachine = chatInputStateMachine;
+        }
+
+        public void Enter() { }
+
         protected override void OnInputUnblocked()
         {
-            ChangeState<TypingEnabledChatInputState>();
+            chatInputStateMachine.Enter<TypingEnabledChatInputState>();
         }
 
         protected override void OnInputBlocked()
         {
-            ChangeState<BlockedChatInputState>();
+            chatInputStateMachine.Enter<BlockedChatInputState>();
         }
     }
 }
-
-#endif
