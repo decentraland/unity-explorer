@@ -116,7 +116,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
-                DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
+                DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.zone/convert?url={{0}}", // TODO REMOVE HARDBINDING TO ZONE ON MERGE, TEST ONLY
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.Notifications => $"https://notifications.decentraland.{ENV}",
