@@ -120,7 +120,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         private bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponent<Animator>()
+            mainAsset.GetComponentInChildren<Animator>(true)
             || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
@@ -132,7 +132,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             Animation? animationComp = null;
 
             // Check for Animator first (Mecanim emotes)
-            animatorComp = mainGameObject.GetComponent<Animator>();
+            animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
 
             if (animatorComp) { animationClips = animatorComp.runtimeAnimatorController.animationClips; }
             else

@@ -170,6 +170,7 @@ namespace DCL.CharacterMotion.Systems
                                 !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
                                 !stunComponent.IsStunned &&
                                 !emoteComponent.IsPlayingEmote &&
+                                !emoteComponent.IsPlayingMaskedEmote &&
                                 !platformComponent.PositionChanged;
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);

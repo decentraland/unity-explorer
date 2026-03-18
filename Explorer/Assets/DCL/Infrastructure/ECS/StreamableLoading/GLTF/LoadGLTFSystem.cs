@@ -127,7 +127,7 @@ namespace ECS.StreamableLoading.GLTF
                         propClip = clip;
 
             var overrideController = new AnimatorOverrideController(baseController);
-            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(); //TODO (Maurizio) could be reused
+            var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(overrides);
 
             for (int i = 0; i < overrides.Count; i++)
