@@ -54,26 +54,36 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, reportCategory)
                     .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+                foreach (var element in dtoPooledList.Value)
+                {
+                    if (element.pointers == null || element.pointers.Length == 0)
+                    {
+                        ReportHub.LogError(reportCategory, "Asset bundle registry returned an entry with no pointers. Skipping.");
+                        continue;
+                    }
+
+                    var ab = element.versions.assets;
+
+                    if (!ab.webgl.HasValue || !ab.mac.HasValue || !ab.windows.HasValue)
+                    {
+                        ReportHub.LogError(reportCategory, $"Asset bundle registry did not return all platform versions for pointer {element.pointers[0]}. Registry must provide mac, windows and webgl. Skipping.");
+                        continue;
+                    }
+
+                    result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
+                    {
+                        mac = new AssetBundlesVersions.VersionInfo { version = ab.mac.Value.version, buildDate = ab.mac.Value.buildDate },
+                        windows = new AssetBundlesVersions.VersionInfo { version = ab.windows.Value.version, buildDate = ab.windows.Value.buildDate },
+                        webgl = new AssetBundlesVersions.VersionInfo { version = ab.webgl.Value.version, buildDate = ab.webgl.Value.buildDate },
+                    });
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, reportCategory);
                 return result;
-            }
-
-            foreach (var element in dtoPooledList.Value)
-            {
-                var ab = element.versions.assets;
-                if (!ab.webgl.HasValue)
-                    throw new InvalidOperationException($"Asset bundle registry did not return webgl version for pointer {element.pointers[0]}. Registry must provide mac, windows and webgl.");
-                var webgl = new AssetBundlesVersions.VersionInfo { version = ab.webgl.Value.version, buildDate = ab.webgl.Value.buildDate };
-                result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
-                {
-                    mac = new AssetBundlesVersions.VersionInfo { version = ab.mac.version, buildDate = ab.mac.buildDate },
-                    windows = new AssetBundlesVersions.VersionInfo { version = ab.windows.version, buildDate = ab.windows.buildDate },
-                    webgl = webgl
-                });
             }
 
             return result;
