@@ -584,9 +584,9 @@ namespace DCL.Chat.ChatMessages
 
             if (chatEntryView.messageBubbleElement.reactionButton != null)
             {
-                Vector3 targetPosition = chatEntryView.messageBubbleElement.reactionButton.transform.position
-                                         + (Vector3)messageReactionsConfig.EmojiPanelOffset;
-                emojiPanelPresenter.MovePanel(targetPosition);
+                float targetY = chatEntryView.messageBubbleElement.reactionButton.transform.position.y
+                                + messageReactionsConfig.EmojiPanelOffset.y;
+                emojiPanelPresenter.MovePanelToWorldY(targetY);
             }
 
             emojiPanelPresenter.SetPanelVisibility(true);

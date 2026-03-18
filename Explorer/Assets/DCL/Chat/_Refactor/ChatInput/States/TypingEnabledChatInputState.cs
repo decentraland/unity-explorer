@@ -45,6 +45,7 @@ namespace DCL.Chat.ChatInput
             SendMessageCommand sendMessageCommand,
             EmojiMapping emojiMapping,
             EmojiPanelPresenter emojiPanelPresenter,
+            EmojiPanelView emojiPanelView,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             CancellationToken stateMachineDisposalCt)
@@ -57,8 +58,8 @@ namespace DCL.Chat.ChatInput
 
             pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
             suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
-            emojiPanelState = new EmojiPanelChatInputState(view, emojiPanelPresenter);
-            emojiPanelView = view.emojiContainer.emojiPanel;
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiPanelPresenter, emojiPanelView);
+            this.emojiPanelView = emojiPanelView;
             inputField = view.inputField;
         }
 

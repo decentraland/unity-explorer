@@ -92,6 +92,14 @@ namespace DCL.Emoji
             view.MoveTo(worldPosition);
         }
 
+        /// <summary>
+        /// Moves the panel vertically to the given world Y while keeping default X.
+        /// </summary>
+        public void MovePanelToWorldY(float worldY)
+        {
+            view.MoveToWorldY(worldY);
+        }
+
         private void ConfigureEmojiSectionSizes()
         {
             foreach (EmojiSectionView emojiSectionView in emojiSectionViews)

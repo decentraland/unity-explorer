@@ -35,7 +35,8 @@ namespace DCL.Chat.ChatInput
             SendMessageCommand sendMessageCommand,
             ITextFormatter textFormatter,
             EmojiMapping emojiMapping,
-            EmojiPanelPresenter emojiPanelPresenter)
+            EmojiPanelPresenter emojiPanelPresenter,
+            EmojiPanelView emojiPanelView)
         {
             this.view = view;
             this.view.Initialize(chatConfig, textFormatter);
@@ -53,6 +54,7 @@ namespace DCL.Chat.ChatInput
                     sendMessageCommand,
                     emojiMapping,
                     emojiPanelPresenter,
+                    emojiPanelView,
                     profileRepositoryWrapper,
                     getParticipantProfilesCommand,
                     fsm.DisposalCt

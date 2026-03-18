@@ -122,7 +122,7 @@ namespace DCL.Chat
             var emojiContainer = view.InputView.emojiContainer;
             var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
             var emojiPanelPresenter = new EmojiPanelPresenter(
-                emojiContainer.emojiPanel,
+                view.EmojiPanelView,
                 emojiContainer.emojiPanelConfiguration,
                 emojiMapping,
                 emojiContainer.emojiSectionViewPrefab,
@@ -162,7 +162,8 @@ namespace DCL.Chat
                 commandRegistry.SendMessage,
                 textFormatter,
                 emojiMapping,
-                emojiPanelPresenter);
+                emojiPanelPresenter,
+                view.EmojiPanelView);
 
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,

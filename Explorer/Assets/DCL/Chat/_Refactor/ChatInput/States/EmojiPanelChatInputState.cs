@@ -10,25 +10,27 @@ namespace DCL.Chat.ChatInput
     public class EmojiPanelChatInputState : IndependentMVCState, IDisposable
     {
         private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly EmojiPanelView emojiPanelView;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        public EmojiPanelChatInputState(ChatInputView view, EmojiPanelPresenter emojiPanelPresenter)
+        public EmojiPanelChatInputState(ChatInputView view, EmojiPanelPresenter emojiPanelPresenter, EmojiPanelView emojiPanelView)
         {
             emojiContainer = view.emojiContainer;
             this.emojiPanelPresenter = emojiPanelPresenter;
+            this.emojiPanelView = emojiPanelView;
 
             inputField = view.inputField;
 
-            clickDetectionHandler = new ChatClickDetectionHandler(emojiContainer.emojiPanel.transform);
+            clickDetectionHandler = new ChatClickDetectionHandler(emojiPanelView.transform);
             clickDetectionHandler.OnClickOutside += Deactivate;
             clickDetectionHandler.Pause();
         }
 
         protected override void Activate()
         {
-            emojiContainer.emojiPanel.ResetToDefaultPosition();
+            emojiPanelView.ResetToDefaultPosition();
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiContainer.emojiPanelButton.SetState(true);
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
