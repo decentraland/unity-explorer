@@ -24,6 +24,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public SkyboxSettingsAsset SkyboxSettings { get; private set; }
 
+        [field: SerializeField]
+        public BuildData BuildData { get; private set; }
+
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]

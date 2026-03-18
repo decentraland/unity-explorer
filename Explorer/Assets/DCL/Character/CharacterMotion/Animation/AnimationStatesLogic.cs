@@ -23,9 +23,8 @@ namespace DCL.CharacterMotion.Animation
             in GlideState glideState)
         {
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
-
             Vector3 velocity = rigidTransform.MoveVelocity.Velocity;
-            float verticalVelocity = rigidTransform.GravityVelocity.y + velocity.y;
+            float verticalVelocity = rigidTransform.GravityVelocity.y + velocity.y + rigidTransform.ExternalVelocity.y;
 
             bool jumpTriggered = jumpState.JumpCount > animationComponent.States.JumpCount;
             bool glidingTriggered = glideState.Value == GlideStateValue.OPENING_PROP && animationComponent.States.GlideState != GlideStateValue.OPENING_PROP;
