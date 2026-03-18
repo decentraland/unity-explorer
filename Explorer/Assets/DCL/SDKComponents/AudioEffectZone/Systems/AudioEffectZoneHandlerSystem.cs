@@ -43,23 +43,38 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         [All(typeof(TransformComponent))]
         private void SetupAudioEffectZone(in Entity entity, ref PBAudioEffectZone pbAudioEffectZone)
         {
+            var triggerArea = new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false);
+
             switch (pbAudioEffectZone.EffectCase)
             {
                 case PBAudioEffectZone.EffectOneofCase.Silence:
-                    World!.Add(entity,
-                        new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
-                        new SilenceZoneComponent()
-                    ); break;
+                    var silence = pbAudioEffectZone.Silence;
+                    World!.Add(entity, triggerArea, new SilenceZoneComponent
+                    {
+                        ExcludeIds = silence.HasExcludeIds ? silence.ExcludeIds : null,
+                    });
+                    break;
                 case PBAudioEffectZone.EffectOneofCase.Despatialize:
-                    World!.Add(entity,
-                        new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
-                        new DespatializationAudioZoneComponent()
-                    ); break;
-                // case PBAudioEffectZone.EffectOneofCase.Reverb:
-                //     World!.Add(entity,
-                //         new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false),
-                //         new ReverbAudioZoneComponent()
-                //     ); break;
+                    World!.Add(entity, triggerArea, new DespatializationAudioZoneComponent());
+                    break;
+                case PBAudioEffectZone.EffectOneofCase.Amplify:
+                    var amplify = pbAudioEffectZone.Amplify;
+                    World!.Add(entity, triggerArea, new AmplificationZoneComponent
+                    {
+                        VolumeMultiplier = amplify.HasVolumeMultiplier ? amplify.VolumeMultiplier : 2.0f,
+                        DistanceMultiplier = amplify.HasDistanceMultiplier ? amplify.DistanceMultiplier : 2.0f,
+                    });
+                    break;
+                case PBAudioEffectZone.EffectOneofCase.Reverb:
+                    var reverb = pbAudioEffectZone.Reverb;
+                    World!.Add(entity, triggerArea, new ReverbAudioZoneComponent
+                    {
+                        Preset = reverb.HasPreset ? reverb.Preset : PBAudioEffectZone.Types.ReverbPreset.RpRoom,
+                    });
+                    break;
+                case PBAudioEffectZone.EffectOneofCase.Echo:
+                    World!.Add(entity, triggerArea, new EchoZoneComponent());
+                    break;
             }
         }
 
@@ -120,8 +135,6 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         [Query]
         private void SetAllProximityAudioMuted([Data] bool muted, ref ProximityAudioSourceComponent proximityAudio)
         {
-            if (proximityAudio.AudioSource == null) return;
-
             proximityAudio.AudioSource.enabled = !muted;
             proximityAudio.AudioSource.mute = muted;
 
