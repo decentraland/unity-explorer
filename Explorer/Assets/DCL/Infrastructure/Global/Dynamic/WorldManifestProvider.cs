@@ -20,9 +20,7 @@ namespace Global.Dynamic
 {
     public class WorldManifestProvider
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
-        private readonly AssetReferenceT<ParcelData> parsedParcels;
 
         private static URLAddress ORG_MANIFEST_URL = URLAddress.FromString("https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json");
         private static URLAddress ZONE_MANIFEST_URL = URLAddress.FromString("https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json");
@@ -31,14 +29,9 @@ namespace Global.Dynamic
 
         private WorldManifest? cachedMainManifest;
 
-        public WorldManifestProvider(
-            IAssetsProvisioner assetsProvisioner,
-            IWebRequestController webRequestController,
-            AssetReferenceT<ParcelData> parsedParcels)
+        public WorldManifestProvider(IWebRequestController webRequestController)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
-            this.parsedParcels = parsedParcels;
         }
 
         public async UniTask<WorldManifest> FetchWorldManifestAsync(URLDomain assetBundleRegistry, string realmName, DecentralandEnvironment environment, CancellationToken ct)
@@ -95,8 +88,6 @@ namespace Global.Dynamic
                 if (cachedMainManifest.HasValue)
                     return cachedMainManifest.Value;
 
-                ProvidedAsset<ParcelData> fallbackParcelData = await assetsProvisioner.ProvideMainAssetAsync(parsedParcels, ct);
-
                 URLAddress manifestURL = environment == DecentralandEnvironment.Zone ? ZONE_MANIFEST_URL : ORG_MANIFEST_URL;
 
                 string? result = await webRequestController
@@ -105,7 +96,7 @@ namespace Global.Dynamic
                                       .StoreTextAsync();
 
                 if (string.IsNullOrEmpty(result))
-                    return WorldManifest.Create(fallbackParcelData.Value.ownedParcels, true);
+                    return WorldManifest.Empty;
 
                 var settings = new JsonSerializerSettings();
                 WorldManifestDto dto = JsonConvert.DeserializeObject<WorldManifestDto>(result, settings);
