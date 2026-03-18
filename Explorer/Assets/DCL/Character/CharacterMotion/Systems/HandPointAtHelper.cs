@@ -100,6 +100,8 @@ namespace DCL.Character.CharacterMotion.Systems
             target.position = Vector3.MoveTowards(
                 target.position, ikTargetPos, ikSpeed * dt);
 
+            avatarBase.RightHandTarget.position = target.position;
+
             Vector3 pointDirection = (ikTargetPos - avatarBase.RightShoulderAnchorPoint.position).normalized;
 
             Vector3 backOfHand = Vector3.up - Vector3.Dot(Vector3.up, pointDirection) * pointDirection;

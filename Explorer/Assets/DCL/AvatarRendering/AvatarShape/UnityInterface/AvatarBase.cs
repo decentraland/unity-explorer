@@ -62,6 +62,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandRaycast { get; private set; }
         [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; }
         [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
+        [field: SerializeField] public Transform RightHandTarget { get; private set; }
         [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
         [field: Header("LOOK-AT IK")]
