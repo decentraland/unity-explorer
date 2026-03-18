@@ -44,7 +44,6 @@ namespace DCL.Profiles
         private ulong lastDeployTimestampInSeconds = 0;
 
         private UniTaskCompletionSource? currentProfileResolutionTask;
-        private UniTask debounceTask;
         private Profile? currentProfile;
 
         public RealmProfileRepository(
