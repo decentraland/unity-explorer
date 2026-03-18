@@ -102,21 +102,35 @@ namespace DCL.Chat.ChatReactions
         private void Load()
         {
             usageEntries.Clear();
+            CleanupLegacyPrefKey();
 
-            // One-time cleanup of the legacy selected-emoji pref key.
+            string saved = ReadSavedFavorites();
+
+            if (saved != null)
+                ParseSavedEntries(saved);
+        }
+
+        private static void CleanupLegacyPrefKey()
+        {
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_SELECTED))
                 DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_SELECTED);
+        }
 
+        private static string ReadSavedFavorites()
+        {
             if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_FAVORITES))
-                return;
+                return null;
 
             string saved = DCLPlayerPrefs.GetString(DCLPrefKeys.CHAT_REACTION_FAVORITES);
+            return string.IsNullOrEmpty(saved) ? null : saved;
+        }
 
-            if (string.IsNullOrEmpty(saved))
-                return;
-
-            // Format: "index:count;index:count;..."
-            // Legacy format (no colon): "index;index;..." — treated as count=1 per entry.
+        /// <summary>
+        /// Zero-allocation character parser for the format <c>index:count;index:count;...</c>.
+        /// Legacy format (no colon): <c>index;index;...</c> — treated as count=1 per entry.
+        /// </summary>
+        private void ParseSavedEntries(string saved)
+        {
             int index = 0;
             int usageCount = 0;
             bool parsingIndex = true;
@@ -126,42 +140,49 @@ namespace DCL.Chat.ChatReactions
             {
                 char c = i < saved.Length ? saved[i] : ENTRY_SEPARATOR;
 
-                if (c >= '0' && c <= '9')
+                switch (c)
                 {
-                    if (parsingIndex)
-                        index = index * 10 + (c - '0');
-                    else
-                        usageCount = usageCount * 10 + (c - '0');
+                    case >= '0' and <= '9':
+                        {
+                            if (parsingIndex)
+                                index = index * 10 + (c - '0');
+                            else
+                                usageCount = usageCount * 10 + (c - '0');
 
-                    hasDigits = true;
-                }
-                else if (c == COUNT_SEPARATOR && parsingIndex && hasDigits)
-                {
-                    parsingIndex = false;
-                    hasDigits = false;
-                }
-                else if (c == ENTRY_SEPARATOR && hasDigits)
-                {
-                    // Legacy entries without ':' get count=1.
-                    if (parsingIndex)
-                        usageCount = 1;
-
-                    if (!IsFixedDefault(index) && !ContainsIndex(index))
-                        usageEntries.Add(new EmojiUsage(index, usageCount));
-
-                    index = 0;
-                    usageCount = 0;
-                    parsingIndex = true;
-                    hasDigits = false;
-                }
-                else
-                {
-                    index = 0;
-                    usageCount = 0;
-                    parsingIndex = true;
-                    hasDigits = false;
+                            hasDigits = true;
+                            break;
+                        }
+                    case COUNT_SEPARATOR when parsingIndex && hasDigits:
+                        parsingIndex = false;
+                        hasDigits = false;
+                        break;
+                    case ENTRY_SEPARATOR when hasDigits:
+                        CommitParsedEntry(ref index, ref usageCount, ref parsingIndex, ref hasDigits);
+                        break;
+                    default:
+                        ResetParseState(ref index, ref usageCount, ref parsingIndex, ref hasDigits);
+                        break;
                 }
             }
+        }
+
+        private void CommitParsedEntry(ref int index, ref int usageCount, ref bool parsingIndex, ref bool hasDigits)
+        {
+            if (parsingIndex)
+                usageCount = 1;
+
+            if (!IsFixedDefault(index) && !ContainsIndex(index))
+                usageEntries.Add(new EmojiUsage(index, usageCount));
+
+            ResetParseState(ref index, ref usageCount, ref parsingIndex, ref hasDigits);
+        }
+
+        private static void ResetParseState(ref int index, ref int usageCount, ref bool parsingIndex, ref bool hasDigits)
+        {
+            index = 0;
+            usageCount = 0;
+            parsingIndex = true;
+            hasDigits = false;
         }
 
         private void Save()
@@ -198,7 +219,7 @@ namespace DCL.Chat.ChatReactions
 
         private struct EmojiUsage
         {
-            public int AtlasIndex;
+            public readonly int AtlasIndex;
             public int Count;
 
             public EmojiUsage(int atlasIndex, int count)

@@ -140,24 +140,23 @@ namespace DCL.Chat.ChatReactions
         {
             chatReactionSimulation.ToggleUIStream(sourceRect);
 
-            if (cachedLocalHeadGetter != null)
-            {
-                if (chatReactionSimulation.IsStreaming && WorldReactionsEnabled)
-                    worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
-                else
-                    worldReactionSimulation.EndStream();
-            }
+            bool shouldStreamWorld = chatReactionSimulation.IsStreaming && WorldReactionsEnabled;
+
+            if (cachedLocalHeadGetter == null) return;
+
+            if (shouldStreamWorld)
+                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
+            else
+                worldReactionSimulation.EndStream();
         }
 
-        public void BeginDebugUIStream(RectTransform? sourceRect = null)
-        {
+        // Debug controls
+
+        public void BeginDebugUIStream(RectTransform? sourceRect = null) =>
             chatReactionSimulation.BeginDebugUIStream(sourceRect);
-        }
 
-        public void EndDebugUIStream()
-        {
+        public void EndDebugUIStream() =>
             chatReactionSimulation.EndDebugUIStream();
-        }
 
         public void BeginDebugLocalStream()
         {
@@ -165,10 +164,8 @@ namespace DCL.Chat.ChatReactions
                 worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
         }
 
-        public void EndDebugLocalStream()
-        {
+        public void EndDebugLocalStream() =>
             worldReactionSimulation.EndStream();
-        }
 
         public void BeginDebugNearby()
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
@@ -90,6 +91,10 @@ namespace DCL.Chat.ChatReactions
                     SendChatReactionTo(emojiIndex, messageId, address, messagePipesHub.ChatPipe(),
                         topic: routing.ChannelId, recipient: routingUser);
                     break;
+                case ChatChannel.ChatChannelType.UNDEFINED:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             if (selfSendEnabled)
@@ -125,31 +130,24 @@ namespace DCL.Chat.ChatReactions
 
         private async UniTaskVoid SelfSendSituationalAsync(int emojiIndex, float timestamp)
         {
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(SELF_SEND_DELAY), cancellationToken: cts.Token);
-
-                string walletId = identityCache.Identity?.Address ?? string.Empty;
-
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Self-send situational reaction: emoji={emojiIndex} wallet={walletId}");
-
-                ReactionReceived?.Invoke(new ReactionReceivedArgs(
-                    walletId, emojiIndex, 1, ReactionType.Situational, string.Empty));
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
+            string walletId = identityCache.Identity?.Address ?? string.Empty;
+            await DelaySelfSendAsync(new ReactionReceivedArgs(walletId, emojiIndex, 1, ReactionType.Situational, string.Empty),
+                $"Self-send situational reaction: emoji={emojiIndex} wallet={walletId}");
         }
 
         private async UniTaskVoid SelfSendChatReactionAsync(int emojiIndex, string messageId, string address)
         {
+            await DelaySelfSendAsync(new ReactionReceivedArgs(address, emojiIndex, 1, ReactionType.Message, messageId),
+                $"Self-send chat reaction: emoji={emojiIndex} messageId={messageId}");
+        }
+
+        private async UniTask DelaySelfSendAsync(ReactionReceivedArgs args, string logMessage)
+        {
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(SELF_SEND_DELAY), cancellationToken: cts.Token);
-
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Self-send chat reaction: emoji={emojiIndex} messageId={messageId}");
-
-                ReactionReceived?.Invoke(new ReactionReceivedArgs(
-                    address, emojiIndex, 1, ReactionType.Message, messageId));
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] {logMessage}");
+                ReactionReceived?.Invoke(args);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }

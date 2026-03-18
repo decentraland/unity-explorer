@@ -56,7 +56,7 @@ namespace DCL.Chat.ChatReactions.Configs
                     unicodeToTileIndex[chars[i].unicode] = (int)chars[i].glyphIndex;
             }
 
-            return unicodeToTileIndex.TryGetValue(unicodeCodepoint, out int index) ? index : -1;
+            return unicodeToTileIndex.GetValueOrDefault(unicodeCodepoint, -1);
         }
 
         /// <summary>
@@ -81,15 +81,7 @@ namespace DCL.Chat.ChatReactions.Configs
             {
                 uint unicode = chars[i].unicode;
                 int glyphIdx = (int)chars[i].glyphIndex;
-
-                string emoji;
-
-                if (unicode >= 0xD800 && unicode <= 0xDFFF || unicode > 0x10FFFF)
-                    emoji = "?";
-                else if (unicode <= 0xFFFF)
-                    emoji = ((char)unicode).ToString();
-                else
-                    emoji = char.ConvertFromUtf32((int)unicode);
+                string emoji = EmojiCodepointHelper.CodepointToDisplayString(unicode);
 
                 sb.AppendLine($"  [{i}] U+{unicode:X4} ({emoji}) → tile {glyphIdx}");
             }

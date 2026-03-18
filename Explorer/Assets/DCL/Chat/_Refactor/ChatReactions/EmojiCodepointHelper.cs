@@ -27,5 +27,19 @@ namespace DCL.Chat.ChatReactions
 
             return true;
         }
+
+        /// <summary>
+        /// Converts a Unicode codepoint to its display string.
+        /// Returns "?" for surrogates and out-of-range values.
+        /// </summary>
+        public static string CodepointToDisplayString(uint unicode)
+        {
+            return unicode switch
+            {
+                >= 0xD800 and <= 0xDFFF or > 0x10FFFF => "?",
+                <= 0xFFFF => ((char)unicode).ToString(),
+                _ => char.ConvertFromUtf32((int)unicode)
+            };
+        }
     }
 }

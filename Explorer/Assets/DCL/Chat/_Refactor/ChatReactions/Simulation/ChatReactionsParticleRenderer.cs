@@ -49,8 +49,7 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Draws world-space particles. Positions and sizes are already in world units —
-        /// no screen-to-world conversion is performed.
+        /// Draws world-space particles. Positions and sizes are already in world units.
         /// </summary>
         public void Draw(ChatReactionsParticle[] particles, int layer, float globalAlpha = 1f)
         {
@@ -63,24 +62,16 @@ namespace DCL.Chat.ChatReactions
                 if (particles[i].alive == 0) continue;
 
                 ref readonly var p = ref particles[i];
+                float t = LifetimeT(p.age, p.lifetime);
 
-                float t = p.lifetime > 0f ? Mathf.Clamp01(p.age / p.lifetime) : 0f;
-                float startSize = p.startSize;
-                float endSize = p.endSize;
+                WriteBatchSlot(batchCount, p.pos,
+                    ApplySizeCurve(p.startSize, t),
+                    ApplySizeCurve(p.endSize, t),
+                    p.emojiIndex, t);
 
-                if (sizeOverLifetime != null)
-                {
-                    float multiplier = sizeOverLifetime.Evaluate(t);
-                    startSize *= multiplier;
-                    endSize *= multiplier;
-                }
+                batchCount++;
 
-                posSize[batchCount] = new Vector4(p.pos.x, p.pos.y, p.pos.z, startSize);
-                extra[batchCount]   = new Vector4(endSize, 0f, 0f, 0f);
-                emoji[batchCount]   = new Vector4(p.emojiIndex, 0f, 0f, 0f);
-                lifeT[batchCount]   = new Vector4(t, 0f, 0f, 0f);
-
-                if (++batchCount == BATCH_SIZE)
+                if (batchCount == BATCH_SIZE)
                 {
                     Flush(layer, batchCount, globalAlpha);
                     batchCount = 0;
@@ -98,9 +89,7 @@ namespace DCL.Chat.ChatReactions
         {
             if (mat == null || cam == null) return;
 
-            float worldSizePerPixel = cam.orthographic
-                ? (2f * cam.orthographicSize) / cam.pixelHeight
-                : (2f * depthFromCamera * Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f)) / cam.pixelHeight;
+            float worldSizePerPixel = WorldSizePerPixel(cam, depthFromCamera);
 
             if (worldSizePerPixel <= 0f || cam.pixelHeight <= 0)
                 return;
@@ -112,26 +101,14 @@ namespace DCL.Chat.ChatReactions
                 if (particles[i].alive == 0) continue;
 
                 ref readonly var p = ref particles[i];
-
-                float t = p.lifetime > 0f ? Mathf.Clamp01(p.age / p.lifetime) : 0f;
-                float startSizePx = p.startSizePx;
-                float endSizePx = p.endSizePx;
-
-                if (sizeOverLifetime != null)
-                {
-                    float multiplier = sizeOverLifetime.Evaluate(t);
-                    startSizePx *= multiplier;
-                    endSizePx *= multiplier;
-                }
+                float t = LifetimeT(p.age, p.lifetime);
 
                 Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(p.screenPos.x, p.screenPos.y, depthFromCamera));
-                float startSize = startSizePx * worldSizePerPixel;
-                float endSize = endSizePx * worldSizePerPixel;
 
-                posSize[batchCount] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
-                extra[batchCount] = new Vector4(endSize, 0f, 0f, 0f);
-                emoji[batchCount] = new Vector4(p.emojiIndex, 0f, 0f, 0f);
-                lifeT[batchCount] = new Vector4(t, 0f, 0f, 0f);
+                WriteBatchSlot(batchCount, worldPos,
+                    ApplySizeCurve(p.startSizePx, t) * worldSizePerPixel,
+                    ApplySizeCurve(p.endSizePx, t) * worldSizePerPixel,
+                    p.emojiIndex, t);
 
                 batchCount++;
 
@@ -144,6 +121,25 @@ namespace DCL.Chat.ChatReactions
 
             if (batchCount > 0)
                 Flush(layer, batchCount, globalAlpha);
+        }
+
+        private static float LifetimeT(float age, float lifetime) =>
+            lifetime > 0f ? Mathf.Clamp01(age / lifetime) : 0f;
+
+        private float ApplySizeCurve(float size, float t) =>
+            sizeOverLifetime != null ? size * sizeOverLifetime.Evaluate(t) : size;
+
+        private static float WorldSizePerPixel(Camera cam, float depth) =>
+            cam.orthographic
+                ? (2f * cam.orthographicSize) / cam.pixelHeight
+                : (2f * depth * Mathf.Tan(cam.fieldOfView * Mathf.Deg2Rad * 0.5f)) / cam.pixelHeight;
+
+        private void WriteBatchSlot(int slot, Vector3 worldPos, float startSize, float endSize, int emojiIndex, float t)
+        {
+            posSize[slot] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
+            extra[slot] = new Vector4(endSize, 0f, 0f, 0f);
+            emoji[slot] = new Vector4(emojiIndex, 0f, 0f, 0f);
+            lifeT[slot] = new Vector4(t, 0f, 0f, 0f);
         }
 
         private void Flush(int layer, int count, float globalAlpha)
