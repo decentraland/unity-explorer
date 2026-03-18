@@ -30,7 +30,11 @@ namespace ECS.StreamableLoading.Textures
         public readonly bool IsAvatarTexture => !string.IsNullOrEmpty(AvatarTextureUserId);
 
         // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
-        private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
+        // For avatar textures, use the userId as the cache key to ensure each user's avatar is cached separately
+        private readonly string cacheKey => 
+            IsAvatarTexture 
+                ? AvatarTextureUserId! 
+                : (string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash);
 
         public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
             string reportSource,
@@ -81,13 +85,14 @@ namespace ECS.StreamableLoading.Textures
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
             IsVideoTexture == other.IsVideoTexture &&
-            VideoPlayerEntity.Equals(other.VideoPlayerEntity);
+            VideoPlayerEntity.Equals(other.VideoPlayerEntity) &&
+            AvatarTextureUserId == other.AvatarTextureUserId;
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
         public readonly override int GetHashCode() =>
-            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
+            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity, AvatarTextureUserId);
 
         public readonly override string ToString() =>
             $"Get Texture by {ReportSource}, {(IsAvatarTexture ? "isAvatarTexture" : string.Empty)} : {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
@@ -98,8 +103,9 @@ namespace ECS.StreamableLoading.Textures
             /// Number added to the hash, to differentiate between incompatible serialize/deserialize types.
             /// E.g. after adding WrapMode and Filtering mode to meta data, previously downloaded textures could not be
             /// deserialized anymore.
+            /// Incremented to 2 to invalidate avatar texture cache after fixing cache key bug (issue #7443)
             /// </summary>
-            private const int ITERATION_NUMBER = 1;
+            private const int ITERATION_NUMBER = 2;
             public static readonly DiskHashCompute INSTANCE = new ();
 
             private DiskHashCompute() { }
@@ -112,6 +118,7 @@ namespace ECS.StreamableLoading.Textures
                 keyPayload.Put((int)asset.FilterMode);
                 keyPayload.Put(asset.IsVideoTexture);
                 keyPayload.Put(asset.VideoPlayerEntity.Id);
+                keyPayload.Put(asset.AvatarTextureUserId ?? string.Empty);
             }
         }
     }
