@@ -1,4 +1,4 @@
-﻿using DCL.FeatureFlags;
+using DCL.FeatureFlags;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
@@ -9,6 +9,7 @@ namespace DCL.Settings.ModuleControllers
     public class VoiceChatVolumeSettingsController : SettingsFeatureController
     {
         private const string VOICE_CHAT_VOLUME_EXPOSED_PARAM = "VoiceChat_Volume";
+        private const string PROXIMITY_VOICE_CHAT_VOLUME_EXPOSED_PARAM = "ProximityVoiceChat_Volume";
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
@@ -30,7 +31,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetVoiceChatVolumeSettings(float volumePercentage)
         {
-            generalAudioMixer.SetFloat(VOICE_CHAT_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
+            float decibels = AudioUtils.PercentageVolumeToDecibel(volumePercentage);
+            generalAudioMixer.SetFloat(VOICE_CHAT_VOLUME_EXPOSED_PARAM, decibels);
+            generalAudioMixer.SetFloat(PROXIMITY_VOICE_CHAT_VOLUME_EXPOSED_PARAM, decibels);
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, volumePercentage, save: true);
         }
 

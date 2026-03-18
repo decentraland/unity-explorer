@@ -57,6 +57,9 @@ namespace DCL.VoiceChat
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
 
+        [Tooltip("Specify group where proximity voice chat sources should put its output")]
+        public AudioMixerGroup ProximityChatAudioMixerGroup;
+
         [Header("Proximity Spatial Audio")]
         [Range(0f, 1f)]
         public float ProximitySpatialBlend = 1f;

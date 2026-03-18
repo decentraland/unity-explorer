@@ -13,6 +13,7 @@ namespace DCL.Audio
         UI_Volume,
         World_Volume,
         VoiceChat_Volume,
+        ProximityVoiceChat_Volume,
         Microphone_Volume
     }
 
