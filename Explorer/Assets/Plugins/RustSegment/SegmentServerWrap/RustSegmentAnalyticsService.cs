@@ -222,12 +222,21 @@ namespace Plugins.RustSegment.SegmentServerWrap
             {
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
 
+                bool isInternal = marshaled.Contains("(will retry)");
+
                 // Required to avoid polluting Sentry with retry messages
-                string reportCategory = marshaled.Contains("(will retry)")
+                string reportCategory = isInternal
                     ? ReportCategory.ANALYTICS_INTERNAL
                     : ReportCategory.ANALYTICS;
 
+#if UNITY_EDITOR
                 ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+#else
+                if (isInternal == false) // Avoid logging ANALYTICS_INTERNAL in builds
+                {
+                    ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+                }
+#endif
             }
             catch
             {

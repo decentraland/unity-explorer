@@ -129,9 +129,11 @@ namespace DCL.VoiceChat
                 if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
                 MicrophoneRtcAudioSource rtcAudioSource = result.Value;
-                rtcAudioSource.Start();
 
-                ITrack livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                if (microphoneHandler.IsMicrophoneEnabled.Value)
+                    rtcAudioSource.Start();
+
+                ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
                     rtcAudioSource
                 );
