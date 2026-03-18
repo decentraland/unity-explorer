@@ -760,7 +760,7 @@ jobs:
           TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
-          BUILD_OPTIONS: 'Development,IncludeTestAssemblies,CompressWithLz4HC'
+          BUILD_OPTIONS: 'Development,CompressWithLz4HC'
           CLEAN_BUILD: false
           CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
           IS_RELEASE_BUILD: false
