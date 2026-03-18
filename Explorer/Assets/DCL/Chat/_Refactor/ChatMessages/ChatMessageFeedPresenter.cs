@@ -42,6 +42,8 @@ namespace DCL.Chat.ChatMessages
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatMessageReactionService messageReactionService;
         private readonly ChatReactionsAtlasConfig atlasConfig;
+        private readonly ChatReactionsMessageConfig messageReactionsConfig;
+        private readonly ChatClickDetectionHandler emojiPanelClickHandler;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -83,7 +85,8 @@ namespace DCL.Chat.ChatMessages
             RevertToOriginalCommand revertToOriginalCommand,
             EmojiPanelPresenter emojiPanelPresenter,
             ChatMessageReactionService messageReactionService,
-            ChatReactionsAtlasConfig atlasConfig)
+            ChatReactionsAtlasConfig atlasConfig,
+            ChatReactionsMessageConfig messageReactionsConfig)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -102,6 +105,11 @@ namespace DCL.Chat.ChatMessages
             this.emojiPanelPresenter = emojiPanelPresenter;
             this.messageReactionService = messageReactionService;
             this.atlasConfig = atlasConfig;
+            this.messageReactionsConfig = messageReactionsConfig;
+
+            emojiPanelClickHandler = new ChatClickDetectionHandler(emojiPanelPresenter.PanelTransform);
+            emojiPanelClickHandler.OnClickOutside += OnEmojiPanelClickOutside;
+            emojiPanelClickHandler.Pause();
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -163,6 +171,9 @@ namespace DCL.Chat.ChatMessages
             view.OnRevertMessageRequested -= OnRevertMessage;
             translationSettings.OnAutoTranslationSettingsChanged -= OnAutoTranslationSettingsChanged;
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+
+            emojiPanelClickHandler.OnClickOutside -= OnEmojiPanelClickOutside;
+            emojiPanelClickHandler.Dispose();
         }
 
         private void OnTranslateMessage(string messageId)
@@ -518,6 +529,7 @@ namespace DCL.Chat.ChatMessages
             view.OnReactionButtonClicked -= OnReactionButtonClicked;
             view.OnReactionPillClicked -= OnReactionPillClicked;
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
+            emojiPanelClickHandler.Pause();
             pendingReactionMessageId = null;
 
             scope.Dispose();
@@ -564,7 +576,16 @@ namespace DCL.Chat.ChatMessages
             pendingReactionMessageId = messageId;
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
             emojiPanelPresenter.EmojiSelected += OnEmojiSelectedForMessageReaction;
+
+            if (chatEntryView.messageBubbleElement.reactionButton != null)
+            {
+                Vector3 targetPosition = chatEntryView.messageBubbleElement.reactionButton.transform.position
+                                         + (Vector3)messageReactionsConfig.EmojiPanelOffset;
+                emojiPanelPresenter.MovePanel(targetPosition);
+            }
+
             emojiPanelPresenter.SetPanelVisibility(true);
+            emojiPanelClickHandler.Resume();
         }
 
         private void OnEmojiSelectedForMessageReaction(string emojiUnicode)
@@ -572,7 +593,7 @@ namespace DCL.Chat.ChatMessages
             if (string.IsNullOrEmpty(pendingReactionMessageId) || string.IsNullOrEmpty(emojiUnicode))
                 return;
 
-            if (!TryGetSingleCodepoint(emojiUnicode, out uint codepoint))
+            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint))
                 return;
 
             int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
@@ -581,32 +602,22 @@ namespace DCL.Chat.ChatMessages
                 return;
 
             messageReactionService.ToggleReaction(pendingReactionMessageId, atlasIndex);
+            CloseMessageReactionEmojiPanel();
+        }
+
+        private void OnEmojiPanelClickOutside()
+        {
+            CloseMessageReactionEmojiPanel();
+        }
+
+        private void CloseMessageReactionEmojiPanel()
+        {
+            if (pendingReactionMessageId == null) return;
 
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
             emojiPanelPresenter.SetPanelVisibility(false);
+            emojiPanelClickHandler.Pause();
             pendingReactionMessageId = null;
-        }
-
-        private static bool TryGetSingleCodepoint(string text, out uint codepoint)
-        {
-            codepoint = 0;
-
-            if (text.Length == 0)
-                return false;
-
-            if (char.IsHighSurrogate(text[0]))
-            {
-                if (text.Length < 2 || !char.IsLowSurrogate(text[1]))
-                    return false;
-
-                codepoint = (uint)char.ConvertToUtf32(text[0], text[1]);
-            }
-            else
-            {
-                codepoint = text[0];
-            }
-
-            return true;
         }
 
         private void OnReactionPillClicked(string messageId, int emojiIndex)

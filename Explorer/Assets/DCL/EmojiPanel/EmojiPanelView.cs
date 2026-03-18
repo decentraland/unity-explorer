@@ -100,5 +100,15 @@ namespace DCL.Emoji
             EnsureInitialized();
             rectTransform.anchoredPosition = DefaultAnchoredPosition;
         }
+
+        /// <summary>
+        /// Moves the panel to the given world position.
+        /// Callers should pre-apply any desired offset before calling.
+        /// </summary>
+        public void MoveTo(Vector3 worldPosition)
+        {
+            EnsureInitialized();
+            rectTransform.position = worldPosition;
+        }
     }
 }

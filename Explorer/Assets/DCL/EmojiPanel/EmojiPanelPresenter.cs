@@ -12,6 +12,7 @@ namespace DCL.Emoji
     public class EmojiPanelPresenter : IDisposable
     {
         public event Action<string>? EmojiSelected;
+        public event Action<bool>? PanelVisibilityChanged;
 
         private readonly EmojiMapping emojiMapping;
         private readonly EmojiPanelView view;
@@ -24,6 +25,8 @@ namespace DCL.Emoji
         private readonly List<EmojiData> foundEmojis = new ();
 
         private CancellationTokenSource cts = new ();
+
+        public Transform PanelTransform => view.transform;
 
         public EmojiPanelPresenter(
             EmojiPanelView view,
@@ -77,6 +80,16 @@ namespace DCL.Emoji
         public void SetPanelVisibility(bool isVisible)
         {
             view.SetVisible(isVisible);
+            PanelVisibilityChanged?.Invoke(isVisible);
+        }
+
+        /// <summary>
+        /// Repositions the emoji panel to the given world position.
+        /// Callers should pre-apply any desired offset before calling.
+        /// </summary>
+        public void MovePanel(Vector3 worldPosition)
+        {
+            view.MoveTo(worldPosition);
         }
 
         private void ConfigureEmojiSectionSizes()

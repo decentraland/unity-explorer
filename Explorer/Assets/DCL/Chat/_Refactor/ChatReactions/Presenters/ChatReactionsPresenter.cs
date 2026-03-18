@@ -19,7 +19,6 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
-        private readonly RectTransform emojiPanelRect;
         private readonly RectTransform addButtonRect;
         private readonly RectTransform buttonRect;
 
@@ -39,7 +38,6 @@ namespace DCL.Chat.ChatReactions
             this.emojiPanelPresenter = emojiPanelPresenter;
             this.atlasConfig = atlasConfig;
 
-            emojiPanelRect = (RectTransform)emojiPanelView.transform;
             addButtonRect = selectorView.AddButtonRect;
 
             selectorPresenter = new ChatReactionsSelectorPresenter(
@@ -113,7 +111,7 @@ namespace DCL.Chat.ChatReactions
 
         private void ShowEmojiPanel()
         {
-            emojiPanelRect.position = addButtonRect.position;
+            emojiPanelPresenter.MovePanel(addButtonRect.position);
             emojiPanelPresenter.EmojiSelected += OnEmojiPanelEmojiSelected;
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiPanelOpenedByReactions = true;
@@ -132,7 +130,7 @@ namespace DCL.Chat.ChatReactions
         {
             if (string.IsNullOrEmpty(emojiUnicode)) return;
 
-            if (!TryGetSingleCodepoint(emojiUnicode, out uint codepoint)) return;
+            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint)) return;
 
             int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
             if (atlasIndex < 0) return;
@@ -140,24 +138,6 @@ namespace DCL.Chat.ChatReactions
             // Send the reaction immediately — do NOT close panels.
             reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
             selectorPresenter.RecordUsage(atlasIndex);
-        }
-
-        private static bool TryGetSingleCodepoint(string text, out uint codepoint)
-        {
-            codepoint = 0;
-            if (text.Length == 0) return false;
-
-            if (char.IsHighSurrogate(text[0]))
-            {
-                if (text.Length < 2 || !char.IsLowSurrogate(text[1])) return false;
-                codepoint = (uint)char.ConvertToUtf32(text[0], text[1]);
-            }
-            else
-            {
-                codepoint = text[0];
-            }
-
-            return true;
         }
 
         public void Show()

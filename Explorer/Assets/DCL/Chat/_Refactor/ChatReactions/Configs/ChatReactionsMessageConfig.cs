@@ -50,5 +50,10 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Min(0f)]
         [field: Tooltip("Duration of the bounce/pop animation played when a reaction count increments (seconds).")]
         [field: SerializeField] public float CountIncrementBounceDuration { get; private set; } = 0.12f;
+
+        [field: Header("Emoji Panel Positioning")]
+        [field: Tooltip("World-space offset applied to the anchor position when opening the emoji panel " +
+                        "from a message reaction button.")]
+        [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 100f);
     }
 }

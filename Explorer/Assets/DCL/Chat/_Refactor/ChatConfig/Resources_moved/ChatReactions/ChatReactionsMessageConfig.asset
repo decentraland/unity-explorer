@@ -21,3 +21,4 @@ MonoBehaviour:
   <AppearDuration>k__BackingField: 0.15
   <DisappearDuration>k__BackingField: 0.1
   <CountIncrementBounceDuration>k__BackingField: 0.12
+  <EmojiPanelOffset>k__BackingField: {x: -85, y: 5}
