@@ -40,14 +40,14 @@ namespace Plugins.NativeWindowManager
         /// <exception cref="NotSupportedException">Thrown if called in window mode.</exception>
         public static Vector2Int FullScreenResolution
         {
-            get => DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.SETTINGS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+            get => DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
 
             set
             {
                 if (Screen.fullScreenMode == FullScreenMode.Windowed)
                     throw new NotSupportedException("Trying to set fullscreen resolution while in windowed mode.");
 
-                DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.SETTINGS_RESOLUTION, value);
+                DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.PS_RESOLUTION, value);
                 Screen.SetResolution(value.x, value.y, FullScreenMode.FullScreenWindow);
             }
         }
