@@ -79,10 +79,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             mainModule.loop = !particleSystemData.HasLoop || particleSystemData.Loop;
             mainModule.prewarm = mainModule.loop && particleSystemData.HasPrewarm && particleSystemData.Prewarm;
 
-            mainModule.simulationSpace = particleSystemData.HasSimulationSpace
-                && particleSystemData.SimulationSpace == PBParticleSystem.Types.SimulationSpace.PssWorld
-                ? ParticleSystemSimulationSpace.World
-                : ParticleSystemSimulationSpace.Local;
+            mainModule.simulationSpace = particleSystemData is { HasSimulationSpace: true, SimulationSpace: PBParticleSystem.Types.SimulationSpace.PssWorld }
+                ? ParticleSystemSimulationSpace.World : ParticleSystemSimulationSpace.Local;
 
             if (particleSystemData.HasLifetime)
                 mainModule.startLifetime = particleSystemData.Lifetime;
@@ -233,7 +231,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             }
 
             forceOverLifetimeModule.enabled = true;
-            forceOverLifetimeModule.space = ParticleSystemSimulationSpace.World;
+            forceOverLifetimeModule.space = particleSystemData is { HasSimulationSpace: true, SimulationSpace: PBParticleSystem.Types.SimulationSpace.PssWorld }
+                                            ? ParticleSystemSimulationSpace.World : ParticleSystemSimulationSpace.Local;
             forceOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.X);
             forceOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.Y);
             forceOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.Z);
