@@ -195,8 +195,15 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (playerState.NewSeq > lastMovement.sequence)
                 {
                     if (playerState.NewSeq - lastMovement.sequence > 1)
+                    {
                         if (TryRequestResync(playerState.SubjectId, lastMovement.sequence))
                             ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {playerState.SubjectId}. Received seq: {playerState.NewSeq}, prev seq: {lastMovement.sequence}");
+                    }
+                    else
+                    {
+                        // Consecutive seq received, normal flow resumed — clear any stale pending resync
+                        pendingResyncs.Remove(playerState.SubjectId);
+                    }
                 }
                 else
                 {
