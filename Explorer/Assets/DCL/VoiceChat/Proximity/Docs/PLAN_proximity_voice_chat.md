@@ -89,12 +89,60 @@ maxDistance = 50f
 spread = 0f
 ```
 
-## Итерация 3: Интеграция с Orchestrator (планируется)
+## Итерация 3: Полноценная интеграция (планируется)
 
-- Добавить `VoiceChatType.SPATIAL` в enum
-- Интегрировать с `VoiceChatOrchestrator` для координации с Private/Community
-- Mute/unmute spatial при активных звонках
-- UI toggle для включения/выключения proximity
+> Детальный анализ каждой фичи — см. `ANALYSIS_voicechat_features.md`
+
+### 3.1 Nametag speaking indicator
+
+**Приоритет:** Высокий | **Сложность:** Низкая
+
+Создать `ProximityNametagsHandler` — аналог `VoiceChatNametagsHandler`, но для Island Room:
+- Подписка на `islandRoom.ActiveSpeakers.Updated`
+- `entityParticipantTable.TryGet()` → `world.AddOrSet(entity, VoiceChatNametagComponent)`
+- Переиспользует существующий компонент, `NametagPlacementSystem` и CSS-анимацию
+
+### 3.2 Mute/Unmute + Push-to-Talk
+
+**Приоритет:** Высокий | **Сложность:** Средняя
+
+- Добавить mute/unmute в `ProximityVoiceChatManager` (`rtcAudioSource.Stop()/Start()`)
+- Экспонировать `ReactiveProperty<bool> IsMicrophoneEnabled`
+- Переиспользовать PTT-логику из `VoiceChatMicrophoneHandler` (hotkey + hold threshold)
+
+### 3.3 Смена микрофона в рантайме
+
+**Приоритет:** Средний | **Сложность:** Низкая
+
+- Подписка на `VoiceChatSettings.MicrophoneChanged`
+- Вызов `rtcAudioSource.SwitchMicrophone(newSelection)`
+
+### 3.4 Mute proximity при Private/Community call
+
+**Приоритет:** Средний | **Сложность:** Средняя | **Зависит от:** 3.2
+
+- Подписка на `voiceChatOrchestrator.CurrentCallStatus`
+- `VOICE_CHAT_IN_CALL` → suppress proximity (mute mic + optional mute playback)
+- `DISCONNECTED` / `ENDING_CALL` → resume
+
+### 3.5 Звуковой фидбек mute/unmute
+
+**Приоритет:** Низкий | **Сложность:** Минимальная | **Зависит от:** 3.2
+
+- Переиспользовать `MicrophoneAudioToggleHandler` с ReactiveProperty из 3.2
+
+### 3.6 macOS permissions guard
+
+**Приоритет:** Средний | **Сложность:** Низкая
+
+- Добавить `VoiceChatPermissions.GuardAsync()` перед `MicrophoneRtcAudioSource.New()` на macOS
+
+### 3.7 Reconnection retry
+
+**Приоритет:** Низкий | **Сложность:** Низкая-средняя
+
+- Retry публикации микрофона при ошибке (delay + max attempts)
+- Логирование причин отключения
 
 ---
 
