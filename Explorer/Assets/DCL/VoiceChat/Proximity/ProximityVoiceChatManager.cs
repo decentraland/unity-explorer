@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
 using LiveKit.Proto;
@@ -36,17 +37,20 @@ namespace DCL.VoiceChat
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
+        private readonly IDisposable callStatusSubscription;
 
         private MicrophoneRtcAudioSource? rtcAudioSource;
         private ITrack? localTrack;
         private LivekitAudioSource? loopbackSource;
         private bool published;
         private bool disposed;
+        private bool suppressed;
 
         public ProximityVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            ConcurrentDictionary<string, AudioSource> activeAudioSources)
+            ConcurrentDictionary<string, AudioSource> activeAudioSources,
+            IReadonlyReactiveProperty<VoiceChatStatus> callStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
@@ -60,6 +64,8 @@ namespace DCL.VoiceChat
             islandRoom.LocalTrackPublished += OnLocalTrackPublished;
             islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
+            callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
+
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
             if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
@@ -70,6 +76,8 @@ namespace DCL.VoiceChat
         {
             if (disposed) return;
             disposed = true;
+
+            callStatusSubscription.Dispose();
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -305,8 +313,13 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            activeAudioSources[key.identity] = source.GetComponent<AudioSource>();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}");
+            AudioSource audioSource = source.GetComponent<AudioSource>();
+            activeAudioSources[key.identity] = audioSource;
+
+            if (suppressed && audioSource != null)
+                audioSource.mute = true;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}{(suppressed ? " (muted — call active)" : "")}");
         }
 
         private void RemoveRemoteSource(StreamKey key)
@@ -345,6 +358,46 @@ namespace DCL.VoiceChat
             source.Stop();
             source.Free();
             source.gameObject.SelfDestroy();
+        }
+
+        private void OnCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+                SuppressProximity();
+            else if (status.IsNotConnected())
+                ResumeProximity();
+        }
+
+        private void SuppressProximity()
+        {
+            if (suppressed) return;
+            suppressed = true;
+
+            rtcAudioSource?.Stop();
+
+            foreach (LivekitAudioSource source in remoteSources.Values)
+            {
+                AudioSource audioSource = source.GetComponent<AudioSource>();
+                if (audioSource != null) audioSource.mute = true;
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Suppressed — Private/Community call active");
+        }
+
+        private void ResumeProximity()
+        {
+            if (!suppressed) return;
+            suppressed = false;
+
+            rtcAudioSource?.Start();
+
+            foreach (LivekitAudioSource source in remoteSources.Values)
+            {
+                AudioSource audioSource = source.GetComponent<AudioSource>();
+                if (audioSource != null) audioSource.mute = false;
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Resumed — no active call");
         }
 
         private void Deactivate()

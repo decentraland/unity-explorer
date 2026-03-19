@@ -162,7 +162,7 @@ namespace DCL.PluginSystem.Global
                     proximityConfigHolder.SpeakingParticipants.Add(identity);
             };
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources);
+            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus);
             pluginScope.Add(proximityVoiceChatManager);
         }
 
