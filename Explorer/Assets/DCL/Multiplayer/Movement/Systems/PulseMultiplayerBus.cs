@@ -20,6 +20,8 @@ namespace DCL.Multiplayer.Connections.Pulse
     // TODO: This class should be moved into another package as it resolves many kind of multiplayer messages
     public class PulseMultiplayerBus : IDisposable
     {
+        private const float SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001f;
+
         private readonly PulseMultiplayerService pulseService;
         private readonly PeerIdCache peerIdCache;
         private readonly MovementInbox movementInbox;
@@ -245,7 +247,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
         {
-            last.timestamp = delta.ServerTick;
+            last.timestamp = delta.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
 
             var velocityChanged = false;
             var movementBlendChanged = false;
@@ -284,15 +286,17 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (velocityChanged)
                 last.velocitySqrMagnitude = last.velocity.sqrMagnitude;
 
+            ref AnimationStates lastAnimState = ref last.animState;
+
             if (delta.HasMovementBlend)
             {
                 float movementBlend = Mathf.Clamp(delta.MovementBlendQuantized, 0, 3);
-                last.animState.MovementBlendValue = movementBlend;
+                lastAnimState.MovementBlendValue = movementBlend;
                 movementBlendChanged = true;
             }
 
             if (delta.HasSlideBlend)
-                last.animState.SlideBlendValue = delta.SlideBlendQuantized;
+                lastAnimState.SlideBlendValue = delta.SlideBlendQuantized;
 
             if (delta.HasHeadYaw)
             {
@@ -308,15 +312,15 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             uint flags = delta.StateFlags;
 
-            last.animState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
-            last.animState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
-            last.animState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
-            last.animState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
+            lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
+            lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
+            lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
+            lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
             last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
 
             if (movementBlendChanged)
             {
-                float mb = last.animState.MovementBlendValue;
+                float mb = lastAnimState.MovementBlendValue;
 
                 last.movementKind = (MovementKind)Mathf.Max(
                     Mathf.RoundToInt(mb),
@@ -324,9 +328,28 @@ namespace DCL.Multiplayer.Connections.Pulse
                 );
             }
 
+            if (delta.HasGlideState)
+                last.animState.GlideState = ToNetworkMovementGlideState(delta.GlideState);
+
             // TODO: isInstant, isEmoting
 
             return last;
+        }
+
+        private GlideStateValue ToNetworkMovementGlideState(GlideState glideState)
+        {
+            switch (glideState)
+            {
+                case GlideState.ClosingProp:
+                    return GlideStateValue.CLOSING_PROP;
+                case GlideState.Gliding:
+                    return GlideStateValue.GLIDING;
+                case GlideState.OpeningProp:
+                    return GlideStateValue.OPENING_PROP;
+                case GlideState.PropClosed:
+                    return GlideStateValue.PROP_CLOSED;
+                default: throw new ArgumentOutOfRangeException(nameof(glideState), glideState, null);
+            }
         }
 
         private void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
@@ -376,7 +399,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             var message = new NetworkMovementMessage
             {
-                timestamp = full.ServerTick,
+                timestamp = full.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP,
                 parcel = parcel,
                 position = worldPosition,
                 rotationY = playerState.RotationY,

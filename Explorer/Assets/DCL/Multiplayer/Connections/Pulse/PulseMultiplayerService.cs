@@ -83,8 +83,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             return subscriber.Channel.ReadAllAsync(ct);
         }
 
-        public void Send(MessagePipe.OutgoingMessage outgoingMessage) =>
+        public void Send(MessagePipe.OutgoingMessage outgoingMessage)
+        {
+            if (transport.State != ITransport.TransportState.CONNECTED) return;
             pipe.Send(outgoingMessage);
+        }
 
         private async UniTaskVoid RouteIncomingMessagesAsync(CancellationToken ct)
         {
