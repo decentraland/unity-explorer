@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Settings.ModuleViews;
 using Plugins.NativeWindowManager;
 using System.Collections.Generic;

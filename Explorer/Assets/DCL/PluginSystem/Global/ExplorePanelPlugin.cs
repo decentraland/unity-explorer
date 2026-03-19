@@ -63,6 +63,7 @@ using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Places;
 using DCL.PrivateWorlds;
+using DCL.Quality.Runtime;
 using DCL.RealmNavigation;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -76,6 +77,7 @@ using Utility;
 using DCL.VoiceChat;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Realm;
+using Global;
 using Global.AppArgs;
 using Runtime.Wearables;
 using UnityEngine;
@@ -122,6 +124,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IRealmData realmData;
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly IInputBlock inputBlock;
@@ -246,7 +249,9 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             ObjectProxy<IFriendsService> friendServiceProxy,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            IRendererFeaturesCache rendererFeaturesCache
+            )
         {
             this.eventBus = eventBus;
             this.featureFlags = featureFlags;
@@ -317,6 +322,7 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
+            this.rendererFeaturesCache = rendererFeaturesCache;
         }
 
         public void Dispose()
@@ -441,9 +447,19 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager, homePlaceEventBus, donationsService, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
+            QualitySettingsController qualitySettingsController = new QualitySettingsController(
+                settings.QualityPresets,
+                upscalingController,
+                settings.RealmPartitionSettings,
+                landscapeData.Value,
+                rendererFeaturesCache,
+                appArgs,
+                analytics);
+
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
                 settings.SettingsMenuConfiguration,
+                qualitySettingsController,
                 generalAudioMixer.Value,
                 settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
@@ -724,6 +740,9 @@ namespace DCL.PluginSystem.Global
 
             [field: Header("Event Detail Panel")]
             [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
+
+            [field: Header("Quality Settings")]
+            [field: SerializeField] internal QualityPresetsAsset QualityPresets { get; private set; }
         }
     }
 }
