@@ -358,8 +358,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     timeout-minutes: 360
-    permissions:
-      variables: write  # needed to update the WARNINGS_BASELINE repository variable
     strategy:
       fail-fast: false
       matrix:
@@ -747,7 +745,7 @@ jobs:
         env:
           COUNT: ${{ steps.count_warnings.outputs.warning_count }}
           BASELINE: ${{ vars.WARNINGS_BASELINE }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
         run: |
           if [ -n "$BASELINE" ] && [ "$COUNT" -ge "$BASELINE" ]; then
             echo "No update: current count ($COUNT) is not less than existing baseline ($BASELINE)"
