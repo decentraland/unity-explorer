@@ -49,6 +49,7 @@ jobs:
       matrix:
         testFilter:
           - SceneRunner   # 50 tests
+          - DCL           # 708 tests
     steps:
 
       - name: Move Docker data-root to /mnt/docker
