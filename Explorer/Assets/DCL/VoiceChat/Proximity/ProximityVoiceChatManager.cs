@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
-using DCL.VoiceChat.Permissions;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
@@ -43,6 +42,7 @@ namespace DCL.VoiceChat
         private MicrophoneRtcAudioSource? rtcAudioSource;
         private ITrack? localTrack;
         private LivekitAudioSource? loopbackSource;
+        private CancellationTokenSource activationCts = new ();
         private bool published;
         private bool disposed;
         private bool suppressed;
@@ -71,7 +71,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
             if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
-                ActivateAsync(CancellationToken.None).Forget();
+                ActivateWithRetryAsync(activationCts.Token).Forget();
         }
 
         public void Dispose()
@@ -79,6 +79,7 @@ namespace DCL.VoiceChat
             if (disposed) return;
             disposed = true;
 
+            activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
@@ -98,44 +99,64 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
-            OnConnectionUpdatedInternalAsync(update).Forget();
+            OnConnectionUpdatedInternalAsync(update, reason).Forget();
             return;
 
-            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate)
+            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
             {
                 await UniTask.SwitchToMainThread();
 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Island Room connection: {connectionUpdate}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"{TAG} Island Room connection: {connectionUpdate}{(disconnectReason.HasValue ? $" (reason: {disconnectReason.Value})" : "")}");
 
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
-                        if (!published)
-                            await ActivateAsync(CancellationToken.None);
+                        activationCts = activationCts.SafeRestart();
+                        await ActivateWithRetryAsync(activationCts.Token);
                         break;
 
                     case ConnectionUpdate.Disconnected:
+                        activationCts.SafeCancelAndDispose();
                         Deactivate();
                         break;
                 }
             }
         }
 
-        private async UniTask ActivateAsync(CancellationToken ct)
+        private async UniTask ActivateWithRetryAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
 
-            try
+            for (var attempt = 1; attempt <= configuration.MaxReconnectionAttempts; attempt++)
             {
-                await PublishLocalTrackAsync(ct);
-                SubscribeToExistingRemoteTracks();
+                if (ct.IsCancellationRequested || disposed) return;
 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening with 3D spatial audio");
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Activation failed: {ex.Message}");
-                Deactivate();
+                try
+                {
+                    await PublishLocalTrackAsync(ct);
+                    SubscribeToExistingRemoteTracks();
+
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening with 3D spatial audio");
+                    return;
+                }
+                catch (OperationCanceledException) { return; }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
+                        $"{TAG} Activation attempt {attempt}/{configuration.MaxReconnectionAttempts} failed: {ex.Message}");
+
+                    Deactivate();
+
+                    if (attempt >= configuration.MaxReconnectionAttempts)
+                    {
+                        ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{TAG} All activation attempts exhausted");
+                        return;
+                    }
+
+                    try { await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct); }
+                    catch (OperationCanceledException) { return; }
+                }
             }
         }
 
