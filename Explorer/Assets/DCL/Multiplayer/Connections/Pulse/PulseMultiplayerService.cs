@@ -46,7 +46,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             await transport.ConnectAsync("127.0.0.1", 7777, ct);
 
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
-            transport.ListenForIncomingDataAsync(connectionLifeCycleCts.Token).SuppressToResultAsync().Forget();
             RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
             var handshakePacket = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);

@@ -38,8 +38,15 @@ MonoBehaviour:
       type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Connections.Pulse, asm: DCL.Plugins}
       data:
         <ENetTransportOptions>k__BackingField:
+          <ConnectTimeoutMs>k__BackingField: 10000
           <ServiceTimeoutMs>k__BackingField: 1
           <BufferSize>k__BackingField: 4096
+        <LandscapeData>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 634089542387236867
       type: {class: MapRendererContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:

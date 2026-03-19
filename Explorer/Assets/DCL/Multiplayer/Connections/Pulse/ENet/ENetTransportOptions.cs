@@ -7,6 +7,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
     public sealed class ENetTransportOptions
     {
         [field: SerializeField]
+        public int ConnectTimeoutMs { get; set; } = 10000;
+
+        [field: SerializeField]
         public int ServiceTimeoutMs { get; set; } = 1;
 
         [field: SerializeField]

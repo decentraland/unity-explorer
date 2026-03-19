@@ -16,8 +16,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         UniTask DisconnectAsync(DisconnectReason reason, CancellationToken ct);
 
-        UniTask ListenForIncomingDataAsync(CancellationToken ct);
-
         void Send(IMessage message, PacketMode mode);
 
         public enum PacketMode

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using Google.Protobuf;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse.ENet
 {
@@ -14,6 +15,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
         private Peer? serverPeer;
         private Host? client;
+        private CancellationTokenSource? lifeCycleCts;
 
         public ENetTransport(
             ENetTransportOptions options,
@@ -63,6 +65,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             client?.Flush();
             client?.Dispose();
             client = null;
+            lifeCycleCts.SafeCancelAndDispose();
             Library.Deinitialize();
         }
 
@@ -79,7 +82,19 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             client.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
             serverPeer = client.Connect(address, channelLimit: ENetChannel.COUNT);
 
-            return UniTask.CompletedTask;
+            lifeCycleCts = lifeCycleCts.SafeRestartLinked(ct);
+            ListenForIncomingDataAsync(lifeCycleCts.Token).Forget();
+
+            try
+            {
+                return UniTask.WaitUntil(() => State == ITransport.TransportState.CONNECTED, cancellationToken: ct)
+                              .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
+            }
+            catch (TimeoutException)
+            {
+                lifeCycleCts.SafeCancelAndDispose();
+                throw;
+            }
         }
 
         public UniTask DisconnectAsync(ITransport.DisconnectReason reason, CancellationToken ct)
@@ -88,7 +103,15 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             return UniTask.CompletedTask;
         }
 
-        public UniTask ListenForIncomingDataAsync(CancellationToken ct)
+        public void Send(IMessage message, ITransport.PacketMode mode)
+        {
+            ENetChannel channel = ToENetChannel(mode);
+
+            if (serverPeer != null)
+                SendToPeer(serverPeer.Value, channel, message);
+        }
+
+        private UniTask ListenForIncomingDataAsync(CancellationToken ct)
         {
             // ENet must be driven on a single dedicated thread
             return UniTask.RunOnThreadPool(async () =>
@@ -123,14 +146,6 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }, configureAwait: false, cancellationToken: ct);
         }
 
-        public void Send(IMessage message, ITransport.PacketMode mode)
-        {
-            ENetChannel channel = ToENetChannel(mode);
-
-            if (serverPeer != null)
-                SendToPeer(serverPeer.Value, channel, message);
-        }
-
         private void ReceiveIncomingMessage(ref Event netEvent)
         {
             var peerId = new PeerId(netEvent.Peer.ID);
@@ -147,6 +162,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                 case EventType.Timeout:
                     serverPeer = null;
+                    lifeCycleCts.SafeCancelAndDispose();
                     break;
 
                 case EventType.Receive:
