@@ -22,9 +22,9 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
     [LogCategory(ReportCategory.VOICE_CHAT)]
     public partial class AudioEffectZoneHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const string REVERB_ROOM_PARAM = "Reverb_Room";
-        private const string REVERB_DECAY_TIME_PARAM = "Reverb_DecayTime";
-        private const string REVERB_HF_RATIO_PARAM = "Reverb_HFRatio";
+        private const string REVERB_ROOM_PARAM = "ProximityChat.Reverb_Room";
+        private const string REVERB_DECAY_TIME_PARAM = "ProximityChat.Reverb_DecayTime";
+        private const string REVERB_HF_RATIO_PARAM = "ProximityChat.Reverb_HFRatio";
         private const float REVERB_OFF_ROOM = -10000f;
 
         private readonly World globalWorld;
@@ -109,7 +109,6 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         }
 
         [Query]
-        [All(typeof(TransformComponent), typeof(AmplificationZoneComponent))]
         private void UpdateAmplifyZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent, ref AmplificationZoneComponent amplificationZone)
         {
             if (pbAudioEffectZone.IsDirty)
@@ -156,7 +155,6 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         }
 
         [Query]
-        [All(typeof(TransformComponent), typeof(ReverbAudioZoneComponent))]
         private void UpdateReverbZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent, ref ReverbAudioZoneComponent reverbZone)
         {
             if (pbAudioEffectZone.IsDirty)
@@ -205,7 +203,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         }
 
         [Query]
-        [All(typeof(TransformComponent), typeof(EchoZoneComponent))]
+        [All(typeof(EchoZoneComponent))]
         private void UpdateEchoZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAudioEffectZone.IsDirty)
@@ -246,7 +244,7 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         }
 
         [Query]
-        [All(typeof(TransformComponent), typeof(SilenceZoneComponent))]
+        [All(typeof(SilenceZoneComponent))]
         private void UpdateSilenceZone(ref PBAudioEffectZone pbAudioEffectZone, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             if (pbAudioEffectZone.IsDirty)
