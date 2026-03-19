@@ -139,6 +139,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 return;
             }
 
+            shapeModule.scale = Vector3.one;
             switch (particleSystemData.ShapeCase)
             {
                 case PBParticleSystem.ShapeOneofCase.Point:
