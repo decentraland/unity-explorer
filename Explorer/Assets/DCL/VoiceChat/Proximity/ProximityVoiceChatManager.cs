@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
+using DCL.VoiceChat.Permissions;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
@@ -126,7 +127,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                PublishLocalTrack(ct);
+                await PublishLocalTrackAsync(ct);
                 SubscribeToExistingRemoteTracks();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening with 3D spatial audio");
@@ -138,10 +139,20 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void PublishLocalTrack(CancellationToken ct)
+        private async UniTask PublishLocalTrackAsync(CancellationToken ct)
         {
             if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
+
+#if UNITY_STANDALONE_OSX
+            bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
+
+            if (!hasPermissions)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{TAG} Microphone permissions not granted, cannot publish local track");
+                return;
+            }
+#endif
 
             Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
 
