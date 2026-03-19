@@ -96,7 +96,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder, debugContainer);
+            ProximityAudioDebugWidget.Setup(debugContainer, proximityConfigHolder);
+            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder);
+            ProximityLipSyncSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
