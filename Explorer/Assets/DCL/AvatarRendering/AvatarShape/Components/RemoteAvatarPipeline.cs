@@ -16,18 +16,21 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// <summary>
     ///     Batched pipeline for all remote avatars. Supports dynamic resizing and index recycling.
     ///     Completion is deferred to a later system for maximum parallelism.
+    ///     Flat backing arrays are pre-filled with dummyTransform so TAA slots can be updated
+    ///     in-place via indexed access, avoiding full rebuilds on every Register/Release.
     /// </summary>
     internal class RemoteAvatarPipeline : IDisposable
     {
         private readonly int bonesArrayLength;
+        private readonly Transform dummyTransform;
         private readonly Stack<GlobalJobArrayIndex> releasedIndexes;
 
         private QuickArray<float4x4> matrixFromAllAvatars;
         private QuickArray<bool> updateAvatar;
         private QuickArray<float4x4> bonesCombined;
 
-        private Transform[][] slotBones;
-        private Transform[] slotRoots;
+        private Transform[] flatBones;
+        private Transform[] flatRoots;
 
         private TransformAccessArray bonesTransformAccessArray;
         private TransformAccessArray rootsTransformAccessArray;
@@ -36,6 +39,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private JobHandle handle;
         private int avatarIndex;
         private int currentAvatarAmountSupported;
+        private int taaSlotCount;
 
         public BoneMatrixCalculationJob Job;
 
@@ -45,9 +49,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public int CurrentAvatarAmountSupported => currentAvatarAmountSupported;
 #endif
 
-        internal RemoteAvatarPipeline(int initialCapacity, int bonesArrayLength, int bonesPerAvatarLength)
+        internal RemoteAvatarPipeline(int initialCapacity, int bonesArrayLength, int bonesPerAvatarLength, Transform dummyTransform)
         {
             this.bonesArrayLength = bonesArrayLength;
+            this.dummyTransform = dummyTransform;
 
             bonesCombined = new QuickArray<float4x4>(bonesPerAvatarLength);
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesPerAvatarLength, bonesCombined.InnerNativeArray());
@@ -55,8 +60,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             matrixFromAllAvatars = new QuickArray<float4x4>(initialCapacity);
             updateAvatar = new QuickArray<bool>(initialCapacity);
 
-            slotBones = new Transform[initialCapacity][];
-            slotRoots = new Transform[initialCapacity];
+            flatBones = new Transform[initialCapacity * bonesArrayLength];
+            flatRoots = new Transform[initialCapacity];
+            FillWithDummy(flatBones, 0, flatBones.Length, dummyTransform);
+            FillWithDummy(flatRoots, 0, flatRoots.Length, dummyTransform);
 
             currentAvatarAmountSupported = initialCapacity;
             releasedIndexes = new Stack<GlobalJobArrayIndex>();
@@ -78,13 +85,29 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 return;
             }
 
-            slotBones[validIndex] = transformMatrixComponent.bones.Inner;
-            slotRoots[validIndex] = avatarBase.transform;
-            updateAvatar[validIndex] = true;
-            structureDirty = true;
-
             if (avatarIndex >= currentAvatarAmountSupported - 1)
                 ResizeArrays();
+
+            // Write into flat backing arrays
+            int offset = validIndex * bonesArrayLength;
+            Transform[] bones = transformMatrixComponent.bones.Inner;
+
+            for (int b = 0; b < bonesArrayLength; b++)
+                flatBones[offset + b] = bones[b];
+
+            flatRoots[validIndex] = avatarBase.transform;
+            updateAvatar[validIndex] = true;
+
+            // Update TAA in-place if index is within current TAA bounds
+            if (bonesTransformAccessArray.isCreated && validIndex < taaSlotCount)
+            {
+                for (int b = 0; b < bonesArrayLength; b++)
+                    bonesTransformAccessArray[offset + b] = bones[b];
+
+                rootsTransformAccessArray[validIndex] = avatarBase.transform;
+            }
+            else
+                structureDirty = true;
         }
 
         public void Release(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
@@ -94,16 +117,28 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             updateAvatar[validIndex] = false;
 
-            slotBones[validIndex] = null;
-            slotRoots[validIndex] = null;
+            // Reset flat backing arrays to dummyTransform
+            int offset = validIndex * bonesArrayLength;
+
+            for (int b = 0; b < bonesArrayLength; b++)
+                flatBones[offset + b] = dummyTransform;
+
+            flatRoots[validIndex] = dummyTransform;
+
+            // Update TAA in-place — no rebuild needed
+            if (bonesTransformAccessArray.isCreated && validIndex < taaSlotCount)
+            {
+                for (int b = 0; b < bonesArrayLength; b++)
+                    bonesTransformAccessArray[offset + b] = dummyTransform;
+
+                rootsTransformAccessArray[validIndex] = dummyTransform;
+            }
 
             releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
             avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
-
-            structureDirty = true;
         }
 
-        public void Schedule(Transform dummyTransform, int batchCount)
+        public void Schedule(int batchCount)
         {
             if (avatarIndex == 0)
                 return;
@@ -111,7 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             if (structureDirty)
             {
                 handle.Complete();
-                RebuildTransformAccessArrays(dummyTransform);
+                RebuildTransformAccessArrays();
             }
 
             var boneGatherJob = new BoneGatherJob { BonesCombined = bonesCombined.InnerNativeArray() };
@@ -132,29 +167,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             handle.Complete();
         }
 
-        private void RebuildTransformAccessArrays(Transform dummyTransform)
+        private void RebuildTransformAccessArrays()
         {
             if (bonesTransformAccessArray.isCreated) bonesTransformAccessArray.Dispose();
             if (rootsTransformAccessArray.isCreated) rootsTransformAccessArray.Dispose();
 
-            int slotCount = avatarIndex;
-            var allBones = new Transform[slotCount * bonesArrayLength];
-            var allRoots = new Transform[slotCount];
-
-            for (int slot = 0; slot < slotCount; slot++)
-            {
-                Transform[] bones = slotBones[slot];
-                Transform root = slotRoots[slot];
-                allRoots[slot] = root != null ? root : dummyTransform;
-
-                int offset = slot * bonesArrayLength;
-
-                for (int b = 0; b < bonesArrayLength; b++)
-                    allBones[offset + b] = bones != null && bones[b] != null ? bones[b] : dummyTransform;
-            }
-
-            bonesTransformAccessArray = new TransformAccessArray(allBones);
-            rootsTransformAccessArray = new TransformAccessArray(allRoots);
+            // Pass flat arrays directly — empty slots are already dummyTransform.
+            // The TAA may cover more slots than avatarIndex, but gather jobs on dummy
+            // transforms are negligible and BoneMatrixCalculationJob only processes up to avatarIndex.
+            bonesTransformAccessArray = new TransformAccessArray(flatBones);
+            rootsTransformAccessArray = new TransformAccessArray(flatRoots);
+            taaSlotCount = currentAvatarAmountSupported;
             structureDirty = false;
         }
 
@@ -166,14 +189,26 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             matrixFromAllAvatars.ReAlloc(newCapacity);
             updateAvatar.ReAlloc(newCapacity);
 
-            Array.Resize(ref slotBones, newCapacity);
-            Array.Resize(ref slotRoots, newCapacity);
+            int oldBonesLength = flatBones.Length;
+            int oldRootsLength = flatRoots.Length;
+
+            Array.Resize(ref flatBones, newCapacity * bonesArrayLength);
+            Array.Resize(ref flatRoots, newCapacity);
+
+            FillWithDummy(flatBones, oldBonesLength, flatBones.Length - oldBonesLength, dummyTransform);
+            FillWithDummy(flatRoots, oldRootsLength, flatRoots.Length - oldRootsLength, dummyTransform);
 
             Job.Dispose();
             Job = new BoneMatrixCalculationJob(bonesArrayLength, newCapacity * bonesArrayLength, bonesCombined.InnerNativeArray());
 
             currentAvatarAmountSupported = newCapacity;
             structureDirty = true;
+        }
+
+        private static void FillWithDummy(Transform[] array, int startIndex, int count, Transform dummy)
+        {
+            for (int i = startIndex; i < startIndex + count; i++)
+                array[i] = dummy;
         }
 
         public void Dispose()

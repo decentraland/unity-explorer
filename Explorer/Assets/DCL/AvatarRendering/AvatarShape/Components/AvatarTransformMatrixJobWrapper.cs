@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             var dummyGO = new GameObject("AvatarTransformMatrixDummy") { hideFlags = HideFlags.HideAndDontSave };
             dummyTransform = dummyGO.transform;
 
-            remoteAvatars = new RemoteAvatarPipeline(AVATAR_ARRAY_SIZE, BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH);
+            remoteAvatars = new RemoteAvatarPipeline(AVATAR_ARRAY_SIZE, BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, dummyTransform);
             mainPlayerAvatar = new MainPlayerPipeline(BONES_ARRAY_LENGTH);
         }
 
@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void ScheduleBoneMatrixCalculation()
         {
             mainPlayerAvatar.ScheduleAndComplete();
-            remoteAvatars.Schedule(dummyTransform, BONE_MATRIX_BATCH_COUNT);
+            remoteAvatars.Schedule(BONE_MATRIX_BATCH_COUNT);
         }
 
         public void CompleteBoneMatrixCalculations()
