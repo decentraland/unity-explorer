@@ -65,6 +65,7 @@ namespace DCL.VoiceChat
             islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
+            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
@@ -78,6 +79,7 @@ namespace DCL.VoiceChat
             disposed = true;
 
             callStatusSubscription.Dispose();
+            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -398,6 +400,32 @@ namespace DCL.VoiceChat
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Resumed — no active call");
+        }
+
+        private void OnMicrophoneChanged(MicrophoneSelection newSelection)
+        {
+            if (rtcAudioSource == null) return;
+
+            SwitchMicrophoneAsync(newSelection).Forget();
+            return;
+
+            async UniTaskVoid SwitchMicrophoneAsync(MicrophoneSelection selection)
+            {
+                if (!PlayerLoopHelper.IsMainThread)
+                    await UniTask.SwitchToMainThread();
+
+                SwitchMicrophoneInternal(selection);
+            }
+        }
+
+        private void SwitchMicrophoneInternal(MicrophoneSelection selection)
+        {
+            Result result = rtcAudioSource!.SwitchMicrophone(selection);
+
+            if (result.Success)
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Microphone switched to: {selection.name}");
+            else
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{TAG} Failed to switch microphone: {result.ErrorMessage}");
         }
 
         private void Deactivate()
