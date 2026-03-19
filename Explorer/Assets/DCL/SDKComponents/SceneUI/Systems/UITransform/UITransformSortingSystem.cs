@@ -11,7 +11,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -39,43 +38,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ResolveSiblingsOrder(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        private void ResolveSiblingsOrder(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
-
-            // if the entity was added its rightOf will be the same
-            // otherwise if it is changed we need to evaluate the new child position
 
             var newRightOf = sdkModel.GetRightOfEntity();
 
             if (!newRightOf.Equals(uiTransformComponent.RelationData.rightOf))
             {
-                // Require parent to re-evaluate its children order
-
-                if (uiTransformComponent.RelationData.parent != Entity.Null)
-                {
-                    ref var parent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
-
-                    if (entitiesMap.TryGetValue(newRightOf, out var newRightOfEntity))
-                    {
-                        ref var newRightOfComponent = ref World.Get<UITransformComponent>(newRightOfEntity);
-
-                        if (newRightOfComponent.RelationData.parent != Entity.Null)
-                        {
-                            Assert.AreEqual(uiTransformComponent.RelationData.parent, newRightOfComponent.RelationData.parent);
-                            parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf, newRightOf, ref newRightOfComponent.RelationData);
-                        }
-                        else if (!newRightOfComponent.IsRoot)
-                            ReportHub.LogError(ReportCategory.SCENE_UI, $"Can't Resolve sibling order for entity: {uiTransformComponent.RelationData.parent.ToString()} - as its new RightOfEntity: {newRightOfEntity.ToString()} - has no parent, but it is NOT a ROOT either");
-                    }
-                    else
-                    {
-                        // TODO fail-safe, make unsorted?
-                    }
-                }
-
                 uiTransformComponent.RelationData.rightOf = newRightOf;
+
+                Entity parentEntity = uiTransformComponent.RelationData.parent;
+
+                if (parentEntity != Entity.Null)
+                {
+                    ref var parent = ref World.Get<UITransformComponent>(parentEntity);
+                    parent.RelationData.UpdateNodeRightOf(sdkEntity, newRightOf);
+                }
             }
         }
 

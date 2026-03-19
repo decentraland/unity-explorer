@@ -23,6 +23,21 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
 
+        public GetExplorerInformationResponse GetExplorerInformation();
+
+        [Serializable]
+        public struct GetExplorerInformationResponse
+        {
+            public string agent;
+            public string platform;
+
+            /// <summary>
+            ///     JSON-serialized Dictionary&lt;string, string&gt; of custom explorer configurations.
+            ///     Parse with JSON.parse in JS.
+            /// </summary>
+            public string configurationsJson;
+        }
+
         [Serializable]
         public struct GetWorldTimeResponse
         {
