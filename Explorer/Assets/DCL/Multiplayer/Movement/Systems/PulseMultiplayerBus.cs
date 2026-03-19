@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Utilities.Extensions;
 using Decentraland.Pulse;
 using System;
@@ -26,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly ParcelEncoder parcelEncoder;
         private readonly PulseIncomingProfileAnnouncements incomingProfiles;
+        private readonly PulseRemoveIntentions removeIntentions;
 
         private bool isDisposed;
 
@@ -33,13 +35,15 @@ namespace DCL.Multiplayer.Connections.Pulse
             PeerIdCache peerIdCache,
             MovementInbox movementInbox,
             ParcelEncoder parcelEncoder,
-            PulseIncomingProfileAnnouncements incomingProfiles)
+            PulseIncomingProfileAnnouncements incomingProfiles,
+            PulseRemoveIntentions removeIntentions)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
             this.incomingProfiles = incomingProfiles;
+            this.removeIntentions = removeIntentions;
         }
 
         public void Send(NetworkMovementMessage message)
@@ -65,7 +69,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
                         SubscribeToPlayerStateFullAsync(ct),
                         SubscribeToPlayerStateDeltaAsync(ct),
-                        SubscribeToProfileAnnouncementsAsync(ct))
+                        SubscribeToProfileAnnouncementsAsync(ct),
+                        SubscribeToPlayerLeftAsync(ct))
                    .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
                    .Forget();
         }
@@ -112,24 +117,24 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        // private async UniTask SubscribeToPlayerLeftAsync(CancellationToken ct)
-        // {
-        //     await foreach (PlayerLeft playerLeft in pulseService.SubscribeAsync<PlayerLeft>(ServerMessage.MessageOneofCase.PlayerLeft, ct))
-        //     {
-        //         if (isDisposed)
-        //         {
-        //             ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-        //             break;
-        //         }
-        //
-        //         peerIdCache.Remove(playerLeft.SubjectId);
-        //
-        //         NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerLeft.State);
-        //         lastMovementMessages[playerLeft.State.SubjectId] = (playerLeft.State.Sequence, movementMessage);
-        //
-        //         Inbox(movementMessage, playerLeft.UserId);
-        //     }
-        // }
+        private async UniTask SubscribeToPlayerLeftAsync(CancellationToken ct)
+        {
+            await foreach (PlayerLeft playerLeft in pulseService.SubscribeAsync<PlayerLeft>(ServerMessage.MessageOneofCase.PlayerLeft, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                    break;
+                }
+
+                if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out string wallet))
+                    removeIntentions.Enqueue(wallet);
+
+                peerIdCache.Remove(playerLeft.SubjectId);
+                lastMovementMessages.Remove(playerLeft.SubjectId);
+                pendingResyncs.Remove(playerLeft.SubjectId);
+            }
+        }
 
         private async UniTask SubscribeToPlayerStateFullAsync(CancellationToken ct)
         {
@@ -190,12 +195,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (playerState.NewSeq > lastMovement.sequence)
                 {
                     if (playerState.NewSeq - lastMovement.sequence > 1)
-                    {
                         if (TryRequestResync(playerState.SubjectId, lastMovement.sequence))
                             ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {playerState.SubjectId}. Received seq: {playerState.NewSeq}, prev seq: {lastMovement.sequence}");
-
-                        continue;
-                    }
                 }
                 else
                 {

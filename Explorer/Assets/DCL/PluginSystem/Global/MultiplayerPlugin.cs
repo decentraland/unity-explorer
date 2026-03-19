@@ -68,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly IActivatableConnectiveRoom chatRoom;
         private readonly IActivatableConnectiveRoom voiceChatRoom;
         private readonly IRemoteAnnouncements remoteAnnouncements;
+        private readonly IRemoveIntentions removeIntentions;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -93,7 +94,8 @@ namespace DCL.PluginSystem.Global
             ThroughputBufferBunch islandThroughputBufferBunch,
             ThroughputBufferBunch sceneThroughputBufferBunch,
             IActivatableConnectiveRoom voiceChatRoom,
-            IRemoteAnnouncements remoteAnnouncements)
+            IRemoteAnnouncements remoteAnnouncements,
+            IRemoveIntentions removeIntentions)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -119,6 +121,7 @@ namespace DCL.PluginSystem.Global
             this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
             this.voiceChatRoom = voiceChatRoom;
             this.remoteAnnouncements = remoteAnnouncements;
+            this.removeIntentions = removeIntentions;
         }
 
         public void Dispose()
@@ -147,9 +150,11 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,
-                new LogRemoveIntentions(
-                    new ThreadSafeRemoveIntentions(roomHub)
-                ),
+                // TODO: properly branch server mode
+                // new LogRemoveIntentions(
+                //     new ThreadSafeRemoveIntentions(roomHub)
+                // ),
+                removeIntentions,
                 new RemoteProfiles(profileRepository, remoteMetadata),
                 profileBroadcast,
                 remoteEntities,

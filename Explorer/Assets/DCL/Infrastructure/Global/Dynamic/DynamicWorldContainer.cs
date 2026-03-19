@@ -62,6 +62,7 @@ using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Navmap;
@@ -259,6 +260,7 @@ namespace Global.Dynamic
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
             var pulseIncomingProfileAnnouncements = new PulseIncomingProfileAnnouncements();
+            var pulseRemoveIntentions = new PulseRemoveIntentions();
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -295,6 +297,7 @@ namespace Global.Dynamic
                         movementInbox,
                         staticContainer.QualityContainer.LandscapeData,
                         pulseIncomingProfileAnnouncements,
+                        pulseRemoveIntentions,
                         ct
                     );
             }
@@ -759,7 +762,8 @@ namespace Global.Dynamic
                     sceneThroughputBunch,
                     voiceChatRoom,
                     // TODO: properly branch profile announcements depending on server setup
-                    pulseIncomingProfileAnnouncements
+                    pulseIncomingProfileAnnouncements,
+                    pulseRemoveIntentions
                 ),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),

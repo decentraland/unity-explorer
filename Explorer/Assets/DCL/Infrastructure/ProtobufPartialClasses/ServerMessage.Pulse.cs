@@ -14,6 +14,7 @@ namespace Decentraland.Pulse
                        MessageOneofCase.PlayerStateFull => PlayerStateFull,
                        MessageOneofCase.PlayerStateDelta => PlayerStateDelta,
                        MessageOneofCase.PlayerJoined => PlayerJoined,
+                       MessageOneofCase.PlayerLeft => PlayerLeft,
                        _ => null,
                    };
         }
