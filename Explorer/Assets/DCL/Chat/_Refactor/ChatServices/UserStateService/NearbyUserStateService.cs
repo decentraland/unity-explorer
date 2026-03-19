@@ -94,17 +94,17 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnSceneRoomUpdatesFromParticipants(Participant participant, UpdateFromParticipant update)
+        private void OnSceneRoomUpdatesFromParticipants(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.IslandRoom());
         }
 
-        private void OnIslandUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnIslandUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.SceneRoom().Room());
         }
 
-        private void OnRoomUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, IRoom otherRoom)
+        private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
             lock (onlineParticipants)
             {
