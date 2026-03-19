@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private ProximityVoiceChatManager? proximityVoiceChatManager;
+        private ProximityNametagsHandler? proximityNametagsHandler;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -161,6 +162,9 @@ namespace DCL.PluginSystem.Global
                 foreach (string identity in activeSpeakers)
                     proximityConfigHolder.SpeakingParticipants.Add(identity);
             };
+
+            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus);
+            pluginScope.Add(proximityNametagsHandler);
 
             proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus);
             pluginScope.Add(proximityVoiceChatManager);
