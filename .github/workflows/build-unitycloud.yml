@@ -72,6 +72,11 @@ on:
         required: false
         default: false
         type: boolean
+      update_warnings_baseline:
+        description: 'Set this branch as the new warnings baseline (use to test or seed from a non-dev branch)'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       profile:
@@ -728,12 +733,17 @@ jobs:
           fi
 
       - name: Update warnings baseline
-        # Only lower the baseline — never raise it — and only on dev pushes.
+        # Only lower the baseline — never raise it.
+        # Fires automatically on every dev push, or manually via the
+        # `update_warnings_baseline` workflow_dispatch input on any branch.
         if: |
           always() &&
           matrix.target == 'windows64' &&
-          github.event_name == 'push' && github.ref == 'refs/heads/dev' &&
-          steps.count_warnings.outputs.warning_count != ''
+          steps.count_warnings.outputs.warning_count != '' &&
+          (
+            (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+            (github.event_name == 'workflow_dispatch' && inputs.update_warnings_baseline == true)
+          )
         env:
           COUNT: ${{ steps.count_warnings.outputs.warning_count }}
           BASELINE: ${{ vars.WARNINGS_BASELINE }}
