@@ -54,7 +54,12 @@ namespace DCL.SDKComponents.AudioEffectZone.Systems
         [All(typeof(TransformComponent))]
         private void SetupAudioEffectZone(in Entity entity, ref PBAudioEffectZone pbAudioEffectZone)
         {
-            var triggerArea = new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: false);
+            bool targetOnlyMainPlayer = pbAudioEffectZone.EffectCase is
+                PBAudioEffectZone.EffectOneofCase.Silence or
+                PBAudioEffectZone.EffectOneofCase.Reverb or
+                PBAudioEffectZone.EffectOneofCase.Echo;
+
+            var triggerArea = new SDKEntityTriggerAreaComponent(areaSize: pbAudioEffectZone.Area, targetOnlyMainPlayer: targetOnlyMainPlayer);
 
             switch (pbAudioEffectZone.EffectCase)
             {
