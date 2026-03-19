@@ -353,6 +353,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     timeout-minutes: 360
+    permissions:
+      variables: write  # needed to update the WARNINGS_BASELINE repository variable
     strategy:
       fail-fast: false
       matrix:
@@ -679,6 +681,75 @@ jobs:
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
           grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
+
+      # ── Compilation warning check ──────────────────────────────────────────
+      # Runs only for the windows64 target (same C# code, so one count is enough).
+
+      - name: Count compilation warnings
+        id: count_warnings
+        if: always() && matrix.target == 'windows64'
+        run: |
+          count=$(grep -cE '\.cs\([0-9]+,[0-9]+\): warning CS' unity_cloud_log.log 2>/dev/null || echo 0)
+          echo "warning_count=$count" >> $GITHUB_OUTPUT
+          echo "Compilation warnings: $count"
+
+      - name: Enforce warning reduction (PR) / report (dev)
+        if: always() && matrix.target == 'windows64' && steps.count_warnings.outputs.warning_count != ''
+        env:
+          COUNT: ${{ steps.count_warnings.outputs.warning_count }}
+          BASELINE: ${{ vars.WARNINGS_BASELINE }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "## Compilation Warnings"
+            echo ""
+            echo "| | Count |"
+            echo "|:---|---:|"
+            echo "| **Current** | $COUNT |"
+            if [ -n "$BASELINE" ]; then
+              delta=$(( COUNT - BASELINE ))
+              echo "| **Baseline** | $BASELINE |"
+              if   [ "$delta" -lt 0 ]; then echo "| **Delta** | 🟢 $delta |"
+              elif [ "$delta" -eq 0 ]; then echo "| **Delta** | 🔴 ±0 |"
+              else                          echo "| **Delta** | 🔴 +$delta |"
+              fi
+            else
+              echo "| **Baseline** | _not established — trigger this workflow on \`dev\` to set one_ |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ -n "$BASELINE" ]; then
+            if [ "$COUNT" -ge "$BASELINE" ]; then
+              echo "::error::Compilation warnings ($COUNT) must be strictly less than the baseline ($BASELINE). Remove at least one warning to merge."
+              exit 1
+            fi
+            echo "✅ Warnings reduced: $COUNT < $BASELINE"
+          fi
+
+      - name: Update warnings baseline
+        # Only lower the baseline — never raise it — and only on dev pushes.
+        if: |
+          always() &&
+          matrix.target == 'windows64' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/dev' &&
+          steps.count_warnings.outputs.warning_count != ''
+        env:
+          COUNT: ${{ steps.count_warnings.outputs.warning_count }}
+          BASELINE: ${{ vars.WARNINGS_BASELINE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$BASELINE" ] && [ "$COUNT" -ge "$BASELINE" ]; then
+            echo "No update: current count ($COUNT) is not less than existing baseline ($BASELINE)"
+            exit 0
+          fi
+
+          echo "Updating baseline: ${BASELINE:-<none>} → $COUNT"
+          gh variable set WARNINGS_BASELINE \
+            --body "$COUNT" \
+            --repo "${{ github.repository }}"
+
+      # ──────────────────────────────────────────────────────────────────────
 
       - name: Generate Shader Compilation Report
         shell: pwsh
