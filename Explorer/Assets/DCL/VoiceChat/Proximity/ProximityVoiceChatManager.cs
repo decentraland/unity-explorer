@@ -329,6 +329,7 @@ namespace DCL.VoiceChat
             if (spatial)
             {
                 configuration.ApplyProximitySettingsTo(audioSource);
+                configuration.ApplySpatializationSettingsTo(source);
                 source.gameObject.AddComponent<ProximityPanCalculator>();
             }
 

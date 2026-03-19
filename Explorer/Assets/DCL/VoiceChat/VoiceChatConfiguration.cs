@@ -1,3 +1,4 @@
+using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -86,6 +87,16 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
+        [Header("Proximity Spatialization (LivekitAudioSource overrides)")]
+        [Tooltip("ILD algorithm. HeadShadow = EqualPower + frequency-dependent LPF on far ear.")]
+        public ILDMode ProximityILDMode = ILDMode.HeadShadow;
+
+        [Tooltip("Enable interaural time delay (Woodworth spherical-head model).")]
+        public bool ProximityEnableITD;
+
+        [Tooltip("Enable pinna HRTF simulation (elevation-dependent notch filters).")]
+        public bool ProximityEnableHRTF;
+
         [Header("Lip Sync")]
         [Tooltip("Mouth sprite atlas (1024x1024, 4x4 grid of 256px cells, 16 poses)")]
         public Texture2D MouthAtlasTexture;
@@ -147,6 +158,13 @@ namespace DCL.VoiceChat
 
             if (ProximityRolloffMode == AudioRolloffMode.Custom)
                 source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
+        }
+
+        public void ApplySpatializationSettingsTo(LivekitAudioSource source)
+        {
+            source.ildMode = ProximityILDMode;
+            source.enableITD = ProximityEnableITD;
+            source.enableHRTF = ProximityEnableHRTF;
         }
     }
 }
