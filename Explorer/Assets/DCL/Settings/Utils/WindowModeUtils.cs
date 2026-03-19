@@ -27,15 +27,21 @@ namespace DCL.Settings.Utils
 
         public static Resolution GetTargetResolution(List<Resolution> possibleResolutions)
         {
-            return DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION)
-                ? GetSavedResolution()
-                : GetDefaultResolution(possibleResolutions);
-
-            Resolution GetSavedResolution()
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.PS_RESOLUTION_WIDTH))
             {
-                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
-                return index < 0 || index >= possibleResolutions.Count ? GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
+                return new Resolution
+                {
+                    width = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_WIDTH),
+                    height = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_HEIGHT),
+                    refreshRateRatio = new RefreshRate
+                    {
+                        numerator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_NUM),
+                        denominator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_DEN, 1),
+                    },
+                };
             }
+
+            return GetDefaultResolution(possibleResolutions);
         }
 
         public static Resolution GetDefaultResolution(List<Resolution> possibleResolutions)
