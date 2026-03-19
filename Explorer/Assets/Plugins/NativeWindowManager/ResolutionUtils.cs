@@ -30,8 +30,7 @@ namespace Plugins.NativeWindowManager
 
                 // Exclude possible duplicates
                 // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
-                if (resolutions.Any(res => res.x == resolution.height
-                                           && res.y == resolution.width))
+                if (resolutions.Any(res => res.x == resolution.width && res.y == resolution.height))
                     continue;
 
                 AddResolution(resolution);
