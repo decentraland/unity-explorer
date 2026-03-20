@@ -14,6 +14,7 @@ using Unity.Collections;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Times;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
@@ -21,6 +22,8 @@ namespace DCL.Profiles
     public class RealmProfileRepository : IBatchedProfileRepository
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
+
+        private const int DEPLOY_WINDOW_IN_SECONDS = 3;
 
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
@@ -36,6 +39,9 @@ namespace DCL.Profiles
         private readonly List<ProfilesBatchRequest> pendingBatches = new (10);
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
+
+        private ulong passedTimeSinceLastDeployment = 0;
+        private ulong lastDeployTimestampInSeconds = 0;
 
         private UniTaskCompletionSource? currentProfileResolutionTask;
         private Profile? currentProfile;
@@ -70,6 +76,7 @@ namespace DCL.Profiles
             }
         }
 
+
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(profile.UserId))
@@ -88,7 +95,10 @@ namespace DCL.Profiles
 
             try
             {
+
                 Profile localCurrent;
+                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, DEPLOY_WINDOW_IN_SECONDS);
+
                 do
                 {
                     localCurrent = profileBuilder.From(currentProfile).Build();
@@ -96,11 +106,13 @@ namespace DCL.Profiles
                     // ADR-290: snapshots are no longer sent during profile deployment
                     IpfsProfileEntity entity = NewPublishProfileEntity(localCurrent);
 
+                    await UniTask.Delay(TimeSpan.FromSeconds(DEPLOY_WINDOW_IN_SECONDS - passedTimeSinceLastDeployment), cancellationToken: ct);
                     await publishIpfsEntityCommand.ExecuteAsync(entity, CancellationToken.None, SERIALIZER_SETTINGS);
+                    passedTimeSinceLastDeployment = 0;
                 }
                 while (!currentProfile.IsSameProfile(localCurrent));
 
-                profileCache.Set(localCurrent.UserId, currentProfile);
+                profileCache.Set(profile.UserId, profile);
                 currentProfileResolutionTask.TrySetResult();
             }
             catch (Exception e)
@@ -111,6 +123,7 @@ namespace DCL.Profiles
             finally
             {
                 currentProfileResolutionTask = null;
+                lastDeployTimestampInSeconds = DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000;
             }
         }
 
