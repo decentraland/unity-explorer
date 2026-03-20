@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 float t = Mathf.Clamp01(elapsed / fadeDuration);
                 color.a = Mathf.Lerp(startAlpha, endAlpha, t);
                 SpriteRenderer.color = color;
-                await UniTask.Yield(ct);
+                await UniTask.Yield();
             }
 
             color.a = endAlpha;
