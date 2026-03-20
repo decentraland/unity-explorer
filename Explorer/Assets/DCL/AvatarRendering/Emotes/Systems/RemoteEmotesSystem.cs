@@ -103,17 +103,26 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    // check if the existing emote component is playing an emote to stop it
-                    // Note: CurrentEmoteReference is set immediately by EmotePlayer.Play(), while
-                    // IsPlayingEmote/IsPlayingMaskedEmote rely on animator state tags that take at
-                    // least one frame to reflect a newly triggered emote. Without this check, a stop
-                    // arriving in that window would be retried and eventually discarded as stale.
-                    if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.IsPlayingMaskedEmote || emoteComponent.CurrentEmoteReference != null))
+                    // check if any emote (full-body or masked) is playing and stop both
+                    bool isPlayingAny = false;
+
+                    if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.CurrentEmoteReference != null))
                     {
                         emoteComponent.StopEmote = true;
                         World.Set(entry.Entity, emoteComponent);
-                        continue;
+                        isPlayingAny = true;
                     }
+
+                    if (World.TryGet(entry.Entity, out CharacterMaskedEmoteComponent masked) && (masked.IsPlaying || masked.CurrentEmoteReference != null))
+                    {
+                        masked.StopEmote = true;
+                        masked.Paused = false;
+                        World.Set(entry.Entity, masked);
+                        isPlayingAny = true;
+                    }
+
+                    if (isPlayingAny)
+                        continue;
 
                     // Entity exists but the play intention hasn't been applied yet (still queued
                     // waiting for interpolation to catch up). Save the stop for retry so it can

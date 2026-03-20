@@ -119,6 +119,67 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
+        public bool PlayMasked(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+            ref CharacterMaskedEmoteComponent maskedEmote)
+        {
+            EmoteReferences? emoteInUse = maskedEmote.CurrentEmoteReference;
+
+            // Early return if the same looping emote is already playing
+            if (emoteInUse != null &&
+                emotesInUse.ContainsKey(emoteInUse) &&
+                pools.ContainsKey(mainAsset) &&
+                emotesInUse[emoteInUse] == pools[mainAsset] &&
+                maskedEmote.EmoteLoop &&
+                isLooping)
+                return true;
+
+            if (emoteInUse != null)
+                Stop(emoteInUse);
+
+            if (!pools.ContainsKey(mainAsset))
+            {
+                if (IsValid(mainAsset))
+                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
+                else
+                    return false;
+            }
+
+            EmoteReferences? emoteReferences = pools[mainAsset]!.Get();
+            if (!emoteReferences) return false;
+
+            Transform avatarTransform = view.GetTransform();
+            Transform emoteTransform = emoteReferences!.transform;
+            emoteTransform.SetParent(avatarTransform, false);
+            emoteTransform.localPosition = Vector3.zero;
+            emoteTransform.localRotation = Quaternion.identity;
+
+            emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
+
+            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            foreach (Transform? child in children.Value)
+                if (child != null)
+                    child.gameObject.layer = avatarTransform.gameObject.layer;
+
+            PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
+
+            if (audioAsset != null)
+            {
+                AudioSource audioSource = audioSourcePool.Get();
+                audioSource.clip = audioAsset;
+                audioSource.spatialize = isSpatial;
+                audioSource.spatialBlend = isSpatial ? 1 : 0;
+                audioSource.transform.position = avatarTransform.position;
+                audioSource.loop = isLooping;
+                audioSource.Play();
+                emoteReferences.audioSource = audioSource;
+            }
+
+            emotesInUse.Add(emoteReferences, pools[mainAsset]);
+            maskedEmote.CurrentEmoteReference = emoteReferences;
+            return true;
+        }
+
         private bool IsValid(GameObject mainAsset) =>
             mainAsset.GetComponentInChildren<Animator>(true)
             || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
@@ -229,7 +290,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (emoteReferences.avatarClip != null)
             {
-                // When mask is AemUpperBody the animation could be applied to an upper-body-only layer; for now use full body
                 view.ReplaceEmoteAnimation(emoteReferences.avatarClip);
                 emoteComponent.EmoteLoop = isLooping;
 
@@ -238,34 +298,54 @@ namespace DCL.AvatarRendering.Emotes.Play
                 view.ResetArmatureInclination();
             }
 
-            // Create a clean slate for the animator before setting the play trigger
+            // Clean slate for the base layer
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE);
-            view.ResetAnimatorTrigger(AnimationHashes.EMOTE_UPPER_BODY);
             view.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
 
-            // Reset layer weights
-            foreach (string layer in AnimatorEmoteLayers.NON_BASE_LAYERS)
-                view.SetLayerWeight(layer, 0);
-
-            // Select and set masking layer based on mask
-            AvatarEmoteMask mask = emoteComponent.Mask;
-            string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
-            view.SetLayerWeight(emoteLayer, 1);
-
-            // Set triggers
-            int emoteTriggerHash = AnimationHashes.GetFromEmoteMask(mask);
-
-            // TODO (Maurizio) probably we need to check all other layers as well here
-            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : emoteTriggerHash);
+            // Full-body emotes only use the base layer
+            view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP)
+                ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
+            SetupPropAnimation(emoteReferences, emoteComponent.EmoteLoop);
+        }
+
+        private void PlayMaskedMecanimEmote(in IAvatarView view, ref CharacterMaskedEmoteComponent maskedEmote, EmoteReferences emoteReferences, bool isLooping)
+        {
+            if (emoteReferences.avatarClip != null)
+            {
+                view.ReplaceMaskedEmoteAnimation(emoteReferences.avatarClip);
+                maskedEmote.EmoteLoop = isLooping;
+                view.ResetArmatureInclination();
+            }
+
+            // Clean slate using masked parameters
+            view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
+            view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
+            view.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
+
+            // Enable the upper body layer
+            string emoteLayer = AnimatorEmoteLayers.GetFromEmoteMask(maskedEmote.Mask);
+            view.SetLayerWeight(emoteLayer, 1);
+
+            // Use MASKED_EMOTE_REFRESH if already in emote state on the target layer, otherwise fresh trigger
+            int targetLayerTag = view.GetAnimatorCurrentStateTag(emoteLayer);
+            bool alreadyInEmote = targetLayerTag == AnimationHashes.MASKED_EMOTE || targetLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
+            view.SetAnimatorTrigger(alreadyInEmote ? AnimationHashes.MASKED_EMOTE_REFRESH : AnimationHashes.MASKED_EMOTE);
+            view.SetAnimatorBool(AnimationHashes.MASKED_EMOTE_LOOP, maskedEmote.EmoteLoop);
+
+            SetupPropAnimation(emoteReferences, maskedEmote.EmoteLoop);
+        }
+
+        private void SetupPropAnimation(EmoteReferences emoteReferences, bool isLooping)
+        {
             if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
             {
                 int propTriggerHash = IsAnimatorImportedLocally(emoteReferences.animatorComp) ? AnimationHashes.PROP_ANIMATION_TRIGGER : emoteReferences.propClipHash;
 
                 emoteReferences.animatorComp.SetTrigger(propTriggerHash);
-                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+                emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isLooping);
             }
 
             return;

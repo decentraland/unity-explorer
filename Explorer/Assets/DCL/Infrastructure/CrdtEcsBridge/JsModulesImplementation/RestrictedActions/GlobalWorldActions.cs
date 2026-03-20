@@ -142,12 +142,21 @@ namespace CrdtEcsBridge.RestrictedActions
             if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible)
                 return;
 
-            // Signal the emote system to stop whatever emote is currently playing (if any).
-            if (!world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
-                return;
+            // Stop full-body emote
+            if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
+            {
+                emoteComponent.StopEmote = true;
+                world.Set(playerEntity, emoteComponent);
+            }
 
-            emoteComponent.StopEmote = true;
-            world.Set(playerEntity, emoteComponent);
+            // Stop masked emote
+            if (world.TryGet(playerEntity, out CharacterMaskedEmoteComponent masked))
+            {
+                masked.StopEmote = true;
+                masked.Paused = false;
+                world.Set(playerEntity, masked);
+            }
+
             messageBus.SendStop();
         }
 

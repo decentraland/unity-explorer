@@ -16,6 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
+        private AnimationClip lastMaskedEmote;
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
@@ -213,6 +214,17 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.enabled = true;
         }
 
+        public void ReplaceMaskedEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastMaskedEmote == animationClip) return;
+
+            overrideController["MaskedEmote"] = animationClip;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastMaskedEmote = animationClip;
+            AvatarAnimator.enabled = true;
+        }
+
         public Vector3 GetAdaptiveNametagPosition()
         {
             Vector3 headPos = headAramatureBone.position;
@@ -278,6 +290,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         bool GetAnimatorBool(int hash);
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
+
+        void ReplaceMaskedEmoteAnimation(AnimationClip animationClip);
 
         float GetAnimatorFloat(int hash);
 

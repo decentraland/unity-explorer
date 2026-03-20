@@ -23,14 +23,9 @@ namespace Utility.Animations
         public static readonly int SLIDE_BLEND = Animator.StringToHash("SlideBlend");
         public static readonly int JUMPING_TAG = Animator.StringToHash("Jumping");
         public static readonly int PROP_ANIMATION_TRIGGER = Animator.StringToHash("PropAnimation");
-        public static readonly int EMOTE_UPPER_BODY = Animator.StringToHash("EmoteUpperBody");
-
-        public static int GetFromEmoteMask(AvatarEmoteMask mask) =>
-            mask switch
-            {
-                AvatarEmoteMask.AemFullBody => EMOTE,
-                AvatarEmoteMask.AemUpperBody => EMOTE_UPPER_BODY,
-                _ => EMOTE,
-            };
+        public static readonly int MASKED_EMOTE = Animator.StringToHash("MaskedEmote");
+        public static readonly int MASKED_EMOTE_LOOP = Animator.StringToHash("MaskedEmoteLoop");
+        public static readonly int MASKED_EMOTE_REFRESH = Animator.StringToHash("MaskedEmoteRefresh");
+        public static readonly int MASKED_EMOTE_STOP = Animator.StringToHash("MaskedEmoteStop");
     }
 }

@@ -31,6 +31,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
+using Utility.Arch;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
@@ -77,15 +78,24 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         protected override void Update(float t)
         {
+            // Masked emote cancellation
+            CancelMaskedEmotesBySceneChangeQuery(World);
+            CancelMaskedEmotesQuery(World);
+
+            // Full-body emote cancellation
             CancelSceneEmotesBySceneChangeQuery(World);
             CancelEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
+
+            // Shared
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
+            SyncMaskedEmotePauseStateQuery(World);
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
+            UpdateMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
             DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
@@ -131,15 +141,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
 
-        // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            foreach (string layerName in AnimatorEmoteLayers.ALL_LAYERS)
-            {
-                int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layerName);
-                emoteComponent.SetAnimationTag(layerName, currentStateTag);
-            }
+            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            emoteComponent.SetAnimationTag(currentStateTag);
         }
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
@@ -161,8 +167,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 StopEmote(ref emoteComponent, avatarView);
                 return;
             }
-
-            // TODO (Maurizio) maybe we should do this for all layers?
 
             if (!emoteReference.legacy)
             {
@@ -227,6 +231,122 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetArmatureInclination();
 
             emoteComponent.Reset();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void StopMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
+        {
+            if (masked.CurrentEmoteReference == null) return;
+
+            emotePlayer.Stop(masked.CurrentEmoteReference);
+
+            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
+            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
+            avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            avatarView.SetLayerWeight(layer, 0);
+
+            masked.Reset();
+        }
+
+        private static void SetEmoteReferencesVisible(EmoteReferences references, bool visible)
+        {
+            // Only toggle renderers — keep the prop Animator running so it stays in sync
+            // with the avatar's upper body layer (which also keeps ticking at weight 0)
+            foreach (Renderer renderer in references.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.enabled = visible;
+                renderer.forceRenderingOff = !visible;
+            }
+        }
+
+        /// <summary>
+        /// Reactively pauses or resumes the masked emote based on whether a full-body emote is playing.
+        /// Runs every frame so pause/resume happens automatically without explicit calls from cancel queries.
+        /// </summary>
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void SyncMaskedEmotePauseState(ref CharacterMaskedEmoteComponent masked, in CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            if (masked.CurrentEmoteReference == null) return;
+
+            // Use CurrentEmoteReference instead of IsPlayingEmote to avoid one-frame delay
+            // (IsPlayingEmote checks the stored tag which is updated at end of frame,
+            //  while CurrentEmoteReference is set immediately by EmotePlayer.Play())
+            bool fullBodyIsPlaying = emoteComponent.CurrentEmoteReference != null;
+
+            if (fullBodyIsPlaying && !masked.Paused)
+            {
+                // Pause: hide masked layer and prop, no state machine triggers —
+                // both the upper body layer and prop animator keep ticking invisibly
+                masked.Paused = true;
+                string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                avatarView.SetLayerWeight(layer, 0);
+                SetEmoteReferencesVisible(masked.CurrentEmoteReference, false);
+            }
+            else if (!fullBodyIsPlaying && masked.Paused)
+            {
+                // Resume: show masked layer and prop — both kept advancing, so they're in sync
+                masked.Paused = false;
+                string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                avatarView.SetLayerWeight(layer, 1);
+                SetEmoteReferencesVisible(masked.CurrentEmoteReference, true);
+            }
+        }
+
+        /// <summary>
+        /// Stops masked scene emotes when the player is no longer in the scene that triggered them.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void CancelMaskedEmotesBySceneChange(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        {
+            if (masked.CurrentEmoteReference == null) return;
+            if (masked.Paused) return;
+            if (!TryParseSceneEmoteURN(masked.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
+            if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
+
+            StopMaskedEmote(ref masked, avatarView);
+            messageBus.SendStop();
+        }
+
+        [Query]
+        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
+        private void CancelMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        {
+            if (masked.StopEmote)
+            {
+                masked.StopEmote = false;
+                StopMaskedEmote(ref masked, avatarView);
+                return;
+            }
+
+            if (masked.Paused || masked.CurrentEmoteReference == null) return;
+            if (masked.CurrentEmoteReference.legacy) return;
+
+            // Wait until the stored tag confirms the emote is playing before checking for end.
+            // On the frame the emote is triggered, the animator hasn't transitioned yet —
+            // without this guard, the non-emote tag would immediately stop it.
+            if (!masked.IsPlaying) return;
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
+            bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+
+            if (isOnAnotherTag)
+                StopMaskedEmote(ref masked, avatarView);
+        }
+
+        [Query]
+        private void UpdateMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        {
+            if (masked.CurrentEmoteReference == null) return;
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);
+            masked.SetAnimationTag(currentStateTag);
         }
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
@@ -298,13 +418,36 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
-                    emoteComponent.EmoteUrn = emoteId;
-                    emoteComponent.Mask = emoteIntent.Mask;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody)
+                    {
+                        // Full-body flow: SyncMaskedEmotePauseState will automatically pause any masked emote
+                        emoteComponent.EmoteUrn = emoteId;
+                        emoteComponent.Mask = emoteIntent.Mask;
+
+                        if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                            ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    }
+                    else
+                    {
+                        // Masked flow: stop any full-body emote that's playing
+                        if (emoteComponent.CurrentEmoteReference != null)
+                            StopEmote(ref emoteComponent, avatarView);
+
+                        ref CharacterMaskedEmoteComponent masked = ref World.AddOrGet<CharacterMaskedEmoteComponent>(entity);
+
+                        // Stop previous masked emote if one exists
+                        if (masked.CurrentEmoteReference != null)
+                            StopMaskedEmote(ref masked, avatarView);
+
+                        masked.EmoteUrn = emoteId;
+                        masked.Mask = emoteIntent.Mask;
+
+                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref masked))
+                            ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    }
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
@@ -324,8 +467,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(CharacterEmoteIntent))]
         private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView)
         {
-            if (animationComponent.CurrentAnimationTagsByLayerName?.TryGetValue(AnimatorEmoteLayers.BASE_LAYER, out int prevTag) != true)
-                return;
+            int prevTag = animationComponent.CurrentAnimationTag;
+            if (prevTag == 0) return;
 
             int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
 

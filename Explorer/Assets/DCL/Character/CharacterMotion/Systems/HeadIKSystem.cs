@@ -158,6 +158,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateIK([Data] float dt,
             [Data] in CameraComponent cameraComponent,
             [Data] bool inWorldCameraActive,
+            Entity entity,
             ref HeadIKComponent headIK,
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
@@ -165,12 +166,14 @@ namespace DCL.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent)
         {
+            bool isPlayingMaskedEmote = World.TryGet(entity, out CharacterMaskedEmoteComponent masked) && masked.IsPlaying;
+
             bool pitchEnabled = debugHeadIKIsEnabled &&
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
                                 !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
                                 !stunComponent.IsStunned &&
                                 !emoteComponent.IsPlayingEmote &&
-                                !emoteComponent.IsPlayingMaskedEmote &&
+                                !isPlayingMaskedEmote &&
                                 !platformComponent.PositionChanged;
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);
