@@ -39,6 +39,10 @@ namespace DCL.Nametags
         private readonly IObjectPool<NametagHolder> nametagHolderPool;
         private readonly NametagsData nametagsData;
 
+        // When ghosts are enabled, nametags should appear immediately (alongside the ghost placeholder).
+        // Otherwise, wait until the avatar has been fully instantiated before showing the nametag.
+        private readonly bool includeGhosts;
+
         private SingleInstanceEntity playerCamera;
 
         public NametagPlacementSystem(
@@ -49,6 +53,7 @@ namespace DCL.Nametags
         {
             this.nametagHolderPool = nametagHolderPool;
             this.nametagsData = nametagsData;
+            includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
         }
 
         public override void Initialize()
@@ -82,6 +87,9 @@ namespace DCL.Nametags
             in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
+            if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
+                return;
+
             if (partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
@@ -98,6 +106,9 @@ namespace DCL.Nametags
             in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
+            if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
+                return;
+
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR) ||
