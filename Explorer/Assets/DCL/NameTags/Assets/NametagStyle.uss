@@ -267,6 +267,22 @@
     height: 6px;
 }
 
+.nametag__badge-hushed {
+    display: none;
+    width: 14px;
+    height: 14px;
+    background-image: url('/Assets/DCL/VoiceChat/Proximity/Textures/HushedIcn.png');
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.nametag--hushed .nametag__badge-hushed {
+    display: flex;
+}
+
+.nametag--hushed .nametag__badge-voice-chat {
+    display: none;
+}
+
 .nametag__message-container {
     height: 0;
     overflow: hidden;

@@ -171,7 +171,7 @@ namespace DCL.PluginSystem.Global
             };
 
             string localIdentity = identityCache.EnsuredIdentity().Address.ToString();
-            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus, playerEntity, localIdentity);
+            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus, playerEntity, localIdentity, proximityMuteService);
             pluginScope.Add(proximityNametagsHandler);
 
             proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus, proximityMuteService);
