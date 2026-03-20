@@ -20,12 +20,12 @@ namespace DCL.WebRequests
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
-            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op, IStreamableLoadingProgressHandler progressHandler = null)
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestArgs: struct
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            try { return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op); }
+            try { return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op, progressHandler); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 if (e.Message.Contains(WebRequestUtils.CANNOT_CONNECT_ERROR))

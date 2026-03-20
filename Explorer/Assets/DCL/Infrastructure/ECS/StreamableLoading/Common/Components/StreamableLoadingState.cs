@@ -1,5 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ namespace ECS.StreamableLoading.Common.Components
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public class StreamableLoadingState
+    public class StreamableLoadingState : IStreamableLoadingProgressHandler, IStreamableLoadingProgress
     {
         public enum Status : byte
         {
@@ -46,8 +47,6 @@ namespace ECS.StreamableLoading.Common.Components
             {
                 state.disposed = false;
                 state.Value = Status.NotStarted;
-                state.ContentLength = -1;
-                state.CompletedDownloadBytes = 0;
             },
             actionOnRelease: state =>
             {
@@ -74,19 +73,12 @@ namespace ECS.StreamableLoading.Common.Components
         public IAcquiredBudget? AcquiredBudget { get; private set; }
 
         /// <summary>
-        ///     Total expected bytes from Content-Length header. -1 if unknown.
-        /// </summary>
-        public long ContentLength { get; internal set; } = -1;
-
-        /// <summary>
-        ///     Bytes downloaded when the request completed.
-        /// </summary>
-        public ulong CompletedDownloadBytes { get; internal set; }
-
-        /// <summary>
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
+
+        public float Progress { get; private set; }
+        public long ContentLength { get; private set; }
 
         public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
@@ -179,5 +171,8 @@ namespace ECS.StreamableLoading.Common.Components
 
             POOL.Release(this);
         }
+
+        public void SetProgress(float progress) => Progress = progress;
+        public void SetContentLength(long length) => ContentLength = length;
     }
 }

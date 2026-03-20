@@ -32,7 +32,8 @@ namespace DCL.WebRequests
             ISet<long>? ignoreErrorCodes = null,
             bool suppressErrors = false,
             DownloadHandler? downloadHandler = null,
-            bool ignoreIrrecoverableErrors = false
+            bool ignoreIrrecoverableErrors = false,
+            IStreamableLoadingProgressHandler progressHandler = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -50,7 +51,7 @@ namespace DCL.WebRequests
                     suppressErrors,
                     downloadHandler,
                     ignoreIrrecoverableErrors
-                ), op
+                ), op, progressHandler
             )!;
 
         /// <summary>
@@ -217,8 +218,10 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.ASSET_BUNDLES,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            bool suppressErrors = false) =>
-            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
+            bool suppressErrors = false,
+            IStreamableLoadingProgressHandler progressHandler = null
+            ) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, progressHandler: progressHandler);
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);

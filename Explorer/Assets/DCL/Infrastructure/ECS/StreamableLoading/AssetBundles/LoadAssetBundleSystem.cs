@@ -61,14 +61,17 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
+            state.SetProgress(0);
+            state.SetContentLength(-1);
+            AssetBundleLoadingResult assetBundleResult = await webRequestController.GetAssetBundleAsync(
+                    intention.CommonArguments,
+                    new GetAssetBundleArguments(loadingMutex, intention.cacheHash),
+                    ct,
+                    GetReportCategory(),
+                    progressHandler: state,
                     suppressErrors: true); // Suppress errors because here we have our own error handling
 
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
-
-            state.CompletedDownloadBytes = assetBundleResult.DownloadedBytes;
-            state.ContentLength = assetBundleResult.ContentLength;
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();

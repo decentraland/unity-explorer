@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -45,9 +45,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly Entity sceneContainerEntity;
 
         // Byte-weighted progress tracking
-        private Dictionary<Entity, (ulong completed, long expected)>? byteDataCache;
-        private HashSet<Entity>? knownSizeEntities;
-        private ulong totalBytesResolved;
+        private Dictionary<Entity, long>? contentLengthCache;
+        private long completedBytes;
         private long totalBytesExpected;
         private int entitiesWithKnownSize;
 
@@ -71,8 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
-            byteDataCache = DictionaryPool<Entity, (ulong, long)>.Get();
-            knownSizeEntities = HashSetPool<Entity>.Get();
+            contentLengthCache = DictionaryPool<Entity, long>.Get();
             startTime = Time.time;
         }
 
@@ -84,16 +82,10 @@ namespace ECS.SceneLifeCycle.Systems
                 entitiesUnderObservation = null;
             }
 
-            if (byteDataCache != null)
+            if (contentLengthCache != null)
             {
-                DictionaryPool<Entity, (ulong, long)>.Release(byteDataCache);
-                byteDataCache = null;
-            }
-
-            if (knownSizeEntities != null)
-            {
-                HashSetPool<Entity>.Release(knownSizeEntities);
-                knownSizeEntities = null;
+                DictionaryPool<Entity, long>.Release(contentLengthCache);
+                contentLengthCache = null;
             }
 
             sceneData.SceneLoadingConcluded = true;
@@ -119,6 +111,7 @@ namespace ECS.SceneLifeCycle.Systems
                 concluded = true;
 
                 List<Entity> toDelete = ListPool<Entity>.Get();
+                long inProgressWeightedBytes = 0;
 
                 // iterate over entities
 
@@ -134,35 +127,42 @@ namespace ECS.SceneLifeCycle.Systems
                         continue;
                     }
 
-                    // Cache byte data from promise entity while it's still alive
-                    CacheByteData(entityRef, in gltfContainerComponent);
+                    // Cache ContentLength from the promise's StreamableLoadingState while it's alive
+                    CacheContentLength(entityRef, in gltfContainerComponent);
 
                     // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
                     if (gltfContainerComponent.State == LoadingState.Loading)
+                    {
                         // if at least one entity is still loading, we are not done.
                         concluded = false;
+
+                        // Accumulate in-progress weighted bytes
+                        if (contentLengthCache!.TryGetValue(entityRef, out long cachedLength) && cachedLength > 0)
+                            inProgressWeightedBytes += (long)(GetEntityProgress(entityRef, in gltfContainerComponent) * cachedLength);
+                    }
                     else
+                    {
                         // remove entity from list - it's loaded, we don't need to check it anymore
                         toDelete.Add(entityRef);
+                    }
                 }
 
-                // Accumulate resolved bytes from entities leaving observation
+                // Accumulate completed bytes from resolved entities
                 for (var i = 0; i < toDelete.Count; i++)
                 {
                     Entity entity = toDelete[i];
 
-                    if (byteDataCache!.TryGetValue(entity, out (ulong completed, long expected) data))
+                    if (contentLengthCache!.TryGetValue(entity, out long len))
                     {
-                        totalBytesResolved += data.completed > 0
-                            ? data.completed
-                            : (ulong)Math.Max(0, data.expected);
+                        if (len > 0)
+                            completedBytes += len;
 
-                        byteDataCache.Remove(entity);
+                        contentLengthCache.Remove(entity);
                     }
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = ComputeProgress();
+                float progress = ComputeProgress(inProgressWeightedBytes);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
@@ -209,7 +209,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
-        private void CacheByteData(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
+        private void CacheContentLength(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
         {
             Entity promiseEntity = gltfContainerComponent.Promise.Entity;
 
@@ -217,29 +217,41 @@ namespace ECS.SceneLifeCycle.Systems
                 || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
                 return;
 
-            byteDataCache![entityRef] = (loadingState.CompletedDownloadBytes, loadingState.ContentLength);
+            if (loadingState.ContentLength <= 0)
+                return;
 
-            // Track expected bytes once per entity
-            if (loadingState.ContentLength > 0 && knownSizeEntities!.Add(entityRef))
+            if (!contentLengthCache!.ContainsKey(entityRef))
             {
+                contentLengthCache[entityRef] = loadingState.ContentLength;
                 totalBytesExpected += loadingState.ContentLength;
                 entitiesWithKnownSize++;
             }
         }
 
-        private float ComputeProgress()
+        private float GetEntityProgress(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
+        {
+            Entity promiseEntity = gltfContainerComponent.Promise.Entity;
+
+            if (!World.IsAlive(promiseEntity)
+                || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
+                return 0f;
+
+            return loadingState.Progress;
+        }
+
+        private float ComputeProgress(long inProgressWeightedBytes)
         {
             // Fallback: count-based progress when no byte data is available
             if (entitiesWithKnownSize <= 0 || totalBytesExpected <= 0)
-                return totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+                return totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1f;
 
             // Estimate unknown assets using average size of known assets
             long avgSize = totalBytesExpected / entitiesWithKnownSize;
             int unknownCount = totalAssetsToResolve - entitiesWithKnownSize;
-            long effectiveTotal = totalBytesExpected + (avgSize * Math.Max(0, unknownCount));
+            long effectiveTotal = totalBytesExpected + avgSize * Math.Max(0, unknownCount);
 
             return effectiveTotal > 0
-                ? Mathf.Clamp01((float)totalBytesResolved / effectiveTotal)
+                ? Mathf.Clamp01((float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)
                 : 0f;
         }
 
