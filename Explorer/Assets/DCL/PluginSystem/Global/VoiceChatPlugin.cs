@@ -13,6 +13,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Concurrent;
@@ -43,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
         private readonly ProximityMuteService proximityMuteService;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
@@ -70,7 +72,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
-            ProximityMuteService proximityMuteService)
+            ProximityMuteService proximityMuteService,
+            IWeb3IdentityCache identityCache)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -84,6 +87,7 @@ namespace DCL.PluginSystem.Global
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
             this.proximityMuteService = proximityMuteService;
+            this.identityCache = identityCache;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -166,7 +170,8 @@ namespace DCL.PluginSystem.Global
                     proximityConfigHolder.SpeakingParticipants.Add(identity);
             };
 
-            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus);
+            string localIdentity = identityCache.EnsuredIdentity().Address.ToString();
+            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus, playerEntity, localIdentity);
             pluginScope.Add(proximityNametagsHandler);
 
             proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus, proximityMuteService);

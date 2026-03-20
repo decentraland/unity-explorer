@@ -1091,7 +1091,8 @@ namespace Global.Dynamic
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder,
-                        proximityMuteService)
+                        proximityMuteService,
+                        identityCache)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
