@@ -32,11 +32,13 @@ namespace DCL.Quality.Runtime
         public void ApplyPreset(QualitySettingsAsset.QualityCustomLevel preset)
         {
             globalVolume.sharedProfile = preset.volumeProfile;
+            URPSettingsApplier.InjectVolume(preset.volumeProfile);
         }
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
         {
             globalVolume.sharedProfile = currentPreset.volumeProfile;
+            URPSettingsApplier.InjectVolume(currentPreset.volumeProfile);
         }
 
         public void AddDebugView(DebugWidgetBuilder debugWidgetBuilder, List<Action> onUpdate) { }
