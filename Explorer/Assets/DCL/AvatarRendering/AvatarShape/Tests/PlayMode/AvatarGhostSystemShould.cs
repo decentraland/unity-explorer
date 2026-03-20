@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             Assert.IsTrue(world.Has<AvatarGhostComponent>(entity));
             ref AvatarGhostComponent ghost = ref world.Get<AvatarGhostComponent>(entity);
-            Assert.AreEqual(AvatarGhostPhase.Revealing, ghost.Phase);
+            Assert.AreEqual(AvatarGhostPhase.GhostRevealingTransition, ghost.Phase);
             Assert.IsTrue(avatarBase.GhostGameObject.activeSelf);
         }
 
@@ -93,7 +93,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(AvatarGhostSystem.REVEAL_DURATION_SEC * 0.5f);
 
             ref AvatarGhostComponent ghost = ref world.Get<AvatarGhostComponent>(entity);
-            Assert.AreEqual(AvatarGhostPhase.Revealing, ghost.Phase);
+            Assert.AreEqual(AvatarGhostPhase.GhostRevealingTransition, ghost.Phase);
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0);
             system.Update(AvatarGhostSystem.REVEAL_DURATION_SEC * 0.5f);
 
-            Assert.AreEqual(AvatarGhostPhase.Revealing, world.Get<AvatarGhostComponent>(entity).Phase);
+            Assert.AreEqual(AvatarGhostPhase.GhostRevealingTransition, world.Get<AvatarGhostComponent>(entity).Phase);
 
             world.Add(entity, new DeleteEntityIntention());
             cleanupSystem.Update(0);

@@ -4,9 +4,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public enum AvatarGhostPhase
     {
-        Revealing,
+        GhostRevealingTransition,
         Visible,
-        RevealTransition,
+        FullAvatarRevealing,
         Hidden,
     }
 
@@ -15,14 +15,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public AvatarGhostPhase Phase;
         public float PhaseElapsed;
         public bool WearablesHidden;
-        public readonly Renderer GhostRenderer;
         public readonly Material GhostMaterial;
 
-        public AvatarGhostComponent(Renderer ghostRenderer, Material ghostMaterial)
+        public AvatarGhostComponent(Material ghostMaterial)
         {
-            GhostRenderer = ghostRenderer;
             GhostMaterial = ghostMaterial;
-            Phase = AvatarGhostPhase.Revealing;
+            Phase = AvatarGhostPhase.GhostRevealingTransition;
             PhaseElapsed = 0f;
             WearablesHidden = false;
         }

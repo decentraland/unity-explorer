@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -209,8 +211,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             lastEmote = animationClip;
             AvatarAnimator.enabled = true;
         }
-
-        private const float GHOST_NAMETAG_HEIGHT = 2f;
 
         public Vector3 GetAdaptiveNametagPosition()
         {

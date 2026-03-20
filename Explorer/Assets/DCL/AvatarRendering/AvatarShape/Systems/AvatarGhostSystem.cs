@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarBase.GhostGameObject.SetActive(true);
 
-            World.Add(entity, new AvatarGhostComponent(avatarBase.GhostRenderer, ghostMaterial));
+            World.Add(entity, new AvatarGhostComponent(ghostMaterial));
         }
 
         [Query]
@@ -107,7 +107,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             // Flip the ghost normal so it disappears bottom-to-top while wearables reveal bottom-to-top
             avatarGhostComponent.GhostMaterial.SetVector(REVEAL_NORMAL_SHADER_ID, REVEAL_NORMAL_FLIPPED);
-            avatarGhostComponent.Phase = AvatarGhostPhase.RevealTransition;
+            avatarGhostComponent.Phase = AvatarGhostPhase.FullAvatarRevealing;
             avatarGhostComponent.PhaseElapsed = 0f;
         }
 
@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention))]
         private void UpdateGhostRevealAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent)
         {
-            if (avatarGhostComponent.Phase != AvatarGhostPhase.Revealing) return;
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.GhostRevealingTransition) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / REVEAL_DURATION_SEC);
@@ -134,7 +134,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(DeleteEntityIntention))]
         private void UpdateRevealTransitionAnimation([Data] float deltaTime, ref AvatarGhostComponent avatarGhostComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            if (avatarGhostComponent.Phase != AvatarGhostPhase.RevealTransition) return;
+            if (avatarGhostComponent.Phase != AvatarGhostPhase.FullAvatarRevealing) return;
 
             avatarGhostComponent.PhaseElapsed += deltaTime;
             float progress = Mathf.Clamp01(avatarGhostComponent.PhaseElapsed / HIDE_DURATION_SEC);
