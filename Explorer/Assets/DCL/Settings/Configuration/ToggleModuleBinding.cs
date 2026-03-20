@@ -5,6 +5,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -17,6 +18,7 @@ using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Settings.Configuration
@@ -30,11 +32,18 @@ namespace DCL.Settings.Configuration
             GRAPHICS_VSYNC_TOGGLE_FEATURE,
             HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
             HEAD_SYNC_FEATURE,
+            HDR_FEATURE,
+            BLOOM_FEATURE,
+            AVATAR_OUTLINE_FEATURE,
+            SUN_SHADOWS_FEATURE,
+            SCENE_SHADOWS_FEATURE,
+            SCENE_LIGHTS_FEATURE,
             // add other features...
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
@@ -60,15 +69,38 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance),
+                ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
+                ToggleFeatures.HDR_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
+                ToggleFeatures.BLOOM_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
+                ToggleFeatures.AVATAR_OUTLINE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
+                ToggleFeatures.SUN_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
+                ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
+                ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
 
             controller.SetView(viewInstance);
             return controller;
+        }
+
+        private static SimpleQualitySettingFeatureController CreateSimpleToggle(
+            SettingsToggleModuleView view,
+            QualitySettingsController qualitySettingsController,
+            UnityAction<bool> setter,
+            Func<IQualitySettingsController, bool> getter)
+        {
+            return new SimpleQualitySettingFeatureController(qualitySettingsController,
+                () =>
+                {
+                    view.ToggleView.Toggle.onValueChanged.AddListener(setter);
+                    view.ConfigureWithoutNotify(getter(qualitySettingsController));
+                },
+                x => view.ConfigureWithoutNotify(getter(x)),
+                () => view.ToggleView.Toggle.onValueChanged.RemoveListener(setter)
+            );
         }
     }
 }

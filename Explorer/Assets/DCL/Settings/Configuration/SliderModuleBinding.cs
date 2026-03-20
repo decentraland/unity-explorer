@@ -13,10 +13,12 @@ using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using DCL.Audio;
+using DCL.Quality.Runtime;
 using DCL.SkyBox;
 using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
 using Utility;
 
 namespace DCL.Settings.Configuration
@@ -38,11 +40,14 @@ namespace DCL.Settings.Configuration
             VOICE_CHAT_VOLUME_FEATURE,
             UPSCALER_FEATURE,
             MUSIC_SFX_SOUND_VOLUME_FEATURE,
+            MAX_SCENE_LIGHTS_FEATURE,
+            SHADOW_DISTANCE_FEATURE,
             // add other features...
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
+            QualitySettingsController qualitySettingsController,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
@@ -68,8 +73,8 @@ namespace DCL.Settings.Configuration
 
             SettingsFeatureController controller = Feature switch
             {
-                SliderFeatures.SCENE_DISTANCE_FEATURE => new SceneDistanceSettingsController(viewInstance, realmPartitionSettingsAsset),
-                SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => new EnvironmentDistanceSettingsController(viewInstance, landscapeData),
+                SliderFeatures.SCENE_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetSceneDistance((int)v), x => x.SceneDistance),
+                SliderFeatures.ENVIRONMENT_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, qualitySettingsController.SetLandscapeDistance, x => x.LandscapeDistance),
                 SliderFeatures.MOUSE_VERTICAL_SENSITIVITY_FEATURE => new MouseVerticalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MOUSE_HORIZONTAL_SENSITIVITY_FEATURE => new MouseHorizontalSensitivitySettingsController(viewInstance, controlsSettingsAsset),
                 SliderFeatures.MASTER_VOLUME_FEATURE => new MasterVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
@@ -79,11 +84,30 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
-                SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
+                SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, qualitySettingsController),
+                SliderFeatures.MAX_SCENE_LIGHTS_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetMaxSceneLights((int)v), x => x.MaxSceneLights),
+                SliderFeatures.SHADOW_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetShadowDistance((int)v), x => x.ShadowDistance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(),
             };
             return controller;
+        }
+
+        private static SimpleQualitySettingFeatureController CreateSimpleSlider(
+            SettingsSliderModuleView view,
+            QualitySettingsController qualitySettingsController,
+            UnityAction<float> setter,
+            Func<IQualitySettingsController, float> getter)
+        {
+            return new SimpleQualitySettingFeatureController(qualitySettingsController,
+                () =>
+                {
+                    view.SliderView.Slider.onValueChanged.AddListener(setter);
+                    view.ConfigureWithoutNotify(getter(qualitySettingsController));
+                },
+                x => view.ConfigureWithoutNotify(getter(x)),
+                () => view.SliderView.Slider.onValueChanged.RemoveAllListeners()
+            );
         }
     }
 }
