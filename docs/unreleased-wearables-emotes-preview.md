@@ -157,6 +157,9 @@ These two flags provide a simpler, signing-free alternative for items that are a
 
 ### Launching
 
+Deep link example (paste on any web browser, uses the latest released installed Explorer): `decentraland://?position=100,100&self-preview-builder-collections=a2041268-189e-4cef-902d-70272aed077c`
+
+Terminal example:
 ```bash
 # macOS — wearables or emotes (same flag)
 open Decentraland.app --args --debug --self-preview-builder-collections <UUID-1>,<UUID-2>
