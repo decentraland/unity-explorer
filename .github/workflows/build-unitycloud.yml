@@ -136,8 +136,7 @@ concurrency:
       github.event_name != 'pull_request' ||
       github.event.action != 'labeled' ||
       github.event.label.name == 'force-build' ||
-      github.event.label.name == 'clean-build' ||
-      github.event.label.name == 'automation-tests'
+      github.event.label.name == 'clean-build'
     }}
 
 jobs:
@@ -163,14 +162,12 @@ jobs:
             github.event.action == 'ready_for_review' ||
             (
               github.event.action == 'labeled' &&
-              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build' || github.event.label.name == 'automation-tests')
+              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
             )
           )
         )
       )
     outputs:
-      should_build: ${{ steps.decide.outputs.should_build }}
-      alttester_build: ${{ steps.decide.outputs.alttester_build }}
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
       version: ${{ github.event.inputs.version || inputs.version || steps.get_version.outputs.full_version }}
@@ -199,54 +196,43 @@ jobs:
         run: |
           set -euo pipefail
 
-          should_build=false
-          alttester_build=false
-
           # Non-PR triggers that reached prebuild => build
           echo "[check non-PR] event_name='${{ github.event_name }}' != 'pull_request'"
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "[non-PR] TRUE -> should_build=true"
-            should_build=true
-          else
-            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
-            echo "labels='$labels'"
-
-            # Check for automation-tests label
-            echo "$labels" | grep -qw 'automation-tests' && alttester_build=true
-            echo "alttester_build='$alttester_build'"
-
-            has_override=false
-            echo "[check override] searching for 'force-build|clean-build' in labels"
-            echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
-
-            echo "has_override='$has_override'"
-            if [ "$has_override" = "true" ]; then
-              echo "[override] TRUE -> should_build=true"
-              should_build=true
-            else
-              is_draft="${{ github.event.pull_request.draft }}"
-              echo "[check draft] is_draft='$is_draft'"
-              if [ "$is_draft" != "true" ]; then
-                explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
-                echo "[check explorer_changed] explorer_changed='$explorer_changed'"
-                if [ "$explorer_changed" = "true" ]; then
-                  echo "[explorer_changed] TRUE -> should_build=true"
-                  should_build=true
-                fi
-              fi
-            fi
+            echo "[non-PR] TRUE -> should_build=true -> exiting 0"
+            exit 0
           fi
 
-          echo "should_build=$should_build" >> $GITHUB_OUTPUT
-          echo "alttester_build=$alttester_build" >> $GITHUB_OUTPUT
+          labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "labels='$labels'"
 
-          # If neither build is needed, fail to skip downstream jobs
-          if [ "$should_build" = "false" ] && [ "$alttester_build" = "false" ]; then
-            echo "No builds needed, skipping"
+          has_override=false
+          echo "[check override] searching for 'force-build|clean-build' in labels"
+          echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
+
+          echo "has_override='$has_override'"
+          if [ "$has_override" = "true" ]; then
+            echo "[override] TRUE -> should_build=true -> exiting 0"
+            exit 0
+          fi
+
+          # If still draft and no override => do not build
+          is_draft="${{ github.event.pull_request.draft }}"
+          echo "[check draft] is_draft='$is_draft'"
+          if [ "$is_draft" = "true" ]; then
+            echo "[draft] TRUE -> should_build=false -> exiting 1"
             exit 1
           fi
 
-          echo "should_build=$should_build, alttester_build=$alttester_build"
+          explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
+          echo "[check explorer_changed] explorer_changed='$explorer_changed'"
+          if [ "$explorer_changed" = "true" ]; then
+            echo "[explorer_changed] TRUE -> should_build=true -> exiting 0"
+            exit 0
+          fi
+
+          echo "[explorer_changed] FALSE -> should_build=false -> exiting 1"
+          exit 1
 
       - name: Get commit SHA
         id: get_commit_sha
@@ -366,7 +352,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: prebuild
-    if: needs.prebuild.outputs.should_build == 'true'
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -428,6 +413,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
       - name: 'Tar artifact to maintain original permissions'
@@ -706,122 +692,6 @@ jobs:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
           if-no-files-found: warn
-
-      # Will run on cancel or timeout only
-      - name: Cancel Unity Cloud build
-        if: ${{ cancelled() }}
-        env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
-          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel
-
-  build-alttester:
-    name: Build (AltTester)
-    runs-on: ubuntu-latest
-    needs: prebuild
-    if: needs.prebuild.outputs.alttester_build == 'true'
-    timeout-minutes: 360
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-
-      - name: Setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12.3
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r scripts/cloudbuild/requirements.txt
-
-      - name: Execute Unity Cloud build (AltTester instrumented)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 180
-          max_attempts: 2
-          retry_on_exit_code: 99
-          retry_wait_seconds: 30
-          on_retry_command: |
-            echo "::warning::🔁 Unity Cloud Build (AltTester) retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
-          command: |
-            echo "🔧 Starting Unity Cloud Build (AltTester) attempt at $(date '+%Y-%m-%d %H:%M:%S')"
-            python -u scripts/cloudbuild/build.py
-        env:
-          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
-          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60
-          GLOBAL_TIMEOUT: 10800
-          TARGET: t_windows64
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
-          BUILD_OPTIONS: 'Development,CompressWithLz4HC'
-          CLEAN_BUILD: false
-          CACHE_STRATEGY: ${{ needs.prebuild.outputs.cache_strategy }}
-          IS_RELEASE_BUILD: false
-          TARGET_NAME_SUFFIX: alttester
-          PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
-          PARAM_SENTRY_ENABLED: false
-          PARAM_INSTALL_SOURCE: launcher
-          PARAM_ALTTESTER_BUILD: 'true'
-          PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Decentraland_windows64_alttester
-          path: |
-            build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
-          if-no-files-found: error
-
-      - name: Set SHA and branch
-        run: |
-          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
-          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
-
-      - name: Compress and upload to S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
-          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: "@dcl/${{ github.event.repository.name }}/branch/${{ env.SAFE_BRANCH_NAME }}/pr-${{ github.run_number }}-${{ env.SHA_SHORT }}"
-        run: |
-          mkdir -p upload_to_s3
-          cd build
-          zip -r ../upload_to_s3/Decentraland_windows64_alttester.zip . \
-            -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" \
-            -x "*_BurstDebugInformation_DoNotShip**"
-          cd ..
-          npx @dcl/cdn-uploader@next \
-            --bucket $EXPLORER_TEAM_S3_BUCKET \
-            --local-folder upload_to_s3 \
-            --bucket-folder $DESTINATION_PATH
-
-      # Will run always (even if failing)
-      - name: Upload cloud logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows64_alttester_unity_log
-          path: unity_cloud_log.log
-          if-no-files-found: error
-
-      - name: Print cloud logs
-        if: always()
-        run: cat unity_cloud_log.log
-
-      - name: Extract and display errors
-        if: always()
-        run: |
-          echo "=== Extracted Errors for windows64 alttester ==="
-          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in alttester log."
 
       # Will run on cancel or timeout only
       - name: Cancel Unity Cloud build

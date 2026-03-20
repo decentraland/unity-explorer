@@ -72,15 +72,6 @@ jobs:
           echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"
 
-          ALTTESTER_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq ".artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
-            select(.expired==false) |
-            select(.name==\"Decentraland_windows64_alttester\") |
-            .id")
-          echo "AltTester Artifact ID: $ALTTESTER_ARTIFACT_ID"
-          echo "ALTTESTER_ARTIFACT_ID=$ALTTESTER_ARTIFACT_ID" >> "$GITHUB_ENV"
-
           ORIGINAL_EVENT=$(jq -r '.event' <<< "$WORKFLOW_RUN_EVENT_OBJ")
           echo "Original Event: $ORIGINAL_EVENT"
 
@@ -160,23 +151,6 @@ jobs:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
 
-      - name: Build AltTester rows
-        id: alttester-rows
-        env:
-          ALTTESTER_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.ALTTESTER_ARTIFACT_ID }}"
-          ALTTESTER_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_windows64_alttester.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
-        run: |
-          if [ -n "${{ env.ALTTESTER_ARTIFACT_ID }}" ]; then
-            {
-              echo "ALTTESTER_ROWS<<EOF"
-              echo "| Download AltTester Windows    | $ALTTESTER_ARTIFACT_URL |"
-              echo "| Download AltTester Windows S3 | $ALTTESTER_ARTIFACT_S3_URL |"
-              echo "EOF"
-            } >> "$GITHUB_ENV"
-          else
-            echo "ALTTESTER_ROWS=" >> "$GITHUB_ENV"
-          fi
-
       - name: Update Comment
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
@@ -203,7 +177,6 @@ jobs:
             | Download Windows S3 | ${{ env.WINDOWS_ARTIFACT_S3_URL }} |
             | Download Mac        | ${{ env.MAC_ARTIFACT_URL }} |
             | Download Mac S3     | ${{ env.MAC_ARTIFACT_S3_URL }} |
-            ${{ env.ALTTESTER_ROWS }}
             | Built on            | ${{ env.BUILD_DATE }} |
 
             ${{ env.SIZE_REPORT }}

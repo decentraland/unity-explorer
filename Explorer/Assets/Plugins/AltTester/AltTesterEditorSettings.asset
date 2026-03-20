@@ -16,98 +16,14 @@ MonoBehaviour:
   AdbPath: /usr/local/bin/adb
   IProxyPath: /usr/local/bin/iproxy
   XcrunPath: /usr/bin/xcrun
-  MyTests:
-  - _selected: 0
-    _testName: /Users/mihakrajnc/Dev/Projects/unity-explorer/alttester/Explorer/Library/ScriptAssemblies/DCL.Automation.Tests.dll
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 1
-    _type: NUnit.Framework.Internal.TestAssembly
-    _parentName: 
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 0
-    path: 
-    _testSelectedCount: 1
-  - _selected: 0
-    _testName: DCL
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 1
-    _type: NUnit.Framework.Internal.TestSuite
-    _parentName: /Users/mihakrajnc/Dev/Projects/unity-explorer/alttester/Explorer/Library/ScriptAssemblies/DCL.Automation.Tests.dll
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 0
-    path: 
-    _testSelectedCount: 1
-  - _selected: 0
-    _testName: DCL.Tests
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 1
-    _type: NUnit.Framework.Internal.TestSuite
-    _parentName: DCL
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 0
-    path: 
-    _testSelectedCount: 1
-  - _selected: 0
-    _testName: DCL.Tests.Automation
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 1
-    _type: NUnit.Framework.Internal.TestSuite
-    _parentName: DCL.Tests
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 0
-    path: 
-    _testSelectedCount: 1
-  - _selected: 0
-    _testName: DCL.Tests.Automation.BackpackAutomationTest
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 1
-    _type: NUnit.Framework.Internal.TestFixture
-    _parentName: DCL.Tests.Automation
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 0
-    path: 
-    _testSelectedCount: 1
-  - _selected: 1
-    _testName: DCL.Tests.Automation.BackpackAutomationTest.Test
-    _testAssembly: DCL.Automation.Tests
-    _status: 1
-    _isSuite: 0
-    _type: NUnit.Framework.Internal.TestMethod
-    _parentName: DCL.Tests.Automation.BackpackAutomationTest
-    _testCaseCount: 1
-    _foldOut: 1
-    _testResultMessage: 
-    _testStackTrace: 
-    _testDuration: 14.3952146
-    path: Assets/DCL/Tests/Automation/BackpackAutomationTest.cs
-    _testSelectedCount: 0
+  MyTests: []
   Scenes:
   - _toBeBuilt: 1
     _path: Assets/Scenes/Main.unity
     _buildIndex: 0
   platform: 2
   StandaloneTarget: 2
-  RanInEditor: 1
+  RanInEditor: 0
   ScenePathDisplayed: 0
   BuildLocationPath: /Users/mihakrajnc/Dev/Builds/alttester
   createXMLReport: 0

@@ -104,11 +104,6 @@ def clone_current_target(use_cache):
     if install_source and install_source != 'launcher':
         base_target_name = f"{base_target_name}-{install_source}"
 
-    # Append optional suffix to differentiate variant builds (e.g. alttester)
-    target_name_suffix = os.getenv('TARGET_NAME_SUFFIX', '')
-    if target_name_suffix:
-        base_target_name = f"{base_target_name}-{target_name_suffix}"
-
     print(f"Start clone_current_target for {base_target_name}")
 
     if is_release_workflow:
@@ -475,24 +470,21 @@ def delete_current_target():
 
     # List of targets to delete
     targets = ['macos', 'windows64']
-    # Also delete variant targets (e.g. alttester instrumented builds)
-    suffixes = ['', '-alttester']
-
-    # Loop through each target and suffix combination
+    
+    # Loop through each target
     for target in targets:
-        for suffix in suffixes:
-            base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}{suffix}'.lower()
-            response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
-
-            if response.status_code == 204:
-                print(f'Build target deleted successfully: "{base_target_name}"')
-            elif response.status_code == 404:
-                print(f'Build target not found: "{base_target_name} - skip deletion"')
-            else:
-                print('Build target failed to be deleted with status code:', response.status_code)
-                print('Response body:', response.text)
-                sys.exit(1)
-
+        base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}'.lower()
+        response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
+        
+        if response.status_code == 204:
+            print(f'Build target deleted successfully: "{base_target_name}"')
+        elif response.status_code == 404:
+            print(f'Build target not found: "{base_target_name} - skip deletion"')
+        else:
+            print('Build target failed to be deleted with status code:', response.status_code)
+            print('Response body:', response.text)
+            sys.exit(1)
+    
     sys.exit(0)
 
 # Entrypoint here ->

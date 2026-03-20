@@ -85,6 +85,7 @@ namespace Global.AppArgs
         public const string GLIDING = "gliding";
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
+        public const string ALTTESTER = "alttester";
 
         public static class Multiplayer
         {
