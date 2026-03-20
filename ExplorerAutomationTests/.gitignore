@@ -1,0 +1,20 @@
+# Build outputs
+bin/
+obj/
+TestReport/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
