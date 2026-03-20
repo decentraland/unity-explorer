@@ -245,6 +245,7 @@ namespace DCL.PluginSystem.Global
 
             if (reactionsConfig.MockEnabled)
             {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Using MockReactionMessageBus (MockEnabled=true)");
                 reactionBus = new MockReactionMessageBus(
                     entityParticipantTable,
                     reactionsConfig,
@@ -252,6 +253,7 @@ namespace DCL.PluginSystem.Global
             }
             else
             {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (selfSend={reactionsConfig.SelfSendEnabled}, routingUser={routingUser})");
                 reactionBus = new MultiplayerReactionMessageBus(
                     messagePipesHub,
                     userBlockingCacheProxy,

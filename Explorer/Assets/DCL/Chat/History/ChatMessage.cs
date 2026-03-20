@@ -89,9 +89,8 @@ namespace DCL.Chat.History
         /// </summary>
         public static string GetStableReactionKey(string walletId, double timestampRaw)
         {
-            // Floor to 2-second buckets to absorb relay drift (~0.5s).
-            // Math.Floor avoids boundary mismatches that Math.Round causes at second edges.
-            long bucket = (long)Math.Floor(timestampRaw * 86400.0 / 2.0);
+            // Floor to 1-second buckets (OADate → seconds) to absorb relay drift.
+            long bucket = (long)Math.Floor(timestampRaw * 86400.0);
             return $"{walletId}:{bucket.ToString(CultureInfo.InvariantCulture)}";
         }
     }

@@ -46,6 +46,8 @@ namespace DCL.Chat.ChatReactions
             this.routingUser = routingUser;
             this.selfSendEnabled = selfSendEnabled;
 
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] Subscribing to Reaction and ChatReaction on Island/Scene/Chat pipes");
+
             messagePipesHub.IslandPipe().Subscribe<Reaction>(Packet.MessageOneofCase.Reaction, OnSituationalReactionReceived);
             messagePipesHub.ScenePipe().Subscribe<Reaction>(Packet.MessageOneofCase.Reaction, OnSituationalReactionReceived);
 
@@ -71,7 +73,11 @@ namespace DCL.Chat.ChatReactions
 
         public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing)
         {
-            if (cts.IsCancellationRequested) return;
+            if (cts.IsCancellationRequested)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] SendMessageReaction skipped — CTS cancelled");
+                return;
+            }
 
             string address = identityCache.Identity?.Address ?? string.Empty;
 
@@ -117,6 +123,8 @@ namespace DCL.Chat.ChatReactions
         private void SendChatReactionTo(int emojiIndex, string messageId, string address,
             IMessagePipe messagePipe, string topic = "", string? recipient = null)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] SendChatReactionTo pipe={messagePipe.GetType().Name} emoji={emojiIndex} messageId={messageId} address={address} topic={topic} recipient={recipient}");
+
             MessageWrap<ChatReaction> reaction = messagePipe.NewMessage<ChatReaction>(topic);
 
             if (recipient != null)
@@ -186,13 +194,27 @@ namespace DCL.Chat.ChatReactions
                     ? receivedMessage.Payload.Address
                     : receivedMessage.FromWalletId;
 
-                if (cts.IsCancellationRequested || IsUserBlocked(walletId))
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] OnChatReactionReceived raw: emoji={receivedMessage.Payload.EmojiIndex} messageId={receivedMessage.Payload.MessageId} address={receivedMessage.Payload.Address} fromWallet={receivedMessage.FromWalletId}");
+
+                if (cts.IsCancellationRequested)
+                {
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] OnChatReactionReceived skipped — CTS cancelled");
                     return;
+                }
+
+                if (IsUserBlocked(walletId))
+                {
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] OnChatReactionReceived skipped — user blocked: {walletId}");
+                    return;
+                }
 
                 string dedupKey = $"{receivedMessage.Payload.MessageId}:{receivedMessage.Payload.EmojiIndex}";
 
                 if (!chatReactionDedup.TryPass(walletId, dedupKey))
+                {
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] OnChatReactionReceived skipped — dedup: {dedupKey} from={walletId}");
                     return;
+                }
 
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={receivedMessage.Payload.EmojiIndex} messageId={receivedMessage.Payload.MessageId} from={walletId}");
 

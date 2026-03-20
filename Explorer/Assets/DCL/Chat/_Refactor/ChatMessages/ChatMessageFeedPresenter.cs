@@ -555,10 +555,17 @@ namespace DCL.Chat.ChatMessages
 
         private void OnReactionChanged(string messageId)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageFeedPresenter] OnReactionChanged: messageId={messageId}");
+
             var viewModel = FindViewModelById(messageId);
-            if (viewModel == null) return;
+            if (viewModel == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[ChatMessageFeedPresenter] OnReactionChanged — viewModel not found for messageId={messageId}");
+                return;
+            }
 
             viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageFeedPresenter] OnReactionChanged — updating UI, hasReactions={viewModel.Reactions != null}");
             view.ReconstructScrollView(false);
         }
 

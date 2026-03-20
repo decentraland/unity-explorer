@@ -45,6 +45,8 @@ namespace DCL.Chat.ChatReactions
             chatHistory.MessageAdded += OnMessageAdded;
             chatHistory.ChannelCleared += OnChannelCleared;
             chatHistory.ChannelRemoved += OnChannelRemoved;
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] Initialized, bus type={reactionBus.GetType().Name}");
         }
 
         /// <summary>
@@ -68,10 +70,14 @@ namespace DCL.Chat.ChatReactions
             }
 
             if (!chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] ToggleReaction — channel not found in history: {channelId.Id}");
                 return;
+            }
 
             ReactionSet? reactions = channel.GetReactions(messageId);
             bool hasReacted = reactions != null && reactions.HasReacted(emojiIndex, ownWallet);
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] ToggleReaction: emoji={emojiIndex} messageId={messageId} channel={channelId.Id} channelType={channel.ChannelType} hasReacted={hasReacted}");
 
             if (hasReacted)
             {
@@ -157,13 +163,15 @@ namespace DCL.Chat.ChatReactions
 
         private void OnReactionReceived(ReactionReceivedArgs args)
         {
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] OnReactionReceived: type={args.Type} emoji={args.EmojiIndex} messageId={args.MessageId} from={args.WalletId}");
+
             if (args.Type != ReactionType.Message)
                 return;
 
             // The wire messageId is a stable key. Resolve it to the local messageId.
             string wireKey = args.MessageId;
 
-            if (!stableKeyToLocalId.TryGetValue(wireKey, out string? localMessageId))
+            if (!TryResolveStableKey(wireKey, out string? localMessageId))
             {
                 // Fallback: try as a direct messageId (e.g., nearby messages where timestamps match).
                 if (messageIdToChannel.ContainsKey(wireKey))
@@ -197,7 +205,10 @@ namespace DCL.Chat.ChatReactions
             }
 
             if (!chatHistory.Channels.TryGetValue(channelId, out ChatChannel? channel))
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] Incoming reaction dropped — channel missing from history: {channelId.Id}");
                 return;
+            }
 
             channel.AddReaction(localMessageId, args.EmojiIndex, args.WalletId);
             ReactionPersistenceRequested?.Invoke(channelId, localMessageId, args.EmojiIndex, args.WalletId, false);
@@ -220,6 +231,42 @@ namespace DCL.Chat.ChatReactions
 
             stableKeyToLocalId[stableKey] = messageId;
             localIdToStableKey[messageId] = stableKey;
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] RegisterMessage: localId={messageId} stableKey={stableKey} channel={channelId.Id}");
+        }
+
+        /// <summary>
+        /// Tries to resolve a wire stable key to a local messageId. Checks adjacent buckets (±1)
+        /// to absorb relay timestamp drift that crosses a floor boundary.
+        /// </summary>
+        private bool TryResolveStableKey(string wireKey, out string? localMessageId)
+        {
+            if (stableKeyToLocalId.TryGetValue(wireKey, out localMessageId))
+                return true;
+
+            int colonIdx = wireKey.LastIndexOf(':');
+            if (colonIdx <= 0 || !long.TryParse(wireKey.Substring(colonIdx + 1), out long bucket))
+            {
+                localMessageId = null;
+                return false;
+            }
+
+            string walletPrefix = wireKey.Substring(0, colonIdx + 1);
+
+            if (stableKeyToLocalId.TryGetValue(string.Concat(walletPrefix, (bucket - 1).ToString()), out localMessageId))
+            {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] StableKey resolved via adjacent bucket-1: wire={wireKey}");
+                return true;
+            }
+
+            if (stableKeyToLocalId.TryGetValue(string.Concat(walletPrefix, (bucket + 1).ToString()), out localMessageId))
+            {
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageReactionService] StableKey resolved via adjacent bucket+1: wire={wireKey}");
+                return true;
+            }
+
+            localMessageId = null;
+            return false;
         }
 
         private bool TryFindChannelForStableKey(string stableKey, string reactionSenderWallet, out ChatChannel.ChannelId channelId)
