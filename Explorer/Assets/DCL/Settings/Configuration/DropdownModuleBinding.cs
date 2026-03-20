@@ -38,7 +38,8 @@ namespace DCL.Settings.Configuration
             CHAT_DMS_MODES_FEATURE,
             CHAT_BUBBLES_MODES_FEATURE,
             VOICECHAT_INPUT_DEVICE,
-            CHAT_TRANSLATE_FEATURE
+            CHAT_TRANSLATE_FEATURE,
+            POINT_AT_MARKER_FEATURE
 
             // add other features...
         }
@@ -62,7 +63,8 @@ namespace DCL.Settings.Configuration
             VolumeBus volumeBus,
             bool isTranslationChatEnabled,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -102,6 +104,8 @@ namespace DCL.Settings.Configuration
                     chatSettingsAsset,
                     isTranslationChatEnabled,
                     eventBus),
+
+                DropdownFeatures.POINT_AT_MARKER_FEATURE => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

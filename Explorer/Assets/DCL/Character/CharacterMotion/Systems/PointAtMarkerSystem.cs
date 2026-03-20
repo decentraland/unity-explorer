@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
+using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Abstract;
@@ -31,19 +32,22 @@ namespace DCL.Character.CharacterMotion.Systems
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ObjectProxy<FriendsCache> friendsCache;
+        private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private SingleInstanceEntity camera;
 
-        internal PointAtMarkerSystem(
+        private PointAtMarkerSystem(
             World world,
             IObjectPool<PointAtMarkerHolder> markerPool,
             IWeb3IdentityCache web3IdentityCache,
-            ObjectProxy<FriendsCache> friendsCache
+            ObjectProxy<FriendsCache> friendsCache,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings
         ) : base(world)
         {
             this.markerPool = markerPool;
             this.web3IdentityCache = web3IdentityCache;
             this.friendsCache = friendsCache;
+            this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
         }
 
         public override void Initialize()
@@ -72,8 +76,11 @@ namespace DCL.Character.CharacterMotion.Systems
             in AvatarBase avatarBase)
         {
             bool isLocalPlayer = profile.UserId == web3IdentityCache.Identity?.Address;
-            // User must be pointing and either be the local player or a friend to show the marker
-            if (!pointAt.IsPointing || (!isLocalPlayer && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
+            PointAtMarkerVisibilitySettings.VisibilitySetting visibilitySetting = pointAtMarkerVisibilitySettings.MarkerVisibilitySetting;
+
+            if (!pointAt.IsPointing
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.NONE && !isLocalPlayer)
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
                 return;
 
             float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;

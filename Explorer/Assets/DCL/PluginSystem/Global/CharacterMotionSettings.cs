@@ -1,5 +1,6 @@
 using DCL.AssetsProvision;
 using DCL.CharacterMotion.Settings;
+using DCL.Settings.Settings;
 using ECS.Unity.GliderProp;
 using System;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace DCL.PluginSystem.Global
         public GlidingSettings Gliding { get; private set; }
 
         [field: SerializeField] internal AssetReferenceGameObject PointAtMarkerPrefab { get; private set; }
+        [field: SerializeField] internal PointAtMarkerVisibilitySettings PointAtMarkerVisibilitySettings { get; private set; }
 
         [Serializable]
         public class GlidingSettings

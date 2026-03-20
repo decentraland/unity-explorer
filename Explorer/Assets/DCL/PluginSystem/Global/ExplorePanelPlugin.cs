@@ -460,7 +460,8 @@ namespace DCL.PluginSystem.Global
                 isTranslationChatEnabled,
                 assetsProvisioner,
                 eventBus,
-                appArgs);
+                appArgs,
+                settings.pointAtMarkerVisibilitySettings);
 
             await settingsController.InitializeAsync();
 
@@ -690,6 +691,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; }
+
+            [field: SerializeField]
+            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; }
 
             [field: Header("Camera Reel")]
             [field: SerializeField]
