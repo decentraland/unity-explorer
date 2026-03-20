@@ -175,13 +175,19 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
-            AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);
+            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
+
+            if (includeGhosts)
+                AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);
+
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler, computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
-            AvatarGhostCleanupSystem.InjectToWorld(ref builder);
+
+            if (includeGhosts)
+                AvatarGhostCleanupSystem.InjectToWorld(ref builder);
             AvatarCleanUpSystem.InjectToWorld(ref builder, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
