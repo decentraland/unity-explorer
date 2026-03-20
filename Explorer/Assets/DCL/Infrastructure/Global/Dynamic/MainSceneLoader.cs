@@ -164,10 +164,6 @@ namespace Global.Dynamic
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 
-            // Alttester Automation (only works when ALTTESTER define is set)
-            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                await InstantiateAsync(altTesterPrefab);
-
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
@@ -194,6 +190,10 @@ namespace Global.Dynamic
             var assetsProvisioner = new AddressablesProvisioner();
 
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                await InstantiateAsync(altTesterPrefab);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);

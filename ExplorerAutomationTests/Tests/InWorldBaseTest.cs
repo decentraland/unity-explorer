@@ -14,9 +14,11 @@ namespace ExplorerAutomationTests.Tests
         {
             try
             {
-                if (AuthenticationMainScreenView.IsScreenVisible())
+                
+                if (SplashScreenView.IsScreenVisible() || AuthenticationMainScreenView.IsScreenVisible())
                 {
-                    Reporter.Log("Authentication screen detected — entering world");
+                    Reporter.Log("Authentication / splash screen detected — entering world");
+                    SplashScreenView.WaitForSplashScreenToDisappear();
                     AuthenticationMainScreenView.WaitForScreenReady();
                     AuthenticationMainScreenView.ClickJumpIntoWorld();
                     LoadingScreenView.WaitForLoadingComplete();

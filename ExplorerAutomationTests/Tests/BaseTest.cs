@@ -15,6 +15,7 @@ namespace ExplorerAutomationTests.Tests
         
         // View instances available to all test classes
         protected AuthenticationMainScreenView AuthenticationMainScreenView { get; set; }
+        protected SplashScreenView SplashScreenView { get; set; }
         protected LoadingScreenView LoadingScreenView { get; set; }
         protected MainMenuView MainMenuView { get; set; }
         protected ExplorePanelView ExplorePanelView { get; set; }
@@ -89,6 +90,7 @@ namespace ExplorerAutomationTests.Tests
             Reporter.Log("Initializing view objects...");
             
             AuthenticationMainScreenView = new AuthenticationMainScreenView(Drivers);
+            SplashScreenView = new SplashScreenView(Drivers);
             LoadingScreenView = new LoadingScreenView(Drivers);
             MainMenuView = new MainMenuView(Drivers);
             ExplorePanelView = new ExplorePanelView(Drivers);
