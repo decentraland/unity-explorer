@@ -1,9 +1,13 @@
 using DCL.Multiplayer.Connections.RoomHubs;
+using JetBrains.Annotations;
 using LiveKit.Proto;
+using LiveKit.Rooms.DataPipes;
+using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -12,13 +16,36 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 {
     public sealed class CommsApiWrap : JsApiWrapper
     {
+        private const int MAX_MESSAGES_PER_SECOND = 10;
+        private const int MAX_MESSAGE_SIZE_BYTES = 16 * 1024;
+        private const string EMPTY_RESPONSE = "{\"streams\":[]}";
+        private const string EMPTY_ARRAY = "[]";
+
+        private static readonly string[] EMPTY_DESTINATIONS = Array.Empty<string>();
+
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
-        private const string EMPTY_RESPONSE = "{\"streams\":[]}";
 
         private readonly StringBuilder stringBuilder;
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
+
+        private readonly object bufferLock = new ();
+        private readonly Dictionary<string, List<BufferedDataMessage>> topicBuffers = new ();
+        private readonly Dictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
+        private IDataPipe subscribedDataPipe;
+
+        private readonly struct BufferedDataMessage
+        {
+            public readonly string SenderIdentity;
+            public readonly string Data;
+
+            public BufferedDataMessage(string senderIdentity, string data)
+            {
+                SenderIdentity = senderIdentity;
+                Data = data;
+            }
+        }
 
         public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
         {
@@ -31,6 +58,19 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         public override void Dispose()
         {
+            if (subscribedDataPipe != null)
+            {
+                subscribedDataPipe.DataReceived -= OnDataReceived;
+                subscribedDataPipe = null;
+            }
+
+            lock (bufferLock)
+            {
+                topicBuffers.Clear();
+            }
+
+            publishRateLimiters.Clear();
+
             stringBuilder.Clear();
             stringWriter.Dispose();
             writer.Close();
@@ -91,6 +131,132 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 sceneExceptionsHandler.OnEngineException(e);
                 return EMPTY_RESPONSE;
             }
+        }
+
+        [UsedImplicitly]
+        public void PublishData(string topic, string data)
+        {
+            try
+            {
+                if (data.Length > MAX_MESSAGE_SIZE_BYTES)
+                    return;
+
+                if (!TryConsumeRateLimit(topic))
+                    return;
+
+                byte[] bytes = Encoding.UTF8.GetBytes(data);
+                var room = roomHub.StreamingRoom();
+                room.DataPipe.PublishData(bytes, topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
+            }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
+            }
+        }
+
+        [UsedImplicitly]
+        public void SubscribeToTopic(string topic)
+        {
+            try
+            {
+                lock (bufferLock)
+                {
+                    if (!topicBuffers.ContainsKey(topic))
+                        topicBuffers[topic] = new List<BufferedDataMessage>();
+                }
+
+                if (subscribedDataPipe != null)
+                    return;
+
+                var room = roomHub.StreamingRoom();
+                subscribedDataPipe = room.DataPipe;
+                subscribedDataPipe.DataReceived += OnDataReceived;
+            }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
+            }
+        }
+
+        [UsedImplicitly]
+        public string ConsumeMessages(string topic)
+        {
+            try
+            {
+                lock (bufferLock)
+                {
+                    if (!topicBuffers.TryGetValue(topic, out List<BufferedDataMessage> buffer) || buffer.Count == 0)
+                        return EMPTY_ARRAY;
+
+                    lock (this)
+                    {
+                        stringBuilder.Clear();
+
+                        writer.WriteStartArray();
+
+                        for (int i = 0; i < buffer.Count; i++)
+                        {
+                            writer.WriteStartObject();
+                            writer.WritePropertyName("sender");
+                            writer.WriteValue(buffer[i].SenderIdentity);
+                            writer.WritePropertyName("data");
+                            writer.WriteValue(buffer[i].Data);
+                            writer.WriteEndObject();
+                        }
+
+                        writer.WriteEndArray();
+
+                        buffer.Clear();
+
+                        return stringWriter.ToString();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
+                return EMPTY_ARRAY;
+            }
+        }
+
+        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
+        {
+            lock (bufferLock)
+            {
+                if (!topicBuffers.TryGetValue(topic, out List<BufferedDataMessage> buffer))
+                    return;
+
+                if (participant == null)
+                    return;
+
+                string decoded = Encoding.UTF8.GetString(data);
+                buffer.Add(new BufferedDataMessage(participant.Identity, decoded));
+            }
+        }
+
+        private bool TryConsumeRateLimit(string topic)
+        {
+            int nowMs = Environment.TickCount;
+
+            if (!publishRateLimiters.TryGetValue(topic, out (int count, int windowStartMs) limiter))
+            {
+                publishRateLimiters[topic] = (1, nowMs);
+                return true;
+            }
+
+            int elapsed = unchecked(nowMs - limiter.windowStartMs);
+
+            if (elapsed >= 1000 || elapsed < 0)
+            {
+                publishRateLimiters[topic] = (1, nowMs);
+                return true;
+            }
+
+            if (limiter.count >= MAX_MESSAGES_PER_SECOND)
+                return false;
+
+            publishRateLimiters[topic] = (limiter.count + 1, limiter.windowStartMs);
+            return true;
         }
     }
 }
