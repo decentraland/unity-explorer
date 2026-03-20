@@ -31,6 +31,13 @@ namespace DCL.Character.CharacterMotion.Systems
                 pointAt.AnimationWeight, targetAnimWeight, settings.HandsIKWeightSpeed * dt);
 
             avatarBase.SetPointAtLayerWeight(pointAt.AnimationWeight);
+
+            if (avatarBase.AdditiveBreathRig == null || avatarBase.AdditiveBreathBridge == null)
+                return;
+
+            avatarBase.AdditiveBreathRig.weight = pointAt.AnimationWeight;
+
+            avatarBase.CachePoseRig.weight = avatarBase.AdditiveBreathRig.weight > 0f ? 1f : 0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -80,6 +80,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Rig TorsoIKRig { get; private set; }
         [field: SerializeField] public Transform TorsoTarget { get; private set; }
 
+        [field: Header("ADDITIVE BREATH")]
+        [field: SerializeField] public Rig CachePoseRig { get; private set; }
+        [field: SerializeField] public Rig AdditiveBreathRig { get; private set; }
+        [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; }
+
         [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }

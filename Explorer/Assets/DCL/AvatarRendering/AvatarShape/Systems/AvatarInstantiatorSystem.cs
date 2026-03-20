@@ -126,12 +126,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
 
-            // Only enable the rig if head-sync is enabled
-            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
-            bool pointAtEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
-            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) || pointAtEnabled;
-            avatarBase.HandsIKRig.enabled = pointAtEnabled;
-            avatarBase.TorsoIKRig.enabled = pointAtEnabled;
+            EnableRigsByFeatureFlags(avatarBase);
 
             // Feet IK components are not added to remote entities
             // We still disable the rigs to ensure no cpu time is wasted
@@ -139,6 +134,28 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.FeetIKRig.enabled = false;
 
             return avatarBase;
+        }
+
+        private void EnableRigsByFeatureFlags(AvatarBase avatarBase)
+        {
+            // Only enable the rig if head-sync is enabled
+            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
+            bool pointAtEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
+
+            // Initialize the bridge BEFORE enabling the RigBuilder.
+            // RigBuilder.enabled triggers Build() which runs binder.Create() — the binders
+            // read Bridge.CachedRotations/BindPoseRotations, so the NativeArrays must exist first.
+            if (pointAtEnabled)
+                avatarBase.AdditiveBreathBridge.Initialize(
+                    avatarBase.RightArmAnchorPoint,
+                    avatarBase.RightForearmAnchorPoint,
+                    avatarBase.RightHandAnchorPoint);
+
+            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) || pointAtEnabled;
+            avatarBase.HandsIKRig.enabled = pointAtEnabled;
+            avatarBase.TorsoIKRig.enabled = pointAtEnabled;
+            avatarBase.CachePoseRig.enabled = pointAtEnabled;
+            avatarBase.AdditiveBreathRig.enabled = pointAtEnabled;
         }
 
         [Query]
@@ -151,6 +168,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (avatarBase != null)
             {
                 // Re-enable rigs since by default we disable them when instantiating new avatars
+                EnableRigsByFeatureFlags(avatarBase);
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HandsIKRig.enabled = true;
                 avatarBase.FeetIKRig.enabled = true;

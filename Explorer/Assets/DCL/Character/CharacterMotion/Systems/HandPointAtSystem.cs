@@ -13,7 +13,6 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Profiles.Entities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Runtime.CompilerServices;
