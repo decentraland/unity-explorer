@@ -162,6 +162,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                         shapeModule.scale = new Vector3(particleSystemData.Box.Size.X, particleSystemData.Box.Size.Y, particleSystemData.Box.Size.Z);
                     break;
             }
+
+            shapeModule.alignToDirection = particleSystemData.HasFaceTravelDirection && particleSystemData.FaceTravelDirection;
         }
 
         private static void ApplySizeOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
@@ -287,9 +289,6 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         private void ApplyRenderer(PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
             var particleRenderer = component.ParticleSystemInstance.GetComponent<ParticleSystemRenderer>();
-
-            bool billboard = !particleSystemData.HasBillboard || particleSystemData.Billboard;
-            particleRenderer.renderMode = billboard ? ParticleSystemRenderMode.Billboard : ParticleSystemRenderMode.Mesh;
 
             var blendMode = particleSystemData.HasBlendMode ? particleSystemData.BlendMode : PBParticleSystem.Types.BlendMode.PsbAlpha;
             EnsureMaterial(ref component, blendMode);
