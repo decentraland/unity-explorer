@@ -34,25 +34,43 @@ namespace DCL.Prefs
         public const string PS_CHUNK_CULL_DISTANCE = "ChunkCullDistance";
         public const string PS_MAX_SIMULTANEOUS_VIDEOS = "MaxSimultaneousVideos";
 
-        public const string SETTINGS_VSYNC_ENABLED = "Settings_VSync";
+        // New quality settings controller
+        public const string PS_QUALITY_PRESET = "QualityPreset";
+        public const string PS_CUSTOM_BASE_PRESET = "QS_CustomBasePreset";
+        public const string PS_FPS_LIMIT = "QS_FpsLimit";
+        public const string PS_VSYNC = "QS_VSync";
+        public const string PS_RESOLUTION_SCALE = "QS_ResolutionScale";
+        public const string PS_MSAA = "QS_MSAA";
+        public const string PS_HDR_NEW = "QS_HDR";
+        public const string PS_BLOOM = "QS_Bloom";
+        public const string PS_AVATAR_OUTLINE = "QS_AvatarOutline";
+        public const string PS_SCENE_DISTANCE = "QS_SceneDistance";
+        public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
+        public const string PS_GRASS_PRESET = "QS_GrassPreset";
+        public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SCENE_LIGHTS = "QS_SceneLights";
+        public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
+        public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
+        public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
+        public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_RESOLUTION_WIDTH = "QS_ResolutionWidth";
+        public const string PS_RESOLUTION_HEIGHT = "QS_ResolutionHeight";
+        public const string PS_RESOLUTION_REFRESH_NUM = "QS_ResolutionRefreshNum";
+        public const string PS_RESOLUTION_REFRESH_DEN = "QS_ResolutionRefreshDen";
+
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
         public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
         public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
-        public const string SETTINGS_ENVIRONMENT_DISTANCE = "Settings_EnvironmentDistance";
-        public const string SETTINGS_FPS_LIMIT = "Settings_FpsLimit";
-        public const string SETTINGS_GRAPHICS_QUALITY = "Settings_GraphicsQuality";
         public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
-        public const string SETTINGS_RESOLUTION = "Settings_Resolution";
-        public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
+
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
-        public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
         public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";
