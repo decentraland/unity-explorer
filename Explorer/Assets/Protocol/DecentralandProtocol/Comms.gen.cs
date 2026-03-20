@@ -2746,7 +2746,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     public const int PointAtDataFieldNumber = 4;
     private int pointAtData_;
     /// <summary>
-    /// bit-compressed: flag + point coordinates 
+    /// bit-compressed: flag + point coordinates
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
