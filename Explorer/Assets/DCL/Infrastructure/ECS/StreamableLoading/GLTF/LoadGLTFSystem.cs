@@ -143,10 +143,14 @@ namespace ECS.StreamableLoading.GLTF
                         targetTransform = goTransform;
                     }
 
-                    await gltfImport.InstantiateSceneAsync(targetTransform, i);
+                    var instantiator = new DclGameObjectInstantiator(gltfImport, targetTransform);
+                    await gltfImport.InstantiateSceneAsync(instantiator, i);
                 }
             else
-                await gltfImport.InstantiateSceneAsync(rootContainerTransform);
+            {
+                var instantiator = new DclGameObjectInstantiator(gltfImport, rootContainerTransform);
+                await gltfImport.InstantiateSceneAsync(instantiator);
+            }
         }
 
         /// <summary>

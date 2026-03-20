@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.Pools;
+using GLTFast;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -90,25 +91,13 @@ namespace DCL.AvatarRendering.Loading.Assets
             return false;
         }
 
-        private static bool HasSpringBoneInHierarchy(Transform transform)
-        {
-            if (transform.name.Contains("springbone", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                if (HasSpringBoneInHierarchy(transform.GetChild(i)))
-                    return true;
-            }
-
-            return false;
-        }
+        private static bool HasSpringBoneInHierarchy(Transform transform) =>
+            transform.GetComponentInChildren<SpringBoneJointComponent>() != null;
 
         /// <summary>
-        ///     Collects spring bone transforms from all SMRs in the wearable.
-        ///     Each entry stores the transform and, for chain roots, the parent skeleton bone name.
-        ///     A chain root is a spring bone whose parent is NOT another spring bone (e.g. parented to Neck).
-        ///     Only chain roots need reparenting during avatar assembly — chain children follow automatically.
+        ///     Collects spring bone transforms from all SMRs in the wearable by checking for
+        ///     <see cref="SpringBoneJointComponent"/> on each bone. Iterates SMR bones to preserve
+        ///     BoneWeight index order. Chain roots are identified by <see cref="SpringBoneJointComponent.IsRoot"/>.
         /// </summary>
         private static SpringBoneData[] CollectSpringBonesFromSMRs(GameObject wearableRoot)
         {
@@ -129,13 +118,14 @@ namespace DCL.AvatarRendering.Loading.Assets
                 {
                     Transform t = bones[j];
 
+                    SpringBoneJointComponent component;
+
                     if (t != null
-                        && t.name.Contains("springbone", StringComparison.OrdinalIgnoreCase)
+                        && (component = t.GetComponent<SpringBoneJointComponent>()) != null
                         && seen.Add(t))
                     {
-                        Transform parent = t.parent;
-                        bool isChainRoot = parent != null && !parent.name.Contains("springbone", StringComparison.OrdinalIgnoreCase);
-                        result.Add(new SpringBoneData(t, isChainRoot ? parent.name : null));
+                        string parentName = component.IsRoot && t.parent != null ? t.parent.name : null;
+                        result.Add(new SpringBoneData(t, parentName));
                     }
                 }
             }
