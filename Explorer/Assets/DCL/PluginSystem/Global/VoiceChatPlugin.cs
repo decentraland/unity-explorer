@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
+        private readonly ProximityMuteService proximityMuteService;
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
@@ -68,7 +69,8 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer)
+            IDebugContainerBuilder debugContainer,
+            ProximityMuteService proximityMuteService)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
+            this.proximityMuteService = proximityMuteService;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -166,7 +169,7 @@ namespace DCL.PluginSystem.Global
             proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus);
             pluginScope.Add(proximityNametagsHandler);
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus);
+            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus, proximityMuteService);
             pluginScope.Add(proximityVoiceChatManager);
         }
 

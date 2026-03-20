@@ -83,11 +83,16 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> muteProximityButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> unmuteProximityButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly GenericContextMenuElement contextGiftButton;
+        private readonly GenericContextMenuElement contextMenuMuteProximityButton;
+        private readonly GenericContextMenuElement contextMenuUnmuteProximityButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProximityMuteService? proximityMuteService;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -108,7 +113,8 @@ namespace DCL.UI
             ISharedSpaceManager sharedSpaceManager,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProximityMuteService? proximityMuteService)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -126,6 +132,7 @@ namespace DCL.UI
             this.realmNavigator = realmNavigator;
             this.includeCommunities = includeCommunities;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.proximityMuteService = proximityMuteService;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));
@@ -141,6 +148,11 @@ namespace DCL.UI
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
             contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
 
+            muteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearProximityButtonConfig.Text, contextMenuSettings.HearProximityButtonConfig.Sprite, new StringDelegate(OnMuteProximityClicked));
+            unmuteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HushProximityButtonConfig.Text, contextMenuSettings.HushProximityButtonConfig.Sprite, new StringDelegate(OnUnmuteProximityClicked));
+            contextMenuMuteProximityButton = new GenericContextMenuElement(muteProximityButtonControlSettings, false);
+            contextMenuUnmuteProximityButton = new GenericContextMenuElement(unmuteProximityButtonControlSettings, false);
+
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
@@ -152,7 +164,9 @@ namespace DCL.UI
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
 
-            contextMenu.AddControl(contextMenuJumpInButton)
+            contextMenu.AddControl(contextMenuMuteProximityButton)
+                       .AddControl(contextMenuUnmuteProximityButton)
+                       .AddControl(contextMenuJumpInButton)
                        .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
@@ -209,6 +223,15 @@ namespace DCL.UI
             {
                 contextMenuCallButton.Enabled = includeVoiceChat;
                 startCallButtonControlSettings.SetData(profile.UserId);
+            }
+
+            if (proximityMuteService != null)
+            {
+                bool isMuted = proximityMuteService.IsMuted(profile.UserId);
+                contextMenuMuteProximityButton.Enabled = !isMuted;
+                contextMenuUnmuteProximityButton.Enabled = isMuted;
+                muteProximityButtonControlSettings.SetData(profile.UserId);
+                unmuteProximityButtonControlSettings.SetData(profile.UserId);
             }
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
@@ -357,6 +380,18 @@ namespace DCL.UI
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+        }
+
+        private void OnMuteProximityClicked(string userId)
+        {
+            proximityMuteService?.SetMuted(userId, true);
+            closeContextMenuTask.TrySetResult();
+        }
+
+        private void OnUnmuteProximityClicked(string userId)
+        {
+            proximityMuteService?.SetMuted(userId, false);
+            closeContextMenuTask.TrySetResult();
         }
 
         private void OnBlockUserClicked(string userId)

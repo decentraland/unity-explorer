@@ -677,6 +677,8 @@ namespace Global.Dynamic
 
             var passportBridge = new MVCPassportBridge(mvcManager);
 
+            var proximityMuteService = new ProximityMuteService();
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -694,7 +696,8 @@ namespace Global.Dynamic
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
                 communitiesDataProvider,
-                bootstrapContainer.DecentralandUrlsSource);
+                bootstrapContainer.DecentralandUrlsSource,
+                proximityMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -1087,7 +1090,8 @@ namespace Global.Dynamic
                         staticContainer.ImageControllerProvider,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
-                        debugBuilder)
+                        debugBuilder,
+                        proximityMuteService)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

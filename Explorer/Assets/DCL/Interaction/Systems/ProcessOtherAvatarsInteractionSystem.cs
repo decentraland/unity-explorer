@@ -10,8 +10,10 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Web3;
 using ECS.Abstract;
 using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -87,7 +89,7 @@ namespace DCL.Interaction.Systems
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
-        private void OpenContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        private void OpenContextMenu(InputAction.CallbackContext context)
         {
             if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
@@ -98,12 +100,12 @@ namespace DCL.Interaction.Systems
                 return;
 
             //Commented for now, we will restore it later
-            //contextMenuTask.TrySetResult();
-            //contextMenuTask = new UniTaskCompletionSource();
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
+            // mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
 
-            //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

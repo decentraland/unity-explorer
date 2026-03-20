@@ -35,6 +35,7 @@ namespace DCL.VoiceChat
         private readonly IRoom islandRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
+        private readonly ProximityMuteService proximityMuteService;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
         private readonly IDisposable callStatusSubscription;
@@ -51,11 +52,13 @@ namespace DCL.VoiceChat
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, AudioSource> activeAudioSources,
-            IReadonlyReactiveProperty<VoiceChatStatus> callStatus)
+            IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
+            ProximityMuteService proximityMuteService)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.activeAudioSources = activeAudioSources;
+            this.proximityMuteService = proximityMuteService;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
 
@@ -67,6 +70,7 @@ namespace DCL.VoiceChat
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            proximityMuteService.MuteStateChanged += OnMuteStateChanged;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
@@ -82,6 +86,7 @@ namespace DCL.VoiceChat
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
+            proximityMuteService.MuteStateChanged -= OnMuteStateChanged;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -350,7 +355,7 @@ namespace DCL.VoiceChat
             AudioSource audioSource = source.GetComponent<AudioSource>();
             activeAudioSources[key.identity] = audioSource;
 
-            if (suppressed && audioSource != null)
+            if (audioSource != null && (suppressed || proximityMuteService.IsMuted(key.identity)))
                 audioSource.mute = true;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} 3D audio source added for {key.identity}{(suppressed ? " (muted — call active)" : "")}");
@@ -425,13 +430,21 @@ namespace DCL.VoiceChat
 
             rtcAudioSource?.Start();
 
-            foreach (LivekitAudioSource source in remoteSources.Values)
+            foreach (KeyValuePair<StreamKey, LivekitAudioSource> entry in remoteSources)
             {
-                AudioSource audioSource = source.GetComponent<AudioSource>();
-                if (audioSource != null) audioSource.mute = false;
+                AudioSource audioSource = entry.Value.GetComponent<AudioSource>();
+
+                if (audioSource != null)
+                    audioSource.mute = proximityMuteService.IsMuted(entry.Key.identity);
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Resumed — no active call");
+        }
+
+        private void OnMuteStateChanged(string walletId, bool muted)
+        {
+            if (activeAudioSources.TryGetValue(walletId, out AudioSource? audioSource) && audioSource != null)
+                audioSource.mute = suppressed || muted;
         }
 
         private void OnMicrophoneChanged(MicrophoneSelection newSelection)

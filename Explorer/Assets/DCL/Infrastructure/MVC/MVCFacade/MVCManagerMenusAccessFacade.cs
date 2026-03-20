@@ -48,6 +48,7 @@ namespace MVC
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProximityMuteService? proximityMuteService;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
@@ -71,7 +72,8 @@ namespace MVC
             IVoiceChatOrchestrator voiceChatOrchestrator,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProximityMuteService? proximityMuteService = null)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
@@ -91,6 +93,7 @@ namespace MVC
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.proximityMuteService = proximityMuteService;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -147,7 +150,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, decentralandUrlsSource);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, decentralandUrlsSource, proximityMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 

@@ -36,3 +36,9 @@ MonoBehaviour:
   <InviteToCommunityConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: 8be81fdf59a094b458426c66803c47e3, type: 3}
     Text: Invite to Community
+  <HearProximityButtonConfig>k__BackingField:
+    Sprite: {fileID: 21300000, guid: ac5d5b4b66992c84486ccc28f3c5099b, type: 3}
+    Text: Hear
+  <HushProximityButtonConfig>k__BackingField:
+    Sprite: {fileID: 21300000, guid: cb40901b8d37641458728920fa32fa82, type: 3}
+    Text: Hush
