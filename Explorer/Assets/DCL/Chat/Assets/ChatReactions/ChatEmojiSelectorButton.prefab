@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4734754734266675322}
   - component: {fileID: 4052990917085068462}
   - component: {fileID: 3767928623303038754}
+  - component: {fileID: 7668941188044545474}
   m_Layer: 5
   m_Name: ChatEmojiSelectorButton
   m_TagString: Untagged
@@ -37,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: -36.4, y: 0}
-  m_SizeDelta: {x: 24, y: 24}
+  m_SizeDelta: {x: 28, y: 28}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &4734754734266675322
 CanvasRenderer:
@@ -121,6 +122,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7668941188044545474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127520868230392441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632d5362c0baa6b489b3f2d371f4ef7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatEntryReactionButtonHoverView
+  icon: {fileID: 7069367890779946623}
+  defaultSprite: {fileID: 21300000, guid: e7a7bbdd6d3844011a591fd9c8dcccc0, type: 3}
+  hoveredSprite: {fileID: 21300000, guid: de3184cebc1ea45b7ba72d0c239a7c5e, type: 3}
+  clickedSprite: {fileID: 21300000, guid: 4004e55e64d134f74a468e6c7ecbfea2, type: 3}
 --- !u!1 &8378804101314343478
 GameObject:
   m_ObjectHideFlags: 0
@@ -156,7 +173,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 14, y: 14}
+  m_SizeDelta: {x: 24, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2033250440781910589
 CanvasRenderer:

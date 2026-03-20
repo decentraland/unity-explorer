@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Emoji;
+using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
@@ -71,7 +72,8 @@ namespace DCL.Chat
             ChatReactionsConfig reactionsConfig,
             ChatSettingsAsset chatSettingsAsset,
             ChatMessageReactionService messageReactionService,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileCache profileCache)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -128,6 +130,36 @@ namespace DCL.Chat
                 emojiContainer.emojiSectionViewPrefab,
                 emojiContainer.emojiButtonPrefab);
 
+            int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
+                reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
+            int maxRecent = reactionsConfig.MessageReactions.MaxRecentEmojis;
+            var recentsService = new ChatReactionRecentsService(fixedDefaults, maxRecent);
+
+            reactionsPresenter = new ChatReactionsPresenter(
+                view.ChatReactionButton,
+                view.ChatReactionsSelector,
+                situationalReactionService,
+                reactionsConfig.Atlas,
+                recentsService,
+                fixedDefaults,
+                view.EmojiPanelView,
+                emojiPanelPresenter,
+                reactionsConfig.MessageReactions);
+
+            string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet);
+
+            ReactionTooltipPresenter? tooltipPresenter = null;
+            if (view.ReactionTooltipView != null)
+            {
+                tooltipPresenter = new ReactionTooltipPresenter(
+                    view.ReactionTooltipView,
+                    profileCache,
+                    profileRepositoryWrapper,
+                    reactionsConfig.Atlas,
+                    ownWallet);
+            }
+
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
                 eventBus,
                 chatHistory,
@@ -142,13 +174,10 @@ namespace DCL.Chat
                 commandRegistry.MarkMessagesAsRead,
                 commandRegistry.TranslateMessageCommand,
                 commandRegistry.RevertToOriginalCommand,
-                emojiPanelPresenter,
+                reactionsPresenter,
                 messageReactionService,
                 reactionsConfig.Atlas,
-                reactionsConfig.MessageReactions);
-
-            string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
-            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet);
+                tooltipPresenter);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,
@@ -172,21 +201,6 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
-            
-            int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
-                reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
-            int maxRecent = reactionsConfig.MessageReactions.MaxRecentEmojis;
-            var recentsService = new ChatReactionRecentsService(fixedDefaults, maxRecent);
-
-            reactionsPresenter = new ChatReactionsPresenter(
-                view.ChatReactionButton,
-                view.ChatReactionsSelector,
-                situationalReactionService,
-                reactionsConfig.Atlas,
-                recentsService,
-                fixedDefaults,
-                view.EmojiPanelView,
-                emojiPanelPresenter);
 
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,

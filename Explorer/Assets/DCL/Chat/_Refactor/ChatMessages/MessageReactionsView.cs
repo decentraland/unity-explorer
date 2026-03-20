@@ -37,6 +37,8 @@ namespace DCL.Chat.ChatMessages
         public float CurrentHeight { get; private set; }
 
         public event Action<string, int>? OnReactionClicked;
+        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
+        public event Action<int>? OnReactionHoverExit;
 
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress)
         {
@@ -78,6 +80,10 @@ namespace DCL.Chat.ChatMessages
                 item.SetData(emojiIndex, count, isOwn, uvRect, atlasConfig.Atlas);
                 item.OnClicked -= OnItemClicked;
                 item.OnClicked += OnItemClicked;
+                item.OnHoverEnter -= OnItemHoverEnter;
+                item.OnHoverEnter += OnItemHoverEnter;
+                item.OnHoverExit -= OnItemHoverExit;
+                item.OnHoverExit += OnItemHoverExit;
                 activeItems.Add(item);
             }
 
@@ -97,6 +103,17 @@ namespace DCL.Chat.ChatMessages
         {
             if (CurrentMessageId != null)
                 OnReactionClicked?.Invoke(CurrentMessageId, emojiIndex);
+        }
+
+        private void OnItemHoverEnter(int emojiIndex, RectTransform pillRect)
+        {
+            if (CurrentMessageId != null)
+                OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId);
+        }
+
+        private void OnItemHoverExit(int emojiIndex)
+        {
+            OnReactionHoverExit?.Invoke(emojiIndex);
         }
 
         private ReactionCountItemView GetOrCreateItem(RectTransform parent)

@@ -434,7 +434,8 @@ namespace DCL.PluginSystem.Global
                 settings.ReactionsConfig,
                 settings.ChatSettingsAsset,
                 messageReactionService,
-                web3IdentityCache
+                web3IdentityCache,
+                profileCache
             );
 
             pluginScope.Add(chatPanelPresenter);

@@ -102,6 +102,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6093391142915211469, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
   m_PrefabInstance: {fileID: 5804616106438160152}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4243427657527603930 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7668941188044545474, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
+  m_PrefabInstance: {fileID: 5804616106438160152}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 632d5362c0baa6b489b3f2d371f4ef7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatEntryReactionButtonHoverView
 --- !u!114 &7261065416926099514 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3767928623303038754, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
@@ -189,6 +200,10 @@ PrefabInstance:
       propertyPath: <reactionButton>k__BackingField
       value: 
       objectReference: {fileID: 7261065416926099514}
+    - target: {fileID: 4503932955293153024, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <reactionButtonHoverView>k__BackingField
+      value: 
+      objectReference: {fileID: 4243427657527603930}
     - target: {fileID: 5100226267730505936, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: <greyColor>k__BackingField.a
       value: 0.6039216

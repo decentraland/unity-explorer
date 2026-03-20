@@ -17,6 +17,8 @@ namespace DCL.Chat.ChatReactions
         public RectTransform AddButtonRect => (RectTransform)addButton.transform;
         public GameObject Divider => divider;
 
+        public RectTransform RectTransform => (RectTransform)transform;
+
         public event Action? OnAddClicked;
 
         public void Show() => gameObject.SetActive(true);

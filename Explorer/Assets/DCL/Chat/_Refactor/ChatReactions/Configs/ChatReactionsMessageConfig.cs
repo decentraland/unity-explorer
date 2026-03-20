@@ -51,6 +51,10 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 1f)]
         [field: SerializeField] public float CountIncrementBounceDuration { get; private set; } = 0.12f;
 
+        [field: Header("Shortcuts Bar Positioning")]
+        [field: Note("Offset applied when positioning the shortcuts bar near a message reaction button.")]
+        [field: SerializeField] public Vector2 ShortcutsBarOffset { get; private set; } = new (0f, 40f);
+
         [field: Header("Emoji Panel Positioning")]
         [field: Note("Screen-space offset applied when opening the emoji panel from a message reaction button.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 100f);

@@ -5,7 +5,6 @@ using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.Emoji;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Chat.ChatReactions;
@@ -39,11 +38,10 @@ namespace DCL.Chat.ChatMessages
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
-        private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly ChatMessageReactionService messageReactionService;
         private readonly ChatReactionsAtlasConfig atlasConfig;
-        private readonly ChatReactionsMessageConfig messageReactionsConfig;
-        private readonly ChatClickDetectionHandler emojiPanelClickHandler;
+        private readonly ReactionTooltipPresenter? tooltipPresenter;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -53,6 +51,7 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatMessageViewModel separatorViewModel;
 
         private string? pendingReactionMessageId;
+        private ChatEntryView? pendingReactionChatEntry;
         private IDisposable? onChannelSelectedSubscription;
 
         private CancellationTokenSource loadChannelCts = new ();
@@ -83,10 +82,10 @@ namespace DCL.Chat.ChatMessages
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
             RevertToOriginalCommand revertToOriginalCommand,
-            EmojiPanelPresenter emojiPanelPresenter,
+            ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
             ChatReactionsAtlasConfig atlasConfig,
-            ChatReactionsMessageConfig messageReactionsConfig)
+            ReactionTooltipPresenter? tooltipPresenter = null)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -102,14 +101,10 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
-            this.emojiPanelPresenter = emojiPanelPresenter;
+            this.reactionsPresenter = reactionsPresenter;
             this.messageReactionService = messageReactionService;
             this.atlasConfig = atlasConfig;
-            this.messageReactionsConfig = messageReactionsConfig;
-
-            emojiPanelClickHandler = new ChatClickDetectionHandler(emojiPanelPresenter.PanelTransform);
-            emojiPanelClickHandler.OnClickOutside += OnEmojiPanelClickOutside;
-            emojiPanelClickHandler.Pause();
+            this.tooltipPresenter = tooltipPresenter;
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -166,14 +161,11 @@ namespace DCL.Chat.ChatMessages
         {
             scrollToBottomPresenter.Dispose();
             loadChannelCts.SafeCancelAndDispose();
+            tooltipPresenter?.Dispose();
 
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
             translationSettings.OnAutoTranslationSettingsChanged -= OnAutoTranslationSettingsChanged;
-            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
-
-            emojiPanelClickHandler.OnClickOutside -= OnEmojiPanelClickOutside;
-            emojiPanelClickHandler.Dispose();
         }
 
         private void OnTranslateMessage(string messageId)
@@ -507,6 +499,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked += OnReactionButtonClicked;
             view.OnReactionPillClicked += OnReactionPillClicked;
+            view.OnReactionHoverEnter += OnReactionHoverEnter;
+            view.OnReactionHoverExit += OnReactionHoverExit;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -533,9 +527,11 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked -= OnReactionButtonClicked;
             view.OnReactionPillClicked -= OnReactionPillClicked;
-            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
-            emojiPanelClickHandler.Pause();
+            view.OnReactionHoverEnter -= OnReactionHoverEnter;
+            view.OnReactionHoverExit -= OnReactionHoverExit;
+            reactionsPresenter.CloseForMessage();
             pendingReactionMessageId = null;
+            pendingReactionChatEntry = null;
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
@@ -578,56 +574,52 @@ namespace DCL.Chat.ChatMessages
 
         private void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
         {
-            pendingReactionMessageId = messageId;
-            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
-            emojiPanelPresenter.EmojiSelected += OnEmojiSelectedForMessageReaction;
-
-            if (chatEntryView.messageBubbleElement.reactionButton != null)
+            if (pendingReactionMessageId == messageId)
             {
-                float targetY = chatEntryView.messageBubbleElement.reactionButton.transform.position.y
-                                + messageReactionsConfig.EmojiPanelOffset.y;
-                emojiPanelPresenter.MovePanelToWorldY(targetY);
+                reactionsPresenter.CloseForMessage();
+                return;
             }
 
-            emojiPanelPresenter.SetPanelVisibility(true);
-            emojiPanelClickHandler.Resume();
+            ClearPendingReactionState();
+
+            pendingReactionMessageId = messageId;
+            pendingReactionChatEntry = chatEntryView;
+            chatEntryView.messageBubbleElement.SetPopupOpen(true);
+            chatEntryView.messageBubbleElement.reactionButtonHoverView?.SetClicked(true);
+
+            var anchor = (RectTransform)chatEntryView.messageBubbleElement.reactionButton!.transform;
+            reactionsPresenter.ShowForMessage(
+                anchor,
+                atlasIndex => messageReactionService.ToggleReaction(messageId, atlasIndex),
+                ClearPendingReactionState);
         }
 
-        private void OnEmojiSelectedForMessageReaction(string emojiUnicode)
-        {
-            if (string.IsNullOrEmpty(pendingReactionMessageId) || string.IsNullOrEmpty(emojiUnicode))
-                return;
-
-            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint))
-                return;
-
-            int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
-
-            if (atlasIndex < 0)
-                return;
-
-            messageReactionService.ToggleReaction(pendingReactionMessageId, atlasIndex);
-            CloseMessageReactionEmojiPanel();
-        }
-
-        private void OnEmojiPanelClickOutside()
-        {
-            CloseMessageReactionEmojiPanel();
-        }
-
-        private void CloseMessageReactionEmojiPanel()
+        private void ClearPendingReactionState()
         {
             if (pendingReactionMessageId == null) return;
 
-            emojiPanelPresenter.EmojiSelected -= OnEmojiSelectedForMessageReaction;
-            emojiPanelPresenter.SetPanelVisibility(false);
-            emojiPanelClickHandler.Pause();
+            pendingReactionChatEntry?.messageBubbleElement.reactionButtonHoverView?.SetClicked(false);
+            pendingReactionChatEntry?.messageBubbleElement.SetPopupOpen(false);
+            pendingReactionChatEntry = null;
             pendingReactionMessageId = null;
         }
 
         private void OnReactionPillClicked(string messageId, int emojiIndex)
         {
             messageReactionService.ToggleReaction(messageId, emojiIndex);
+        }
+
+        private void OnReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
+        {
+            if (tooltipPresenter == null) return;
+
+            ReactionSet? reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect);
+        }
+
+        private void OnReactionHoverExit(int emojiIndex)
+        {
+            tooltipPresenter?.Hide();
         }
 
         protected override void Activate()

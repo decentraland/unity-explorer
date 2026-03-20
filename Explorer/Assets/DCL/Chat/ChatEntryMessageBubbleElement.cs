@@ -30,6 +30,7 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; } = null!;
         [field: SerializeField] internal Button messageOptionsButton { get; private set; } = null!;
         [field: SerializeField] internal Button? reactionButton { get; private set; }
+        [field: SerializeField] internal ChatEntryReactionButtonHoverView? reactionButtonHoverView { get; private set; }
 
         public event Action? OnTranslateRequest;
         public event Action? OnRevertRequest;
@@ -62,6 +63,7 @@ namespace DCL.Chat
             {
                 messageOptionsButton.gameObject.SetActive(false);
                 reactionButton?.gameObject.SetActive(false);
+                reactionButtonHoverView?.ResetState();
             }
 
             OnPointerExitEvent?.Invoke();
@@ -69,10 +71,17 @@ namespace DCL.Chat
 
         public Vector3 PopupPosition => popupPosition.position;
 
+        public void SetPopupOpen(bool open)
+        {
+            popupOpen = open;
+        }
+
         public void Reset()
         {
+            popupOpen = false;
             messageOptionsButton.gameObject.SetActive(false);
             reactionButton?.gameObject.SetActive(false);
+            reactionButtonHoverView?.ResetState();
             reactionsEnabled = true;
         }
 

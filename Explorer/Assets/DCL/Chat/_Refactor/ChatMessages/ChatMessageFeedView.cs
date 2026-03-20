@@ -66,6 +66,8 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
         public event Action<string, int>? OnReactionPillClicked;
+        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
+        public event Action<int>? OnReactionHoverExit;
 
         private Sequence? _fadeSequenceTween;
 
@@ -277,6 +279,10 @@ namespace DCL.Chat.ChatMessages
 
                     itemScript.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
                     itemScript.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
+                    itemScript.messageReactionsView.OnReactionHoverEnter -= HandleReactionHoverEnter;
+                    itemScript.messageReactionsView.OnReactionHoverEnter += HandleReactionHoverEnter;
+                    itemScript.messageReactionsView.OnReactionHoverExit -= HandleReactionHoverExit;
+                    itemScript.messageReactionsView.OnReactionHoverExit += HandleReactionHoverExit;
 
                     itemScript.RecalculateHeight();
                 }
@@ -335,6 +341,16 @@ namespace DCL.Chat.ChatMessages
         private void HandleReactionPillClicked(string messageId, int emojiIndex)
         {
             OnReactionPillClicked?.Invoke(messageId, emojiIndex);
+        }
+
+        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
+        {
+            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
+        }
+
+        private void HandleReactionHoverExit(int emojiIndex)
+        {
+            OnReactionHoverExit?.Invoke(emojiIndex);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

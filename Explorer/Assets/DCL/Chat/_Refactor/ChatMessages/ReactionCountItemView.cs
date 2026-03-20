@@ -1,12 +1,18 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat.ChatMessages
 {
-    public class ReactionCountItemView : MonoBehaviour
+    public class ReactionCountItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        private static readonly Vector3 HOVERED_SCALE = new (1.2f, 1.2f, 1.2f);
+        private const float ANIM_DURATION = 0.1f;
+
+        [SerializeField] private RectTransform contentContainer;
         [SerializeField] private RawImage emojiImage;
         [SerializeField] private TextMeshProUGUI countLabel;
         [SerializeField] private Image background;
@@ -17,6 +23,8 @@ namespace DCL.Chat.ChatMessages
         private int emojiIndex;
 
         public event Action<int>? OnClicked;
+        public event Action<int, RectTransform>? OnHoverEnter;
+        public event Action<int>? OnHoverExit;
 
         public int EmojiIndex => emojiIndex;
 
@@ -41,10 +49,26 @@ namespace DCL.Chat.ChatMessages
             gameObject.SetActive(true);
         }
 
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            contentContainer.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
+            OnHoverEnter?.Invoke(emojiIndex, (RectTransform)transform);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            contentContainer.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
+            OnHoverExit?.Invoke(emojiIndex);
+        }
+
         public void Hide()
         {
+            contentContainer.DOKill();
+            contentContainer.localScale = Vector3.one;
             gameObject.SetActive(false);
             OnClicked = null;
+            OnHoverEnter = null;
+            OnHoverExit = null;
         }
 
         private void OnDestroy()

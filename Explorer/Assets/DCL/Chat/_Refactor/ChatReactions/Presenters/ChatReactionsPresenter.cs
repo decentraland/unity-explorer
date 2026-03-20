@@ -8,8 +8,9 @@ namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Top-level presenter that coordinates the reaction button, shortcuts bar,
-    /// and emoji panel. Button click toggles the bar. Clicking any emoji in the
-    /// bar or panel sends it immediately without closing panels.
+    /// and emoji panel. Supports two modes:
+    /// - Situational mode (default): bar opens from bottom button, emoji clicks fire particles.
+    /// - Message mode: bar opens near a message's reaction button, emoji clicks toggle reactions.
     /// </summary>
     public sealed class ChatReactionsPresenter : IDisposable
     {
@@ -19,10 +20,21 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
+        private readonly ChatReactionsSelectorView selectorView;
+        private readonly RectTransform selectorRect;
         private readonly RectTransform addButtonRect;
         private readonly RectTransform buttonRect;
+        private readonly Vector2 shortcutsBarOffset;
+
+        // Original anchored position — restored when leaving message mode
+        private readonly Vector2 originalAnchoredPosition;
 
         private bool emojiPanelOpenedByReactions;
+
+        // Message mode fields — null means situational mode is active
+        private Action<int>? messageReactionHandler;
+        private Action? messageDismissHandler;
+        private Transform? messageAnchor;
 
         public ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
@@ -32,11 +44,18 @@ namespace DCL.Chat.ChatReactions
             ChatReactionRecentsService recentsService,
             int[] fixedDefaults,
             EmojiPanelView emojiPanelView,
-            EmojiPanelPresenter emojiPanelPresenter)
+            EmojiPanelPresenter emojiPanelPresenter,
+            ChatReactionsMessageConfig messageReactionsConfig)
         {
             this.reactionService = reactionService;
             this.emojiPanelPresenter = emojiPanelPresenter;
             this.atlasConfig = atlasConfig;
+            this.selectorView = selectorView;
+            selectorRect = selectorView.RectTransform;
+            shortcutsBarOffset = messageReactionsConfig.ShortcutsBarOffset;
+
+            // Save original layout position so we can restore it after message mode
+            originalAnchoredPosition = selectorRect.anchoredPosition;
 
             addButtonRect = selectorView.AddButtonRect;
 
@@ -64,8 +83,51 @@ namespace DCL.Chat.ChatReactions
             selectorPresenter.AddClicked += OnAddClicked;
         }
 
+        private bool IsInMessageMode => messageReactionHandler != null;
+
+        /// <summary>
+        /// Opens the shortcuts bar near a message's reaction button anchor.
+        /// The bar is centered horizontally on the anchor and placed above it.
+        /// Emoji clicks will invoke <paramref name="onReaction"/> instead of firing particles.
+        /// When the bar closes (click-outside, toggle, or situational button), <paramref name="onDismiss"/> is called.
+        /// </summary>
+        public void ShowForMessage(RectTransform anchor, Action<int> onReaction, Action onDismiss)
+        {
+            // Close any existing bar state first
+            HideBar();
+
+            messageReactionHandler = onReaction;
+            messageDismissHandler = onDismiss;
+            messageAnchor = anchor;
+
+            // Add the anchor to click-handler ignore set so clicking the same button toggles
+            clickDetectionHandler.AddIgnoredTransform(anchor);
+
+            // Position bar centered above the anchor button
+            PositionBarAboveAnchor(anchor);
+
+            selectorPresenter.Show();
+            clickDetectionHandler.Resume();
+        }
+
+        /// <summary>
+        /// Closes the bar if currently in message mode. No-op in situational mode.
+        /// </summary>
+        public void CloseForMessage()
+        {
+            if (IsInMessageMode)
+                HideBar();
+        }
+
         private void OnButtonClicked()
         {
+            // If in message mode, close it first — the bottom button always operates in situational mode
+            if (IsInMessageMode)
+            {
+                HideBar();
+                return;
+            }
+
             if (selectorPresenter.IsVisible)
             {
                 HideBar();
@@ -79,10 +141,15 @@ namespace DCL.Chat.ChatReactions
 
         private void OnSelectorReactionClicked(int atlasIndex)
         {
-            // Send the reaction immediately — do NOT close the bar.
-            // Only record usage; the bar refreshes next time it opens to avoid
-            // visually shuffling icons while the user is actively clicking.
-            reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            if (IsInMessageMode)
+            {
+                messageReactionHandler!.Invoke(atlasIndex);
+            }
+            else
+            {
+                reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            }
+
             selectorPresenter.RecordUsage(atlasIndex);
         }
 
@@ -96,6 +163,26 @@ namespace DCL.Chat.ChatReactions
             HideEmojiPanel();
             selectorPresenter.Hide();
             clickDetectionHandler.Pause();
+            ClearMessageMode();
+        }
+
+        private void ClearMessageMode()
+        {
+            if (!IsInMessageMode) return;
+
+            if (messageAnchor != null)
+                clickDetectionHandler.RemoveIgnoredTransform(messageAnchor);
+
+            Action? dismiss = messageDismissHandler;
+            messageReactionHandler = null;
+            messageDismissHandler = null;
+            messageAnchor = null;
+
+            // Restore bar to its original layout position for situational mode
+            selectorRect.anchoredPosition = originalAnchoredPosition;
+
+            // Notify the caller (ChatMessageFeedPresenter) so it can clear its pending state
+            dismiss?.Invoke();
         }
 
         private void OnAddClicked()
@@ -111,7 +198,17 @@ namespace DCL.Chat.ChatReactions
 
         private void ShowEmojiPanel()
         {
-            emojiPanelPresenter.MovePanel(addButtonRect.position);
+            if (IsInMessageMode)
+            {
+                // In message mode, position emoji panel centered at the bar's height
+                // using MoveToWorldY to keep the default horizontal position
+                emojiPanelPresenter.MovePanelToWorldY(selectorRect.position.y);
+            }
+            else
+            {
+                emojiPanelPresenter.MovePanel(addButtonRect.position);
+            }
+
             emojiPanelPresenter.EmojiSelected += OnEmojiPanelEmojiSelected;
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiPanelOpenedByReactions = true;
@@ -135,8 +232,15 @@ namespace DCL.Chat.ChatReactions
             int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
             if (atlasIndex < 0) return;
 
-            // Send the reaction immediately — do NOT close panels.
-            reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            if (IsInMessageMode)
+            {
+                messageReactionHandler!.Invoke(atlasIndex);
+            }
+            else
+            {
+                reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
+            }
+
             selectorPresenter.RecordUsage(atlasIndex);
         }
 
@@ -155,6 +259,7 @@ namespace DCL.Chat.ChatReactions
         public void Dispose()
         {
             HideEmojiPanel();
+            ClearMessageMode();
             clickDetectionHandler.OnClickOutside -= OnClickOutside;
             clickDetectionHandler.Dispose();
             buttonPresenter.ButtonClicked -= OnButtonClicked;
@@ -163,6 +268,23 @@ namespace DCL.Chat.ChatReactions
 
             buttonPresenter.Dispose();
             selectorPresenter.Dispose();
+        }
+
+        /// <summary>
+        /// Positions the shortcuts bar centered horizontally above the anchor,
+        /// offset vertically by <see cref="shortcutsBarOffset"/>.y.
+        /// </summary>
+        private void PositionBarAboveAnchor(RectTransform anchor)
+        {
+            Vector3 anchorPos = anchor.position;
+
+            // Get the bar's width in world-space so we can center it
+            float barWorldWidth = selectorRect.rect.width * selectorRect.lossyScale.x;
+
+            selectorRect.position = new Vector3(
+                anchorPos.x - barWorldWidth * 0.5f + shortcutsBarOffset.x,
+                anchorPos.y + shortcutsBarOffset.y,
+                anchorPos.z);
         }
     }
 }
