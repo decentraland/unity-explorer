@@ -5,7 +5,7 @@ namespace ExplorerAutomationTests.Views
     {
         private readonly (By, string) _sceneLoadingScreenLocator = (By.ID, "21e9d696-d866-4717-85c0-2b6e4f1c4d9d");
 
-        public LoadingScreenView(DriverContainer driverContainer) : base(driverContainer)
+        public LoadingScreenView(AltDriver altDriver) : base(altDriver)
         {
         }
 

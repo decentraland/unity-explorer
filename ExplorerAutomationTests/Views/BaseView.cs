@@ -3,15 +3,11 @@ namespace ExplorerAutomationTests.Views
 {
     public abstract class BaseView
     {
-        protected DriverContainer Drivers { get; set; }
+        protected AltDriver AltDriver { get; }
 
-        protected AltDriver AltDriver => Drivers.AltDriver;
-        protected AppiumDriver<AppiumWebElement> AppiumDriver => Drivers.AppiumDriver;
-        protected IWebDriver SeleniumDriver => Drivers.SeleniumDriver;
-
-        protected BaseView(DriverContainer drivers)
+        protected BaseView(AltDriver altDriver)
         {
-            Drivers = drivers;
+            AltDriver = altDriver;
         }
 
         [AllureStep("Click on object")]
@@ -40,7 +36,7 @@ namespace ExplorerAutomationTests.Views
             }
             catch (WaitTimeOutException)
             {
-                Reporter.Log($"Object {locator.Item2} was not found within {timeout} seconds", withScreenshot: true);
+                Reporter.Log($"Object {locator.Item2} was not found within {timeout} seconds");
                 throw new AssertionException($"Object '{locator.Item2}' was not found within {timeout} seconds. Please check if the object exists or if the game loaded correctly.");
             }
         }
@@ -93,7 +89,7 @@ namespace ExplorerAutomationTests.Views
             }
             catch (AltTester.AltTesterSDK.Driver.NotFoundException)
             {
-                Reporter.Log($"Object {locator.Item2} not found", withScreenshot: true);
+                Reporter.Log($"Object {locator.Item2} not found");
                 throw new AssertionException($"Object '{locator.Item2}' was not found. Please verify the object exists in the current scene.");
             }
         }
@@ -120,20 +116,6 @@ namespace ExplorerAutomationTests.Views
         public virtual void Wait(double seconds)
         {
             Thread.Sleep(TimeSpan.FromSeconds(seconds));
-        }
-
-        [AllureStep("Press key")]
-        public virtual void PressKey(AltKeyCode keyCode, float power = 1, float duration = 0.1f)
-        {
-            Reporter.Log($"Pressing key: {keyCode}");
-            AltDriver.PressKey(keyCode, power, duration);
-            Thread.Sleep(500); // Brief pause after key press
-        }
-
-        [AllureStep("Press Escape")]
-        public virtual void PressEscape()
-        {
-            PressKey(AltKeyCode.Escape);
         }
     }
 }

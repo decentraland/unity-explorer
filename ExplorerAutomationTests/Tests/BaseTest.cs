@@ -1,18 +1,13 @@
-using PlatformType = ExplorerAutomationTests.Common.PlatformType;
 
 namespace ExplorerAutomationTests.Tests
 {
-    /// <summary>
-    /// Base test class that handles driver setup, teardown, and common test infrastructure
-    /// All test classes should inherit from this class to get consistent test behavior
-    /// </summary>
     [TestFixture]
     [AllureNUnit]
     public class BaseTest
     {
         protected Exception ExceptionFromOneTimeSetUp;
-        protected DriverContainer Drivers { get; set; } = default;
-        
+        protected AltDriver AltDriver { get; set; }
+
         // View instances available to all test classes
         protected AuthenticationMainScreenView AuthenticationMainScreenView { get; set; }
         protected SplashScreenView SplashScreenView { get; set; }
@@ -21,7 +16,6 @@ namespace ExplorerAutomationTests.Tests
         protected ExplorePanelView ExplorePanelView { get; set; }
 
         private static Dictionary<String, String> unityLogs = new Dictionary<String, String>();
-
 
         #region Setup and Teardown
 
@@ -32,9 +26,10 @@ namespace ExplorerAutomationTests.Tests
             Reporter.Log("OneTimeSetUp - Initializing Test Configuration and Starting All Drivers");
             try
             {
-                StartAllDrivers();
+                StartDriver();
                 SetupUnityLogListener();
                 InitializeViews();
+                EnsureInWorld();
             }
             catch (Exception ex)
             {
@@ -49,8 +44,8 @@ namespace ExplorerAutomationTests.Tests
         public void OneTimeTearDown()
         {
             AddUnityLogsToAllure();
-            StopAllDrivers();
-            Reporter.Log("All drivers stopped and cleanup completed.");
+            StopDriver();
+            Reporter.Log("Driver stopped and cleanup completed.");
         }
 
         [SetUp]
@@ -62,8 +57,10 @@ namespace ExplorerAutomationTests.Tests
                 throw ExceptionFromOneTimeSetUp;
             }
 
-            // Add test-specific setup here if needed
             Reporter.Log($"Starting test: {TestContext.CurrentContext.Test.Name}");
+            
+            // In case a popup is opened, this will close it
+            PressEscape();
         }
 
         [TearDown]
@@ -88,139 +85,86 @@ namespace ExplorerAutomationTests.Tests
         public void InitializeViews()
         {
             Reporter.Log("Initializing view objects...");
-            
-            AuthenticationMainScreenView = new AuthenticationMainScreenView(Drivers);
-            SplashScreenView = new SplashScreenView(Drivers);
-            LoadingScreenView = new LoadingScreenView(Drivers);
-            MainMenuView = new MainMenuView(Drivers);
-            ExplorePanelView = new ExplorePanelView(Drivers);
+
+            AuthenticationMainScreenView = new AuthenticationMainScreenView(AltDriver);
+            SplashScreenView = new SplashScreenView(AltDriver);
+            LoadingScreenView = new LoadingScreenView(AltDriver);
+            MainMenuView = new MainMenuView(AltDriver);
+            ExplorePanelView = new ExplorePanelView(AltDriver);
 
             Reporter.Log("All view objects initialized successfully");
         }
 
-        [AllureStep("Start All Drivers and Set Up Test Environment")]
-        public void StartAllDrivers()
-        {
-            Reporter.Log("Setting up test environment...");
-            Reporter.Log($"Platform: {TestConfiguration.Platform}");
-            Reporter.Log($"Running tests with Appium: {TestConfiguration.RunningWithAppium}");
-            Reporter.Log($"Running tests with Selenium: {TestConfiguration.RunningWithSelenium}");
-
-            // Start optional drivers based on configuration
-            AppiumDriver<AppiumWebElement> appiumDriver = null;
-            IWebDriver seleniumDriver = null;
-
-            if (TestConfiguration.RunningWithAppium)
-            {
-                appiumDriver = StartAppiumDriver();
-            }
-
-            if (TestConfiguration.RunningWithSelenium)
-            {
-                seleniumDriver = StartSeleniumDriver();
-            }
-
-            // Create driver container
-            var altDriver = StartAltTesterDriver();
-
-            Drivers = new DriverContainer(altDriver, appiumDriver, seleniumDriver);
-
-            Reporter.Log("All drivers started successfully");
-
-        }
-
         [AllureStep("Start AltTester Driver")]
-        public AltDriver StartAltTesterDriver()
+        public void StartDriver()
         {
+            Reporter.Log($"Connecting to AltTester at 127.0.0.1:13000");
 
-            Reporter.Log($"Connecting to AltTester at {TestConfiguration.AltTesterServerUrl}:{TestConfiguration.AltTesterServerPort}");
-
-            var driver = new AltDriver(
-                host: TestConfiguration.AltTesterServerUrl,
-                port: TestConfiguration.AltTesterServerPort,
-                appName: TestConfiguration.AltTesterAppName,
+            AltDriver = new AltDriver(
+                host: "127.0.0.1",
+                port: 13000,
+                appName: "__default__",
                 enableLogging: false,
                 connectTimeout: 5
             );
 
-            Reporter.AltDriver = driver;
-
-            Reporter.Log($"Successfully connected to the game.");
-
-            return driver;
+            Reporter.AltDriver = AltDriver;
+            Reporter.Log("Successfully connected to the game.");
         }
 
-        [AllureStep("Start Appium Driver")]
-        protected virtual AppiumDriver<AppiumWebElement> StartAppiumDriver()
-        {
-            Reporter.Log("Setting up Appium driver...");
-
-            var appiumOptions = new AppiumOptions();
-            AppiumDriver<AppiumWebElement> driver = null;
-
-            switch (TestConfiguration.Platform)
-            {
-                case PlatformType.Android:
-                    appiumOptions.AddAdditionalCapability("platformName", "Android");
-                    appiumOptions.AddAdditionalCapability("appium:automationName", "UiAutomator2");
-                    appiumOptions.AddAdditionalCapability("appium:newCommandTimeout", 2000);
-                    appiumOptions.AddAdditionalCapability("appium:autoGrantPermissions", true);
-                    appiumOptions.AddAdditionalCapability("deviceName", TestConfiguration.DeviceName);
-                    appiumOptions.AddAdditionalCapability("appPackage", TestConfiguration.AppBundleId);
-                    driver = new AndroidDriver<AppiumWebElement>(new Uri("http://127.0.0.1:4723/wd/hub"), appiumOptions);
-                    break;
-
-                case PlatformType.iOS:
-                    appiumOptions.AddAdditionalCapability("platformName", "iOS");
-                    appiumOptions.AddAdditionalCapability("deviceName", TestConfiguration.DeviceName);
-                    appiumOptions.AddAdditionalCapability("bundleId", TestConfiguration.AppBundleId);
-                    driver = new IOSDriver<AppiumWebElement>(new Uri("http://127.0.0.1:4723/wd/hub"), appiumOptions);
-                    break;
-
-                default:
-                    Reporter.Log("Appium not supported for current platform");
-                    break;
-            }
-
-            return driver;
-        }
-
-        [AllureStep("Start Selenium Driver")]
-        protected virtual IWebDriver StartSeleniumDriver()
-        {
-
-            if (TestConfiguration.Platform == PlatformType.WebGL)
-            {
-                Reporter.Log("Setting up Chrome driver for WebGL testing...");
-
-                var chromeOptions = new ChromeOptions();
-                chromeOptions.AddArgument("--no-sandbox");
-                chromeOptions.AddArgument("--disable-dev-shm-usage");
-
-                var driver = new ChromeDriver(chromeOptions);
-                driver.Navigate().GoToUrl(TestConfiguration.WebGLUrl);
-
-                return driver;
-            }
-
-            Reporter.Log("Selenium not needed for current platform");
-            return null;
-        }
-
-        protected virtual void StopAllDrivers()
+        protected virtual void StopDriver()
         {
             try
             {
-                Drivers.AltDriver.Stop();
-                Drivers.SeleniumDriver.Quit();
-                Drivers.AppiumDriver.Quit();
-
-                Reporter.Log("All drivers stopped successfully");
+                AltDriver?.Stop();
+                Reporter.Log("Driver stopped successfully");
             }
             catch (Exception ex)
             {
-                Reporter.Log($"Error stopping drivers: {ex.Message}");
+                Reporter.Log($"Error stopping driver: {ex.Message}");
             }
+        }
+
+        #endregion
+
+        #region In-World Setup
+
+        [AllureStep("Ensure player is in-world")]
+        protected virtual void EnsureInWorld()
+        {
+            if (SplashScreenView.IsScreenVisible() || AuthenticationMainScreenView.IsScreenVisible())
+            {
+                Reporter.Log("Authentication / splash screen detected — entering world");
+                SplashScreenView.WaitForSplashScreenToDisappear();
+                AuthenticationMainScreenView.WaitForScreenReady();
+                AuthenticationMainScreenView.ClickJumpIntoWorld();
+                LoadingScreenView.WaitForLoadingComplete();
+            }
+            else
+            {
+                Reporter.Log("Already in-world — skipping authentication");
+            }
+
+            MainMenuView.WaitForMenuReady();
+            Reporter.Log("Player is in-world and main menu is ready");
+        }
+
+        #endregion
+
+        #region Input Helpers
+
+        [AllureStep("Press key")]
+        public void PressKey(AltKeyCode keyCode, float power = 1, float duration = 0.1f)
+        {
+            Reporter.Log($"Pressing key: {keyCode}");
+            AltDriver.PressKey(keyCode, power, duration);
+            Thread.Sleep(500);
+        }
+
+        [AllureStep("Press Escape")]
+        public void PressEscape()
+        {
+            PressKey(AltKeyCode.Escape);
         }
 
         #endregion
@@ -229,10 +173,10 @@ namespace ExplorerAutomationTests.Tests
 
         protected virtual void SetupUnityLogListener()
         {
-            if (Drivers.AltDriver != null)
+            if (AltDriver != null)
             {
                 Reporter.Log("Setting up Unity log listener");
-                Drivers.AltDriver.AddNotificationListener<AltLogNotificationResultParams>(
+                AltDriver.AddNotificationListener<AltLogNotificationResultParams>(
                     NotificationType.LOG,
                     LogCallback,
                     true
@@ -254,7 +198,6 @@ namespace ExplorerAutomationTests.Tests
 
             var log = logParams;
 
-            // Log all Unity messages regardless of level
             using (var sw = new StreamWriter(filepath, true))
             {
                 sw.WriteLine($"{log.message}");

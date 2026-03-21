@@ -26,15 +26,15 @@ namespace ExplorerAutomationTests.Views
         public GallerySection Gallery { get; }
         public SettingsSection Settings { get; }
 
-        public ExplorePanelView(DriverContainer driverContainer) : base(driverContainer)
+        public ExplorePanelView(AltDriver altDriver) : base(altDriver)
         {
-            Events = new EventsSection(driverContainer);
-            Places = new PlacesSection(driverContainer);
-            Communities = new CommunitiesSection(driverContainer);
-            Navmap = new NavmapSection(driverContainer);
-            Backpack = new BackpackSection(driverContainer);
-            Gallery = new GallerySection(driverContainer);
-            Settings = new SettingsSection(driverContainer);
+            Events = new EventsSection(altDriver);
+            Places = new PlacesSection(altDriver);
+            Communities = new CommunitiesSection(altDriver);
+            Navmap = new NavmapSection(altDriver);
+            Backpack = new BackpackSection(altDriver);
+            Gallery = new GallerySection(altDriver);
+            Settings = new SettingsSection(altDriver);
         }
 
         [AllureStep("Wait for explore panel to open")]

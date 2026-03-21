@@ -4,7 +4,7 @@ namespace ExplorerAutomationTests.Views
     {
         private readonly (By, string) _splashScreenLocator = (By.NAME, "Splash(Clone)");
 
-        public SplashScreenView(DriverContainer driverContainer) : base(driverContainer) { }
+        public SplashScreenView(AltDriver altDriver) : base(altDriver) { }
 
         [AllureStep("Check if splash screen is visible")]
         public bool IsScreenVisible()

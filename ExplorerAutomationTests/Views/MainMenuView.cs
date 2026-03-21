@@ -18,7 +18,8 @@ namespace ExplorerAutomationTests.Views
         private readonly (By, string) _helpButtonLocator = (By.ID, "c02afb7d-0abf-405e-9ecc-48f8cf439f42");
         private readonly (By, string) _sidebarSettingsButtonLocator = (By.ID, "a7a98fe6-eca1-4f67-996e-2049c9e020bb");
 
-        public MainMenuView(DriverContainer driverContainer) : base(driverContainer)
+
+        public MainMenuView(AltDriver altDriver) : base(altDriver)
         {
         }
 

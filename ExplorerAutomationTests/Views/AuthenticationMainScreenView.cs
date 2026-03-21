@@ -8,7 +8,7 @@ namespace ExplorerAutomationTests.Views
         private readonly (By, string) _jumpIntoWorldButtonLocator = (By.ID, "646623d5-3519-49df-93ed-ab668d7917db");
         private readonly (By, string) _useADifferentAccountButtonLocator = (By.ID, "f658ab9f-18ac-4281-a0a9-dd030d8224d6");
 
-        public AuthenticationMainScreenView(DriverContainer driverContainer) : base(driverContainer)
+        public AuthenticationMainScreenView(AltDriver altDriver) : base(altDriver)
         {
         }
 

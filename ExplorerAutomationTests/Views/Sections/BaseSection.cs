@@ -5,7 +5,7 @@ namespace ExplorerAutomationTests.Views.Sections
     {
         private readonly (By, string) _sectionLocator;
 
-        protected BaseSection(DriverContainer drivers, (By, string) sectionLocator) : base(drivers)
+        protected BaseSection(AltDriver altDriver, (By, string) sectionLocator) : base(altDriver)
         {
             _sectionLocator = sectionLocator;
         }
