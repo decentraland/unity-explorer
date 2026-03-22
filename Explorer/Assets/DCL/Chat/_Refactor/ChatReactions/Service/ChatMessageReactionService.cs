@@ -23,6 +23,9 @@ namespace DCL.Chat.ChatReactions
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
 
+        // Reused during channel purge to avoid allocating a new list each time.
+        private readonly List<string> purgeBuffer = new ();
+
         // Local messageId → channelId (for outgoing reactions from UI clicks).
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
 
@@ -139,18 +142,17 @@ namespace DCL.Chat.ChatReactions
 
         private void PurgeChannelEntries(ChatChannel.ChannelId channelId)
         {
-            // Collect keys to remove (avoid modifying dictionaries during enumeration).
-            var keysToRemove = new List<string>();
+            purgeBuffer.Clear();
 
             foreach (var kvp in messageIdToChannel)
             {
                 if (kvp.Value.Equals(channelId))
-                    keysToRemove.Add(kvp.Key);
+                    purgeBuffer.Add(kvp.Key);
             }
 
-            for (int i = 0; i < keysToRemove.Count; i++)
+            for (int i = 0; i < purgeBuffer.Count; i++)
             {
-                string msgId = keysToRemove[i];
+                string msgId = purgeBuffer[i];
                 messageIdToChannel.Remove(msgId);
 
                 if (localIdToStableKey.TryGetValue(msgId, out string? stableKey))

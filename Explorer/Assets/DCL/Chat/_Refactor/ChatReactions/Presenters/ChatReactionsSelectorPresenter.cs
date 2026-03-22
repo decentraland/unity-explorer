@@ -57,6 +57,8 @@ namespace DCL.Chat.ChatReactions
             view.Hide();
         }
 
+        public ChatReactionsSelectorView View => view;
+
         public bool IsVisible => view.gameObject.activeSelf;
 
         public void Show()

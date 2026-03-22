@@ -112,11 +112,11 @@ namespace DCL.Emoji
         }
 
         /// <summary>
-        /// Moves the panel vertically to match the given world Y while
-        /// keeping the default horizontal (X) position centred on the chat panel.
+        /// Keeps the default horizontal position and moves the panel
+        /// vertically to match the given world-space Y coordinate.
         /// Used by message reactions so the panel stays horizontally stable.
         /// </summary>
-        public void MoveToWorldY(float worldY)
+        public void PositionCenteredAtWorldY(float worldY)
         {
             EnsureInitialized();
             rectTransform.anchoredPosition = new Vector2(

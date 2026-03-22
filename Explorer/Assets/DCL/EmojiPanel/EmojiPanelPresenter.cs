@@ -83,23 +83,6 @@ namespace DCL.Emoji
             PanelVisibilityChanged?.Invoke(isVisible);
         }
 
-        /// <summary>
-        /// Repositions the emoji panel to the given world position.
-        /// Callers should pre-apply any desired offset before calling.
-        /// </summary>
-        public void MovePanel(Vector3 worldPosition)
-        {
-            view.MoveTo(worldPosition);
-        }
-
-        /// <summary>
-        /// Moves the panel vertically to the given world Y while keeping default X.
-        /// </summary>
-        public void MovePanelToWorldY(float worldY)
-        {
-            view.MoveToWorldY(worldY);
-        }
-
         private void ConfigureEmojiSectionSizes()
         {
             foreach (EmojiSectionView emojiSectionView in emojiSectionViews)

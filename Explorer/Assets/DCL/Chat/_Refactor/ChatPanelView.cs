@@ -19,6 +19,7 @@ namespace DCL.Chat
         [field: SerializeField] public ChannelMemberFeedView MemberListView { get; private set; } = null!;
         [field: SerializeField] public ChatReactionButtonView ChatReactionButton { get; private set; } = null!;
         [field: SerializeField] public ChatReactionsSelectorView ChatReactionsSelector { get; private set; } = null!;
+        [field: SerializeField] public ChatReactionsSelectorView MessageReactionsSelector { get; private set; } = null!;
         [field: SerializeField] public EmojiPanelView EmojiPanelView { get; private set; } = null!;
         [field: SerializeField] public ReactionTooltipView? ReactionTooltipView { get; private set; }
 

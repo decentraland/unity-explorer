@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.Translation;
 using DCL.Translation.Service;
 using DCL.Chat.ChatReactions;
-using DCL.Chat.ChatReactions.Configs;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -38,10 +37,8 @@ namespace DCL.Chat.ChatMessages
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
-        private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly ChatMessageReactionService messageReactionService;
-        private readonly ChatReactionsAtlasConfig atlasConfig;
-        private readonly ReactionTooltipPresenter? tooltipPresenter;
+        private readonly MessageReactionInteractionPresenter reactionInteraction;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -50,8 +47,6 @@ namespace DCL.Chat.ChatMessages
 
         private readonly ChatMessageViewModel separatorViewModel;
 
-        private string? pendingReactionMessageId;
-        private ChatEntryView? pendingReactionChatEntry;
         private IDisposable? onChannelSelectedSubscription;
 
         private CancellationTokenSource loadChannelCts = new ();
@@ -84,7 +79,6 @@ namespace DCL.Chat.ChatMessages
             RevertToOriginalCommand revertToOriginalCommand,
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
-            ChatReactionsAtlasConfig atlasConfig,
             ReactionTooltipPresenter? tooltipPresenter = null)
         {
             this.view = view;
@@ -101,10 +95,13 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
-            this.reactionsPresenter = reactionsPresenter;
             this.messageReactionService = messageReactionService;
-            this.atlasConfig = atlasConfig;
-            this.tooltipPresenter = tooltipPresenter;
+
+            reactionInteraction = new MessageReactionInteractionPresenter(
+                reactionsPresenter,
+                messageReactionService,
+                tooltipPresenter,
+                msgId => currentChannelService.CurrentChannel?.GetReactions(msgId));
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -161,7 +158,7 @@ namespace DCL.Chat.ChatMessages
         {
             scrollToBottomPresenter.Dispose();
             loadChannelCts.SafeCancelAndDispose();
-            tooltipPresenter?.Dispose();
+            reactionInteraction.Dispose();
 
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
@@ -497,10 +494,10 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
-            view.OnReactionButtonClicked += OnReactionButtonClicked;
-            view.OnReactionPillClicked += OnReactionPillClicked;
-            view.OnReactionHoverEnter += OnReactionHoverEnter;
-            view.OnReactionHoverExit += OnReactionHoverExit;
+            view.OnReactionButtonClicked += reactionInteraction.OnReactionButtonClicked;
+            view.OnReactionPillClicked += reactionInteraction.OnReactionPillClicked;
+            view.OnReactionHoverEnter += reactionInteraction.OnReactionHoverEnter;
+            view.OnReactionHoverExit += reactionInteraction.OnReactionHoverExit;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -525,13 +522,11 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
-            view.OnReactionButtonClicked -= OnReactionButtonClicked;
-            view.OnReactionPillClicked -= OnReactionPillClicked;
-            view.OnReactionHoverEnter -= OnReactionHoverEnter;
-            view.OnReactionHoverExit -= OnReactionHoverExit;
-            reactionsPresenter.CloseForMessage();
-            pendingReactionMessageId = null;
-            pendingReactionChatEntry = null;
+            view.OnReactionButtonClicked -= reactionInteraction.OnReactionButtonClicked;
+            view.OnReactionPillClicked -= reactionInteraction.OnReactionPillClicked;
+            view.OnReactionHoverEnter -= reactionInteraction.OnReactionHoverEnter;
+            view.OnReactionHoverExit -= reactionInteraction.OnReactionHoverExit;
+            reactionInteraction.Deactivate();
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
@@ -577,56 +572,6 @@ namespace DCL.Chat.ChatMessages
         private void OnScrollToBottomButtonClicked()
         {
             view.ShowLastMessage(useSmoothScroll: true);
-        }
-
-        private void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
-        {
-            if (pendingReactionMessageId == messageId)
-            {
-                reactionsPresenter.CloseForMessage();
-                return;
-            }
-
-            ClearPendingReactionState();
-
-            pendingReactionMessageId = messageId;
-            pendingReactionChatEntry = chatEntryView;
-            chatEntryView.messageBubbleElement.SetPopupOpen(true);
-            chatEntryView.messageBubbleElement.reactionButtonHoverView?.SetClicked(true);
-
-            var anchor = (RectTransform)chatEntryView.messageBubbleElement.reactionButton!.transform;
-            reactionsPresenter.ShowForMessage(
-                anchor,
-                atlasIndex => messageReactionService.ToggleReaction(messageId, atlasIndex),
-                ClearPendingReactionState);
-        }
-
-        private void ClearPendingReactionState()
-        {
-            if (pendingReactionMessageId == null) return;
-
-            pendingReactionChatEntry?.messageBubbleElement.reactionButtonHoverView?.SetClicked(false);
-            pendingReactionChatEntry?.messageBubbleElement.SetPopupOpen(false);
-            pendingReactionChatEntry = null;
-            pendingReactionMessageId = null;
-        }
-
-        private void OnReactionPillClicked(string messageId, int emojiIndex)
-        {
-            messageReactionService.ToggleReaction(messageId, emojiIndex);
-        }
-
-        private void OnReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
-        {
-            if (tooltipPresenter == null) return;
-
-            ReactionSet? reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
-            tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect);
-        }
-
-        private void OnReactionHoverExit(int emojiIndex)
-        {
-            tooltipPresenter?.Hide();
         }
 
         protected override void Activate()

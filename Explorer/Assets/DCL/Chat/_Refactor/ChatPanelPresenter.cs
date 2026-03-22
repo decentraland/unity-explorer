@@ -138,6 +138,7 @@ namespace DCL.Chat
             reactionsPresenter = new ChatReactionsPresenter(
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
+                view.MessageReactionsSelector,
                 situationalReactionService,
                 reactionsConfig.Atlas,
                 recentsService,
@@ -176,7 +177,6 @@ namespace DCL.Chat
                 commandRegistry.RevertToOriginalCommand,
                 reactionsPresenter,
                 messageReactionService,
-                reactionsConfig.Atlas,
                 tooltipPresenter);
 
             var inputPresenter = new ChatInputPresenter(
