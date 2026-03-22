@@ -16,7 +16,13 @@ namespace DCL.Chat.ChatMessages
 
         private void Awake()
         {
-            rectTransform = (RectTransform)transform;
+            EnsureInitialized();
+        }
+
+        private void EnsureInitialized()
+        {
+            if (rectTransform == null)
+                rectTransform = (RectTransform)transform;
         }
 
         public void Show(string text, Rect emojiUvRect, Texture atlas, Vector3 worldPosition)
@@ -58,6 +64,7 @@ namespace DCL.Chat.ChatMessages
 
         private void PositionAbove(Vector3 worldPosition)
         {
+            EnsureInitialized();
             rectTransform.position = new Vector3(
                 worldPosition.x + offset.x,
                 worldPosition.y + offset.y,
