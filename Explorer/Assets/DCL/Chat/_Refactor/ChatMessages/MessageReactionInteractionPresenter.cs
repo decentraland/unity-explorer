@@ -41,17 +41,21 @@ namespace DCL.Chat.ChatMessages
             }
 
             ClearPendingState();
-
-            pendingReactionMessageId = messageId;
-            pendingReactionChatEntry = chatEntryView;
-            chatEntryView.messageBubbleElement.SetPopupOpen(true);
-            chatEntryView.messageBubbleElement.reactionButtonHoverView?.SetClicked(true);
+            ActivatePendingReaction(messageId, chatEntryView);
 
             var anchor = (RectTransform)chatEntryView.messageBubbleElement.reactionButton!.transform;
             reactionsPresenter.ShowForMessage(
                 anchor,
                 atlasIndex => messageReactionService.ToggleReaction(messageId, atlasIndex),
                 ClearPendingState);
+        }
+
+        private void ActivatePendingReaction(string messageId, ChatEntryView chatEntryView)
+        {
+            pendingReactionMessageId = messageId;
+            pendingReactionChatEntry = chatEntryView;
+            chatEntryView.messageBubbleElement.SetPopupOpen(true);
+            chatEntryView.messageBubbleElement.reactionButtonHoverView?.SetClicked(true);
         }
 
         public void OnReactionPillClicked(string messageId, int emojiIndex)

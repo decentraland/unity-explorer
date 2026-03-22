@@ -219,15 +219,21 @@ namespace DCL.Chat.ChatReactions
 
         private void OnEmojiPanelEmojiSelected(string emojiUnicode)
         {
-            if (string.IsNullOrEmpty(emojiUnicode)) return;
-
-            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint)) return;
-
-            int atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
-            if (atlasIndex < 0) return;
+            if (!TryResolveEmojiAtlasIndex(emojiUnicode, out int atlasIndex)) return;
 
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
+        }
+
+        private bool TryResolveEmojiAtlasIndex(string emojiUnicode, out int atlasIndex)
+        {
+            atlasIndex = -1;
+
+            if (string.IsNullOrEmpty(emojiUnicode)) return false;
+            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint)) return false;
+
+            atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
+            return atlasIndex >= 0;
         }
 
         /// <summary>
