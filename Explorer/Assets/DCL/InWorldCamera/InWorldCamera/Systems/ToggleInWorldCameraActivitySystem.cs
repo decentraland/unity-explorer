@@ -124,8 +124,8 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
-            if(hudController.State == ControllerState.ViewHiding 
-                || hudController.State == ControllerState.ViewHidden 
+            if(hudController.State == ControllerState.ViewHiding
+                || hudController.State == ControllerState.ViewHidden
                 || hudController.State == ControllerState.ViewShowing)
                 return;
 
@@ -173,7 +173,7 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchToInWorldCamera();
 
-            cursor.Lock();
+            cursor.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Locked;
 
