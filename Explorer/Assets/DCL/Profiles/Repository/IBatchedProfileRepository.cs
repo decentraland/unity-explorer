@@ -1,4 +1,4 @@
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using System.Collections.Generic;
 
 namespace DCL.Profiles

@@ -1,4 +1,4 @@
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;

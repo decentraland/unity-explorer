@@ -1,4 +1,4 @@
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using REnum;
