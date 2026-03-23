@@ -1,6 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using UniVRM10.FastSpringBones;
@@ -8,7 +8,9 @@ using UniVRM10.FastSpringBones;
 namespace DCL.SpringBones
 {
     [LogCategory(ReportCategory.AVATAR)]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateAfter(typeof(SpringBoneRegistrationSystem))]
+    [UpdateBefore(typeof(StartAvatarMatricesCalculationSystem))]
     public partial class SpringBonesSimulationSystem : BaseUnityLoopSystem
     {
         private readonly FastSpringBoneService springBoneService;

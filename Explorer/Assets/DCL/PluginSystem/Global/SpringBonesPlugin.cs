@@ -31,8 +31,11 @@ namespace DCL.PluginSystem.Global
             springBoneService = (await Object.InstantiateAsync(springBoneServicePrefab))[0];
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
             SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService);
+            SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService);
+        }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

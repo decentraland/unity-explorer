@@ -18,11 +18,22 @@ namespace DCL.AvatarRendering.Loading.Assets
     {
         public readonly Transform Transform;
         public readonly string SkeletonParentName;
+        public readonly float Stiffness;
+        public readonly float Drag;
+        public readonly Vector3 GravityDir;
+        public readonly float GravityPower;
+        public readonly float HitRadius;
 
-        public SpringBoneData(Transform transform, string skeletonParentName)
+        public SpringBoneData(Transform transform, string skeletonParentName,
+            float stiffness, float drag, Vector3 gravityDir, float gravityPower, float hitRadius)
         {
             Transform = transform;
             SkeletonParentName = skeletonParentName;
+            Stiffness = stiffness;
+            Drag = drag;
+            GravityDir = gravityDir;
+            GravityPower = gravityPower;
+            HitRadius = hitRadius;
         }
 
         public bool IsChainRoot => SkeletonParentName != null;
