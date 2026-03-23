@@ -742,14 +742,7 @@ namespace Global.Dynamic
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(
                     profilesRepository,
                     thumbnailCache
-
-#if !NO_LIVEKIT_MODE
-                    ,
-                    remoteMetadata
-#endif
-
                     );
-
 
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
