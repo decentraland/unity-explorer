@@ -4,6 +4,10 @@ using Utility;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Adapts ClearScript's <see cref="Microsoft.ClearScript.JavaScript.IArrayBuffer"/> to <see cref="IDCLArrayBuffer"/>,
+    /// providing read/write byte access and unsafe direct-pointer (<see cref="IntPtr"/>) access to the underlying V8 buffer.
+    /// </summary>
     public class V8ArrayBufferAdapter : IDCLArrayBuffer
     {
         private readonly IArrayBuffer arrayBuffer;

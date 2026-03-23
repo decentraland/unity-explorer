@@ -3,6 +3,10 @@ using Microsoft.ClearScript.V8;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Factory that creates and configures <see cref="Microsoft.ClearScript.V8.V8ScriptEngine"/> instances
+    /// with IL2CPP-compatible settings (reflection-based interop), implementing <see cref="IJavaScriptEngineFactory"/>.
+    /// </summary>
     public sealed class V8EngineFactory : IJavaScriptEngineFactory
     {
         public V8EngineFactory()

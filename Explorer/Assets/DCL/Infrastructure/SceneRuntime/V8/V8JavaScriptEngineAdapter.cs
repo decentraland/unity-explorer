@@ -5,6 +5,10 @@ using System;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Adapts ClearScript's <see cref="Microsoft.ClearScript.V8.V8ScriptEngine"/> to <see cref="IJavaScriptEngine"/>,
+    /// bridging C# and JavaScript execution: compiling scripts, exposing host objects, resolving promises, and reporting heap info.
+    /// </summary>
     public class V8JavaScriptEngineAdapter : IJavaScriptEngine
     {
         public IDCLScriptObject Global => new V8ScriptObjectAdapter(V8Engine.Global);

@@ -2,6 +2,10 @@ using Microsoft.ClearScript.V8;
 
 namespace SceneRuntime
 {
+    /// <summary>
+    /// Adapts ClearScript's <see cref="Microsoft.ClearScript.V8.V8RuntimeHeapInfo"/> to <see cref="IRuntimeHeapInfo"/>,
+    /// exposing V8 heap memory statistics (used heap, heap limit, external size, etc.) for scene memory monitoring.
+    /// </summary>
     public class V8RuntimeHeapInfoAdapter : IRuntimeHeapInfo
     {
         private readonly V8RuntimeHeapInfo v8HeapInfo;

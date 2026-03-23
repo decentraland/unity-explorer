@@ -18,6 +18,11 @@ using Utility;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Main scene runtime orchestrator implementing <see cref="ISceneRuntime"/> and <see cref="IJsOperations"/>.
+    /// Manages the V8 engine lifecycle, compiles and executes scene JavaScript, drives the module system,
+    /// and pools <c>Uint8Array</c> instances for CRDT communication.
+    /// </summary>
     public sealed class V8SceneRuntimeImpl : ISceneRuntime
     {
         private readonly V8JavaScriptEngineAdapter engineAdapter;
