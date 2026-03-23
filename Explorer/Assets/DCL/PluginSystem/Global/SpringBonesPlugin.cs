@@ -1,20 +1,20 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.SpringBones;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
+using UniVRM10.FastSpringBones;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
-    /// <summary>
-    ///     Instantiates a GameObject containing a MonoBehaviour that runs the spring bones simulation.
-    /// </summary>
-    public class SpringBonesPlugin : IDCLGlobalPlugin<SpringBonesSettings>
+    public class SpringBonesPlugin : IDCLGlobalPlugin<SpringBonesPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+
+        private FastSpringBoneService springBoneService;
 
         public SpringBonesPlugin(IAssetsProvisioner assetsProvisioner)
         {
@@ -25,18 +25,26 @@ namespace DCL.PluginSystem.Global
         {
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
-
-        public async UniTask InitializeAsync(SpringBonesSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            var simulationPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SpringBonesSimulationPrefab, ct: ct)).Value;
-            await Object.InstantiateAsync(simulationPrefab);
+            var springBoneServicePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SpringBonesSimulationPrefab, ct)).Value;
+            springBoneService = (await Object.InstantiateAsync(springBoneServicePrefab))[0];
         }
-    }
 
-    [Serializable]
-    public class SpringBonesSettings : IDCLPluginSettings
-    {
-        [field: SerializeField] public AssetReferenceGameObject SpringBonesSimulationPrefab { get; private set; } = null!;
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService);
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: SerializeField]
+            public SpringBonesSimulationPrefabReference SpringBonesSimulationPrefab { get; private set; }
+
+            [Serializable]
+            public class SpringBonesSimulationPrefabReference : ComponentReference<FastSpringBoneService>
+            {
+                public SpringBonesSimulationPrefabReference(string guid) : base(guid) { }
+            }
+        }
     }
 }
