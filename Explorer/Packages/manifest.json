@@ -90,7 +90,6 @@
     }
   ],
   "testables": [
-    "org.decentraland.clearscript",
-    "com.unity.inputsystem"
+    "org.decentraland.clearscript"
   ]
 }
