@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/BushOptimized_v02.prefab.meta
 guid: 8a3cdfc951741ee4a9701dd82aa54f2c
-========
-guid: bc7c208d1e7e942f0b37191bd9fad362
->>>>>>>> origin/shape/webgl_client_merge:Explorer/Assets/DCL/AvatarRendering/Emotes/EmbeddedEmotes/CommonEmotes/Clap/Clap_Emote.prefab.meta
 PrefabImporter:
   externalObjects: {}
   userData: 
