@@ -42,13 +42,15 @@ namespace DCL.UI.ProfileElements
             this.profileRepositoryWrapper = profileDataProvider;
             currentWalledId = new Web3Address("");
             Profile.CompactInfo? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct).SuppressAnyExceptionWithFallback(null);
+
             connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
 
             if (profile == null) return;
 
             currentWalledId = playerId;
             userNameElement.Setup(profile.Value);
-            await profilePictureView.SetupAsync(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl, profile.Value.UserId, ct);        }
+            await profilePictureView.SetupAsync(profileRepositoryWrapper, profile.Value.UserNameColor, profile.Value.FaceSnapshotUrl, profile.Value.UserId, ct);
+        }
 
         private void Awake()
         {

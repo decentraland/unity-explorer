@@ -1,3 +1,4 @@
+
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.WebRequests;
@@ -22,10 +23,7 @@ namespace DCL.UI.Profiles.Helpers
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
 
-        public ProfileRepositoryWrapper(
-                IProfileRepository profileRepository,
-                ISpriteCache thumbnailCache
-        )
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
@@ -39,5 +37,6 @@ namespace DCL.UI.Profiles.Helpers
 
         public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>
             profileRepository.GetCompactAsync(userId, ct);
+
     }
 }
