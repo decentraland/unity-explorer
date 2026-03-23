@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/DCL/UI/ColorPicker/NameColorPickerView.cs.meta
 guid: a53b2845f7e40445fa9aaea91377fef1
-========
-guid: 17ffa00d4e3548c3afe1b87c65321a78
->>>>>>>> origin/shape/webgl_client_merge:Explorer/Assets/DCL/WebRequests/Analytics/IRequestMetric.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

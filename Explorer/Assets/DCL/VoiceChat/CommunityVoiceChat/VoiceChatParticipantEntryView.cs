@@ -127,7 +127,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             string? participantName,
             Color nameColor,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ReactiveProperty<string?> profilePictureUrl,
+            string? profilePictureUrl,
             string walletId, CancellationToken ct)
         {
             nameElement.text = participantName;

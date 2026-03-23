@@ -54,8 +54,8 @@ namespace DCL.UI.ConfirmationDialog
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
 
-            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
-            bool hasFromProfileImage = !string.IsNullOrEmpty(dialogData.FromUserInfo.Address);
+            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.UserId);
+            bool hasFromProfileImage = !string.IsNullOrEmpty(dialogData.FromUserInfo.UserId);
 
             profilePicturesContainer.SetActive(hasProfileImage);
             profilePictureView.gameObject.SetActive(hasProfileImage);

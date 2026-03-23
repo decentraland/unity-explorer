@@ -124,7 +124,7 @@ namespace DCL.SDKComponents.NFTShape.System
             if (anyTexture.IsVideoTextureData(out VideoTextureData videoTextureData))
                 nftLoadingComponent.VideoPlayerEntity = World.Create(anyTexture,
                     new CustomMediaStream(MediaPlayerComponent.DEFAULT_VOLUME, true),
-                    videoTextureData.Consumer,
+                    videoTextureData!.Consumer,
                     videoTextureData.MediaPlayer);
         }
     }
