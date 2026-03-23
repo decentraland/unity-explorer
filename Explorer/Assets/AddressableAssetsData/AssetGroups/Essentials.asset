@@ -75,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd30078b12df4679bed329bf3c002ad
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Ghosts/HologramShader.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2df144b808932744487656f89a42fb11
     m_Address: FlatNormal_256_BC5.DDS
     m_ReadOnly: 0
