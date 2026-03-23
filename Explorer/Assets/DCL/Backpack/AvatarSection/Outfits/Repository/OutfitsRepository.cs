@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
             { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
 
-        private const int DEPLOY_WINDOW_IN_SECONDS = 15;
+        private const int DEFAULT_DEPLOY_WINDOW_IN_SECONDS = 15;
 
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
@@ -46,6 +47,25 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             this.nftNamesProvider = nftNamesProvider;
         }
 
+        private static int deployWindowInSeconds
+        {
+            get
+            {
+                if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.OUTFITS_DEPLOY_WINDOW,
+                        "deploy_window_in_seconds",
+                        out OutfitsDeployWindowConfig? config) && config.HasValue && config.Value.DeployWindowInSeconds > 0)
+                    return config.Value.DeployWindowInSeconds;
+
+                return DEFAULT_DEPLOY_WINDOW_IN_SECONDS;
+            }
+        }
+
+        [Serializable]
+        private struct OutfitsDeployWindowConfig
+        {
+            [JsonProperty("deploy_window_in_seconds")] public int DeployWindowInSeconds;
+        }
+
         /// <summary>
         ///     Deploys the complete set of outfits for a user to the Catalyst network.
         ///     Multiple rapid calls are coalesced: only the latest state is deployed,
@@ -61,6 +81,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
             currentOutfits = outfits;
             currentVersion++;
+            var deployWindow = (ulong)deployWindowInSeconds;
 
             if (currentResolutionTask != null)
             {
@@ -72,7 +93,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
             try
             {
-                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, DEPLOY_WINDOW_IN_SECONDS);
+                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, deployWindow);
 
                 int localVersion;
 
@@ -81,7 +102,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
                     localVersion = currentVersion;
                     List<OutfitItem> localOutfits = currentOutfits!;
 
-                    await UniTask.Delay(TimeSpan.FromSeconds(DEPLOY_WINDOW_IN_SECONDS - passedTimeSinceLastDeployment), cancellationToken: ct);
+                    await UniTask.Delay(TimeSpan.FromSeconds(deployWindow - (double)passedTimeSinceLastDeployment), cancellationToken: ct);
 
                     INftNamesProvider.PaginatedNamesResponse namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
 
