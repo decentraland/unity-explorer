@@ -1,10 +1,6 @@
 using Cysharp.Threading.Tasks;
-
-#if !NO_LIVEKIT_MODE
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
-#endif
-
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -50,7 +46,6 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
-
 #if !NO_LIVEKIT_MODE
         private readonly IChatEventBus chatEventBus;
 #endif
@@ -89,11 +84,9 @@ namespace DCL.UI
 
         public CommunityPlayerEntryContextMenu(
             ObjectProxy<IFriendsService> friendServiceProxy,
-
 #if !NO_LIVEKIT_MODE
             IChatEventBus chatEventBus,
 #endif
-
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -389,7 +382,7 @@ namespace DCL.UI
                                                                                          BAN_MEMBER_CONFIRM_TEXT,
                                                                                          voiceChatContextMenuSettings.BanUserPopupSprite,
                                                                                          false, false,
-                                                                                         userInfo: new Profile.CompactInfo(walletId, participant.Name.Value ?? string.Empty, participant.HasClaimedName.Value ?? false, participant.ProfilePictureUrl.Value ?? string.Empty)),
+                                                                                         userInfo: participant.Profile),
                                                                                      ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

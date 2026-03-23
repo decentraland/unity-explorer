@@ -8,7 +8,7 @@ namespace DCL.WebRequests
     public enum WRThreadFlags
     {
         /// <summary>
-        ///     Switch to the thread pool for deserialization
+        ///     Switch to ThreadPool for deserialization
         /// </summary>
         SwitchToThreadPool = 1,
 

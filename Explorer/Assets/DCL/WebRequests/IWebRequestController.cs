@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Utility.Types;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -24,7 +23,7 @@ namespace DCL.WebRequests
 #if UNITY_EDITOR
         public static int TOTAL_BUDGET = 15;
 
-        public static readonly IWebRequestController DEFAULT = new WebRequestController(
+        public static readonly IWebRequestController TEST = new WebRequestController(
             IWebRequestsAnalyticsContainer.TEST,
             new IWeb3IdentityCache.Default(),
             new RequestHub(
@@ -33,8 +32,6 @@ namespace DCL.WebRequests
             new WebRequestBudget(TOTAL_BUDGET,
                 new ElementBinding<ulong>((ulong)TOTAL_BUDGET))
         );
-
-        public static readonly IWebRequestController TEST = DEFAULT;
 #endif
     }
 }

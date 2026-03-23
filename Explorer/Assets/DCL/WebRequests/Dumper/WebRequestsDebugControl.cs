@@ -1,4 +1,4 @@
-using CodeLess.Attributes;
+﻿using CodeLess.Attributes;
 
 namespace DCL.WebRequests.Dumper
 {

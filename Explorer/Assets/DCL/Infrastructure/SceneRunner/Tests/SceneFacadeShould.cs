@@ -106,7 +106,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
-                IWebRequestController.DEFAULT,
+                IWebRequestController.TEST ,
 #if !NO_LIVEKIT_MODE
                 NullRoomHub.INSTANCE,
 #endif
