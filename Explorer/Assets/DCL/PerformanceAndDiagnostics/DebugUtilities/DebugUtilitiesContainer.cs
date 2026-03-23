@@ -1,4 +1,4 @@
-using DCL.DebugUtilities.Views;
+﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;

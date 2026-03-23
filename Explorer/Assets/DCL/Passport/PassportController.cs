@@ -660,18 +660,17 @@ namespace DCL.Passport
                     characterPreviewController!.OnBeforeShow();
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0,
-
+                Profile? profile = await profileRepository.GetAsync(
+                    userId,
+                    0,
 #if !NO_LIVEKIT_MODE
-                        remoteMetadata.GetLambdaDomainOrNull(userId),
+                    remoteMetadata.GetLambdaDomainOrNull(userId),
 #else
-                        null,
+                    null,
 #endif
-
-                        ct,
-                        getFromCacheIfPossible: false,
-                        batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED
-                        );
+                    ct,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED
+                    );
 
                 if (profile == null)
                     return;

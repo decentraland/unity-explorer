@@ -31,6 +31,27 @@ DebugWidget {
     padding-bottom: 2px;
 }
 
+#DebugWebRequestItem {
+    border-bottom-color: rgb(82, 82, 82);
+    border-bottom-width: 1px;
+    border-left-color: rgb(82, 82, 82);
+    border-right-color: rgb(82, 82, 82);
+    border-top-color: rgb(82, 82, 82);
+}
+
+#DebugWebRequestItem > #URL {
+    cursor: link;
+    color: #292aff;
+}
+
+#DebugWebRequestItem.warning {
+    background-color: rgb(253, 190, 70);
+}
+
+#DebugWebRequestItem.error {
+    background-color: rgb(245, 72, 78);
+}
+
 #DebugButton {
     align-self: stretch;
 }
@@ -89,7 +110,6 @@ DebugControl > #Right {
 
 DebugHintElement.debug-hint--before {
     margin-bottom: -4px;
-
     padding-bottom: 2px;
     border-radius: 0;
     border-top-left-radius: 3px;
@@ -103,7 +123,6 @@ DebugHintElement.debug-hint--before {
 
 DebugHintElement.debug-hint--after {
     margin-top: -4px;
-
     padding-bottom: 2px;
     border-radius: 0;
     border-bottom-left-radius: 3px;
@@ -129,7 +148,23 @@ DebugHintElement > #Sign {
 
 .unity-foldout__toggle > .unity-toggle__input > .unity-foldout__checkmark {
     -unity-background-image-tint-color: white;
-    margin-left: 0px;
+    margin-left: 0;
+}
+
+#DebugInnerFoldout.unity-foldout {
+    padding-left: 1px;
+}
+
+#DebugInnerFoldout.unity-foldout .unity-foldout__text {
+    -unity-font-style: bold;
+    font-size: 94%;
+    -unity-font-definition: url("project://database/Assets/DCL/UIToolkit/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&guid=b7c607f38bada4c96aa322fe8add23f9&type=3#NotInter-Regular");
+    -unity-text-outline-width: 0;
+    color: rgb(207, 207, 207);
+}
+
+#DebugInnerFoldout.unity-foldout .unity-foldout__checkmark {
+    -unity-background-image-tint-color: rgb(207, 207, 207);
 }
 
 .unity-foldout__toggle {
@@ -161,7 +196,7 @@ DebugToggleElement > .unity-toggle #unity-checkmark {
 }
 
 DropdownField {
-    margin: 0;    
+    margin: 0;
 }
 
 DropdownField > VisualElement {
@@ -174,7 +209,7 @@ DropdownField > VisualElement {
 }
 
 .unity-base-popup-field__text {
-    color: #2e2e2e; 
+    color: rgb(46, 46, 46);
     margin: 1px;
     padding: 0;
 }
@@ -201,7 +236,7 @@ DropdownField > VisualElement {
 .unity-text-element--inner-input-field-component {
     padding: 0;
     margin: 0;
-    color: #2e2e2e;
+    color: rgb(46, 46, 46);
     -unity-text-align: middle-right;
     font-size: 11px;
 }
@@ -225,7 +260,7 @@ DropdownField > VisualElement {
     background-color: rgba(255, 255, 255, 0.75);
     border-radius: 3px;
     border-width: 0;
-    color: #2e2e2e;
+    color: rgb(46, 46, 46);
     font-size: 11px;
     -unity-font-style: normal;
 }
@@ -256,23 +291,23 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 }
 
 .debug-hint--info > #Sign {
-    background-image: url('project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/info.png');
+    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/info.png?fileID=21300000&guid=b4bc39df09b8ec24eb8dedf59c9d93f4&type=3#info");
 }
 
 .debug-hint--warning > Label {
-    color: #fdbe46;
+    color: rgb(253, 190, 70);
 }
 
 .debug-hint--warning > #Sign {
-    background-image: url('project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/warning.png');
+    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/warning.png?fileID=21300000&guid=9efda222ae9055341af5cea4e3d1930c&type=3#warning");
 }
 
 .debug-hint--error > Label {
-    color: #f5484e;
+    color: rgb(245, 72, 78);
 }
 
 .debug-hint--error > #Sign {
-    background-image: url('project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/error.png');
+    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/error.png?fileID=21300000&guid=66188f3b6d3dccc45bf836b7232d0ebb&type=3#error");
 }
 
 .unity-slider {
@@ -301,31 +336,29 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 }
 
 .unity-scroller {
-
     width: 12px;
 }
 
 .unity-base-slider__dragger {
     width: 12px;
     border-radius: 4px;
-    border-width: 0px;
-    left: 0px;
- }
+    border-width: 0;
+    left: 0;
+}
 
 .unity-base-field__label {
     min-width: 12px;
 }
 
-/* Average FPS banner styles */
-.avg-fps-banner { 
+.avg-fps-banner {
     flex-direction: row;
     border-radius: 6px;
-    background-color: #ffffff;
+    background-color: rgb(255, 255, 255);
     padding: 5px;
     width: 100%;
 }
 
-.avg-fps-banner__column { 
+.avg-fps-banner__column {
     flex-direction: column;
     width: 50%;
 }
@@ -336,39 +369,41 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     font-size: 18px;
     -unity-text-align: middle-left;
 }
+
 .avg-fps-banner__frames-window-label {
     font-size: 12px;
-    color: #807f7f;
+    color: rgb(128, 127, 127);
     -unity-text-align: middle-left;
 }
 
-.avg-fps-banner__fps { 
+.avg-fps-banner__fps {
     -unity-font-style: bold;
     font-size: 18px;
-    color: #2ecc71; 
+    color: rgb(46, 204, 113);
     -unity-text-align: middle-right;
 }
-.avg-fps-banner__ms { 
+
+.avg-fps-banner__ms {
     font-size: 14px;
-    color: #2ecc71;
+    color: rgb(46, 204, 113);
     -unity-text-align: middle-right;
     white-space: nowrap;
 }
 
 .avg-fps-banner--good {
-    border-left-color: #2ecc71;
+    border-left-color: rgb(46, 204, 113);
     border-left-width: 4px;
     border-left-style: solid;
 }
 
 .avg-fps-banner--normal {
-    border-left-color: #f1c40f;
+    border-left-color: rgb(241, 196, 15);
     border-left-width: 4px;
     border-left-style: solid;
 }
 
 .avg-fps-banner--bad {
-    border-left-color: #e74c3c;
+    border-left-color: rgb(231, 76, 60);
     border-left-width: 4px;
     border-left-style: solid;
 }
