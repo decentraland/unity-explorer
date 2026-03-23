@@ -145,6 +145,7 @@ namespace DCL.Chat.ChatReactions
 
         private void OnSelectorReactionClicked(int atlasIndex)
         {
+            HideEmojiPanel();
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
         }
