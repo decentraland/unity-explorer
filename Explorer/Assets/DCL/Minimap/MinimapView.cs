@@ -102,12 +102,5 @@ namespace DCL.Minimap
 
         private void OnUnHoverMap() =>
             minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
-
-        [Serializable]
-        public struct ContextMenuConfig
-        {
-            public Sprite copyLinkIcon;
-            public Button button;
-        }
     }
 }

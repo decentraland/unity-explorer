@@ -1,5 +1,3 @@
-#if !NO_LIVEKIT_MODE
-
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
@@ -121,7 +119,8 @@ namespace DCL.Multiplayer.SDK.Tests
         private class FakeEmoteStorage : IEmoteStorage
         {
             internal readonly Dictionary<URN, IEmote> emotes = new ();
-            public List<URN> EmbededURNs { get; }
+
+            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
 
             public bool TryGetElement(URN urn, out IEmote element)
             {
@@ -160,11 +159,6 @@ namespace DCL.Multiplayer.SDK.Tests
                 throw new NotImplementedException();
             }
 
-            public void AddEmbeded(URN urn, IEmote emote)
-            {
-                throw new NotImplementedException();
-            }
-
             public bool TryGetLatestTransferredAt(URN nftUrn, out DateTime latestTransferredAt)
             {
                 throw new NotImplementedException();
@@ -177,12 +171,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
             public IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> AllOwnedNftRegistry { get; }
 
-            public IReadOnlyList<URN> BaseEmotesUrns => throw new NotImplementedException();
-
             public void SetBaseEmotesUrns(IReadOnlyCollection<URN> urns) =>
                 throw new NotImplementedException();
         }
     }
 }
-
-#endif
