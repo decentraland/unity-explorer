@@ -59,7 +59,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ServerMessage.MessageOneofCase.PlayerJoined] = CreatePool<PlayerJoined>((packet, mes) => packet.PlayerJoined = mes),
             [ServerMessage.MessageOneofCase.PlayerStateDelta] = CreatePool<PlayerStateDeltaTier0>((packet, mes) => packet.PlayerStateDelta = mes),
             [ServerMessage.MessageOneofCase.PlayerStateFull] = CreatePool<PlayerStateFull>((packet, mes) => packet.PlayerStateFull = mes),
-            [ServerMessage.MessageOneofCase.PlayerLeft] = CreatePool<PlayerLeft>((packet, mes) => packet.PlayerLeft = mes)
+            [ServerMessage.MessageOneofCase.PlayerLeft] = CreatePool<PlayerLeft>((packet, mes) => packet.PlayerLeft = mes),
+            [ServerMessage.MessageOneofCase.PlayerProfileVersionAnnounced] = CreatePool<PlayerProfileVersionsAnnounced>((packet, mes) => packet.PlayerProfileVersionAnnounced = mes),
         };
 
         public ServerMessage Get(ServerMessage.MessageOneofCase kind) =>

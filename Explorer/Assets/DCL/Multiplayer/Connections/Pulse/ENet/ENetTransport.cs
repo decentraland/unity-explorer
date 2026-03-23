@@ -158,6 +158,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                 case EventType.Disconnect:
                     serverPeer = null;
+                    lifeCycleCts.SafeCancelAndDispose();
                     break;
 
                 case EventType.Timeout:
