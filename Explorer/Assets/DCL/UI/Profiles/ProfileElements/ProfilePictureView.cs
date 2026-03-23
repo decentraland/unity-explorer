@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using MVC;
@@ -52,16 +53,6 @@ namespace DCL.UI.ProfileElements
         public event Action? PointerEnter;
         public event Action? PointerExit;
 
-        public void Bind(IReactiveProperty<ProfileThumbnailViewModel.WithColor> viewModelProp)
-        {
-            binding?.Dispose();
-
-            viewModelProp.UpdateValue(viewModelProp.Value.SetProfile(viewModelProp.Value.Thumbnail.TryBind()));
-
-            OnThumbnailWithColorUpdated(viewModelProp.Value);
-            binding = viewModelProp.Subscribe(OnThumbnailWithColorUpdated);
-        }
-
         public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp)
         {
             // Unbind previous binding if exists
@@ -73,27 +64,10 @@ namespace DCL.UI.ProfileElements
             binding = viewModelProp.Subscribe(OnThumbnailUpdated);
         }
 
-        public void Bind(IReactiveProperty<ProfileThumbnailViewModel> viewModelProp, Color userNameColor)
-        {
-            // Unbind previous binding if exists
-            binding?.Dispose();
-
-            viewModelProp.UpdateValue(viewModelProp.Value.TryBind());
-
-            SetBaseBackgroundColor(userNameColor);
-
-            OnThumbnailUpdated(viewModelProp.Value);
-            binding = viewModelProp.Subscribe(OnThumbnailUpdated);
-        }
-
-        private void OnThumbnailWithColorUpdated(ProfileThumbnailViewModel.WithColor model)
-        {
-            SetBaseBackgroundColor(model.ProfileColor);
-            OnThumbnailUpdated(model.Thumbnail);
-        }
-
         private void OnThumbnailUpdated(ProfileThumbnailViewModel model)
         {
+            SetBaseBackgroundColor(model.ProfileColor);
+
             switch (model.ThumbnailState)
             {
                 case ProfileThumbnailViewModel.State.LOADING:
@@ -135,7 +109,7 @@ namespace DCL.UI.ProfileElements
         }
 
         [Obsolete("Use " + nameof(Bind) + " instead.")]
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, in DCL.Profiles.Profile.CompactInfo profile)
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, in Profile.CompactInfo profile)
         {
             profileRepositoryWrapper = profileDataProvider;
             SetBackgroundColor(profile.UserNameColor);
