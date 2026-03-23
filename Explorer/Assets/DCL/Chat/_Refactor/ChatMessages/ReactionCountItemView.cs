@@ -9,9 +9,6 @@ namespace DCL.Chat.ChatMessages
 {
     public class ReactionCountItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private static readonly Vector3 HOVERED_SCALE = new (1.2f, 1.2f, 1.2f);
-        private const float ANIM_DURATION = 0.1f;
-
         [SerializeField] private RectTransform contentContainer;
         [SerializeField] private RawImage emojiImage;
         [SerializeField] private TextMeshProUGUI countLabel;
@@ -20,6 +17,8 @@ namespace DCL.Chat.ChatMessages
         [SerializeField] private Color defaultColor = new (0.2f, 0.2f, 0.2f, 0.8f);
         [SerializeField] private Color highlightedColor = new (0.3f, 0.2f, 0.5f, 0.8f);
 
+        private Vector3 hoveredScale = new (1.2f, 1.2f, 1.2f);
+        private float animDuration = 0.1f;
         private int emojiIndex;
 
         public event Action<int>? OnClicked;
@@ -27,6 +26,12 @@ namespace DCL.Chat.ChatMessages
         public event Action<int>? OnHoverExit;
 
         public int EmojiIndex => emojiIndex;
+
+        public void Configure(float hoverScale, float hoverAnimDuration)
+        {
+            hoveredScale = new Vector3(hoverScale, hoverScale, hoverScale);
+            animDuration = hoverAnimDuration;
+        }
 
         public void SetInteractable(bool interactable)
         {
@@ -51,13 +56,13 @@ namespace DCL.Chat.ChatMessages
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            contentContainer.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
+            contentContainer.DOScale(hoveredScale, animDuration).SetEase(Ease.OutQuad);
             OnHoverEnter?.Invoke(emojiIndex, (RectTransform)transform);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            contentContainer.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
+            contentContainer.DOScale(Vector3.one, animDuration).SetEase(Ease.OutQuad);
             OnHoverExit?.Invoke(emojiIndex);
         }
 

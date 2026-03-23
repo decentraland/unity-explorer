@@ -33,6 +33,8 @@ namespace DCL.Chat.ChatMessages
 
         private ChatReactionsAtlasConfig? reactionsAtlasConfig;
         private string? ownWalletAddress;
+        private float hoverScale = 1.2f;
+        private float hoverAnimDuration = 0.1f;
         private string? dmPartnerWallet;
 
         // View models are reused and set
@@ -104,10 +106,13 @@ namespace DCL.Chat.ChatMessages
             dmPartnerWallet = wallet;
         }
 
-        public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress)
+        public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress,
+            float hoverScale, float hoverAnimDuration)
         {
             reactionsAtlasConfig = atlasConfig;
             ownWalletAddress = walletAddress;
+            this.hoverScale = hoverScale;
+            this.hoverAnimDuration = hoverAnimDuration;
         }
 
         private void ChatScrollToBottomToBottomClicked()
@@ -273,7 +278,8 @@ namespace DCL.Chat.ChatMessages
 
                 if (itemScript.messageReactionsView != null && reactionsAtlasConfig != null)
                 {
-                    itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty);
+                    itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty,
+                        hoverScale, hoverAnimDuration);
                     itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
                     itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
 

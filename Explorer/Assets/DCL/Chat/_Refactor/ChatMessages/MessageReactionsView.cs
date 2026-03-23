@@ -23,6 +23,8 @@ namespace DCL.Chat.ChatMessages
 
         private ChatReactionsAtlasConfig? atlasConfig;
         private string? ownWalletAddress;
+        private float hoverScale = 1.2f;
+        private float hoverAnimDuration = 0.1f;
 
         // Captured once in Awake from prefab-authored row positions.
         private float bottomRowY;
@@ -50,10 +52,13 @@ namespace DCL.Chat.ChatMessages
             topRowY = Mathf.Max(row1.anchoredPosition.y, row2.anchoredPosition.y);
         }
 
-        public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress)
+        public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
+            float hoverScale, float hoverAnimDuration)
         {
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
+            this.hoverScale = hoverScale;
+            this.hoverAnimDuration = hoverAnimDuration;
         }
 
         public void UpdateReactions(ReactionSet? reactions)
@@ -112,6 +117,7 @@ namespace DCL.Chat.ChatMessages
                 bool isFirstRow = i < MAX_PER_ROW;
                 RectTransform targetRow = isFirstRow ? row1 : row2;
                 ReactionCountItemView item = GetOrCreateItem(targetRow);
+                item.Configure(hoverScale, hoverAnimDuration);
                 item.transform.SetSiblingIndex(isFirstRow ? i : i - MAX_PER_ROW);
 
                 bool isOwn = !string.IsNullOrEmpty(ownWalletAddress)

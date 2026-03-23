@@ -148,7 +148,9 @@ namespace DCL.Chat
                 reactionsConfig.MessageReactions);
 
             string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
-            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet);
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,
+                reactionsConfig.MessageReactions.HoverScale,
+                reactionsConfig.MessageReactions.HoverAnimDuration);
 
             ReactionTooltipPresenter? tooltipPresenter = null;
             if (view.ReactionTooltipView != null)

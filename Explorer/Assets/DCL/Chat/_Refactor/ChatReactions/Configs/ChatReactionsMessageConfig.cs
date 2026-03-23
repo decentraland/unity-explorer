@@ -54,6 +54,14 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 2f)]
         [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0.5f;
 
+        [field: Header("Hover")]
+        [field: Note("Scale applied to reaction count pills on pointer hover.")]
+        [field: SerializeField] public float HoverScale { get; private set; } = 1.2f;
+
+        [field: Note("Duration (seconds) of the hover scale animation on reaction count pills.")]
+        [field: Range(0f, 1f)]
+        [field: SerializeField] public float HoverAnimDuration { get; private set; } = 0.1f;
+
         [field: Header("Animations")]
         [field: Note("NOT YET WIRED UP — reaction bubble appear animation duration (seconds).")]
         [field: Range(0f, 1f)]

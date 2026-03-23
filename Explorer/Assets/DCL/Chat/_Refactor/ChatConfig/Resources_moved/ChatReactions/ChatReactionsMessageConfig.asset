@@ -18,6 +18,8 @@ MonoBehaviour:
   <MaxRecentEmojis>k__BackingField: 3
   <MaxReactionTypesPerMessage>k__BackingField: 6
   <NetworkDebounceSeconds>k__BackingField: 0.5
+  <HoverScale>k__BackingField: 1
+  <HoverAnimDuration>k__BackingField: 0.1
   <AppearDuration>k__BackingField: 0.15
   <DisappearDuration>k__BackingField: 0.1
   <CountIncrementBounceDuration>k__BackingField: 0.12
