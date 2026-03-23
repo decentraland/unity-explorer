@@ -44,6 +44,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Emotes](emotes.md)** — Emote loading, animation controllers, and pooling
 - **[Skeleton Loading Animation](skeleton-loading-animation.md)** — Bone animations for loading states
 - **[Avatar Animation for Demos](avatar-animation-for-demos.md)** — Using Unity Timeline for demo recordings
+- **[Unreleased Wearables & Emotes Preview](unreleased-wearables-emotes-preview.md)** — Builder API signing, GLTF-based loading, and self-preview collection flow
 
 ## Chat & Social
 - **[Chat](chat.md)** — Chat system architecture, state machine, and MVP structure
