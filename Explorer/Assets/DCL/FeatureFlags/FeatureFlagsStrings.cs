@@ -68,6 +68,7 @@ namespace DCL.FeatureFlags
         public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
         public const string DOUBLE_JUMP = "alfa-double-jump";
         public const string GLIDING = "alfa-gliding";
+        public const string AVATAR_GHOSTS = "alfa-avatar-ghosts";
         public const string REPORT_USER = "alfa-report-user";
 
         public static class Endpoints

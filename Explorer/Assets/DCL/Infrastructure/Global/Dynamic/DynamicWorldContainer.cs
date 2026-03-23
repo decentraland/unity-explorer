@@ -508,7 +508,6 @@ namespace Global.Dynamic
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
-                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -946,7 +945,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService
+                    worldPermissionsService,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
