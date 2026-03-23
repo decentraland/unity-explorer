@@ -88,6 +88,7 @@ namespace DCL.PluginSystem.Global
         private float startFadeDistanceDithering;
         private float endFadeDistanceDithering;
         private ReadOnlyAvatarHighlightData highlightData;
+        private Material ghostMaterial = null!;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
 
@@ -143,6 +144,7 @@ namespace DCL.PluginSystem.Global
             await CreateAvatarBasePoolAsync(settings, ct);
             await CreateNametagPoolAsync(settings, ct);
             await CreateMaterialPoolPrewarmedAsync(settings, ct);
+            ghostMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.GhostMaterial, ct)).Value;
             await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
             facialFeaturesTextures = await CreateDefaultFaceTexturesByBodyShapeAsync(settings, ct);
 
@@ -172,12 +174,20 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
+            bool includeGhosts = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_GHOSTS);
+
+            if (includeGhosts)
+                AvatarGhostSystem.InjectToWorld(ref builder, ghostMaterial);
+
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler, computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
-            AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
+
+            if (includeGhosts)
+                AvatarGhostCleanupSystem.InjectToWorld(ref builder);
+            AvatarCleanUpSystem.InjectToWorld(ref builder, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
@@ -301,6 +311,9 @@ namespace DCL.PluginSystem.Global
             private AssetReferenceMaterial? faceFeatureMaterial;
 
             [field: SerializeField]
+            private AssetReferenceMaterial? ghostMaterial;
+
+            [field: SerializeField]
             public float startFadeDistanceDithering = 2;
 
             [field: SerializeField]
@@ -328,6 +341,8 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceMaterial CelShadingMaterial => celShadingMaterial.EnsureNotNull();
 
             public AssetReferenceMaterial FaceFeatureMaterial => faceFeatureMaterial.EnsureNotNull();
+
+            public AssetReferenceMaterial GhostMaterial => ghostMaterial.EnsureNotNull();
 
             public AssetReferenceT<Texture> DefaultMaleMouthTexture;
             public AssetReferenceT<Texture> DefaultMaleEyesTexture;

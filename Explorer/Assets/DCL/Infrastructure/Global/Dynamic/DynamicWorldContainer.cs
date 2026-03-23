@@ -562,7 +562,8 @@ namespace Global.Dynamic
             IEventBus emotesEventBus = new EventBus(true);
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
-            var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
+            var initializationFlowContainer = InitializationFlowContainer.Create(
+                staticContainer,
                 bootstrapContainer,
                 realmContainer,
                 realmNavigator,
@@ -572,7 +573,6 @@ namespace Global.Dynamic
 #if !NO_LIVEKIT_MODE
                 livekitHealthCheck,
 #endif
-                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -1047,7 +1047,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService
+                    worldPermissionsService,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
 #endif
 

@@ -106,7 +106,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8ec9ea2c5325c7ef6ca5afada5f2b9b7271b60e3"
+      "hash": "6e25bbeb62282d12580e23793036693f400ed91e"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",

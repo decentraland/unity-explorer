@@ -112,8 +112,18 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
-                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                    if (creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
+                        && creationHelper.InitialSceneStateLOD.ParentContainer != null)
+                    {
+                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                            PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
+                                creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                        else
+                        {
+                            ReportHub.LogWarning(GetReportData(), $"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct");
+                            creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                        }
+                    }
                     else
                     {
                         ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
@@ -155,10 +165,12 @@ namespace DCL.LOD.Systems
             InitialSceneStateLOD = initialSceneStateLOD;
             AssetHash = assetHash;
             IndexToCreate = indexToCreate;
+            Generation = initialSceneStateLOD.Generation;
         }
 
-        public InitialSceneStateLOD InitialSceneStateLOD { get;  }
-        public string AssetHash { get;  }
+        public InitialSceneStateLOD InitialSceneStateLOD { get; }
+        public string AssetHash { get; }
         public int IndexToCreate { get; }
+        public int Generation { get; }
     }
 }

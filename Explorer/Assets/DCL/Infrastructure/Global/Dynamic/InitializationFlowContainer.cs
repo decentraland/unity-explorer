@@ -39,7 +39,6 @@ namespace DCL.UserInAppInitializationFlow
 #if !NO_LIVEKIT_MODE
             IHealthCheck liveKitHealthCheck,
 #endif
-            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
@@ -64,11 +63,8 @@ namespace DCL.UserInAppInitializationFlow
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
 #endif
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
-
             var loadingOperations = new List<IStartupOperation>()
             {
 
@@ -116,35 +112,32 @@ namespace DCL.UserInAppInitializationFlow
 
             return new InitializationFlowContainer
             {
-                InitializationFlow = new RealUserInAppInitializationFlow(
-                        loadingStatus: loadingStatus,
-                        decentralandUrlsSource: bootstrapContainer.DecentralandUrlsSource,
-                        mvcManager: mvcManager,
-                        backgroundMusic: backgroundMusic,
-                        realmNavigator: realmNavigator,
-                        loadingScreen: loadingScreen,
-                        realmController: realmContainer.RealmController,
-                        portableExperiencesController: staticContainer.PortableExperiencesController,
+                InitializationFlow = new RealUserInAppInitializationFlow(loadingStatus,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    mvcManager,
+                    backgroundMusic,
+                    realmNavigationContainer.RealmNavigator,
+                    loadingScreen,
+                    realmContainer.RealmController,
+                    staticContainer.PortableExperiencesController,
 #if !NO_LIVEKIT_MODE
-                        roomHub,
+                    roomHub,
 #endif
-                        initOps: startUpOps,
-                        reloginOps: reLoginOps,
-                        checkOnboardingStartupOperation: checkOnboardingStartupOperation,
-                        identityCache: bootstrapContainer.IdentityCache.EnsureNotNull(),
-
+                    startUpOps,
+                    reLoginOps,
+                    bootstrapContainer.IdentityCache.EnsureNotNull(),
 #if !NO_LIVEKIT_MODE
-                        ensureLivekitConnectionStartupOperation,
+                    ensureLivekitConnectionStartupOperation,
 #endif
-
-                        appArgs: appArgs,
-                        characterObject: characterContainer.CharacterObject,
-                        characterExposedTransform: characterContainer.Transform,
-                        startParcel: dynamicWorldParams.StartParcel
+                    appArgs,
+                    characterContainer.CharacterObject,
+                    characterContainer.Transform,
+                    dynamicWorldParams.StartParcel
 #if !UNITY_WEBGL
-                            , localSceneDevelopment
+                  , localSceneDevelopment
 #endif
-                            ),
+
+                    ),
             };
         }
     }

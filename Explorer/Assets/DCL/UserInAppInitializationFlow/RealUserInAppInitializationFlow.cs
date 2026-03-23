@@ -50,7 +50,6 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
         private readonly IPortableExperiencesController portableExperiencesController;
-        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
 
@@ -80,7 +79,6 @@ namespace DCL.UserInAppInitializationFlow
 #endif
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
-            CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
 #if !NO_LIVEKIT_MODE
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
@@ -96,7 +94,6 @@ namespace DCL.UserInAppInitializationFlow
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
-            this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
 #if !NO_LIVEKIT_MODE
             this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
@@ -197,10 +194,6 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            // We need to do this before livekit because there is a realm change in this operation
-                            // and we need to ensure that livekit connects to the correct endpoint
-                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
-
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
                                 = characterObject.Controller.transform.position
@@ -272,8 +265,6 @@ namespace DCL.UserInAppInitializationFlow
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
-
-            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
 
         // TODO should be an operation
