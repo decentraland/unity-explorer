@@ -125,7 +125,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 {
                     bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                         ViewDependencies.ConfirmationDialogOpener,
-                        userProfile.Name,
                         view.ContextMenuSettings.ReportSprite,
                         ReportCategory.FRIENDS,
                         ct);

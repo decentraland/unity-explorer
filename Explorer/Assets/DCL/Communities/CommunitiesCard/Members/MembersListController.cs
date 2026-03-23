@@ -260,7 +260,6 @@ namespace DCL.Communities.CommunitiesCard.Members
                 {
                     bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                         ViewDependencies.ConfirmationDialogOpener,
-                        memberData.Name,
                         view.contextMenuSettings.ReportSprite,
                         ReportCategory.PROFILE,
                         ct);

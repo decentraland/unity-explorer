@@ -968,7 +968,6 @@ namespace DCL.Passport
                 {
                     bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                         ViewDependencies.ConfirmationDialogOpener,
-                        targetProfile!.Name,
                         viewInstance!.ReportSprite,
                         ReportCategory.PROFILE,
                         ct);
@@ -980,7 +979,7 @@ namespace DCL.Passport
 
                     webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
                         ownProfile != null ? ownProfile.UserId : string.Empty,
-                        targetProfile.UserId));
+                        targetProfile!.UserId));
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }

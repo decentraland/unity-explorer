@@ -396,7 +396,6 @@ namespace DCL.UI
                 {
                     bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                         ViewDependencies.ConfirmationDialogOpener,
-                        targetProfile.Name,
                         contextMenuSettings.ReportButtonConfig.Sprite,
                         ReportCategory.PROFILE,
                         ct);
