@@ -1053,7 +1053,7 @@ namespace Global.Dynamic
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
                 new JumpIndicatorPlugin(assetsProvisioner),
-                new SpringBonesPlugin()
+                new SpringBonesPlugin(assetsProvisioner),
             };
 
             if (donationsService.DonationFeatureEnabled)
