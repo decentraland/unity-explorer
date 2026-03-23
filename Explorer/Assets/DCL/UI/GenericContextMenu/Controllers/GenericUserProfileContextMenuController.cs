@@ -30,7 +30,7 @@ using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
 using DCL.Profiles.Self;
-using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.ConfirmationDialog;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -387,31 +387,16 @@ namespace DCL.UI
         private void OnReportUserClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            ShowReportConfirmationDialogAsync(userId, cancellationTokenSource.Token).Forget();
-            return;
 
-            async UniTask ShowReportConfirmationDialogAsync(string reportedUserId, CancellationToken ct)
-            {
-                try
-                {
-                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                        ViewDependencies.ConfirmationDialogOpener,
-                        contextMenuSettings.ReportModalSprite,
-                        ReportCategory.PROFILE,
-                        ct);
-
-                    if (!confirmed)
-                        return;
-
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                        ownProfile != null ? ownProfile.UserId : string.Empty,
-                        reportedUserId));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-            }
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                contextMenuSettings.ReportModalSprite,
+                ReportCategory.PROFILE,
+                userId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                cancellationTokenSource.Token).Forget();
         }
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile.CompactInfo profile)

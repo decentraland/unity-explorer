@@ -48,7 +48,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
 using UnityEngine;
@@ -959,31 +959,16 @@ namespace DCL.Passport
         private void ReportUserClicked()
         {
             reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
-            ShowReportConfirmationDialogAsync(reportConfirmationDialogCts.Token).Forget();
-            return;
 
-            async UniTask ShowReportConfirmationDialogAsync(CancellationToken ct)
-            {
-                try
-                {
-                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                        ViewDependencies.ConfirmationDialogOpener,
-                        viewInstance!.ReportSprite,
-                        ReportCategory.PROFILE,
-                        ct);
-
-                    if (!confirmed)
-                        return;
-
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                        ownProfile != null ? ownProfile.UserId : string.Empty,
-                        targetProfile!.UserId));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
-            }
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                viewInstance!.ReportSprite,
+                ReportCategory.PROFILE,
+                targetProfile!.UserId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void ShowMutualFriends()

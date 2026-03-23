@@ -18,6 +18,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using Utility;
@@ -82,6 +83,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? rejectCommunityInvitationCts;
         private CancellationTokenSource? loadResultsCts;
         private CancellationTokenSource? manageRequestReceivedCts;
+        private CancellationTokenSource? reportConfirmationDialogCts;
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
@@ -208,6 +210,7 @@ namespace DCL.Communities.CommunitiesBrowser
             acceptCommunityInvitationCts?.SafeCancelAndDispose();
             rejectCommunityInvitationCts?.SafeCancelAndDispose();
             manageRequestReceivedCts?.SafeCancelAndDispose();
+            reportConfirmationDialogCts?.SafeCancelAndDispose();
 
             view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
         }
@@ -919,22 +922,17 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OpenReportUserForm(ICommunityMemberData profile)
         {
-            OpenReportUserFormAsync(profile).Forget();
-            return;
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
 
-            async UniTask OpenReportUserFormAsync(ICommunityMemberData reportedProfile, CancellationToken ct = default)
-            {
-                try
-                {
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                        ownProfile != null ? ownProfile.UserId : string.Empty,
-                        reportedProfile.Address));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
-            }
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                view.contextMenuSettings.ReportSprite,
+                ReportCategory.COMMUNITIES,
+                profile.Address,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void ManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention)

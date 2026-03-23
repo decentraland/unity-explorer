@@ -9,7 +9,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utilities.Extensions;
 using MVC;
@@ -116,31 +116,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void ReportUserClicked(Profile.CompactInfo profile)
         {
             reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
-            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
-            return;
 
-            async UniTask ShowReportConfirmationDialogAsync(Profile.CompactInfo userProfile, CancellationToken ct)
-            {
-                try
-                {
-                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                        ViewDependencies.ConfirmationDialogOpener,
-                        view.ContextMenuSettings.ReportSprite,
-                        ReportCategory.FRIENDS,
-                        ct);
-
-                    if (!confirmed)
-                        return;
-
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                        ownProfile != null ? ownProfile.UserId : string.Empty,
-                        userProfile.UserId));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.FRIENDS); }
-            }
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                view.ContextMenuSettings.ReportSprite,
+                ReportCategory.FRIENDS,
+                profile.UserId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void HandleContextMenuUserProfileButton(Profile.CompactInfo userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)

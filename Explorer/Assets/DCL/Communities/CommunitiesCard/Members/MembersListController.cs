@@ -29,7 +29,7 @@ using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.UI.ConfirmationDialog.Opener;
+using DCL.UI.ConfirmationDialog;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
@@ -251,31 +251,16 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void ReportUserClickedAsync(ICommunityMemberData profile)
         {
             reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
-            ShowReportConfirmationDialogAsync(profile, reportConfirmationDialogCts.Token).Forget();
-            return;
 
-            async UniTask ShowReportConfirmationDialogAsync(ICommunityMemberData memberData, CancellationToken ct)
-            {
-                try
-                {
-                    bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
-                        ViewDependencies.ConfirmationDialogOpener,
-                        view.ReportSprite,
-                        ReportCategory.PROFILE,
-                        ct);
-
-                    if (!confirmed)
-                        return;
-
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-
-                    webBrowser.OpenUrl(string.Format(decentralandUrlsSource.Url(DecentralandUrl.ReportUserForm),
-                        ownProfile != null ? ownProfile.UserId : string.Empty,
-                        memberData.Address));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
-            }
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                view.ReportSprite,
+                ReportCategory.COMMUNITIES,
+                profile.Address,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void OnBanUser(ICommunityMemberData profile)
