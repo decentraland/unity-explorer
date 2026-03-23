@@ -1,9 +1,9 @@
 ﻿using DCL.Chat.History;
 using DCL.Friends.UserBlocking;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
@@ -139,14 +139,14 @@ namespace DCL.Chat.ChatServices
         ///     </list>
         /// </summary>
         /// <param name="connectionState"></param>
-        private void OnRoomConnectionStateChange(ConnectionState connectionState)
+        private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
             lock (onlineParticipants)
             {
                 switch (connectionState)
                 {
-                    case ConnectionState.ConnDisconnected:
-                    case ConnectionState.ConnConnected:
+                    case LKConnectionState.ConnDisconnected:
+                    case LKConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
                         eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
                         break;

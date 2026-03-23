@@ -12,7 +12,7 @@ namespace DCL.UI.ProfileElements
         public readonly struct WithColor : IEquatable<WithColor>
         {
             public static readonly Color DEFAULT_PROFILE_COLOR = Color.white;
-
+            
             public readonly ProfileThumbnailViewModel Thumbnail;
             public readonly Color ProfileColor;
 
