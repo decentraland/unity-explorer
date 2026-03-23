@@ -381,8 +381,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 6
-    targetScene: {x: 4, y: 0}
+    initialRealm: 5
+    targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
