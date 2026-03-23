@@ -447,7 +447,7 @@ namespace DCL.Passport
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
-                    viewInstance.ReportSprite,
+                    viewInstance.ReportOptionSprite,
                     ReportUserClicked,
                     iconColor: redColor,
                     textColor: redColor));

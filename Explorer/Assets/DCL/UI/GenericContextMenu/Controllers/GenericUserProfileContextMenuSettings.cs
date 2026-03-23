@@ -8,6 +8,7 @@ namespace DCL.UI
     {
         [field: SerializeField] public GenericContextMenuControlConfig BlockButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig ReportButtonConfig { get; private set; }
+        [field: SerializeField] public Sprite ReportModalSprite { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig JumpInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig GiftInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }

@@ -75,7 +75,7 @@ namespace DCL.Communities.CommunitiesBrowser
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor)));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportOptionSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor));
         }
 
         public void Initialize()

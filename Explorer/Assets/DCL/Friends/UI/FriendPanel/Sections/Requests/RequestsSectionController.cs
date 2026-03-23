@@ -64,7 +64,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                          .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!.Value), iconColor: redColor, textColor: redColor), includeUserBlocking));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => ReportUserClicked(lastClickedProfileCtx!.Value), iconColor: redColor, textColor: redColor));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportOptionSprite, () => ReportUserClicked(lastClickedProfileCtx!.Value), iconColor: redColor, textColor: redColor));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;

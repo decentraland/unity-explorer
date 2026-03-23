@@ -113,6 +113,9 @@ namespace DCL.Passport
         public string BlockText { get; private set; } = "Block";
 
         [field: SerializeField]
+        public Sprite ReportOptionSprite { get; private set; }
+
+        [field: SerializeField]
         public Sprite ReportSprite { get; private set; }
 
         [field: SerializeField]

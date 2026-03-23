@@ -15,6 +15,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         [SerializeField] private Sprite blockSprite;
         [SerializeField] private string blockText = "Block";
         [Space(10)]
+        [SerializeField] private Sprite reportOptionSprite;
         [SerializeField] private Sprite reportSprite;
         [SerializeField] private string reportText = "Report";
 
@@ -23,6 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public string ViewProfileText => viewProfileText;
         public Sprite BlockSprite => blockSprite;
         public string BlockText => blockText;
+        public Sprite ReportOptionSprite => reportOptionSprite;
         public Sprite ReportSprite => reportSprite;
         public string ReportText => reportText;
     }
