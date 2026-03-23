@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Chat.History
 {
@@ -102,8 +103,8 @@ namespace DCL.Chat.History
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
             chatHistory.ChannelCleared += OnChatHistoryChannelCleared;
 
-            UniTask.RunOnThreadPool(() => ProcessQueueAsync(cts.Token)).Forget();
-            UniTask.RunOnThreadPool(() => CheckChannelFileTimeoutsAsync(cts.Token)).Forget();
+            DCLTask.RunOnThreadPool(() => ProcessQueueAsync(cts.Token)).Forget();
+            DCLTask.RunOnThreadPool(() => CheckChannelFileTimeoutsAsync(cts.Token)).Forget();
         }
 
         /// <summary>
