@@ -902,6 +902,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        ghostMaterial:
+          m_AssetGUID: 2bd30078b12df4679bed329bf3c002ad
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         startFadeDistanceDithering: 0.42
         endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100

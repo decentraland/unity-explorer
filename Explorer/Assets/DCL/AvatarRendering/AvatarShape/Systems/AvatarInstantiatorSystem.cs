@@ -49,6 +49,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
+        private readonly bool pointAtFeatureEnabled;
+        private readonly bool headSyncFeatureEnabled;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
@@ -76,6 +78,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
             for (var i = 0; i < facialFeaturesTexturesByBodyShapeCopy.Length; i++)
                 facialFeaturesTexturesByBodyShapeCopy[i] = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>());
+
+            pointAtFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
+            headSyncFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
         }
 
         protected override void OnDispose()
@@ -85,46 +90,56 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            EnsureAvatarBaseQuery(World);
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(AvatarBase))]
+        private void EnsureAvatarBase(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
-
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
-
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             Transform avatarTransform = avatarBase.transform;
+            avatarTransform.SetParent(transformComponent.Transform, false);
+            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
-            if (transformComponent.Transform != null)
+            for (var index = 0; index < children.Value.Count; index++)
             {
-                avatarTransform.SetParent(transformComponent.Transform, false);
+                Transform child = children.Value[index];
 
-                using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-                for (var index = 0; index < children.Value.Count; index++)
-                {
-                    Transform child = children.Value[index];
-
-                    if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
-                }
+                if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
             }
 
             avatarTransform.ResetLocalTRS();
+
+            // Initialize breathing bridge NOW, while bones are still in rest pose.
+            // Once the AvatarBase is added to the entity and the Animator runs,
+            // bone rotations will reflect the idle animation, not the bind pose.
+            if (pointAtFeatureEnabled)
+                avatarBase.AdditiveBreathBridge.Initialize(
+                    avatarBase.RightArmAnchorPoint,
+                    avatarBase.RightForearmAnchorPoint,
+                    avatarBase.RightHandAnchorPoint);
+
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
+        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
+
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
 
             var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
-
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
 
             EnableRigsByFeatureFlags(avatarBase);
 
@@ -133,37 +148,31 @@ namespace DCL.AvatarRendering.AvatarShape
             // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
             avatarBase.FeetIKRig.enabled = false;
 
-            return avatarBase;
+            World.Add(entity, avatarTransformMatrixComponent, skinningComponent);
+
+            return true;
         }
 
         private void EnableRigsByFeatureFlags(AvatarBase avatarBase)
         {
-            // Only enable the rig if head-sync is enabled
-            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
-            bool pointAtEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
+            // Bridge initialization is done in EnsureAvatarBase (must happen before Animator runs
+            // so bind pose rotations are captured from rest pose, not animated pose).
+            // RigBuilder.enabled triggers Build() → binder.Create() which reads the NativeArrays,
+            // so Initialize() must have been called before this point.
 
-            // Initialize the bridge BEFORE enabling the RigBuilder.
-            // RigBuilder.enabled triggers Build() which runs binder.Create() — the binders
-            // read Bridge.CachedRotations/BindPoseRotations, so the NativeArrays must exist first.
-            if (pointAtEnabled)
-                avatarBase.AdditiveBreathBridge.Initialize(
-                    avatarBase.RightArmAnchorPoint,
-                    avatarBase.RightForearmAnchorPoint,
-                    avatarBase.RightHandAnchorPoint);
-
-            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC) || pointAtEnabled;
-            avatarBase.HandsIKRig.enabled = pointAtEnabled;
-            avatarBase.TorsoIKRig.enabled = pointAtEnabled;
-            avatarBase.CachePoseRig.enabled = pointAtEnabled;
-            avatarBase.AdditiveBreathRig.enabled = pointAtEnabled;
+            avatarBase.RigBuilder.enabled = headSyncFeatureEnabled || pointAtFeatureEnabled;
+            avatarBase.HandsIKRig.enabled = pointAtFeatureEnabled;
+            avatarBase.TorsoIKRig.enabled = pointAtFeatureEnabled;
+            avatarBase.CachePoseRig.enabled = pointAtFeatureEnabled;
+            avatarBase.AdditiveBreathRig.enabled = pointAtFeatureEnabled;
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
-        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
+            if (!InstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
 
             if (avatarBase != null)
             {
