@@ -3,6 +3,22 @@ using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
+    public readonly struct TooltipPositioningConfig
+    {
+        public readonly Vector2 Offset;
+        public readonly float ArrowMinX;
+        public readonly float ArrowMaxX;
+        public readonly float ArrowXOffset;
+
+        public TooltipPositioningConfig(Vector2 offset, float arrowMinX, float arrowMaxX, float arrowXOffset)
+        {
+            Offset = offset;
+            ArrowMinX = arrowMinX;
+            ArrowMaxX = arrowMaxX;
+            ArrowXOffset = arrowXOffset;
+        }
+    }
+
     /// <summary>
     /// Settings for per-message emoji reactions shown inline in the chat feed
     /// (similar to Discord / Slack message reactions).
@@ -58,5 +74,23 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Header("Emoji Panel Positioning")]
         [field: Note("Offset applied to the + button position when opening the emoji panel from reactions.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 0f);
+
+        [field: Header("Tooltip Positioning")]
+        [field: Note("Offset applied when positioning the tooltip above a reaction pill. " +
+                     "X keeps the tooltip centered (typically 0), Y is the gap above the pill.")]
+        [field: SerializeField] public Vector2 TooltipOffset { get; private set; } = new (0f, 12f);
+
+        [field: Note("Minimum local X for the tooltip arrow (clamps to left edge of tooltip background).")]
+        [field: SerializeField] public float TooltipArrowMinX { get; private set; } = -140f;
+
+        [field: Note("Maximum local X for the tooltip arrow (clamps to right edge of tooltip background).")]
+        [field: SerializeField] public float TooltipArrowMaxX { get; private set; } = 140f;
+
+        [field: Note("Extra X offset added to the arrow position after centering on the pill. " +
+                     "Use to fine-tune alignment if the arrow doesn't point at the pill center.")]
+        [field: SerializeField] public float TooltipArrowXOffset { get; private set; } = 0f;
+
+        public TooltipPositioningConfig TooltipConfig =>
+            new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
     }
 }

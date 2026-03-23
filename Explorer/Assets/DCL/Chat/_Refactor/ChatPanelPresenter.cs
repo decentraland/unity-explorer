@@ -158,6 +158,7 @@ namespace DCL.Chat
                     profileCache,
                     profileRepositoryWrapper,
                     reactionsConfig.Atlas,
+                    reactionsConfig.MessageReactions,
                     ownWallet);
             }
 

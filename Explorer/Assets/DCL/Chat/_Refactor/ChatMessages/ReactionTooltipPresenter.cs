@@ -23,15 +23,16 @@ namespace DCL.Chat.ChatMessages
         private readonly StringBuilder sb = new (256);
         private readonly List<string> unresolvedWallets = new (8);
         private readonly List<string> lastReactors = new (8);
-        private static readonly Vector3[] CORNERS = new Vector3[4];
 
         private CancellationTokenSource? asyncCts;
+        private string? shownMessageId;
 
         public ReactionTooltipPresenter(
             ReactionTooltipView view,
             IProfileCache profileCache,
             ProfileRepositoryWrapper profileRepository,
             ChatReactionsAtlasConfig atlasConfig,
+            ChatReactionsMessageConfig messageConfig,
             string ownWalletAddress)
         {
             this.view = view;
@@ -39,27 +40,36 @@ namespace DCL.Chat.ChatMessages
             this.profileRepository = profileRepository;
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
+
+            var positioner = new ReactionTooltipPositioner(
+                (RectTransform)view.transform,
+                view.ArrowTransform,
+                view.CenteringReference,
+                messageConfig.TooltipConfig);
+
+            view.Initialize(positioner);
         }
 
-        public void ShowForReaction(ReactionSet? reactions, int emojiIndex, RectTransform pillTransform)
+        public void ShowForReaction(ReactionSet? reactions, int emojiIndex, RectTransform pillTransform, string messageId)
         {
             asyncCts.SafeCancelAndDispose();
 
             if (reactions == null)
             {
-                view.Hide();
+                Hide();
                 return;
             }
 
             IReadOnlyCollection<string>? reactors = reactions.GetReactors(emojiIndex);
             if (reactors == null || reactors.Count == 0)
             {
-                view.Hide();
+                Hide();
                 return;
             }
 
+            shownMessageId = messageId;
+
             Rect uvRect = atlasConfig.GetUVRect(emojiIndex);
-            Vector3 pillTop = GetPillTopCenter(pillTransform);
 
             lastReactors.Clear();
             foreach (string wallet in reactors)
@@ -68,13 +78,10 @@ namespace DCL.Chat.ChatMessages
             unresolvedWallets.Clear();
             string text = BuildText(lastReactors, out bool allResolved);
 
-            if (allResolved)
+            view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
+
+            if (!allResolved)
             {
-                view.Show(text, uvRect, atlasConfig.Atlas, pillTop);
-            }
-            else
-            {
-                view.Show(text, uvRect, atlasConfig.Atlas, pillTop);
                 asyncCts = new CancellationTokenSource();
                 ResolveAndUpdateAsync(asyncCts.Token).Forget();
             }
@@ -84,7 +91,14 @@ namespace DCL.Chat.ChatMessages
         {
             asyncCts.SafeCancelAndDispose();
             asyncCts = null;
+            shownMessageId = null;
             view.Hide();
+        }
+
+        public void HideIfShowingMessage(string messageId)
+        {
+            if (string.Equals(shownMessageId, messageId, StringComparison.Ordinal))
+                Hide();
         }
 
         public void Dispose()
@@ -178,16 +192,6 @@ namespace DCL.Chat.ChatMessages
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
-        }
-
-        private static Vector3 GetPillTopCenter(RectTransform pill)
-        {
-            pill.GetWorldCorners(CORNERS);
-            // CORNERS: 0=bottom-left, 1=top-left, 2=top-right, 3=bottom-right
-            return new Vector3(
-                (CORNERS[1].x + CORNERS[2].x) * 0.5f,
-                CORNERS[1].y,
-                CORNERS[1].z);
         }
     }
 }

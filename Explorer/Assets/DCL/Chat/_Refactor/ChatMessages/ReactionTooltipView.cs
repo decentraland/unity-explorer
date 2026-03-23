@@ -10,42 +10,32 @@ namespace DCL.Chat.ChatMessages
         [SerializeField] private RawImage emojiImage;
         [SerializeField] private GameObject loadingIndicator;
         [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private Vector2 offset = new (0f, 12f);
+        [SerializeField] private RectTransform arrowTransform;
+        [Tooltip("Required because tooltip is parented under a zero-size RectTransform (ChatBody). " +
+                 "Points to a reference element whose center defines horizontal centering.")]
+        [SerializeField] private RectTransform centeringReference;
 
-        private RectTransform rectTransform;
+        private ReactionTooltipPositioner? positioner;
 
-        private void Awake()
+        public RectTransform? ArrowTransform => arrowTransform;
+        public RectTransform? CenteringReference => centeringReference;
+
+        public void Initialize(ReactionTooltipPositioner positioner)
         {
-            EnsureInitialized();
+            this.positioner = positioner;
         }
 
-        private void EnsureInitialized()
+        public void Show(string text, Rect emojiUvRect, Texture atlas, RectTransform pillTransform)
         {
-            if (rectTransform == null)
-                rectTransform = (RectTransform)transform;
-        }
-
-        public void Show(string text, Rect emojiUvRect, Texture atlas, Vector3 worldPosition)
-        {
-            loadingIndicator.SetActive(false);
-            namesText.gameObject.SetActive(true);
-            emojiImage.gameObject.SetActive(true);
-
-            namesText.text = text;
-            emojiImage.texture = atlas;
-            emojiImage.uvRect = emojiUvRect;
-
-            PositionAbove(worldPosition);
+            ShowContent(text, emojiUvRect, atlas);
+            positioner?.PositionAbovePill(pillTransform);
             SetVisible(true);
         }
 
-        public void ShowLoading(Vector3 worldPosition)
+        public void ShowLoading(RectTransform pillTransform)
         {
-            loadingIndicator.SetActive(true);
-            namesText.gameObject.SetActive(false);
-            emojiImage.gameObject.SetActive(false);
-
-            PositionAbove(worldPosition);
+            ShowLoadingContent();
+            positioner?.PositionAbovePill(pillTransform);
             SetVisible(true);
         }
 
@@ -62,13 +52,22 @@ namespace DCL.Chat.ChatMessages
             SetVisible(false);
         }
 
-        private void PositionAbove(Vector3 worldPosition)
+        private void ShowContent(string text, Rect emojiUvRect, Texture atlas)
         {
-            EnsureInitialized();
-            rectTransform.position = new Vector3(
-                worldPosition.x + offset.x,
-                worldPosition.y + offset.y,
-                worldPosition.z);
+            loadingIndicator.SetActive(false);
+            namesText.gameObject.SetActive(true);
+            emojiImage.gameObject.SetActive(true);
+
+            namesText.text = text;
+            emojiImage.texture = atlas;
+            emojiImage.uvRect = emojiUvRect;
+        }
+
+        private void ShowLoadingContent()
+        {
+            loadingIndicator.SetActive(true);
+            namesText.gameObject.SetActive(false);
+            emojiImage.gameObject.SetActive(false);
         }
 
         private void SetVisible(bool visible)

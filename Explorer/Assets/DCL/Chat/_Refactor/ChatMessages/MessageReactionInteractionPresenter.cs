@@ -60,6 +60,7 @@ namespace DCL.Chat.ChatMessages
 
         public void OnReactionPillClicked(string messageId, int emojiIndex)
         {
+            tooltipPresenter?.Hide();
             messageReactionService.ToggleReaction(messageId, emojiIndex);
         }
 
@@ -68,12 +69,17 @@ namespace DCL.Chat.ChatMessages
             if (tooltipPresenter == null) return;
 
             ReactionSet? reactions = getReactions(messageId);
-            tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect);
+            tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect, messageId);
         }
 
         public void OnReactionHoverExit(int emojiIndex)
         {
             tooltipPresenter?.Hide();
+        }
+
+        public void OnReactionChanged(string messageId)
+        {
+            tooltipPresenter?.HideIfShowingMessage(messageId);
         }
 
         /// <summary>

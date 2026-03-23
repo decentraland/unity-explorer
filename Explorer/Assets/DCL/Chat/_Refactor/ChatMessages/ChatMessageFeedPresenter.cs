@@ -562,6 +562,7 @@ namespace DCL.Chat.ChatMessages
             if (viewModel == null) return;
 
             viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            reactionInteraction.OnReactionChanged(messageId);
             view.ReconstructScrollView(false);
         }
 
