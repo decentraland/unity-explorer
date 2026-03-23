@@ -55,9 +55,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private CommunitiesInvitesAndRequestsView invitesAndRequestsView = null!;
 
         [Header("Assets")]
-        [SerializeField] public CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
 
         public CommunitiesInvitesAndRequestsView InvitesAndRequestsView => invitesAndRequestsView;
+        public Sprite ReportSprite => contextMenuSettings.ReportSprite;
 
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
 

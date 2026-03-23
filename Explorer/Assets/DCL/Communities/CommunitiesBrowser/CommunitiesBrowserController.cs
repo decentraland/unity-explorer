@@ -926,7 +926,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ReportUserHelper.ShowConfirmAndReportAsync(
                 ViewDependencies.ConfirmationDialogOpener,
-                view.contextMenuSettings.ReportSprite,
+                view.ReportSprite,
                 ReportCategory.COMMUNITIES,
                 profile.Address,
                 selfProfile,
