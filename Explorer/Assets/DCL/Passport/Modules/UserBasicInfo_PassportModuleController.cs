@@ -64,7 +64,7 @@ namespace DCL.Passport.Modules
         {
             currentProfile = profile;
 
-            nameElementController.Setup(profile);
+            nameElementController.Setup(profile.Compact);
             walletAddressElementController.Setup(profile.Compact);
 
             checkNameEditionCancellationToken = checkNameEditionCancellationToken.SafeRestart();
