@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
@@ -79,9 +79,7 @@ namespace DCL.PluginSystem
                 return (null, false);
 
             if (createDependencies != null)
-            {
                 await createDependencies(container);
-            }
 
             return (container, true);
         }
