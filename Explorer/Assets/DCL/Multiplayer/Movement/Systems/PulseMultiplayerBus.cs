@@ -1,7 +1,9 @@
-﻿using CrdtEcsBridge.Components.Conversion;
+﻿using CommunicationData.URLHelpers;
+using CrdtEcsBridge.Components.Conversion;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
@@ -30,6 +32,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly ParcelEncoder parcelEncoder;
         private readonly PulseIncomingProfileAnnouncements incomingProfiles;
         private readonly PulseRemoveIntentions removeIntentions;
+        private readonly PulseEmotesMessageBus emotesMessageBus;
 
         private bool isDisposed;
 
@@ -38,7 +41,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             MovementInbox movementInbox,
             ParcelEncoder parcelEncoder,
             PulseIncomingProfileAnnouncements incomingProfiles,
-            PulseRemoveIntentions removeIntentions)
+            PulseRemoveIntentions removeIntentions,
+            PulseEmotesMessageBus emotesMessageBus)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -46,6 +50,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.parcelEncoder = parcelEncoder;
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
+            this.emotesMessageBus = emotesMessageBus;
         }
 
         public void Send(NetworkMovementMessage message)
@@ -72,7 +77,9 @@ namespace DCL.Multiplayer.Connections.Pulse
                         SubscribeToPlayerStateFullAsync(ct),
                         SubscribeToPlayerStateDeltaAsync(ct),
                         SubscribeToProfileAnnouncementsAsync(ct),
-                        SubscribeToPlayerLeftAsync(ct))
+                        SubscribeToPlayerLeftAsync(ct),
+                        SubscribeToEmoteStartedAsync(ct),
+                        SubscribeToEmoteStoppedAsync(ct))
                    .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
                    .Forget();
         }
@@ -240,6 +247,57 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
+        private async UniTask SubscribeToEmoteStartedAsync(CancellationToken ct)
+        {
+            await foreach (EmoteStarted emoteStarted in pulseService.SubscribeAsync<EmoteStarted>(
+                               ServerMessage.MessageOneofCase.EmoteStarted, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote started while disposed");
+                    break;
+                }
+
+                if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out string walletId))
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
+                    continue;
+                }
+
+                if (emoteStarted.PlayerState != null)
+                {
+                    NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isEmoting: true);
+                    lastMovementMessages[emoteStarted.SubjectId] = (0, movementMessage);
+                    Inbox(movementMessage, walletId);
+                }
+
+                float timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+                emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
+            }
+        }
+
+        private async UniTask SubscribeToEmoteStoppedAsync(CancellationToken ct)
+        {
+            await foreach (EmoteStopped emoteStopped in pulseService.SubscribeAsync<EmoteStopped>(
+                               ServerMessage.MessageOneofCase.EmoteStopped, ct))
+            {
+                if (isDisposed)
+                {
+                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote stopped while disposed");
+                    break;
+                }
+
+                if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out string walletId))
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
+                    continue;
+                }
+
+                // TODO: Handle emote stop for remote players (e.g. set StopEmote flag)
+                ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
+            }
+        }
+
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
             movementInbox.TryEnqueue(fullMovementMessage, @for);
@@ -380,10 +438,11 @@ namespace DCL.Multiplayer.Connections.Pulse
                 state.HeadPitch = message.headYawAndPitch[1];
         }
 
-        private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full)
-        {
-            PlayerState playerState = full.State;
+        private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
+            ToNetworkMovementMessage(full.State, full.ServerTick);
 
+        private NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState, uint serverTick, bool isEmoting = false)
+        {
             Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
 
             var worldPosition = new Vector3(
@@ -399,7 +458,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             var message = new NetworkMovementMessage
             {
-                timestamp = full.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP,
+                timestamp = serverTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP,
                 parcel = parcel,
                 position = worldPosition,
                 rotationY = playerState.RotationY,
@@ -417,12 +476,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                     IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
-
-                // Instant is always false as it was created to simulate Teleportation which is handled separately with the server
                 isInstant = false,
-
-                // TODO: resolve emoting
-                isEmoting = false,
+                isEmoting = isEmoting,
 
                 headIKYawEnabled = playerState.HasHeadYaw,
                 headIKPitchEnabled = playerState.HasHeadPitch,
