@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.CharacterMotion.Components;

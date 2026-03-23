@@ -275,6 +275,7 @@ namespace DCL.RealmNavigation
                 return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, TELEPORT_NOT_ALLOWED_LOCAL_SCENE);
 
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
+
             if (!parcelCheckResult.Success)
                 return parcelCheckResult.AsEnumResult(TaskError.MessageError);
 

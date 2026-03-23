@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
