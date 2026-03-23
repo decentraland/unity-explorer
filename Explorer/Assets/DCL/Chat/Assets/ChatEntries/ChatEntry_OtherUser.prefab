@@ -196,6 +196,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 35
       objectReference: {fileID: 0}
+    - target: {fileID: 4000618137078915722, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 32
+      objectReference: {fileID: 0}
     - target: {fileID: 4503932955293153024, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: <reactionButton>k__BackingField
       value: 
@@ -355,6 +359,10 @@ PrefabInstance:
     - target: {fileID: 7728191724019989410, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 7728191724019989410, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8268183569765582420, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_SizeDelta.x

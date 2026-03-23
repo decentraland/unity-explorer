@@ -35,7 +35,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 5, y: 3}
+  m_AnchoredPosition: {x: 5, y: 32}
   m_SizeDelta: {x: 273, y: 22.48}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &2679173082280965212
@@ -137,7 +137,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 5, y: 32}
+  m_AnchoredPosition: {x: 5, y: 3}
   m_SizeDelta: {x: 273, y: 22.48}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &4780811882701742661
@@ -424,8 +424,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d74b9c1884357ca44bf9b95f6d86e532, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatMessages.MessageReactionsView
-  row1: {fileID: 4000618137078915722}
-  row2: {fileID: 7728191724019989410}
+  row1: {fileID: 7728191724019989410}
+  row2: {fileID: 4000618137078915722}
   itemPrefab: {fileID: 6616656429978940896, guid: 330091c639e626f46aeb9bdaf3e0685e, type: 3}
   singleRowHeight: 32
   doubleRowHeight: 64
