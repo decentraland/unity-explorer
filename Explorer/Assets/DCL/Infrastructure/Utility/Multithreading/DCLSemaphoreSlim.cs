@@ -8,6 +8,15 @@ using Cysharp.Threading.Tasks;
 
 namespace Utility.Multithreading
 {
+    /// <summary>
+    ///     WebGL-compatible replacement for <see cref="System.Threading.SemaphoreSlim" />.
+    ///     On non-WebGL platforms delegates directly to <c>SemaphoreSlim</c> for proper thread-safe async waiting.
+    ///     On WebGL (single-threaded) uses a <see cref="Queue{T}"/> of <see cref="UniTaskCompletionSource"/> waiters
+    ///     to simulate async wait/release semantics without any OS synchronisation primitives, since those are
+    ///     unavailable in the browser.
+    ///     <para>Synchronous <see cref="Wait"/> always returns <c>false</c> on WebGL because blocking is not possible
+    ///     on a single-threaded runtime; callers should use <see cref="WaitAsync()"/> instead.</para>
+    /// </summary>
     public sealed class DCLSemaphoreSlim
     {
 #if !UNITY_WEBGL

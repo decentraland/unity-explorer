@@ -4,6 +4,12 @@ using Utility;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     Adapts a JavaScript <c>ArrayBuffer</c> (held as a <see cref="WebClientScriptObject" />) to the
+    ///     <see cref="IDCLArrayBuffer" /> interface. Byte reads and writes use the jslib's
+    ///     <c>JSContext_ReadObjectBytesIntoBuffer</c> / <c>JSContext_WriteObjectBytesFromBuffer</c> calls to avoid
+    ///     copying data through JSON. Direct pointer access is not supported on WebGL.
+    /// </summary>
     public class WebClientArrayBufferAdapter : IDCLArrayBuffer
     {
         private readonly WebClientScriptObject scriptObject;

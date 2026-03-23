@@ -2,6 +2,15 @@ using System.Collections.Generic;
 
 namespace SceneRuntime
 {
+    /// <summary>
+    ///     Platform-agnostic abstraction over a JavaScript object that lives inside a scene's JS engine.
+    ///     Implementations include the ClearScript/V8 desktop path and the <see cref="WebClient.WebClientScriptObject" />
+    ///     WebGL path, both of which forward property access and method invocation to the underlying engine.
+    ///     <para>
+    ///         Arguments and return values are passed as C# <c>object</c>; each implementation is responsible for
+    ///         marshalling them to/from the engine's native representation (e.g., JSON over P/Invoke for WebGL).
+    ///     </para>
+    /// </summary>
     public interface IDCLScriptObject
     {
         /// <summary>

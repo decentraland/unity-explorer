@@ -2,7 +2,14 @@ using System.Collections.Generic;
 
 namespace Utility.Multithreading
 {
-    // WebGL friendly implementation of concurrent dictionary
+    /// <summary>
+    ///     WebGL-compatible drop-in replacement for <see cref="System.Collections.Concurrent.ConcurrentDictionary{TKey,TValue}" />.
+    ///     On non-WebGL platforms the real <c>ConcurrentDictionary</c> is used for thread-safe access.
+    ///     On WebGL (single-threaded) a plain <see cref="Dictionary{TKey,TValue}" /> is used instead, since
+    ///     WebGL has no OS threads and the locking overhead of <c>ConcurrentDictionary</c> is unnecessary.
+    ///     Implements both <see cref="IDictionary{TKey,TValue}" /> and <see cref="IReadOnlyDictionary{TKey,TValue}" />
+    ///     so it can be used wherever either interface is required.
+    /// </summary>
     public class DCLConcurrentDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
     {
 #if !UNITY_WEBGL

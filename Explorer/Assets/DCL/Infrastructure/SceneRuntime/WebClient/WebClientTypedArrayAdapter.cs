@@ -5,6 +5,13 @@ using Utility;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     Adapts a JavaScript <c>Uint8Array</c> (held as a <see cref="WebClientScriptObject" />) to the
+    ///     <see cref="IDCLTypedArray{T}" /> interface expected by the scene runtime.
+    ///     Byte reads and writes are forwarded to the jslib via <c>JSContext_ReadObjectBytesIntoBuffer</c> /
+    ///     <c>JSContext_WriteObjectBytesFromBuffer</c> rather than copying through JSON. Direct pointer access is not
+    ///     supported on WebGL and will throw <see cref="NotSupportedException" />.
+    /// </summary>
     public class WebClientTypedArrayAdapter : IDCLTypedArray<byte>, IDCLScriptObject
     {
         public WebClientScriptObject ScriptObject { get; }

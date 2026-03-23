@@ -8,7 +8,14 @@ using Cysharp.Threading.Tasks;
 
 namespace Utility.Multithreading
 {
-    // WebGL friendly Interlocked to avoid threading issues
+    /// <summary>
+    ///     WebGL-compatible replacement for <see cref="System.Threading.Interlocked" /> atomic operations.
+    ///     On non-WebGL platforms the real <c>Interlocked</c> methods are used to guarantee memory ordering
+    ///     across threads. On WebGL (single-threaded) direct non-atomic operations are used instead, since
+    ///     there are no competing threads and the interlocked overhead is unnecessary.
+    ///     <para>The <c>TRUST_WEBGL_THREAD_SAFETY_FLAG</c> comment at the top of the file marks this class as
+    ///     intentionally unsafe on multi-threaded platforms — the WebGL path must never be used outside WebGL.</para>
+    /// </summary>
     public sealed class DCLInterlocked
     {
 #if UNITY_WEBGL

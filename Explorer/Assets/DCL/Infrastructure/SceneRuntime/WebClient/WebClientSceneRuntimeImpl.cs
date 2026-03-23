@@ -15,6 +15,20 @@ using Utility;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     WebGL implementation of <see cref="ISceneRuntime" /> that drives a Decentraland scene inside a browser-hosted
+    ///     JavaScript engine (<see cref="WebClientJavaScriptEngine" />).
+    ///     <para>
+    ///         On construction it compiles and registers all JS modules (system libs + the scene script itself) with the engine
+    ///         so that <c>require()</c> calls in Init.js resolve correctly. Actual Init.js execution is deferred until
+    ///         <see cref="ExecuteSceneJson" /> runs, which guarantees all host API objects are registered first.
+    ///     </para>
+    ///     <para>
+    ///         The update loop calls <c>onStart</c> / <c>onUpdate</c> on the compiled scene module and synchronises
+    ///         completion via a <see cref="JSTaskResolverResetable" /> that is polled by the JS promise chain.
+    ///     </para>
+    ///     <para>Only compiled for <c>UNITY_WEBGL</c> builds (or <c>EDITOR_DEBUG_WEBGL</c> in the editor).</para>
+    /// </summary>
     public sealed class WebClientSceneRuntimeImpl : ISceneRuntime
     {
         private readonly IJavaScriptEngine engine;

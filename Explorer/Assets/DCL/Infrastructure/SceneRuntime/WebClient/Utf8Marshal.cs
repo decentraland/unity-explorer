@@ -5,6 +5,15 @@ using DCL.Diagnostics;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     Low-level helpers for marshalling strings across the C#/jslib P/Invoke boundary as null-terminated UTF-8 buffers.
+    ///     <para>
+    ///         <see cref="StringToHGlobalUTF8" /> allocates unmanaged memory that the caller must free with
+    ///         <c>Marshal.FreeHGlobal</c> after the P/Invoke call returns.
+    ///         <see cref="PtrToStringUTF8(IntPtr,int)" /> reads a known-length buffer;
+    ///         <see cref="PtrToStringUTF8(IntPtr)" /> scans for the null terminator with a 1 MB safety cap.
+    ///     </para>
+    /// </summary>
     internal static class Utf8Marshal
     {
         public static unsafe IntPtr StringToHGlobalUTF8(string str)
@@ -31,6 +40,8 @@ namespace SceneRuntime.WebClient
         }
 
         /// <summary>
+        ///     Reads a null-terminated UTF-8 string from an unmanaged pointer by scanning for the null byte.
+        ///     Truncates at 1 MB to prevent runaway reads on malformed data.
         /// </summary>
         public static unsafe string PtrToStringUTF8(IntPtr ptr)
         {

@@ -240,12 +240,12 @@ namespace Global
 
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
+            var createMediaContainer = true;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            if (!BrowserUtils.IsSafari())
-                container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
-#else
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
+            createMediaContainer  = !BrowserUtils.IsSafari();
 #endif
+            if (createMediaContainer)
+                container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 

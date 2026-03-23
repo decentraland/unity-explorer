@@ -7,6 +7,20 @@ using Utility;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     Represents a JavaScript object (or global property path) stored inside a <see cref="WebClientJavaScriptEngine" />
+    ///     context. All property access and method invocation is forwarded to the jslib layer via P/Invoke.
+    ///     <para>
+    ///         Objects that cannot be serialised to JSON are stored in the jslib's <c>objectInstances</c> map and
+    ///         referenced by an opaque <c>__obj_N</c> ID (see <see cref="ObjectId" />). Plain property paths
+    ///         (e.g. <c>"globalThis"</c>) fall back to <c>engine.Evaluate</c>.
+    ///     </para>
+    ///     <para>
+    ///         Arguments and return values cross the C#/JS boundary as JSON, with special <c>__objectRef</c> and
+    ///         <c>__type:ByteArray</c> markers for non-serialisable types (see <see cref="SerializeArgsForJs" /> /
+    ///         <see cref="SerializeValueForJs" />).
+    ///     </para>
+    /// </summary>
     public class WebClientScriptObject : IDCLScriptObject
     {
         private readonly WebClientJavaScriptEngine engine;

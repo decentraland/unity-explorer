@@ -3,6 +3,14 @@ using System.Collections.Generic;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     Process-wide registry that maps <c>(contextId, objectId)</c> pairs to the C# objects exposed to JavaScript as host
+    ///     objects. The jslib layer calls back into C# with these IDs when JavaScript invokes a method on a host object.
+    ///     <para>
+    ///         All objects registered for a given context are removed at once when the engine is disposed via
+    ///         <see cref="UnregisterAll" />.
+    ///     </para>
+    /// </summary>
     internal static class WebClientHostObjectRegistry
     {
         private static readonly Dictionary<string, Dictionary<string, object>> CONTEXT_OBJECTS = new ();

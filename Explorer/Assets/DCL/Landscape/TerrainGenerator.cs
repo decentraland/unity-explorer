@@ -210,7 +210,14 @@ namespace DCL.Landscape
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
             {
+                float beforeCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+
                 IsTerrainGenerated = true;
+
+                float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
+
+                ReportHub.Log(ReportCategory.LANDSCAPE,
+                    $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);

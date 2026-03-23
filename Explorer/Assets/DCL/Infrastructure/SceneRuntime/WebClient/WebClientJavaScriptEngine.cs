@@ -14,6 +14,20 @@ using UnityEngine;
 
 namespace SceneRuntime.WebClient
 {
+    /// <summary>
+    ///     WebGL implementation of <see cref="IJavaScriptEngine" /> that bridges C# and a JavaScript runtime running in the
+    ///     browser. All JavaScript execution is delegated to the jslib layer via P/Invoke (<c>JSContext_*</c> externs).
+    ///     <para>
+    ///         Each engine instance owns a named JS context identified by <see cref="contextId" />. Host objects (C# instances
+    ///         exposed to JavaScript) are tracked through <see cref="WebClientHostObjectRegistry" /> and cleaned up on
+    ///         <see cref="Dispose" />.
+    ///     </para>
+    ///     <para>
+    ///         UniTask-backed promises are bridged through <see cref="JSUniTaskPromiseResolver{T}" /> /
+    ///         <see cref="JSUniTaskPromiseResolver" /> helper objects that are temporarily registered as host objects so the
+    ///         JavaScript side can poll their completion state.
+    ///     </para>
+    /// </summary>
     public class WebClientJavaScriptEngine : IJavaScriptEngine
     {
         // Delegate type for the void callback (used for methods like Completed/Reject)
@@ -790,6 +804,10 @@ namespace SceneRuntime.WebClient
         private static extern void JSContext_RegisterHostObjectCallbackWithReturn(HostObjectCallbackWithReturnDelegate callback);
     }
 
+    /// <summary>
+    ///     Holds the jslib-side script ID of a compiled JavaScript module so it can be evaluated later via
+    ///     <see cref="WebClientJavaScriptEngine.Evaluate(ICompiledScript)" />.
+    /// </summary>
     public class WebGLCompiledScript : ICompiledScript
     {
         public string ScriptId { get; }
@@ -800,6 +818,11 @@ namespace SceneRuntime.WebClient
         }
     }
 
+    /// <summary>
+    ///     Bridges a <see cref="UniTask{T}" /> to a JavaScript promise by running the task in the background and exposing
+    ///     completion state through <c>[UsedImplicitly]</c>-tagged methods that JavaScript can poll.
+    ///     The resolver is registered as a temporary host object and removed once the task settles.
+    /// </summary>
     internal class JSUniTaskPromiseResolver<T>
     {
         private T? result;
@@ -852,6 +875,10 @@ namespace SceneRuntime.WebClient
             error;
     }
 
+    /// <summary>
+    ///     Non-generic variant of <see cref="JSUniTaskPromiseResolver{T}" /> for void <see cref="UniTask" /> operations.
+    ///     Bridges a <see cref="UniTask" /> to a JavaScript promise that resolves with no value.
+    /// </summary>
     internal class JSUniTaskPromiseResolver
     {
         private string? error;
