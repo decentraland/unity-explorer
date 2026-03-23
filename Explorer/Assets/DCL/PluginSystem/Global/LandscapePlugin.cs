@@ -12,8 +12,7 @@ using ECS.Prioritization;
 using GPUInstancerPro;
 using System.Threading;
 using DCL.Diagnostics;
-using Unity.Collections;
-using Unity.Mathematics;
+
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -33,8 +32,6 @@ namespace DCL.PluginSystem.Global
 
         private RealmPartitionSettingsAsset realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
-        private NativeList<int2> emptyParcels;
-        private NativeHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
         // private IGPUIWrapper gpuiWrapper;
@@ -67,8 +64,7 @@ namespace DCL.PluginSystem.Global
                 terrainGenerator.Dispose();
                 worldTerrainGenerator.Dispose();
 
-                if (emptyParcels.IsCreated) emptyParcels.Dispose();
-                if (ownedParcels.IsCreated) ownedParcels.Dispose();
+
             }
         }
 
@@ -95,10 +91,7 @@ namespace DCL.PluginSystem.Global
                 ReportHub.Log(ReportCategory.LANDSCAPE, $"LandscapePlugin: Registered Renderer Key {treeRendererKeys[prototypeIndex]} for prototype {prototypeIndex} ({treePrototypes[prototypeIndex].asset.name})");
             }
 
-            emptyParcels = new NativeList<int2>(Allocator.Persistent);
-            ownedParcels = new NativeHashSet<int2>(0, Allocator.Persistent);
-            var ownedParcelsReadOnly = ownedParcels.AsReadOnly();
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys, ref emptyParcels, ref ownedParcelsReadOnly, landscapeData.Value);
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, treeRendererKeys, landscapeData.Value);
 
             await worldTerrainGenerator.InitializeAsync(landscapeData.Value.worldsTerrainData,
                 treeRendererKeys, landscapeData.Value);
