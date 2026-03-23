@@ -72,5 +72,6 @@ namespace DCL.NotificationsBus.NotificationTypes
 
         BAN_WARNING,
         BANNED,
+        BAN_LIFTED,
     }
 }

@@ -44,6 +44,7 @@ namespace DCL.Notifications.Serialization
         private const string TIP_RECEIVED_TYPE = "tip_received";
         private const string BAN_WARNING_TYPE = "ban_warning";
         private const string BANNED_TYPE = "banned";
+        private const string BAN_LIFTED_TYPE = "ban_lifted";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -122,6 +123,7 @@ namespace DCL.Notifications.Serialization
                     TIP_RECEIVED_TYPE => new TipReceivedNotification(),
                     BAN_WARNING_TYPE => new BanWarningNotification(),
                     BANNED_TYPE => new BannedNotification(),
+                    BAN_LIFTED_TYPE => new BanLiftedNotification(),
                     _ => null,
                 };
 
