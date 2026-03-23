@@ -768,7 +768,6 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
   <VersionText>k__BackingField: {fileID: 4613417570274952093}
   <CharacterPreviewView>k__BackingField: {fileID: 8185437588405162452}
-  <TransactionFeeConfirmationView>k__BackingField: {fileID: 1263697144875488291}
   <LoginSelectionAuthView>k__BackingField: {fileID: 3626083524348347871}
   <VerificationDappAuthView>k__BackingField: {fileID: 5988428590248281739}
   <VerificationOTPAuthView>k__BackingField: {fileID: 1435686278016238798}
@@ -1128,7 +1127,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -21, y: 0}
-  m_SizeDelta: {x: 22, y: 20}
+  m_SizeDelta: {x: 24, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6217521105691194791
 CanvasRenderer:
@@ -1409,17 +1408,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 780e6ed0fdb34194c92f8e560963b8f9, type: 3}
---- !u!114 &1263697144875488291 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1567150198340539680, guid: 780e6ed0fdb34194c92f8e560963b8f9, type: 3}
-  m_PrefabInstance: {fileID: 303481800695464195}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0da9bb98e83027746b40c1f5f43ba19c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: AuthenticationScreenFlow::DCL.AuthenticationScreenFlow.TransactionFeeConfirmationView
 --- !u!224 &3992252487768445545 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3697872467015258986, guid: 780e6ed0fdb34194c92f8e560963b8f9, type: 3}

@@ -30,7 +30,6 @@ namespace DCL.UserInAppInitializationFlow
             TerrainContainer terrainContainer,
             ILoadingScreen loadingScreen,
             IHealthCheck liveKitHealthCheck,
-            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
@@ -47,7 +46,6 @@ namespace DCL.UserInAppInitializationFlow
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
 
             var loadingOperations = new List<IStartupOperation>()
@@ -97,7 +95,6 @@ namespace DCL.UserInAppInitializationFlow
                     roomHub,
                     startUpOps,
                     reLoginOps,
-                    checkOnboardingStartupOperation,
                     bootstrapContainer.IdentityCache.EnsureNotNull(),
                     ensureLivekitConnectionStartupOperation,
                     appArgs,

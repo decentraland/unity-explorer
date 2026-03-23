@@ -54,7 +54,12 @@ namespace DCL.Browser.DecentralandUrls
                 // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
                 // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
+                Url(DecentralandUrl.AssetBundleRegistryVersion);
                 Url(DecentralandUrl.AssetBundlesCDN);
+                Url(DecentralandUrl.Profiles);
+                Url(DecentralandUrl.ProfilesMetadata);
+                Url(DecentralandUrl.EntitiesActive);
+                Url(DecentralandUrl.WorldEntitiesActive);
                 Url(DecentralandUrl.ArchipelagoStatus);
                 Url(DecentralandUrl.ArchipelagoHotScenes);
                 Url(DecentralandUrl.Genesis);
@@ -124,7 +129,7 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
-        private void ResetRealmDependentUrls(RealmKind __)
+        private void ResetRealmDependentUrls(RealmKind realmKind)
         {
             using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? realmDependentCachedUrls);
 
@@ -190,7 +195,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistryVersion => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
+                DecentralandUrl.AssetBundleRegistryVersion => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldPermissions => $"https://worlds-content-server.decentraland.{ENV}/world/{{0}}/permissions",
                 DecentralandUrl.WorldComms => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/comms",
@@ -216,15 +221,14 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ReportUserForm => $"https://report.decentraland.{ENV}/players?player_address={{0}}&reported_address={{1}}",
                 DecentralandUrl.BannedUsers => $"https://social-api.decentraland.{ENV}/v1/moderation/users/{{0}}/bans",
 
-                DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
-                DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
+                DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
+                DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
-
-                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
