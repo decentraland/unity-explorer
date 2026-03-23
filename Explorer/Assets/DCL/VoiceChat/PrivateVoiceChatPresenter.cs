@@ -1,17 +1,16 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.LiveKit.Public;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
-using DCL.LiveKit.Public;
 
 namespace DCL.VoiceChat
 {
@@ -81,8 +80,8 @@ namespace DCL.VoiceChat
             {
                 foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
                 {
-                    Profile? profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
-                    if (profileAsync != null) userName = profileAsync.Name;
+                    Profile.CompactInfo? profile = await profileDataProvider.GetProfileAsync(activeSpeaker, ct).SuppressAnyExceptionWithFallback(null);
+                    if (profile != null) userName = profile.Value.Name;
                 }
             }
 
