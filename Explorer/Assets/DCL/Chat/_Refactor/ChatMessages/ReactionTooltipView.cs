@@ -32,8 +32,10 @@ namespace DCL.Chat.ChatMessages
             SetVisible(true);
         }
 
-        public void ShowLoading(RectTransform pillTransform)
+        public void ShowLoading(Rect emojiUvRect, Texture atlas, RectTransform pillTransform)
         {
+            emojiImage.texture = atlas;
+            emojiImage.uvRect = emojiUvRect;
             ShowLoadingContent();
             positioner?.PositionAbovePill(pillTransform);
             SetVisible(true);

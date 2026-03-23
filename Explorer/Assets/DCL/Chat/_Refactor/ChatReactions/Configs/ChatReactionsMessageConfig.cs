@@ -100,5 +100,29 @@ namespace DCL.Chat.ChatReactions.Configs
 
         public TooltipPositioningConfig TooltipConfig =>
             new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
+
+        [Header("Debug — Tooltip")]
+        [Note("Simulate a loading delay before showing tooltip content.")]
+        public bool TooltipMockLoadingEnabled;
+
+        [Note("Duration (seconds) of the simulated loading delay.")]
+        [Range(0.1f, 5f)]
+        public float TooltipMockLoadingDelay = 1f;
+
+        [Note("Append random mock user names to each tooltip to test multi-user display.")]
+        public bool TooltipMockUsersEnabled;
+
+        [Note("Number of extra mock user names appended to each tooltip.")]
+        [Range(1, 20)]
+        public int TooltipMockUserCount = 5;
+
+        [Note("Pool of display names used for mock users. Edit in Inspector to test different names/lengths.")]
+        public string[] TooltipMockUserNames =
+        {
+            "CryptoWhale", "MetaBuilder", "PixelPioneer", "VoxelVoyager", "NFTNomad",
+            "ChainChaser", "BlockBaron", "EtherExplorer", "TokenTraveler", "DeFiDreamer",
+            "WebWanderer", "CodeCrafter", "DigitalDrifter", "ByteBandit", "HashHunter",
+            "LedgerLion", "MintMaster", "RealmRider", "SynthSurfer", "WarpWalker",
+        };
     }
 }

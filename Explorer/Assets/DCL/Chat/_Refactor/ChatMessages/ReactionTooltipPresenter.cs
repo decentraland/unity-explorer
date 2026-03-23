@@ -19,6 +19,7 @@ namespace DCL.Chat.ChatMessages
         private readonly IProfileCache profileCache;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatReactionsAtlasConfig atlasConfig;
+        private readonly ChatReactionsMessageConfig messageConfig;
         private readonly string ownWalletAddress;
         private readonly StringBuilder sb = new (256);
         private readonly List<string> unresolvedWallets = new (8);
@@ -39,6 +40,7 @@ namespace DCL.Chat.ChatMessages
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.atlasConfig = atlasConfig;
+            this.messageConfig = messageConfig;
             this.ownWalletAddress = ownWalletAddress;
 
             var positioner = new ReactionTooltipPositioner(
@@ -53,6 +55,7 @@ namespace DCL.Chat.ChatMessages
         public void ShowForReaction(ReactionSet? reactions, int emojiIndex, RectTransform pillTransform, string messageId)
         {
             asyncCts.SafeCancelAndDispose();
+            asyncCts = null;
 
             if (reactions == null)
             {
@@ -75,15 +78,27 @@ namespace DCL.Chat.ChatMessages
             foreach (string wallet in reactors)
                 lastReactors.Add(wallet);
 
-            unresolvedWallets.Clear();
-            string text = BuildText(lastReactors, out bool allResolved);
+            int mockUserCount = messageConfig.TooltipMockUsersEnabled
+                ? messageConfig.TooltipMockUserCount
+                : 0;
 
-            view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
-
-            if (!allResolved)
+            if (messageConfig.TooltipMockLoadingEnabled)
             {
+                view.ShowLoading(uvRect, atlasConfig.Atlas, pillTransform);
                 asyncCts = new CancellationTokenSource();
-                ResolveAndUpdateAsync(asyncCts.Token).Forget();
+                MockLoadThenShowAsync(mockUserCount, asyncCts.Token).Forget();
+            }
+            else
+            {
+                unresolvedWallets.Clear();
+                string text = BuildText(lastReactors, mockUserCount, out bool allResolved);
+                view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
+
+                if (!allResolved)
+                {
+                    asyncCts = new CancellationTokenSource();
+                    ResolveAndUpdateAsync(mockUserCount, asyncCts.Token).Forget();
+                }
             }
         }
 
@@ -107,14 +122,28 @@ namespace DCL.Chat.ChatMessages
             asyncCts = null;
         }
 
-        private string BuildText(List<string> reactors, out bool allResolved)
+        private string BuildText(List<string> reactors, int mockUserCount, out bool allResolved)
         {
             sb.Clear();
             unresolvedWallets.Clear();
             allResolved = true;
 
-            bool ownIncluded = false;
             int count = 0;
+            string[] mockNames = messageConfig.TooltipMockUserNames;
+
+            if (mockNames.Length > 0)
+            {
+                for (int i = 0; i < mockUserCount; i++)
+                {
+                    if (count > 0)
+                        sb.Append(", ");
+
+                    sb.Append(mockNames[UnityEngine.Random.Range(0, mockNames.Length)]);
+                    count++;
+                }
+            }
+
+            bool ownIncluded = false;
 
             for (int i = 0; i < reactors.Count; i++)
             {
@@ -173,25 +202,46 @@ namespace DCL.Chat.ChatMessages
             return false;
         }
 
-        private async UniTaskVoid ResolveAndUpdateAsync(CancellationToken ct)
+        private async UniTaskVoid MockLoadThenShowAsync(int mockUserCount, CancellationToken ct)
         {
             try
             {
-                for (int i = 0; i < unresolvedWallets.Count; i++)
-                {
-                    if (ct.IsCancellationRequested) return;
-
-                    await profileRepository.GetProfileAsync(unresolvedWallets[i], ct);
-                }
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(messageConfig.TooltipMockLoadingDelay),
+                    cancellationToken: ct);
 
                 if (ct.IsCancellationRequested) return;
 
-                // Rebuild text now that profiles are cached
-                string updatedText = BuildText(lastReactors, out _);
-                view.UpdateText(updatedText);
+                unresolvedWallets.Clear();
+                string text = BuildText(lastReactors, mockUserCount, out bool allResolved);
+                view.UpdateText(text);
+
+                if (!allResolved)
+                    await ResolveProfilesAndRebuildTextAsync(mockUserCount, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
+        }
+
+        private async UniTaskVoid ResolveAndUpdateAsync(int mockUserCount, CancellationToken ct)
+        {
+            try { await ResolveProfilesAndRebuildTextAsync(mockUserCount, ct); }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
+        }
+
+        private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
+        {
+            for (int i = 0; i < unresolvedWallets.Count; i++)
+            {
+                if (ct.IsCancellationRequested) return;
+                await profileRepository.GetProfileAsync(unresolvedWallets[i], ct);
+            }
+
+            if (ct.IsCancellationRequested) return;
+
+            string updatedText = BuildText(lastReactors, mockUserCount, out _);
+            view.UpdateText(updatedText);
         }
     }
 }
