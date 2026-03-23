@@ -461,7 +461,7 @@ namespace Global.Dynamic
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
-#if UNITY_EDITOR
+#if UNITY_WEBGL && UNITY_EDITOR
             // LiveKit Room uses WebGL native bridge (JSRef) which doesn't exist in Editor; use null room for chat.
             IActivatableConnectiveRoom chatRoom = new ActivatableConnectiveRoom(IConnectiveRoom.Null.INSTANCE);
 #else
@@ -557,17 +557,15 @@ namespace Global.Dynamic
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
-
+            IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             var chatHistory = new ChatHistory();
             IEventBus emotesEventBus = new EventBus(true);
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
-
-            IRealmNavigator realmNavigatorForInit = realmNavigatorContainer != null ? realmNavigatorContainer.RealmNavigator : new NoOpRealmNavigator();
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
-                realmNavigatorForInit,
+                realmNavigator,
                 realmNavigatorContainer,
                 terrainContainer,
                 loadingScreen,
@@ -588,7 +586,6 @@ namespace Global.Dynamic
 
                 staticContainer.CharacterContainer);
 
-            IRealmNavigator realmNavigator = realmNavigatorContainer != null ? realmNavigatorContainer.RealmNavigator : realmNavigatorForInit;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
 
@@ -1230,9 +1227,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
             globalPlugins.Add(new MapRendererPlugin(mapRendererContainer.MapRenderer));
-
-            if (realmNavigatorContainer != null)
-                globalPlugins.Add(realmNavigatorContainer.CreatePlugin());
+            globalPlugins.Add(realmNavigatorContainer.CreatePlugin());
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
 #if !NO_LIVEKIT_MODE

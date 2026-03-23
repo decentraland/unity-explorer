@@ -124,8 +124,8 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
-            if(hudController.State == ControllerState.ViewHiding
-                || hudController.State == ControllerState.ViewHidden
+            if(hudController.State == ControllerState.ViewHiding 
+                || hudController.State == ControllerState.ViewHidden 
                 || hudController.State == ControllerState.ViewShowing)
                 return;
 

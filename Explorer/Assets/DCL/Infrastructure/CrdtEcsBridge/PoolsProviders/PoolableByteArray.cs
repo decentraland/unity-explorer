@@ -57,23 +57,23 @@ namespace CrdtEcsBridge.PoolsProviders
 
         public struct Enumerator : IEnumerator<byte>
         {
-            private readonly byte[] _array;
-            private readonly int _end; // cache Offset + Count, since it's a little slow
-            private int _current;
+            private readonly byte[] array;
+            private readonly int end; // cache Offset + Count, since it's a little slow
+            private int current;
 
             internal Enumerator(PoolableByteArray arraySegment)
             {
-                _array = arraySegment.Array;
-                _end = arraySegment.Length;
-                _current = -1;
+                array = arraySegment.Array;
+                end = arraySegment.Length;
+                current = -1;
             }
 
             public bool MoveNext()
             {
-                if (_current < _end)
+                if (current < end)
                 {
-                    _current++;
-                    return _current < _end;
+                    current++;
+                    return current < end;
                 }
 
                 return false;
@@ -83,13 +83,13 @@ namespace CrdtEcsBridge.PoolsProviders
             {
                 get
                 {
-                    if (_current < -1)
+                    if (current < -1)
                         throw new InvalidOperationException("EnumNotStarted");
 
-                    if (_current >= _end)
+                    if (current >= end)
                         throw new InvalidOperationException("EnumEnded");
 
-                    return _array[_current];
+                    return array[current];
                 }
             }
 
@@ -97,7 +97,7 @@ namespace CrdtEcsBridge.PoolsProviders
 
             void IEnumerator.Reset()
             {
-                _current = -1;
+                current = -1;
             }
 
             public void Dispose() { }
