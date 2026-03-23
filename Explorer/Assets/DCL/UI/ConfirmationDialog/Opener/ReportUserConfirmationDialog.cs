@@ -8,14 +8,13 @@ namespace DCL.UI.ConfirmationDialog.Opener
 {
     public static class ReportUserConfirmationDialog
     {
-        private const string TEXT_FORMAT = "You will be redirected to a web form to report {0}.";
-        private const string SUB_TEXT = "Please fill up the form as detailed as possible, providing evidence of the infraction.";
+        private const string TEXT_FORMAT = "You will be redirected to a web form";
+        private const string SUB_TEXT = "Fill out the form with as much detail as you can, including evidence of what happened.";
         private const string CONFIRM_TEXT = "Report";
         private const string CANCEL_TEXT = "Cancel";
 
         public static async UniTask<bool> ShowAsync(
             IConfirmationDialogOpener confirmationDialogOpener,
-            string userName,
             Sprite? reportSprite,
             string reportCategory,
             CancellationToken ct)
@@ -23,7 +22,7 @@ namespace DCL.UI.ConfirmationDialog.Opener
             Result<ConfirmationResult> dialogResult = await confirmationDialogOpener
                 .OpenConfirmationDialogAsync(
                     new ConfirmationDialogParameter(
-                        string.Format(TEXT_FORMAT, userName),
+                        TEXT_FORMAT,
                         CANCEL_TEXT,
                         CONFIRM_TEXT,
                         reportSprite,

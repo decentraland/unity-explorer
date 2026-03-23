@@ -12,7 +12,7 @@ namespace DCL.ApplicationBlocklistGuard
 {
     public class BlockedScreenController : ControllerBase<BlockedScreenView, BlockedScreenParameters>
     {
-        private const string DEFAULT_INFO_TEXT = "Please contact support team for more information.";
+        private const string DEFAULT_INFO_TEXT = "Contact Support for more information.";
 
         private readonly IWebBrowser webBrowser;
         private readonly StringBuilder infoTextBuilder = new ();
@@ -41,9 +41,11 @@ namespace DCL.ApplicationBlocklistGuard
             {
                 infoTextBuilder.Append("Ban period: ");
                 infoTextBuilder.Append(FormatRemainingBanTime(inputData.BannedUserData.expiresAt));
+                infoTextBuilder.Append(".");
                 infoTextBuilder.AppendLine();
                 infoTextBuilder.Append("Reason: ");
                 infoTextBuilder.Append(inputData.BannedUserData.reason);
+                infoTextBuilder.Append(".");
                 infoTextBuilder.AppendLine();
             }
             infoTextBuilder.Append(DEFAULT_INFO_TEXT);

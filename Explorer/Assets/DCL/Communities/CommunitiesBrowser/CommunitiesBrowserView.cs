@@ -200,7 +200,6 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 bool confirmed = await ReportUserConfirmationDialog.ShowAsync(
                     ViewDependencies.ConfirmationDialogOpener,
-                    memberData.Name,
                     contextMenuSettings.ReportSprite,
                     ReportCategory.COMMUNITIES,
                     ct);
@@ -208,7 +207,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!confirmed)
                     return;
 
-                ReportUserRequested?.Invoke(profile);
+                ReportUserRequested?.Invoke(memberData);
             }
         }
 
