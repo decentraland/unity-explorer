@@ -94,7 +94,6 @@ namespace Global
                 mvcManager,
                 profileRepository,
                 web3IdentityCache,
-                decentralandUrlsSource,
                 webRequestController,
 #if !NO_LIVEKIT_MODE
                 roomHub,

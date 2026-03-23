@@ -46,6 +46,7 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var realmController = new RealmController(
+                identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 teleportController,
                 retrieveSceneFromFixedRealm,
