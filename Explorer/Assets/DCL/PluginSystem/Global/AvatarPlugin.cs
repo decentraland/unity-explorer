@@ -29,6 +29,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using ECS.LifeCycle.Systems;
 using Runtime.Wearables;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;

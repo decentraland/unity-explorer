@@ -1,4 +1,4 @@
-using DCL.DebugUtilities.UIBindings;
+﻿using DCL.DebugUtilities.UIBindings;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
