@@ -7,6 +7,11 @@ using Utility;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Dual-interface adapter that wraps ClearScript's <see cref="Microsoft.ClearScript.JavaScript.ITypedArray{T}"/> (byte)
+    /// as both <see cref="IDCLTypedArray{T}"/> and <see cref="IDCLScriptObject"/>, enabling byte-level read/write,
+    /// unsafe direct access, and general JavaScript object manipulation on the same array instance.
+    /// </summary>
     public class V8TypedArrayAdapter : IDCLTypedArray<byte>, IDCLScriptObject
     {
         public ITypedArray<byte> TypedArray { get; }

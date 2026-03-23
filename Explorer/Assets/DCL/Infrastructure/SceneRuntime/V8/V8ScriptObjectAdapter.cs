@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Adapts ClearScript's <see cref="Microsoft.ClearScript.ScriptObject"/> to <see cref="IDCLScriptObject"/>,
+    /// forwarding property access, method invocation, and constructor calls while unwrapping DCL adapter types
+    /// before passing values back to ClearScript.
+    /// </summary>
     public class V8ScriptObjectAdapter : IDCLScriptObject
     {
         public ScriptObject ScriptObject { get; }

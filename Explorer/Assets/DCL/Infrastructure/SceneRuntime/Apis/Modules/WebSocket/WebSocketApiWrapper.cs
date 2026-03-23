@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Utility;
 
 namespace SceneRuntime.Apis.Modules
@@ -40,8 +40,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise();
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
 
@@ -56,8 +55,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise(); //We cant use ToPromise as its a ClearScript extension
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
 
@@ -72,8 +70,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise();
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
 
@@ -89,8 +86,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise();
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
 
@@ -105,8 +101,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise();
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
 
@@ -116,8 +111,7 @@ namespace SceneRuntime.Apis.Modules
             try { return api.CloseAsync(websocketId, disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this); }
             catch (Exception e)
             {
-                return Task.CompletedTask;
-                //return Task.FromException(e).ToPromise();
+                return UniTask.FromException(e).ToDisconnectedPromise(this);
             }
         }
     }

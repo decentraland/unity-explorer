@@ -4,6 +4,11 @@ using Utility;
 
 namespace SceneRuntime.V8
 {
+    /// <summary>
+    /// Implements <see cref="ITypedArrayConverter"/> to normalise typed-array values returned from JavaScript:
+    /// passes through existing <see cref="IDCLTypedArray{T}"/> instances unchanged and wraps raw ClearScript
+    /// <see cref="Microsoft.ClearScript.JavaScript.ITypedArray{T}"/> values in a <see cref="V8TypedArrayAdapter"/>.
+    /// </summary>
     public class V8TypedArrayConverter : ITypedArrayConverter
     {
         public IDCLTypedArray<byte> Convert(object typedArray)
