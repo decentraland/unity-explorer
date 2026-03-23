@@ -44,7 +44,6 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Emotes](emotes.md)** — Emote loading, animation controllers, and pooling
 - **[Skeleton Loading Animation](skeleton-loading-animation.md)** — Bone animations for loading states
 - **[Avatar Animation for Demos](avatar-animation-for-demos.md)** — Using Unity Timeline for demo recordings
-- **[Unreleased Wearables & Emotes Preview](unreleased-wearables-emotes-preview.md)** — Builder API signing, GLTF-based loading, and self-preview collection flow
 
 ## Chat & Social
 - **[Chat](chat.md)** — Chat system architecture, state machine, and MVP structure
@@ -66,6 +65,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[IPFS Realms](ipfs-realms.md)** — Publishing entities to IPFS catalysts
 
 ## Testing & Debugging
+- **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
