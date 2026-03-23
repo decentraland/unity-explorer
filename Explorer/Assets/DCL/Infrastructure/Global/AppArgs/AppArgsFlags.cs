@@ -17,7 +17,6 @@ namespace Global.AppArgs
         public const string PROFILER_LOG_FILE = "raw";
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
-        public const string GENESIS_SCENE = "genesisScene";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";

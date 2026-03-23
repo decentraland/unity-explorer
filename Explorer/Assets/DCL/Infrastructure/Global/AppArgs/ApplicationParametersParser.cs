@@ -80,25 +80,6 @@ namespace Global.AppArgs
                 ReportHub.LogWarning(ReportCategory.STARTUP, $"[WebGL] Failed to parse URL query for '{WORLD_QUERY_PARAM}': {e.Message}");
             }
 
-            try
-            {
-                string? genesisScene = query[AppArgsFlags.GENESIS_SCENE];
-                if (string.IsNullOrEmpty(genesisScene))
-                    return;
-
-                genesisScene = HttpUtility.UrlDecode(genesisScene);
-                if (string.IsNullOrEmpty(genesisScene))
-                    return;
-
-                if (!TryParseParcel(genesisScene, out _, out _))
-                    return;
-
-                appParameters[AppArgsFlags.GENESIS_SCENE] = genesisScene;
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.STARTUP, $"[WebGL] Failed to parse URL query for '{AppArgsFlags.GENESIS_SCENE}': {e.Message}");
-            }
         }
 #endif
 
@@ -190,14 +171,6 @@ namespace Global.AppArgs
                 output[AppArgsFlags.SKIP_AUTH_SCREEN] = value[..^1];
 
             return output;
-        }
-
-        private static bool TryParseParcel(string value, out int x, out int y)
-        {
-            x = y = 0;
-            string[] parts = value.Split(',');
-            if (parts.Length != 2) return false;
-            return int.TryParse(parts[0].Trim(), out x) && int.TryParse(parts[1].Trim(), out y);
         }
 
         private void LogArguments()

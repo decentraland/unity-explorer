@@ -2,11 +2,9 @@ using DCL.Audio;
 using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 #endif
-
 using DCL.Multiplayer.HealthChecks;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
@@ -142,13 +140,3 @@ namespace DCL.UserInAppInitializationFlow
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
