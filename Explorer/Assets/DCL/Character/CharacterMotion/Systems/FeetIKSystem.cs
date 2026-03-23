@@ -134,7 +134,9 @@ namespace DCL.CharacterMotion.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateToggleStatus(ref FeetIKComponent feetIKComponent, AvatarBase avatarBase)
         {
-            feetIKComponent.IsDisabled = !feetIkIsEnabled;
+            // Also treat as disabled when the rig component itself is off — this prevents
+            // initialization and processing before InstantiateMainPlayerAvatar enables it.
+            feetIKComponent.IsDisabled = !feetIkIsEnabled || !avatarBase.FeetIKRig.enabled;
             avatarBase.FeetIKRig.weight = feetIKComponent.IsDisabled ? 0 : 1;
         }
 
