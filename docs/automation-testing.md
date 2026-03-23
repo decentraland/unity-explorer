@@ -224,17 +224,70 @@ After installing the extension, add the AltTester MCP server to your Claude Code
 
 Restart Claude Code after updating the configuration.
 
+### Available MCP Tools
+
+The AltTester MCP server exposes the following tools that Claude can use when connected to a running instrumented build:
+
+#### Connection & State
+
+| Tool | Description |
+|---|---|
+| `driver` | Connect/disconnect/check status of the AltDriver (`create`, `status`, `stop`) |
+| `get_game_state` | Full game state: scene name, object count, and hierarchical object tree with view-aware separation (on-screen vs off-screen) |
+| `get_all_elements` | Paginated list of all scene elements with optional full details |
+| `scene` | Get current scene, load a scene, or list all available scenes |
+| `get_application_screen_size` | Screen dimensions in pixels |
+| `get_screenshot` | Capture a PNG screenshot and save to disk |
+
+#### Object Inspection
+
+| Tool | Description |
+|---|---|
+| `find_object` | Find a single object by locator strategy (`NAME`, `PATH`, `ID`, `TAG`, `LAYER`, `TEXT`, `COMPONENT`) |
+| `find_objects` | Find all objects matching a locator, with optional filtering for active/on-screen objects |
+| `component_property` | Read, write, or wait on a Unity component property (e.g. `Text.text`, `Transform.position`) |
+
+#### Interaction
+
+| Tool | Description |
+|---|---|
+| `click` | Click an object by locator, with optional wait and coordinate output |
+| `touch` | Multi-touch gestures: `begin`, `move`, `end` with finger ID tracking |
+| `key_input` | Keyboard input: `press`, `down`, `up` with key codes |
+| `scroll` | Scroll at coordinates with configurable speed and direction |
+| `move_mouse` | Move cursor to screen coordinates |
+| `reset_input` | Reset all input to neutral state |
+
+#### Wait Conditions
+
+| Tool | Description |
+|---|---|
+| `wait_for_object` | Wait for an object to appear (with timeout) |
+| `wait_for_object_absence` | Wait for an object to disappear |
+
+#### Utilities
+
+| Tool | Description |
+|---|---|
+| `setup_starter_project` | Scaffold a new test project (C#, Python, Java, or Robot Framework) |
+| `documentation` | Read, list, or search AltTester documentation |
+| `start_alt_tester_desktop` | Launch AltTester Desktop from `/Applications` |
+
 ### Usage
 
-With the MCP server configured and AltTester Desktop connected to the running game, Claude can:
+With the MCP server configured and an instrumented build connected via AltTester Desktop, Claude can:
 
-- **Inspect the live game** — query the object hierarchy, read properties, and understand the current UI state.
-- **Generate test code** — write C# tests following this project's patterns and coding standards.
-- **Debug failing tests** — analyze failures and suggest alternative locators or debugging strategies.
+- **Inspect the live game** — use `get_game_state` and `find_objects` to query the full object hierarchy, identify locators, and understand the current UI state.
+- **Discover locators** — use `find_object` with different strategies (`NAME`, `ID`, `PATH`) to find the best locator for a UI element, then use those in test code.
+- **Read component properties** — use `component_property` to inspect `Text.text`, `Transform.position`, or any component field on a live object.
+- **Take screenshots** — use `get_screenshot` to capture the current screen for visual verification.
+- **Generate test code** — combine live inspection with the project's POM patterns to write accurate tests with verified locators.
+- **Debug failing tests** — find objects that tests can't locate, check if they're on-screen, and suggest alternative locators.
 
 Example prompts:
-- *"Help me write a test that opens the Backpack panel and verifies it's visible."*
-- *"What objects are currently visible on screen?"*
-- *"Why is my test failing to find the Settings button? Suggest alternative locators."*
+- *"Connect to the running game and show me the UI hierarchy."*
+- *"Find the Settings button and tell me its locator ID."*
+- *"Take a screenshot and write a test for whatever panel is currently open."*
+- *"Why can't my test find the Backpack section? Check if it's visible in the game."*
 
 For full documentation, see the [AltTester AI Extension docs](https://alttester.com/docs/desktop/latest/pages/ai-extension.html).
