@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PluginSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -14,8 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -126,8 +123,8 @@ namespace DCL.LOD.Systems
                     }
                     else
                     {
-                        ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
-                        creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                        //Means that the ISS loading has been cancelled. We need to remove the reference to keep counting correctly
+                        Result.Asset!.Dereference();
                     }
                 }
                 World.Destroy(entity);
