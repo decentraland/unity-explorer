@@ -27,6 +27,7 @@ namespace DCL.Chat.ChatMessages
 
         private CancellationTokenSource? asyncCts;
         private string? shownMessageId;
+        private int shownEmojiIndex = -1;
 
         public ReactionTooltipPresenter(
             ReactionTooltipView view,
@@ -54,6 +55,9 @@ namespace DCL.Chat.ChatMessages
 
         public void ShowForReaction(ReactionSet? reactions, int emojiIndex, RectTransform pillTransform, string messageId)
         {
+            if (IsAlreadyShowing(messageId, emojiIndex))
+                return;
+
             asyncCts.SafeCancelAndDispose();
             asyncCts = null;
 
@@ -71,6 +75,7 @@ namespace DCL.Chat.ChatMessages
             }
 
             shownMessageId = messageId;
+            shownEmojiIndex = emojiIndex;
 
             Rect uvRect = atlasConfig.GetUVRect(emojiIndex);
 
@@ -107,6 +112,7 @@ namespace DCL.Chat.ChatMessages
             asyncCts.SafeCancelAndDispose();
             asyncCts = null;
             shownMessageId = null;
+            shownEmojiIndex = -1;
             view.Hide();
         }
 
@@ -121,6 +127,10 @@ namespace DCL.Chat.ChatMessages
             asyncCts.SafeCancelAndDispose();
             asyncCts = null;
         }
+
+        private bool IsAlreadyShowing(string messageId, int emojiIndex) =>
+            shownEmojiIndex == emojiIndex
+            && string.Equals(shownMessageId, messageId, StringComparison.Ordinal);
 
         private string BuildText(List<string> reactors, int mockUserCount, out bool allResolved)
         {

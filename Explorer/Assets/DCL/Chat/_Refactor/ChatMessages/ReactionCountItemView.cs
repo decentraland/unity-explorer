@@ -20,6 +20,7 @@ namespace DCL.Chat.ChatMessages
         private Vector3 hoveredScale = new (1.2f, 1.2f, 1.2f);
         private float animDuration = 0.1f;
         private int emojiIndex;
+        private bool hiding;
 
         public event Action<int>? OnClicked;
         public event Action<int, RectTransform>? OnHoverEnter;
@@ -62,18 +63,19 @@ namespace DCL.Chat.ChatMessages
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (hiding) return;
+
             contentContainer.DOScale(Vector3.one, animDuration).SetEase(Ease.OutQuad);
             OnHoverExit?.Invoke(emojiIndex);
         }
 
         public void Hide()
         {
+            hiding = true;
             contentContainer.DOKill();
             contentContainer.localScale = Vector3.one;
             gameObject.SetActive(false);
-            OnClicked = null;
-            OnHoverEnter = null;
-            OnHoverExit = null;
+            hiding = false;
         }
 
         private void OnDestroy()
