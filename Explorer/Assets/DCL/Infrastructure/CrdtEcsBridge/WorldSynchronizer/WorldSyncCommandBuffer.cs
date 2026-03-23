@@ -147,6 +147,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     batchState.reconciliationState = new ReconciliationState(reconciliationEffect, reconciliationEffect);
                     batchState.sdkComponentBridge = sdkComponentBridge;
                     componentsBatch[message.ComponentId] = batchState;
+                    return reconciliationEffect;
             }
 
             return reconciliationEffect;
@@ -228,8 +229,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (componentsBatch.Count == 0) continue;
 
-                    bool isNewEntity = !entitiesMap.TryGetValue(entity, out Entity realEntity);
-                    if (isNewEntity)
+                    if (!entitiesMap.TryGetValue(entity, out Entity realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 
                     foreach (BatchState batchState in componentsBatch.Values)
