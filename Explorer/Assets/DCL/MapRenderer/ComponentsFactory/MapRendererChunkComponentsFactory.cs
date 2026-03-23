@@ -2,7 +2,6 @@
 using DCL.AssetsProvision;
 using DCL.MapPins.Bus;
 using DCL.EventsApi;
-using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
