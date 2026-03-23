@@ -133,7 +133,7 @@ namespace DCL.Backpack.Gifting.Presenters
             }
             finally
             {
-                NativeWindowManager.TryRevertTemporaryWindowMode();
+                NativeWindowManager.ReleaseTemporaryWindowMode();
             }
         }
 

@@ -80,10 +80,9 @@ namespace Plugins.NativeWindowManager
 
         private static bool IsResolutionCompatibleWithAspectRatio(float resolutionWidth, float resolutionHeight, float aspectRatioWidth, float aspectRatioHeight)
         {
-            const float EPSILON = 0.0001f;
             float resolutionAspectRatioValue = GetAspectRatioValue(resolutionWidth, resolutionHeight);
             float aspectRationValueToCheck = GetAspectRatioValue(aspectRatioWidth, aspectRatioHeight);
-            return Mathf.Abs(resolutionAspectRatioValue - aspectRationValueToCheck) <= EPSILON;
+            return Mathf.Approximately(resolutionAspectRatioValue, aspectRationValueToCheck);
         }
 
         // By design, the default resolution should be a 1080p resolution with a 16:9 aspect ratio

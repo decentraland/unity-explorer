@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
                     ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
-            NativeWindowManager.TryRevertTemporaryWindowMode();
+            NativeWindowManager.ReleaseTemporaryWindowMode();
             view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
             base.Exit();
         }

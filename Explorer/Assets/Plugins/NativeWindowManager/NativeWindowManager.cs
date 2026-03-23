@@ -20,6 +20,8 @@ namespace Plugins.NativeWindowManager
         private const int MIN_WIDTH = 640;
         private const int MIN_HEIGHT = 480;
 
+        private static int requestCounter;
+
         /// <summary>
         /// Fires when the current resolution (Screen.width/height) changes.
         /// </summary>
@@ -105,6 +107,8 @@ namespace Plugins.NativeWindowManager
         /// </summary>
         public static void RequestTemporaryWindowMode()
         {
+            if (requestCounter++ != 0) return;
+
             if (Screen.fullScreenMode == FullScreenMode.FullScreenWindow)
             {
                 wasFullScreenBeforeRequest = false;
@@ -125,8 +129,14 @@ namespace Plugins.NativeWindowManager
         /// Reverts a temporary window mode request, unless we were previously
         /// already in window mode.
         /// </summary>
-        public static void TryRevertTemporaryWindowMode()
+        public static void ReleaseTemporaryWindowMode()
         {
+            if (requestCounter != 0)
+            {
+                requestCounter--;
+                return;
+            }
+
             if (!wasFullScreenBeforeRequest || Screen.fullScreenMode == FullScreenMode.FullScreenWindow) return;
 
             Screen.SetResolution(FullScreenResolution.x, FullScreenResolution.y, FullScreenMode.FullScreenWindow);
