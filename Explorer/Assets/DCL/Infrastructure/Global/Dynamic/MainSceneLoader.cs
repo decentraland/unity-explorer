@@ -105,6 +105,9 @@ namespace Global.Dynamic
                     // This will happen when, for example, you delete the
                     // StreamingAssets folder or if Addressables built nothing.
 
+                    ReportHub.LogError(ReportCategory.ALWAYS,
+                        "InitializeFlowAsync has failed. The game is dead.");
+
                     if (Environment.GetCommandLineArgs().Contains("--autopilot"))
                         Application.Quit(1);
 
