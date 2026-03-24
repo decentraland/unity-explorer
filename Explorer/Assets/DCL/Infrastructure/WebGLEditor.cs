@@ -23,9 +23,14 @@ namespace DCL.Infrastructure
         [MenuItem("Decentraland/WebGL/Build and Start")]
         public static void BuildAndStart()
         {
-            // Can be adopted for Windows later
+#if UNITY_EDITOR_WIN
+            const string CHROME_PATH = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+            const string CHROME_TEMP_DIR = "C:/tmp";
+#else
             const string CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-            const string CHROME_ARGS = "--disable-web-security --user-data-dir=/tmp/chrome-no-cors";
+            const string CHROME_TEMP_DIR = "/tmp/chrome-no-cors";
+#endif
+            const string CHROME_ARGS = "--disable-web-security --user-data-dir=" + CHROME_TEMP_DIR;
             
             const int START_PORT = 8000;
             const string SERVER_CMD = "python3 -m http.server"; // EXAMPLE: python3 -m http.server 8044
@@ -144,8 +149,15 @@ namespace DCL.Infrastructure
             {
                 StartInfo = new ProcessStartInfo
                 {
+
+#if UNITY_EDITOR_WIN
+                    FileName = "python3.exe",
+                    Arguments = $"-m http.server {port}",
+#else
                     FileName = "/usr/bin/env",
                     Arguments = $"python3 -m http.server {port}",
+#endif
+
                     WorkingDirectory = Path.GetFullPath(buildFolder),
                     RedirectStandardOutput = false,
                     RedirectStandardError = false,
