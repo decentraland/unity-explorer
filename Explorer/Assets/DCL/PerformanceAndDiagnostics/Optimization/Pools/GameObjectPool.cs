@@ -49,8 +49,24 @@ namespace DCL.Optimization.Pools
             gameObjectPool.Release(element);
         }
 
-        public T Get() =>
-            gameObjectPool.Get();
+        public T Get()
+        {
+            // Defensive programming in response to a null reference exception
+            // that occurred when accessing a Transform component fresh out of
+            // a pool. Issue:
+            // https://github.com/decentraland/unity-explorer/issues/7701
+
+            while (true)
+            {
+                var component = gameObjectPool.Get();
+
+                if (component == null)
+                    ReportHub.LogError(ReportCategory.ENGINE,
+                        $"{typeof(T).Name} has been destroyed while in the pool.");
+                else
+                    return component;
+            }
+        }
 
         public void Clear() =>
             gameObjectPool.Clear();
