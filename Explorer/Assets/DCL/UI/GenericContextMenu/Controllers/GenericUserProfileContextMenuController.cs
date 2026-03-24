@@ -92,7 +92,7 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuMuteProximityButton;
         private readonly GenericContextMenuElement contextMenuUnmuteProximityButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly ProximityMuteService? proximityMuteService;
+        private readonly ProximityMuteService proximityMuteService;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -384,13 +384,17 @@ namespace DCL.UI
 
         private void OnMuteProximityClicked(string userId)
         {
-            proximityMuteService?.SetMuted(userId, true);
-            closeContextMenuTask.TrySetResult();
+            MuteProximityAsync(userId, true).Forget();
         }
 
         private void OnUnmuteProximityClicked(string userId)
         {
-            proximityMuteService?.SetMuted(userId, false);
+            MuteProximityAsync(userId, false).Forget();
+        }
+
+        private async UniTaskVoid MuteProximityAsync(string userId, bool muted)
+        {
+            await proximityMuteService.SetMutedAsync(userId, muted, cancellationTokenSource.Token);
             closeContextMenuTask.TrySetResult();
         }
 

@@ -154,6 +154,8 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
 
+            await proximityMuteService.LoadAsync(ct);
+
             proximityConfigHolder.Config = voiceChatConfiguration;
 
             if (voiceChatConfiguration.MouthAtlasTexture != null)

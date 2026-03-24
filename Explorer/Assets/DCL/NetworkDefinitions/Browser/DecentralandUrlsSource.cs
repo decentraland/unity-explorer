@@ -223,6 +223,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
+                DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
+
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 

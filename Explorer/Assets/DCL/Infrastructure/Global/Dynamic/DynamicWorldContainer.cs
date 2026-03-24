@@ -88,6 +88,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
+using DCL.VoiceChat.MutePersistence;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -676,7 +677,11 @@ namespace Global.Dynamic
 
             var passportBridge = new MVCPassportBridge(mvcManager);
 
-            var proximityMuteService = new ProximityMuteService();
+            var proximityMuteCache = new ProximityMuteCache();
+            var proximityMuteRepository = new RestProximityMuteRepository(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource);
+            var proximityMuteService = new ProximityMuteService(proximityMuteCache, proximityMuteRepository);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
