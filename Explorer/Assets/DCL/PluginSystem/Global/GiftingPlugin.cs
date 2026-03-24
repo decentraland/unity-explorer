@@ -62,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
         private GiftReceivedPopupController? giftReceivedPopupController;
+        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -205,6 +206,8 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
+
+            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
