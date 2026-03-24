@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c834fc85f66fdbf4b9c012dc7f250d93, type: 3}
+  m_Name: QualityPresetLow
+  m_EditorClassIdentifier: Settings::DCL.Quality.QualityPresetData
+  fpsLimit: 30
+  vSyncEnabled: 0
+  resolutionScale: 0.5
+  msaaLevel: 0
+  hdrEnabled: 0
+  bloomEnabled: 0
+  avatarOutlineEnabled: 0
+  sceneDistance: 10
+  landscapeDistance: 500
+  sunShadows: 0
+  sceneLightsEnabled: 0
+  sceneLightShadowsEnabled: 1
+  maxSceneLights: 0
+  shadowsQualityLevel: 0
+  shadowDistance: 30

@@ -9,6 +9,7 @@ using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -53,6 +54,7 @@ namespace DCL.UI
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -88,7 +90,8 @@ namespace DCL.UI
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
-            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider)
+            IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -101,6 +104,7 @@ namespace DCL.UI
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked, null, false, false);
 
@@ -302,7 +306,7 @@ namespace DCL.UI
         private void OnJumpInClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource, parcel => JumpToFriendClicked(userId, parcel));
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>

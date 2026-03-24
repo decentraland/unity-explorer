@@ -2244,6 +2244,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "CameraReel",
+                    "type": "Button",
+                    "id": "e85e2a3b-f3d0-4437-93ad-4d14f00a8972",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2453,6 +2462,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Events",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d846ba0c-659b-4c85-90c2-3b950846dc8d",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -3220,15 +3240,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "CameraReel",
-                    "type": "Button",
-                    "id": "31bfeb99-05fb-4d03-8b5b-625b9a978aca",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "ShowHide",
                     "type": "Button",
                     "id": "cf1e68d1-cb76-496e-bcf9-7ebe352d5f9d",
@@ -3549,17 +3560,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleInWorldCamera",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "e5a2c668-2319-4423-b37b-7f32451dba2c",
-                    "path": "<Keyboard>/k",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

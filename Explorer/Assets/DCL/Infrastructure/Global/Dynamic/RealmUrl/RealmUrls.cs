@@ -45,6 +45,9 @@ namespace Global.Dynamic.RealmUrl
                 _ => throw new ArgumentOutOfRangeException()
             };
 
+        public string GenesisRealm() =>
+            decentralandUrlsSource.Url(DecentralandUrl.Genesis);
+
         private async UniTask<string> CustomRealmAsync(CancellationToken ct)
         {
             string realm = realmLaunchSettings.customRealm;

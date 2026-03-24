@@ -12,18 +12,22 @@ namespace DCL.Interaction.PlayerOriginated.Components
 
         public bool IsAtDistance;
 
-        public HoverStateComponent(bool isAtDistance, Collider? lastHitCollider, bool hasCollider)
+        public bool IsCursorInteraction;
+
+        public HoverStateComponent(bool isAtDistance, Collider? lastHitCollider, bool hasCollider, bool isCursorInteraction)
         {
             IsAtDistance = isAtDistance;
             LastHitCollider = lastHitCollider;
             HasCollider = hasCollider;
+            IsCursorInteraction = isCursorInteraction;
         }
 
-        public void AssignCollider(Collider collider, bool isAtDistance)
+        public void AssignCollider(Collider collider, bool isAtDistance, bool isCursorInteraction)
         {
             LastHitCollider = collider;
             HasCollider = true;
             IsAtDistance = isAtDistance;
+            IsCursorInteraction = isCursorInteraction;
         }
 
         public void Clear()
@@ -31,6 +35,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
             LastHitCollider = null;
             IsAtDistance = false;
             HasCollider = false;
+            IsCursorInteraction = false;
         }
     }
 }

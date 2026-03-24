@@ -1,7 +1,9 @@
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -39,6 +41,7 @@ namespace DCL.Places
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? openContextMenuCts;
         private HomePlaceEventBus? homePlaceEventBus;
+        private IWorldPermissionsService worldPermissionsService = null!;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -82,12 +85,14 @@ namespace DCL.Places
             PlacesStateService stateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepoWrapper,
-            HomePlaceEventBus homeEventBus)
+            HomePlaceEventBus homeEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
             this.homePlaceEventBus = homeEventBus;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
@@ -187,6 +192,12 @@ namespace DCL.Places
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
+
+            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) &&
+                placeInfoWithConnectedFriends.PlaceInfo.is_private)
+            {
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, cardView.WorldAccessCancellationToken).Forget();
+            }
 
             if (index == currentPlacesIds.Count - 1)
                 PlacesGridScrollAtTheBottom?.Invoke();

@@ -177,7 +177,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return true;
         }
 
-        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, 
+        private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
             SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
@@ -207,7 +207,7 @@ namespace DCL.Multiplayer.Movement.Systems
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
             bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD ||
-                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping
+                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.JumpCount != remote.animState.JumpCount
                              || remotePlayerMovement.PastMessage.movementKind == MovementKind.IDLE || remote.movementKind == MovementKind.IDLE;
 
             // Interpolate linearly to/from zero velocities to avoid position overshooting

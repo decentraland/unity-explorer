@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.PrivateWorlds;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using System;
@@ -201,13 +202,22 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.GetAdapterURL(meta.sceneId);
-            string json = meta.ToJson();
+            
+            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
+
+            if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
 
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, json, token)
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;
+            
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
+            
             return connectionString;
         }
 
@@ -217,5 +227,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public string adapter;
             public string fixedAdapter;
         }
+
     }
 }

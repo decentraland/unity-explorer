@@ -1,10 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/DCL/Interaction/HoverCanvas/UI/HoverCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=48fc6d51c040e7341986d956d3390c9e&amp;type=3#HoverCanvasStyleSheet" />
-    <DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement name="TooltipElement" class="tooltipBackground">
-        <ui:VisualElement name="KeyRoot" class="tooltipInputKey">
-            <ui:Label tabindex="-1" text="ENTER" display-tooltip-when-elided="true" name="KeyName" class="tooltipKeyLabel" />
+    <Style src="project://database/Assets/DCL/Interaction/HoverCanvas/UI/HoverCanvasStyleSheet.uss?fileID=7433441132597879392&amp;guid=48fc6d51c040e7341986d956d3390c9e&amp;type=3#HoverCanvasStyleSheet"/>
+    <DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement name="TooltipElement" picking-mode="Ignore" class="tooltipBackground">
+        <ui:VisualElement name="KeyRoot" picking-mode="Ignore" class="tooltipInputKey">
+            <ui:Label tabindex="-1" text="ENTER" display-tooltip-when-elided="true" name="KeyName" picking-mode="Ignore" class="tooltipKeyLabel"/>
         </ui:VisualElement>
-        <ui:Image name="Icon" class="tooltipIcon" />
-        <ui:Label tabindex="-1" text="It&apos;s a very very very long tooltip that should be truncated" display-tooltip-when-elided="true" name="Hint" enable-rich-text="true" class="tooltipHintText" />
+        <ui:Image name="Icon" picking-mode="Ignore" class="tooltipIcon"/>
+        <ui:Label tabindex="-1" text="It&#39;s a very very very long tooltip that should be truncated" display-tooltip-when-elided="true" name="Hint" enable-rich-text="true" picking-mode="Ignore" class="tooltipHintText"/>
     </DCL.Interaction.HoverCanvas.UI.HoverCanvasTooltipElement>
 </ui:UXML>

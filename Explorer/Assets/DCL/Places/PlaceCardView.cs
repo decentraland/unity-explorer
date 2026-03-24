@@ -1,4 +1,5 @@
 using DCL.Communities;
+using DCL.PrivateWorlds;
 using DCL.EventsApi;
 using DCL.Profiles;
 using DCL.UI;
@@ -38,6 +39,8 @@ namespace DCL.Places
         [SerializeField] private GameObject featuredTag = null!;
         [SerializeField] private HoverableTooltip liveTagWithTooltip = null!;
         [SerializeField] private GameObject headerGradient = null!;
+        [SerializeField] private GameObject inviteOnlyTag = null!;
+        [SerializeField] private GameObject liveTag = null!;
         [SerializeField] private FriendsConnectedConfig friendsConnected;
 
         [Header("Buttons")]
@@ -50,6 +53,12 @@ namespace DCL.Places
         [SerializeField] private Button jumpInButton = null!;
         [SerializeField] private Button deleteButton = null!;
         [SerializeField] private Button mainButton = null!;
+
+        [Header("World Access")]
+        [SerializeField] private Button enterPasswordButton = null!;
+
+        private const string PADLOCK_CLOSED_SPRITE = "<sprite name=\"PadlockClosed\">";
+        private const string PADLOCK_OPENED_SPRITE = "<sprite name=\"PadlockOpened\">";
 
         [Serializable]
         private struct FriendsConnectedConfig
@@ -75,6 +84,10 @@ namespace DCL.Places
         private Vector2 originalFooterSizeDelta;
         private PlaceInfo? currentPlaceInfo;
         private CancellationTokenSource loadingThumbnailCts;
+        private CancellationTokenSource? worldAccessCts;
+        private string lastPlaceTitle = string.Empty;
+        private WorldAccessCheckResult lastAccessState = WorldAccessCheckResult.Allowed;
+        private WorldAccessType? lastAccessType;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -87,6 +100,7 @@ namespace DCL.Places
         public event Action<PlaceInfo, PlaceCardView>? MainButtonClicked;
 
         public bool IsSetAsHome => homeToggle.Toggle.isOn;
+        public CancellationToken WorldAccessCancellationToken => worldAccessCts?.Token ?? CancellationToken.None;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -116,6 +130,7 @@ namespace DCL.Places
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo!, shareButton.transform.position, this));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
+            enterPasswordButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
             deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo!));
             mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentPlaceInfo!, this));
         }
@@ -123,8 +138,11 @@ namespace DCL.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        private void OnDisable() =>
+        private void OnDisable()
+        {
             loadingThumbnailCts.SafeCancelAndDispose();
+            worldAccessCts.SafeCancelAndDispose();
+        }
 
         public void Configure(PlaceInfo placeInfo, string ownerName, bool userOwnsPlace, ThumbnailLoader thumbnailLoader,
             List<Profile.CompactInfo>? friends = null, ProfileRepositoryWrapper? profileRepositoryWrapper = null, bool isHome = false, EventDTO? liveEvent = null)
@@ -132,9 +150,11 @@ namespace DCL.Places
             currentPlaceInfo = placeInfo;
 
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
+            worldAccessCts = worldAccessCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, loadingThumbnailCts.Token, true).Forget();
 
-            placeNameText.text = placeInfo.title;
+            lastPlaceTitle = placeInfo.title ?? string.Empty;
+            placeNameText.text = lastPlaceTitle;
             placeDescriptionText.text = ownerName;
             int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
             onlineMembersText.text = $"{onlineMembers}";
@@ -181,6 +201,34 @@ namespace DCL.Places
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
             SilentlySetHomeToggle(isHome);
+
+            inviteOnlyTag.SetActive(false);
+            SetWorldAccessState(WorldAccessCheckResult.Allowed);
+        }
+
+        public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
+        {
+            lastAccessState = accessState;
+            lastAccessType = accessType;
+
+            RefreshPlaceTitleWithPadlock();
+
+            inviteOnlyTag.SetActive(accessState == WorldAccessCheckResult.AccessDenied);
+
+            jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
+            enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
+        }
+
+        private void RefreshPlaceTitleWithPadlock()
+        {
+            if (placeNameText == null || string.IsNullOrEmpty(lastPlaceTitle))
+                return;
+
+            bool isRestricted = lastAccessState == WorldAccessCheckResult.AccessDenied || lastAccessState == WorldAccessCheckResult.PasswordRequired;
+            bool isInvited = lastAccessState == WorldAccessCheckResult.Allowed && lastAccessType == WorldAccessType.AllowList;
+
+            string prefix = isRestricted ? PADLOCK_CLOSED_SPRITE : isInvited ? PADLOCK_OPENED_SPRITE : string.Empty;
+            placeNameText.text = prefix + lastPlaceTitle;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,

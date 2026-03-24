@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace DCL.CharacterMotion.Settings
@@ -34,6 +34,21 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField] [field: Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
 
+        [field: SerializeField] [field: Header("Air Jumps")] public int AirJumpCount { get; set; } = 1;
+        [field: SerializeField] public float AirJumpHeight { get; set; } = 2;
+        [field: SerializeField] public float AirJumpDelay { get; set; } = 0.2f;
+        [field: SerializeField] public float AirJumpGravityDuringDelay { get; set; }
+        [field: SerializeField] public float CooldownBetweenJumps { get; set; }
+        [field: SerializeField] public float AirJumpDirectionChangeImpulse { get; set; }
+
+        [field: SerializeField] [field: Header("Gliding")] public float GlideSpeed { get; private set; } = 6;
+        [field: SerializeField] public float GlideMinGroundDistance { get; private set; } = 2;
+        [field: SerializeField] public float GlideMaxGravity { get; private set; } = 1;
+        [field: SerializeField] public float JumpToGlideTimeInterval { get; private set; } = 0.5f;
+        [field: SerializeField] public float GlideCooldown { get; private set; } = 0.5f;
+        [field: SerializeField] public float GlideAnimMaxAngle { get; private set; } = 30;
+        [field: SerializeField] public float GlideAnimBlendSpeed { get; private set; } = 10;
+
         [field: SerializeField] [field: Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
 
         [field: SerializeField] [field: Header("Hard fall stun")] public float JumpHeightStun { get; private set; } = 10f;
@@ -53,7 +68,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        
+
         [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MoveAnimBlendMaxWalkSpeed { get; private set; } = 1f;
         [field: SerializeField] public float MoveAnimBlendMaxJogSpeed { get; private set; } = 3f;
@@ -93,5 +108,11 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKRemotePlayersDistance { get; set; } = 10;
         [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
+
+        [field: Header("Impulse / External Velocity")]
+        [field: SerializeField] public float CharacterMass { get; set; } = 1f;
+        [field: SerializeField] public float ExternalEnvDrag { get; set; } = 0.5f;
+        [field: SerializeField] public float ExternalGroundFriction { get; set; } = 4f;
+        [field: SerializeField] public float MaxExternalVelocity { get; set; } = 50f;
     }
 }

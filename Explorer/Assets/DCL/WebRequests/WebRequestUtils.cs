@@ -15,6 +15,7 @@ namespace DCL.WebRequests
         public const string CANNOT_CONNECT_ERROR = "Cannot connect to destination host";
 
         public const int BAD_REQUEST = 400;
+        public const int UNAUTHORIZED_ACCESS = 401;
         public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
 

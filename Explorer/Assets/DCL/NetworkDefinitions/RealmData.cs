@@ -26,6 +26,7 @@ namespace ECS
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
+        public string WorldCommsSecret { get; set; }
         public bool Configured { get; private set; }
         public float? SkyboxFixedHour { get; private set; }
 
@@ -94,6 +95,7 @@ namespace ECS
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
             Hostname = string.Empty;
+            WorldCommsSecret = string.Empty;
             WorldManifest = WorldManifest.Empty;
         }
 

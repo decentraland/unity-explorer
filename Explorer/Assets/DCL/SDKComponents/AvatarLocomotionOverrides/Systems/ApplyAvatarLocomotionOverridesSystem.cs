@@ -8,6 +8,7 @@ using DCL.SDKComponents.AvatarLocomotion.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using Unity.Mathematics;
+using CalculateCharacterVelocitySystem = DCL.Character.CharacterMotion.Systems.CalculateCharacterVelocitySystem;
 
 namespace DCL.SDKComponents.AvatarLocomotion.Systems
 {

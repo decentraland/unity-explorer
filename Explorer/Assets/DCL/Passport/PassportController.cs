@@ -410,6 +410,7 @@ namespace DCL.Passport
                                       getUserPositionBuffer,
                                       onlineUsersProvider,
                                       realmNavigator,
+                                      decentralandUrlsSource,
                                       parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
                                           parcel))),
                               false));
@@ -461,7 +462,7 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,
                 parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
         }
 
@@ -553,10 +554,13 @@ namespace DCL.Passport
                 Profile? profile = await selfProfile.ProfileAsync(ct);
                 if (profile != null)
                 {
-                    profile.ClaimedNameColor = colorPickerController.CurrentColor;
+                    // Create a copy to avoid mutating the cached profile in-place,
+                    // which would cause UpdateProfileAsync to see no changes (IdenticalProfileUpdateException)
+                    Profile newProfile = new ProfileBuilder().From(profile).Build();
+                    newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
 
                         if (updatedProfile != null)
                             profileChangesBus.PushUpdate(updatedProfile);

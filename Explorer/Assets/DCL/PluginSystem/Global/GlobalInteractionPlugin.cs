@@ -10,6 +10,7 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
+using ECS.SceneLifeCycle;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
+using PlayerOriginatedProximitySystem = DCL.Interaction.Systems.PlayerOriginatedProximitySystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -29,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IEventSystem eventSystem;
+        private readonly IScenesCache scenesCache;
         private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
 
@@ -42,6 +45,7 @@ namespace DCL.PluginSystem.Global
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
             IEventSystem eventSystem,
+            IScenesCache scenesCache,
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade)
         {
@@ -49,6 +53,7 @@ namespace DCL.PluginSystem.Global
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
             this.eventSystem = eventSystem;
+            this.scenesCache = scenesCache;
             this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
         }
@@ -66,11 +71,17 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
-                builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
+                builder.World.Create(
+                    new PlayerOriginRaycastResultForSceneEntities(),
+                    new PlayerOriginRaycastResultForGlobalEntities(),
+                    new HoverStateComponent(),
+                    new HoverFeedbackComponent(hoverCanvas.TooltipsCount),
+                    new ProximityResultForSceneEntities()),
                 builder.World, arguments.PlayerEntity);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
                 playerInteractionEntity, 100f);
+            PlayerOriginatedProximitySystem.InjectToWorld(ref builder, entityCollidersGlobalCache, scenesCache, playerInteractionEntity);
 
             DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;
 
