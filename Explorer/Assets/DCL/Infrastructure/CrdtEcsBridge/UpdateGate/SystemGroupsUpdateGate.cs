@@ -1,6 +1,6 @@
 using Arch.SystemGroups.DefaultSystemGroups;
-using Arch.SystemGroups.UnityBridge;
 using DCL.Optimization.Pools;
+using TimeProvider = Arch.SystemGroups.UnityBridge.TimeProvider;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;

@@ -10,6 +10,7 @@ using ECS.Groups;
 
 using ECS.Unity.Transforms.Components;
 using System;
+using TimeProvider = Arch.SystemGroups.UnityBridge.TimeProvider;
 
 
 namespace ECS.Unity.Transforms.Systems
