@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyBudgetQuery(World, multiplier);
 
             // Debug container Widget updater
-            if (visibilityBinding.IsExpanded)
+            if (visibilityBinding.IsConnectedAndExpanded)
             {
                 string color = totalParticles >= maxSceneParticles ? "red" : "green";
                 particleCountBinding.Value = $"<color={color}>{totalParticles} / {maxSceneParticles}</color>";
