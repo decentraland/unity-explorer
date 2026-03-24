@@ -93,7 +93,20 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            InitializeFlowAsync(destroyCancellationToken).Forget();
+            new Func<CancellationToken, UniTask>(async ct =>
+            {
+                try { await InitializeFlowAsync(ct); }
+                catch (Exception)
+                {
+                    // This will happen when, for example, you delete the
+                    // StreamingAssets folder or if Addressables built nothing.
+
+                    if (Environment.GetCommandLineArgs().Contains("--autopilot"))
+                        Application.Quit(1);
+
+                    throw;
+                }
+            })(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
