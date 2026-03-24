@@ -109,5 +109,13 @@ namespace SocketIOClient.Transport.WebSockets
         {
             _ws.Dispose();
         }
+
+        public void AddHeader(string key, string val)
+        {
+            _ws.Options.SetRequestHeader(key, val);
+        }
+
+        public void SetProxy(IWebProxy proxy) =>
+            _ws.Options.Proxy = proxy;
     }
 }
