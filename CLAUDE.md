@@ -107,6 +107,13 @@ Before writing or modifying any code, follow the code-standards skill for naming
 * Expose system constructors via `[InternalsVisibleTo]`.
 * Use NUnit + NSubstitute.
 
+### 11. **Assembly Rules**
+
+* **Tests** → always `.asmref` pointing to `DCL.EditMode.Tests` (`GUID:da80994a355e49d5b84f91c0a84a721f`), never a new `.asmdef`.
+* **New code** → `.asmref` to the parent assembly. Only create a new `.asmdef` if the code **must be referenced by other assemblies**.
+* **ECS Systems** → `.asmref` pointing to `DCL.Plugins`.
+* See [`docs/directories-and-assemblies-structure.md`](docs/directories-and-assemblies-structure.md) for full details.
+
 ---
 
 ### Specific Notes
