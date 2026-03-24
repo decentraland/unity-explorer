@@ -397,7 +397,7 @@ namespace DCL.Notifications.NewNotification
             {
                 notificationCanvasGroup.interactable = false;
                 notificationCanvasGroup.blocksRaycasts = false;
-                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
             }
         }
 
@@ -415,7 +415,7 @@ namespace DCL.Notifications.NewNotification
             {
                 notificationCanvasGroup.interactable = false;
                 notificationCanvasGroup.blocksRaycasts = false;
-                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
             }
         }
 
