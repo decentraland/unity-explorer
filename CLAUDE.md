@@ -103,7 +103,8 @@ Before writing or modifying any code, follow the code-standards skill for naming
 
 ### 10. **Testing Systems**
 
-* Use `UnitySystemTestBase<T>` for world lifecycle in tests.
+* **Before writing any tests**, read [`docs/testing-guide.md`](docs/testing-guide.md) for full conventions.
+* Use `UnitySystemTestBase<T>` for world lifecycle in ECS system tests.
 * Expose system constructors via `[InternalsVisibleTo]`.
 * Use NUnit + NSubstitute.
 
