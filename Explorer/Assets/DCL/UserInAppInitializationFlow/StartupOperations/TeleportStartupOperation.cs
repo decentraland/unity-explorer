@@ -17,6 +17,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly StartParcel startParcel;
         private readonly IAppArgs appArgs;
+        private readonly bool editorPositionOverrideActive;
 
         public TeleportStartupOperation(
             ILoadingStatus loadingStatus,
@@ -26,17 +27,19 @@ namespace DCL.UserInAppInitializationFlow
             CameraSamplingData cameraSamplingData,
             StartParcel startParcel,
             IAppArgs appArgs,
+            bool editorPositionOverrideActive = false,
             string reportCategory = ReportCategory.SCENE_LOADING)
             : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, reportCategory)
         {
             this.startParcel = startParcel;
             this.appArgs = appArgs;
+            this.editorPositionOverrideActive = editorPositionOverrideActive;
         }
 
         public override UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            // If the user explicitly provided --position, it takes highest priority over any world manifest spawn coordinate
-            if (!appArgs.HasFlag(AppArgsFlags.POSITION))
+            // --position flag or Editor Start Position take highest priority over any world manifest spawn coordinate
+            if (!appArgs.HasFlag(AppArgsFlags.POSITION) && !editorPositionOverrideActive)
             {
                 // If the WorldManifest defines an explicit spawn coordinate, use it
                 // (e.g. worlds with a fixed or curated spawn point)
