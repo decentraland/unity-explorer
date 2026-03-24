@@ -731,9 +731,9 @@ namespace Global.Dynamic
 
         private void InstantiateAltTester(IAppArgs appArgs)
         {
+#if ALTTESTER
             var instance = Instantiate(altTesterPrefab);
 
-#if ALTTESTER
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {
                 var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
