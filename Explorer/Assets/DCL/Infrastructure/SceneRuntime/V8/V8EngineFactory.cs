@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
 
@@ -39,3 +40,4 @@ namespace SceneRuntime.V8
         }
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using Microsoft.ClearScript.JavaScript;
 using System;
 using Utility;
@@ -23,3 +24,4 @@ namespace SceneRuntime.V8
         }
     }
 }
+#endif

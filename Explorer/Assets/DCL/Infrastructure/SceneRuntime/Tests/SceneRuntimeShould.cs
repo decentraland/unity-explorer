@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
@@ -179,3 +180,4 @@ namespace SceneRuntime.Tests
         }
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿#if !UNITY_WEBGL
+using DCL.Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using NUnit.Framework;
@@ -59,3 +60,4 @@ namespace SceneRuntime.Tests
         }
     }
 }
+#endif
