@@ -44,6 +44,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Emotes](emotes.md)** — Emote loading, animation controllers, and pooling
 - **[Skeleton Loading Animation](skeleton-loading-animation.md)** — Bone animations for loading states
 - **[Avatar Animation for Demos](avatar-animation-for-demos.md)** — Using Unity Timeline for demo recordings
+- **[Unreleased Wearables & Emotes Preview](unreleased-wearables-emotes-preview.md)** — Builder API signing, GLTF-based loading, and self-preview collection flow
 
 ## Chat & Social
 - **[Chat](chat.md)** — Chat system architecture, state machine, and MVP structure
@@ -76,3 +77,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, and Unity Cloud
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
+
+## Operations
+- **[Incident Management & Hotfix Policy](incident-management-and-hotfix-policy.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
+- **[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md)** — Primary vs secondary feature categories used to decide SEV-2 hotfixes

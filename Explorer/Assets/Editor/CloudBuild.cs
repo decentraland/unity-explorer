@@ -1,5 +1,6 @@
 using AltTester.AltTesterUnitySDK.Editor;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PluginSystem.Global;
 using JetBrains.Annotations;
 using System;
 using System.Collections;
