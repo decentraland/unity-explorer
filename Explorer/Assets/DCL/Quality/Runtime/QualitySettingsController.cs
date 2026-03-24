@@ -21,10 +21,6 @@ namespace DCL.Quality.Runtime
         public int FpsLimit { get; private set; }
         public bool VSync { get; private set; }
         public float ResolutionScale { get; private set; }
-        public int ResolutionWidth { get; private set; }
-        public int ResolutionHeight { get; private set; }
-        public RefreshRate ResolutionRefreshRate { get; private set; }
-        public FullScreenMode WindowMode { get; private set; }
         public MsaaLevel Msaa { get; private set; }
         public bool Hdr { get; private set; }
         public bool Bloom { get; private set; }
@@ -73,11 +69,6 @@ namespace DCL.Quality.Runtime
                 ApplyAllSettings();
             }
             else { SetPreset(savedPreset); }
-
-            // Window mode and resolution are set aside from other saved values because they're not tied to presets.
-            LoadSavedWindowMode();
-            LoadSavedResolution();
-            URPSettingsApplier.ApplyResolution(ResolutionWidth, ResolutionHeight, WindowMode, ResolutionRefreshRate);
         }
 
         public void SetPreset(QualityPresetLevel level)
@@ -163,30 +154,6 @@ namespace DCL.Quality.Runtime
             SwitchToCustom();
             upscalingController.UpdateUpscaling(ResolutionScale);
             TrackQualitySettingsReport();
-        }
-
-        public void SetResolution(int width, int height, RefreshRate refreshRate)
-        {
-            ResolutionWidth = width;
-            ResolutionHeight = height;
-            ResolutionRefreshRate = refreshRate;
-
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_WIDTH, width);
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_HEIGHT, height);
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_NUM, (int)refreshRate.numerator);
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_DEN, (int)refreshRate.denominator);
-
-            URPSettingsApplier.ApplyResolution(width, height, WindowMode, refreshRate);
-        }
-
-        public void SetWindowMode(int index)
-        {
-            if (index < 0 || index >= FullscreenModeUtils.Modes.Count)
-                return;
-
-            WindowMode = FullscreenModeUtils.Modes[index];
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
-            URPSettingsApplier.ApplyResolution(ResolutionWidth, ResolutionHeight, WindowMode, ResolutionRefreshRate);
         }
 
         public void SetMsaa(MsaaLevel level)
@@ -295,46 +262,6 @@ namespace DCL.Quality.Runtime
             SwitchToCustom();
             URPSettingsApplier.ApplyShadowDistance(distance);
             TrackQualitySettingsReport();
-        }
-
-        private void LoadSavedWindowMode()
-        {
-            if (appArgs.HasFlag(AppArgsFlags.WINDOWED_MODE))
-            {
-                WindowMode = FullScreenMode.Windowed;
-                return;
-            }
-
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
-            {
-                int index = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
-                WindowMode = index >= 0 && index < FullscreenModeUtils.Modes.Count
-                    ? FullscreenModeUtils.Modes[index]
-                    : FullScreenMode.FullScreenWindow;
-            }
-            else { WindowMode = FullScreenMode.FullScreenWindow; }
-        }
-
-        private void LoadSavedResolution()
-        {
-            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.PS_RESOLUTION_WIDTH))
-            {
-                ResolutionWidth = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_WIDTH);
-                ResolutionHeight = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_HEIGHT);
-
-                ResolutionRefreshRate = new RefreshRate
-                {
-                    numerator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_NUM),
-                    denominator = (uint)DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_RESOLUTION_REFRESH_DEN, 1),
-                };
-            }
-            else
-            {
-                Resolution current = ResolutionUtils.GetAvailableResolutions()[0];
-                ResolutionWidth = current.width;
-                ResolutionHeight = current.height;
-                ResolutionRefreshRate = current.refreshRateRatio;
-            }
         }
 
         private void SwitchToCustom()

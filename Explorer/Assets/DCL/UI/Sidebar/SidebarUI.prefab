@@ -74,6 +74,7 @@ MonoBehaviour:
   <placesButton>k__BackingField: {fileID: 5769488305435868274}
   <eventsButton>k__BackingField: {fileID: 7889445956358821651}
   <liveEventsCounterText>k__BackingField: {fileID: 5871320542459693597}
+  <liveEventsCounterContainer>k__BackingField: {fileID: 5821736173644323423}
   <communitiesButton>k__BackingField: {fileID: 9067792495595083366}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
@@ -2587,6 +2588,11 @@ PrefabInstance:
 --- !u!224 &213922546199920864 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7344965737709528038, guid: a6d5885fdf7854743861ea324687f23f, type: 3}
+  m_PrefabInstance: {fileID: 7428280767322972934}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5821736173644323423 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4025224332538706265, guid: a6d5885fdf7854743861ea324687f23f, type: 3}
   m_PrefabInstance: {fileID: 7428280767322972934}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &5871320542459693597 stripped

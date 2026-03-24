@@ -58,6 +58,7 @@ using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using ECS;
 using System.IO;
+using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -177,8 +178,10 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
-                WindowModeUtils.ApplyWindowedMode();
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             World world = World.Create();
 
