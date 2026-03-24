@@ -5,7 +5,7 @@ namespace DCL.Optimization.PerformanceBudgeting
     public class ConcurrentLoadingPerformanceBudget : IReleasablePerformanceBudget
     {
         private readonly int maxBudget;
-        private int currentBudget;
+        internal int currentBudget;
 
         public ConcurrentLoadingPerformanceBudget(int initialBudget)
         {
