@@ -193,6 +193,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void ResetState()
         {
             ResetArmatureInclination();
+            transform.localPosition = Vector3.zero;
             AvatarAnimator.Rebind();
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
