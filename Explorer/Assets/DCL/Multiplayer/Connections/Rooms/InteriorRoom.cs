@@ -2,26 +2,25 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Interior;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-
-#if !UNITY_WEBGL || UNITY_EDITOR
-using LiveKit.Rooms.Streaming.Audio;
-using LiveKit.Rooms.TrackPublications;
-#endif
-
-using LiveKit.Rooms.Tracks;
-using LiveKit.Rooms.Tracks.Hub;
-using LiveKit.Rooms.VideoStreaming;
 using System;
 using System.Threading;
 using UnityEngine.Pool;
 using RichTypes;
 using DCL.LiveKit.Public;
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Proto;
+using LiveKit.Rooms.Tracks;
+using LiveKit.Rooms.VideoStreaming;
+using LiveKit.Rooms.Tracks.Hub;
+#endif
+
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -31,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
         private readonly InteriorLocalTracks localTracks = new ();
@@ -44,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
         public ILocalTracks LocalTracks => localTracks;
@@ -55,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event Room.MetaDelegate? RoomMetadataChanged;
         public event Room.SidDelegate? RoomSidChanged;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -169,7 +168,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
             localTracks.Assign(room.LocalTracks);
@@ -178,7 +177,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -199,7 +198,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
@@ -231,7 +230,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private void RoomOnTrackUnmuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackUnmuted?.Invoke(publication, participant);

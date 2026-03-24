@@ -4,18 +4,16 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-
-#if !UNITY_WEBGL || UNITY_EDITOR
-using LiveKit.Rooms.Streaming.Audio;
-#endif
-
-using LiveKit.Rooms.Tracks;
-using LiveKit.Rooms.Tracks.Hub;
-using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using RichTypes;
 using System;
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.Tracks;
+using LiveKit.Rooms.Tracks.Hub;
+using LiveKit.Rooms.VideoStreaming;
+#endif
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -29,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => NullDataPipe.INSTANCE;
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
         public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;
