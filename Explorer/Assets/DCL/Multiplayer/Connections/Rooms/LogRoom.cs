@@ -17,7 +17,9 @@ using LiveKit.Rooms.TrackPublications;
 #endif
 
 using LiveKit.Rooms.Tracks;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using LiveKit.Rooms.Tracks.Factory;
+#endif
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
