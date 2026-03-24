@@ -238,7 +238,7 @@ namespace SceneRunner
                 IRoomHub roomHub)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),

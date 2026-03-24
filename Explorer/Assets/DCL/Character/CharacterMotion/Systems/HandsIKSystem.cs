@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using Utility.Animations;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -61,7 +62,6 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void UpdateIK(
             [Data] float dt,
-            Entity entity,
             ref HandsIKComponent handsIKComponent,
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
@@ -71,7 +71,8 @@ namespace DCL.CharacterMotion.Systems
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
 
-            bool isPlayingMaskedEmote = World.TryGet(entity, out CharacterMaskedEmoteComponent masked) && masked.IsPlaying;
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled

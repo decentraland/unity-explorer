@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
@@ -24,6 +25,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
         private ISystemClipboard systemClipboard;
+        private World sceneWorld;
 
         [SetUp]
         public void SetUp()
@@ -41,13 +43,23 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new Vector2Int(0, 2),
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
+            sceneWorld = World.Create();
+            Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
                 mvcManager,
                 sceneStateProvider,
                 globalWorldActions,
                 sceneData,
                 new AllowEverythingJsApiPermissionsProvider(),
-                systemClipboard);
+                systemClipboard,
+                sceneWorld,
+                scenePlayerEntity);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            World.Destroy(sceneWorld);
         }
 
         [Test]

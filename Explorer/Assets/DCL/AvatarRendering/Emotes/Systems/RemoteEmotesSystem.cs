@@ -103,7 +103,7 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    // check if any emote (full-body or masked) is playing and stop both
+                    // Check if any emote (full-body or masked) is playing on the remote entity and stop it
                     bool isPlayingAny = false;
 
                     if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.CurrentEmoteReference != null))
@@ -116,7 +116,6 @@ namespace DCL.AvatarRendering.Emotes
                     if (World.TryGet(entry.Entity, out CharacterMaskedEmoteComponent masked) && (masked.IsPlaying || masked.CurrentEmoteReference != null))
                     {
                         masked.StopEmote = true;
-                        masked.Paused = false;
                         World.Set(entry.Entity, masked);
                         isPlayingAny = true;
                     }

@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using Utility.Animations;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -158,7 +159,6 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateIK([Data] float dt,
             [Data] in CameraComponent cameraComponent,
             [Data] bool inWorldCameraActive,
-            Entity entity,
             ref HeadIKComponent headIK,
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
@@ -166,7 +166,10 @@ namespace DCL.CharacterMotion.Systems
             in CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent)
         {
-            bool isPlayingMaskedEmote = World.TryGet(entity, out CharacterMaskedEmoteComponent masked) && masked.IsPlaying;
+            // Check the upper body layer animator state to detect masked emotes.
+            // The component lives in scene worlds (not global), so we check the animator directly.
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             bool pitchEnabled = debugHeadIKIsEnabled &&
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&

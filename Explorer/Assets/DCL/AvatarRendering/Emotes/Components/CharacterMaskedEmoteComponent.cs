@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
-using SceneRunner.Scene;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -12,8 +11,6 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteReferences? CurrentEmoteReference;
         public bool StopEmote;
         public AvatarEmoteMask Mask;
-        public bool Paused;
-        public ISceneFacade? SourceScene;
 
         private int currentAnimationTag;
 
@@ -21,7 +18,6 @@ namespace DCL.AvatarRendering.Emotes
         {
             get
             {
-                if (Paused) return false;
                 if (CurrentEmoteReference == null) return false;
                 return currentAnimationTag == AnimationHashes.MASKED_EMOTE || currentAnimationTag == AnimationHashes.MASKED_EMOTE_LOOP;
             }
@@ -36,8 +32,6 @@ namespace DCL.AvatarRendering.Emotes
             CurrentEmoteReference = null;
             StopEmote = false;
             Mask = AvatarEmoteMask.AemFullBody;
-            Paused = false;
-            SourceScene = null;
         }
     }
 }

@@ -109,7 +109,7 @@ namespace CrdtEcsBridge.RestrictedActions
             messageBus.Send(urn, isLooping, mask);
         }
 
-        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
+        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask, CancellationToken ct, Action<URN, bool, AvatarEmoteMask>? onEmoteResolved = null)
         {
             world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
 
@@ -118,10 +118,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
             if (loadFromLocalScene)
             {
-                // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
-                // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
                 if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
-                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, mask, ct);
+                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, mask, ct, onEmoteResolved);
                 else
                     ReportHub.LogError(ReportCategory.EMOTE, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
             }
@@ -130,7 +128,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
-                    hash, loop, mask, ct);
+                    hash, loop, mask, ct, onEmoteResolved);
             }
 
             world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
@@ -142,25 +140,17 @@ namespace CrdtEcsBridge.RestrictedActions
             if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible)
                 return;
 
-            // Stop full-body emote
+            // Stop full-body emote (global world only — masked emotes are handled by scene-side systems)
             if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
             {
                 emoteComponent.StopEmote = true;
                 world.Set(playerEntity, emoteComponent);
             }
 
-            // Stop masked emote
-            if (world.TryGet(playerEntity, out CharacterMaskedEmoteComponent masked))
-            {
-                masked.StopEmote = true;
-                masked.Paused = false;
-                world.Set(playerEntity, masked);
-            }
-
             messageBus.SendStop();
         }
 
-        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct, Action<URN, bool, AvatarEmoteMask>? onEmoteResolved = null)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -180,11 +170,14 @@ namespace CrdtEcsBridge.RestrictedActions
                 URN urn = value.GetUrn();
                 bool isLooping = value.IsLooping();
 
-                TriggerEmote(urn, isLooping, mask);
+                if (onEmoteResolved != null)
+                    onEmoteResolved(urn, isLooping, mask);
+                else
+                    TriggerEmote(urn, isLooping, mask);
             }
         }
 
-        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
+        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct, Action<URN, bool, AvatarEmoteMask>? onEmoteResolved = null)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -202,7 +195,10 @@ namespace CrdtEcsBridge.RestrictedActions
                 var value = consumed.Value[0]!;
                 URN urn = value.GetUrn();
 
-                TriggerEmote(urn, loop, mask);
+                if (onEmoteResolved != null)
+                    onEmoteResolved(urn, loop, mask);
+                else
+                    TriggerEmote(urn, loop, mask);
             }
         }
     }

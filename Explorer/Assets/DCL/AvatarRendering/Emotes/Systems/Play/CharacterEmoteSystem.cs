@@ -25,12 +25,10 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
-using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using Utility;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
@@ -62,39 +60,32 @@ namespace DCL.AvatarRendering.Emotes.Play
             World world,
             IEmoteStorage emoteStorage,
             IEmotesMessageBus messageBus,
-            AudioSource audioSource,
+            EmotePlayer emotePlayer,
             IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
-            IAppArgs appArgs,
             IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
+            this.emotePlayer = emotePlayer;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
             this.localSceneDevelopment = localSceneDevelopment;
-            emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
         protected override void Update(float t)
         {
-            // Masked emote cancellation
-            CancelMaskedEmotesQuery(World);
-
-            // Full-body emote cancellation
             CancelSceneEmotesBySceneChangeQuery(World);
             CancelEmotesQuery(World);
+            CancelRemoteMaskedEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
-
-            // Shared
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
-            UpdateMaskedEmoteVisibilityQuery(World);
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
-            UpdateMaskedEmoteTagsQuery(World);
+            UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
             DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
@@ -233,89 +224,31 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
+        private void StopRemoteMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
             if (masked.CurrentEmoteReference == null) return;
 
-            emotePlayer.Stop(masked.CurrentEmoteReference);
-
-            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
-            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
-            avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
-
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            avatarView.SetLayerWeight(layer, 0);
-
+            emotePlayer.StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
             masked.Reset();
         }
 
         /// <summary>
-        /// Controls masked emote visibility based on two conditions:
-        /// - Paused while a full-body emote is playing (resumes when it ends)
-        /// - Paused while the player is outside the scene that triggered it (resumes on re-entry)
-        /// Non-scene masked emotes (SourceScene == null) are always considered "in scene".
-        /// Runs on both local and remote player entities for consistent behavior without network messages.
+        /// Handles cancellation of masked emotes on remote player entities in the global world.
+        /// Local player masked emotes are handled by SceneMaskedEmoteSystem in each scene world.
         /// </summary>
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateMaskedEmoteVisibility(ref CharacterMaskedEmoteComponent masked, in CharacterEmoteComponent emoteComponent, in CharacterTransform characterTransform, in IAvatarView avatarView)
-        {
-            if (masked.CurrentEmoteReference == null) return;
-
-            bool fullBodyIsPlaying = emoteComponent.CurrentEmoteReference != null;
-
-            bool isInScene = masked.SourceScene == null
-                || (scenesCache.TryGetByParcel(characterTransform.Position.ToParcel(), out ISceneFacade? currentScene)
-                    && currentScene == masked.SourceScene);
-
-            bool visible = !fullBodyIsPlaying && isInScene;
-            SetMaskedEmoteVisibility(ref masked, in avatarView, visible);
-        }
-
-        private static void SetMaskedEmoteVisibility(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView, bool visible)
-        {
-            bool shouldBePaused = !visible;
-            if (masked.Paused == shouldBePaused) return;
-
-            masked.Paused = shouldBePaused;
-
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            float weight = visible ? 1f : 0f;
-            avatarView.SetLayerWeight(layer, weight);
-
-            SetEmoteReferencesVisible(masked.CurrentEmoteReference!, visible);
-        }
-
-        /// <summary>
-        /// Toggles only the renderers of the emote references while keeping the prop Animator running,
-        /// so it remains in sync with the avatar's upper body layer (which continues updating at weight 0).
-        /// </summary>
-        private static void SetEmoteReferencesVisible(EmoteReferences references, bool visible)
-        {
-            foreach (Renderer renderer in references.GetComponentsInChildren<Renderer>(true))
-            {
-                renderer.enabled = visible;
-                renderer.forceRenderingOff = !visible;
-            }
-        }
-
-        [Query]
-        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
-        private void CancelMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
+        private void CancelRemoteMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
         {
             if (masked.StopEmote)
             {
                 masked.StopEmote = false;
-                StopMaskedEmote(ref masked, avatarView);
+                StopRemoteMaskedEmote(ref masked, avatarView);
                 return;
             }
 
-            if (masked.Paused || masked.CurrentEmoteReference == null) return;
+            if (masked.CurrentEmoteReference == null) return;
             if (masked.CurrentEmoteReference.legacy) return;
-
-            // Wait until the stored tag confirms the emote is playing before checking for end.
-            // On the frame the emote is triggered, the animator hasn't transitioned yet —
-            // without this guard, the non-emote tag would immediately stop it.
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
@@ -323,11 +256,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
             if (isOnAnotherTag)
-                StopMaskedEmote(ref masked, avatarView);
+                StopRemoteMaskedEmote(ref masked, avatarView);
         }
 
         [Query]
-        private void UpdateMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        [None(typeof(PlayerComponent))]
+        private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
         {
             if (masked.CurrentEmoteReference == null) return;
 
@@ -410,7 +344,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody)
                     {
-                        // Full-body flow: SyncMaskedEmotePauseState will automatically pause any masked emote
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = emoteIntent.Mask;
 
@@ -419,21 +352,18 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
                     else
                     {
-                        // Masked flow: stop any full-body emote that's playing
+                        // Masked emotes for remote players are handled here in the global world.
+                        // Local player masked emotes go through SceneMaskedEmoteSystem instead.
                         if (emoteComponent.CurrentEmoteReference != null)
                             StopEmote(ref emoteComponent, avatarView);
 
                         ref CharacterMaskedEmoteComponent masked = ref World.AddOrGet<CharacterMaskedEmoteComponent>(entity);
 
-                        // Stop previous masked emote if one exists
                         if (masked.CurrentEmoteReference != null)
-                            StopMaskedEmote(ref masked, avatarView);
+                            StopRemoteMaskedEmote(ref masked, avatarView);
 
                         masked.EmoteUrn = emoteId;
                         masked.Mask = emoteIntent.Mask;
-
-                        TryParseSceneEmoteURN(emoteId, out _, out _, out _, out ISceneFacade? sourceScene);
-                        masked.SourceScene = sourceScene;
 
                         if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref masked))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");

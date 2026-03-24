@@ -372,6 +372,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             pool!.Release(emoteReference);
         }
 
+        public void StopMasked(EmoteReferences emoteReference, in IAvatarView avatarView, AvatarEmoteMask mask)
+        {
+            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
+            avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
+            avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
+            avatarView.SetLayerWeight(layer, 0);
+
+            Stop(emoteReference);
+        }
+
         private static void ExtractClips(
             IReadOnlyList<AnimationClip> animationClips,
             List<AnimationClip> uniqueClips,

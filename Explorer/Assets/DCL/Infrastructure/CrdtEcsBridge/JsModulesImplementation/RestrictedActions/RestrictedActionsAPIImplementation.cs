@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using Utility.Arch;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
@@ -26,6 +28,8 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly ISystemClipboard systemClipboard;
+        private readonly Arch.Core.World sceneWorld;
+        private readonly Arch.Core.Entity scenePlayerEntity;
 
         public RestrictedActionsAPIImplementation(
             IMVCManager mvcManager,
@@ -33,7 +37,9 @@ namespace CrdtEcsBridge.RestrictedActions
             IGlobalWorldActions globalWorldActions,
             ISceneData sceneData,
             IJsApiPermissionsProvider permissionsProvider,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            Arch.Core.World sceneWorld,
+            Arch.Core.Entity scenePlayerEntity)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
@@ -41,6 +47,8 @@ namespace CrdtEcsBridge.RestrictedActions
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
             this.systemClipboard = systemClipboard;
+            this.sceneWorld = sceneWorld;
+            this.scenePlayerEntity = scenePlayerEntity;
         }
 
         public bool TryOpenExternalUrl(string url)
@@ -107,7 +115,10 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            globalWorldActions.TriggerEmote(predefinedEmote, false, mask);
+            if (mask == AvatarEmoteMask.AemFullBody)
+                globalWorldActions.TriggerEmote(predefinedEmote, false, mask);
+            else
+                TriggerMaskedEmoteOnSceneWorld(predefinedEmote, mask);
         }
 
         public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, AvatarEmoteMask mask, CancellationToken ct)
@@ -122,7 +133,17 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await UniTask.SwitchToMainThread();
 
-                await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct);
+                if (mask == AvatarEmoteMask.AemFullBody)
+                {
+                    await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct);
+                }
+                else
+                {
+                    // Load the emote through global world (emote storage/promises are global),
+                    // then route the resolved URN to the scene world
+                    await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct,
+                        (urn, isLooping, emMask) => TriggerMaskedEmoteOnSceneWorld(urn, emMask));
+                }
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)
@@ -132,6 +153,38 @@ namespace CrdtEcsBridge.RestrictedActions
             }
 
             return true;
+        }
+
+        public void TryStopEmote()
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            // Stop full-body emote on global world
+            globalWorldActions.StopEmote();
+
+            // Stop masked emote on this scene's world
+            if (sceneWorld.TryGet(scenePlayerEntity, out CharacterMaskedEmoteComponent masked))
+            {
+                masked.StopEmote = true;
+                masked.EmoteUrn = default; // Permanent stop — don't replay on re-entry
+                sceneWorld.Set(scenePlayerEntity, masked);
+            }
+        }
+
+        private void TriggerMaskedEmoteOnSceneWorld(CommunicationData.URLHelpers.URN urn, AvatarEmoteMask mask)
+        {
+            // Ensure the scene player entity has the masked emote component
+            sceneWorld.AddOrGet(scenePlayerEntity, new CharacterMaskedEmoteComponent());
+
+            // Create the intent on the scene world's player entity — SceneMaskedEmoteSystem will consume it
+            sceneWorld.AddOrSet(scenePlayerEntity, new CharacterEmoteIntent
+            {
+                EmoteId = urn,
+                Spatial = true,
+                TriggerSource = TriggerSource.SCENE,
+                Mask = mask,
+            });
         }
 
         public bool TryOpenNftDialog(string urn)
@@ -155,14 +208,6 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
 
             CopyToClipboardAsync(text).Forget();
-        }
-
-        public void TryStopEmote()
-        {
-            if (!sceneStateProvider.IsCurrent)
-                return;
-
-            globalWorldActions.StopEmote();
         }
 
         private async UniTask OpenUrlAsync(string url)

@@ -32,6 +32,8 @@ using ECS.SceneLifeCycle;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using DCL.AvatarRendering.Emotes.Play;
+using DCL.Utilities;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -61,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private readonly ObjectProxy<EmotePlayer> emotePlayerProxy;
         private readonly bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly bool builderCollectionsPreview;
@@ -96,8 +99,10 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             EntitiesAnalytics entitiesAnalytics,
-            ITrimmedEmoteStorage trimmedEmoteStorage)
+            ITrimmedEmoteStorage trimmedEmoteStorage,
+            ObjectProxy<EmotePlayer> emotePlayerProxy)
         {
+            this.emotePlayerProxy = emotePlayerProxy;
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
@@ -149,7 +154,9 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            var sharedEmotePlayer = new EmotePlayer(audioSourceReference!, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
+            emotePlayerProxy.SetObject(sharedEmotePlayer);
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, sharedEmotePlayer, debugBuilder, localSceneDevelopment, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
