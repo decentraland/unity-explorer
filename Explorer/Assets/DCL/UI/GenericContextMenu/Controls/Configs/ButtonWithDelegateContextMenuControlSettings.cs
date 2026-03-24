@@ -22,13 +22,10 @@ namespace DCL.UI.Controls.Configs
         public ButtonWithDelegateContextMenuControlSettings(string buttonText, Sprite buttonIcon, Delegate callback, RectOffset horizontalLayoutPadding = null, int horizontalLayoutSpacing = 10,
             bool horizontalLayoutReverseArrangement = false, Color textColor = default, Color iconColor = default)
         {
-            ColorUtility.TryParseHtmlString("#FCFCFC", out Color defaultTextColor);
-            ColorUtility.TryParseHtmlString("#FFFFFF", out Color defaultIconColor);
-
             this.buttonText = buttonText;
-            this.buttonTextColor = textColor == default(Color) ? defaultTextColor : textColor;
+            this.buttonTextColor = textColor == default(Color) ? ContextMenuColors.DEFAULT_TEXT : textColor;
             this.buttonIcon = buttonIcon;
-            this.buttonIconColor = iconColor == default(Color) ? defaultIconColor : iconColor;
+            this.buttonIconColor = iconColor == default(Color) ? ContextMenuColors.DEFAULT_ICON : iconColor;
             this.callback = callback;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? new RectOffset(8, 8, 0, 0);
             this.horizontalLayoutSpacing = horizontalLayoutSpacing;

@@ -138,7 +138,7 @@ namespace DCL.UI
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.contextMenuSettings = contextMenuSettings;
 
-            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));

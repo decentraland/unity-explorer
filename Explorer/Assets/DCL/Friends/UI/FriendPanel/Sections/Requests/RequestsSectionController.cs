@@ -55,7 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.selfProfile = selfProfile;
 
-            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))

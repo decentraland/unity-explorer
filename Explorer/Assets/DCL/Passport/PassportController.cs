@@ -437,7 +437,7 @@ namespace DCL.Passport
                     -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
                 false));
 
-            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
             contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
                     viewInstance.BlockSprite,
                     BlockUserClicked,

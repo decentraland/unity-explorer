@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
                     CommunityButtonClicked?.Invoke(CommunityId);
             });
 
-            ColorUtility.TryParseHtmlString("#FF2D55", out Color redColor);
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                          .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
