@@ -52,6 +52,7 @@ namespace DCL.Donations
         private readonly string contractAddress;
         private readonly string networkName;
         private readonly URLAddress manaUsdApiUrl;
+        private readonly bool isLocalSceneDevelopmentMode;
 
         private DateTime lastManaRateQueryTime;
         private decimal lastManaRate;
@@ -63,7 +64,8 @@ namespace DCL.Donations
             IRealmData realmData,
             IPlacesAPIService placesAPIService,
             DecentralandEnvironment dclEnvironment,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            bool isLocalSceneDevelopmentMode)
         {
             this.scenesCache = scenesCache;
             this.ethereumApi = ethereumApi;
@@ -71,6 +73,7 @@ namespace DCL.Donations
             this.realmData = realmData;
             this.placesAPIService = placesAPIService;
             this.manaUsdApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ManaUsdRateApiUrl));
+            this.isLocalSceneDevelopmentMode = isLocalSceneDevelopmentMode;
 
             switch (dclEnvironment)
             {
@@ -103,23 +106,17 @@ namespace DCL.Donations
             }
 
             sceneCreatorAddressCts = sceneCreatorAddressCts.SafeRestart();
-            FetchCreatorAddressAsync(sceneCreatorAddressCts.Token).Forget();
+            UpdateCreatorAddressAsync(sceneCreatorAddressCts.Token).Forget();
             return;
 
-            async UniTaskVoid FetchCreatorAddressAsync(CancellationToken ct)
+            async UniTaskVoid UpdateCreatorAddressAsync(CancellationToken ct)
             {
                 try
                 {
-                    string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
-                    string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
-
-                    if (addressFromScene != addressFromApis)
-                    {
-                        SentrySdk.AddBreadcrumb($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}.");
-                        ReportHub.LogException(new Exception( "Possible phishing attempt detected in Donations: using address from Places API."), ReportCategory.DONATIONS);
-                    }
-
-                    donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
+                    if (isLocalSceneDevelopmentMode)
+                        UpdateFromCurrentScene(currentScene);
+                    else
+                        await UpdateFromApis(currentScene, ct);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e)
@@ -127,6 +124,26 @@ namespace DCL.Donations
                     ReportHub.LogException(e, ReportCategory.DONATIONS);
                 }
             }
+        }
+
+        private void UpdateFromCurrentScene(ISceneFacade? currentScene)
+        {
+            string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
+            donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromScene), addressFromScene, currentScene!.Info.BaseParcel));
+        }
+
+        private async UniTask UpdateFromApis(ISceneFacade? currentScene, CancellationToken ct)
+        {
+            string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
+            string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
+
+            if (addressFromScene != addressFromApis)
+            {
+                SentrySdk.AddBreadcrumb($"Possible phishing detected! Creator address from scene data '{addressFromScene}' does not match address from Places API '{addressFromApis}' for scene {currentScene?.Info.Name} @ {currentScene?.Info.BaseParcel}.");
+                ReportHub.LogException(new Exception( "Possible phishing attempt detected in Donations: using address from Places API."), ReportCategory.DONATIONS);
+            }
+
+            donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromApis), addressFromApis, currentScene!.Info.BaseParcel));
         }
 
         public async UniTask<string> GetSceneNameAsync(Vector2Int parcelPosition, CancellationToken ct)
