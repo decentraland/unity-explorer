@@ -28,6 +28,7 @@ using System;
 using System.Threading;
 using DCL.Audio;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.InputModifier.Components;
@@ -86,7 +87,8 @@ namespace Global.Tests.PlayMode
             Entity playerEntity = world.Create(new PlayerComponent(),
                 new CharacterTransform(),
                 new PlayerMovementNetworkComponent(),
-                new InputModifierComponent());
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
