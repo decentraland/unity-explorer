@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             })));
 
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise,
-                randomSkinColor, randomHairColor, randomEyesColor);
+                randomSkinColor, randomHairColor, randomEyesColor, NoAcquiredBudget.INSTANCE);
 
             Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
             IExtendedObjectPool<Material>? materialPool = Substitute.For<IExtendedObjectPool<Material>>();

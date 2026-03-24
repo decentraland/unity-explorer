@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -97,7 +98,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
         private AvatarShapeComponent CreateAvatarShapeComponent(string id = "test-user-id", string name = "TestUser")
         {
-            return new AvatarShapeComponent(name, id);
+            return new AvatarShapeComponent(name, id, NoAcquiredBudget.INSTANCE);
         }
 
         private Transform CreateCameraFocus(Vector3 position)

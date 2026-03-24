@@ -51,17 +51,14 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
-            if (!avatarLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget))
-                return;
-
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
-                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true })
-                { LoadingBudget = acquiredBudget });
+                NoAcquiredBudget.INSTANCE,
+                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
             World.Add(entity, new AvatarHighlightComponent());
         }
 
@@ -73,9 +70,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
 
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor)
-                { LoadingBudget = acquiredBudget });
-            World.Add(entity, new AvatarHighlightComponent());
+            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor, acquiredBudget),
+                new AvatarHighlightComponent());
         }
 
         [Query]
@@ -85,7 +81,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
 
-            var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
+            var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor, NoAcquiredBudget.INSTANCE);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
             LoadAllEmotes(profile, partition);
@@ -122,34 +118,40 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!profile.IsDirty)
                 return;
 
-            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            if (!avatarLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget))
+                return;
+
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition, acquiredBudget);
             profile.IsDirty = false;
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void UpdateMainPlayerAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!profile.IsDirty)
                 return;
 
-            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition, NoAcquiredBudget.INSTANCE);
 
             // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
             LoadAllEmotes(profile, partition);
             profile.IsDirty = false;
         }
 
-        private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition, IAcquiredBudget acquiredBudget)
         {
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
+
+            avatarShapeComponent.LoadingBudget.Release();
 
             WearablePromise newPromise = CreateWearablePromise(profile, partition);
             avatarShapeComponent.ID = profile.UserId;
             avatarShapeComponent.Name = profile.Name;
             avatarShapeComponent.WearablePromise = newPromise;
+            avatarShapeComponent.LoadingBudget = acquiredBudget;
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
             avatarShapeComponent.HairColor = profile.Avatar.HairColor;
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;

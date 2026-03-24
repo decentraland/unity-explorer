@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Interaction.Raycast.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var highlightSettings = new ReadOnlyAvatarHighlightData(OUTLINE_OPACITY, OUTLINE_THICKNESS, Color.red, FADE_IN_TIME, FADE_OUT_TIME);
             system = new AvatarHighlightSystem(world, highlightSettings);
 
-            var avatarShape = new AvatarShapeComponent("TestAvatar", "test-id");
+            var avatarShape = new AvatarShapeComponent("TestAvatar", "test-id", NoAcquiredBudget.INSTANCE);
             var highlightComponent = new AvatarHighlightComponent { Opacity = 0 };
             avatarEntity = world.Create(avatarShape, highlightComponent);
         }

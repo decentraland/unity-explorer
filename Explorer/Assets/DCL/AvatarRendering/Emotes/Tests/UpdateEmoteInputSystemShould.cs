@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
@@ -54,7 +55,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
         private Entity CreatePlayerEntity(Profile profile, bool isVisible = true, bool disableEmote = false)
         {
-            var avatarShape = new AvatarShapeComponent("TestPlayer", "test-id")
+            var avatarShape = new AvatarShapeComponent("TestPlayer", "test-id", NoAcquiredBudget.INSTANCE)
             {
                 IsVisible = isVisible,
             };
@@ -204,8 +205,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             try
             {
-                var avatarShape1 = new AvatarShapeComponent("TestPlayer1", "test-id1") { IsVisible = true };
-                var avatarShape2 = new AvatarShapeComponent("TestPlayer2", "test-id2") { IsVisible = true };
+                var avatarShape1 = new AvatarShapeComponent("TestPlayer1", "test-id1", NoAcquiredBudget.INSTANCE) { IsVisible = true };
+                var avatarShape2 = new AvatarShapeComponent("TestPlayer2", "test-id2", NoAcquiredBudget.INSTANCE) { IsVisible = true };
 
                 var entity1 = world.Create(
                     new PlayerComponent(testGameObject.transform),

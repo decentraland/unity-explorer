@@ -27,18 +27,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public readonly List<CachedAttachment> InstantiatedWearables;
         public readonly List<Renderer> OutlineCompatibleRenderers;
 
-        private IAcquiredBudget loadingBudget;
-
-        public IAcquiredBudget LoadingBudget
-        {
-            get => loadingBudget ?? NoAcquiredBudget.INSTANCE;
-            set => loadingBudget = value;
-        }
-
+        public IAcquiredBudget LoadingBudget;
         public bool ShowOnlyWearables;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
-            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
+            Color skinColor, Color hairColor, Color eyesColor, IAcquiredBudget loadingBudget, bool showOnlyWearables = false)
         {
             ID = id;
             Name = name;
@@ -54,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
-            loadingBudget = NoAcquiredBudget.INSTANCE;
+            this.LoadingBudget = loadingBudget;
         }
 
         public void CreateOutlineCompatibilityList()
@@ -75,13 +68,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public AvatarShapeComponent(string name, string id) : this()
+        public AvatarShapeComponent(string name, string id, IAcquiredBudget loadingBudget) : this()
         {
             ID = id;
             Name = name;
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
             IsVisible = true;
+            this.LoadingBudget = loadingBudget;
         }
     }
 }

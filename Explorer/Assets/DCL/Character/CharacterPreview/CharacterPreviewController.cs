@@ -11,6 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -55,7 +56,7 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME, NoAcquiredBudget.INSTANCE) { IsPreview = true },
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent(),
                 new HeadIKComponent());
