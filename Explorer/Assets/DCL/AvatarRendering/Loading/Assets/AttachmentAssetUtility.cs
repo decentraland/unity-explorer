@@ -127,7 +127,7 @@ namespace DCL.AvatarRendering.Loading.Assets
                         string parentName = component.IsRoot && t.parent != null ? t.parent.name : null;
                         result.Add(new SpringBoneData(t, parentName,
                             component.Stiffness, component.Drag, component.GravityDir,
-                            component.GravityPower, component.HitRadius));
+                            component.GravityPower, component.HitRadius, t.localRotation, t.localPosition, t.localScale));
                     }
                 }
             }

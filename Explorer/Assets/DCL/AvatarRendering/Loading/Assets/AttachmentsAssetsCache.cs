@@ -92,22 +92,10 @@ namespace DCL.AvatarRendering.Loading.Assets
             // This logic should not be executed if the application is quitting
             if (!UnityObjectUtils.IsQuitting)
             {
-                // Reparent spring bone chain roots back to wearable root so they travel with the cached instance.
-                // Only roots need reparenting — chain children follow automatically.
-                Transform wearableRoot = cachedAttachment.Instance.transform;
-                SpringBoneData[] springBones = cachedAttachment.SpringBones;
-
-                for (var i = 0; i < springBones.Length; i++)
-                {
-                    if (springBones[i].IsChainRoot && springBones[i].Transform != null)
-                        springBones[i].Transform.SetParent(wearableRoot, false);
-                }
-
                 cachedAttachment.Instance.SetActive(false);
 
                 foreach (Renderer renderer in cachedAttachment.Renderers)
                     renderer.enabled = true;
-
                 cachedAttachment.Instance.transform.SetParent(parentContainer);
             }
         }
@@ -130,6 +118,32 @@ namespace DCL.AvatarRendering.Loading.Assets
             }
 
             ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;
+        }
+
+        public void ReleaseSpringBones(IList<CachedAttachment> wearables)
+        {
+            for (var w = 0; w < wearables.Count; w++)
+            {
+                SpringBoneData[] springBones = wearables[w].SpringBones;
+
+                if (springBones.Length == 0)
+                    continue;
+
+                Transform wearableRoot = wearables[w].Instance.transform;
+
+                for (var i = 0; i < springBones.Length; i++)
+                {
+                    if (springBones[i].Transform != null)
+                    {
+                        if (springBones[i].IsChainRoot)
+                            springBones[i].Transform.SetParent(wearableRoot, false);
+
+                        springBones[i].Transform.localRotation = springBones[i].DefaultLocalRotation;
+                        springBones[i].Transform.localPosition = springBones[i].DefaultLocalPosition;
+                        springBones[i].Transform.localScale = springBones[i].DefaultLocalScale;
+                    }
+                }
+            }
         }
     }
 }

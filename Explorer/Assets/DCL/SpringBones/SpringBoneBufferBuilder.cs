@@ -105,7 +105,7 @@ namespace DCL.SpringBones
                         gravityDir: data.GravityDir,
                         dragForce: data.Drag,
                         radius: data.HitRadius),
-                    DefaultLocalRotation = current.localRotation,
+                    DefaultLocalRotation = data.DefaultLocalRotation,
                 });
 
                 // Walk to the next spring bone child in the chain

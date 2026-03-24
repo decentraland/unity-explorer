@@ -292,7 +292,8 @@ namespace DCL.AvatarRendering.AvatarShape
                     if (!springBones[i].IsChainRoot)
                         continue;
 
-                    if (bonesByName.TryGetValue(springBones[i].SkeletonParentName, out Transform targetBone))
+                    if (bonesByName.TryGetValue(springBones[i].SkeletonParentName, out Transform targetBone)
+                        && springBones[i].Transform.parent != targetBone)
                         springBones[i].Transform.SetParent(targetBone, false);
                     else
                         ReportHub.LogWarning(ReportCategory.AVATAR, $"Spring bone '{springBones[i].Transform.name}' could not find avatar skeleton bone '{springBones[i].SkeletonParentName}', leaving in wearable hierarchy");
