@@ -267,7 +267,6 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (emoteStarted.PlayerState != null)
                 {
                     NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isEmoting: true);
-                    lastMovementMessages[emoteStarted.SubjectId] = (0, movementMessage);
                     Inbox(movementMessage, walletId);
                 }
 
