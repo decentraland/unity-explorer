@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatServices;
+#if !NO_LIVEKIT_MODE
+using DCL.Chat.ChatServices;
 using MVC;
 using UnityEngine.Assertions;
 using Utility;
@@ -88,3 +89,4 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
+#endif

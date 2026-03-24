@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatServices;
+#if !NO_LIVEKIT_MODE
+using DCL.Chat.ChatServices;
 using MVC;
 
 namespace DCL.Chat.ChatStates
@@ -41,3 +42,4 @@ namespace DCL.Chat.ChatStates
             stateMachine.Enter<MembersChatState>();
     }
 }
+#endif

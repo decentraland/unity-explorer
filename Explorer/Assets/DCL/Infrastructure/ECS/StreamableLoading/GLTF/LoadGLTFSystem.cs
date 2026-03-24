@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -193,3 +194,4 @@ namespace ECS.StreamableLoading.GLTF
         }
     }
 }
+#endif

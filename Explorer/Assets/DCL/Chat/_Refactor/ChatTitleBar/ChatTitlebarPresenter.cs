@@ -1,3 +1,4 @@
+#if !NO_LIVEKIT_MODE
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -165,7 +166,7 @@ namespace DCL.Chat
 
         private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
-            // Only care if we’re viewing a Community channel and it matches
+            // Only care if we're viewing a Community channel and it matches
             if (currentViewModel == null || currentViewModel.ViewMode != TitlebarViewMode.Community)
                 return;
 
@@ -489,3 +490,4 @@ namespace DCL.Chat
         }
     }
 }
+#endif

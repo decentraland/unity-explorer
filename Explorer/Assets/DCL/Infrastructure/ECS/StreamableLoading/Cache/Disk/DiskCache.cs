@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
 using DCL.Utility.Types;
@@ -61,7 +63,7 @@ namespace ECS.StreamableLoading.Cache.Disk
                 ReportCategory.STREAMABLE_LOADING,
                 $"[DiskCache] WRITE OK {(existed ? "OVERWRITE" : "CREATE")} path='{path}'"
             );
-            
+
             return EnumResult<TaskError>.SuccessResult();
         }
 
@@ -176,3 +178,4 @@ namespace ECS.StreamableLoading.Cache.Disk
             diskCache.RemoveAsync(key, extension, token);
     }
 }
+#endif

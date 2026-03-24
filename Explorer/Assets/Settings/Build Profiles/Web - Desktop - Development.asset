@@ -1196,6 +1196,6 @@ MonoBehaviour:
   m_Script: {fileID: 15010, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: Quality Settings
   m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.Build.Profile.BuildProfileQualitySettings
-  m_DefaultQualityLevel: WEBGL
+  m_DefaultQualityLevel: High
   m_QualityLevels:
-  - WEBGL
+  - High

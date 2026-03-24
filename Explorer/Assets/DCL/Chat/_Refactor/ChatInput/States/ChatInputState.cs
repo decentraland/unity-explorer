@@ -1,4 +1,5 @@
-﻿using MVC;
+#if !NO_LIVEKIT_MODE
+using MVC;
 
 namespace DCL.Chat.ChatInput
 {
@@ -19,3 +20,4 @@ namespace DCL.Chat.ChatInput
         protected virtual void OnInputUnblocked() { }
     }
 }
+#endif

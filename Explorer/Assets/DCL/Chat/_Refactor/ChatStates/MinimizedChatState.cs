@@ -1,4 +1,5 @@
-﻿using MVC;
+#if !NO_LIVEKIT_MODE
+using MVC;
 
 namespace DCL.Chat.ChatStates
 {
@@ -30,3 +31,4 @@ namespace DCL.Chat.ChatStates
             stateMachine.Enter<FocusedChatState>();
     }
 }
+#endif

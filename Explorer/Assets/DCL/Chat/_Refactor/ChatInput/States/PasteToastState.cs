@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+#if !NO_LIVEKIT_MODE
+using Cysharp.Threading.Tasks;
 using DCL.UI;
 using MVC;
 using System.Threading;
@@ -31,3 +32,4 @@ namespace DCL.Chat.ChatInput
         }
     }
 }
+#endif
