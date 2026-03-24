@@ -50,6 +50,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.LoadingBudget = loadingBudget;
         }
 
+        public bool IsWearableInstantiated => InstantiatedWearables.Count > 0;
+
         public void CreateOutlineCompatibilityList()
         {
             // TODO: support outline for wearables when body is invisible

@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void HideNewlyInstantiatedWearables(ref AvatarShapeComponent avatarShapeComponent, ref AvatarGhostComponent avatarGhostComponent)
         {
             if (avatarGhostComponent.WearablesHidden) return;
-            if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
+            if (!avatarShapeComponent.IsWearableInstantiated) return;
 
             foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
             {

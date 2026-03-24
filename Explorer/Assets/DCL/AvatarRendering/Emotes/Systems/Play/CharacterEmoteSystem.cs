@@ -204,6 +204,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             in IAvatarView avatarView,
             ref AvatarShapeComponent avatarShapeComponent)
         {
+            if (!avatarShapeComponent.IsWearableInstantiated)
+                return;
+
             URN emoteId = emoteIntent.EmoteId;
 
             // it's very important to catch any exception here to avoid not consuming the emote intent, so we don't infinitely create props
