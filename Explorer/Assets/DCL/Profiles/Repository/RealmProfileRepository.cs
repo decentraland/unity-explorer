@@ -23,7 +23,7 @@ namespace DCL.Profiles
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
 
-        private const int DEPLOY_WINDOW_IN_SECONDS = 3;
+        private const int DEPLOY_WINDOW_IN_SECONDS = 4;
 
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
@@ -112,7 +112,7 @@ namespace DCL.Profiles
                 }
                 while (!currentProfile.IsSameProfile(localCurrent));
 
-                profileCache.Set(profile.UserId, profile);
+                profileCache.Set(currentProfile.UserId, currentProfile);
                 currentProfileResolutionTask.TrySetResult();
             }
             catch (Exception e)
