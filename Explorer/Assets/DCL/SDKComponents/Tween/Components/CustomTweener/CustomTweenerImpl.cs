@@ -61,10 +61,14 @@ namespace DCL.SDKComponents.Tween.Components
 
         protected override DG.Tweening.Tween CreateContinuousTweener(Quaternion start, Quaternion direction, float speed)
         {
-            // Derive rotation axis from given orientation
-            Vector3 axis = (direction * Vector3.up).normalized;
+            // Derive rotation axis directly from the quaternion's imaginary part (x,y,z = sin(angle/2) * axis).
+            // This correctly preserves the sign of the axis (e.g. +Y vs -Y) and avoids the identity problem
+            // where any rotation around Y would leave Vector3.up unchanged and lose direction information.
+            var axis = new Vector3(direction.x, direction.y, direction.z);
             if (axis.sqrMagnitude < 1e-6f)
                 axis = Vector3.up;
+            else
+                axis = axis.normalized;
 
             float absSpeed = Mathf.Abs(speed);
             float secondsPerRevolution = 360f / Mathf.Max(absSpeed, 0.0001f);
