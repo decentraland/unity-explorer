@@ -308,34 +308,17 @@ namespace DCL.Chat.ChatMessages
 
         internal void StartChatEntriesFadeout()
         {
-            _fadeSequenceTween?.Kill();
-            _fadeSequenceTween = null;
-            chatEntriesCanvasGroup.DOKill();
-            chatEntriesCanvasGroup.alpha = 1f;
-
-            bool completed = false;
+            StopChatEntriesFadeout();
             float waitSeconds = chatEntriesWaitBeforeFading / 1000f;
 
-            Sequence seq = DOTween.Sequence()
+            _fadeSequenceTween = DOTween.Sequence()
                 .AppendInterval(waitSeconds)
-                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime))
-                .OnComplete(() =>
-                {
-                    completed = true;
-                })
-                .OnKill(() =>
-                {
-                    if (!completed && chatEntriesCanvasGroup)
-                        chatEntriesCanvasGroup.alpha = 1f;
-                });
-
-            _fadeSequenceTween = seq;
+                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime));
         }
 
         internal void StopChatEntriesFadeout()
         {
             _fadeSequenceTween?.Kill();
-            _fadeSequenceTween = null;
             chatEntriesCanvasGroup.DOKill();
             chatEntriesCanvasGroup.alpha = 1f;
         }
