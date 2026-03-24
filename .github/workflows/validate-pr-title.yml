@@ -7,4 +7,4 @@ on:
       - dev
 jobs:
   semantic:
-    uses: decentraland/source-repo/.github/workflows/validate-pr-title.yml@main
+    uses: decentraland/actions/.github/workflows/validate-pr-title.yml@main
