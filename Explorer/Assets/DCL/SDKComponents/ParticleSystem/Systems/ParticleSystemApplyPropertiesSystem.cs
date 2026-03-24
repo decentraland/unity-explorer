@@ -5,6 +5,7 @@ using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Groups;
@@ -63,12 +64,12 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             ApplyMain(particleSystemData, particleSystem);
             ApplyEmission(particleSystemData, particleSystem);
             ApplyShape(particleSystemData, particleSystem);
-            ApplySizeOverLifetime(particleSystemData, particleSystem);
+            ApplySizeOverLifetime(particleSystemData, particleSystem, ref component);
             ApplyRotationOverLifetime(particleSystemData, particleSystem);
-            ApplyColorOverLifetime(particleSystemData, particleSystem);
+            ApplyColorOverLifetime(particleSystemData, particleSystem, ref component);
             ApplyForceOverLifetime(particleSystemData, particleSystem);
             ApplyLimitVelocityOverLifetime(particleSystemData, particleSystem);
-            ApplySpriteSheet(particleSystemData, particleSystem);
+            ApplySpriteSheet(particleSystemData, particleSystem, ref component);
             ApplyRenderer(particleSystemData, ref component);
         }
 
@@ -76,20 +77,15 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         {
             var mainModule = particleSystem.main;
 
-            mainModule.loop = !particleSystemData.HasLoop || particleSystemData.Loop;
-            mainModule.prewarm = mainModule.loop && particleSystemData.HasPrewarm && particleSystemData.Prewarm;
+            mainModule.loop = particleSystemData.GetLoop();
+            mainModule.prewarm = mainModule.loop && particleSystemData.GetPrewarm();
 
-            mainModule.simulationSpace = particleSystemData is { HasSimulationSpace: true, SimulationSpace: PBParticleSystem.Types.SimulationSpace.PssWorld }
+            mainModule.simulationSpace = particleSystemData.GetSimulationSpace() == PBParticleSystem.Types.SimulationSpace.PssWorld
                 ? ParticleSystemSimulationSpace.World : ParticleSystemSimulationSpace.Local;
 
-            if (particleSystemData.HasLifetime)
-                mainModule.startLifetime = particleSystemData.Lifetime;
-
-            if (particleSystemData.HasMaxParticles)
-                mainModule.maxParticles = (int)particleSystemData.MaxParticles;
-
-            if (particleSystemData.HasGravity)
-                mainModule.gravityModifier = particleSystemData.Gravity;
+            mainModule.startLifetime = particleSystemData.GetLifetime();
+            mainModule.maxParticles = (int)particleSystemData.GetMaxParticles();
+            mainModule.gravityModifier = particleSystemData.GetGravity();
 
             // Initial size: random between start and end
             if (particleSystemData.InitialSize != null)
@@ -117,11 +113,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         private static void ApplyEmission(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
             var emissionModule = particleSystem.emission;
-            bool active = !particleSystemData.HasActive || particleSystemData.Active;
-            emissionModule.enabled = active;
-
-            if (particleSystemData.HasRate)
-                emissionModule.rateOverTime = particleSystemData.Rate;
+            emissionModule.enabled = particleSystemData.GetActive();
+            emissionModule.rateOverTime = particleSystemData.GetRate();
         }
 
         private static void ApplyShape(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
@@ -147,13 +140,13 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
                 case PBParticleSystem.ShapeOneofCase.Sphere:
                     shapeModule.shapeType = ParticleSystemShapeType.Sphere;
-                    shapeModule.radius = particleSystemData.Sphere.HasRadius ? particleSystemData.Sphere.Radius : 1f;
+                    shapeModule.radius = particleSystemData.Sphere.GetRadius();
                     break;
 
                 case PBParticleSystem.ShapeOneofCase.Cone:
                     shapeModule.shapeType = ParticleSystemShapeType.Cone;
-                    shapeModule.angle = particleSystemData.Cone.HasAngle ? particleSystemData.Cone.Angle : 25f;
-                    shapeModule.radius = particleSystemData.Cone.HasRadius ? particleSystemData.Cone.Radius : 1f;
+                    shapeModule.angle = particleSystemData.Cone.GetAngle();
+                    shapeModule.radius = particleSystemData.Cone.GetRadius();
                     break;
 
                 case PBParticleSystem.ShapeOneofCase.Box:
@@ -163,10 +156,10 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                     break;
             }
 
-            shapeModule.alignToDirection = particleSystemData.HasFaceTravelDirection && particleSystemData.FaceTravelDirection;
+            shapeModule.alignToDirection = particleSystemData.GetFaceTravelDirection();
         }
 
-        private static void ApplySizeOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
+        private static void ApplySizeOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
         {
             var sizeOverLifetimeModule = particleSystem.sizeOverLifetime;
 
@@ -180,7 +173,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             sizeOverLifetimeModule.separateAxes = false;
 
             // Linear lerp from start to end over particle lifetime using a two-key curve
-            sizeOverLifetimeModule.size = BuildLinearCurve(particleSystemData.SizeOverTime.Start, particleSystemData.SizeOverTime.End);
+            sizeOverLifetimeModule.size = BuildLinearCurve(particleSystemData.SizeOverTime.Start, particleSystemData.SizeOverTime.End, ref component.CachedCurve);
         }
 
         private static void ApplyRotationOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
@@ -201,7 +194,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 particleSystemData.RotationOverTime.End * Mathf.Deg2Rad);
         }
 
-        private static void ApplyColorOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
+        private static void ApplyColorOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
         {
             var colorOverLifetimeModule = particleSystem.colorOverLifetime;
 
@@ -213,13 +206,17 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             colorOverLifetimeModule.enabled = true;
 
-            var gradient = new Gradient();
-            gradient.SetKeys(
-                new[] { new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.Start), 0f), new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.End), 1f) },
-                new[] { new GradientAlphaKey(particleSystemData.ColorOverTime.Start.A, 0f), new GradientAlphaKey(particleSystemData.ColorOverTime.End.A, 1f) }
-            );
+            component.CachedGradient ??= new Gradient();
+            component.CachedColorKeys ??= new GradientColorKey[2];
+            component.CachedAlphaKeys ??= new GradientAlphaKey[2];
 
-            colorOverLifetimeModule.color = new UnityEngine.ParticleSystem.MinMaxGradient(gradient);
+            component.CachedColorKeys[0] = new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.Start), 0f);
+            component.CachedColorKeys[1] = new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.End), 1f);
+            component.CachedAlphaKeys[0] = new GradientAlphaKey(particleSystemData.ColorOverTime.Start.A, 0f);
+            component.CachedAlphaKeys[1] = new GradientAlphaKey(particleSystemData.ColorOverTime.End.A, 1f);
+
+            component.CachedGradient.SetKeys(component.CachedColorKeys, component.CachedAlphaKeys);
+            colorOverLifetimeModule.color = new UnityEngine.ParticleSystem.MinMaxGradient(component.CachedGradient);
         }
 
         private static void ApplyForceOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
@@ -233,7 +230,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             }
 
             forceOverLifetimeModule.enabled = true;
-            forceOverLifetimeModule.space = particleSystemData is { HasSimulationSpace: true, SimulationSpace: PBParticleSystem.Types.SimulationSpace.PssWorld }
+            forceOverLifetimeModule.space = particleSystemData.GetSimulationSpace() == PBParticleSystem.Types.SimulationSpace.PssWorld
                                             ? ParticleSystemSimulationSpace.World : ParticleSystemSimulationSpace.Local;
             forceOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.X);
             forceOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.AdditionalForce.Y);
@@ -254,10 +251,10 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             limitVelocityModule.separateAxes = false;
             limitVelocityModule.space = ParticleSystemSimulationSpace.Local;
             limitVelocityModule.limit = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.LimitVelocity.Speed);
-            limitVelocityModule.dampen = particleSystemData.LimitVelocity.HasDampen ? particleSystemData.LimitVelocity.Dampen : 1f;
+            limitVelocityModule.dampen = particleSystemData.LimitVelocity.GetDampen();
         }
 
-        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
+        private static void ApplySpriteSheet(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
         {
             var textureSheetAnimationModule = particleSystem.textureSheetAnimation;
 
@@ -279,19 +276,26 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             int startFrame = (int)particleSystemData.SpriteSheet.StartFrame;
             int endFrame = particleSystemData.SpriteSheet.EndFrame > 0 ? (int)particleSystemData.SpriteSheet.EndFrame : totalFrames - 1;
 
-            textureSheetAnimationModule.frameOverTime = BuildLinearCurve(startFrame, endFrame);
+            textureSheetAnimationModule.frameOverTime = BuildLinearCurve(startFrame, endFrame, ref component.CachedCurve);
 
-            float framesPerSecond = particleSystemData.SpriteSheet.HasFramesPerSecond ? particleSystemData.SpriteSheet.FramesPerSecond : 30f;
+            float framesPerSecond = particleSystemData.SpriteSheet.GetFramesPerSecond();
             textureSheetAnimationModule.timeMode = ParticleSystemAnimationTimeMode.FPS;
             textureSheetAnimationModule.fps = framesPerSecond;
         }
 
         private void ApplyRenderer(PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
         {
-            var particleRenderer = component.ParticleSystemInstance.GetComponent<ParticleSystemRenderer>();
+            var particleRenderer = component.Renderer;
 
-            var blendMode = particleSystemData.HasBlendMode ? particleSystemData.BlendMode : PBParticleSystem.Types.BlendMode.PsbAlpha;
-            EnsureMaterial(ref component, blendMode);
+            var blendMode = particleSystemData.GetBlendMode();
+
+            if (!component.BlendModeInitialized || component.LastAppliedBlendMode != blendMode)
+            {
+                EnsureMaterial(ref component, blendMode);
+                component.LastAppliedBlendMode = blendMode;
+                component.BlendModeInitialized = true;
+            }
+
             particleRenderer.material = component.ParticleMaterial;
 
             if (particleSystemData.Texture != null)
@@ -383,12 +387,17 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 component.ParticleMaterial.mainTexture = result.Asset;
         }
 
-        private static UnityEngine.ParticleSystem.MinMaxCurve BuildLinearCurve(float start, float end)
+        private static UnityEngine.ParticleSystem.MinMaxCurve BuildLinearCurve(float start, float end, ref AnimationCurve cachedCurve)
         {
-            var curve = new AnimationCurve(
-                new Keyframe(0f, start),
-                new Keyframe(1f, end));
-            return new UnityEngine.ParticleSystem.MinMaxCurve(1f, curve);
+            if (cachedCurve == null)
+                cachedCurve = new AnimationCurve(new Keyframe(0f, start), new Keyframe(1f, end));
+            else
+            {
+                cachedCurve.MoveKey(0, new Keyframe(0f, start));
+                cachedCurve.MoveKey(1, new Keyframe(1f, end));
+            }
+
+            return new UnityEngine.ParticleSystem.MinMaxCurve(1f, cachedCurve);
         }
 
         private static Color ToUnityColor(global::Decentraland.Common.Color4 protoColor) =>

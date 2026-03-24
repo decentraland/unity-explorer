@@ -4,8 +4,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using UnityEngine;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
@@ -14,7 +16,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
     [UpdateAfter(typeof(ParticleSystemApplyPropertiesSystem))]
     [ThrottlingEnabled]
     [LogCategory(ReportCategory.PARTICLE_SYSTEM)]
-    public partial class ParticleSystemPlaybackSystem : BaseUnityLoopSystem
+    public partial class ParticleSystemPlaybackSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         internal ParticleSystemPlaybackSystem(World world) : base(world) { }
 
@@ -39,7 +41,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             if (!particleSystemData.IsDirty) return;
 
-            var state = particleSystemData.HasPlaybackState ? particleSystemData.PlaybackState : PBParticleSystem.Types.PlaybackState.PsPlaying;
+            var state = particleSystemData.GetPlaybackState();
 
             switch (state)
             {
@@ -54,6 +56,38 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 case PBParticleSystem.Types.PlaybackState.PsStopped:
                     if (particleSystem.isPlaying || particleSystem.isPaused)
                         particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    break;
+            }
+        }
+
+        public void OnSceneIsCurrentChanged(bool enteredScene)
+        {
+            if (enteredScene)
+                ResumeAllParticleSystemsQuery(World);
+            else
+                PauseAllParticleSystemsQuery(World);
+        }
+
+        [Query]
+        private void PauseAllParticleSystems(ref ParticleSystemComponent component)
+        {
+            if (component.ParticleSystemInstance.isPlaying)
+                component.ParticleSystemInstance.Pause();
+        }
+
+        [Query]
+        private void ResumeAllParticleSystems(ref PBParticleSystem particleSystemData, ref ParticleSystemComponent component)
+        {
+            var state = particleSystemData.GetPlaybackState();
+
+            switch (state)
+            {
+                case PBParticleSystem.Types.PlaybackState.PsPlaying:
+                    component.ParticleSystemInstance.Play();
+                    break;
+                case PBParticleSystem.Types.PlaybackState.PsPaused:
+                    break;
+                case PBParticleSystem.Types.PlaybackState.PsStopped:
                     break;
             }
         }

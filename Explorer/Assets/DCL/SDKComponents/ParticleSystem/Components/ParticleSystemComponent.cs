@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.ECSComponents;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace DCL.SDKComponents.ParticleSystem
     public struct ParticleSystemComponent
     {
         public readonly UnityEngine.ParticleSystem ParticleSystemInstance;
+        public readonly ParticleSystemRenderer Renderer;
         public readonly GameObject HostGameObject;
 
         public GetTextureIntention LoadingTextureIntention;
@@ -16,9 +18,20 @@ namespace DCL.SDKComponents.ParticleSystem
 
         public uint LastRestartCount;
 
+        // Cached objects to avoid allocations on dirty updates
+        public Gradient CachedGradient;
+        public GradientColorKey[] CachedColorKeys;
+        public GradientAlphaKey[] CachedAlphaKeys;
+        public AnimationCurve CachedCurve;
+
+        // Blend mode tracking to skip redundant material operations
+        public PBParticleSystem.Types.BlendMode LastAppliedBlendMode;
+        public bool BlendModeInitialized;
+
         public ParticleSystemComponent(UnityEngine.ParticleSystem instance, GameObject hostGameObject) : this()
         {
             ParticleSystemInstance = instance;
+            Renderer = instance.GetComponent<ParticleSystemRenderer>();
             HostGameObject = hostGameObject;
         }
 

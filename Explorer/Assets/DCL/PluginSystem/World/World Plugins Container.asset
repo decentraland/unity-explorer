@@ -230,6 +230,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <ParticleMaterial>k__BackingField: {fileID: 2100000, guid: 3f2e1d0c4b5a6978abcdef0123456789, type: 2}
+        <MaxSceneParticles>k__BackingField: 1000
     - rid: 6144113899072913497
       type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
       data:

@@ -4,6 +4,8 @@ using System.Threading;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -25,15 +27,21 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
+        private readonly IDebugContainerBuilder debugBuilder;
 
         private IComponentPool<ParticleSystem>? particleSystemPool;
         private IObjectPool<Material>? particleMaterialPool;
+        private ParticleSystemPluginSettings? pluginSettings;
+        private ElementBinding<string>? particleCountBinding;
+        private DebugWidgetVisibilityBinding? particlesVisibilityBinding;
 
-        public ParticleSystemPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public ParticleSystemPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
+            CacheCleaner cacheCleaner, IDebugContainerBuilder debugBuilder)
         {
             this.poolsRegistry = poolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
             this.cacheCleaner = cacheCleaner;
+            this.debugBuilder = debugBuilder;
         }
 
         public void Dispose() { }
@@ -59,7 +67,10 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.ScenePartition,
                 particleMaterialPool!);
 
-            ParticleSystemPlaybackSystem.InjectToWorld(ref builder);
+            var playbackSystem = ParticleSystemPlaybackSystem.InjectToWorld(ref builder);
+            sceneIsCurrentListeners.Add(playbackSystem);
+
+            ParticleSystemBudgetSystem.InjectToWorld(ref builder, pluginSettings!, particleCountBinding!, particlesVisibilityBinding!);
 
             finalizeWorldSystems.Add(lifecycleSystem);
         }
@@ -74,6 +85,15 @@ namespace DCL.PluginSystem.World
                 onRelease: OnPoolRelease);
 
             cacheCleaner.Register(particleSystemPool);
+
+            pluginSettings = settings;
+
+            particleCountBinding = new ElementBinding<string>(string.Empty);
+            particlesVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PARTICLES)
+                ?.SetVisibilityBinding(particlesVisibilityBinding)
+                .AddCustomMarker("Scene Particles:", particleCountBinding);
 
             particleMaterialPool = new ObjectPool<Material>(
                 createFunc: () => new Material(settings.ParticleMaterial),
@@ -102,6 +122,9 @@ namespace DCL.PluginSystem.World
             /// </summary>
             [field: SerializeField]
             public Material ParticleMaterial { get; private set; }
+
+            [field: SerializeField]
+            public int MaxSceneParticles { get; private set; } = 1000;
         }
     }
 }
