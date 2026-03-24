@@ -1,6 +1,6 @@
 # ADR: Persistent Mute for Proximity Voice Chat
 
-**Status:** Accepted
+**Status:** Implemented (Iteration 1)
 **Date:** 2026-03-24
 **Authors:** Voice Chat team
 
@@ -8,7 +8,7 @@
 
 ## Context
 
-Proximity Voice Chat уже поддерживает mute/unmute отдельных игроков через `ProximityMuteService`. Текущая реализация — in-memory `HashSet<string>`, без persistence. При перезапуске приложения все mute'ы сбрасываются.
+Proximity Voice Chat уже поддерживает mute/unmute отдельных игроков через `ProximityMuteService`. Изначальная реализация — in-memory `HashSet<string>`, без persistence. При перезапуске приложения все mute'ы сбрасывались.
 
 ### Требования
 
@@ -28,6 +28,18 @@ Backend-команда развернула HTTP REST API на Social Service д
 | `DELETE` | `/v1/mutes` | Снять мьют с указанного address |
 
 Запросы требуют подписи (signed fetch). Хранение на стороне сервера — "the same way we do with blocked players".
+
+**Формат ответа GET:**
+```json
+{
+  "data": {
+    "results": [{ "address": "string", "muted_at": "date-time" }],
+    "total": 0, "limit": 0, "offset": 0, "page": 0, "pages": 0
+  }
+}
+```
+
+**Тело POST / DELETE:** `{ "muted_address": "string" }`, ответ — 204 No Content.
 
 ---
 
@@ -55,18 +67,18 @@ flowchart TD
 
 ### Communities (HTTP REST-based)
 
-Пример CRUD через REST:
+Пример CRUD через REST с signed fetch:
 
 ```csharp
 // GET
 await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
     .CreateFromJson<TResponse>(WRJsonParser.Newtonsoft);
 
-// POST
-await webRequestController.SignedFetchPostAsync(url, postArgs, string.Empty, ct)
+// POST с JSON body
+await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(body), string.Empty, ct)
     .CreateFromJson<TResponse>(WRJsonParser.Newtonsoft);
 
-// DELETE
+// DELETE (без body)
 await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
     .CreateFromJson<TResponse>(WRJsonParser.Newtonsoft);
 ```
@@ -156,12 +168,16 @@ Cache-First + фоновое обновление при смене realm/island
 | Направленность | Двусторонняя (блок/блокнут) | Односторонняя (только мьют) |
 | Scope | Глобальный (чат, профили, voice) | Только Proximity Voice Chat |
 
+### Инфраструктурные изменения
+
+DELETE-эндпоинт мьютов требует тело запроса (`{ "muted_address": "..." }`). Существующий `SignedFetchDeleteAsync` не поддерживал body — добавлен новый overload в `SignedWebRequestControllerExtensions.cs`, принимающий `GenericPostArguments`. Это возможно, т.к. `GenericDeleteRequest` внутренне использует `GenericPostRequest.CreateWebRequest` (с upload handler) и просто меняет HTTP-метод на DELETE.
+
 ---
 
 ## Consequences
 
-- `ProximityMuteService` получает зависимость от нового `IProximityMuteRepository` (REST API)
-- Добавляется `IProximityMuteCache` с событиями (аналог `IUserBlockingCache`)
-- При старте приложения выполняется дополнительный HTTP-запрос для загрузки мьютов
-- Mute/Unmute из контекстного меню становится async (запрос к API перед обновлением кэша)
+- `ProximityMuteService` рефакторнут в фасад над `IProximityMuteCache` + `IProximityMuteRepository`
+- Добавлен `IProximityMuteCache` с событиями (аналог `IUserBlockingCache`)
+- При старте приложения выполняется HTTP-запрос для загрузки мьютов (в `VoiceChatPlugin.InitializeAsync`)
+- Mute/Unmute из контекстного меню — async (запрос к API, при успехе обновляется кэш, при ошибке — кэш не меняется)
 - Путь расширения к Варианту 3: добавить refresh в `OnConnectionUpdated` или при realm change

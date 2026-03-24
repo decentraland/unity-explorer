@@ -11,238 +11,83 @@ Persistence для proximity mute через HTTP REST API на Social Service.
 
 ## Iteration 1: REST Repository + Cache + Startup Load
 
-**Status:** Planned
+**Status:** Implemented
 
-Минимальная реализация: загрузка мьютов при старте, CRUD через API, in-memory кэш.
+Загрузка мьютов при старте, CRUD через API, in-memory кэш.
 
 ### Архитектура
 
 ```mermaid
 flowchart TD
-    Startup["Startup / Plugin Init"] -->|"LoadMutedUsersAsync<br/>(GET /v1/mutes, все страницы)"| Repo["IProximityMuteRepository<br/>(RestProximityMuteRepository)"]
+    Startup["VoiceChatPlugin.InitializeAsync"] -->|"LoadAsync<br/>(GET /v1/mutes, все страницы)"| Service["ProximityMuteService<br/>(facade)"]
+    Service -->|GetAllMutedUsersAsync| Repo["IProximityMuteRepository<br/>(RestProximityMuteRepository)"]
     Repo -->|signed HTTP| API["Social Service<br/>GET/POST/DELETE /v1/mutes"]
-    Repo -->|"List&lt;string&gt;"| Cache["IProximityMuteCache<br/>(ProximityMuteCache)"]
+    Service -->|"cache.Reset(list)"| Cache["IProximityMuteCache<br/>(ProximityMuteCache)"]
 
-    CtxMenu["Context Menu<br/>(Mute/Unmute click)"] -->|"MuteAsync / UnmuteAsync"| Service["ProximityMuteService"]
+    CtxMenu["Context Menu<br/>(Mute/Unmute click)"] -->|"SetMutedAsync"| Service
     Service -->|"POST/DELETE"| Repo
-    Service -->|"Add/Remove"| Cache
+    Service -->|"cache.SetMuted"| Cache
     Cache -->|"MuteStateChanged event"| Manager["ProximityVoiceChatManager"]
     Cache -->|"MuteStateChanged event"| Nametags["ProximityNametagsHandler"]
 
-    Manager -->|"IsMuted check"| Cache
+    Manager -->|"IsMuted check"| Service
     Manager -->|"AudioSource.mute"| Audio["Unity Audio"]
 ```
 
-### Что делать
+### Реализованные файлы
 
-#### 1. DTO (response models)
+#### Новые файлы
 
-Создать `Assets/DCL/VoiceChat/Proximity/MutePersistence/DTOs/`:
+| Файл | Назначение |
+|------|-----------|
+| `MutePersistence/GetMutesResponse.cs` | DTO ответа `GET /v1/mutes` — вложенная структура `data.results[].address`, пагинация `data.total/limit/offset` |
+| `MutePersistence/MuteRequestBody.cs` | DTO тела `POST/DELETE /v1/mutes` — `{ "muted_address": "0x..." }` |
+| `MutePersistence/IProximityMuteRepository.cs` | Интерфейс транспортного слоя (API). Три метода: `GetAllMutedUsersAsync`, `MuteUserAsync`, `UnmuteUserAsync` |
+| `MutePersistence/RestProximityMuteRepository.cs` | HTTP-реализация через `IWebRequestController` + `SignedFetch*`. Пагинация GET в цикле (PAGE_SIZE=100). POST/DELETE через `WithNoOpAsync()` (204 No Content) |
+| `MutePersistence/IProximityMuteCache.cs` | Интерфейс in-memory кэша: `IsMuted`, `SetMuted`, `Reset`, `MuteStateChanged` event |
+| `MutePersistence/ProximityMuteCache.cs` | `HashSet<string>` (OrdinalIgnoreCase). `SetMuted` fire'ит event только при фактическом изменении |
 
-```csharp
-// MutedUserDto.cs
-[Serializable]
-public struct MutedUserDto
-{
-    public string address;
-}
+#### Изменённые файлы
 
-// GetMutesResponseDto.cs
-[Serializable]
-public struct GetMutesResponseDto
-{
-    public MutedUserDto[] mutes;
-    public PaginationDto pagination;
-}
+| Файл | Изменение |
+|------|-----------|
+| `ProximityMuteService.cs` | Рефакторинг: из самостоятельного сервиса в фасад над `IProximityMuteCache` + `IProximityMuteRepository`. Новые методы: `LoadAsync(ct)`, `SetMutedAsync(walletId, muted, ct)`. Синхронные `SetMuted` и `ToggleMute` сохранены для обратной совместимости (local-only). `MuteStateChanged` — passthrough с кэша |
+| `DecentralandUrl.cs` | Добавлен `SocialServiceMutes = 84` |
+| `DecentralandUrlsSource.cs` | Маппинг: `SocialServiceMutes → https://social-api.decentraland.{ENV}/v1/mutes` |
+| `SignedWebRequestControllerExtensions.cs` | Новый overload `SignedFetchDeleteAsync` с `GenericPostArguments` (body) — DELETE API мьютов требует body `{ "muted_address": "..." }` |
+| `DynamicWorldContainer.cs` | Wiring: `ProximityMuteCache` + `RestProximityMuteRepository` → `ProximityMuteService(cache, repo)` |
+| `VoiceChatPlugin.cs` | `await proximityMuteService.LoadAsync(ct)` в `InitializeAsync` перед созданием proximity-менеджеров |
+| `GenericUserProfileContextMenuController.cs` | `OnMuteProximityClicked` / `OnUnmuteProximityClicked` → async `MuteProximityAsync` → `SetMutedAsync` через API |
 
-// PaginationDto.cs
-[Serializable]
-public struct PaginationDto
-{
-    public int offset;
-    public int limit;
-    public int total;
-}
+#### Нетронутые файлы
 
-// MuteRequestDto.cs
-[Serializable]
-public struct MuteRequestDto
-{
-    public string address;
-}
-```
+| Файл | Почему |
+|------|--------|
+| `ProximityVoiceChatManager.cs` | Использует только `IsMuted()` + `MuteStateChanged` — публичный контракт не изменился |
+| `ProximityNametagsHandler.cs` | Аналогично — подписка на `MuteStateChanged` и `IsMuted()` |
 
-> Точные поля уточнить по документации API. Структуры адаптировать после первого успешного запроса.
+### Ключевые решения
 
-#### 2. IProximityMuteRepository (интерфейс)
+**Repository vs Cache:**
+- **Repository** = транспорт (как общаться с API: HTTP, signed fetch, пагинация, сериализация)
+- **Cache** = состояние (что замьючено: O(1) lookup, events для подписчиков)
+- **Service** = фасад-координатор (API call → при успехе → обновить кэш)
 
-Создать `Assets/DCL/VoiceChat/Proximity/MutePersistence/IProximityMuteRepository.cs`:
+**DELETE с body:**
+Существующий `SignedFetchDeleteAsync` передавал `GenericPostArguments.Empty`. Добавлен overload с `GenericPostArguments` аргументом. `GenericDeleteRequest` поддерживает body, т.к. внутренне использует `GenericPostRequest.CreateWebRequest` + метод "DELETE".
 
-```csharp
-public interface IProximityMuteRepository
-{
-    /// Загружает все замьюченные адреса (пагинация внутри).
-    UniTask<List<string>> GetAllMutedUsersAsync(CancellationToken ct);
+**Cancellation:**
+Согласно code standards проекта: `ct.IsCancellationRequested` + return (не `ThrowIfCancellationRequested`), `OperationCanceledException` игнорируется (не re-throw).
 
-    /// Мьютит пользователя на сервере.
-    UniTask MuteUserAsync(string walletAddress, CancellationToken ct);
-
-    /// Снимает мьют на сервере.
-    UniTask UnmuteUserAsync(string walletAddress, CancellationToken ct);
-}
-```
-
-#### 3. RestProximityMuteRepository (реализация)
-
-Создать `Assets/DCL/VoiceChat/Proximity/MutePersistence/RestProximityMuteRepository.cs`:
-
-**Зависимости:**
-- `IWebRequestController` — signed HTTP запросы
-- `IDecentralandUrlsSource` — base URL для Social Service mutes endpoint
-
-**Реализация:**
-- `GetAllMutedUsersAsync`: цикл пагинации `GET /v1/mutes?offset=N&limit=M` пока не загрузит все
-- `MuteUserAsync`: `POST /v1/mutes` с телом `{ "address": "0x..." }`
-- `UnmuteUserAsync`: `DELETE /v1/mutes` с телом `{ "address": "0x..." }`
-- Использовать `SignedFetchGetAsync`, `SignedFetchPostAsync`, `SignedFetchDeleteAsync`
-- Паттерн: аналогично `CommunitiesDataProvider`
-
-#### 4. IProximityMuteCache (интерфейс)
-
-Создать `Assets/DCL/VoiceChat/Proximity/MutePersistence/IProximityMuteCache.cs`:
-
-```csharp
-public interface IProximityMuteCache
-{
-    event Action<string, bool>? MuteStateChanged;
-
-    bool IsMuted(string walletAddress);
-    void SetMuted(string walletAddress, bool muted);
-    void Reset(IEnumerable<string> mutedAddresses);
-}
-```
-
-#### 5. ProximityMuteCache (реализация)
-
-Создать `Assets/DCL/VoiceChat/Proximity/MutePersistence/ProximityMuteCache.cs`:
-
-- `HashSet<string>` (как текущий `ProximityMuteService`)
-- `Reset()` — очищает и заполняет из переданного списка
-- `SetMuted()` — add/remove + fire event
-- `IsMuted()` — lookup
-
-#### 6. Рефакторинг ProximityMuteService
-
-Текущий `ProximityMuteService` становится фасадом:
-
-```csharp
-public class ProximityMuteService
-{
-    private readonly IProximityMuteCache cache;
-    private readonly IProximityMuteRepository repository;
-
-    // Sync check — для ProximityVoiceChatManager, ProximityNametagsHandler
-    public bool IsMuted(string walletId) => cache.IsMuted(walletId);
-
-    // Event passthrough
-    public event Action<string, bool>? MuteStateChanged;
-
-    // Async mute/unmute — для Context Menu
-    public async UniTaskVoid MuteAsync(string walletId, CancellationToken ct)
-    {
-        await repository.MuteUserAsync(walletId, ct);
-        cache.SetMuted(walletId, true);
-    }
-
-    public async UniTaskVoid UnmuteAsync(string walletId, CancellationToken ct)
-    {
-        await repository.UnmuteUserAsync(walletId, ct);
-        cache.SetMuted(walletId, false);
-    }
-
-    // Startup load
-    public async UniTask LoadAsync(CancellationToken ct)
-    {
-        List<string> muted = await repository.GetAllMutedUsersAsync(ct);
-        cache.Reset(muted);
-    }
-}
-```
-
-**Важно:** `ToggleMute()` и `SetMuted(walletId, bool)` сохранить для обратной совместимости с текущими вызовами из контекстного меню, но внутри они должны вызывать async API.
-
-#### 7. Регистрация URL
-
-Добавить endpoint в `IDecentralandUrlsSource` / `DecentralandUrl` enum:
-
-```csharp
-SocialServiceMutes  // → {socialServiceBaseUrl}/v1/mutes
-```
-
-Проверить как другие Social Service HTTP endpoints зарегистрированы. Возможно, base URL уже есть и нужно только добавить path.
-
-#### 8. DI / Plugin Wiring
-
-В `DynamicWorldContainer` (или соответствующем контейнере):
-
-```csharp
-var muteRepo = new RestProximityMuteRepository(webRequestController, urlsSource);
-var muteCache = new ProximityMuteCache();
-var proximityMuteService = new ProximityMuteService(muteCache, muteRepo);
-```
-
-#### 9. Startup Load
-
-Варианты загрузки при старте:
-
-**A. В `VoiceChatPlugin.InjectToWorld()` (предпочтительно):**
-```csharp
-await proximityMuteService.LoadAsync(ct);
-```
-
-**B. Отдельная Startup Operation (аналог `BlocklistCheckStartupOperation`):**
-Если загрузка должна блокировать дальнейшую инициализацию.
-
-Вариант A проще и достаточен — мьюты нужны только для proximity voice chat.
-
-#### 10. Обновление Context Menu
-
-В `GenericUserProfileContextMenuController`:
-- `OnMuteProximityClicked` → вызвать `proximityMuteService.MuteAsync(userId, ct)`
-- `OnUnmuteProximityClicked` → вызвать `proximityMuteService.UnmuteAsync(userId, ct)`
-- Обработать ошибки API (показать notification при неудаче)
-- Optimistic update: обновить кнопку сразу, откатить при ошибке (опционально)
-
-### Файловая структура
-
-```
-Assets/DCL/VoiceChat/Proximity/
-├── MutePersistence/
-│   ├── DTOs/
-│   │   ├── MutedUserDto.cs
-│   │   ├── GetMutesResponseDto.cs
-│   │   ├── PaginationDto.cs
-│   │   └── MuteRequestDto.cs
-│   ├── IProximityMuteRepository.cs
-│   ├── IProximityMuteCache.cs
-│   ├── RestProximityMuteRepository.cs
-│   └── ProximityMuteCache.cs
-├── ProximityMuteService.cs              ← рефакторинг: фасад над cache + repository
-├── ProximityVoiceChatManager.cs         ← без изменений (использует IsMuted + MuteStateChanged)
-├── ProximityNametagsHandler.cs          ← без изменений
-└── ...
-```
-
-### Error Handling
-
-- `LoadAsync` при старте: log warning через `ReportHub`, продолжить без кэша (graceful degradation)
-- `MuteAsync` / `UnmuteAsync`: log error, не обновлять кэш при ошибке API
-- Сетевые ошибки не должны крашить приложение — мьют работает локально даже без API
+**Error handling:**
+- `LoadAsync` при старте: log warning, продолжить без кэша (graceful degradation)
+- `SetMutedAsync`: log error, кэш НЕ обновляется при ошибке API
+- Сетевые ошибки не крашат приложение
 
 ### Тестирование
 
 - Unit-тест `ProximityMuteCache`: Reset, SetMuted, IsMuted, events
-- Unit-тест `ProximityMuteService`: LoadAsync заполняет кэш, MuteAsync/UnmuteAsync вызывают repo + cache
+- Unit-тест `ProximityMuteService`: LoadAsync заполняет кэш, SetMutedAsync вызывает repo + cache
 - Mock `IProximityMuteRepository` через NSubstitute
 - Integration-тест (опционально): реальный HTTP запрос к zone/staging API
 
