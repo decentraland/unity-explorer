@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -193,3 +194,4 @@ namespace SceneRuntime.V8
         }
     }
 }
+#endif

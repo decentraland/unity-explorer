@@ -14,7 +14,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.WebRequests;
 using System;
 using System.Threading;
 using DCL.UI;
@@ -22,7 +21,10 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using RustAudio;
+using DCL.WebRequests;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
@@ -90,8 +92,9 @@ namespace DCL.PluginSystem.Global
 
             if (voiceChatPluginSettingsAsset.Value != null)
                 voiceChatPluginSettingsAsset.Dispose();
-
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             RustAudioClient.DeInit();
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -111,7 +114,7 @@ namespace DCL.PluginSystem.Global
             voiceChatHandler = new VoiceChatMicrophoneHandler(
 
 #if !UNITY_WEBGL
-            voiceChatConfiguration, 
+            voiceChatConfiguration,
             voiceChatOrchestrator
 #endif
 

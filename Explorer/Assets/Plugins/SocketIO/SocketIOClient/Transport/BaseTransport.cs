@@ -114,8 +114,9 @@ namespace SocketIOClient.Transport
         }
 
         public abstract UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken);
-
         public abstract UniTask DisconnectAsync(CancellationToken cancellationToken);
+        public abstract void AddHeader(string key, string val);
+        public abstract void SetProxy(IWebProxy proxy);
 
         public virtual void Dispose()
         {

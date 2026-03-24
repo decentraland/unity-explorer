@@ -429,7 +429,7 @@ namespace DCL.VoiceChat
             SpeakersUpdated?.Invoke(speakers.Count);
         }
 
-        private void RefreshParticipantStateFromMetadata(LKParticipant? participant, VoiceChatParticipantState? existingState)
+        private void RefreshParticipantStateFromMetadata(LKParticipant participant, VoiceChatParticipantState? existingState)
         {
             if (participant == null || existingState == null) return;
 

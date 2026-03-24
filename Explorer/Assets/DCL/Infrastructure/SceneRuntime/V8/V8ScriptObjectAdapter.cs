@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using Microsoft.ClearScript;
 using System.Collections.Generic;
 
@@ -69,3 +70,4 @@ namespace SceneRuntime.V8
             adapter.ScriptObject;
     }
 }
+#endif

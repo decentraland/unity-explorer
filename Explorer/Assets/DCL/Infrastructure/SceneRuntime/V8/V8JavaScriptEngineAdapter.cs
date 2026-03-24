@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -62,3 +63,4 @@ namespace SceneRuntime.V8
             uniTask.AsTask().ToPromise()!;
     }
 }
+#endif

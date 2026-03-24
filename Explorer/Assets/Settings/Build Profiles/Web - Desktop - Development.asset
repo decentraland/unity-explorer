@@ -36,7 +36,6 @@ MonoBehaviour:
   - {fileID: 4800000, guid: fe03ddacbd7a41e2950c4035119e10c4, type: 3}
   - {fileID: 4800000, guid: 9f3c26b521ac7c44ea7ce1b164cc3808, type: 3}
   - {fileID: 4800000, guid: e5b617d736d0466ea1f935a5a0d79b1b, type: 3}
-  - {fileID: 4800000, guid: 71b22c46a39ba46498cb2d8fab22343f, type: 3}
   - {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 15105, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 15106, guid: 0000000000000000f000000000000000, type: 0}
@@ -45,7 +44,6 @@ MonoBehaviour:
   m_LightProbeOutsideHullStrategy: 0
   m_PreloadedShaders:
   - {fileID: 20000000, guid: 5cdf6711ee9677f488992eeacb9b08a9, type: 2}
-  - {fileID: 20000000, guid: 6ce2513ef52770e48bb210879e4ba7bf, type: 2}
   m_PreloadShadersBatchTimeLimit: -1
   m_ShaderBuildSettings:
     keywordDeclarationOverrides: []
@@ -628,7 +626,7 @@ MonoBehaviour:
     - line: '|     m_DynamicBatching: 0'
     - line: '|   - m_BuildTarget: WebGL'
     - line: '|     m_StaticBatching: 1'
-    - line: '|     m_DynamicBatching: 1'
+    - line: '|     m_DynamicBatching: 0'
     - line: '|   m_BuildTargetShaderSettings: []'
     - line: '|   m_BuildTargetGraphicsJobs:'
     - line: '|   - m_BuildTarget: MacStandaloneSupport'
@@ -1032,7 +1030,7 @@ MonoBehaviour:
     - line: '|     WebGL: 1'
     - line: '|   il2cppCodeGeneration:'
     - line: '|     Standalone: 1'
-    - line: '|     WebGL: 1'
+    - line: '|     WebGL: 0'
     - line: '|   il2cppStacktraceInformation:'
     - line: '|     Standalone: 1'
     - line: '|   managedStrippingLevel:'

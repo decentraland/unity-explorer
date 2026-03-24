@@ -21,15 +21,6 @@
       "dependencies": {},
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
-    "com.atteneder.draco": {
-      "version": "4.0.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.burst": "1.4.11"
-      },
-      "url": "https://package.openupm.com"
-    },
     "com.atteneder.gltfast": {
       "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
