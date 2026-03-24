@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,16 +17,25 @@ namespace DCL.UI.Sidebar.Editor
         private Vector2 buttonSize = new (34, 34);
         private Vector2 iconSize = new (34, 34);
 
+        private int cachedChildCount;
+
         [MenuItem("Decentraland/Create/Sidebar Button")]
         private static void ShowWindow()
         {
             var window = GetWindow<CreateSidebarButtonWindow>("Create Sidebar Button");
             window.minSize = new Vector2(350, 300);
+            window.CacheLayoutInfo();
+        }
 
+        private void CacheLayoutInfo()
+        {
             var bottomLayout = AssetDatabase.LoadAssetAtPath<GameObject>(BOTTOM_LAYOUT_PATH);
 
             if (bottomLayout != null)
-                window.siblingIndex = bottomLayout.transform.childCount;
+            {
+                cachedChildCount = bottomLayout.transform.childCount;
+                siblingIndex = cachedChildCount;
+            }
         }
 
         private void OnGUI()
@@ -51,7 +59,10 @@ namespace DCL.UI.Sidebar.Editor
 
             EditorGUILayout.Space(4);
 
-            DrawPreview();
+            EditorGUILayout.HelpBox(
+                $"Will insert '{buttonName}' at index {siblingIndex}\n" +
+                $"Current children in BottomLayout: {cachedChildCount}",
+                MessageType.Info);
 
             EditorGUILayout.Space(8);
 
@@ -61,22 +72,6 @@ namespace DCL.UI.Sidebar.Editor
                 CreateButton();
 
             EditorGUI.EndDisabledGroup();
-        }
-
-        private void DrawPreview()
-        {
-            var bottomLayout = AssetDatabase.LoadAssetAtPath<GameObject>(BOTTOM_LAYOUT_PATH);
-
-            if (bottomLayout == null)
-            {
-                EditorGUILayout.HelpBox($"BottomLayout prefab not found at:\n{BOTTOM_LAYOUT_PATH}", MessageType.Error);
-                return;
-            }
-
-            EditorGUILayout.HelpBox(
-                $"Will insert '{buttonName}' at index {siblingIndex} in {bottomLayout.name}\n" +
-                $"Current children: {bottomLayout.transform.childCount}",
-                MessageType.Info);
         }
 
         private void CreateButton()
@@ -102,14 +97,12 @@ namespace DCL.UI.Sidebar.Editor
 
             try
             {
-                // Check for duplicate name
                 if (contentsRoot.transform.Find(buttonName) != null)
                 {
                     Debug.LogError($"[CreateSidebarButton] Button '{buttonName}' already exists in {contentsRoot.name}");
                     return;
                 }
 
-                // Instantiate SidebarButton as prefab instance
                 var buttonGO = (GameObject)PrefabUtility.InstantiatePrefab(sidebarButtonPrefab, contentsRoot.transform);
                 buttonGO.name = buttonName;
 
@@ -127,35 +120,34 @@ namespace DCL.UI.Sidebar.Editor
             }
             finally { PrefabUtility.UnloadPrefabContents(contentsRoot); }
 
+            CacheLayoutInfo();
             AssetDatabase.Refresh();
         }
 
         private void ConfigureRootButton(GameObject buttonGO)
         {
-            // RectTransform
             var rt = buttonGO.GetComponent<RectTransform>();
             rt.sizeDelta = buttonSize;
 
-            // Button — match other sidebar buttons
             var button = buttonGO.GetComponent<Button>();
 
-            if (button != null)
-            {
-                var colors = button.colors;
-                colors.normalColor = new Color(1f, 1f, 1f, 0f);
-                colors.highlightedColor = new Color(1f, 1f, 1f, 0.031f);
-                colors.pressedColor = new Color(1f, 1f, 1f, 0f);
-                colors.selectedColor = new Color(1f, 1f, 1f, 0.031f);
-                colors.disabledColor = new Color(0.784f, 0.784f, 0.784f, 0.502f);
-                colors.fadeDuration = 0f;
-                colors.colorMultiplier = 1f;
-                button.colors = colors;
+            if (button == null)
+                return;
 
-                var selBg = buttonGO.transform.Find("SelectedBackground");
+            var colors = button.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.031f);
+            colors.pressedColor = new Color(1f, 1f, 1f, 0f);
+            colors.selectedColor = new Color(1f, 1f, 1f, 0.031f);
+            colors.disabledColor = new Color(0.784f, 0.784f, 0.784f, 0.502f);
+            colors.fadeDuration = 0f;
+            colors.colorMultiplier = 1f;
+            button.colors = colors;
 
-                if (selBg != null)
-                    button.targetGraphic = selBg.GetComponent<Image>();
-            }
+            var selBg = buttonGO.transform.Find("SelectedBackground");
+
+            if (selBg != null)
+                button.targetGraphic = selBg.GetComponent<Image>();
         }
 
         private void ConfigureChildImages(GameObject buttonGO)
@@ -168,7 +160,6 @@ namespace DCL.UI.Sidebar.Editor
             SetChildImage(buttonGO, "HoverSprites", hoverSprite, Color.white, iconSize);
             SetChildImage(buttonGO, "UnhoverSprites", defaultSprite, Color.white, iconSize);
 
-            // Tooltip — inactive by default
             var tooltip = buttonGO.transform.Find("Tooltip");
 
             if (tooltip != null)
@@ -200,7 +191,6 @@ namespace DCL.UI.Sidebar.Editor
 
         private static void CreateDivider(Transform parent, int index)
         {
-            // Find existing Div to clone style from
             Transform existingDiv = null;
 
             for (int i = 0; i < parent.childCount; i++)
@@ -220,7 +210,6 @@ namespace DCL.UI.Sidebar.Editor
             }
             else
             {
-                // Create from scratch if no Div exists
                 var divGO = new GameObject("Div", typeof(RectTransform), typeof(Image));
                 divGO.transform.SetParent(parent, false);
                 divGO.layer = LayerMask.NameToLayer("UI");
