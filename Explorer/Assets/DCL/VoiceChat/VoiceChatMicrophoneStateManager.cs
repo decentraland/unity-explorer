@@ -51,8 +51,10 @@ namespace DCL.VoiceChat
 
             if (!connected)
                 UpdateMicrophoneState();
+#if !UNITY_WEBGL
             else
                 microphoneHandler.DisableMicrophoneForCall();
+#endif
         }
 
         private void OnCallStatusChanged(VoiceChatStatus newStatus)

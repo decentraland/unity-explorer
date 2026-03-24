@@ -1,3 +1,4 @@
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
@@ -55,3 +56,4 @@ namespace DCL.Multiplayer.Connections.Demo
         }
     }
 }
+#endif

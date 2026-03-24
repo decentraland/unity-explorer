@@ -119,12 +119,19 @@ namespace DCL.SDKComponents.MediaStream
 #endif
         );
 
-        public bool WaitingForProperties => Match(
-            static avPro => avPro.WaitingForProperties
-#if !NO_LIVEKIT_MODE && (!UNITY_WEBGL || EDITOR_DEBUG_WEBGL)
-          , static _ => false
+        public bool WaitingForProperties
+        {
+            get
+            {
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                return false;
+#else
+                if (IsAvProPlayer(out var avPro))
+                    return avPro!.WaitingForProperties;
+                return false;
 #endif
-            );
+            }
+        }
 
         public Vector2 GetTexureScale => Match(static avPro =>
             {

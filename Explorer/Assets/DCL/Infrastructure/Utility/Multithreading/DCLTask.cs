@@ -29,7 +29,7 @@ namespace Utility.Multithreading
             bool configureAwait = true,
             CancellationToken cancellationToken = default)
         {
-            return action();
+            await action();
         }
 #else
         public static UniTask RunOnThreadPool(
