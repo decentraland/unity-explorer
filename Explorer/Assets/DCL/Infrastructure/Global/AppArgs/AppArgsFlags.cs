@@ -56,6 +56,7 @@ namespace Global.AppArgs
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string WINDOWED_MODE = "windowed-mode";
+        public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
@@ -83,6 +84,8 @@ namespace Global.AppArgs
         public const string DOUBLE_JUMP = "double-jump";
 
         public const string GLIDING = "gliding";
+
+        public const string AVATAR_GHOSTS = "avatar-ghosts";
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
 

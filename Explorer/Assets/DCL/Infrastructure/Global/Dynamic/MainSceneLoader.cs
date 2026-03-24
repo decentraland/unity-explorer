@@ -26,7 +26,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.ModuleControllers;
+using DCL.Quality.Runtime;
 using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
@@ -58,6 +58,7 @@ using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using ECS;
 using System.IO;
+using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -177,8 +178,10 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
-                WindowModeUtils.ApplyWindowedMode();
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             World world = World.Create();
 
@@ -404,16 +407,15 @@ namespace Global.Dynamic
                 new UnitySystemInfoProvider(),
                 new PlatformDriveInfoProvider());
 
-            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs)
             {
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
+                SavedQualitySettingsApplier.EnforceLowPreset();
             }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
-            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
             UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);

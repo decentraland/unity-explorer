@@ -78,7 +78,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;
-            view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
+            string address = visiblePerson.userAddress;
+            view.userNameTag.text = $"#{address[^Math.Min(4, address.Length)..]}";
             view.profilePictureView.SetBackgroundColor(userColor);
             view.profilePictureView.SetLoadingState(true);
 

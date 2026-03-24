@@ -16,7 +16,7 @@ MonoBehaviour:
   behindFps: 1
   aggregatePositionTolerance: 0.5
   maxLoadingDistanceInParcels: 20
-  <MinLoadingDistanceInParcels>k__BackingField: 20
+  <MinLoadingDistanceInParcels>k__BackingField: 5
   <AggregateAngleTolerance>k__BackingField: 10
   <UnloadingDistanceToleranceInParcels>k__BackingField: 1
   <ScenesRequestBatchSize>k__BackingField: 6
