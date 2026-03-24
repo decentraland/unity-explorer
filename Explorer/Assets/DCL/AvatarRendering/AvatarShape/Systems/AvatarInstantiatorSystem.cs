@@ -127,6 +127,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
+
             // Only enable the rig if head-sync is enabled
             // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
             avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
@@ -249,6 +250,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 wearablesResult.Asset.Dispose();
 
             avatarShapeComponent.IsDirty = false;
+            avatarShapeComponent.LoadingBudget.Release();
 
             return skinningComponent;
         }

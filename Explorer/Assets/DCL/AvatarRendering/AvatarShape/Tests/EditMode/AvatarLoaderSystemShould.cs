@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Ipfs;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
 using Decentraland.Common;
 using ECS;
@@ -55,7 +56,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
             realmData.Ipfs.Returns(ipfsRealm);
-            system = new AvatarLoaderSystem(world);
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            system = new AvatarLoaderSystem(world, budget);
 
             fakePointers = new List<URN>();
             fakePointers.Add(BODY_SHAPE_MALE);

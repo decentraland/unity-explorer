@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
@@ -26,6 +27,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public readonly List<CachedAttachment> InstantiatedWearables;
         public readonly List<Renderer> OutlineCompatibleRenderers;
 
+        private IAcquiredBudget loadingBudget;
+
+        public IAcquiredBudget LoadingBudget
+        {
+            get => loadingBudget ?? NoAcquiredBudget.INSTANCE;
+            set => loadingBudget = value;
+        }
+
         public bool ShowOnlyWearables;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
@@ -45,6 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
+            loadingBudget = NoAcquiredBudget.INSTANCE;
         }
 
         public void CreateOutlineCompatibilityList()

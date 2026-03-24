@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -28,7 +29,12 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        internal AvatarLoaderSystem(World world) : base(world) { }
+        private readonly IReleasablePerformanceBudget avatarLoadingBudget;
+
+        internal AvatarLoaderSystem(World world, IReleasablePerformanceBudget avatarLoadingBudget) : base(world)
+        {
+            this.avatarLoadingBudget = avatarLoadingBudget;
+        }
 
         protected override void Update(float t)
         {
@@ -45,13 +51,17 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
+            if (!avatarLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget))
+                return;
+
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
-                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
+                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true })
+                { LoadingBudget = acquiredBudget });
             World.Add(entity, new AvatarHighlightComponent());
         }
 
@@ -59,8 +69,12 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape), typeof(PlayerComponent))]
         private void CreateAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
+            if (!avatarLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget))
+                return;
+
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
+            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor)
+                { LoadingBudget = acquiredBudget });
             World.Add(entity, new AvatarHighlightComponent());
         }
 

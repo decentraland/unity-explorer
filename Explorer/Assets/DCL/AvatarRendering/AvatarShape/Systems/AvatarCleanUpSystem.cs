@@ -7,7 +7,6 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
@@ -55,6 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            DestroyPendingAvatarQuery(World);
             DestroyAvatarQuery(World);
         }
 
@@ -81,6 +81,18 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             deleteEntityIntention.DeferDeletion = false;
             InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
+        }
+
+        [Query]
+        [None(typeof(AvatarBase))]
+        private void DestroyPendingAvatar(ref AvatarShapeComponent avatarShapeComponent, ref DeleteEntityIntention deleteEntityIntention)
+        {
+            deleteEntityIntention.DeferDeletion = false;
+
+            if (!avatarShapeComponent.WearablePromise.IsConsumed)
+                avatarShapeComponent.WearablePromise.ForgetLoading(World);
+
+            avatarShapeComponent.LoadingBudget.Release();
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,

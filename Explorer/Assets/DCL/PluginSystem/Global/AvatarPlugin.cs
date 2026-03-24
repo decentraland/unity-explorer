@@ -92,6 +92,7 @@ namespace DCL.PluginSystem.Global
         private Material ghostMaterial = null!;
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
+        private ConcurrentLoadingPerformanceBudget avatarLoadingBudget;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -138,6 +139,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
+            avatarLoadingBudget = new ConcurrentLoadingPerformanceBudget(settings.maxConcurrentAvatarLoads);
             startFadeDistanceDithering = settings.startFadeDistanceDithering;
             endFadeDistanceDithering = settings.endFadeDistanceDithering;
             highlightData = new ReadOnlyAvatarHighlightData(await settings.OutlineSettingsRef.LoadAssetAsync());
@@ -163,7 +165,7 @@ namespace DCL.PluginSystem.Global
 
             var skinningStrategy = new ComputeShaderSkinning();
 
-            AvatarLoaderSystem.InjectToWorld(ref builder);
+            AvatarLoaderSystem.InjectToWorld(ref builder, avatarLoadingBudget);
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_HIGHLIGHT))
@@ -322,6 +324,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public int defaultMaterialCapacity = 100;
+
+            [field: SerializeField]
+            public int maxConcurrentAvatarLoads = 3;
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
