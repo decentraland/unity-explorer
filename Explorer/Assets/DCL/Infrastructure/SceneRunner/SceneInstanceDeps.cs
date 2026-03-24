@@ -321,11 +321,12 @@ namespace SceneRunner
                         syncDeps.CRDTWorldSynchronizer,
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
-                        syncDeps.ExceptionsHandler,
+                        syncDeps.ExceptionsHandler
 #if !UNITY_WEBGL
-                        syncDeps.ecsMultiThreadSync,
+                        , syncDeps.ecsMultiThreadSync
+                        , syncOwner
 #endif
-                        syncOwner),
+                        ),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
         }
 
@@ -349,11 +350,11 @@ namespace SceneRunner
                         syncDeps.CRDTWorldSynchronizer,
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
-                        syncDeps.ExceptionsHandler,
+                        syncDeps.ExceptionsHandler
 #if !UNITY_WEBGL
-                        syncDeps.ecsMultiThreadSync,
+                        , syncDeps.ecsMultiThreadSync
+                        , syncOwner
 #endif
-                        syncOwner
                     ),
                     syncDeps,
                     sceneRuntime,

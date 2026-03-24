@@ -35,6 +35,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Common;
@@ -585,6 +586,10 @@ namespace Global.Dynamic
 
         private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+#if UNITY_WEBGL
+            ReportHub.Log(ReportData.UNSPECIFIED, "Disk cache disabled while WebGL");
+            return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+#else
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
@@ -612,6 +617,7 @@ namespace Global.Dynamic
 
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
+#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)

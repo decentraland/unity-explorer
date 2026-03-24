@@ -21,6 +21,9 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.Clipboard;
 using ECS;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
@@ -137,6 +140,9 @@ namespace Global.Tests.PlayMode
                 webJsSources,
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>()
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                , new WebGLSceneUpdateQueue()
+#endif
             );
 
             return (staticContainer, sceneSharedContainer);
