@@ -4,10 +4,10 @@
 
 Automation tests use [AltTester SDK 2.3.0](https://alttester.com/docs/sdk/latest/) to drive the running application through its UI — clicking buttons, waiting for screens, and asserting on visible state. Unlike unit and integration tests, automation tests exercise the full built application as a user would.
 
-The tests live in a standalone .NET test project, separate from the Unity project:
+The tests live in a separate repository:
 
-- **Project:** `ExplorerAutomationTests/`
-- **Framework:** .NET 8.0, NUnit 3, Allure reporting
+- **Repository:** [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation)
+- **Framework:** .NET 10.0, NUnit 4, Allure reporting
 - **Driver:** AltTester-Driver 2.3.0
 
 ---
@@ -27,64 +27,12 @@ This means the tests run as a separate process and talk to the game over the net
 
 ## Test Architecture
 
-The project follows the **Page Object Model (POM)** pattern with a view hierarchy:
+The project follows the **Page Object Model (POM)** pattern. See the [explorer-automation README](https://github.com/decentraland/explorer-automation) for full project structure and coding standards.
 
-```
-ExplorerAutomationTests/
-├── Common/
-│   └── Reporter.cs                 # Timestamped logging and Allure step/screenshot helpers
-├── Tests/
-│   ├── BaseTest.cs                 # Base class: driver setup, view init, EnsureInWorld flow
-│   ├── ExplorePanelTests.cs        # Explore panel sidebar and tab tests
-│   └── ShortcutsTests.cs           # Keyboard shortcut tests
-├── Views/
-│   ├── BaseView.cs                 # Abstract base: click, wait, find, text helpers
-│   ├── AuthenticationMainScreenView.cs
-│   ├── SplashView.cs
-│   ├── LoadingScreenView.cs
-│   ├── MainMenuView.cs             # Sidebar buttons (events, places, map, etc.)
-│   ├── ExplorePanelView.cs         # Panel tabs + section view instances
-│   └── ExplorePanelSections/       # Sections specific to the Explore Panel
-│       ├── BaseSection.cs          # Abstract base for panel sections
-│       ├── EventsSection.cs
-│       ├── PlacesSection.cs
-│       ├── CommunitiesSection.cs
-│       ├── NavmapSection.cs
-│       ├── BackpackSection.cs
-│       ├── GallerySection.cs
-│       └── SettingsSection.cs
-├── GlobalUsings.cs
-└── ExplorerAutomationTests.csproj
-```
-
-### Key patterns
-
-- **BaseTest** connects the `AltDriver`, initializes all view objects, and runs `EnsureInWorld()` (handles splash screen, authentication, and loading).
-- **View classes** encapsulate locators (as `(By, string)` tuples) and interaction methods. Most locators use `By.ID` with UUIDs for stability.
-- **BaseView** provides reusable methods: `ClickObject`, `WaitForObject`, `WaitForObjectNotBePresent`, `IsObjectPresent`, `SetText`, `GetText`.
+- **Views** encapsulate UI locators and interaction methods. `BaseView` provides reusable helpers (`ClickObject`, `WaitForObject`, `IsObjectPresent`, etc.). Panel-specific sections (e.g. `ExplorePanelSections/`) inherit from `BaseSection`.
+- **BaseTest** manages the driver lifecycle, initializes all view objects, and runs `EnsureInWorld()` to get past splash/auth/loading screens. All test classes inherit from it.
 - **Reporter** wraps console logging with timestamps and creates Allure steps/screenshots.
 - **Allure** attributes (`[AllureSuite]`, `[AllureTest]`, `[AllureStep]`) decorate tests and view methods for rich HTML reports.
-
-### Test flow
-
-```
-OneTimeSetUp:
-  StartDriver()        → Connect AltDriver to AltTester Desktop
-  InitializeViews()    → Create all view/section objects
-  EnsureInWorld()      → Wait through splash → auth → loading
-
-Per-test SetUp:
-  PressEscape()        → Clear any open panels
-
-Test method:
-  Uses pre-initialized views (MainMenuView, ExplorePanelView, etc.)
-
-Per-test TearDown:
-  Screenshot on failure
-
-OneTimeTearDown:
-  Stop AltDriver
-```
 
 ---
 
