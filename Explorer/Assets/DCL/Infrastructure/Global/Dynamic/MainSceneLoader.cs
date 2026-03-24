@@ -193,7 +193,7 @@ namespace Global.Dynamic
 
             // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
             if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-                await InstantiateAsync(altTesterPrefab);
+                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
@@ -724,6 +724,29 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             return input.SelectedOption;
+        }
+
+        private void InstantiateAltTester(IAppArgs appArgs)
+        {
+            var instance = Instantiate(altTesterPrefab);
+
+#if ALTTESTER
+            if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
+            {
+                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+
+                var split = endpoint.Split(':');
+
+                if (split.Length != 2 || !int.TryParse(split[1], out var port))
+                {
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"Invalid Alttester endpoint (needs to be host:port): {endpoint}");
+                    return;
+                }
+
+                runner.InstrumentationSettings.AltServerHost = split[0];
+                runner.InstrumentationSettings.AltServerPort = port;
+            }
+#endif
         }
 
         /// <summary>
