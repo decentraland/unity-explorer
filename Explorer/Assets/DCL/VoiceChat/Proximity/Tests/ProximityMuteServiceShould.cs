@@ -5,8 +5,11 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.VoiceChat.Tests
 {
@@ -90,6 +93,7 @@ namespace DCL.VoiceChat.Tests
             // Arrange
             repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Throws(new Exception("Server error"));
+            LogAssert.Expect(LogType.Error, new Regex("Failed to mute 0xABC"));
 
             // Act
             await service.SetMutedAsync("0xABC", true, CancellationToken.None);
@@ -104,6 +108,7 @@ namespace DCL.VoiceChat.Tests
             // Arrange
             repository.UnmuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Throws(new Exception("Server error"));
+            LogAssert.Expect(LogType.Error, new Regex("Failed to unmute 0xABC"));
 
             // Act
             await service.SetMutedAsync("0xABC", false, CancellationToken.None);
@@ -167,6 +172,7 @@ namespace DCL.VoiceChat.Tests
             // API starts failing
             failingRepo.MuteUserAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                        .Throws(new Exception("Server down"));
+            LogAssert.Expect(LogType.Error, new Regex("Failed to mute 0xBBB"));
 
             // Act — mute attempt fails
             await svc.SetMutedAsync("0xBBB", true, CancellationToken.None);
@@ -225,6 +231,96 @@ namespace DCL.VoiceChat.Tests
             // Assert
             Assert.That(receivedId, Is.EqualTo("0xABC"));
             Assert.That(receivedMuted, Is.True);
+        }
+
+        [Test]
+        public async Task LogWarningWhenLoadFails()
+        {
+            // Arrange
+            repository.GetAllMutedUsersAsync(Arg.Any<CancellationToken>())
+                      .Throws(new Exception("Connection refused"));
+            LogAssert.Expect(LogType.Warning, new Regex("Failed to load muted users"));
+
+            // Act
+            await service.LoadAsync(CancellationToken.None);
+        }
+
+        [Test]
+        public async Task LetEveryoneBeHeardWhenLoadFails()
+        {
+            // Arrange — API is down at startup
+            var realCache = new ProximityMuteCache();
+            var failingRepo = Substitute.For<IProximityMuteRepository>();
+            failingRepo.GetAllMutedUsersAsync(Arg.Any<CancellationToken>())
+                       .Throws(new Exception("Service unavailable"));
+
+            var svc = new ProximityMuteService(realCache, failingRepo);
+
+            // Act
+            await svc.LoadAsync(CancellationToken.None);
+
+            // Assert — no one is muted, voice chat works for everyone
+            Assert.That(svc.IsMuted("0xANYONE"), Is.False);
+        }
+
+        [Test]
+        public async Task NotUpdateCacheWhenLoadIsCancelled()
+        {
+            // Arrange
+            repository.GetAllMutedUsersAsync(Arg.Any<CancellationToken>())
+                      .Throws(new OperationCanceledException());
+
+            // Act
+            await service.LoadAsync(CancellationToken.None);
+
+            // Assert — cancellation is silently ignored, cache untouched
+            cache.DidNotReceive().Reset(Arg.Any<IEnumerable<string>>());
+        }
+
+        [Test]
+        public async Task NotUpdateCacheWhenMuteIsCancelled()
+        {
+            // Arrange
+            repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
+                      .Throws(new OperationCanceledException());
+
+            // Act
+            await service.SetMutedAsync("0xABC", true, CancellationToken.None);
+
+            // Assert — cancellation prevents cache update (no partial state)
+            cache.DidNotReceive().SetMuted(Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Test]
+        public async Task CallApiBeforeUpdatingCacheOnMute()
+        {
+            // Arrange — verify cache is NOT updated during the API call
+            repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
+                      .Returns(_ =>
+                      {
+                          cache.DidNotReceive().SetMuted(Arg.Any<string>(), Arg.Any<bool>());
+                          return UniTask.CompletedTask;
+                      });
+
+            // Act
+            await service.SetMutedAsync("0xABC", true, CancellationToken.None);
+
+            // Assert — after API succeeds, cache IS updated
+            cache.Received(1).SetMuted("0xABC", true);
+        }
+
+        [Test]
+        public async Task UpdateCacheDirectlyWhenAsyncMuteHasNoRepository()
+        {
+            // Arrange — local-only mode, no API backend
+            var localCache = new ProximityMuteCache();
+            var localService = new ProximityMuteService(localCache);
+
+            // Act — async path skips API and updates cache directly
+            await localService.SetMutedAsync("0xABC", true, CancellationToken.None);
+
+            // Assert
+            Assert.That(localService.IsMuted("0xABC"), Is.True);
         }
     }
 }
