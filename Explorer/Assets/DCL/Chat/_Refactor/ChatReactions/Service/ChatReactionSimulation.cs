@@ -6,9 +6,9 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Pure C# simulation for the situational reaction particle system.
-    /// Particles live in screen space (pixels) so they do not move with the camera.
-    /// Owns the particle pool, GPU renderer, spawn resolver, and stream emitter.
+    /// Orchestrates the screen-space UI particle pipeline:
+    /// Store → Flight steering → Integrate → Compact → Render.
+    /// Owns spawning, streaming, and spawn resolution logic.
     /// </summary>
     public sealed class ChatReactionSimulation : IDisposable
     {
@@ -22,7 +22,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
-        private readonly ChatReactionsUiParticlePool uiPool;
+        private readonly DenseUiParticleStore uiStore;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
@@ -31,10 +31,9 @@ namespace DCL.Chat.ChatReactions
         private readonly int atlasTotalTiles;
 
         private RectTransform? defaultSpawnRect;
-        private int uiAliveCount;
 
-        public int AliveCount => uiAliveCount;
-        public int PoolCapacity => uiPool.Capacity;
+        public int AliveCount => uiStore.Count;
+        public int PoolCapacity => uiStore.Capacity;
         public bool IsStreaming => streamEmitter.IsStreaming;
 
         public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
@@ -46,7 +45,7 @@ namespace DCL.Chat.ChatReactions
             atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
 
             runtimeMaterial = CreateRuntimeMaterial(config);
-            uiPool = new ChatReactionsUiParticlePool(config.UILane.MaxParticles);
+            uiStore = new DenseUiParticleStore(config.UILane.MaxParticles);
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
 
@@ -64,21 +63,34 @@ namespace DCL.Chat.ChatReactions
                 UnityEngine.Object.Destroy(runtimeMaterial);
         }
 
+        // ── Pipeline ────────────────────────────────────────────────
+
         public void Tick(float dt)
         {
-            SimulateParticlePhysics(dt);
-            ApplyFlightSteering(dt);
+            if (uiStore.Count > 0)
+            {
+                ApplyFlightSteering(dt);
+
+                Profiler.BeginSample("ChatReactions.UI.Physics");
+                UiParticleIntegrator.Step(uiStore.Buffer, uiStore.Count,
+                    config.UILane.Gravity, config.UILane.Drag, dt);
+                uiStore.CompactDead();
+                Profiler.EndSample();
+            }
+
             EmitStreamParticles(dt);
         }
 
         public void Draw(Camera cam)
         {
-            if (cam == null) return;
+            if (cam == null || uiStore.Count == 0) return;
 
             Profiler.BeginSample("ChatReactions.UI.Draw");
-            renderer.Draw(cam, uiPool.Raw, 0, config.UILane.DepthFromCamera);
+            renderer.Draw(cam, uiStore.Buffer, uiStore.Count, 0, config.UILane.DepthFromCamera);
             Profiler.EndSample();
         }
+
+        // ── Spawning ────────────────────────────────────────────────
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
@@ -92,6 +104,8 @@ namespace DCL.Chat.ChatReactions
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
 
+        // ── Streaming ───────────────────────────────────────────────
+
         public void BeginUIStream(RectTransform sourceRect) =>
             streamEmitter.Begin(sourceRect);
 
@@ -104,24 +118,18 @@ namespace DCL.Chat.ChatReactions
         public void BeginDebugUIStream(RectTransform? sourceRect = null) => streamEmitter.Begin(sourceRect);
         public void EndDebugUIStream() => streamEmitter.End();
 
-        private void SimulateParticlePhysics(float dt)
-        {
-            Profiler.BeginSample("ChatReactions.UI.Physics");
-            uiAliveCount = uiPool.Update(dt, config.UILane.Gravity, config.UILane.Drag);
-            Profiler.EndSample();
-        }
+        // ── Private ─────────────────────────────────────────────────
 
         private void ApplyFlightSteering(float dt)
         {
             if (flightController == null) return;
 
             Profiler.BeginSample("ChatReactions.UI.FlightSteer");
-            var particles = uiPool.Raw;
+            var buffer = uiStore.Buffer;
 
-            for (int i = 0; i < particles.Length; i++)
+            for (int i = 0; i < uiStore.Count; i++)
             {
-                ref var p = ref particles[i];
-                if (p.alive == 0) continue;
+                ref var p = ref buffer[i];
 
                 Vector2 accel = flightController.GetSteering2D(p.age, p.zigZagPhase);
                 p.screenVel += accel * dt;
@@ -151,8 +159,6 @@ namespace DCL.Chat.ChatReactions
             Profiler.EndSample();
         }
 
-        // ── Spawn Helpers ─────────────────────────────────────────
-
         private void SpawnBurst(Vector2 basePx, int emojiIndex, int count, float jitterH, float jitterV)
         {
             var ui = config.UILane;
@@ -166,7 +172,18 @@ namespace DCL.Chat.ChatReactions
                 Vector2 velocity = ResolveSpawnVelocity(ui, out float phase);
                 Vector2 jitter = new Vector2(Rand(-jitterH, jitterH), Rand(-jitterV, jitterV));
 
-                uiPool.Spawn(basePx + jitter, velocity, lifetime, startSizePx, endSizePx, emojiIndex, phase);
+                uiStore.Add(new ChatReactionsUiParticle
+                {
+                    screenPos = basePx + jitter,
+                    screenVel = velocity,
+                    age = 0f,
+                    lifetime = lifetime,
+                    startSizePx = startSizePx,
+                    endSizePx = endSizePx,
+                    emojiIndex = emojiIndex,
+                    zigZagPhase = phase,
+                    alive = 1,
+                });
             }
         }
 

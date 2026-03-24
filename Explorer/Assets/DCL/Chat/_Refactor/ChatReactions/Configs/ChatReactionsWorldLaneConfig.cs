@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
@@ -13,7 +14,7 @@ namespace DCL.Chat.ChatReactions.Configs
     public class ChatReactionsWorldLaneConfig : ScriptableObject
     {
         [field: Header("Pool")]
-        [field: Note("INIT-ONLY — read once to allocate the particle ring-buffer. " +
+        [field: Note("INIT-ONLY — read once to allocate the particle array. " +
                      "Keep at or below 1023 to stay within a single RenderMeshInstanced call.")]
         [field: Range(64, 1023)]
         [field: SerializeField] public int MaxParticles { get; private set; } = 1023;
@@ -38,21 +39,24 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("Constant acceleration (units/sec²). Negative Y = gentle downward pull.")]
         [field: SerializeField] public Vector3 Gravity { get; private set; } = new(0f, -0.2f, 0f);
 
-        [field: Header("Tether — avatar-following spring")]
+        [field: Header("Anchor Spring — avatar-following force")]
         [field: Note("Spring stiffness pulling anchored particles toward their avatar on XZ. " +
-                     "Higher = tighter follow. Zero disables tethering (particles behave as before).")]
+                     "Higher = tighter follow. Zero disables the spring (particles float freely).")]
         [field: Range(0f, 30f)]
-        [field: SerializeField] public float TetherStrength { get; private set; } = 15f;
+        [field: FormerlySerializedAs("<TetherStrength>k__BackingField")]
+        [field: SerializeField] public float SpringStrength { get; private set; } = 15f;
 
-        [field: Note("Damping on the tether spring (XZ only). Counteracts overshoot — " +
-                     "higher = smoother and more mellow. Critical damping ≈ 2 × √TetherStrength.")]
+        [field: Note("Damping on the spring (XZ only). Counteracts overshoot — " +
+                     "higher = smoother and more mellow. Critical damping ≈ 2 × √SpringStrength.")]
         [field: Range(0f, 20f)]
-        [field: SerializeField] public float TetherDamping { get; private set; } = 8f;
+        [field: FormerlySerializedAs("<TetherDamping>k__BackingField")]
+        [field: SerializeField] public float SpringDamping { get; private set; } = 8f;
 
-        [field: Note("Multiplier on tether strength over normalised lifetime [0,1]. " +
+        [field: Note("Multiplier on spring strength over normalised lifetime [0,1]. " +
                      "1 at birth → 0 at death makes young particles follow tightly " +
                      "while old ones drift free. Leave empty for constant strength.")]
-        [field: SerializeField] public AnimationCurve TetherOverLifetime { get; private set; }
+        [field: FormerlySerializedAs("<TetherOverLifetime>k__BackingField")]
+        [field: SerializeField] public AnimationCurve SpringOverLifetime { get; private set; }
 
         [field: Header("Burst")]
         [field: Note("How many particles to spawn per burst trigger (tap or stream tick).")]
@@ -86,6 +90,13 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("INIT-ONLY — size multiplier curve over lifetime [0,1]. " +
                      "Enables pop/shrink effects. Leave empty for raw start→end interpolation.")]
         [field: SerializeField] public AnimationCurve SizeOverLifetime { get; private set; }
+
+        [field: Header("Visibility Culling")]
+        [field: Note("Max distance (world units) at which world-space reactions are rendered. " +
+                     "Avatars beyond this or outside the camera view are skipped during rendering. " +
+                     "Matches nametag range by default.")]
+        [field: Range(10f, 100f)]
+        [field: SerializeField] public float MaxSpawnDistance { get; private set; } = 40f;
 
         [field: Header("Mock Simulation")]
         [field: Note("Minimum seconds between simulated incoming reactions.")]

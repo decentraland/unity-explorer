@@ -19,6 +19,7 @@ namespace DCL.Chat.ChatReactions
         private readonly string?[] walletIds = new string?[MAX_ANCHORS];
         private readonly Vector3[] positions = new Vector3[MAX_ANCHORS];
         private readonly bool[] active = new bool[MAX_ANCHORS];
+        private readonly bool[] visible = new bool[MAX_ANCHORS];
         private int highWaterMark;
 
         /// <summary>
@@ -73,6 +74,69 @@ namespace DCL.Chat.ChatReactions
 
         public bool IsActive(byte index) =>
             index < MAX_ANCHORS && active[index];
+
+        public bool IsVisible(byte index) =>
+            index < MAX_ANCHORS && visible[index];
+
+        public int CountVisible()
+        {
+            int count = 0;
+
+            for (int i = 0; i < highWaterMark; i++)
+            {
+                if (visible[i])
+                    count++;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Updates visibility for all active anchors using a single viewport check per anchor.
+        /// Call once per frame before culling. Local player anchor is always visible.
+        /// </summary>
+        public void UpdateVisibility(Camera cam, float maxDistanceSqr)
+        {
+            if (cam == null)
+            {
+                for (int i = 0; i < highWaterMark; i++)
+                    visible[i] = active[i];
+
+                return;
+            }
+
+            Vector3 camPos = cam.transform.position;
+
+            for (int i = 0; i < highWaterMark; i++)
+            {
+                if (!active[i])
+                {
+                    visible[i] = false;
+                    continue;
+                }
+
+                if (walletIds[i] == LOCAL_PLAYER_ID)
+                {
+                    visible[i] = true;
+                    continue;
+                }
+
+                visible[i] = IsOnScreen(cam, camPos, positions[i], maxDistanceSqr);
+            }
+        }
+
+        internal static bool IsOnScreen(Camera cam, Vector3 camPos, Vector3 worldPos, float maxDistSqr)
+        {
+            float dx = worldPos.x - camPos.x;
+            float dy = worldPos.y - camPos.y;
+            float dz = worldPos.z - camPos.z;
+
+            if (dx * dx + dy * dy + dz * dz > maxDistSqr)
+                return false;
+
+            Vector3 vp = cam.WorldToViewportPoint(worldPos);
+            return vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f;
+        }
 
         private byte FindExistingAnchor(string walletId)
         {

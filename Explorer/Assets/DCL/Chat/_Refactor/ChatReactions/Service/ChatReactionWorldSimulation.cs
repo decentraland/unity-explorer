@@ -7,9 +7,9 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Pure C# simulation for world-space situational reaction particles.
-    /// Particles are placed at real world-space positions (e.g. above avatar heads)
-    /// and rendered as camera-facing billboards that respect scene depth.
+    /// Orchestrates the world-space situational reaction particle pipeline:
+    /// Store → Forces (spring, oscillation) → Integrate → Compact → Cull → Render.
+    /// Owns spawning, streaming, and debug emission logic.
     /// </summary>
     public sealed class ChatReactionWorldSimulation : IDisposable
     {
@@ -21,14 +21,14 @@ namespace DCL.Chat.ChatReactions
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
-        private readonly ChatReactionsParticlePool worldPool;
+        private readonly DenseParticleStore store;
         private readonly ChatReactionsParticleRenderer renderer;
+        private readonly ParticleVisibilityCuller culler;
         private readonly System.Random rng;
         private readonly int atlasTotalTiles;
         private readonly AvatarAnchorTable anchorTable = new ();
         private readonly IAvatarReactionPosition? avatarPosition;
-
-        private int aliveCount;
+        private readonly float maxSpawnDistanceSqr;
 
         private float streamAccumulator;
         private bool isStreaming;
@@ -40,12 +40,17 @@ namespace DCL.Chat.ChatReactions
         private bool debugActive;
         private Func<List<Vector3>>? debugPositionsGetter;
 
-        public int AliveCount => aliveCount;
-        public int PoolCapacity => worldPool.Capacity;
+        private int lastVisibleCount;
+        private int lastVisibleAnchorCount;
+
+        public int AliveCount => store.Count;
+        public int PoolCapacity => store.Capacity;
+        public int VisibleCount => lastVisibleCount;
+        public int VisibleAnchorCount => lastVisibleAnchorCount;
         public bool IsStreaming => isStreaming;
         public bool IsDebugNearbyActive => debugActive;
 
-        public bool HasAliveParticles() => aliveCount > 0;
+        public bool HasAliveParticles() => store.Count > 0;
 
         public ChatReactionWorldSimulation(ChatReactionsConfig config, IAvatarReactionPosition? avatarPosition = null)
         {
@@ -55,7 +60,9 @@ namespace DCL.Chat.ChatReactions
             atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
 
             runtimeMaterial = CreateRuntimeMaterial(config);
-            worldPool = new ChatReactionsParticlePool(config.WorldLane.MaxParticles);
+            store = new DenseParticleStore(config.WorldLane.MaxParticles);
+            culler = new ParticleVisibilityCuller(config.WorldLane.MaxParticles);
+            maxSpawnDistanceSqr = config.WorldLane.MaxSpawnDistance * config.WorldLane.MaxSpawnDistance;
 
             var sizeCurve = config.WorldLane.SizeOverLifetime;
             renderer = new ChatReactionsParticleRenderer(runtimeMaterial, sizeCurve?.length > 0 ? sizeCurve : null);
@@ -67,34 +74,70 @@ namespace DCL.Chat.ChatReactions
                 UnityEngine.Object.Destroy(runtimeMaterial);
         }
 
+        // ── Pipeline ────────────────────────────────────────────────
+
         public void Tick(float dt)
         {
-            if (HasAliveParticles())
+            if (store.Count > 0)
             {
-                RefreshAnchorPositions();
-                ApplyAvatarTether(dt);
-                ApplyLateralOscillation(dt);
+                anchorTable.Refresh(avatarPosition);
+
+                AnchorSpringForce.Apply(store.Buffer, store.Count, anchorTable,
+                    config.WorldLane.SpringStrength, config.WorldLane.SpringDamping,
+                    config.WorldLane.SpringOverLifetime, dt);
+
+                ParticleOscillationForce.Apply(store.Buffer, store.Count,
+                    config.WorldLane.ZigZagAmplitude, config.WorldLane.ZigZagFrequency, dt);
+
+                Profiler.BeginSample("ChatReactions.World.Integrate");
+                ParticleIntegrator.Step(store.Buffer, store.Count,
+                    config.WorldLane.Gravity, config.WorldLane.Drag, dt);
+                Profiler.EndSample();
+
+                Profiler.BeginSample("ChatReactions.World.Compact");
+                store.CompactDead();
+                Profiler.EndSample();
             }
 
-            SimulateParticlePhysics(dt);
             EmitStreamParticles(dt);
             EmitDebugNearbyParticles(dt);
         }
 
         public void Draw(Camera cam)
         {
-            if (cam == null || aliveCount == 0) return;
+            if (cam == null || store.Count == 0)
+            {
+                if (config.DebugEnabled && cam != null)
+                {
+                    anchorTable.UpdateVisibility(cam, maxSpawnDistanceSqr);
+                    lastVisibleAnchorCount = anchorTable.CountVisible();
+                }
+                else
+                {
+                    lastVisibleAnchorCount = 0;
+                }
+
+                lastVisibleCount = 0;
+                return;
+            }
 
             Profiler.BeginSample("ChatReactions.World.Draw");
-            renderer.Draw(worldPool.Raw, config.WorldLane.RenderLayer);
+
+            anchorTable.UpdateVisibility(cam, maxSpawnDistanceSqr);
+            lastVisibleCount = culler.Cull(store.Buffer, store.Count,
+                cam, anchorTable, maxSpawnDistanceSqr);
+
+            if (config.DebugEnabled)
+                lastVisibleAnchorCount = anchorTable.CountVisible();
+
+            renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount,
+                config.WorldLane.RenderLayer);
+
             Profiler.EndSample();
         }
 
-        /// <summary>
-        /// Spawns a burst of emoji particles rising upward from <paramref name="headPos"/>
-        /// (typically <c>AvatarBase.GetAdaptiveNametagPosition()</c>).
-        /// Particles are unanchored and will not follow any avatar.
-        /// </summary>
+        // ── Spawning ────────────────────────────────────────────────
+
         public void TriggerWorldReaction(Vector3 headPos, int emojiIndex, int count)
         {
             var lane = config.WorldLane;
@@ -103,10 +146,6 @@ namespace DCL.Chat.ChatReactions
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane);
         }
 
-        /// <summary>
-        /// Spawns a burst anchored to the avatar identified by <paramref name="walletId"/>.
-        /// Particles will follow the avatar's position via the tether system.
-        /// </summary>
         public void TriggerAnchoredReaction(Vector3 headPos, string walletId, int emojiIndex, int count)
         {
             byte anchor = anchorTable.Allocate(walletId, headPos);
@@ -116,9 +155,6 @@ namespace DCL.Chat.ChatReactions
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
         }
 
-        /// <summary>
-        /// Spawns a burst anchored to the local player's avatar.
-        /// </summary>
         public void TriggerAnchoredReactionLocalPlayer(Vector3 headPos, int emojiIndex, int count)
         {
             byte anchor = anchorTable.Allocate(AvatarAnchorTable.LOCAL_PLAYER_ID, headPos);
@@ -127,6 +163,8 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < Mathf.Max(1, count); i++)
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
         }
+
+        // ── Streaming ───────────────────────────────────────────────
 
         public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex, string? walletId = null)
         {
@@ -159,47 +197,7 @@ namespace DCL.Chat.ChatReactions
             debugAccumulator = 0f;
         }
 
-        private void RefreshAnchorPositions()
-        {
-            anchorTable.Refresh(avatarPosition);
-        }
-
-        private void ApplyAvatarTether(float dt)
-        {
-            AvatarTetherHelper.ApplyTetherForces(worldPool.Raw, anchorTable,
-                config.WorldLane.TetherStrength, config.WorldLane.TetherDamping,
-                config.WorldLane.TetherOverLifetime, dt);
-        }
-
-        private void SimulateParticlePhysics(float dt)
-        {
-            Profiler.BeginSample("ChatReactions.World.Physics");
-            aliveCount = worldPool.Tick(dt, config.WorldLane.Gravity, config.WorldLane.Drag);
-            Profiler.EndSample();
-        }
-
-        private void ApplyLateralOscillation(float dt)
-        {
-            var lane = config.WorldLane;
-            if (lane.ZigZagAmplitude <= 0f) return;
-
-            Profiler.BeginSample("ChatReactions.World.ZigZag");
-            var particles = worldPool.Raw;
-
-            for (int i = 0; i < particles.Length; i++)
-            {
-                ref var p = ref particles[i];
-                if (p.alive == 0) continue;
-
-                float oscillation = Mathf.Sin(p.age * lane.ZigZagFrequency * TWO_PI + p.zigZagPhase)
-                                  * lane.ZigZagAmplitude;
-
-                p.vel.x += Mathf.Cos(p.zigZagPhase) * oscillation * dt;
-                p.vel.z += Mathf.Sin(p.zigZagPhase) * oscillation * dt;
-            }
-
-            Profiler.EndSample();
-        }
+        // ── Private ─────────────────────────────────────────────────
 
         private void EmitStreamParticles(float dt)
         {
@@ -245,7 +243,19 @@ namespace DCL.Chat.ChatReactions
             Vector3 velocity = RandomUpwardVelocity(speed);
             float phase = Rand(0f, TWO_PI);
 
-            worldPool.Spawn(spawnPos, velocity, lifetime, startSize, endSize, emojiIndex, phase, anchorIndex);
+            store.Add(new ChatReactionsParticle
+            {
+                pos = spawnPos,
+                vel = velocity,
+                age = 0f,
+                lifetime = lifetime,
+                startSize = startSize,
+                endSize = endSize,
+                emojiIndex = emojiIndex,
+                zigZagPhase = phase,
+                alive = 1,
+                anchorIndex = anchorIndex,
+            });
         }
 
         private void EmitSingleStreamBurst()

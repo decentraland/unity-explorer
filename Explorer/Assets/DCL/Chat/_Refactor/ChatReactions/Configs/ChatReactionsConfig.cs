@@ -55,6 +55,8 @@ namespace DCL.Chat.ChatReactions.Configs
         [ShowOnly] [SerializeField] private int uiAliveCount;
         [ShowOnly] [SerializeField] private int uiPoolCapacity;
         [ShowOnly] [SerializeField] private int worldAliveCount;
+        [ShowOnly] [SerializeField] private int worldVisibleCount;
+        [ShowOnly] [SerializeField] private int worldVisibleAnchors;
         [ShowOnly] [SerializeField] private int worldPoolCapacity;
         [ShowOnly] [SerializeField] private int nearbyAvatarCount;
         [ShowOnly] [SerializeField] private bool isUIStreaming;
@@ -62,7 +64,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [ShowOnly] [SerializeField] private bool isDebugNearbyActive;
         /// <summary>Called by the presenter each frame to push live data into the config for Inspector display.</summary>
         public void UpdateStats(int uiAlive, int uiCapacity,
-            int worldAlive, int worldCapacity,
+            int worldAlive, int worldVisible, int worldVisibleAnchorsCount, int worldCapacity,
             int nearbyAvatars,
             bool uiStreaming, bool worldStreaming,
             bool debugNearby)
@@ -70,6 +72,8 @@ namespace DCL.Chat.ChatReactions.Configs
             uiAliveCount = uiAlive;
             uiPoolCapacity = uiCapacity;
             worldAliveCount = worldAlive;
+            worldVisibleCount = worldVisible;
+            worldVisibleAnchors = worldVisibleAnchorsCount;
             worldPoolCapacity = worldCapacity;
             nearbyAvatarCount = nearbyAvatars;
             isUIStreaming = uiStreaming;

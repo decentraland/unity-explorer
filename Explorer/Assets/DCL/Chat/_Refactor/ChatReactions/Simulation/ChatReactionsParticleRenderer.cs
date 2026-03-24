@@ -49,19 +49,18 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Draws world-space particles. Positions and sizes are already in world units.
+        /// Draws only the world-space particles at the given indices.
+        /// Used with <see cref="ParticleVisibilityCuller"/> for camera-culled rendering.
         /// </summary>
-        public void Draw(ChatReactionsParticle[] particles, int layer, float globalAlpha = 1f)
+        public void Draw(ChatReactionsParticle[] buffer, int[] visibleIndices, int visibleCount, int layer, float globalAlpha = 1f)
         {
-            if (mat == null) return;
+            if (mat == null || visibleCount == 0) return;
 
             int batchCount = 0;
 
-            for (int i = 0; i < particles.Length; i++)
+            for (int k = 0; k < visibleCount; k++)
             {
-                if (particles[i].alive == 0) continue;
-
-                ref readonly var p = ref particles[i];
+                ref readonly var p = ref buffer[visibleIndices[k]];
                 float t = LifetimeT(p.age, p.lifetime);
 
                 WriteBatchSlot(batchCount, p.pos,
@@ -82,12 +81,13 @@ namespace DCL.Chat.ChatReactions
                 Flush(layer, batchCount, globalAlpha);
         }
 
-        /// <summary>Draws screen-space particles by converting to world space each frame (camera-independent).</summary>
-        /// <param name="cam">Camera used for screen-to-world conversion. Required; no draw if null.</param>
-        /// <param name="depthFromCamera">World-space depth at which to place particles.</param>
-        public void Draw(Camera cam, ChatReactionsUiParticle[] particles, int layer, float depthFromCamera, float globalAlpha = 1f)
+        /// <summary>
+        /// Draws screen-space particles using a count bound (dense array — no alive checks).
+        /// Converts pixel coordinates to world space via the camera.
+        /// </summary>
+        public void Draw(Camera cam, ChatReactionsUiParticle[] buffer, int count, int layer, float depthFromCamera, float globalAlpha = 1f)
         {
-            if (mat == null || cam == null) return;
+            if (mat == null || cam == null || count == 0) return;
 
             float worldSizePerPixel = WorldSizePerPixel(cam, depthFromCamera);
 
@@ -96,11 +96,9 @@ namespace DCL.Chat.ChatReactions
 
             int batchCount = 0;
 
-            for (int i = 0; i < particles.Length; i++)
+            for (int i = 0; i < count; i++)
             {
-                if (particles[i].alive == 0) continue;
-
-                ref readonly var p = ref particles[i];
+                ref readonly var p = ref buffer[i];
                 float t = LifetimeT(p.age, p.lifetime);
 
                 Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(p.screenPos.x, p.screenPos.y, depthFromCamera));

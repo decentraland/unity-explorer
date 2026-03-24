@@ -4,41 +4,40 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Applies a damped spring tether that pulls anchored particles toward their
+    /// Applies a damped spring force that pulls anchored particles toward their
     /// avatar's current XZ position. Y is left free so particles float upward naturally.
-    /// Formula: F = (strength × displacement − damping × velocity) × lifetimeCurve.
+    /// Formula: F = (strength x displacement - damping x velocity) x lifetimeCurve.
     /// </summary>
-    public static class AvatarTetherHelper
+    public static class AnchorSpringForce
     {
-        public static void ApplyTetherForces(
-            ChatReactionsParticle[] particles,
+        public static void Apply(
+            ChatReactionsParticle[] buffer,
+            int count,
             AvatarAnchorTable anchors,
             float strength,
             float damping,
-            AnimationCurve? tetherOverLifetime,
+            AnimationCurve? strengthOverLifetime,
             float dt)
         {
             if (strength <= 0f) return;
 
-            Profiler.BeginSample("ChatReactions.World.Tether");
+            Profiler.BeginSample("ChatReactions.World.AnchorSpring");
 
-            bool hasCurve = tetherOverLifetime != null && tetherOverLifetime.length > 0;
+            bool hasCurve = strengthOverLifetime != null && strengthOverLifetime.length > 0;
 
-            for (int i = 0; i < particles.Length; i++)
+            for (int i = 0; i < count; i++)
             {
-                ref var p = ref particles[i];
-                if (p.alive == 0) continue;
+                ref var p = ref buffer[i];
                 if (p.anchorIndex == ChatReactionsParticle.ANCHOR_NONE) continue;
                 if (!anchors.IsActive(p.anchorIndex)) continue;
 
                 Vector3 anchor = anchors.GetPosition(p.anchorIndex);
 
                 float t = p.lifetime > 0f ? p.age / p.lifetime : 0f;
-                float curveMultiplier = hasCurve ? tetherOverLifetime!.Evaluate(t) : 1f;
+                float curveMultiplier = hasCurve ? strengthOverLifetime!.Evaluate(t) : 1f;
                 float effectiveStrength = strength * curveMultiplier;
                 float effectiveDamping = damping * curveMultiplier;
 
-                // Damped spring on XZ only — Y floats freely.
                 float dx = anchor.x - p.pos.x;
                 float dz = anchor.z - p.pos.z;
 

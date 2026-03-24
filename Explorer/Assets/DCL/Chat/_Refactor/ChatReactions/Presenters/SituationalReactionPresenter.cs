@@ -63,6 +63,8 @@ namespace DCL.Chat.ChatReactions
                             service.UIAliveCount,
                             service.UIPoolCapacity,
                             service.WorldAliveCount,
+                            service.WorldVisibleCount,
+                            service.WorldVisibleAnchors,
                             service.WorldPoolCapacity,
                             service.NearbyAvatarCount,
                             service.IsUIStreaming,

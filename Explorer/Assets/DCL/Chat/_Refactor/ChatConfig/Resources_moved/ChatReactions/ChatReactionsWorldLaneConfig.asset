@@ -18,9 +18,9 @@ MonoBehaviour:
   <SizeRange>k__BackingField: {x: 0.16, y: 0.25}
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
-  <TetherStrength>k__BackingField: 30
-  <TetherDamping>k__BackingField: 20
-  <TetherOverLifetime>k__BackingField:
+  <SpringStrength>k__BackingField: 30
+  <SpringDamping>k__BackingField: 20
+  <SpringOverLifetime>k__BackingField:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -110,6 +110,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  <MaxSpawnDistance>k__BackingField: 40
   <MockIntervalMin>k__BackingField: 0.5
   <MockIntervalMax>k__BackingField: 0.5
   <MockMinEmojisPerBurst>k__BackingField: 1

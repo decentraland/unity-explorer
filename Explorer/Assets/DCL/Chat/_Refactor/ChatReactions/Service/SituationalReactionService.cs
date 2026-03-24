@@ -189,11 +189,13 @@ namespace DCL.Chat.ChatReactions
         public int UIAliveCount => chatReactionSimulation.AliveCount;
         public int UIPoolCapacity => chatReactionSimulation.PoolCapacity;
         public int WorldAliveCount => worldReactionSimulation.AliveCount;
+        public int WorldVisibleCount => worldReactionSimulation.VisibleCount;
+        public int WorldVisibleAnchors => worldReactionSimulation.VisibleAnchorCount;
         public int WorldPoolCapacity => worldReactionSimulation.PoolCapacity;
         public bool IsUIStreaming => chatReactionSimulation.IsStreaming;
         public bool IsWorldStreaming => worldReactionSimulation.IsStreaming;
         public bool IsDebugNearbyActive => debugActive;
-        public int NearbyAvatarCount => avatarPosition?.LastNearbyCount ?? 0;
+        public int NearbyAvatarCount => avatarPosition?.GetNearbyAvatarCount() ?? 0;
 
         private int StreamEmojiIndex => -1;
 
