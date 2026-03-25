@@ -48,7 +48,7 @@ namespace MVC
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ProximityMuteService? proximityMuteService;
+        private readonly ProximityMuteService proximityMuteService;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
@@ -73,7 +73,7 @@ namespace MVC
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProximityMuteService? proximityMuteService = null)
+            ProximityMuteService proximityMuteService)
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;

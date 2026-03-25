@@ -114,7 +114,7 @@ namespace DCL.UI
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProximityMuteService? proximityMuteService)
+            ProximityMuteService proximityMuteService)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
