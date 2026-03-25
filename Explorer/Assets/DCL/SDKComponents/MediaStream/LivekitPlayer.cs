@@ -36,10 +36,12 @@ namespace DCL.SDKComponents.MediaStream
 
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
+        private const string PRESENTATION_BOT_PREFIX = "presentation-bot:";
 
         private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
         private float lastAudioScanTime;
+        private bool videoTrackMuted;
 
         private bool disposed;
 
@@ -52,6 +54,8 @@ namespace DCL.SDKComponents.MediaStream
         public PlayerState State => playerState;
 
         public bool IsVideoOpened => currentVideoStream != null && currentVideoStream.Value.Resource.Has;
+
+        public bool IsVideoTrackMuted => videoTrackMuted;
 
         private bool isAudioOpened => audioSources.Count > 0
             && audioSources.Exists(static a => a.stream.Resource.Has);
@@ -79,6 +83,8 @@ namespace DCL.SDKComponents.MediaStream
                 // Video is alive — try to follow the active speaker (CurrentStream only)
                 TryFollowActiveSpeaker();
             }
+
+            videoTrackMuted = IsVideoOpened && CheckVideoTrackMuted();
 
             // PBVideoPlayer entities don't have a PBAudioStream component, so EnsureAudioIsPlaying
             // is never called from UpdateAudioStream for them. Handle audio discovery here.
@@ -192,6 +198,26 @@ namespace DCL.SDKComponents.MediaStream
             return false;
         }
 
+        private bool CheckVideoTrackMuted()
+        {
+            if (currentVideoIdentity == null) return false;
+
+            lock (room.Participants)
+            {
+                var participant = room.Participants.RemoteParticipant(currentVideoIdentity);
+
+                if (participant == null) return false;
+
+                foreach ((_, TrackPublication track) in participant.Tracks)
+                {
+                    if (track.Kind == TrackKind.KindVideo)
+                        return track.Muted;
+                }
+            }
+
+            return false;
+        }
+
         private void CollectAllAudioTracks(List<StreamKey> output)
         {
             output.Clear();
@@ -229,6 +255,12 @@ namespace DCL.SDKComponents.MediaStream
         private void TryFollowActiveSpeaker()
         {
             if (playingAddress!.Value.IsUserStream(out _)) return;
+
+            // If a presentation bot is active, try to switch to it and don't follow speakers.
+            if (TrySwitchToPresentationBot()) return;
+
+            // If currently showing a presentation bot, don't switch away to a speaker.
+            if (currentVideoIdentity != null && currentVideoIdentity.StartsWith(PRESENTATION_BOT_PREFIX)) return;
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
@@ -277,6 +309,8 @@ namespace DCL.SDKComponents.MediaStream
             // See: https://github.com/decentraland/unity-explorer/issues/3796
             lock (room.Participants)
             {
+                StreamKey? fallback = null;
+
                 foreach ((string remoteParticipantIdentity, _) in room.Participants.RemoteParticipantIdentities())
                 {
                     var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -285,8 +319,56 @@ namespace DCL.SDKComponents.MediaStream
                         continue;
 
                     foreach ((string sid, TrackPublication value) in participant.Tracks)
+                    {
                         if (value.Kind == kind)
-                            return new StreamKey(remoteParticipantIdentity, sid);
+                        {
+                            // Presentation bot always has priority.
+                            if (remoteParticipantIdentity.StartsWith(PRESENTATION_BOT_PREFIX))
+                                return new StreamKey(remoteParticipantIdentity, sid);
+
+                            fallback ??= new StreamKey(remoteParticipantIdentity, sid);
+                        }
+                    }
+                }
+
+                return fallback;
+            }
+        }
+
+        private bool TrySwitchToPresentationBot()
+        {
+            // Already on the presentation bot.
+            if (currentVideoIdentity != null && currentVideoIdentity.StartsWith(PRESENTATION_BOT_PREFIX))
+                return true;
+
+            StreamKey? botTrack = FindPresentationBotVideoTrack();
+
+            if (botTrack == null) return false;
+
+            currentVideoStream = room.VideoStreams.ActiveStream(botTrack.Value);
+            currentVideoIdentity = botTrack.Value.identity;
+            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
+            return true;
+        }
+
+        private StreamKey? FindPresentationBotVideoTrack()
+        {
+            lock (room.Participants)
+            {
+                foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
+                {
+                    if (!identity.StartsWith(PRESENTATION_BOT_PREFIX))
+                        continue;
+
+                    var participant = room.Participants.RemoteParticipant(identity);
+
+                    if (participant == null) continue;
+
+                    foreach ((string sid, TrackPublication track) in participant.Tracks)
+                    {
+                        if (track.Kind == TrackKind.KindVideo)
+                            return new StreamKey(identity, sid);
+                    }
                 }
             }
 
@@ -353,6 +435,7 @@ namespace DCL.SDKComponents.MediaStream
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
             currentVideoStream = null;
             currentVideoIdentity = null;
+            videoTrackMuted = false;
             playerState = PlayerState.STOPPED;
             ReleaseAllAudioSources();
         }
