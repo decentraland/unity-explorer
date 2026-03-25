@@ -1,3 +1,4 @@
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;

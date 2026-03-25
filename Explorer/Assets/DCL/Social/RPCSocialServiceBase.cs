@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Sentry;
 using System;
-using System.Net.WebSockets;
+using Utility.Networking;
 using System.Threading;
 
 namespace DCL.SocialService

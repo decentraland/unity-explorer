@@ -3,7 +3,7 @@ using Sentry;
 using Sentry.Unity;
 using System;
 using System.Linq;
-using System.Net.WebSockets;
+using Utility.Networking;
 using System.Text;
 using UnityEngine.Device;
 

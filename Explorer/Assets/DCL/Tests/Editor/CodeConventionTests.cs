@@ -6,10 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Diagnostics;
-using UnityEditor;
 using System.Text.RegularExpressions;
-using System.Linq;
+using UnityEditor;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -37,8 +35,13 @@ namespace DCL.Tests
         }; // cause it's autogen
 
         private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
-            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs"
-        }; // cause it's autogen
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs",
+            "Assets/DCL/Infrastructure/Utility/Networking/Abstract/DClWebSocketDefinitions.cs",
+        };
+
+        private static readonly string[] UNITASK_EXCLUDED_PATHS = {
+            "Assets/DCL/Infrastructure/Utility/Multithreading/DCLTask.cs"
+        };
 
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
@@ -97,6 +100,9 @@ namespace DCL.Tests
         [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
         public void VerifyShouldNotUseDangerousUniTask(string filePath)
         {
+            if (UNITASK_EXCLUDED_PATHS.Contains(filePath))
+                return;
+
             string fileContent = File.ReadAllText(filePath);
             ShouldNotUseDangerousUniTask(fileContent, filePath);
         }
@@ -155,63 +161,54 @@ namespace DCL.Tests
         private static void ValidateNoForbiddenApiUsed(
                 string pattern,
                 string recommendation,
-                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+                IReadOnlyList<string>? ignorePaths)
         {
-            string projectRoot = Directory.GetCurrentDirectory();
+            var regex = new Regex(pattern);
+            var violations = new List<string>();
 
+            var files = AssetDatabase.FindAssets("t:Script")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(p => Path.GetExtension(p) == ".cs"
+                            && !p.StartsWith("Packages/")
+                            && !EXCLUDED_PATHS.Any(p.Contains));
 
-            // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
-            var psi = new ProcessStartInfo
+            foreach (string filePath in files)
             {
-                FileName = "/opt/homebrew/bin/rg", // PATH envvar is not inherited into Unity Process, full path is used
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                if (ignorePaths != null && IsIgnored(filePath, ignorePaths))
+                    continue;
 
-            psi.ArgumentList.Add("--line-number");
-            psi.ArgumentList.Add("--no-heading");
-            psi.ArgumentList.Add("--color");
-            psi.ArgumentList.Add("never");
+                string[] lines = File.ReadAllLines(filePath);
 
-            psi.ArgumentList.Add(pattern);
-            psi.ArgumentList.Add($"{projectRoot}/Assets");
-
-            psi.ArgumentList.Add("--glob");
-            psi.ArgumentList.Add("*.cs");
-
-            if (ignorePaths != null)
-            {
-                foreach (var p in ignorePaths)
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    psi.ArgumentList.Add("--glob");
-                    psi.ArgumentList.Add($"!{p}");
+                    if (regex.IsMatch(lines[i]))
+                        violations.Add($"{filePath}:{i + 1}: {lines[i].Trim()}");
                 }
             }
 
-            using var process = Process.Start(psi);
-            if (process == null)
-                Assert.Fail("Failed to start ripgrep (rg). Is it installed and on PATH?");
+            Assert.IsTrue(violations.Count == 0,
+                $"Detected forbidden API usage:\n\n{string.Join("\n", violations)}\nRecommendation: {recommendation}");
+        }
 
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            // rg exit codes:
-            // 0 = matches found
-            // 1 = no matches
-            // 2 = error
-            if (process.ExitCode == 2)
+        private static bool IsIgnored(string filePath, IReadOnlyList<string> ignorePaths)
+        {
+            foreach (string ignorePath in ignorePaths)
             {
-                Assert.Fail($"ripgrep error:\n{stderr}");
+                if (ignorePath.Contains('*'))
+                {
+                    string regexPattern = "^" + Regex.Escape(ignorePath).Replace("\\*", ".*") + "$";
+
+                    if (Regex.IsMatch(filePath, regexPattern))
+                        return true;
+                }
+                else
+                {
+                    if (filePath.Contains(ignorePath))
+                        return true;
+                }
             }
 
-            if (process.ExitCode == 0)
-            {
-                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendation}\n\nArgs: {psi.Arguments}");
-            }
+            return false;
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)

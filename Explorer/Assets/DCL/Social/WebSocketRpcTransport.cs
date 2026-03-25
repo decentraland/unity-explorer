@@ -1,10 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility;
+using Utility.Networking;
 using ITransport = rpc_csharp.transport.ITransport;
 
 namespace DCL.SocialService
@@ -14,7 +14,7 @@ namespace DCL.SocialService
         private readonly Uri uri;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly byte[] receiveBuffer;
-        private readonly ClientWebSocket webSocket;
+        private readonly DCLWebSocket webSocket;
 
         private bool isDisposed;
 
@@ -27,12 +27,11 @@ namespace DCL.SocialService
 
         public WebSocketState State => webSocket.State;
 
-        public WebSocketRpcTransport(Uri uri,
-            int bufferSize = 100000)
+        public WebSocketRpcTransport(Uri uri, int bufferSize = 100000)
         {
             this.uri = uri;
             receiveBuffer = new byte[bufferSize];
-            webSocket = new ClientWebSocket();
+            webSocket = new DCLWebSocket();
         }
 
         public void Dispose()

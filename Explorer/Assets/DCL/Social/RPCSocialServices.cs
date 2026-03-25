@@ -8,7 +8,7 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Net.WebSockets;
+using Utility.Networking;
 using Utility.Multithreading;
 using RpcClient = rpc_csharp.RpcClient;
 using Utility;

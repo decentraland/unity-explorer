@@ -7,7 +7,7 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using Global.Dynamic.RealmUrl;
 using System;
 using System.Net.Sockets;
-using System.Net.WebSockets;
+using Utility.Networking;
 using System.Threading;
 using Utility;
 

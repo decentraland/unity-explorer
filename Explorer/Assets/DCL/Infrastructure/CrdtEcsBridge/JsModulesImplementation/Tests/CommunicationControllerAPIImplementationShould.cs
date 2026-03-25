@@ -1,4 +1,5 @@
-﻿using CRDT.Protocol;
+﻿#if !UNITY_WEBGL
+using CRDT.Protocol;
 using CRDT;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
@@ -6,11 +7,13 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime;
+using SceneRuntime.V8;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,9 +50,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var uint8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
 
             jsOperations = Substitute.For<IJsOperations>();
-            jsOperations.NewArray().Returns(_ => arrayCtor.Invoke(true));
+            jsOperations.NewArray().Returns(_ => new V8ScriptObjectAdapter((ScriptObject)arrayCtor.Invoke(true)));
 
-            jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
+            jsOperations.GetTempUint8Array().Returns(_ => new V8TypedArrayAdapter((ITypedArray<byte>)uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE)));
 
             api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
                 jsOperations, InstancePoolsProvider.Create());
@@ -335,8 +338,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         [TearDown]
         public void TearDown()
         {
-            api.Dispose();
-            engine.Dispose();
+            api?.Dispose();
+            engine?.Dispose();
         }
 
         // This class exists because we can't mock ReadOnlySpan (ref structs)
@@ -359,3 +362,4 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         }
     }
 }
+#endif

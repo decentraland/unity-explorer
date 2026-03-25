@@ -1,3 +1,4 @@
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 using Cysharp.Threading.Tasks;
 using DCL.Profiling;
 using DCL.RealmNavigation;

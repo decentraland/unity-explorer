@@ -95,7 +95,7 @@ namespace DCL.WebSockets.JS
                 Memory<byte> buffer,
                 CancellationToken cancellationToken)
         {
-            // Match System.Net.WebSockets behavior: Closed => Close frame
+            // Match native WebSocket behavior: Closed => Close frame
             if (State == WebSocketState.Closed)
             {
                 return new WebSocketReceiveResult(
