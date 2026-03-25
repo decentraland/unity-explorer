@@ -10,8 +10,6 @@ namespace DCL.Chat.ChatReactions
     /// </summary>
     public sealed class ChatReactionFlightController
     {
-        private const float TWO_PI = Mathf.PI * 2f;
-
         private readonly ChatReactionsUILaneConfig config;
         private readonly System.Random rng;
 
@@ -26,8 +24,8 @@ namespace DCL.Chat.ChatReactions
         /// X = horizontal kick (screen-right), Y = gentle upward from InitialUpRange.
         /// </summary>
         public Vector2 GetSpawnVelocity2D() =>
-            new(Rand(config.KickSpeedRange.x, config.KickSpeedRange.y),
-                Rand(config.InitialUpRange.x, config.InitialUpRange.y));
+            new(rng.NextFloat(config.KickSpeedRange.x, config.KickSpeedRange.y),
+                rng.NextFloat(config.InitialUpRange.x, config.InitialUpRange.y));
 
         /// <summary>
         /// Returns per-particle 2D acceleration (pixels/sec²) based on age and zig-zag phase.
@@ -35,7 +33,7 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public Vector2 GetSteering2D(float age, float zigZagPhase)
         {
-            float zigZag = Mathf.Sin(age * config.ZigZagFrequency * TWO_PI + zigZagPhase)
+            float zigZag = Mathf.Sin(age * config.ZigZagFrequency * MathConstants.TWO_PI + zigZagPhase)
                          * config.ZigZagAmplitude;
 
             return new Vector2(zigZag, config.FloatUpAcceleration);
@@ -43,9 +41,6 @@ namespace DCL.Chat.ChatReactions
 
         /// <summary>Returns a random phase in [0, 2π] for zig-zag offset.</summary>
         public float GetRandomPhase() =>
-            Rand(0f, TWO_PI);
-
-        private float Rand(float min, float max) =>
-            (float)(min + rng.NextDouble() * (max - min));
+            rng.NextFloat(0f, MathConstants.TWO_PI);
     }
 }

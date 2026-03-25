@@ -9,8 +9,6 @@ namespace DCL.Chat.ChatReactions
     /// </summary>
     public static class ParticleOscillationForce
     {
-        private const float TWO_PI = Mathf.PI * 2f;
-
         public static void Apply(ChatReactionsParticle[] buffer, int count, float amplitude, float frequency, float dt)
         {
             if (amplitude <= 0f) return;
@@ -21,7 +19,7 @@ namespace DCL.Chat.ChatReactions
             {
                 ref var p = ref buffer[i];
 
-                float oscillation = Mathf.Sin(p.age * frequency * TWO_PI + p.zigZagPhase)
+                float oscillation = Mathf.Sin(p.age * frequency * MathConstants.TWO_PI + p.zigZagPhase)
                                   * amplitude;
 
                 p.vel.x += Mathf.Cos(p.zigZagPhase) * oscillation * dt;

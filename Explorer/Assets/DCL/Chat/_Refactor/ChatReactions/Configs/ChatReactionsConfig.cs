@@ -26,6 +26,16 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public ChatReactionsUILaneConfig UILane { get; private set; }
         [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; private set; }
 
+        [field: Header("Shared Spawn Settings")]
+        [field: SerializeField] [field: Range(0.05f, 1f)]
+        public float SpawnSizeMinRatio { get; private set; } = 0.2f;
+
+        [field: SerializeField] [field: Range(0.1f, 1f)]
+        public float SpawnSizeMaxRatio { get; private set; } = 0.5f;
+
+        /// <summary>Safe tile count: at least 1, even if atlas is missing.</summary>
+        public int SafeTotalTiles => Atlas != null ? Mathf.Max(1, Atlas.TotalTiles) : 1;
+
         [field: Header("Message Reactions")]
         [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; private set; }
 

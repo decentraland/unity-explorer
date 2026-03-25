@@ -17,8 +17,6 @@ namespace DCL.Chat.ChatReactions
         private const float RECT_JITTER_H = 8f;
         private const float RECT_JITTER_V = 4f;
         private const float FALLBACK_LATERAL_RANGE = 20f;
-        private const float SPAWN_SIZE_MIN_RATIO = 0.2f;
-        private const float SPAWN_SIZE_MAX_RATIO = 0.5f;
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
@@ -42,9 +40,9 @@ namespace DCL.Chat.ChatReactions
         {
             this.config = config;
             rng = new System.Random();
-            atlasTotalTiles = config.Atlas != null ? Mathf.Max(1, config.Atlas.TotalTiles) : 1;
+            atlasTotalTiles = config.SafeTotalTiles;
 
-            runtimeMaterial = CreateRuntimeMaterial(config);
+            runtimeMaterial = ChatReactionMaterialFactory.CreateRuntimeMaterial(config);
             uiStore = new DenseUiParticleStore(config.UILane.MaxParticles);
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
@@ -157,12 +155,12 @@ namespace DCL.Chat.ChatReactions
 
             for (int i = 0; i < Mathf.Max(1, count); i++)
             {
-                float endSizePx = Rand(ui.SizeRange.x, ui.SizeRange.y);
-                float startSizePx = endSizePx * Rand(SPAWN_SIZE_MIN_RATIO, SPAWN_SIZE_MAX_RATIO);
-                float lifetime = Rand(ui.LifetimeRange.x, ui.LifetimeRange.y);
+                float endSizePx = rng.NextFloat(ui.SizeRange.x, ui.SizeRange.y);
+                float startSizePx = endSizePx * rng.NextFloat(config.SpawnSizeMinRatio, config.SpawnSizeMaxRatio);
+                float lifetime = rng.NextFloat(ui.LifetimeRange.x, ui.LifetimeRange.y);
 
                 Vector2 velocity = ResolveSpawnVelocity(ui, out float phase);
-                Vector2 jitter = new Vector2(Rand(-jitterH, jitterH), Rand(-jitterV, jitterV));
+                Vector2 jitter = new Vector2(rng.NextFloat(-jitterH, jitterH), rng.NextFloat(-jitterV, jitterV));
 
                 uiStore.Add(new ChatReactionsUiParticle
                 {
@@ -188,8 +186,8 @@ namespace DCL.Chat.ChatReactions
             }
 
             phase = 0f;
-            float speed = Rand(ui.SpeedRange.x, ui.SpeedRange.y);
-            return new Vector2(Rand(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), speed);
+            float speed = rng.NextFloat(ui.SpeedRange.x, ui.SpeedRange.y);
+            return new Vector2(rng.NextFloat(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), speed);
         }
 
         private Vector2 ResolveDefaultSpawnPosition() =>
@@ -200,14 +198,5 @@ namespace DCL.Chat.ChatReactions
         public int GetRandomEmojiIndex() =>
             rng.Next(0, atlasTotalTiles);
 
-        private static Material CreateRuntimeMaterial(ChatReactionsConfig config)
-        {
-            var mat = new Material(config.EmojiMaterial) { name = config.EmojiMaterial.name + " (Runtime)" };
-            ChatReactionsAtlasHelper.ApplyAtlasToMaterial(mat, config);
-            return mat;
-        }
-
-        private float Rand(float min, float max) =>
-            (float)(min + rng.NextDouble() * (max - min));
     }
 }

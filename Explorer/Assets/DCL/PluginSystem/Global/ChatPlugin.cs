@@ -248,8 +248,7 @@ namespace DCL.PluginSystem.Global
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Using MockReactionMessageBus (MockEnabled=true)");
                 reactionBus = new MockReactionMessageBus(
                     entityParticipantTable,
-                    reactionsConfig,
-                    reactionsConfig.Atlas != null ? reactionsConfig.Atlas.TotalTiles : 1);
+                    reactionsConfig);
             }
             else
             {

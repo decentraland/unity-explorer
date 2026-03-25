@@ -21,12 +21,11 @@ namespace DCL.Chat.ChatReactions
 
         public MockReactionMessageBus(
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            ChatReactionsConfig config,
-            int atlasTotalTiles)
+            ChatReactionsConfig config)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.config = config;
-            this.atlasTotalTiles = Math.Max(1, atlasTotalTiles);
+            this.atlasTotalTiles = config.SafeTotalTiles;
             rng = new System.Random();
             cts = new CancellationTokenSource();
 
