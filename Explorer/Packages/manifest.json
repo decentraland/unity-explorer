@@ -23,6 +23,7 @@
     "com.unity.addressables": "2.8.1",
     "com.unity.animation.rigging": "1.4.1",
     "com.unity.cinemachine": "2.10.5",
+    "com.unity.cloud.draco": "5.4.3",
     "com.unity.cloud.ktx": "3.6.2",
     "com.unity.code-analysis": "0.1.2-preview",
     "com.unity.collections": "2.6.2",
