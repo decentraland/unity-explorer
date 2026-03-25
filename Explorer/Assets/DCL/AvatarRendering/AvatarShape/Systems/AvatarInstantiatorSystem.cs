@@ -256,6 +256,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
 
+            avatarShapeComponent.InstantiationVersion++;
             avatarShapeComponent.IsDirty = false;
 
             return (skinningComponent, finalBoneArray);

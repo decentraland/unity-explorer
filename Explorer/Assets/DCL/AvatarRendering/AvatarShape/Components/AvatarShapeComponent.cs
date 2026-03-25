@@ -12,6 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsVisible;
         public bool HiddenByModifierArea;
         public bool IsPreview;
+        public int InstantiationVersion;
 
         public Color SkinColor;
         public Color HairColor;
@@ -45,6 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
+            InstantiationVersion = -1;
         }
 
         public void CreateOutlineCompatibilityList()
