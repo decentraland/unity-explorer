@@ -1,6 +1,6 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
 
 using Newtonsoft.Json;
 using System;

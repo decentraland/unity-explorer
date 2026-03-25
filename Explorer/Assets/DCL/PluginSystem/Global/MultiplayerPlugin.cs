@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Multiplayer.Connections.Rooms.Interior;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Multiplayer.Connections.Systems.Throughput;
@@ -37,7 +38,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 #if !WEBGL_ACTIVE
-using DCL.Multiplayer.Connections.FfiClients;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using DCL.UserInAppInitializationFlow;
@@ -143,7 +143,7 @@ namespace DCL.PluginSystem.Global
 
 // TODO initialize on WebGL
 #if !WEBGL_ACTIVE
-            IFFIClient.Default.EnsureInitialize();
+            IFFIClient.Default.EnsureAssigned();
 #endif
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
