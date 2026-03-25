@@ -79,6 +79,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
             }
+            catch (InvalidProtocolBufferException)
+            {
+                // Non-protobuf data on the pipe (e.g. JSON from CommsApi data messaging) — not an error.
+            }
             catch (Exception e)
             {
                 ReportHub.LogError(

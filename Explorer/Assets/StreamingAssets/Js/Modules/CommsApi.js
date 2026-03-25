@@ -6,3 +6,20 @@ module.exports.getActiveVideoStreams = async function () {
     const result = JSON.parse(json);
     return result;
 }
+
+module.exports.publishData = async function (message) {
+    CommsApi.PublishData(message.topic, message.data);
+}
+
+module.exports.updateMetadata = async function (message) {
+    CommsApi.UpdateMetadata(message.metadata);
+}
+
+module.exports.subscribeToTopic = async function (message) {
+    CommsApi.SubscribeToTopic(message.topic);
+}
+
+module.exports.consumeMessages = async function (message) {
+    const json = CommsApi.ConsumeMessages(message.topic);
+    return JSON.parse(json);
+}
