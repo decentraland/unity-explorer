@@ -223,52 +223,19 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.Reset();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopRemoteMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
-        {
-            if (masked.CurrentEmoteReference == null) return;
-
-            emotePlayer.StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
-            masked.Reset();
-        }
-
         /// <summary>
         /// Handles cancellation of masked emotes on remote player entities in the global world.
         /// Local player masked emotes are handled by SceneMaskedEmoteSystem in each scene world.
         /// </summary>
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
-        private void CancelRemoteMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
-        {
-            if (masked.StopEmote)
-            {
-                masked.StopEmote = false;
-                StopRemoteMaskedEmote(ref masked, avatarView);
-                return;
-            }
-
-            if (masked.CurrentEmoteReference == null) return;
-            if (masked.CurrentEmoteReference.legacy) return;
-            if (!masked.IsPlaying) return;
-
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
-            bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
-
-            if (isOnAnotherTag)
-                StopRemoteMaskedEmote(ref masked, avatarView);
-        }
+        private void CancelRemoteMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
+            emotePlayer.TryCancelMaskedEmote(ref masked, avatarView);
 
         [Query]
         [None(typeof(PlayerComponent))]
-        private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
-        {
-            if (masked.CurrentEmoteReference == null) return;
-
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);
-            masked.SetAnimationTag(currentStateTag);
-        }
+        private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
+            EmotePlayer.UpdateMaskedEmoteTag(ref masked, avatarView);
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
@@ -360,7 +327,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                         ref CharacterMaskedEmoteComponent masked = ref World.AddOrGet<CharacterMaskedEmoteComponent>(entity);
 
                         if (masked.CurrentEmoteReference != null)
-                            StopRemoteMaskedEmote(ref masked, avatarView);
+                        {
+                            emotePlayer.StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
+                            masked.Reset();
+                        }
 
                         masked.EmoteUrn = emoteId;
                         masked.Mask = emoteIntent.Mask;

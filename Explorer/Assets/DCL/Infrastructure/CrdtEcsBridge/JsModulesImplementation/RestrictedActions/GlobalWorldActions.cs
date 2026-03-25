@@ -140,7 +140,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible)
                 return;
 
-            // Stop full-body emote (global world only — masked emotes are handled by scene-side systems)
+            // Stop full-body emote (global world only, masked emotes are handled by scene-side systems)
             if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
             {
                 emoteComponent.StopEmote = true;

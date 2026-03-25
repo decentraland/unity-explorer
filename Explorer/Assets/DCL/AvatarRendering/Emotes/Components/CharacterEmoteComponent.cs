@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
+using System.Runtime.CompilerServices;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -36,6 +37,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public readonly int CurrentAnimationTag => currentAnimationTag;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAnimationTag(int tag) => currentAnimationTag = tag;
 
         public void Reset()
