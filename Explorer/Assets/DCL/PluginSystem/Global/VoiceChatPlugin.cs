@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private ProximityVoiceChatManager? proximityVoiceChatManager;
         private ProximityNametagsHandler? proximityNametagsHandler;
+        private VoiceChatConfiguration? storedVoiceChatConfig;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -94,6 +95,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            identityCache.OnIdentityChanged -= OnProximityIdentityAvailable;
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -154,8 +156,6 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
 
-            await proximityMuteService.LoadAsync(ct);
-
             proximityConfigHolder.Config = voiceChatConfiguration;
 
             if (voiceChatConfiguration.MouthAtlasTexture != null)
@@ -172,11 +172,37 @@ namespace DCL.PluginSystem.Global
                     proximityConfigHolder.SpeakingParticipants.Add(identity);
             };
 
-            string localIdentity = identityCache.EnsuredIdentity().Address.ToString();
-            proximityNametagsHandler = new ProximityNametagsHandler(islandRoom, entityParticipantTable, world, voiceChatOrchestrator.CurrentCallStatus, playerEntity, localIdentity, proximityMuteService);
+            storedVoiceChatConfig = voiceChatConfiguration;
+            identityCache.OnIdentityChanged += OnProximityIdentityAvailable;
+
+            if (identityCache.Identity != null)
+                await InitializeProximityAsync(ct);
+        }
+
+        private void OnProximityIdentityAvailable()
+        {
+            if (identityCache.Identity == null) return;
+            if (proximityNametagsHandler != null) return;
+
+            InitializeProximityAsync(CancellationToken.None).Forget();
+        }
+
+        private async UniTask InitializeProximityAsync(CancellationToken ct)
+        {
+            await proximityMuteService.LoadAsync(ct);
+
+            string localIdentity = identityCache.Identity!.Address.ToString();
+
+            proximityNametagsHandler = new ProximityNametagsHandler(
+                roomHub.IslandRoom(), entityParticipantTable, world,
+                voiceChatOrchestrator.CurrentCallStatus, playerEntity,
+                localIdentity, proximityMuteService);
             pluginScope.Add(proximityNametagsHandler);
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(islandRoom, voiceChatConfiguration, proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus, proximityMuteService);
+            proximityVoiceChatManager = new ProximityVoiceChatManager(
+                roomHub.IslandRoom(), storedVoiceChatConfig!,
+                proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
+                proximityMuteService);
             pluginScope.Add(proximityVoiceChatManager);
         }
 

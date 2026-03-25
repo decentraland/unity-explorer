@@ -384,11 +384,13 @@ namespace DCL.UI
 
         private void OnMuteProximityClicked(string userId)
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             MuteProximityAsync(userId, true).Forget();
         }
 
         private void OnUnmuteProximityClicked(string userId)
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             MuteProximityAsync(userId, false).Forget();
         }
 
