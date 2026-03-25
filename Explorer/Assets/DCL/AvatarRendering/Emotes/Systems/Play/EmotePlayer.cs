@@ -103,6 +103,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
             avatarView.SetLayerWeight(layer, 0);
 
+            // Clear the clip cache so ReplaceMaskedEmoteAnimation re-applies
+            // the clip on replay (same clip would otherwise be skipped)
+            avatarView.ClearMaskedEmoteAnimationCache();
+
             Stop(emoteReference);
         }
 

@@ -82,7 +82,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (masked.CurrentEmoteReference != null)
             {
-                StopMaskedEmote(ref masked);
+                TryStopMaskedEmote(ref masked);
                 messageBusProxy.Object?.SendStop();
             }
 
@@ -95,8 +95,25 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        private void CancelMaskedEmotes(ref CharacterMaskedEmoteComponent masked) =>
-            cachedEmotePlayer.TryCancelMaskedEmote(ref masked, cachedAvatarView);
+        private void CancelMaskedEmotes(ref CharacterMaskedEmoteComponent masked)
+        {
+            if (masked.StopEmote)
+            {
+                TryStopMaskedEmote(ref masked, permanent: true);
+                return;
+            }
+
+            if (masked.CurrentEmoteReference == null) return;
+            if (masked.CurrentEmoteReference.legacy) return;
+            if (!masked.IsPlaying) return;
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int currentTag = cachedAvatarView.GetAnimatorCurrentStateTag(layer);
+            bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+
+            if (isOnAnotherTag)
+                TryStopMaskedEmote(ref masked);
+        }
 
         [Query]
         private void ConsumeMaskedEmoteIntent([Data] float dt, Entity entity,
@@ -157,7 +174,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                 // Stop previous masked emote if one exists
                 if (masked.CurrentEmoteReference != null)
-                    StopMaskedEmote(ref masked);
+                    TryStopMaskedEmote(ref masked);
 
                 masked.EmoteUrn = emoteId;
                 masked.Mask = emoteIntent.Mask;
@@ -185,13 +202,11 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
             {
-                // Replay: the player re-entered the scene or full-body emote ended
                 ReplayMaskedEmote(ref masked);
             }
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
             {
-                // Stop: player left the scene or full-body emote started
-                StopMaskedEmote(ref masked);
+                TryStopMaskedEmote(ref masked);
                 cachedMessageBus.SendStop();
             }
         }
@@ -216,7 +231,11 @@ namespace DCL.AvatarRendering.Emotes.Play
             AudioClip? audioClip = audioAssetResult?.Asset;
 
             if (!cachedEmotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), true, in cachedAvatarView, ref masked))
-                ReportHub.LogError(ReportCategory.EMOTE, $"Failed to replay masked emote {masked.EmoteUrn}");
+                return;
+
+            // Reset stored tag so CancelMaskedEmotes doesn't fire on the next frame
+            // before UpdateMaskedEmoteTags has a chance to set the real animator state.
+            masked.SetAnimationTag(0);
 
             cachedMessageBus.Send(masked.EmoteUrn, emote.IsLooping(), masked.Mask);
         }
@@ -225,17 +244,35 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void UpdateMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked) =>
             EmotePlayer.UpdateMaskedEmoteTag(ref masked, cachedAvatarView);
 
+        /// <summary>
+        /// Stops the masked emote animation and releases pool references.
+        /// When permanent=true, clears EmoteUrn (no replay possible).
+        /// When permanent=false, preserves EmoteUrn/Mask for replay on re-entry.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopMaskedEmote(ref CharacterMaskedEmoteComponent masked)
+        private void TryStopMaskedEmote(ref CharacterMaskedEmoteComponent masked, bool permanent = false)
         {
-            if (masked.CurrentEmoteReference == null) return;
+            if (masked.CurrentEmoteReference == null)
+            {
+                if (permanent)
+                    masked.Reset();
+                return;
+            }
 
             cachedEmotePlayer.StopMasked(masked.CurrentEmoteReference, in cachedAvatarView, masked.Mask);
 
-            // Keep EmoteUrn and Mask so we can replay when re-entering the scene
-            masked.CurrentEmoteReference = null;
-            masked.EmoteLoop = false;
-            masked.StopEmote = false;
+            if (permanent)
+                masked.Reset();
+            else
+            {
+                // Keep EmoteUrn and Mask so we can replay when re-entering the scene.
+                // Reset the stored animation tag to prevent CancelMaskedEmotes from
+                // erroneously firing with a stale IsPlaying=true on the next frame.
+                masked.CurrentEmoteReference = null;
+                masked.EmoteLoop = false;
+                masked.StopEmote = false;
+                masked.SetAnimationTag(0);
+            }
         }
     }
 }
