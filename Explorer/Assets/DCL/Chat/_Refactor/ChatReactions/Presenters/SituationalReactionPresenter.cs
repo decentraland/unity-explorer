@@ -26,12 +26,12 @@ namespace DCL.Chat.ChatReactions
         public SituationalReactionPresenter(SituationalReactionService service,
             ChatReactionsConfig config,
             ChatReactionDebugState debugState,
-            Button? debugButtonRect = null)
+            Button? debugButton = null)
         {
             this.service = service;
             this.config = config;
             this.debugState = debugState;
-            this.debugButtonRect = debugButtonRect != null ? debugButtonRect.GetComponent<RectTransform>() : null;
+            this.debugButtonRect = debugButton != null ? debugButton.GetComponent<RectTransform>() : null;
 
             if (this.debugButtonRect != null)
                 service.SetDefaultUISpawnRect(this.debugButtonRect);
@@ -42,8 +42,8 @@ namespace DCL.Chat.ChatReactions
 
         public void Dispose()
         {
-            cts.SafeCancelAndDispose();
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+            cts.SafeCancelAndDispose();
         }
 
         private async UniTask UpdateLoopAsync(CancellationToken ct)
@@ -62,9 +62,7 @@ namespace DCL.Chat.ChatReactions
                     {
                         ApplyDebugToggles();
                         Profiler.BeginSample("ChatReactions.DebugStats");
-                        ChatReactionStats stats = service.GetStats();
-                        debugState.UpdateStats(stats);
-                        config.UpdateStats(stats);
+                        debugState.UpdateStats(service.GetStats());
                         Profiler.EndSample();
                     }
 

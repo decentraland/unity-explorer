@@ -92,11 +92,6 @@ namespace DCL.Chat.ChatReactions
             }
         }
 
-        /// <summary>
-        /// Registers all messages in a channel so their IDs can be resolved for reactions.
-        /// Must be called after loading history (e.g., FillChannel) since that path
-        /// does not fire MessageAdded.
-        /// </summary>
         private void SendReactionToNetwork(int emojiIndex, string messageId,
             ChatChannel.ChatChannelType channelType, ChatChannel.ChannelId channelId)
         {
@@ -108,6 +103,11 @@ namespace DCL.Chat.ChatReactions
             reactionBus.SendMessageReaction(emojiIndex, stableKey, routing);
         }
 
+        /// <summary>
+        /// Registers all messages in a channel so their IDs can be resolved for reactions.
+        /// Must be called after loading history (e.g., FillChannel) since that path
+        /// does not fire MessageAdded.
+        /// </summary>
         public void RegisterChannelMessages(ChatChannel channel)
         {
             ChatChannel.ChannelId channelId = channel.Id;

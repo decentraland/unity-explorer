@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatReactions
     /// Store → Flight steering → Integrate → Compact → Render.
     /// Owns spawning, streaming, and spawn resolution logic.
     /// </summary>
-    public sealed class ChatReactionSimulation : IDisposable
+    public sealed class ChatReactionUISimulation : IDisposable
     {
         private const float LANE_JITTER_H = 12f;
         private const float LANE_JITTER_V = 8f;
@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions
 
         public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
 
-        public ChatReactionSimulation(ChatReactionsConfig config, RectTransform laneRect)
+        public ChatReactionUISimulation(ChatReactionsConfig config, RectTransform laneRect)
         {
             this.config = config;
             rng = new System.Random();
@@ -152,8 +152,9 @@ namespace DCL.Chat.ChatReactions
         private void SpawnBurst(Vector2 basePx, int emojiIndex, int count, float jitterH, float jitterV)
         {
             var ui = config.UILane;
+            int n = Mathf.Max(1, count);
 
-            for (int i = 0; i < Mathf.Max(1, count); i++)
+            for (int i = 0; i < n; i++)
             {
                 float endSizePx = rng.NextFloat(ui.SizeRange.x, ui.SizeRange.y);
                 float startSizePx = endSizePx * rng.NextFloat(config.SpawnSizeMinRatio, config.SpawnSizeMaxRatio);

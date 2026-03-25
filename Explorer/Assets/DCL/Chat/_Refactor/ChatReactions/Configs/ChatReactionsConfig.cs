@@ -59,31 +59,5 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [Note("Continuously spawn random reactions above all nearby remote avatars.")]
         public bool StreamRemotePlayers;
-
-        [Header("Debug Stats (read-only at runtime)")]
-        [ShowOnly] [SerializeField] private int uiAliveCount;
-        [ShowOnly] [SerializeField] private int uiPoolCapacity;
-        [ShowOnly] [SerializeField] private int worldAliveCount;
-        [ShowOnly] [SerializeField] private int worldVisibleCount;
-        [ShowOnly] [SerializeField] private int worldVisibleAnchors;
-        [ShowOnly] [SerializeField] private int worldPoolCapacity;
-        [ShowOnly] [SerializeField] private int nearbyAvatarCount;
-        [ShowOnly] [SerializeField] private bool isUIStreaming;
-        [ShowOnly] [SerializeField] private bool isWorldStreaming;
-        [ShowOnly] [SerializeField] private bool isDebugNearbyActive;
-
-        public void UpdateStats(ChatReactionStats stats)
-        {
-            uiAliveCount = stats.UIAliveCount;
-            uiPoolCapacity = stats.UIPoolCapacity;
-            worldAliveCount = stats.WorldAliveCount;
-            worldVisibleCount = stats.WorldVisibleCount;
-            worldVisibleAnchors = stats.WorldVisibleAnchors;
-            worldPoolCapacity = stats.WorldPoolCapacity;
-            nearbyAvatarCount = stats.NearbyAvatarCount;
-            isUIStreaming = stats.IsUIStreaming;
-            isWorldStreaming = stats.IsWorldStreaming;
-            isDebugNearbyActive = stats.IsDebugNearbyActive;
-        }
     }
 }

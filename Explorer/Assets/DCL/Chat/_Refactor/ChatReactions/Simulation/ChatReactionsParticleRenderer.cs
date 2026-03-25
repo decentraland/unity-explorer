@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly Matrix4x4[] matrices = new Matrix4x4[BATCH_SIZE];
         private readonly Vector4[] posSize = new Vector4[BATCH_SIZE];
-        private readonly Vector4[] extra = new Vector4[BATCH_SIZE];
+        private readonly Vector4[] endSizeData = new Vector4[BATCH_SIZE];
         private readonly Vector4[] emoji = new Vector4[BATCH_SIZE];
         private readonly Vector4[] lifeT = new Vector4[BATCH_SIZE];
 
@@ -135,7 +135,7 @@ namespace DCL.Chat.ChatReactions
         private void WriteBatchSlot(int slot, Vector3 worldPos, float startSize, float endSize, int emojiIndex, float t)
         {
             posSize[slot] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
-            extra[slot] = new Vector4(endSize, 0f, 0f, 0f);
+            endSizeData[slot] = new Vector4(endSize, 0f, 0f, 0f);
             emoji[slot] = new Vector4(emojiIndex, 0f, 0f, 0f);
             lifeT[slot] = new Vector4(t, 0f, 0f, 0f);
         }
@@ -145,7 +145,7 @@ namespace DCL.Chat.ChatReactions
             Profiler.BeginSample("ChatReactions.Flush");
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
             mpb.SetVectorArray(PosSizeId, posSize);
-            mpb.SetVectorArray(ExtraId, extra);
+            mpb.SetVectorArray(ExtraId, endSizeData);
             mpb.SetVectorArray(EmojiId, emoji);
             mpb.SetVectorArray(LifeTId, lifeT);
 

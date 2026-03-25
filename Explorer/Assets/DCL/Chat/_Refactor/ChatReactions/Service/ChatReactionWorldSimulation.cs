@@ -145,8 +145,9 @@ namespace DCL.Chat.ChatReactions
         public void TriggerWorldReaction(Vector3 headPos, int emojiIndex, int count)
         {
             var lane = config.WorldLane;
+            int n = Mathf.Max(1, count);
 
-            for (int i = 0; i < Mathf.Max(1, count); i++)
+            for (int i = 0; i < n; i++)
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane);
         }
 
@@ -154,8 +155,9 @@ namespace DCL.Chat.ChatReactions
         {
             byte anchor = anchorTable.Allocate(walletId, headPos);
             var lane = config.WorldLane;
+            int n = Mathf.Max(1, count);
 
-            for (int i = 0; i < Mathf.Max(1, count); i++)
+            for (int i = 0; i < n; i++)
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
         }
 
@@ -163,8 +165,9 @@ namespace DCL.Chat.ChatReactions
         {
             byte anchor = anchorTable.Allocate(AvatarAnchorTable.LOCAL_PLAYER_ID, headPos);
             var lane = config.WorldLane;
+            int n = Mathf.Max(1, count);
 
-            for (int i = 0; i < Mathf.Max(1, count); i++)
+            for (int i = 0; i < n; i++)
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
         }
 

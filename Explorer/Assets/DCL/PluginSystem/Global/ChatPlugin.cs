@@ -286,6 +286,7 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(situationalReactionService);
 
             var reactionDebugState = new ChatReactionDebugState();
+            pluginScope.Add(reactionDebugState);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {

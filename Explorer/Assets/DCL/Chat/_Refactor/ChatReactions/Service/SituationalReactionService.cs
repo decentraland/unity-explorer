@@ -9,7 +9,7 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly ChatReactionsConfig config;
         private readonly IAvatarReactionPosition? avatarPosition;
-        private readonly ChatReactionSimulation chatReactionSimulation;
+        private readonly ChatReactionUISimulation chatReactionSimulation;
         private readonly ChatReactionWorldSimulation worldReactionSimulation;
         private readonly Func<Vector3?>? cachedLocalHeadGetter;
         private readonly IReactionMessageBus? reactionBus;
@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions
             this.avatarPosition = avatarPosition;
             this.reactionBus = reactionBus;
 
-            chatReactionSimulation = new ChatReactionSimulation(config, laneRect);
+            chatReactionSimulation = new ChatReactionUISimulation(config, laneRect);
             worldReactionSimulation = new ChatReactionWorldSimulation(config, avatarPosition);
 
             if (avatarPosition != null)

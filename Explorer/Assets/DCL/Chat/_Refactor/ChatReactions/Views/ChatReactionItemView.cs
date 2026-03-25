@@ -1,8 +1,6 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
-using DG.Tweening;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat.ChatReactions
@@ -10,12 +8,10 @@ namespace DCL.Chat.ChatReactions
     /// <summary>
     /// Individual emoji item in the shortcuts bar. Displays an emoji from the atlas
     /// and fires <see cref="OnClicked"/> when tapped.
+    /// Hover animation is handled by a sibling <see cref="HoverScaleEffect"/> component.
     /// </summary>
-    public sealed class ChatReactionItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public sealed class ChatReactionItemView : MonoBehaviour
     {
-        private static readonly Vector3 HOVERED_SCALE = new (1.2f, 1.2f, 1.2f);
-        private const float ANIM_DURATION = 0.1f;
-
         [SerializeField] private Button selectButton;
         [SerializeField] private RawImage emojiImage;
 
@@ -24,6 +20,7 @@ namespace DCL.Chat.ChatReactions
         public event Action<int>? OnClicked;
 
         private bool listenersAttached;
+        private HoverScaleEffect? cachedHoverEffect;
 
         public void Initialize(int atlasIndex, ChatReactionsAtlasConfig atlasConfig)
         {
@@ -45,31 +42,18 @@ namespace DCL.Chat.ChatReactions
 
         public void ResetForPool()
         {
-            emojiImage.transform.DOKill();
+            cachedHoverEffect ??= GetComponent<HoverScaleEffect>();
+            cachedHoverEffect?.ResetScale();
             OnClicked = null;
             AtlasIndex = -1;
         }
 
         private void OnDestroy()
         {
-            emojiImage.transform.DOKill();
-
             if (!listenersAttached) return;
 
             selectButton.onClick.RemoveListener(HandleClicked);
             listenersAttached = false;
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            emojiImage.transform.DOKill();
-            emojiImage.transform.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            emojiImage.transform.DOKill();
-            emojiImage.transform.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
         }
 
         private void HandleClicked() => OnClicked?.Invoke(AtlasIndex);

@@ -5,7 +5,7 @@ namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Shared utility for applying atlas settings to a runtime material.
-    /// Used by both <see cref="ChatReactionSimulation"/> and <see cref="ChatReactionWorldSimulation"/>.
+    /// Used by both <see cref="ChatReactionUISimulation"/> and <see cref="ChatReactionWorldSimulation"/>.
     /// </summary>
     public static class ChatReactionsAtlasHelper
     {
