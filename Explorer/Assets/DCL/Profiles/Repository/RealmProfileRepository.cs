@@ -14,6 +14,7 @@ using Unity.Collections;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Times;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.Profile>;
 
 namespace DCL.Profiles
@@ -21,6 +22,8 @@ namespace DCL.Profiles
     public class RealmProfileRepository : IBatchedProfileRepository
     {
         public static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileConverter(), new ProfileCompactInfoConverter() } };
+
+        private const int DEPLOY_WINDOW_IN_SECONDS = 3;
 
         private readonly bool useCentralizedProfiles;
         private readonly IWebRequestController webRequestController;
@@ -36,6 +39,9 @@ namespace DCL.Profiles
         private readonly List<ProfilesBatchRequest> pendingBatches = new (10);
 
         private readonly List<ProfilesBatchRequest> ongoingBatches = new (10);
+
+        private ulong passedTimeSinceLastDeployment = 0;
+        private ulong lastDeployTimestampInSeconds = 0;
 
         private UniTaskCompletionSource? currentProfileResolutionTask;
         private Profile? currentProfile;
@@ -70,6 +76,7 @@ namespace DCL.Profiles
             }
         }
 
+
         public async UniTask SetAsync(Profile profile, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(profile.UserId))
@@ -88,7 +95,10 @@ namespace DCL.Profiles
 
             try
             {
+
                 Profile localCurrent;
+                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, DEPLOY_WINDOW_IN_SECONDS);
+
                 do
                 {
                     localCurrent = profileBuilder.From(currentProfile).Build();
@@ -96,20 +106,24 @@ namespace DCL.Profiles
                     // ADR-290: snapshots are no longer sent during profile deployment
                     IpfsProfileEntity entity = NewPublishProfileEntity(localCurrent);
 
+                    await UniTask.Delay(TimeSpan.FromSeconds(DEPLOY_WINDOW_IN_SECONDS - passedTimeSinceLastDeployment), cancellationToken: ct);
                     await publishIpfsEntityCommand.ExecuteAsync(entity, CancellationToken.None, SERIALIZER_SETTINGS);
+                    passedTimeSinceLastDeployment = 0;
                 }
                 while (!currentProfile.IsSameProfile(localCurrent));
 
-                profileCache.Set(localCurrent.UserId, currentProfile);
+                profileCache.Set(profile.UserId, profile);
                 currentProfileResolutionTask.TrySetResult();
             }
             catch (Exception e)
             {
                 currentProfileResolutionTask.TrySetException(e);
+                throw;
             }
             finally
             {
                 currentProfileResolutionTask = null;
+                lastDeployTimestampInSeconds = DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000;
             }
         }
 
@@ -237,9 +251,10 @@ namespace DCL.Profiles
             Assert.IsTrue(!versionSpecified || tier > ProfileTier.Kind.Compact, "Specifying version for compact profile is not supported by design");
 
             bool delayBatchResolution = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+            bool forceCatalyst = EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST);
 
             // Compact Tiers are not supported on catalysts
-            if (!useCentralizedProfiles)
+            if (!useCentralizedProfiles || forceCatalyst)
                 tier = ProfileTier.Kind.Full;
 
             try
@@ -267,7 +282,8 @@ namespace DCL.Profiles
                 try
                 {
                     // Two paths
-                    if (EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
+                    // Forcing from catalyst dispatches the current batch. Its current usage is to retrieve an update profile, so we need it straight away
+                    if (forceCatalyst || EnumUtils.HasFlag(fetchBehaviour, IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET))
                         return await EnforceSingleGetAsync();
                     else
                     {
@@ -296,7 +312,7 @@ namespace DCL.Profiles
 
                 // Launch single request
                 // It still can return `null` if all atempts are exhausted
-                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, ct);
+                return await ExecuteSingleGetAsync(id, version, fromCatalyst, delayBatchResolution, forceCatalyst, ct);
             }
         }
 
@@ -326,14 +342,15 @@ namespace DCL.Profiles
         ///     GET supports full profiles only and should be never used to retrieve compact ones
         /// </summary>
         /// <returns></returns>
-        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, CancellationToken ct)
+        private async UniTask<ProfileTier?> ExecuteSingleGetAsync(string id, int version, URLDomain? fromCatalyst, bool retryUntilResolved, bool forceCatalyst,
+            CancellationToken ct)
         {
             try
             {
                 ProfileTier? profile;
 
                 // Centralized endpoint doesn't support GET
-                if (useCentralizedProfiles)
+                if (useCentralizedProfiles && !forceCatalyst)
                 {
                     profile = await ProfilesRequest.PostSingleAsync(webRequestController, PostUrl(fromCatalyst, ProfileTier.Kind.Full), id, version,
                         retryUntilResolved ? CentralizedProfileRetryPolicy.VALUE : RetryPolicy.NONE, ct);

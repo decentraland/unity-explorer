@@ -60,7 +60,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIDropdown
         {
             var newDropdown = dropdownsPool.Get();
             newDropdown.Initialize(UiElementUtils.BuildElementName(COMPONENT_NAME, entity));
-            uiTransformComponent.Transform.Add(newDropdown.DropdownField);
+            uiTransformComponent.ContentContainer.Add(newDropdown.DropdownField);
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);

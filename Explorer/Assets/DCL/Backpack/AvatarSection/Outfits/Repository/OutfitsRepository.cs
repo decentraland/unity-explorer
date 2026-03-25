@@ -1,5 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using ECS;
 using Newtonsoft.Json;
 using Utility;
 using Utility.Json;
+using Utility.Times;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Repository
 {
@@ -26,8 +28,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
             { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
 
+        private const int DEFAULT_DEPLOY_WINDOW_IN_SECONDS = 15;
+
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
+
+        private ulong passedTimeSinceLastDeployment = 0;
+        private ulong lastDeployTimestampInSeconds = 0;
+
+        private UniTaskCompletionSource? currentResolutionTask;
+        private List<OutfitItem>? currentOutfits;
+        private int currentVersion;
 
         public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider)
@@ -36,8 +47,29 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             this.nftNamesProvider = nftNamesProvider;
         }
 
+        private static int deployWindowInSeconds
+        {
+            get
+            {
+                if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.OUTFITS_DEPLOY_WINDOW,
+                        "deploy_window_in_seconds",
+                        out OutfitsDeployWindowConfig? config) && config.HasValue && config.Value.DeployWindowInSeconds > 0)
+                    return config.Value.DeployWindowInSeconds;
+
+                return DEFAULT_DEPLOY_WINDOW_IN_SECONDS;
+            }
+        }
+
+        [Serializable]
+        private struct OutfitsDeployWindowConfig
+        {
+            [JsonProperty("deploy_window_in_seconds")] public int DeployWindowInSeconds;
+        }
+
         /// <summary>
         ///     Deploys the complete set of outfits for a user to the Catalyst network.
+        ///     Multiple rapid calls are coalesced: only the latest state is deployed,
+        ///     after a 15-second delay that respects the backend rate limit.
         /// </summary>
         public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct)
         {
@@ -47,32 +79,68 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             if (string.IsNullOrEmpty(profile?.UserId))
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
-            INftNamesProvider.PaginatedNamesResponse namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+            currentOutfits = outfits;
+            currentVersion++;
+            var deployWindow = (ulong)deployWindowInSeconds;
 
-            var metadata = new OutfitsMetadata
+            if (currentResolutionTask != null)
             {
-                outfits = outfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
-                    ? new List<string>
-                    {
-                        namesForExtraSlots.Names[0],
-                    }
-                    : new List<string>(),
-            };
+                await UniTask.WhenAny(currentResolutionTask.Task, UniTask.WaitUntilCanceled(ct));
+                return;
+            }
 
-            var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
+            currentResolutionTask = new UniTaskCompletionSource();
+
+            try
             {
-                version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
+                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, deployWindow);
+
+                int localVersion;
+
+                do
                 {
-                    $"{profile.UserId}:outfits",
-                },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>(),
-            };
+                    localVersion = currentVersion;
+                    List<OutfitItem> localOutfits = currentOutfits!;
 
-            try { await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, ct, SERIALIZER_SETTINGS); }
+                    await UniTask.Delay(TimeSpan.FromSeconds(deployWindow - (double)passedTimeSinceLastDeployment), cancellationToken: ct);
+
+                    INftNamesProvider.PaginatedNamesResponse namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+
+                    var metadata = new OutfitsMetadata
+                    {
+                        outfits = localOutfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
+                            ? new List<string>
+                            {
+                                namesForExtraSlots.Names[0],
+                            }
+                            : new List<string>(),
+                    };
+
+                    var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
+                    {
+                        version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
+                        {
+                            $"{profile.UserId}:outfits",
+                        },
+                        timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>(),
+                    };
+
+                    await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, ct, SERIALIZER_SETTINGS);
+                    passedTimeSinceLastDeployment = 0;
+                }
+                while (localVersion != currentVersion);
+
+                currentResolutionTask.TrySetResult();
+            }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.OUTFITS);
+                currentResolutionTask.TrySetException(e);
                 throw;
+            }
+            finally
+            {
+                currentResolutionTask = null;
+                lastDeployTimestampInSeconds = DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000;
             }
         }
     }

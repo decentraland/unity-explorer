@@ -13,6 +13,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Settings;
 using DCL.Web3;
@@ -26,7 +27,11 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.Audio;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
@@ -79,10 +84,15 @@ namespace Global.Tests.PlayMode
 
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
+            Entity playerEntity = world.Create(new PlayerComponent(),
+                new CharacterTransform(),
+                new PlayerMovementNetworkComponent(),
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, new BuildData(), globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 analyticsContainer,
@@ -99,7 +109,7 @@ namespace Global.Tests.PlayMode
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
                 world,
-                new Entity(),
+                playerEntity,
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,

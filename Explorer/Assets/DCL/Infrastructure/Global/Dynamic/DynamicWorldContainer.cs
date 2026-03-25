@@ -118,7 +118,6 @@ using DCL.PluginSystem.SmartWearables;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.AvatarLocomotion;
-using DCL.Settings.ScreenMode;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PrivateWorlds;
 using DCL.Translation;
@@ -254,8 +253,6 @@ namespace Global.Dynamic
                 baseUserProvider,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
-
-            var screenModeController = new ScreenModeController(appArgs);
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -396,7 +393,7 @@ namespace Global.Dynamic
                 localDevelopmentMetaDataSource,
                 appArgs,
                 staticContainer.RealmData);
-            
+
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
 
@@ -494,7 +491,6 @@ namespace Global.Dynamic
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
-                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -583,7 +579,7 @@ namespace Global.Dynamic
                 IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                     staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                     placesAPIService, bootstrapContainer.Environment,
-                    bootstrapContainer.DecentralandUrlsSource);
+                    bootstrapContainer.DecentralandUrlsSource, localSceneDevelopment);
 
                 donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics.Controller) : coreDonationsService;
             }
@@ -929,7 +925,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService
+                    worldPermissionsService,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -949,7 +946,6 @@ namespace Global.Dynamic
                     bootstrapContainer.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
-                    screenModeController,
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),

@@ -75,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd30078b12df4679bed329bf3c002ad
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Ghosts/HologramShader.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2df144b808932744487656f89a42fb11
     m_Address: FlatNormal_256_BC5.DDS
     m_ReadOnly: 0
@@ -200,11 +205,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 86bf0204cf3bb75429342452a2a460af
-    m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a91951d2f71f174d998356f01a3603c
     m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
     m_ReadOnly: 0
@@ -287,6 +287,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d08e60223593f4abe8863c64316f3476
     m_Address: FlipLinearToGammaMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b42532e2af88d479961e27dd400651
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown_Unselectable.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
