@@ -138,15 +138,27 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             try
             {
-                if (data.Length > MAX_MESSAGE_SIZE_BYTES)
+                if (string.IsNullOrEmpty(data) || data.Length > MAX_MESSAGE_SIZE_BYTES)
                     return;
 
                 if (!TryConsumeRateLimit(topic))
                     return;
 
                 byte[] bytes = Encoding.UTF8.GetBytes(data);
-                var room = roomHub.StreamingRoom();
-                room.DataPipe.PublishData(bytes, topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
+                roomHub.StreamingRoom().DataPipe.PublishData(bytes, topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
+            }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
+            }
+        }
+
+        [UsedImplicitly]
+        public void UpdateMetadata(string metadata)
+        {
+            try
+            {
+                roomHub.StreamingRoom().UpdateLocalMetadata(metadata);
             }
             catch (Exception e)
             {
