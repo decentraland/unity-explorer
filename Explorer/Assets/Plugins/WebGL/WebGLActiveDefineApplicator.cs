@@ -1,8 +1,7 @@
-using System.Collections.Generic;
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build;
-#endif
 
 namespace DCL.WebGL
 {
@@ -47,3 +46,5 @@ namespace DCL.WebGL
         }
     }
 }
+#endif
+
