@@ -1,7 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Wearables.Helpers;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
