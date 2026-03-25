@@ -45,12 +45,15 @@ namespace DCL.Chat.ChatReactions
 
         public void ResetForPool()
         {
+            emojiImage.transform.DOKill();
             OnClicked = null;
             AtlasIndex = -1;
         }
 
         private void OnDestroy()
         {
+            emojiImage.transform.DOKill();
+
             if (!listenersAttached) return;
 
             selectButton.onClick.RemoveListener(HandleClicked);
@@ -59,11 +62,13 @@ namespace DCL.Chat.ChatReactions
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            emojiImage.transform.DOKill();
             emojiImage.transform.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            emojiImage.transform.DOKill();
             emojiImage.transform.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
         }
 

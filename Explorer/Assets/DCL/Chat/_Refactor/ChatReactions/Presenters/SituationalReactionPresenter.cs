@@ -112,8 +112,9 @@ namespace DCL.Chat.ChatReactions
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
         {
-            Profiler.BeginSample("ChatReactions.CameraMain");
-            if (cam != Camera.main || Camera.main == null)
+            Profiler.BeginSample("ChatReactions.CameraCheck");
+            Camera mainCam = Camera.main;
+            if (cam != mainCam || mainCam == null)
             {
                 Profiler.EndSample();
                 return;

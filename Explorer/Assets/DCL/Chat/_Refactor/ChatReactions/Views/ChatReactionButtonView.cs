@@ -23,14 +23,22 @@ namespace DCL.Chat.ChatReactions
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (icon != null)
-                icon.transform.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
+            if (icon == null) return;
+            icon.transform.DOKill();
+            icon.transform.DOScale(HOVERED_SCALE, ANIM_DURATION).SetEase(Ease.OutQuad);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (icon == null) return;
+            icon.transform.DOKill();
+            icon.transform.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
+        }
+
+        private void OnDestroy()
+        {
             if (icon != null)
-                icon.transform.DOScale(Vector3.one, ANIM_DURATION).SetEase(Ease.OutQuad);
+                icon.transform.DOKill();
         }
     }
 }
