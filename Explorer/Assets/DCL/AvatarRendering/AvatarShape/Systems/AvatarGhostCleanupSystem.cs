@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
