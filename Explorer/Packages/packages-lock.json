@@ -12,7 +12,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b716fb630f9ba13af4956ebb66bea35e17548cad"
+      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
