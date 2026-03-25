@@ -41,7 +41,9 @@ namespace DCL.VoiceChat
         private readonly ProximityMuteService proximityMuteService;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
+        private readonly ProximityVoiceChatStateModel stateModel;
         private readonly IDisposable callStatusSubscription;
+        private IDisposable? proximityStateSubscription;
 
         private MicrophoneRtcAudioSource? rtcAudioSource;
         private ITrack? localTrack;
@@ -56,12 +58,14 @@ namespace DCL.VoiceChat
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, AudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            ProximityMuteService proximityMuteService)
+            ProximityMuteService proximityMuteService,
+            ProximityVoiceChatStateModel stateModel)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.activeAudioSources = activeAudioSources;
             this.proximityMuteService = proximityMuteService;
+            this.stateModel = stateModel;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
 
@@ -72,12 +76,14 @@ namespace DCL.VoiceChat
             islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
+            proximityStateSubscription = stateModel.State.Subscribe(OnProximityStateChanged);
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
             proximityMuteService.MuteStateChanged += OnMuteStateChanged;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initialized, waiting for Island Room connection");
 
-            if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+            if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected
+                && stateModel.State.Value is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking)
                 ActivateWithRetryAsync(activationCts.Token).Forget();
         }
 
@@ -88,6 +94,7 @@ namespace DCL.VoiceChat
 
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
+            proximityStateSubscription?.Dispose();
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
             proximityMuteService.MuteStateChanged -= OnMuteStateChanged;
 
@@ -120,8 +127,11 @@ namespace DCL.VoiceChat
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
-                        activationCts = activationCts.SafeRestart();
-                        await ActivateWithRetryAsync(activationCts.Token);
+                        if (stateModel.State.Value is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking)
+                        {
+                            activationCts = activationCts.SafeRestart();
+                            await ActivateWithRetryAsync(activationCts.Token);
+                        }
                         break;
 
                     case ConnectionUpdate.Disconnected:
@@ -146,6 +156,10 @@ namespace DCL.VoiceChat
                     SubscribeToExistingRemoteTracks();
 
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Activated — publishing and listening with 3D spatial audio");
+
+                    if (stateModel.State.Value != ProximityVoiceChatState.Speaking)
+                        rtcAudioSource?.Stop();
+
                     return;
                 }
                 catch (OperationCanceledException) { return; }
@@ -405,9 +419,56 @@ namespace DCL.VoiceChat
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
-                SuppressProximity();
+                stateModel.Suppress();
             else if (status.IsNotConnected())
-                ResumeProximity();
+                stateModel.Resume();
+        }
+
+        private void OnProximityStateChanged(ProximityVoiceChatState newState)
+        {
+            OnProximityStateChangedInternalAsync(newState).Forget();
+            return;
+
+            async UniTaskVoid OnProximityStateChangedInternalAsync(ProximityVoiceChatState state)
+            {
+                await UniTask.SwitchToMainThread();
+
+                if (disposed) return;
+
+                switch (state)
+                {
+                    case ProximityVoiceChatState.Disconnected:
+                        activationCts.SafeCancelAndDispose();
+                        Deactivate();
+                        break;
+
+                    case ProximityVoiceChatState.Hearing:
+                        if (suppressed)
+                            ResumeProximity();
+                        else if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        {
+                            activationCts = activationCts.SafeRestart();
+                            await ActivateWithRetryAsync(activationCts.Token);
+                        }
+
+                        rtcAudioSource?.Stop();
+                        break;
+
+                    case ProximityVoiceChatState.Speaking:
+                        if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        {
+                            activationCts = activationCts.SafeRestart();
+                            await ActivateWithRetryAsync(activationCts.Token);
+                        }
+
+                        rtcAudioSource?.Start();
+                        break;
+
+                    case ProximityVoiceChatState.Blocked:
+                        SuppressProximity();
+                        break;
+                }
+            }
         }
 
         private void SuppressProximity()
@@ -430,8 +491,6 @@ namespace DCL.VoiceChat
         {
             if (!suppressed) return;
             suppressed = false;
-
-            rtcAudioSource?.Start();
 
             foreach (KeyValuePair<StreamKey, LivekitAudioSource> entry in remoteSources)
             {

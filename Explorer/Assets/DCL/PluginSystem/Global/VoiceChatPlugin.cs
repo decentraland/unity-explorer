@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private ProximityVoiceChatManager? proximityVoiceChatManager;
         private ProximityNametagsHandler? proximityNametagsHandler;
+        private ProximityVoiceChatStateModel? proximityStateModel;
         private VoiceChatConfiguration? storedVoiceChatConfig;
 
         public VoiceChatPlugin(
@@ -199,10 +200,13 @@ namespace DCL.PluginSystem.Global
                 localIdentity, proximityMuteService);
             pluginScope.Add(proximityNametagsHandler);
 
+            proximityStateModel = new ProximityVoiceChatStateModel();
+            pluginScope.Add(proximityStateModel);
+
             proximityVoiceChatManager = new ProximityVoiceChatManager(
                 roomHub.IslandRoom(), storedVoiceChatConfig!,
                 proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                proximityMuteService);
+                proximityMuteService, proximityStateModel);
             pluginScope.Add(proximityVoiceChatManager);
         }
 
