@@ -312,7 +312,7 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin?[]
             {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
                 new GltfContainerPluginWebGL(sharedDependencies.FrameTimeBudget, sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneReadinessReportQueue, container.LoadingStatus, container.GltfContainerAssetsCache),
 #else
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs),
@@ -321,7 +321,7 @@ namespace Global
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                 new NFTShapePlugin(
                         decentralandUrlsSource,
                         container.assetsProvisioner,

@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         }
 
         private bool IsFormatValidForDefaultTex(TextureFormat texFormat) =>
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
             texFormat == DEFAULT_WEBGL_TEXTURE_FORMAT;
 #else
             texFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT

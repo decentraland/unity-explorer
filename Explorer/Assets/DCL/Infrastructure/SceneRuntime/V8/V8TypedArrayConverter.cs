@@ -1,4 +1,4 @@
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
 using Microsoft.ClearScript.JavaScript;
 using System;
 using Utility;

@@ -1,9 +1,4 @@
 using Cysharp.Threading.Tasks;
-
-#if !NO_LIVEKIT_MODE
-using DCL.Multiplayer.Profiles.Poses;
-#endif
-
 using DCL.Profiles;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
@@ -21,6 +16,7 @@ using DCL.LiveKit.Public;
 
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 #endif
 
 namespace SceneRuntime.Apis.Modules.Players

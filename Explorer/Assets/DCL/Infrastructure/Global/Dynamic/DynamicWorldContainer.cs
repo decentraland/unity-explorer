@@ -1100,14 +1100,11 @@ namespace Global.Dynamic
 #endif
 
                 new AudioPlaybackPlugin(
-
 // TODO it's for now to be without audio for Terrain
 #if !UNITY_WEBGL
                         terrainContainer.GenesisTerrain,
                         terrainContainer.WorldsTerrain,
 #endif
-
-
                         assetsProvisioner,
                         dynamicWorldParams.EnableLandscape,
                         audioMixerVolumesController,

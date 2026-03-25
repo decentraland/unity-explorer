@@ -1,4 +1,4 @@
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
 
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;

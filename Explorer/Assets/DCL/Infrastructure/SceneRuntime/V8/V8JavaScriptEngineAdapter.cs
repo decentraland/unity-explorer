@@ -1,4 +1,4 @@
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;

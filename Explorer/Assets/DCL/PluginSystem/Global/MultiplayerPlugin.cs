@@ -12,7 +12,6 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Multiplayer.Connections.Rooms.Interior;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
 using DCL.Multiplayer.Connections.Systems.Throughput;
@@ -37,11 +36,12 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using DCL.UserInAppInitializationFlow;
 using LiveKit.Internal.FFIClients;
+using DCL.Multiplayer.Connections.Rooms.Interior;
 #endif
 
 namespace DCL.PluginSystem.Global
@@ -126,7 +126,7 @@ namespace DCL.PluginSystem.Global
             archipelagoIslandRoom.Dispose();
             gateKeeperSceneRoom.Dispose();
 
-#if !NO_LIVEKIT_MODE && (!WEBGL_ACTIVE)
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
             IFFIClient.Default.Dispose();
 #endif
         }
@@ -142,7 +142,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
 
 // TODO initialize on WebGL
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             IFFIClient.Default.EnsureAssigned();
 #endif
 

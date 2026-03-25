@@ -18,7 +18,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const TextureFormat DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT = TextureFormat.BC7;
         public const TextureFormat DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT = TextureFormat.RGBA32;
 
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
         /// <summary>
         ///     WebGL: BC7 is not supported. We must use DXT5 NOT crunched otherwise we cant make certain calculations easily.
         /// </summary>

@@ -1,4 +1,4 @@
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
 using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
 

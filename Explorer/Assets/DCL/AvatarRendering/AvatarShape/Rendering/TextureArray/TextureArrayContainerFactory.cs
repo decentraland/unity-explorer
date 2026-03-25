@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateToon(IReadOnlyList<int> defaultResolutions)
         {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
             var basemapFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
             var normalFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
             var emissiveFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
@@ -129,7 +129,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateFacial(IReadOnlyList<int> defaultResolutions)
         {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
             var basemapFormat = DEFAULT_WEBGL_TEXTURE_FORMAT;
 #else
             var basemapFormat = DEFAULT_BASEMAP_TEXTURE_FORMAT;

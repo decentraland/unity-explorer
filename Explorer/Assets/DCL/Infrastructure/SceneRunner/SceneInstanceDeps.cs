@@ -322,7 +322,7 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                         , syncDeps.ecsMultiThreadSync
                         , syncOwner
 #endif
@@ -351,7 +351,7 @@ namespace SceneRunner
                         syncDeps.OutgoingCRDTMessagesProvider,
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                         , syncDeps.ecsMultiThreadSync
                         , syncOwner
 #endif

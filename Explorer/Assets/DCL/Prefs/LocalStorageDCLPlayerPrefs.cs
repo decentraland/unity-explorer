@@ -1,4 +1,4 @@
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

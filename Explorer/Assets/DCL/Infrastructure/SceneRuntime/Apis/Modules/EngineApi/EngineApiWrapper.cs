@@ -7,7 +7,6 @@ using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
 #if !WEBGL_ACTIVE
-using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 #endif
 
