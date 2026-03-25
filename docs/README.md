@@ -44,6 +44,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Emotes](emotes.md)** — Emote loading, animation controllers, and pooling
 - **[Skeleton Loading Animation](skeleton-loading-animation.md)** — Bone animations for loading states
 - **[Avatar Animation for Demos](avatar-animation-for-demos.md)** — Using Unity Timeline for demo recordings
+- **[Unreleased Wearables & Emotes Preview](unreleased-wearables-emotes-preview.md)** — Builder API signing, GLTF-based loading, and self-preview collection flow
 
 ## Chat & Social
 - **[Chat](chat.md)** — Chat system architecture, state machine, and MVP structure
@@ -66,6 +67,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 ## Testing & Debugging
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
+- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
