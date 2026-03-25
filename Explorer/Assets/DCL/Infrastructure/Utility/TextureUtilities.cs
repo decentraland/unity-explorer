@@ -87,7 +87,7 @@ public static class TextureUtilities
         {
             Graphics.Blit(sourceTexture, rt);
 
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
             // ReadPixels is not supported on WebGL/WebGPU; use GPU-only copy
             Graphics.CopyTexture(rt, 0, 0, rgba32Texture, 0, 0);
             rgba32Texture.Apply(false, true);

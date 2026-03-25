@@ -10,7 +10,7 @@ using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
     public class MultiThreadSync : IDisposable
     {
         internal readonly struct AcquisitionInfo

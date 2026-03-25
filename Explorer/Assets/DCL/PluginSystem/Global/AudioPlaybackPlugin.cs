@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly bool enableLandscape;
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
         private readonly TerrainGenerator terrainGenerator;
         private readonly WorldTerrainGenerator worldTerrainGenerator;
 #endif
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
 
         public AudioPlaybackPlugin(
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                 TerrainGenerator terrainGenerator,
                 WorldTerrainGenerator worldTerrainGenerator,
 #endif
@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.Global
                 )
         {
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 #endif
@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             if (enableLandscape)
                 LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, worldTerrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value, realmData);
 #endif

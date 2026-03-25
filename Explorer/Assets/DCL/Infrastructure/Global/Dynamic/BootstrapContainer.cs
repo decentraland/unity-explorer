@@ -23,7 +23,7 @@ using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
 using Global.Dynamic.RealmUrl;

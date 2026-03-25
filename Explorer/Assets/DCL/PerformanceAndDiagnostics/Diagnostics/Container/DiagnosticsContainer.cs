@@ -32,7 +32,7 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params IReportHandler[] additionalHandlers)
         {
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             settings.NotifyErrorDebugLogDisabled();
 #endif
 
@@ -46,7 +46,7 @@ namespace DCL.Diagnostics
             SentryReportHandler? sentryReportHandler = null;
             SentrySampler? sentrySampler = null;
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add(sentryReportHandler = new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), sentrySampler = new SentrySampler(), settings.DebounceEnabled));
 #endif
@@ -55,7 +55,7 @@ namespace DCL.Diagnostics
             ReportHub.Initialize(logger);
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             Debug.unityLogger.logHandler = logger;
 #endif
 
@@ -64,7 +64,7 @@ namespace DCL.Diagnostics
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
-#if UNITY_WEBGL
+#if WEBGL_ACTIVE
             return;
 #endif
             SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);

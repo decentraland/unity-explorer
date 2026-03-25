@@ -21,7 +21,7 @@ using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
 using ECS.SceneLifeCycle.WebGL;
 using SceneRuntime.WebClient;
 #else
@@ -59,7 +59,7 @@ namespace Global
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
            ,
             WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
@@ -73,7 +73,7 @@ namespace Global
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.ECSWorldPlugins);
 
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
             IJavaScriptEngineFactory engineFactory = new WebClientJavaScriptEngineFactory();
 #else
             IJavaScriptEngineFactory engineFactory = new V8EngineFactory();
@@ -106,7 +106,7 @@ namespace Global
                 dclEnvironment,
                 systemClipboard,
                 staticContainer.StaticSettings.BuildData?.InstallSource ?? string.Empty
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
                ,
                 webglSceneUpdateQueue
 #endif

@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         private static readonly IReadOnlyDictionary<string, LKParticipant> EMPTY_DICTIONARY = new Dictionary<string, LKParticipant>();
 
         public static readonly NullParticipantsHub INSTANCE = new ();
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !WEBGL_ACTIVE
         public static readonly WeakReference<LKParticipant> WEAK_NULL_PARTICIPANT = new (NULL_PARTICIPANT);
         private static readonly LKParticipant NULL_PARTICIPANT = new ();
 #endif
@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public event ParticipantDelegate? UpdatesFromParticipant;
 
         public LKParticipant LocalParticipant() =>
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !WEBGL_ACTIVE
             NULL_PARTICIPANT;
 #else
             new LKParticipant();

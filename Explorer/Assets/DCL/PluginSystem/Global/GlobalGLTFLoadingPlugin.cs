@@ -1,6 +1,6 @@
 // GLTFast forces usage of Task that is not compatible with WebGL
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
 
 using Arch.SystemGroups;
 using DCL.WebRequests;

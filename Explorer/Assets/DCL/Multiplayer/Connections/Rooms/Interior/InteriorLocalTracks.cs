@@ -1,4 +1,4 @@
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !WEBGL_ACTIVE
 
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit;

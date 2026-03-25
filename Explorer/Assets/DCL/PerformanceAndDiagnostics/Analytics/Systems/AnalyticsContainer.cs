@@ -7,10 +7,12 @@ using DCL.Utility;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Versioning;
-using Plugins.RustSegment.SegmentServerWrap;
 using System;
 using System.Threading;
 using UnityEngine;
+#if UNITY_WEBGL
+using Plugins.RustSegment.SegmentServerWrap;
+#endif
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {

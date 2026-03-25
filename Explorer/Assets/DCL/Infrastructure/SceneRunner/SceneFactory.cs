@@ -35,7 +35,7 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using UnityEngine;
@@ -79,7 +79,7 @@ namespace SceneRunner
         private readonly ISystemClipboard systemClipboard;
         private readonly string installSource;
 
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
         private readonly WebGLSceneUpdateQueue webglSceneUpdateQueue;
 #endif
 
@@ -111,7 +111,7 @@ namespace SceneRunner
             DecentralandEnvironment dclEnvironment,
             ISystemClipboard systemClipboard,
             string installSource
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
            ,
             WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
@@ -138,7 +138,7 @@ namespace SceneRunner
             this.realmData = realmData;
             this.portableExperiencesController = portableExperiencesController;
             this.skyboxSettings = skyboxSettings;
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
             this.webglSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.messagePipesHub = messagePipesHub;
@@ -204,7 +204,7 @@ namespace SceneRunner
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IJsApiPermissionsProvider permissionsProvider, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
                ,
                 webglSceneUpdateQueue
 #endif
@@ -232,7 +232,7 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
 #endif
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
@@ -253,7 +253,7 @@ namespace SceneRunner
                     messagePipesHub,
                     webRequestController,
                     skyboxSettings,
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                         engineAPIMutexOwner,
 #endif
                     profileRepository,
@@ -304,7 +304,7 @@ namespace SceneRunner
                     messagePipesHub,
                     webRequestController,
                     skyboxSettings,
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                         engineAPIMutexOwner,
 #endif
                     profileRepository,

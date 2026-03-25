@@ -8,7 +8,7 @@ namespace DCL.Optimization.Multithreading
     {
         private static readonly CustomSampler SAMPLER;
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
         private readonly Mutex mutex = new (); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
@@ -21,7 +21,7 @@ namespace DCL.Optimization.Multithreading
 
         public void Acquire()
         {
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             mutex.WaitOne();
 #endif
             Acquired = true;
@@ -29,7 +29,7 @@ namespace DCL.Optimization.Multithreading
 
         public void Release()
         {
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             mutex.ReleaseMutex();
 #endif
             Acquired = false;
@@ -38,7 +38,7 @@ namespace DCL.Optimization.Multithreading
         public void Dispose()
         {
             Acquired = false;
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
             mutex.Dispose();
 #endif
         }

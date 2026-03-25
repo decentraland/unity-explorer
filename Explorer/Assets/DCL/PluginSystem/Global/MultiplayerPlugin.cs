@@ -36,7 +36,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !WEBGL_ACTIVE
 using DCL.Multiplayer.Connections.FfiClients;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
@@ -126,7 +126,7 @@ namespace DCL.PluginSystem.Global
             archipelagoIslandRoom.Dispose();
             gateKeeperSceneRoom.Dispose();
 
-#if !NO_LIVEKIT_MODE && (!UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL))
+#if !NO_LIVEKIT_MODE && (!WEBGL_ACTIVE)
             IFFIClient.Default.Dispose();
 #endif
         }
@@ -142,7 +142,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
 
 // TODO initialize on WebGL
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !WEBGL_ACTIVE
             IFFIClient.Default.EnsureInitialize();
 #endif
 

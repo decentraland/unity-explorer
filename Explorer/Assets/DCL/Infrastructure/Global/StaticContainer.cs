@@ -241,7 +241,7 @@ namespace Global
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
             var createMediaContainer = true;
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+#if WEBGL_ACTIVE
             createMediaContainer  = !BrowserUtils.IsSafari();
 #endif
             if (createMediaContainer)
@@ -271,7 +271,7 @@ namespace Global
 
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache);
 
-#if UNITY_WEBGL
+#if WEBGL_ACTIVE
             var textureDiskCache = IDiskCache<TextureData>.Null.INSTANCE;
 #else
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
@@ -312,7 +312,7 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin?[]
             {
-#if UNITY_WEBGL
+#if WEBGL_ACTIVE
                 new GltfContainerPluginWebGL(sharedDependencies.FrameTimeBudget, sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneReadinessReportQueue, container.LoadingStatus, container.GltfContainerAssetsCache),
 #else
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs),
@@ -321,7 +321,7 @@ namespace Global
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
 
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                 new NFTShapePlugin(
                         decentralandUrlsSource,
                         container.assetsProvisioner,
@@ -348,7 +348,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                 new AudioAnalysisPlugin(sharedDependencies),
 #endif
                 assetBundlePlugin,
@@ -372,7 +372,7 @@ namespace Global
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
-#if !UNITY_WEBGL
+#if !WEBGL_ACTIVE
                 new SkyboxTimePlugin(),
 #endif
                 new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),
