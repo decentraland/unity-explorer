@@ -1093,7 +1093,8 @@ namespace Global.Dynamic
                         chatSharedAreaEventBus,
                         debugBuilder,
                         proximityMuteService,
-                        identityCache)
+                        identityCache,
+                        mainUIView.SidebarView.ProximityVoiceChatButton)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

@@ -96,6 +96,7 @@ MonoBehaviour:
   <controlsButton>k__BackingField: {fileID: 2642532882811586268}
   <unreadMessagesButton>k__BackingField: {fileID: 6088716717838591032}
   <chatUnreadMessagesNumber>k__BackingField: {fileID: 3554301536170617574}
+  <ProximityVoiceChatButton>k__BackingField: {fileID: 2645182747962779940}
   <marketplaceCreditsButton>k__BackingField: {fileID: 541355166805241142}
   <marketplaceCreditsButtonAnimator>k__BackingField: {fileID: 8553432859607388883}
   <marketplaceCreditsButtonAlertMark>k__BackingField: {fileID: 8415137157935535153}
@@ -1665,6 +1666,38 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 908348278511598412, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 908348278511598412, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 908348278511598412, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 908348278511598412, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1311163399807503956, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1311163399807503956, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1311163399807503956, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1311163399807503956, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1883059045905303280, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -2365,6 +2398,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03bc8dc52cfe497f9933d219f4940373, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2645182747962779940 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 336565534913770376, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff05dbcd27013f4da6ed6fe6de0cbc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.ProximityVoiceChatButtonView
 --- !u!114 &3554301536170617574 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1246724455828271178, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}

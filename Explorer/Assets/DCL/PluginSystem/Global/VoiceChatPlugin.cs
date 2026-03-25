@@ -13,6 +13,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.VoiceChat.Proximity;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
         private readonly ProximityMuteService proximityMuteService;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly ProximityVoiceChatButtonView? proximityVoiceChatButtonView;
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
@@ -59,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private ProximityVoiceChatManager? proximityVoiceChatManager;
         private ProximityNametagsHandler? proximityNametagsHandler;
         private ProximityVoiceChatStateModel? proximityStateModel;
+        private ProximityVoiceChatButtonController? proximityButtonController;
         private VoiceChatConfiguration? storedVoiceChatConfig;
 
         public VoiceChatPlugin(
@@ -75,7 +78,8 @@ namespace DCL.PluginSystem.Global
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
             ProximityMuteService proximityMuteService,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            ProximityVoiceChatButtonView? proximityVoiceChatButtonView)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -90,6 +94,7 @@ namespace DCL.PluginSystem.Global
             this.debugContainer = debugContainer;
             this.proximityMuteService = proximityMuteService;
             this.identityCache = identityCache;
+            this.proximityVoiceChatButtonView = proximityVoiceChatButtonView;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -208,6 +213,13 @@ namespace DCL.PluginSystem.Global
                 proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
                 proximityMuteService, proximityStateModel);
             pluginScope.Add(proximityVoiceChatManager);
+
+            if (proximityVoiceChatButtonView != null)
+            {
+                proximityButtonController = new ProximityVoiceChatButtonController(
+                    proximityVoiceChatButtonView, proximityStateModel);
+                pluginScope.Add(proximityButtonController);
+            }
         }
 
         private static Texture2DArray SliceMouthAtlas(Texture2D atlas, int cols, int rows)
