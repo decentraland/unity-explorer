@@ -92,6 +92,7 @@ namespace DCL.PluginSystem.Global
 
             if (voiceChatPluginSettingsAsset.Value != null)
                 voiceChatPluginSettingsAsset.Dispose();
+#if !WEBGL_ACTIVE
             RustAudioClient.DeInit();
 #endif
         }
