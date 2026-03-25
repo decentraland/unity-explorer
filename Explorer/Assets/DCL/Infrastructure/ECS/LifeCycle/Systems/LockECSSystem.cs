@@ -32,6 +32,5 @@ namespace ECS.LifeCycle.Systems
             boxedScope.Acquire(owner);
         }
     }
-#endif
-
 }
+#endif
