@@ -48,7 +48,7 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -93,14 +93,14 @@
       "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/webgpu-shader-compat",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/webGPU_compatibility",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "6e25bbeb62282d12580e23793036693f400ed91e"
+      "hash": "e3991a8f967de98e56ad8d632a5bedf43f794366"
     },
     "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -108,16 +108,16 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
+      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
     },
     "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "a46452ddbbdad24be9044e282b0f0ba0dff99744"
+      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
