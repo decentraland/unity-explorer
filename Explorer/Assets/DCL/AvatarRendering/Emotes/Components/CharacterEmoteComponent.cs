@@ -19,21 +19,8 @@ namespace DCL.AvatarRendering.Emotes
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
             : 0f;
 
-        /// <summary>
-        ///     Whether a full-body emote is being played on the base layer.
-        /// </summary>
-        public readonly bool IsPlayingEmote
-        {
-            get
-            {
-                // Legacy clips are handled with the legacy animation component
-                if (CurrentEmoteReference && CurrentEmoteReference.legacy) return CurrentEmoteReference.animationComp!.isPlaying;
-
-                return currentAnimationTag == AnimationHashes.EMOTE || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
-            }
-        }
-
-        public readonly bool IsPlayingLegacyEmote => CurrentEmoteReference && CurrentEmoteReference.legacy;
+        public readonly bool IsPlayingEmote =>
+            currentAnimationTag == AnimationHashes.EMOTE || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
         public readonly int CurrentAnimationTag => currentAnimationTag;
 

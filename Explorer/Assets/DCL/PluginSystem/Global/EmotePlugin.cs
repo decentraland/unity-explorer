@@ -154,7 +154,7 @@ namespace DCL.PluginSystem.Global
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
-            var sharedEmotePlayer = new EmotePlayer(audioSourceReference!, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
+            var sharedEmotePlayer = new EmotePlayer(audioSourceReference!);
             emotePlayerProxy.SetObject(sharedEmotePlayer);
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, sharedEmotePlayer, debugBuilder, localSceneDevelopment, scenesCache);
 

@@ -87,7 +87,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             UpdateEmoteTagsQuery(World);
             UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
-            DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
         }
 
@@ -158,20 +157,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            if (!emoteReference.legacy)
+            if (!emoteComponent.IsPlayingEmote)
             {
-                if (!emoteComponent.IsPlayingEmote)
-                {
-                    avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-                    return;
-                }
-
-                int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
-                bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
-
-                if (isOnAnotherTag)
-                    StopEmote(ref emoteComponent, avatarView);
+                avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+                return;
             }
+
+            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+
+            if (isOnAnotherTag)
+                StopEmote(ref emoteComponent, avatarView);
         }
 
         // Related issues:
@@ -374,12 +370,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
-        [Query]
-        private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
-        {
-            if (emote.CurrentEmoteReference && emote.CurrentEmoteReference.legacy)
-                avatarView.AvatarAnimator.enabled = false;
-        }
 
         [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)

@@ -104,7 +104,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             if (masked.CurrentEmoteReference == null) return;
-            if (masked.CurrentEmoteReference.legacy) return;
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);

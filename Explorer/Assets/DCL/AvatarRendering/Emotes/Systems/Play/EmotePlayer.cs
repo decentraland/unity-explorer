@@ -13,9 +13,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 {
     public class EmotePlayer
     {
-        // Emotes can have up to 2 clips (avatar + prop)
-        private static readonly AnimationClip[] LEGACY_ANIMATION_CLIPS = new AnimationClip[2];
-
         private const string AVATAR_ANIMATION_PLACEHOLDER_NAME = "AvatarAnimationPlaceholder";
         private const string PROP_ANIMATION_PLACEHOLDER_NAME = "PropAnimationPlaceholder";
 
@@ -24,11 +21,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
-        private readonly bool legacyAnimationsEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, bool legacyAnimationsEnabled)
+        public EmotePlayer(AudioSource audioSourcePrefab)
         {
-            this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
@@ -53,15 +48,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
-            if (emoteReferences.legacy)
-            {
-                if (!legacyAnimationsEnabled)
-                    return false;
-
-                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
-            }
-            else
-                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
+            PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
@@ -103,8 +90,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(mask);
             avatarView.SetLayerWeight(layer, 0);
 
-            // Clear the clip cache so ReplaceMaskedEmoteAnimation re-applies
-            // the clip on replay (same clip would otherwise be skipped)
             avatarView.ClearMaskedEmoteAnimationCache();
 
             Stop(emoteReference);
@@ -112,7 +97,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         /// <summary>
         /// Checks if a masked emote should be cancelled based on its animator state.
-        /// Shared between SceneMaskedEmoteSystem (local) and CharacterEmoteSystem (remote).
+        /// Used by CharacterEmoteSystem for remote player entities.
         /// </summary>
         public void TryCancelMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
@@ -124,7 +109,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             if (masked.CurrentEmoteReference == null) return;
-            if (masked.CurrentEmoteReference.legacy) return;
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
@@ -135,10 +119,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 StopAndResetMaskedEmote(ref masked, avatarView);
         }
 
-        /// <summary>
-        /// Updates the masked emote's stored animation tag from the animator.
-        /// Shared between SceneMaskedEmoteSystem (local) and CharacterEmoteSystem (remote).
-        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateMaskedEmoteTag(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
@@ -157,10 +137,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             currentlyLooping &&
             isLooping;
 
-        /// <summary>
-        /// Stop previous emote, acquire from pool, setup transform/layer/audio.
-        /// Returns null on failure.
-        /// </summary>
         private EmoteReferences? AcquireEmoteReferences(GameObject mainAsset,
             AudioClip? audioAsset,
             bool isSpatial,
@@ -172,7 +148,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                if (IsValid(mainAsset))
+                if (mainAsset.GetComponentInChildren<Animator>(true))
                     pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
                 else
                     return null;
@@ -187,8 +163,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
 
-            // Set the layer of the objects & children everytime since the emote can be created and stored in the pool elsewhere, like the avatar preview
-            // In that case, the hierarchy will keep the wrong layer in the future usages
             emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
 
             using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
@@ -204,7 +178,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;
                 audioSource.transform.position = avatarTransform.position;
-                audioSource.loop = true; // audio looping handled by the emote's own loop logic
+                audioSource.loop = true;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }
@@ -220,44 +194,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             masked.Reset();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponentInChildren<Animator>(true)
-            || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
-
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
-            AnimationClip[] animationClips;
-            Animator? animatorComp = null;
-            Animation? animationComp = null;
-
-            animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
-
-            if (animatorComp) { animationClips = animatorComp.runtimeAnimatorController.animationClips; }
-            else
-            {
-                animationComp = mainGameObject.GetComponentInChildren<Animation>(true);
-
-                Array.Clear(LEGACY_ANIMATION_CLIPS, 0, LEGACY_ANIMATION_CLIPS.Length);
-
-                int clipCount = 0;
-
-                foreach (AnimationState state in animationComp)
-                {
-                    if (state.clip != null && clipCount < LEGACY_ANIMATION_CLIPS.Length)
-                        LEGACY_ANIMATION_CLIPS[clipCount++] = state.clip;
-                }
-
-                animationClips = LEGACY_ANIMATION_CLIPS;
-            }
+            Animator animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
+            AnimationClip[] animationClips = animatorComp.runtimeAnimatorController.animationClips;
 
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash, out bool legacy);
+            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
 
             if (uniqueClips.Count == 1)
             {
@@ -284,40 +232,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, animatorComp, animationComp, propClipHash, legacy);
+            references.Initialize(avatarClip, propClip, animatorComp, propClipHash);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
-            // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
-            if (animatorComp != null)
-                animatorComp.fireEvents = false;
+            animatorComp.fireEvents = false;
 
             return references;
-        }
-
-        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
-        {
-            Animation animationComp = avatarView.AddOrGetLegacyAnimation();
-
-            animationComp.playAutomatically = false;
-            animationComp.Stop();
-
-            if (emoteReferences.avatarClip != null)
-            {
-                emoteComponent.EmoteLoop = loop;
-                var avatarClipName = emoteReferences.avatarClip.name;
-                animationComp.AddClip(emoteReferences.avatarClip, avatarClipName);
-                animationComp[avatarClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                animationComp.Play(avatarClipName);
-            }
-
-            if (emoteReferences.propClip != null && emoteReferences.animationComp != null)
-            {
-                var propAnimationComp = emoteReferences.animationComp;
-                var propClipName = emoteReferences.propClip.name;
-                propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                propAnimationComp.Play(propClipName);
-            }
         }
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
@@ -396,8 +317,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             List<AnimationClip> uniqueClips,
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
-            out int propClipHash,
-            out bool legacy)
+            out int propClipHash)
         {
             avatarClip = null;
             propClip = null;
@@ -423,8 +343,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                     }
                 }
             }
-
-            legacy = avatarClip && avatarClip.legacy;
 
             return;
 
