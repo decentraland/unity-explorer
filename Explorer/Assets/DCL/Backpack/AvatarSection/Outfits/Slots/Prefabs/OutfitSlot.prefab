@@ -840,7 +840,6 @@ GameObject:
   - component: {fileID: 7398406827179317153}
   - component: {fileID: 8457520230934744965}
   - component: {fileID: 1248288470618126796}
-  - component: {fileID: 8911064652880859765}
   m_Layer: 5
   m_Name: Thumbnail
   m_TagString: Untagged
@@ -905,18 +904,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8911064652880859765
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2655067896535739429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3009358379760560631
 GameObject:
   m_ObjectHideFlags: 0
@@ -2202,7 +2189,6 @@ GameObject:
   - component: {fileID: 1775897863163301264}
   - component: {fileID: 7133844368451752215}
   - component: {fileID: 4208237251788940906}
-  - component: {fileID: 2024637882916043664}
   m_Layer: 5
   m_Name: Silhuette
   m_TagString: Untagged
@@ -2267,18 +2253,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2024637882916043664
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8391213615801953172}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8924112819378530828
 GameObject:
   m_ObjectHideFlags: 0

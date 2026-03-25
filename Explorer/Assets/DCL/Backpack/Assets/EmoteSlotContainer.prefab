@@ -961,7 +961,6 @@ GameObject:
   - component: {fileID: 696252781600941864}
   - component: {fileID: 5025607985946494451}
   - component: {fileID: 7593845559794328202}
-  - component: {fileID: 9166757804837448315}
   m_Layer: 5
   m_Name: EmoteThumbnail
   m_TagString: Untagged
@@ -1026,18 +1025,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &9166757804837448315
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4904233933613272824}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5395326989043946873
 GameObject:
   m_ObjectHideFlags: 0
@@ -1452,7 +1439,6 @@ GameObject:
   - component: {fileID: 9017805532720681203}
   - component: {fileID: 6661340366087839124}
   - component: {fileID: 7651342907035147151}
-  - component: {fileID: 5116269606049832117}
   m_Layer: 5
   m_Name: EmoteRarityBackground
   m_TagString: Untagged
@@ -1517,18 +1503,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &5116269606049832117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7624615643822437495}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7806603888344901049
 GameObject:
   m_ObjectHideFlags: 0

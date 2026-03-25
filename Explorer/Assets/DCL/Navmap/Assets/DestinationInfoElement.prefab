@@ -941,7 +941,6 @@ GameObject:
   - component: {fileID: 584517571306363022}
   - component: {fileID: 7510354311571325674}
   - component: {fileID: 7293302873017058572}
-  - component: {fileID: 7816679968006529060}
   m_Layer: 5
   m_Name: MapPinIcon
   m_TagString: Untagged
@@ -1006,15 +1005,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &7816679968006529060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9185557787842887889}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4516844571978323200}
-  - component: {fileID: 4289996402313194836}
   - component: {fileID: 6416659959482614600}
   - component: {fileID: 798080801506195513}
   m_Layer: 5
@@ -40,18 +39,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4289996402313194836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 83335813712063289}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!222 &6416659959482614600
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -104,7 +91,6 @@ GameObject:
   - component: {fileID: 1061224755921162527}
   - component: {fileID: 3616473883191131312}
   - component: {fileID: 8899714419687409300}
-  - component: {fileID: 8851418794278667009}
   m_Layer: 5
   m_Name: CancelButton
   m_TagString: Untagged
@@ -252,18 +238,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &8851418794278667009
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 87742869633888259}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &126423628841791003
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,7 +247,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5332164505867234814}
-  - component: {fileID: 8091995119889012436}
   - component: {fileID: 134081473185530363}
   - component: {fileID: 4451877333625816521}
   m_Layer: 5
@@ -310,18 +283,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -60}
   m_SizeDelta: {x: -120, y: 150}
   m_Pivot: {x: 0.5, y: 1}
---- !u!114 &8091995119889012436
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 126423628841791003}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!222 &134081473185530363
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -357,7 +318,6 @@ GameObject:
   - component: {fileID: 8806878567793312711}
   - component: {fileID: 5965295237039175749}
   - component: {fileID: 1731465110148109028}
-  - component: {fileID: 1901307198767206731}
   m_Layer: 5
   m_Name: StatusText
   m_TagString: Untagged
@@ -484,18 +444,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &1901307198767206731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 133651025364389901}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &173630955316745193
 GameObject:
   m_ObjectHideFlags: 0
@@ -507,7 +455,6 @@ GameObject:
   - component: {fileID: 7728473609722651846}
   - component: {fileID: 5165852394474712486}
   - component: {fileID: 7316211766053955189}
-  - component: {fileID: 9204712115675526537}
   m_Layer: 5
   m_Name: Top
   m_TagString: Untagged
@@ -572,18 +519,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &9204712115675526537
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 173630955316745193}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &341242266509121497
 GameObject:
   m_ObjectHideFlags: 0
@@ -595,7 +530,6 @@ GameObject:
   - component: {fileID: 616119937947168997}
   - component: {fileID: 6776367090545305392}
   - component: {fileID: 4383237184820923096}
-  - component: {fileID: 783883737197608016}
   m_Layer: 5
   m_Name: Handle
   m_TagString: Untagged
@@ -660,18 +594,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &783883737197608016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 341242266509121497}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &384913005031034023
 GameObject:
   m_ObjectHideFlags: 0
@@ -686,7 +608,6 @@ GameObject:
   - component: {fileID: 4817175209940955853}
   - component: {fileID: 2223610464006396013}
   - component: {fileID: 6030189298569410552}
-  - component: {fileID: 8331512345713654463}
   - component: {fileID: 4080612314799218137}
   m_Layer: 5
   m_Name: ToggleWearables
@@ -846,18 +767,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8331512345713654463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 384913005031034023}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &4080612314799218137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -889,7 +798,6 @@ GameObject:
   - component: {fileID: 5362279950394207549}
   - component: {fileID: 6744775773019475066}
   - component: {fileID: 1666572948504778584}
-  - component: {fileID: 4934937013121917112}
   - component: {fileID: 6830685545843447141}
   m_Layer: 5
   m_Name: StatusIcon
@@ -955,18 +863,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4934937013121917112
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 437637902665033080}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &6830685545843447141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -997,7 +893,6 @@ GameObject:
   m_Component:
   - component: {fileID: 145002351944208712}
   - component: {fileID: 5671679593407831344}
-  - component: {fileID: 5749184280312929604}
   - component: {fileID: 3963127518668238650}
   m_Layer: 5
   m_Name: Viewport
@@ -1035,18 +930,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 965346317486065338}
   m_CullTransparentMesh: 1
---- !u!114 &5749184280312929604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 965346317486065338}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &3963127518668238650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1072,7 +955,6 @@ GameObject:
   - component: {fileID: 5630608109918495855}
   - component: {fileID: 4376068882744820714}
   - component: {fileID: 5429562014798746373}
-  - component: {fileID: 3569607915127916353}
   m_Layer: 5
   m_Name: UnselectedText
   m_TagString: Untagged
@@ -1199,18 +1081,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &3569607915127916353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990046407990627143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &1014086250818817823
 GameObject:
   m_ObjectHideFlags: 0
@@ -1223,7 +1093,6 @@ GameObject:
   - component: {fileID: 6938537827229250042}
   - component: {fileID: 5411393404708434534}
   - component: {fileID: 7620202563892022869}
-  - component: {fileID: 7181382666855119942}
   m_Layer: 5
   m_Name: TabSelector
   m_TagString: Untagged
@@ -1287,18 +1156,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 2
   m_VerticalFit: 0
---- !u!114 &7181382666855119942
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1014086250818817823}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &1014995540756253400
 GameObject:
   m_ObjectHideFlags: 0
@@ -1311,7 +1168,6 @@ GameObject:
   - component: {fileID: 2586737240358241918}
   - component: {fileID: 3960848497115676154}
   - component: {fileID: 8336117496611540623}
-  - component: {fileID: 5123380983079388463}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -1450,18 +1306,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5123380983079388463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1014995540756253400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &1538763066164356052
 GameObject:
   m_ObjectHideFlags: 0
@@ -1471,7 +1315,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4138765719407788958}
-  - component: {fileID: 2450665656781553145}
   m_Layer: 5
   m_Name: Sliding Area
   m_TagString: Untagged
@@ -1499,18 +1342,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000061035156, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2450665656781553145
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538763066164356052}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2370284647731738550
 GameObject:
   m_ObjectHideFlags: 0
@@ -1525,7 +1356,6 @@ GameObject:
   - component: {fileID: 2425821374110703086}
   - component: {fileID: 493318470482638289}
   - component: {fileID: 8279486870905574062}
-  - component: {fileID: 304169083737760320}
   m_Layer: 5
   m_Name: SendGiftButton
   m_TagString: Untagged
@@ -1673,18 +1503,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &304169083737760320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2370284647731738550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2526823276085419585
 GameObject:
   m_ObjectHideFlags: 0
@@ -1694,7 +1512,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3470851363001925844}
-  - component: {fileID: 8390405478795021581}
   - component: {fileID: 2134221090376408799}
   - component: {fileID: 2365802193705767221}
   m_Layer: 5
@@ -1726,18 +1543,6 @@ RectTransform:
   m_AnchoredPosition: {x: -50, y: -220}
   m_SizeDelta: {x: -100, y: -390}
   m_Pivot: {x: 1, y: 1}
---- !u!114 &8390405478795021581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2526823276085419585}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &2134221090376408799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1777,7 +1582,6 @@ GameObject:
   - component: {fileID: 5721270445715694293}
   - component: {fileID: 4175965859604419749}
   - component: {fileID: 3944718529717097901}
-  - component: {fileID: 3725716017255611465}
   m_Layer: 5
   m_Name: SelectedText
   m_TagString: Untagged
@@ -1924,18 +1728,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &3725716017255611465
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2572199085106216793}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2703020359525143723
 GameObject:
   m_ObjectHideFlags: 0
@@ -1948,7 +1740,6 @@ GameObject:
   - component: {fileID: 7802013222428928096}
   - component: {fileID: 3775589041924931803}
   - component: {fileID: 3265491955098475324}
-  - component: {fileID: 6388150947602875648}
   m_Layer: 5
   m_Name: SelectedBackground
   m_TagString: Untagged
@@ -2033,18 +1824,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &6388150947602875648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2703020359525143723}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2718502927026863802
 GameObject:
   m_ObjectHideFlags: 0
@@ -2054,7 +1833,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8774715817376175106}
-  - component: {fileID: 6267456482109796477}
   m_Layer: 5
   m_Name: Sliding Area
   m_TagString: Untagged
@@ -2082,18 +1860,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0.000061035156, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6267456482109796477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2718502927026863802}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3230177651759956600
 GameObject:
   m_ObjectHideFlags: 0
@@ -2106,7 +1872,6 @@ GameObject:
   - component: {fileID: 6850455452958601320}
   - component: {fileID: 4559468117482460967}
   - component: {fileID: 5883466428112670887}
-  - component: {fileID: 6034121949021704014}
   m_Layer: 5
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
@@ -2221,18 +1986,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &6034121949021704014
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3230177651759956600}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3666997200744481373
 GameObject:
   m_ObjectHideFlags: 0
@@ -2244,7 +1997,6 @@ GameObject:
   - component: {fileID: 2936782137945371202}
   - component: {fileID: 6946285389333012422}
   - component: {fileID: 2961694040739754741}
-  - component: {fileID: 6558882578209839805}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -2371,18 +2123,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &6558882578209839805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3666997200744481373}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3853351048073395811
 GameObject:
   m_ObjectHideFlags: 0
@@ -2392,7 +2132,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 966354851928960442}
-  - component: {fileID: 6333179668937403875}
   m_Layer: 5
   m_Name: Progress
   m_TagString: Untagged
@@ -2420,18 +2159,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &6333179668937403875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3853351048073395811}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &4018717081570988125
 GameObject:
   m_ObjectHideFlags: 0
@@ -2444,7 +2171,6 @@ GameObject:
   - component: {fileID: 7350052371558191765}
   - component: {fileID: 4849905750404105094}
   - component: {fileID: 7284642530208998149}
-  - component: {fileID: 2966827009041274338}
   - component: {fileID: 4301508990082649242}
   - component: {fileID: 1380961526322487603}
   - component: {fileID: 2542977550205076020}
@@ -2544,18 +2270,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2966827009041274338
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4018717081570988125}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!225 &4301508990082649242
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2621,7 +2335,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3520066240208976593}
-  - component: {fileID: 4140961944177611735}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -2650,18 +2363,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4140961944177611735
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5279442408843973201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5535648965676366705
 GameObject:
   m_ObjectHideFlags: 0
@@ -2673,7 +2374,6 @@ GameObject:
   - component: {fileID: 8727181881241475759}
   - component: {fileID: 7570109317796834931}
   - component: {fileID: 7946491886129129921}
-  - component: {fileID: 4118171424654482038}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -2800,18 +2500,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &4118171424654482038
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5535648965676366705}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5875660316366246832
 GameObject:
   m_ObjectHideFlags: 0
@@ -2821,7 +2509,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1140191117730910648}
-  - component: {fileID: 5847976042241095103}
   - component: {fileID: 7287786396215034832}
   - component: {fileID: 6995210781205139764}
   - component: {fileID: 5778958884389353833}
@@ -2852,18 +2539,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0.000061035156}
   m_SizeDelta: {x: 0, y: -27.712162}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &5847976042241095103
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5875660316366246832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &7287786396215034832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2951,7 +2626,6 @@ GameObject:
   - component: {fileID: 6420185432762437562}
   - component: {fileID: 5314246602482800559}
   - component: {fileID: 7853697978024128009}
-  - component: {fileID: 1033173827207149737}
   m_Layer: 5
   m_Name: Bottom
   m_TagString: Untagged
@@ -3016,18 +2690,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1033173827207149737
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6343256206832400978}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &6678476635120605898
 GameObject:
   m_ObjectHideFlags: 0
@@ -3037,7 +2699,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7080414920890611226}
-  - component: {fileID: 8588422321173150463}
   - component: {fileID: 8486172590113482246}
   m_Layer: 5
   m_Name: Footer
@@ -3069,18 +2730,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 54}
   m_SizeDelta: {x: -120, y: 100}
   m_Pivot: {x: 0.5, y: 0}
---- !u!114 &8588422321173150463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6678476635120605898}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &8486172590113482246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3110,7 +2759,6 @@ GameObject:
   - component: {fileID: 1479359425097015996}
   - component: {fileID: 7516979675364117972}
   - component: {fileID: 3649392897795497620}
-  - component: {fileID: 5292998892514940704}
   m_Layer: 5
   m_Name: SelectedBackground
   m_TagString: Untagged
@@ -3195,18 +2843,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &5292998892514940704
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6942160966528483829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &6969448981733912373
 GameObject:
   m_ObjectHideFlags: 0
@@ -3499,7 +3135,6 @@ GameObject:
   m_Component:
   - component: {fileID: 9030154126796059298}
   - component: {fileID: 5588936455232130985}
-  - component: {fileID: 5124418059988720816}
   - component: {fileID: 8314722629778653083}
   m_Layer: 5
   m_Name: Viewport
@@ -3537,18 +3172,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7161153018969839953}
   m_CullTransparentMesh: 1
---- !u!114 &5124418059988720816
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7161153018969839953}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &8314722629778653083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3574,7 +3197,6 @@ GameObject:
   - component: {fileID: 7107541377569382640}
   - component: {fileID: 6818686301684894357}
   - component: {fileID: 351307930017793727}
-  - component: {fileID: 3403955058844857543}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -3639,18 +3261,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3403955058844857543
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7201321115941514951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7263483140981729853
 GameObject:
   m_ObjectHideFlags: 0
@@ -3662,7 +3272,6 @@ GameObject:
   - component: {fileID: 5256265092737447988}
   - component: {fileID: 5565487091028545117}
   - component: {fileID: 9144457632926700340}
-  - component: {fileID: 2524737953396210768}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -3789,18 +3398,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &2524737953396210768
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7263483140981729853}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7406602743095748758
 GameObject:
   m_ObjectHideFlags: 0
@@ -3812,7 +3409,6 @@ GameObject:
   - component: {fileID: 7999361687292804298}
   - component: {fileID: 7806775088112202351}
   - component: {fileID: 7654945327299960745}
-  - component: {fileID: 7413803978843628900}
   m_Layer: 5
   m_Name: UnselectedText
   m_TagString: Untagged
@@ -3939,18 +3535,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &7413803978843628900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7406602743095748758}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7482207488757878950
 GameObject:
   m_ObjectHideFlags: 0
@@ -3965,7 +3549,6 @@ GameObject:
   - component: {fileID: 5736645815908920976}
   - component: {fileID: 4885435443615887165}
   - component: {fileID: 5518452310001161537}
-  - component: {fileID: 8574293298025985666}
   - component: {fileID: 5213384751763503216}
   m_Layer: 5
   m_Name: ToggleEmotes
@@ -4125,18 +3708,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8574293298025985666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7482207488757878950}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &5213384751763503216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4169,7 +3740,6 @@ GameObject:
   - component: {fileID: 4205694582946793274}
   - component: {fileID: 7615830131235458213}
   - component: {fileID: 217197077660852645}
-  - component: {fileID: 1519178979130731054}
   m_Layer: 5
   m_Name: SelectedText
   m_TagString: Untagged
@@ -4316,18 +3886,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &1519178979130731054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7522572077624666804}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7626095383227046423
 GameObject:
   m_ObjectHideFlags: 0
@@ -4340,7 +3898,6 @@ GameObject:
   - component: {fileID: 5564784004731011075}
   - component: {fileID: 912437095369461171}
   - component: {fileID: 2948098621370046869}
-  - component: {fileID: 5834737756736419818}
   m_Layer: 5
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
@@ -4455,18 +4012,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5834737756736419818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7626095383227046423}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &8177530504246937952
 GameObject:
   m_ObjectHideFlags: 0
@@ -4479,7 +4024,6 @@ GameObject:
   - component: {fileID: 6328791209580422593}
   - component: {fileID: 5440283235817278496}
   - component: {fileID: 24475456845676650}
-  - component: {fileID: 7668555603923036176}
   - component: {fileID: 2299806472486411658}
   - component: {fileID: 5737843258918101639}
   - component: {fileID: 3435490676038160901}
@@ -4579,18 +4123,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &7668555603923036176
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8177530504246937952}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!225 &2299806472486411658
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -4656,7 +4188,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1949656961403114436}
-  - component: {fileID: 5658374557036319154}
   - component: {fileID: 5311560547508444204}
   - component: {fileID: 8028106966575403806}
   - component: {fileID: 2557432286877524578}
@@ -4687,18 +4218,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0.000061035156}
   m_SizeDelta: {x: 0, y: -27.712162}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &5658374557036319154
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8376730338589886957}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &5311560547508444204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4786,7 +4305,6 @@ GameObject:
   - component: {fileID: 3141389461615154291}
   - component: {fileID: 2028555243436204370}
   - component: {fileID: 7826609834618534977}
-  - component: {fileID: 5154386158438361268}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -4851,18 +4369,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &5154386158438361268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8387680480936814976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8417483654172665155
 GameObject:
   m_ObjectHideFlags: 0
@@ -4875,7 +4381,6 @@ GameObject:
   - component: {fileID: 672634698827523493}
   - component: {fileID: 1185349941910390681}
   - component: {fileID: 5369777081586227574}
-  - component: {fileID: 2822095642999633914}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -5014,18 +4519,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa79a46ad7d14748b3e248214931267e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2822095642999633914
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8417483654172665155}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8598508474934300302
 GameObject:
   m_ObjectHideFlags: 0
@@ -5035,7 +4528,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4913741045323122218}
-  - component: {fileID: 248241559242691068}
   - component: {fileID: 2635438615544885939}
   - component: {fileID: 2671024698675686569}
   m_Layer: 5
@@ -5066,18 +4558,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 40}
   m_Pivot: {x: 0.5, y: 1}
---- !u!114 &248241559242691068
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8598508474934300302}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &2635438615544885939
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5129,7 +4609,6 @@ GameObject:
   - component: {fileID: 4843197543039191659}
   - component: {fileID: 1791267137712453294}
   - component: {fileID: 5880811044494469174}
-  - component: {fileID: 8397913255603008165}
   m_Layer: 5
   m_Name: Handle
   m_TagString: Untagged
@@ -5194,18 +4673,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &8397913255603008165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8706926307660372655}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &8764941437129482345
 GameObject:
   m_ObjectHideFlags: 0
@@ -5215,7 +4682,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3643623683592024831}
-  - component: {fileID: 1796359518248824618}
   - component: {fileID: 7654957451426135180}
   - component: {fileID: 8789575558597320140}
   m_Layer: 5
@@ -5246,18 +4712,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1796359518248824618
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8764941437129482345}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!222 &7654957451426135180
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5408,7 +4862,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1680379197715742333}
-  - component: {fileID: 4927422019073176531}
   - component: {fileID: 6430333463064707579}
   - component: {fileID: 6101913584099487422}
   m_Layer: 5
@@ -5437,18 +4890,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 2}
   m_Pivot: {x: 0.5, y: 0}
---- !u!114 &4927422019073176531
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9071028895516177547}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!222 &6430333463064707579
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5588,53 +5029,17 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5325290955636425075}
-    - targetCorrespondingSourceObject: {fileID: 4766856788059098459, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3970887844028014805}
-    - targetCorrespondingSourceObject: {fileID: 2304282548624854871, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7673201380397035749}
-    - targetCorrespondingSourceObject: {fileID: 2746992030135118307, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2595907712630516306}
   m_SourcePrefab: {fileID: 100100000, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
 --- !u!1 &921851684834901217 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2304282548624854871, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
   m_PrefabInstance: {fileID: 1383000900507235254}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7673201380397035749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 921851684834901217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3832036959007480405 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2746992030135118307, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
   m_PrefabInstance: {fileID: 1383000900507235254}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2595907712630516306
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3832036959007480405}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!224 &4000914864471898359 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2645720894569843521, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
@@ -5645,35 +5050,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6603376892380800894, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
   m_PrefabInstance: {fileID: 1383000900507235254}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5325290955636425075
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5229400111773521096}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5842893867584290541 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4766856788059098459, guid: 291c5ed7d06eb524ba0de1b96ecdc913, type: 3}
   m_PrefabInstance: {fileID: 1383000900507235254}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3970887844028014805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5842893867584290541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1001 &2734829742163366372
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5998,21 +5379,6 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5656729445006871095, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7601664437170047669}
-    - targetCorrespondingSourceObject: {fileID: 298914080153479309, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3853179196355377254}
-    - targetCorrespondingSourceObject: {fileID: 5790594399661718223, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8899244277481812578}
-    - targetCorrespondingSourceObject: {fileID: 887863634563133352, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6074793889262972668}
-    - targetCorrespondingSourceObject: {fileID: 7714158660142843443, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3855015867681523822}
   m_SourcePrefab: {fileID: 100100000, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
 --- !u!224 &234264602525502305 stripped
 RectTransform:
@@ -6024,86 +5390,26 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 298914080153479309, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
   m_PrefabInstance: {fileID: 2734829742163366372}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3853179196355377254
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2436981677495105897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3001159236094623308 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 887863634563133352, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
   m_PrefabInstance: {fileID: 2734829742163366372}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6074793889262972668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3001159236094623308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5690899867791218647 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7714158660142843443, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
   m_PrefabInstance: {fileID: 2734829742163366372}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3855015867681523822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5690899867791218647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7743003172891958227 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5656729445006871095, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
   m_PrefabInstance: {fileID: 2734829742163366372}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7601664437170047669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7743003172891958227}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8478100807900850987 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5790594399661718223, guid: b3a9cc462b58886439a1e5ed02d47162, type: 3}
   m_PrefabInstance: {fileID: 2734829742163366372}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8899244277481812578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8478100807900850987}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1001 &2941854203418918955
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6306,13 +5612,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6959189544949296242, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3526095246657830811}
-    - targetCorrespondingSourceObject: {fileID: 6959189544949296242, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1305062595250154162}
-    - targetCorrespondingSourceObject: {fileID: 8769887081569858764, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7066131858759092995}
   m_SourcePrefab: {fileID: 100100000, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
 --- !u!114 &2581005873461023687 stripped
 MonoBehaviour:
@@ -6330,18 +5630,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6959189544949296242, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
   m_PrefabInstance: {fileID: 2941854203418918955}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3526095246657830811
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5208292893455215705}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1305062595250154162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6367,18 +5655,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8769887081569858764, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
   m_PrefabInstance: {fileID: 2941854203418918955}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7066131858759092995
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5865785795520263399}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &7577514806039942965 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4754443713931925278, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
@@ -6580,45 +5856,12 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 836569618237506586, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1438212012707887686}
-    - targetCorrespondingSourceObject: {fileID: 6797649934491323978, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6784581222241594736}
-    - targetCorrespondingSourceObject: {fileID: 3561266351254130364, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6540734936610553809}
-    - targetCorrespondingSourceObject: {fileID: 6309461940976961823, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2380497532461405656}
-    - targetCorrespondingSourceObject: {fileID: 5811259303221985865, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4892363914785079957}
-    - targetCorrespondingSourceObject: {fileID: 1684105793296059905, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3214046204081714464}
-    - targetCorrespondingSourceObject: {fileID: 2566166531741544786, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 516883456541203545}
   m_SourcePrefab: {fileID: 100100000, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
 --- !u!1 &1037339591504761550 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2566166531741544786, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &516883456541203545
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1037339591504761550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &1327756589509878431 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4581470978530328835, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
@@ -6635,52 +5878,16 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3561266351254130364, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6540734936610553809
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2059742488048545056}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2766779874999412614 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 836569618237506586, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1438212012707887686
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2766779874999412614}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &4226242641084460445 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1684105793296059905, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3214046204081714464
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4226242641084460445}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!224 &6687413227643755428 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8158256326675281976, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
@@ -6691,52 +5898,16 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6797649934491323978, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6784581222241594736
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8336055811448270294}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8824295724605975171 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6309461940976961823, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2380497532461405656
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8824295724605975171}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &9033158232698216917 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5811259303221985865, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
   m_PrefabInstance: {fileID: 3312824143050990492}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4892363914785079957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9033158232698216917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1001 &5844246956657359879
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7030,85 +6201,22 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5586862444216862296, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6230960179442871793}
-    - targetCorrespondingSourceObject: {fileID: 6956488416157110236, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3366669569532369957}
-    - targetCorrespondingSourceObject: {fileID: 2966939729984342902, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5258529373671674897}
-    - targetCorrespondingSourceObject: {fileID: 7752228125545481342, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6231216233133932024}
-    - targetCorrespondingSourceObject: {fileID: 7172759973846273261, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6205457181209978979}
-    - targetCorrespondingSourceObject: {fileID: 766780602294446782, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3592147999119315948}
-    - targetCorrespondingSourceObject: {fileID: 6419208300919453317, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1957367487150271917}
-    - targetCorrespondingSourceObject: {fileID: 2790917021355922098, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1848687788627531540}
-    - targetCorrespondingSourceObject: {fileID: 4763941396038248314, guid: a52574ba41ef80648857589a956a79ca, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7600032006589871248}
   m_SourcePrefab: {fileID: 100100000, guid: a52574ba41ef80648857589a956a79ca, type: 3}
 --- !u!1 &580810784917080706 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6419208300919453317, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1957367487150271917
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 580810784917080706}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &1370788432386415485 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4763941396038248314, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7600032006589871248
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370788432386415485}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2058825002282416735 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5586862444216862296, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6230960179442871793
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2058825002282416735}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &2325072724430903659 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8169176739740607852, guid: a52574ba41ef80648857589a956a79ca, type: 3}
@@ -7136,69 +6244,21 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6956488416157110236, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3366669569532369957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3571502934649877467}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3643461120947613930 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7172759973846273261, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6205457181209978979
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3643461120947613930}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &4219764878318401657 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7752228125545481342, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6231216233133932024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4219764878318401657}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &6610942587179341497 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 766780602294446782, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3592147999119315948
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6610942587179341497}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!224 &7946106651354239396 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4565755306284330403, guid: a52574ba41ef80648857589a956a79ca, type: 3}
@@ -7209,35 +6269,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2790917021355922098, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1848687788627531540
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8620377435633544885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8662181661012522865 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2966939729984342902, guid: a52574ba41ef80648857589a956a79ca, type: 3}
   m_PrefabInstance: {fileID: 5844246956657359879}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5258529373671674897
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8662181661012522865}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1001 &6598242538454984024
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7484,50 +6520,17 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2336035712942851721, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8495117744030434607}
-    - targetCorrespondingSourceObject: {fileID: 1478407899719663598, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 751060026170600390}
-    - targetCorrespondingSourceObject: {fileID: 1761498992749964840, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5868465744826438}
   m_SourcePrefab: {fileID: 100100000, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
 --- !u!1 &5219678356449159621 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2336035712942851721, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
   m_PrefabInstance: {fileID: 7501661990644330316}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8495117744030434607
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5219678356449159621}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &8100106377444606308 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1761498992749964840, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
   m_PrefabInstance: {fileID: 7501661990644330316}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5868465744826438
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8100106377444606308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!224 &8658978692374255251 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
@@ -7538,18 +6541,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1478407899719663598, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
   m_PrefabInstance: {fileID: 7501661990644330316}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &751060026170600390
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8979929112026828962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1001 &8668072143641749956
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7667,187 +6658,52 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7319283368522151503, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1733585964051223900}
-    - targetCorrespondingSourceObject: {fileID: 6404350374353871204, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7230018068602259301}
-    - targetCorrespondingSourceObject: {fileID: 6531367703513470458, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8563516410974820987}
-    - targetCorrespondingSourceObject: {fileID: 1537685419818722824, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1295849780692183490}
-    - targetCorrespondingSourceObject: {fileID: 8279587512889529381, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5707811503271481805}
-    - targetCorrespondingSourceObject: {fileID: 5541511638230278960, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7355209126031602754}
-    - targetCorrespondingSourceObject: {fileID: 4009457732993393182, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8888249698574955101}
-    - targetCorrespondingSourceObject: {fileID: 8023494731595085905, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3996625934057442708}
-    - targetCorrespondingSourceObject: {fileID: 4561718667523275783, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7325656865545065799}
   m_SourcePrefab: {fileID: 100100000, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
 --- !u!1 &769039430642302433 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8279587512889529381, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5707811503271481805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 769039430642302433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &1662391499222471061 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8023494731595085905, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3996625934057442708
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1662391499222471061}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2150605993494863755 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7319283368522151503, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1733585964051223900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2150605993494863755}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2354255655788415136 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6404350374353871204, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7230018068602259301
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2354255655788415136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &2517294360225692734 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6531367703513470458, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8563516410974820987
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2517294360225692734}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &3795490817314982644 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5541511638230278960, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7355209126031602754
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3795490817314982644}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5117592509597849027 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4561718667523275783, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7325656865545065799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5117592509597849027}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &5759920446098770906 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4009457732993393182, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8888249698574955101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5759920446098770906}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!1 &7862679180652974028 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1537685419818722824, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8668072143641749956}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1295849780692183490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7862679180652974028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.olegknyazev.softmask::SoftMasking.SoftMaskable
 --- !u!114 &8086367642123046158 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
