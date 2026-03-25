@@ -116,7 +116,7 @@ namespace DCL.Donations
                     if (isLocalSceneDevelopmentMode)
                         UpdateFromCurrentScene(currentScene);
                     else
-                        await UpdateFromApis(currentScene, ct);
+                        await UpdateFromApisAsync(currentScene, ct);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e)
@@ -132,7 +132,7 @@ namespace DCL.Donations
             donationsEnabledCurrentScene.UpdateValue((!string.IsNullOrEmpty(addressFromScene), addressFromScene, currentScene!.Info.BaseParcel));
         }
 
-        private async UniTask UpdateFromApis(ISceneFacade? currentScene, CancellationToken ct)
+        private async UniTask UpdateFromApisAsync(ISceneFacade? currentScene, CancellationToken ct)
         {
             string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
             string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
