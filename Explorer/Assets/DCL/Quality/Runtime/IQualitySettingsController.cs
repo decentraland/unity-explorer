@@ -14,10 +14,6 @@ namespace DCL.Quality.Runtime
         int FpsLimit { get; }
         bool VSync { get; }
         float ResolutionScale { get; }
-        int ResolutionWidth { get; }
-        int ResolutionHeight { get; }
-        RefreshRate ResolutionRefreshRate { get; }
-        FullScreenMode WindowMode { get; }
 
         // Post Processing
         MsaaLevel Msaa { get; }
@@ -55,8 +51,6 @@ namespace DCL.Quality.Runtime
         void SetFpsLimit(int fps);
         void SetVSync(bool enabled);
         void SetResolutionScale(float scale);
-        void SetResolution(int width, int height, RefreshRate refreshRate);
-        void SetWindowMode(int index);
 
         // Post Processing
         void SetMsaa(MsaaLevel level);
