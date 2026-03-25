@@ -19,6 +19,7 @@ namespace DCL.UI
         [Space]
         [SerializeField] private Button startButton;
         [SerializeField] private GameObject errorContainer;
+        [SerializeField] private GameObject loadingSpinner;
 
         [Header("FIELD OUTLINE")]
         [SerializeField] private Image outline;
@@ -64,6 +65,12 @@ namespace DCL.UI
             startButton.onClick.AddListener(EmitStartButtonPressedEvent);
         }
 
+        public void SetSpinnerActive(bool isActive)
+        {
+            startButton.gameObject.SetActive(!isActive);
+            loadingSpinner.SetActive(isActive);
+        }
+
         private void OnDisable()
         {
             if (activateInputCoroutine != null)
@@ -89,7 +96,7 @@ namespace DCL.UI
                 SetErrorState(false);
         }
 
-        private void SetErrorState(bool hasError)
+        public void SetErrorState(bool hasError)
         {
             outline.color = hasError ? outlineErrorColor : outlineNormalColor;
             errorContainer.SetActive(hasError);

@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
@@ -174,14 +176,36 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OTPLogin()
         {
-            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
+            OTPLoginAsync(controller.GetRestartedLoginToken()).Forget();
+        }
 
+        private async UniTaskVoid OTPLoginAsync(CancellationToken ct)
+        {
+            compositeWeb3Provider.CurrentProvider = AuthProvider.ThirdWeb;
             controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
 
+            string email = viewInstance.LoginSelectionAuthView.EmailInputField.Text;
+            view.EmailInputField.SetSpinnerActive(true);
+
+            try { await compositeWeb3Provider.SendOtpAsync(email, ct); }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception e)
+            {
+                view.EmailInputField.SetErrorState(true);
+                return;
+            }
+            finally
+            {
+                view.EmailInputField.SetSpinnerActive(false);
+            }
+
             view.Hide();
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
-                payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
+                payload: (email, ct));
         }
 
         private void OnRetryFromError()

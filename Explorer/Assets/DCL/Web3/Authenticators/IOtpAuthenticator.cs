@@ -26,5 +26,11 @@ namespace DCL.Web3.Authenticators
         ///     Returns true if auto-login succeeded.
         /// </summary>
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct);
+
+        /// <summary>
+        ///     Creates the wallet for the given email and sends the initial OTP.
+        ///     Throws if the email is invalid or OTP sending fails.
+        /// </summary>
+        public UniTask SendOtpAsync(string email, CancellationToken ct = default);
     }
 }

@@ -84,6 +84,9 @@ namespace DCL.Web3.Authenticators
         public async UniTask ResendOtpAsync(CancellationToken ct = default) =>
             await loginService.ResendOtpAsync(ct);
 
+        public async UniTask SendOtpAsync(string email, CancellationToken ct = default) =>
+            await loginService.SendOtpAsync(email, ct);
+
         // Ethereum API
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
             ethereumApi.SendAsync(activeWallet, request, source, ct);

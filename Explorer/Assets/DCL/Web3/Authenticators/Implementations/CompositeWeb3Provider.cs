@@ -77,6 +77,9 @@ namespace DCL.Web3.Authenticators
         public UniTask ResendOtpAsync(CancellationToken ct = default) =>
             thirdWebAuth.ResendOtpAsync(ct);
 
+        public UniTask SendOtpAsync(string email, CancellationToken ct = default) =>
+            thirdWebAuth.SendOtpAsync(email, ct);
+
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {
             if (OtpIsDisabled())

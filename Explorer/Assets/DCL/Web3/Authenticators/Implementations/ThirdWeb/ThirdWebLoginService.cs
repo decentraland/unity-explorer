@@ -154,8 +154,13 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
+        public async UniTask SendOtpAsync(string email, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentException("Email is required for OTP authentication", nameof(email));
+
+            await UniTask.SwitchToMainThread(ct);
+
             pendingWallet = await InAppWallet.Create(
                 client,
                 email,
@@ -164,6 +169,14 @@ namespace DCL.Web3.Authenticators
 
             await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct);
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
+        }
+
+        private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
+        {
+            if (pendingWallet == null)
+                await SendOtpAsync(email!, ct);
+            else
+                await UniTask.SwitchToMainThread(ct);
 
             // Wait for successful login via SubmitOtp
             loginCompletionSource = new UniTaskCompletionSource<bool>();
