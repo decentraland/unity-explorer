@@ -26,8 +26,9 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.ModuleControllers;
+using DCL.Quality.Runtime;
 using DCL.Settings.Utils;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -56,6 +57,8 @@ using System.Threading;
 using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using ECS;
+using System.IO;
+using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -84,12 +87,15 @@ namespace Global.Dynamic
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
+        [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
+        private FileStream? singleInstanceLock;
 
         private void Awake()
         {
@@ -128,6 +134,10 @@ namespace Global.Dynamic
 
         private void OnApplicationQuit()
         {
+            // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
+            try { singleInstanceLock?.Dispose(); }
+            catch { }
+
             DisableAllSelectableTransitions();
         }
 
@@ -169,8 +179,10 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
-                WindowModeUtils.ApplyWindowedMode();
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
 
             World world = World.Create();
 
@@ -181,6 +193,10 @@ namespace Global.Dynamic
             var assetsProvisioner = new AddressablesProvisioner();
 
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
@@ -214,6 +230,12 @@ namespace Global.Dynamic
             try
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
+
+                if (ShouldForceSingleRunningInstance(applicationParametersParser))
+                {
+                    await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
+                    return;
+                }
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
@@ -344,6 +366,35 @@ namespace Global.Dynamic
             }
         }
 
+        private async UniTask ShowSingleRunningInstancePopupAsync(AddressablesProvisioner assetsProvisioner, CancellationToken ct)
+        {
+            ErrorPopupView prefab = (await assetsProvisioner.ProvideMainAssetAsync(singleInstanceRunningPopupPrefab, ct)).Value.GetComponent<ErrorPopupView>();
+            ErrorPopupView popup = Instantiate(prefab);
+            popup.OkButton.onClick.AddListener(ExitUtils.Exit);
+        }
+
+        private bool ShouldForceSingleRunningInstance(IAppArgs appArgs)
+        {
+#if UNITY_EDITOR
+            return false;
+#endif
+            if (appArgs.HasFlag(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES)) return false;
+
+            try
+            {
+                string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
+
+                // Note that FileShare.None should lock the file to other processes, and it does,
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                singleInstanceLock.Lock(0, 0);
+            }
+            catch (IOException) { return true; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
+
+            return false;
+        }
+
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
@@ -361,16 +412,15 @@ namespace Global.Dynamic
                 new UnitySystemInfoProvider(),
                 new PlatformDriveInfoProvider());
 
-            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs)
             {
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
+                SavedQualitySettingsApplier.EnforceLowPreset();
             }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
-            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
             UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
@@ -677,6 +727,29 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             return input.SelectedOption;
+        }
+
+        private void InstantiateAltTester(IAppArgs appArgs)
+        {
+#if ALTTESTER
+            var instance = Instantiate(altTesterPrefab);
+
+            if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
+            {
+                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+
+                var split = endpoint.Split(':');
+
+                if (split.Length != 2 || !int.TryParse(split[1], out var port))
+                {
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"Invalid Alttester endpoint (needs to be host:port): {endpoint}");
+                    return;
+                }
+
+                runner.InstrumentationSettings.AltServerHost = split[0];
+                runner.InstrumentationSettings.AltServerPort = port;
+            }
+#endif
         }
 
         /// <summary>

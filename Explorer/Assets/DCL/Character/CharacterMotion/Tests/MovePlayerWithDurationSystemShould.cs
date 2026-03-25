@@ -228,10 +228,10 @@ namespace DCL.CharacterMotion.Tests
 
             var animationComponent = world.Get<CharacterAnimationComponent>(e);
 
+            Assert.That(animationComponent.States.IsSliding, Is.False, "Should not be sliding");
             Assert.That(animationComponent.States.IsGrounded, Is.True, "Should be grounded during movement");
-            Assert.That(animationComponent.States.IsJumping, Is.False, "Should not be jumping");
+            Assert.That(animationComponent.States.JumpCount, Is.EqualTo(0), "Should not be jumping");
             Assert.That(animationComponent.States.IsFalling, Is.False, "Should not be falling");
-            Assert.That(animationComponent.IsSliding, Is.False, "Should not be sliding");
         }
 
         [Test]

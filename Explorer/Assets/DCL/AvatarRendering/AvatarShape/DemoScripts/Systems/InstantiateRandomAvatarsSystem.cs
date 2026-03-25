@@ -337,6 +337,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new JumpInputComponent(),
                     new MovementInputComponent(),
                     characterControllerSettings,
+                    new MovementSpeedLimit(),
+                    new GlideState(),
+                    new JumpState(),
                     new RandomAvatar()
                 );
             }

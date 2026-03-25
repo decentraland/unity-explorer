@@ -10,7 +10,7 @@ namespace DCL.WebRequests
     ///     Custom upload handler that builds JSON directly into a byte buffer
     ///     without intermediate string allocations.
     /// </summary>
-    public struct BufferedStringUploadHandler
+    public struct BufferedStringUploadHandler : IDisposable
     {
         // Use a native array instead of pooling a managed one to reduce the memory consumption
         // Native Arrays are not GCed so they don't produce the corresponding pressure
@@ -25,35 +25,30 @@ namespace DCL.WebRequests
         ///     When <see cref="CreateUploadHandler" /> is called, buffer can't be accessed anymore, but until the web request is disposed of
         ///     the data is still valid
         /// </summary>
-        private unsafe byte* preservedBufferPtr;
+        private NativeArray<byte> preservedArray;
 
-        private int preservedBufferLength;
-
-        public unsafe BufferedStringUploadHandler(int initialCapacity = 1024)
+        public BufferedStringUploadHandler(int initialCapacity = 1024)
         {
             buffer = new NativeList<byte>(initialCapacity, Allocator.Persistent);
-            preservedBufferPtr = null;
-            preservedBufferLength = 0;
+            preservedArray = default(NativeArray<byte>);
         }
 
         /// <summary>
         ///     Sets the buffer as the upload data.
         ///     Call this after building your JSON. <br />
-        ///     UploadHandler will dispose the created underlying buffer
+        ///     UploadHandler will dispose the created underlying buffer <br />
+        ///     It's crucial to invoke this method by "ref" to reflect the changes on the underlying structure
         /// </summary>
         public unsafe UploadHandlerRaw CreateUploadHandler()
         {
             ThrowIfDisposed();
 
-            // Create a NativeArray copy that actually owns the memory with Persistent allocator (the same allocator the NativeList was created with)
-            NativeArray<byte> array = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(buffer.GetUnsafePtr(), buffer.Length, Allocator.Persistent);
+            // Create a NativeArray that actually owns the memory with Persistent allocator (the same allocator the NativeList was created with)
+            preservedArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(buffer.GetUnsafePtr(), buffer.Length, Allocator.Persistent);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.Create());
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref preservedArray, AtomicSafetyHandle.Create());
 #endif
-
-            preservedBufferPtr = buffer.GetUnsafePtr();
-            preservedBufferLength = buffer.Length;
 
             // NativeList contains an underlying UnsafeList which is allocated on heap and referenced by a pointer
             // It contains several fields apart from the byte* so they won't be deallocated automatically by UploadHandler
@@ -63,7 +58,7 @@ namespace DCL.WebRequests
             // Buffer is no longer valid and can't be used
             buffer = default(NativeList<byte>);
 
-            return new UploadHandlerRaw(array, true);
+            return new UploadHandlerRaw(preservedArray, true);
         }
 
         /// <summary>
@@ -326,15 +321,18 @@ namespace DCL.WebRequests
             buffer.Clear();
         }
 
+        /// <summary>
+        ///     This method is only valid to call before <see cref="UploadHandlerRaw.Dispose" /> has been called,
+        ///     otherwise it will throw EXCEPTION_ACCESS_VIOLATION_READ (native crash) or <see cref="ObjectDisposedException" /> if compiled with "ENABLE_UNITY_COLLECTIONS_CHECKS". <br />
+        /// </summary>
+        /// <returns></returns>
         public override unsafe string ToString()
         {
-            if (buffer.IsCreated)
-            {
-                if (preservedBufferPtr != null)
-                    return Encoding.UTF8.GetString(preservedBufferPtr, preservedBufferLength);
+            if (preservedArray.IsCreated)
+                return Encoding.UTF8.GetString(preservedArray.AsReadOnlySpan());
 
+            if (buffer.IsCreated)
                 return Encoding.UTF8.GetString(buffer.GetUnsafePtr(), buffer.Length);
-            }
 
             throw new ObjectDisposedException(nameof(buffer));
         }
@@ -343,6 +341,13 @@ namespace DCL.WebRequests
         {
             if (!buffer.IsCreated)
                 throw new ObjectDisposedException(nameof(buffer));
+        }
+
+        public void Dispose()
+        {
+            // it's OK to dispose not created buffers as it's checked secured properly in their Dispose implementation
+            buffer.Dispose();
+            preservedArray.Dispose();
         }
     }
 }

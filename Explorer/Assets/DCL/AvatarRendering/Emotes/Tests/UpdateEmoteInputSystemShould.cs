@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.ECSComponents;
+using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Profiles;
@@ -64,7 +65,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 new PlayerComponent(testGameObject.transform),
                 profile,
                 avatarShape,
-                inputModifier
+                inputModifier,
+                new GlideState()
             );
 
             return entity;
@@ -210,14 +212,16 @@ namespace DCL.AvatarRendering.Emotes.Tests
                     new PlayerComponent(testGameObject.transform),
                     profile1,
                     avatarShape1,
-                    new InputModifierComponent()
+                    new InputModifierComponent(),
+                    new GlideState()
                 );
 
                 var entity2 = world.Create(
                     new PlayerComponent(testGo2.transform),
                     profile2,
                     avatarShape2,
-                    new InputModifierComponent()
+                    new InputModifierComponent(),
+                    new GlideState()
                 );
 
                 world.Add(entity1, new TriggerEmoteBySlotIntent { Slot = 0 });
@@ -324,24 +328,13 @@ namespace DCL.AvatarRendering.Emotes.Tests
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
             public List<(URN emoteId, bool loopCyclePassed, AvatarEmoteMask mask)> SentEmotes = new ();
-
-            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
-                throw new NotImplementedException();
-
-            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask)
-            {
-                SentEmotes.Add((urn, loopCyclePassed, mask));
-            }
-
-            public void SendStop() =>
-                throw new NotImplementedException();
-
+            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() => throw new NotImplementedException();
+            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) => SentEmotes.Add((urn, loopCyclePassed, mask));
+            public void SendStop() => throw new NotImplementedException();
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
-
-            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
-                throw new NotImplementedException();
+            public void SaveForRetry(RemoteEmoteStopIntention intention) => throw new NotImplementedException();
         }
     }
 }

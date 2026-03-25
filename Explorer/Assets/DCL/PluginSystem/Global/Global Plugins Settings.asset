@@ -60,6 +60,7 @@ MonoBehaviour:
   - rid: 745469515127586908
   - rid: 2563261270153757000
   - rid: 5190442831932031144
+  - rid: 5526985638232195369
   - rid: 1221415613651484787
   - rid: 732305993255354462
   - rid: 1709771649487732831
@@ -418,6 +419,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <QualityPresets>k__BackingField: {fileID: 11400000, guid: d8c17d5ed6e4b5e41b9155c640906ef2, type: 2}
     - rid: 1709771649487732831
       type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:
@@ -899,6 +901,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        ghostMaterial:
+          m_AssetGUID: 2bd30078b12df4679bed329bf3c002ad
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         startFadeDistanceDithering: 0.42
         endFadeDistanceDithering: 0.25
         defaultMaterialCapacity: 100
@@ -958,6 +966,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         DefaultFemaleEyebrowsTexture:
           m_AssetGUID: eae766b15f997414794bfd4f17de5949
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 5526985638232195369
+      type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <JumpIndicatorPrefab>k__BackingField:
+          m_AssetGUID: 77042a6626e1a064f90b622d0381d7df
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -1050,6 +1067,7 @@ MonoBehaviour:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         <SkyboxSettings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
+        <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
@@ -1079,7 +1097,16 @@ MonoBehaviour:
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <ControllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <Gliding>k__BackingField:
+          <PropPrefab>k__BackingField:
+            m_AssetGUID: 3c7d798e18864314497aa15d59d3ee1b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <EnablePropPooling>k__BackingField: 0
+          <TrailVelocityThreshold>k__BackingField: 1
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

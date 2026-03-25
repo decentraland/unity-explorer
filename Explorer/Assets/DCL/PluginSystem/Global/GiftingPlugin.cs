@@ -20,7 +20,6 @@ using DCL.Backpack.Gifting.Services.GiftItemLoaderService;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.Backpack.Gifting.Styling;
-using DCL.Backpack.Gifting.Tests;
 using DCL.Browser;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -57,7 +56,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IScreenModeController screenModeController;
         private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
@@ -82,7 +80,6 @@ namespace DCL.PluginSystem.Global
             ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController,
             ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -103,7 +100,6 @@ namespace DCL.PluginSystem.Global
             this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.screenModeController = screenModeController;
             this.imageControllerProvider = imageControllerProvider;
         }
 
@@ -194,8 +190,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand,
-                screenModeController
+                giftTransferRequestCommand
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
@@ -206,19 +201,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
-
-#region EDITOR_TEST
-#if UNITY_EDITOR
-
-            // NOTE: For triggering notification in the editor because
-            // NOTE: method in the documentation for faking notifications doesn't work
-            // NOTE: look for TestGiftNotification component on TEST_GIFT_NOTIFICATIONS game object
-            // NOTE: and trigger notification through context menu by
-            // NOTE: choosing "Trigger Gift Notification" option
-            var go = new GameObject().AddComponent<TestGiftNotification>();
-            go.name = "TEST_GIFT_NOTIFICATIONS";
-#endif
-#endregion
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

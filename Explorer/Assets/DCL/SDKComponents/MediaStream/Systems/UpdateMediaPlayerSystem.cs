@@ -119,12 +119,12 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
-            if (component.MediaPlayer.WaitingForProperties) return;
-            if (!frameTimeBudget.TrySpendBudget()) return;
-
             var address = MediaAddress.New(sdkComponent.Src!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
+
+            if (component.MediaPlayer.WaitingForProperties) return;
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
 

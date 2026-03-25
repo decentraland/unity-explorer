@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -97,6 +99,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
         [field: SerializeField] public Transform Armature { get; private set; }
 
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; }
+
+        public Renderer GhostRenderer { get; private set; }
+
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
@@ -126,6 +132,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
 
             headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+
+            GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
         }
 
         public Transform GetTransform() =>
@@ -172,6 +180,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Vector3 angles = Armature.eulerAngles;
             angles.x = 90;
             Armature.eulerAngles = angles;
+        }
+
+        // Called onRelease of the pool. Resets stuff to avoid:
+        //   - Armature inclination that could be caused by emotes
+        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        public void ResetState()
+        {
+            ResetArmatureInclination();
+            transform.localPosition = Vector3.zero;
+            AvatarAnimator.Rebind();
+            HipsConstraint.data.offset = Vector3.zero;
+            HipsConstraint.weight = 0;
         }
 
         public void SetLayerWeight(string layerName, float weight)
@@ -221,6 +241,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Vector3 GetAdaptiveNametagPosition()
         {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
             Vector3 headPos = headAramatureBone.position;
 
             float maxY = headPos.y;

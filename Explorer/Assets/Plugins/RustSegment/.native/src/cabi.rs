@@ -157,6 +157,13 @@ pub extern "C" fn segment_server_flush() -> OperationHandleId {
 }
 
 #[no_mangle]
+pub extern "C" fn segment_server_pump_next_event() -> i32 {
+    // 1 - pumped, 0 - nothing
+    let result = SEGMENT_SERVER.try_pump_next_event();
+    i32::from(result)
+}
+
+#[no_mangle]
 pub extern "C" fn segment_server_dispose() -> bool {
     SEGMENT_SERVER.dispose()
 }

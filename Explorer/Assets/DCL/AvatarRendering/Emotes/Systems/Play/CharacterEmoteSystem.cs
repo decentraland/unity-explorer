@@ -118,7 +118,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
 
         /// <summary>
@@ -130,6 +130,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
 
+        // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
         private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
@@ -146,11 +147,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             emoteComponent.StopEmote = false;
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
-
             if (!emoteReference) return;
 
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
-
             if (shouldCancelEmote)
             {
                 StopEmote(ref emoteComponent, avatarView);
@@ -338,10 +337,8 @@ namespace DCL.AvatarRendering.Emotes.Play
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
-                {
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
                     CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
-                }
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -365,11 +362,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         [Query]
-        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
-        {
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent) =>
             characterController.enabled = !emoteComponent.IsPlayingEmote;
-        }
-
 
         [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)

@@ -68,7 +68,8 @@ namespace DCL.PlacesAPIService
             string? category = null,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null)
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -84,7 +85,8 @@ namespace DCL.PlacesAPIService
                 sortByStr, sortDirectionStr, category, addRealmDetails: true,
                 withConnectedUsers: withConnectedUsers,
                 onlySdk7: onlySdk7,
-                withLiveEvents: withLiveEvents);
+                withLiveEvents: withLiveEvents,
+                onlyPlaces: onlyPlaces);
         }
 
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
@@ -226,7 +228,8 @@ namespace DCL.PlacesAPIService
             IPlacesAPIService.SortDirection sortDirection = IPlacesAPIService.SortDirection.DESC,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null)
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null)
         {
             string sortByStr = string.Empty;
             string sortDirectionStr = string.Empty;
@@ -243,7 +246,8 @@ namespace DCL.PlacesAPIService
                 onlyFavorites: true,
                 withConnectedUsers: withConnectedUsers,
                 onlySdk7: onlySdk7,
-                withLiveEvents: withLiveEvents);
+                withLiveEvents: withLiveEvents,
+                onlyPlaces: onlyPlaces);
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)

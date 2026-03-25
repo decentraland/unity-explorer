@@ -1,3 +1,7 @@
+using System;
+using System.Runtime.CompilerServices;
+using Unity.Collections;
+
 namespace DCL.SDKComponents.InputModifier.Components
 {
     /// <summary>
@@ -5,12 +9,23 @@ namespace DCL.SDKComponents.InputModifier.Components
     /// </summary>
     public struct InputModifierComponent
     {
-        private bool disableAll;
-        private bool disableWalk;
-        private bool disableJog;
-        private bool disableRun;
-        private bool disableJump;
-        private bool disableEmote;
+        [Flags]
+        private enum ModifierId
+        {
+            NONE,
+            WALK = 1,
+            JOG = 1 << 1,
+            RUN = 1 << 2,
+            JUMP = 1 << 3,
+            EMOTE = 1 << 4,
+            DOUBLE_JUMP = 1 << 5,
+            GLIDING = 1 << 6,
+            ALL = 1 << 31
+        }
+
+        private ModifierId disabledMask;
+
+        public bool EverythingEnabled => disabledMask == ModifierId.NONE;
 
         /// <summary>
         ///     When set to true, disables all related properties (Walk, Jog, Run, Jump, Emote).
@@ -18,17 +33,8 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableAll
         {
-            get => disableAll;
-
-            set
-            {
-                disableAll = value;
-                disableWalk = value;
-                disableJog = value;
-                disableRun = value;
-                disableJump = value;
-                disableEmote = value;
-            }
+            get => (disabledMask & ModifierId.ALL) != 0;
+            set => disabledMask = value ? disabledMask | ModifierId.ALL : disabledMask & ~ModifierId.ALL;
         }
 
         /// <summary>
@@ -38,8 +44,8 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableWalk
         {
-            get => disableAll || disableWalk;
-            set => disableWalk = value;
+            get => IsDisabled(ModifierId.WALK);
+            set => disabledMask = value ? disabledMask | ModifierId.WALK : disabledMask & ~ModifierId.WALK;
         }
 
         /// <summary>
@@ -49,8 +55,8 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableJog
         {
-            get => disableAll || disableJog;
-            set => disableJog = value;
+            get => IsDisabled(ModifierId.JOG);
+            set => disabledMask = value ? disabledMask | ModifierId.JOG : disabledMask & ~ModifierId.JOG;
         }
 
         /// <summary>
@@ -60,8 +66,8 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableRun
         {
-            get => disableAll || disableRun;
-            set => disableRun = value;
+            get => IsDisabled(ModifierId.RUN);
+            set => disabledMask = value ? disabledMask | ModifierId.RUN : disabledMask & ~ModifierId.RUN;
         }
 
         /// <summary>
@@ -71,8 +77,8 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableJump
         {
-            get => disableAll || disableJump;
-            set => disableJump = value;
+            get => IsDisabled(ModifierId.JUMP);
+            set => disabledMask = value ? disabledMask | ModifierId.JUMP : disabledMask & ~ModifierId.JUMP;
         }
 
         /// <summary>
@@ -82,8 +88,36 @@ namespace DCL.SDKComponents.InputModifier.Components
         /// </summary>
         public bool DisableEmote
         {
-            get => disableAll || disableEmote;
-            set => disableEmote = value;
+            get => IsDisabled(ModifierId.EMOTE);
+            set => disabledMask = value ? disabledMask | ModifierId.EMOTE : disabledMask & ~ModifierId.EMOTE;
         }
+
+        /// <summary>
+        ///     Gets or sets the DisableDoubleJump property.
+        ///     <para>Get: Returns true if DisableAll is true or if DisableDoubleJump is explicitly set to true.</para>
+        ///     <para>Set: Explicitly sets the DisableDoubleJump property to the given value.</para>
+        /// </summary>
+        public bool DisableDoubleJump
+        {
+            get => IsDisabled(ModifierId.DOUBLE_JUMP);
+            set => disabledMask = value ? disabledMask | ModifierId.DOUBLE_JUMP : disabledMask & ~ModifierId.DOUBLE_JUMP;
+        }
+
+        /// <summary>
+        ///     Gets or sets the DisableGliding property.
+        ///     <para>Get: Returns true if DisableAll is true or if DisableGliding is explicitly set to true.</para>
+        ///     <para>Set: Explicitly sets the DisableGliding property to the given value.</para>
+        /// </summary>
+        public bool DisableGliding
+        {
+            get => IsDisabled(ModifierId.GLIDING);
+            set => disabledMask = value ? disabledMask | ModifierId.GLIDING : disabledMask & ~ModifierId.GLIDING;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsDisabled(ModifierId modifier) => (disabledMask & (ModifierId.ALL | modifier)) != 0;
+
+        public void RemoveAllModifiers() =>
+            disabledMask = ModifierId.NONE;
     }
 }

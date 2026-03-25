@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.Movement.Systems
             bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
-                || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
+                || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
                 SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
                 return;
@@ -156,18 +156,20 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocityTier = velocityTier,
 
                 isStunned = playerStunComponent.IsStunned,
-                isSliding = animation.IsSliding,
+                isSliding = animation.States.IsSliding,
                 isInstant = isInstant,
                 isEmoting = isEmoting,
 
                 animState = new AnimationStates
                 {
+                    IsSliding = animation.States.IsSliding,
                     IsGrounded = animation.States.IsGrounded,
-                    IsJumping = animation.States.IsJumping,
+                    JumpCount = animation.States.JumpCount,
                     IsLongJump = animation.States.IsLongJump,
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,
-                    // NOTE we are NOT setting 'is stunned' because it's already sent as part of the movement message itself
+                    IsStunned = playerStunComponent.IsStunned,
+                    GlideState = animation.States.GlideState,
 
                     // Just for testing purposes. We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
                     SlideBlendValue = animation.States.SlideBlendValue,

@@ -16,18 +16,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Hubs
 
         public MessagePipesHub(
             IRoomHub roomHub,
-            IMultiPool sendingMultiPool,
-            IMultiPool receivingMultiPool,
+            IMultiPool multiPool,
             IMemoryPool memoryPool,
             ThroughputBufferBunch islandBufferBunch,
             ThroughputBufferBunch sceneBufferBunch,
             ThroughputBufferBunch chatBufferBunch
         ) : this(
-            new MessagePipe(roomHub.SceneRoom().Room().DataPipe.WithThroughputMeasure(sceneBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.GATEKEEPER)
+            new MessagePipe(roomHub.SceneRoom().Room().DataPipe.WithThroughputMeasure(sceneBufferBunch), multiPool, memoryPool, RoomSource.GATEKEEPER)
                .WithLog("Scene"),
-            new MessagePipe(roomHub.IslandRoom().DataPipe.WithThroughputMeasure(islandBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.ISLAND)
+            new MessagePipe(roomHub.IslandRoom().DataPipe.WithThroughputMeasure(islandBufferBunch), multiPool, memoryPool, RoomSource.ISLAND)
                .WithLog("Island"),
-            new MessagePipe(roomHub.ChatRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), sendingMultiPool, receivingMultiPool, memoryPool, RoomSource.CHAT)
+            new MessagePipe(roomHub.ChatRoom().DataPipe.WithThroughputMeasure(chatBufferBunch), multiPool, memoryPool, RoomSource.CHAT)
                .WithLog("Chat")
         ) { }
 
