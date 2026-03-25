@@ -19,6 +19,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -125,8 +126,18 @@ namespace DCL.AvatarRendering.AvatarShape
             var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
 
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            AvatarCustomSkinningComponent skinningComponent;
 
+            try { skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, GetReportData());
+                CleanUpFailedInstantiation(ref avatarShapeComponent);
+
+                // Retry with fallback body shape — male body is always available
+                var fallbackResult = new WearablesLoadResult(GetReportData(), e);
+                skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in fallbackResult, avatarBase);
+            }
 
             // Only enable the rig if head-sync is enabled
             // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
@@ -177,8 +188,25 @@ namespace DCL.AvatarRendering.AvatarShape
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
-            // Override by ref
-            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            try
+            {
+                skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, GetReportData());
+                CleanUpFailedInstantiation(ref avatarShapeComponent);
+
+                // Retry with fallback body shape — male body is always available
+                var fallbackResult = new WearablesLoadResult(GetReportData(), e);
+                skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in fallbackResult, avatarBase);
+            }
+        }
+
+        private void CleanUpFailedInstantiation(ref AvatarShapeComponent avatarShapeComponent)
+        {
+            wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            avatarShapeComponent.OutlineCompatibleRenderers.Clear();
         }
 
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
