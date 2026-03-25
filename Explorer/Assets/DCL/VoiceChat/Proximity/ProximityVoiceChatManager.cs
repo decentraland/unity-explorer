@@ -4,6 +4,9 @@ using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+#if UNITY_STANDALONE_OSX
+using DCL.VoiceChat.Permissions;
+#endif
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
