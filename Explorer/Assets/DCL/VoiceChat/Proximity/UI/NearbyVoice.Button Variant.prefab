@@ -124,6 +124,14 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 34
       objectReference: {fileID: 0}
+    - target: {fileID: 2749807465873248309, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2749807465873248309, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: a006366825b69884f9bb5da54b63adb1, type: 2}
     - target: {fileID: 2788950014895397509, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -231,7 +239,7 @@ PrefabInstance:
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 4b974e2f52d43ab4481cdf49145dc862, type: 3}
+      objectReference: {fileID: 21300000, guid: 63a492ae4b817664b96657f07a7c2511, type: 3}
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Color.b
       value: 0.988
