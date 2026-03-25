@@ -71,6 +71,7 @@ namespace DCL.Chat
             SituationalReactionService situationalReactionService,
             ChatReactionsConfig reactionsConfig,
             ChatReactionDebugState reactionDebugState,
+            SituationalReactionDebugController reactionDebugController,
             ChatSettingsAsset chatSettingsAsset,
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
@@ -210,6 +211,7 @@ namespace DCL.Chat
                 situationalReactionService,
                 reactionsConfig,
                 reactionDebugState,
+                reactionDebugController,
                 view.ChatReactionButton.ReactionButton);
             
             uiScope.Add(titleBarPresenter);

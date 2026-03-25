@@ -13,9 +13,10 @@ namespace DCL.Chat.ChatReactions
 {
     public sealed class SituationalReactionPresenter : IDisposable
     {
-        private readonly SituationalReactionService service;
+        private readonly ISituationalReactionSimulation service;
         private readonly ChatReactionsConfig config;
         private readonly ChatReactionDebugState debugState;
+        private readonly SituationalReactionDebugController? debugController;
         private readonly RectTransform? debugButtonRect;
         private readonly CancellationTokenSource cts = new ();
 
@@ -23,14 +24,16 @@ namespace DCL.Chat.ChatReactions
         private bool prevStreamLocal;
         private bool prevStreamRemote;
 
-        public SituationalReactionPresenter(SituationalReactionService service,
+        public SituationalReactionPresenter(ISituationalReactionSimulation service,
             ChatReactionsConfig config,
             ChatReactionDebugState debugState,
+            SituationalReactionDebugController? debugController = null,
             Button? debugButton = null)
         {
             this.service = service;
             this.config = config;
             this.debugState = debugState;
+            this.debugController = debugController;
             this.debugButtonRect = debugButton != null ? debugButton.GetComponent<RectTransform>() : null;
 
             if (this.debugButtonRect != null)
@@ -44,6 +47,7 @@ namespace DCL.Chat.ChatReactions
         {
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
             cts.SafeCancelAndDispose();
+            debugController?.Dispose();
         }
 
         private async UniTask UpdateLoopAsync(CancellationToken ct)
@@ -62,7 +66,8 @@ namespace DCL.Chat.ChatReactions
                     {
                         ApplyDebugToggles();
                         Profiler.BeginSample("ChatReactions.DebugStats");
-                        debugState.UpdateStats(service.GetStats(debugState.IsDebugNearbyActive));
+                        if (debugController != null)
+                            debugState.UpdateStats(debugController.GetStats(debugState.IsDebugNearbyActive));
                         Profiler.EndSample();
                     }
 
@@ -75,22 +80,24 @@ namespace DCL.Chat.ChatReactions
 
         private void ApplyDebugToggles()
         {
+            if (debugController == null) return;
+
             if (config.StreamUILane != prevStreamUI)
             {
                 prevStreamUI = config.StreamUILane;
                 if (prevStreamUI)
-                    service.BeginDebugUIStream(debugButtonRect);
+                    debugController.BeginDebugUIStream(debugButtonRect);
                 else
-                    service.EndDebugUIStream();
+                    debugController.EndDebugUIStream();
             }
 
             if (config.StreamLocalPlayer != prevStreamLocal)
             {
                 prevStreamLocal = config.StreamLocalPlayer;
                 if (prevStreamLocal)
-                    service.BeginDebugLocalStream();
+                    debugController.BeginDebugLocalStream();
                 else
-                    service.EndDebugLocalStream();
+                    debugController.EndDebugLocalStream();
             }
 
             if (config.StreamRemotePlayers != prevStreamRemote)
@@ -98,12 +105,12 @@ namespace DCL.Chat.ChatReactions
                 prevStreamRemote = config.StreamRemotePlayers;
                 if (prevStreamRemote)
                 {
-                    service.BeginDebugNearby();
+                    debugController.BeginDebugNearby();
                     debugState.IsDebugNearbyActive = true;
                 }
                 else
                 {
-                    service.EndDebugNearby();
+                    debugController.EndDebugNearby();
                     debugState.IsDebugNearbyActive = false;
                 }
             }

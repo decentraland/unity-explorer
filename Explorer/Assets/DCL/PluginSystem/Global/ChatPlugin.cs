@@ -281,6 +281,12 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(situationalReactionService);
 
+            var reactionDebugController = new SituationalReactionDebugController(
+                situationalReactionService.UISimulation,
+                situationalReactionService.WorldSimulation,
+                avatarReactionPosition);
+            pluginScope.Add(reactionDebugController);
+
             var remoteReactionRouter = new RemoteReactionRouter(situationalReactionService, reactionBus);
             remoteReactionRouter.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
 
@@ -441,6 +447,7 @@ namespace DCL.PluginSystem.Global
                 situationalReactionService,
                 settings.ReactionsConfig,
                 reactionDebugState,
+                reactionDebugController,
                 settings.ChatSettingsAsset,
                 messageReactionService,
                 web3IdentityCache,

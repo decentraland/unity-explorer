@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatReactions
     /// </summary>
     public sealed class RemoteReactionRouter : IDisposable
     {
-        private readonly ISituationalReactionService service;
+        private readonly IRemoteReactionTarget service;
         private readonly IReactionMessageBus reactionBus;
 
         /// <summary>
@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public bool ShowRemoteUIReactions { get; set; } = true;
 
-        public RemoteReactionRouter(ISituationalReactionService service, IReactionMessageBus reactionBus)
+        public RemoteReactionRouter(IRemoteReactionTarget service, IReactionMessageBus reactionBus)
         {
             this.service = service;
             this.reactionBus = reactionBus;

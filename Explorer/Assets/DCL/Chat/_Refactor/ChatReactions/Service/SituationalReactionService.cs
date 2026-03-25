@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 
@@ -14,13 +13,17 @@ namespace DCL.Chat.ChatReactions
         private readonly Func<Vector3?>? cachedLocalHeadGetter;
         private readonly IReactionMessageBus? reactionBus;
 
+        private const int STREAM_EMOJI_INDEX = -1;
+
         /// <summary>
         /// When false, no world-space reactions (particles above avatar heads) are spawned.
         /// Controlled by the In-World Chat Bubbles &amp; Reactions setting.
         /// </summary>
         public bool WorldReactionsEnabled { get; set; } = true;
 
-        private readonly Func<List<Vector3>>? cachedNearbyGetter;
+        // Temporary: exposed for debug controller wiring. Removed in Task 5 (DIP).
+        public ChatReactionUISimulation UISimulation => chatReactionSimulation;
+        public ChatReactionWorldSimulation WorldSimulation => worldReactionSimulation;
 
         public SituationalReactionService(ChatReactionsConfig config, RectTransform laneRect,
             IAvatarReactionPosition? avatarPosition = null, IReactionMessageBus? reactionBus = null)
@@ -35,15 +38,12 @@ namespace DCL.Chat.ChatReactions
             if (avatarPosition != null)
             {
                 cachedLocalHeadGetter = avatarPosition.GetLocalPlayerHeadPosition;
-                cachedNearbyGetter = avatarPosition.GetAllNearbyHeadPositions;
             }
         }
 
         public void Dispose()
         {
             worldReactionSimulation.EndStream();
-            chatReactionSimulation.EndDebugUIStream();
-            worldReactionSimulation.EndDebugNearby();
             chatReactionSimulation.Dispose();
             worldReactionSimulation.Dispose();
         }
@@ -83,6 +83,9 @@ namespace DCL.Chat.ChatReactions
                 worldReactionSimulation.TriggerAnchoredReaction(headPos.Value, walletId, emojiIndex, count);
         }
 
+        public void TriggerRemoteUIReaction(int emojiIndex, int count) =>
+            chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
+
         public void TriggerUIReaction(int emojiIndex, int count)
         {
             chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
@@ -114,7 +117,7 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.BeginUIStream(sourceRect);
 
             if (cachedLocalHeadGetter != null && WorldReactionsEnabled)
-                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
+                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, STREAM_EMOJI_INDEX, AvatarAnchorTable.LOCAL_PLAYER_ID);
         }
 
         public void EndUIStream()
@@ -132,56 +135,10 @@ namespace DCL.Chat.ChatReactions
             if (cachedLocalHeadGetter == null) return;
 
             if (shouldStreamWorld)
-                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
+                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, STREAM_EMOJI_INDEX, AvatarAnchorTable.LOCAL_PLAYER_ID);
             else
                 worldReactionSimulation.EndStream();
         }
-
-        // Debug controls
-
-        public void BeginDebugUIStream(RectTransform? sourceRect = null) =>
-            chatReactionSimulation.BeginDebugUIStream(sourceRect);
-
-        public void EndDebugUIStream() =>
-            chatReactionSimulation.EndDebugUIStream();
-
-        public void BeginDebugLocalStream()
-        {
-            if (cachedLocalHeadGetter != null)
-                worldReactionSimulation.BeginStream(cachedLocalHeadGetter, StreamEmojiIndex, AvatarAnchorTable.LOCAL_PLAYER_ID);
-        }
-
-        public void EndDebugLocalStream() =>
-            worldReactionSimulation.EndStream();
-
-        public void BeginDebugNearby()
-        {
-            if (cachedNearbyGetter == null) return;
-            worldReactionSimulation.BeginDebugNearby(cachedNearbyGetter);
-        }
-
-        public void EndDebugNearby()
-        {
-            worldReactionSimulation.EndDebugNearby();
-        }
-
-        public ChatReactionStats GetStats(bool debugNearbyActive) =>
-            new (
-                chatReactionSimulation.AliveCount,
-                chatReactionSimulation.PoolCapacity,
-                worldReactionSimulation.AliveCount,
-                worldReactionSimulation.VisibleCount,
-                worldReactionSimulation.VisibleAnchorCount,
-                worldReactionSimulation.PoolCapacity,
-                avatarPosition?.GetNearbyAvatarCount() ?? 0,
-                chatReactionSimulation.IsStreaming,
-                worldReactionSimulation.IsStreaming,
-                debugNearbyActive);
-
-        public void TriggerRemoteUIReaction(int emojiIndex, int count) =>
-            chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
-
-        private int StreamEmojiIndex => -1;
 
         private void TriggerWorldForLocalPlayer(int emojiIndex)
         {

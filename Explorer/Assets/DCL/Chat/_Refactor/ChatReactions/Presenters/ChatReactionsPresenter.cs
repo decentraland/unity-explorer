@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionButtonPresenter buttonPresenter;
         private readonly ChatReactionsSelectorPresenter situationalSelectorPresenter;
         private readonly ChatReactionsSelectorPresenter messageSelectorPresenter;
-        private readonly ISituationalReactionService reactionService;
+        private readonly ISituationalReactionTrigger reactionService;
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
@@ -39,7 +39,7 @@ namespace DCL.Chat.ChatReactions
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView situationalSelectorView,
             ChatReactionsSelectorView messageSelectorView,
-            ISituationalReactionService reactionService,
+            ISituationalReactionTrigger reactionService,
             ChatReactionsAtlasConfig atlasConfig,
             ChatReactionRecentsService recentsService,
             int[] fixedDefaults,
