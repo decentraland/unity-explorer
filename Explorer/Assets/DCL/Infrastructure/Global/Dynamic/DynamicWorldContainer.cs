@@ -579,7 +579,7 @@ namespace Global.Dynamic
                 IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                     staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                     placesAPIService, bootstrapContainer.Environment,
-                    bootstrapContainer.DecentralandUrlsSource);
+                    bootstrapContainer.DecentralandUrlsSource, localSceneDevelopment);
 
                 donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics.Controller) : coreDonationsService;
             }
