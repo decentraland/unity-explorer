@@ -83,6 +83,7 @@ namespace DCL.Chat.ChatReactions
             {
                 channel.RemoveReaction(messageId, emojiIndex, ownWallet);
                 ReactionPersistenceRequested?.Invoke(channelId, messageId, emojiIndex, ownWallet, true);
+                SendReactionToNetwork(emojiIndex, messageId, channel.ChannelType, channelId, isRemoval: true);
             }
             else
             {
@@ -93,14 +94,15 @@ namespace DCL.Chat.ChatReactions
         }
 
         private void SendReactionToNetwork(int emojiIndex, string messageId,
-            ChatChannel.ChatChannelType channelType, ChatChannel.ChannelId channelId)
+            ChatChannel.ChatChannelType channelType, ChatChannel.ChannelId channelId, bool isRemoval = false)
         {
             string stableKey = localIdToStableKey.TryGetValue(messageId, out string? key)
                 ? key
                 : messageId;
 
+            int wireEmojiIndex = isRemoval ? ~emojiIndex : emojiIndex;
             var routing = new ReactionChannelRouting(channelType, channelId.Id);
-            reactionBus.SendMessageReaction(emojiIndex, stableKey, routing);
+            reactionBus.SendMessageReaction(wireEmojiIndex, stableKey, routing);
         }
 
         /// <summary>
@@ -170,8 +172,16 @@ namespace DCL.Chat.ChatReactions
             if (!TryResolveIncomingReaction(args.MessageId, args.WalletId, out string localMessageId, out ChatChannel channel))
                 return;
 
-            channel.AddReaction(localMessageId, args.EmojiIndex, args.WalletId);
-            ReactionPersistenceRequested?.Invoke(channel.Id, localMessageId, args.EmojiIndex, args.WalletId, false);
+            if (args.IsRemoval)
+            {
+                channel.RemoveReaction(localMessageId, args.EmojiIndex, args.WalletId);
+                ReactionPersistenceRequested?.Invoke(channel.Id, localMessageId, args.EmojiIndex, args.WalletId, true);
+            }
+            else
+            {
+                channel.AddReaction(localMessageId, args.EmojiIndex, args.WalletId);
+                ReactionPersistenceRequested?.Invoke(channel.Id, localMessageId, args.EmojiIndex, args.WalletId, false);
+            }
         }
 
         /// <summary>

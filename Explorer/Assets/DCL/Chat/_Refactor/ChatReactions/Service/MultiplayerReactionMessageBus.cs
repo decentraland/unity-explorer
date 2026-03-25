@@ -143,10 +143,13 @@ namespace DCL.Chat.ChatReactions
                 $"Self-send situational reaction: emoji={emojiIndex} wallet={walletId}");
         }
 
-        private async UniTaskVoid SelfSendChatReactionAsync(int emojiIndex, string messageId, string address)
+        private async UniTaskVoid SelfSendChatReactionAsync(int wireEmojiIndex, string messageId, string address)
         {
-            await DelaySelfSendAsync(new ReactionReceivedArgs(address, emojiIndex, 1, ReactionType.Message, messageId),
-                $"Self-send chat reaction: emoji={emojiIndex} messageId={messageId}");
+            bool isRemoval = wireEmojiIndex < 0;
+            int emojiIndex = isRemoval ? ~wireEmojiIndex : wireEmojiIndex;
+
+            await DelaySelfSendAsync(new ReactionReceivedArgs(address, emojiIndex, 1, ReactionType.Message, messageId, isRemoval),
+                $"Self-send chat reaction: emoji={emojiIndex} isRemoval={isRemoval} messageId={messageId}");
         }
 
         private async UniTask DelaySelfSendAsync(ReactionReceivedArgs args, string logMessage)
@@ -208,7 +211,12 @@ namespace DCL.Chat.ChatReactions
                     return;
                 }
 
-                string dedupKey = $"{receivedMessage.Payload.MessageId}:{receivedMessage.Payload.EmojiIndex}";
+                int rawEmojiIndex = receivedMessage.Payload.EmojiIndex;
+                bool isRemoval = rawEmojiIndex < 0;
+                int emojiIndex = isRemoval ? ~rawEmojiIndex : rawEmojiIndex;
+
+                // Use raw value in dedup key so add/remove have distinct keys
+                string dedupKey = $"{receivedMessage.Payload.MessageId}:{rawEmojiIndex}";
 
                 if (!chatReactionDedup.TryPass(walletId, dedupKey))
                 {
@@ -216,14 +224,15 @@ namespace DCL.Chat.ChatReactions
                     return;
                 }
 
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={receivedMessage.Payload.EmojiIndex} messageId={receivedMessage.Payload.MessageId} from={walletId}");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={emojiIndex} isRemoval={isRemoval} messageId={receivedMessage.Payload.MessageId} from={walletId}");
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     walletId,
-                    receivedMessage.Payload.EmojiIndex,
+                    emojiIndex,
                     1,
                     ReactionType.Message,
-                    receivedMessage.Payload.MessageId));
+                    receivedMessage.Payload.MessageId,
+                    isRemoval));
             }
         }
 
