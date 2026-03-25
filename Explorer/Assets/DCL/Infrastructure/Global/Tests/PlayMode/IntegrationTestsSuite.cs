@@ -30,7 +30,11 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.Audio;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
@@ -83,6 +87,11 @@ namespace Global.Tests.PlayMode
 
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
+            Entity playerEntity = world.Create(new PlayerComponent(),
+                new CharacterTransform(),
+                new PlayerMovementNetworkComponent(),
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
@@ -103,7 +112,7 @@ namespace Global.Tests.PlayMode
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
                 world,
-                new Entity(),
+                playerEntity,
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,
