@@ -16,6 +16,8 @@ MonoBehaviour:
   <EmojiMaterial>k__BackingField: {fileID: 2100000, guid: 3bb1569857e0416438c8f05f427cc4ba, type: 2}
   <UILane>k__BackingField: {fileID: 11400000, guid: 63cac0f6e35666c49b5e0b9bd0fa0a22, type: 2}
   <WorldLane>k__BackingField: {fileID: 11400000, guid: 44ddfb8a933575544857300ca6cca86c, type: 2}
+  <SpawnSizeMinRatio>k__BackingField: 0.2
+  <SpawnSizeMaxRatio>k__BackingField: 0.5
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
   MockEnabled: 0
   SelfSendEnabled: 0
@@ -24,11 +26,11 @@ MonoBehaviour:
   StreamLocalPlayer: 0
   StreamRemotePlayers: 0
   uiAliveCount: 0
-  uiPoolCapacity: 1023
+  uiPoolCapacity: 0
   worldAliveCount: 0
-  worldVisibleCount: 1
+  worldVisibleCount: 0
   worldVisibleAnchors: 0
-  worldPoolCapacity: 1023
+  worldPoolCapacity: 0
   nearbyAvatarCount: 0
   isUIStreaming: 0
   isWorldStreaming: 0

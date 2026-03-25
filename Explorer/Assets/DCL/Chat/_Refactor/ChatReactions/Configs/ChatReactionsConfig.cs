@@ -48,8 +48,7 @@ namespace DCL.Chat.ChatReactions.Configs
         public bool SelfSendEnabled;
 
         [Header("Debug — Streaming")]
-        [Note("Master toggle — enables Inspector-driven debug toggles and live stats below. " +
-              "Disable in production.")]
+        [Note("Master toggle — enables debug toggles and live stats. Disable in production.")]
         public bool DebugEnabled;
 
         [Note("Continuously stream UI particles from the lane bottom.")]
@@ -72,23 +71,19 @@ namespace DCL.Chat.ChatReactions.Configs
         [ShowOnly] [SerializeField] private bool isUIStreaming;
         [ShowOnly] [SerializeField] private bool isWorldStreaming;
         [ShowOnly] [SerializeField] private bool isDebugNearbyActive;
-        /// <summary>Called by the presenter each frame to push live data into the config for Inspector display.</summary>
-        public void UpdateStats(int uiAlive, int uiCapacity,
-            int worldAlive, int worldVisible, int worldVisibleAnchorsCount, int worldCapacity,
-            int nearbyAvatars,
-            bool uiStreaming, bool worldStreaming,
-            bool debugNearby)
+
+        public void UpdateStats(ChatReactionStats stats)
         {
-            uiAliveCount = uiAlive;
-            uiPoolCapacity = uiCapacity;
-            worldAliveCount = worldAlive;
-            worldVisibleCount = worldVisible;
-            worldVisibleAnchors = worldVisibleAnchorsCount;
-            worldPoolCapacity = worldCapacity;
-            nearbyAvatarCount = nearbyAvatars;
-            isUIStreaming = uiStreaming;
-            isWorldStreaming = worldStreaming;
-            isDebugNearbyActive = debugNearby;
+            uiAliveCount = stats.UIAliveCount;
+            uiPoolCapacity = stats.UIPoolCapacity;
+            worldAliveCount = stats.WorldAliveCount;
+            worldVisibleCount = stats.WorldVisibleCount;
+            worldVisibleAnchors = stats.WorldVisibleAnchors;
+            worldPoolCapacity = stats.WorldPoolCapacity;
+            nearbyAvatarCount = stats.NearbyAvatarCount;
+            isUIStreaming = stats.IsUIStreaming;
+            isWorldStreaming = stats.IsWorldStreaming;
+            isDebugNearbyActive = stats.IsDebugNearbyActive;
         }
     }
 }

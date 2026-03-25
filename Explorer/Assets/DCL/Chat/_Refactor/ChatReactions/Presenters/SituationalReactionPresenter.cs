@@ -15,6 +15,7 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly SituationalReactionService service;
         private readonly ChatReactionsConfig config;
+        private readonly ChatReactionDebugState debugState;
         private readonly RectTransform? debugButtonRect;
         private readonly CancellationTokenSource cts = new ();
 
@@ -24,10 +25,12 @@ namespace DCL.Chat.ChatReactions
 
         public SituationalReactionPresenter(SituationalReactionService service,
             ChatReactionsConfig config,
+            ChatReactionDebugState debugState,
             Button? debugButtonRect = null)
         {
             this.service = service;
             this.config = config;
+            this.debugState = debugState;
             this.debugButtonRect = debugButtonRect != null ? debugButtonRect.GetComponent<RectTransform>() : null;
 
             if (this.debugButtonRect != null)
@@ -59,17 +62,9 @@ namespace DCL.Chat.ChatReactions
                     {
                         ApplyDebugToggles();
                         Profiler.BeginSample("ChatReactions.DebugStats");
-                        config.UpdateStats(
-                            service.UIAliveCount,
-                            service.UIPoolCapacity,
-                            service.WorldAliveCount,
-                            service.WorldVisibleCount,
-                            service.WorldVisibleAnchors,
-                            service.WorldPoolCapacity,
-                            service.NearbyAvatarCount,
-                            service.IsUIStreaming,
-                            service.IsWorldStreaming,
-                            service.IsDebugNearbyActive);
+                        ChatReactionStats stats = service.GetStats();
+                        debugState.UpdateStats(stats);
+                        config.UpdateStats(stats);
                         Profiler.EndSample();
                     }
 

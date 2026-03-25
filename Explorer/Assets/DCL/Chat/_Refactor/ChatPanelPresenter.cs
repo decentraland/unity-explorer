@@ -70,6 +70,7 @@ namespace DCL.Chat
             ITranslationCache translationCache,
             SituationalReactionService situationalReactionService,
             ChatReactionsConfig reactionsConfig,
+            ChatReactionDebugState reactionDebugState,
             ChatSettingsAsset chatSettingsAsset,
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
@@ -208,6 +209,7 @@ namespace DCL.Chat
             var situationalReactionPresenter = new SituationalReactionPresenter(
                 situationalReactionService,
                 reactionsConfig,
+                reactionDebugState,
                 view.ChatReactionButton.ReactionButton);
             
             uiScope.Add(titleBarPresenter);

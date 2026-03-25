@@ -285,6 +285,8 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(situationalReactionService);
 
+            var reactionDebugState = new ChatReactionDebugState();
+
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
@@ -433,6 +435,7 @@ namespace DCL.PluginSystem.Global
                 translationCache,
                 situationalReactionService,
                 settings.ReactionsConfig,
+                reactionDebugState,
                 settings.ChatSettingsAsset,
                 messageReactionService,
                 web3IdentityCache,
