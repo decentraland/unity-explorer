@@ -137,7 +137,8 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = proto.IsLongFall,
                     IsFalling = proto.IsFalling,
                     IsStunned = proto.IsStunned,
-                    GlideState = (GlideStateValue)proto.GlideState,
+                    // Facial expression packed into bits 2-13; low 2 bits are the actual GlideState.
+                    GlideState = (GlideStateValue)((int)proto.GlideState & 0x3),
                 },
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
@@ -146,6 +147,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 headIKYawEnabled = proto.HeadIkYawEnabled,
                 headIKPitchEnabled = proto.HeadIkPitchEnabled,
                 headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
+
+                // Unpack facial expression indices from bits 2-13 of GlideState.
+                eyebrowsExpressionIndex = (byte)(((int)proto.GlideState >> 2) & 0xF),
+                eyesExpressionIndex = (byte)(((int)proto.GlideState >> 6) & 0xF),
+                mouthExpressionIndex = (byte)(((int)proto.GlideState >> 10) & 0xF),
             };
         }
 
@@ -197,7 +203,14 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsLongJump = message.animState.IsLongJump;
             movement.IsLongFall = message.animState.IsLongFall;
             movement.IsFalling = message.animState.IsFalling;
-            movement.GlideState = (Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState)message.animState.GlideState;
+            // GlideStateValue uses values 0-3 (2 bits). Facial expression indices (4 bits each) are
+            // packed into bits 2-13 of the GlideState int field to avoid adding new proto fields.
+            int packedFaceExpression = (message.eyebrowsExpressionIndex & 0xF)
+                                       | ((message.eyesExpressionIndex & 0xF) << 4)
+                                       | ((message.mouthExpressionIndex & 0xF) << 8);
+
+            movement.GlideState = (Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState)(
+                (int)message.animState.GlideState | (packedFaceExpression << 2));
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;

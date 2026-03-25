@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System;
@@ -46,6 +47,13 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            // Ensure LocalPlayerFacialExpressionComponent exists before the expression query runs.
+            SetupNetworkExpressionComponentQuery(World);
+
+            // Sync any external writes to AvatarFaceExpressionComponent (e.g. debug menu) back to the
+            // network bridge component so PlayerMovementNetSendSystem picks them up.
+            SyncAvatarExpressionToNetworkQuery(World);
+
             if (triggeredSlot < 0)
                 return;
 
@@ -54,16 +62,58 @@ namespace DCL.AvatarRendering.AvatarShape
             triggeredSlot = -1;
         }
 
+        /// <summary>
+        ///     Adds <see cref="LocalPlayerFacialExpressionComponent"/> to the player entity as soon as
+        ///     <see cref="AvatarFaceExpressionComponent"/> is available (i.e. after avatar load).
+        ///     Runs at most once per player entity thanks to the [None] filter.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerComponent), typeof(AvatarFaceExpressionComponent))]
+        [None(typeof(LocalPlayerFacialExpressionComponent), typeof(DeleteEntityIntention))]
+        private void SetupNetworkExpressionComponent(in Entity entity)
+        {
+            World.Add(entity, new LocalPlayerFacialExpressionComponent());
+        }
+
         [Query]
         [All(typeof(PlayerComponent), typeof(AvatarFaceExpressionComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplyExpressionToPlayer([Data] int expressionIndex, ref AvatarFaceExpressionComponent expression)
+        private void ApplyExpressionToPlayer([Data] int expressionIndex, ref AvatarFaceExpressionComponent expression, ref LocalPlayerFacialExpressionComponent networkExpression)
         {
             AvatarFaceExpressionDefinition def = expressions[expressionIndex];
             expression.EyebrowsExpressionIndex = def.EyebrowsIndex;
             expression.EyesExpressionIndex = def.EyesIndex;
             expression.MouthExpressionIndex = def.MouthIndex;
             expression.IsDirty = true;
+
+            networkExpression.EyebrowsIndex = (byte)def.EyebrowsIndex;
+            networkExpression.EyesIndex = (byte)def.EyesIndex;
+            networkExpression.MouthIndex = (byte)def.MouthIndex;
+        }
+
+        /// <summary>
+        ///     Every frame, mirrors the local player's <see cref="AvatarFaceExpressionComponent"/> into
+        ///     <see cref="LocalPlayerFacialExpressionComponent"/> so that changes made outside the input
+        ///     system (e.g. the debug menu) are also propagated over the network.
+        ///     Negative sentinel values (NO_EYE_OVERRIDE / NO_MOUTH_POSE) are clamped to 0.
+        /// </summary>
+        [Query]
+        [All(typeof(PlayerComponent), typeof(AvatarFaceExpressionComponent), typeof(LocalPlayerFacialExpressionComponent))]
+        [None(typeof(DeleteEntityIntention))]
+        private void SyncAvatarExpressionToNetwork(in AvatarFaceExpressionComponent expression, ref LocalPlayerFacialExpressionComponent networkExpression)
+        {
+            byte eyebrows = (byte)Math.Max(0, expression.EyebrowsExpressionIndex);
+            byte eyes = (byte)Math.Max(0, expression.EyesExpressionIndex);
+            byte mouth = (byte)Math.Max(0, expression.MouthExpressionIndex);
+
+            if (networkExpression.EyebrowsIndex == eyebrows &&
+                networkExpression.EyesIndex == eyes &&
+                networkExpression.MouthIndex == mouth)
+                return;
+
+            networkExpression.EyebrowsIndex = eyebrows;
+            networkExpression.EyesIndex = eyes;
+            networkExpression.MouthIndex = mouth;
         }
 
         private void OnSlotPerformed(InputAction.CallbackContext ctx)
