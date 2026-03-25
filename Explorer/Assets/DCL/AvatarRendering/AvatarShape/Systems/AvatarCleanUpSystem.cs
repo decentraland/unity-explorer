@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -24,7 +24,6 @@ namespace DCL.AvatarRendering.AvatarShape
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarCleanUpSystem : BaseUnityLoopSystem
     {
-        private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IAvatarMaterialPoolHandler avatarMaterialPoolHandler;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -37,7 +36,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
         internal AvatarCleanUpSystem(
             World world,
-            IPerformanceBudget instantiationFrameTimeBudget,
             FixedComputeBufferHandler vertOutBuffer,
             IAvatarMaterialPoolHandler avatarMaterialPoolHandler,
             IComponentPool<AvatarBase> avatarPoolRegistry,
@@ -46,7 +44,6 @@ namespace DCL.AvatarRendering.AvatarShape
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob) : base(world)
         {
-            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.vertOutBuffer = vertOutBuffer;
             this.avatarMaterialPoolHandler = avatarMaterialPoolHandler;
             this.avatarPoolRegistry = avatarPoolRegistry;

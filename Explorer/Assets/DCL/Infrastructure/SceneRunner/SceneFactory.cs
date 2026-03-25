@@ -65,6 +65,7 @@ namespace SceneRunner
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
+        private readonly string installSource;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -89,7 +90,8 @@ namespace SceneRunner
             ISceneCommunicationPipe messagePipesHub,
             IRemoteMetadata remoteMetadata,
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            string installSource)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -112,6 +114,7 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.dclEnvironment = dclEnvironment;
+            this.installSource = installSource;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -198,7 +201,7 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -227,7 +230,7 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
