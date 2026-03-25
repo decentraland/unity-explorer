@@ -63,6 +63,19 @@ namespace DCL.UI.Sidebar
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; }
 
+        [field: Header("Zendesk Support")]
+        /// <summary>
+        /// Button that opens the in-game Zendesk Support (Messaging) UI.
+        /// Wire up in the SidebarUI prefab – use the existing SidebarButton prefab as a template.
+        /// </summary>
+        [field: SerializeField] internal Button supportButton { get; private set; }
+
+        /// <summary>
+        /// Optional button that opens the Zendesk Help Center home screen.
+        /// Requires Guide to be enabled on the Zendesk account.
+        /// </summary>
+        [field: SerializeField] internal Button helpCenterButton { get; private set; }
+
         [field: Header("Controls")]
         [field: SerializeField] internal Button controlsButton { get; private set; }
 

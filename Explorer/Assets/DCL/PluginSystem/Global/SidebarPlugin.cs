@@ -24,6 +24,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
+using DCL.ZendeskSupport;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -144,6 +145,11 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
+            // Zendesk Support: initialize the controller and pass it to the sidebar.
+            // The SDK initialization is deferred until the first time the view is shown
+            // so it does not block startup.
+            var zendeskSupportController = new ZendeskSupportController();
+
             mvcManager.RegisterController(new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
@@ -167,7 +173,8 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 decentralandUrls,
                 eventBus,
-                eventsApiService
+                eventsApiService,
+                zendeskSupportController
             ));
         }
 

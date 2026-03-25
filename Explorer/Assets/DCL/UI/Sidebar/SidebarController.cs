@@ -26,6 +26,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.ZendeskSupport;
 using ECS;
 using MVC;
 using System;
@@ -50,6 +51,7 @@ namespace DCL.UI.Sidebar
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
+        private readonly ZendeskSupportController zendeskSupportController;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
@@ -87,7 +89,8 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             IEventBus eventBus,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            ZendeskSupportController zendeskSupportController = null)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -107,6 +110,7 @@ namespace DCL.UI.Sidebar
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.eventsApiService = eventsApiService;
+            this.zendeskSupportController = zendeskSupportController;
 
             eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -145,6 +149,18 @@ namespace DCL.UI.Sidebar
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
+
+            // Zendesk support hooks
+            if (viewInstance.supportButton != null)
+                viewInstance.supportButton.onClick.AddListener(OnSupportButtonClickedAsync);
+
+            if (viewInstance.helpCenterButton != null)
+                viewInstance.helpCenterButton.onClick.AddListener(OnHelpCenterButtonClickedAsync);
+
+            // Kick off Zendesk SDK initialization in the background so it is ready
+            // before the user first clicks the support button.
+            if (zendeskSupportController != null)
+                zendeskSupportController.InitializeAsync().Forget();
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
@@ -380,6 +396,18 @@ namespace DCL.UI.Sidebar
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
+        }
+
+        private void OnSupportButtonClickedAsync()
+        {
+            if (zendeskSupportController == null) return;
+            zendeskSupportController.ShowMessagingAsync().Forget();
+        }
+
+        private void OnHelpCenterButtonClickedAsync()
+        {
+            if (zendeskSupportController == null) return;
+            zendeskSupportController.ShowHomeAsync().Forget();
         }
 
         private async void OnControlsButtonClickedAsync()

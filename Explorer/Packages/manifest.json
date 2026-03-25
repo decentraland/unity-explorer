@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.zendesk.messaging": "https://github.com/zendesk/zendesk_messaging_unity.git",
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
     "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
     "com.alttester.sdk": "2.3.0",
