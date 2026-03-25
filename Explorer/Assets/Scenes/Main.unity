@@ -510,6 +510,7 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  altTesterPrefab: {fileID: 6159525817960279506, guid: d311441ba5d3f4a05b5a75c9aa33f8bc, type: 3}
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0
