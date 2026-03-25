@@ -74,28 +74,40 @@ namespace DCL.Chat.ChatReactions
                 UnityEngine.Object.Destroy(runtimeMaterial);
         }
 
-        // ── Pipeline ────────────────────────────────────────────────
-
         public void Tick(float dt)
         {
             if (store.Count > 0)
             {
                 anchorTable.Refresh(avatarPosition);
 
-                AnchorSpringForce.Apply(store.Buffer, store.Count, anchorTable,
-                    config.WorldLane.SpringStrength, config.WorldLane.SpringDamping,
-                    config.WorldLane.SpringOverLifetime, dt);
+                AnchorSpringForce.Apply(store.Buffer,
+                    store.Count,
+                    anchorTable,
+                    config.WorldLane.SpringStrength, 
+                    config.WorldLane.SpringDamping,
+                    config.WorldLane.SpringOverLifetime,
+                    dt);
 
-                ParticleOscillationForce.Apply(store.Buffer, store.Count,
-                    config.WorldLane.ZigZagAmplitude, config.WorldLane.ZigZagFrequency, dt);
+                ParticleOscillationForce.Apply(store.Buffer,
+                    store.Count,
+                    config.WorldLane.ZigZagAmplitude,
+                    config.WorldLane.ZigZagFrequency,
+                    dt);
 
                 Profiler.BeginSample("ChatReactions.World.Integrate");
-                ParticleIntegrator.Step(store.Buffer, store.Count,
-                    config.WorldLane.Gravity, config.WorldLane.Drag, dt);
+                
+                ParticleIntegrator.Step(store.Buffer, 
+                    store.Count,
+                    config.WorldLane.Gravity,
+                    config.WorldLane.Drag,
+                    dt);
+                
                 Profiler.EndSample();
 
                 Profiler.BeginSample("ChatReactions.World.Compact");
+                
                 store.CompactDead();
+                
                 Profiler.EndSample();
             }
 
@@ -124,19 +136,14 @@ namespace DCL.Chat.ChatReactions
             Profiler.BeginSample("ChatReactions.World.Draw");
 
             anchorTable.UpdateVisibility(cam, maxSpawnDistanceSqr);
-            lastVisibleCount = culler.Cull(store.Buffer, store.Count,
-                cam, anchorTable, maxSpawnDistanceSqr);
+            lastVisibleCount = culler.Cull(store.Buffer, store.Count, cam, anchorTable, maxSpawnDistanceSqr);
 
             if (config.DebugEnabled)
                 lastVisibleAnchorCount = anchorTable.CountVisible();
 
-            renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount,
-                config.WorldLane.RenderLayer);
-
+            renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount, config.WorldLane.RenderLayer);
             Profiler.EndSample();
         }
-
-        // ── Spawning ────────────────────────────────────────────────
 
         public void TriggerWorldReaction(Vector3 headPos, int emojiIndex, int count)
         {
@@ -163,8 +170,6 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < Mathf.Max(1, count); i++)
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
         }
-
-        // ── Streaming ───────────────────────────────────────────────
 
         public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex, string? walletId = null)
         {
@@ -196,8 +201,6 @@ namespace DCL.Chat.ChatReactions
             debugPositionsGetter = null;
             debugAccumulator = 0f;
         }
-
-        // ── Private ─────────────────────────────────────────────────
 
         private void EmitStreamParticles(float dt)
         {

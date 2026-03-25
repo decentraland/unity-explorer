@@ -96,7 +96,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Avatars beyond this or outside the camera view are skipped during rendering. " +
                      "Matches nametag range by default.")]
         [field: Range(10f, 100f)]
-        [field: SerializeField] public float MaxSpawnDistance { get; private set; } = 40f;
+        [field: SerializeField] public float MaxSpawnDistance { get; private set; } = 40;
 
         [field: Header("Mock Simulation")]
         [field: Note("Minimum seconds between simulated incoming reactions.")]

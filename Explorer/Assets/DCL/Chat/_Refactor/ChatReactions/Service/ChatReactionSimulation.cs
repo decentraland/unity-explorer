@@ -63,8 +63,6 @@ namespace DCL.Chat.ChatReactions
                 UnityEngine.Object.Destroy(runtimeMaterial);
         }
 
-        // ── Pipeline ────────────────────────────────────────────────
-
         public void Tick(float dt)
         {
             if (uiStore.Count > 0)
@@ -90,8 +88,6 @@ namespace DCL.Chat.ChatReactions
             Profiler.EndSample();
         }
 
-        // ── Spawning ────────────────────────────────────────────────
-
         public void TriggerUIReaction(int emojiIndex, int count)
         {
             Vector2 basePx = ResolveDefaultSpawnPosition();
@@ -104,8 +100,6 @@ namespace DCL.Chat.ChatReactions
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
 
-        // ── Streaming ───────────────────────────────────────────────
-
         public void BeginUIStream(RectTransform sourceRect) =>
             streamEmitter.Begin(sourceRect);
 
@@ -117,8 +111,6 @@ namespace DCL.Chat.ChatReactions
 
         public void BeginDebugUIStream(RectTransform? sourceRect = null) => streamEmitter.Begin(sourceRect);
         public void EndDebugUIStream() => streamEmitter.End();
-
-        // ── Private ─────────────────────────────────────────────────
 
         private void ApplyFlightSteering(float dt)
         {
