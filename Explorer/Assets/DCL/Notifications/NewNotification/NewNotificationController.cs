@@ -397,7 +397,8 @@ namespace DCL.Notifications.NewNotification
             {
                 notificationCanvasGroup.interactable = false;
                 notificationCanvasGroup.blocksRaycasts = false;
-                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token)
+                                             .SuppressCancellationThrow();
             }
         }
 
