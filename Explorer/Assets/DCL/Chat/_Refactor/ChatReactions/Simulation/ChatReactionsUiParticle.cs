@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
-    public struct ChatReactionsUiParticle
+    public struct ChatReactionsUiParticle : IAliveParticle
     {
         public Vector2 screenPos;
         public Vector2 screenVel;
@@ -13,5 +13,7 @@ namespace DCL.Chat.ChatReactions
         public int emojiIndex;
         public float zigZagPhase;
         public byte alive;
+
+        public byte Alive => alive;
     }
 }

@@ -3,27 +3,27 @@ using UnityEngine;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Dense array storage for world-space particles.
+    /// Dense array storage for particles.
     /// <c>Buffer[0..Count-1]</c> are all alive — no gaps, no alive checks needed in loops.
     /// </summary>
-    public sealed class DenseParticleStore
+    public sealed class DenseParticleStore<T> where T : struct, IAliveParticle
     {
-        private readonly ChatReactionsParticle[] buffer;
+        private readonly T[] buffer;
         private int count;
 
-        public ChatReactionsParticle[] Buffer => buffer;
+        public T[] Buffer => buffer;
         public int Count => count;
         public int Capacity => buffer.Length;
 
         public DenseParticleStore(int capacity)
         {
-            buffer = new ChatReactionsParticle[Mathf.Max(64, capacity)];
+            buffer = new T[Mathf.Max(64, capacity)];
         }
 
         /// <summary>
-        /// Appends a particle. When full, overwrites index 0 (oldest after compaction).
+        /// Appends a particle. When full, overwrites index 0 (round-robin eviction, not LRU).
         /// </summary>
-        public void Add(ChatReactionsParticle particle)
+        public void Add(T particle)
         {
             if (count >= buffer.Length)
             {
@@ -35,7 +35,7 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Removes dead particles (alive == 0) by shifting survivors forward.
+        /// Removes dead particles (Alive == 0) by shifting survivors forward.
         /// Single forward pass, stable order, updates <see cref="Count"/>.
         /// </summary>
         public void CompactDead()
@@ -44,7 +44,7 @@ namespace DCL.Chat.ChatReactions
 
             for (int i = 0; i < count; i++)
             {
-                if (buffer[i].alive == 0)
+                if (buffer[i].Alive == 0)
                     continue;
 
                 if (writeIdx != i)

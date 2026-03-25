@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
-        private readonly DenseUiParticleStore uiStore;
+        private readonly DenseParticleStore<ChatReactionsUiParticle> uiStore;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
@@ -43,7 +43,7 @@ namespace DCL.Chat.ChatReactions
             atlasTotalTiles = config.SafeTotalTiles;
 
             runtimeMaterial = ChatReactionMaterialFactory.CreateRuntimeMaterial(config);
-            uiStore = new DenseUiParticleStore(config.UILane.MaxParticles);
+            uiStore = new DenseParticleStore<ChatReactionsUiParticle>(config.UILane.MaxParticles);
             spawnResolver = new UIReactionSpawnResolver(laneRect);
             streamEmitter = new UIReactionStreamEmitter();
 
@@ -68,7 +68,7 @@ namespace DCL.Chat.ChatReactions
                 ApplyFlightSteering(dt);
 
                 Profiler.BeginSample("ChatReactions.UI.Physics");
-                UiParticleIntegrator.Step(uiStore.Buffer, uiStore.Count,
+                ParticleIntegrator.Step(uiStore.Buffer, uiStore.Count,
                     config.UILane.Gravity, config.UILane.Drag, dt);
                 uiStore.CompactDead();
                 Profiler.EndSample();

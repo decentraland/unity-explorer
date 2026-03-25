@@ -18,7 +18,7 @@ namespace DCL.Chat.ChatReactions
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
-        private readonly DenseParticleStore store;
+        private readonly DenseParticleStore<ChatReactionsParticle> store;
         private readonly ChatReactionsParticleRenderer renderer;
         private readonly ParticleVisibilityCuller culler;
         private readonly System.Random rng;
@@ -57,7 +57,7 @@ namespace DCL.Chat.ChatReactions
             atlasTotalTiles = config.SafeTotalTiles;
 
             runtimeMaterial = ChatReactionMaterialFactory.CreateRuntimeMaterial(config, "World Runtime");
-            store = new DenseParticleStore(config.WorldLane.MaxParticles);
+            store = new DenseParticleStore<ChatReactionsParticle>(config.WorldLane.MaxParticles);
             culler = new ParticleVisibilityCuller(config.WorldLane.MaxParticles);
             maxSpawnDistanceSqr = config.WorldLane.MaxSpawnDistance * config.WorldLane.MaxSpawnDistance;
 

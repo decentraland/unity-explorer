@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
-    public struct ChatReactionsParticle
+    public struct ChatReactionsParticle : IAliveParticle
     {
         public const byte ANCHOR_NONE = 255;
 
@@ -16,5 +16,7 @@ namespace DCL.Chat.ChatReactions
         public float zigZagPhase;
         public byte alive;
         public byte anchorIndex;
+
+        public byte Alive => alive;
     }
 }
