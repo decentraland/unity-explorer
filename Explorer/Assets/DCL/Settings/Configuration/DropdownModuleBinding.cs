@@ -83,8 +83,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, qualitySettingsController),
-                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
                 DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
                 DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,

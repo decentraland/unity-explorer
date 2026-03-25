@@ -53,10 +53,7 @@ namespace DCL.Prefs
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
-        public const string PS_RESOLUTION_WIDTH = "QS_ResolutionWidth";
-        public const string PS_RESOLUTION_HEIGHT = "QS_ResolutionHeight";
-        public const string PS_RESOLUTION_REFRESH_NUM = "QS_ResolutionRefreshNum";
-        public const string PS_RESOLUTION_REFRESH_DEN = "QS_ResolutionRefreshDen";
+        public const string PS_RESOLUTION = "QS_Resolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
@@ -68,7 +65,7 @@ namespace DCL.Prefs
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
 
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
-        public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
+        public const string SETTINGS_FULLSCREEN = "Settings_Fullscreen";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
 

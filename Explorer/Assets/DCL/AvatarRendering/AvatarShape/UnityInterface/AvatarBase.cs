@@ -215,6 +215,19 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.eulerAngles = angles;
         }
 
+        // Called onRelease of the pool. Resets stuff to avoid:
+        //   - Armature inclination that could be caused by emotes
+        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        public void ResetState()
+        {
+            ResetArmatureInclination();
+            transform.localPosition = Vector3.zero;
+            AvatarAnimator.Rebind();
+            HipsConstraint.data.offset = Vector3.zero;
+            HipsConstraint.weight = 0;
+            FeetIKRig.enabled = false;
+        }
+
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 

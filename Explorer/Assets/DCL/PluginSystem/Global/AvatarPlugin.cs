@@ -216,7 +216,7 @@ namespace DCL.PluginSystem.Global
                     instance.FeetIKRig.enabled = false;
                     return instance;
                 },
-                onRelease: avatarBase => { avatarBase.FeetIKRig.enabled = false; });
+                onRelease: avatarBase => avatarBase.ResetState());
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
