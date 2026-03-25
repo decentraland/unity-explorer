@@ -2023,8 +2023,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 10.5
-  m_fontSizeBase: 10.5
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2131,7 +2131,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.ChatReactionButtonView
   <ReactionButton>k__BackingField: {fileID: 9134375418826102299}
-  <icon>k__BackingField: {fileID: 2837788084586182247}
 --- !u!114 &9134375418826102299
 MonoBehaviour:
   m_ObjectHideFlags: 0
