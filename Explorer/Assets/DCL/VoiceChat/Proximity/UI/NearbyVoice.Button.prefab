@@ -32,6 +32,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 34
       objectReference: {fileID: 0}
+    - target: {fileID: 824787487679499640, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Name
+      value: UnhoverImage
+      objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
       value: 91.47
@@ -222,7 +226,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Name
-      value: NearbyVoice.Button Variant
+      value: NearbyVoice.Button
       objectReference: {fileID: 0}
     - target: {fileID: 5790594399661718223, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_IsActive
@@ -236,6 +240,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 4b974e2f52d43ab4481cdf49145dc862, type: 3}
+    - target: {fileID: 7669936517213317908, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_Name
+      value: HoverImage
+      objectReference: {fileID: 0}
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -263,11 +271,67 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7736114565438975700}
   m_SourcePrefab: {fileID: 100100000, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
 --- !u!114 &353328369979377817 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4701620919981290508, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 5032989285250759829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &817535700602156706 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 5032989285250759829}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7736114565438975700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817535700602156706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff05dbcd27013f4da6ed6fe6de0cbc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.ProximityVoiceChatButtonView
+  unselectedImage: {fileID: 3379401566610532616}
+  hoverStateImage: {fileID: 7958809184563542825}
+  disconnectedSprites:
+    unselected: {fileID: 21300000, guid: 4b974e2f52d43ab4481cdf49145dc862, type: 3}
+    hover: {fileID: 21300000, guid: 82ca2aeafeec83445b09d76a739f31ac, type: 3}
+  hearingSprites:
+    unselected: {fileID: 21300000, guid: 63a492ae4b817664b96657f07a7c2511, type: 3}
+    hover: {fileID: 21300000, guid: 2aa12e028190a8c45a2acaf4940436c4, type: 3}
+  speakingSprites:
+    unselected: {fileID: 21300000, guid: 3cd840df1a9a5204eb03d0b1d9b4e3ac, type: 3}
+    hover: {fileID: 21300000, guid: 5cdadcad5fe65e14ca0986a6c245e50d, type: 3}
+  blockedSprites:
+    unselected: {fileID: 21300000, guid: fde22405b71d7e84f88e57224d627e18, type: 3}
+    hover: {fileID: 21300000, guid: 86250fa27cfbd964fbff5e2d68de6274, type: 3}
+--- !u!114 &3379401566610532616 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 5032989285250759829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7958809184563542825 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3146780150498150332, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
   m_PrefabInstance: {fileID: 5032989285250759829}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
