@@ -10,7 +10,7 @@ using Global.Versioning;
 using System;
 using System.Threading;
 using UnityEngine;
-#if UNITY_WEBGL
+#if !UNITY_WEBGL
 using Plugins.RustSegment.SegmentServerWrap;
 #endif
 
