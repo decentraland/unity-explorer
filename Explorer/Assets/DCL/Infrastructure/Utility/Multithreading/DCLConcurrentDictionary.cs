@@ -63,6 +63,24 @@ namespace Utility.Multithreading
 #endif
         }
 
+        public bool TryAdd(TKey key, TValue value)
+        {
+#if UNITY_WEBGL
+            if (Inner.ContainsKey(key))
+                return false;
+
+            Inner.Add(key, value);
+            return true;
+#else
+            return Inner.TryAdd(key, value);
+#endif
+        }
+
+        public TValue GetValueOrDefault(TKey key)
+        {
+            return Inner.TryGetValue(key, out TValue value) ? value : default;
+        }
+
         public bool Contains(KeyValuePair<TKey, TValue> item) =>
             ((ICollection<KeyValuePair<TKey, TValue>>)Inner).Contains(item);
 

@@ -6,8 +6,8 @@ using DCL.Utility;
 using Sentry;
 using Sentry.Unity;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 using System.Linq;
 using System.Net.Http;
 using UnityEngine;
@@ -49,7 +49,7 @@ namespace DCL.PerformanceAndDiagnostics
     [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
     public partial class SentryTransactionMapping<T>
     {
-        private readonly ConcurrentDictionary<T, ITransactionTracer> sentryTransactions = new ();
+        private readonly DCLConcurrentDictionary<T, ITransactionTracer> sentryTransactions = new ();
 
         public bool TryGet(T key, out ITransactionTracer transactionTracer) =>
             sentryTransactions.TryGetValue(key, out transactionTracer);
@@ -151,8 +151,8 @@ namespace DCL.PerformanceAndDiagnostics
         private const string ERROR_EXCEPTION_MESSAGE_TAG = "error.exception_message";
         private const string ERROR_STACK_TAG = "error.stack";
 
-        private readonly ConcurrentDictionary<ITransactionTracer, int> sentryTransactionErrors = new ();
-        private readonly ConcurrentDictionary<ITransactionTracer, Stack<ISpan>> transactionsSpans = new ();
+        private readonly DCLConcurrentDictionary<ITransactionTracer, int> sentryTransactionErrors = new ();
+        private readonly DCLConcurrentDictionary<ITransactionTracer, Stack<ISpan>> transactionsSpans = new ();
 
         public SentryTransactionManager()
         {
@@ -364,7 +364,7 @@ namespace DCL.PerformanceAndDiagnostics
             }
             else { transaction.Finish(spanStatus); }
 
-            sentryTransactionErrors.Remove(transaction, out _);
+            sentryTransactionErrors.TryRemove(transaction, out _);
         }
 
         public void EndCurrentSpanWithError(ITransactionTracer transactionTracer, string errorMessage, Exception? exception = null)

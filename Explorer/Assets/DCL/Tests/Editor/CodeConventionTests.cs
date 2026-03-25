@@ -21,6 +21,8 @@ namespace DCL.Tests
         private const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
         private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
 
+        private const string TRUST_WEBGL_FILE_IO_SAFETY_FLAG = nameof(TRUST_WEBGL_FILE_IO_SAFETY_FLAG);
+
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
 
         private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
@@ -132,7 +134,8 @@ namespace DCL.Tests
             ValidateNoForbiddenApiUsed(
                     pattern,
                     "Guard File IO operations under #if !UNITY_WEBGL and update the test.",
-                    ignorePaths
+                    ignorePaths,
+                    TRUST_WEBGL_FILE_IO_SAFETY_FLAG
                     );
         }
 
@@ -161,7 +164,8 @@ namespace DCL.Tests
         private static void ValidateNoForbiddenApiUsed(
                 string pattern,
                 string recommendation,
-                IReadOnlyList<string>? ignorePaths)
+                IReadOnlyList<string>? ignorePaths,
+                string? trustFlag = null)
         {
             var regex = new Regex(pattern);
             var violations = new List<string>();
@@ -177,7 +181,12 @@ namespace DCL.Tests
                 if (ignorePaths != null && IsIgnored(filePath, ignorePaths))
                     continue;
 
-                string[] lines = File.ReadAllLines(filePath);
+                string fileContent = File.ReadAllText(filePath);
+
+                if (trustFlag != null && fileContent.Contains(trustFlag))
+                    continue;
+
+                string[] lines = fileContent.Split('\n');
 
                 for (int i = 0; i < lines.Length; i++)
                 {
