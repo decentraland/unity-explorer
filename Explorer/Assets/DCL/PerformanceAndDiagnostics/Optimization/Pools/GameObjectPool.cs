@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
 
@@ -26,14 +25,19 @@ namespace DCL.Optimization.Pools
 
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
-            gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
+
+            gameObjectPool = new ExtendedObjectPool<T>(
+                creationHandler ?? HandleCreation,
+                actionOnRelease: HandleRelease,
+                actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
         public void Dispose() =>
             Clear();
 
         public PooledObject<T> Get(out T v) =>
-            gameObjectPool.Get(out v);
+            new (v = Get(), this);
 
         public void Release(T element)
         {
@@ -51,21 +55,29 @@ namespace DCL.Optimization.Pools
 
         public T Get()
         {
+            if (UnityObjectUtils.IsQuitting)
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
+
             // Defensive programming in response to a null reference exception
-            // that occurred when accessing a Transform component fresh out of
-            // a pool. Issue:
-            // https://github.com/decentraland/unity-explorer/issues/7701
+            // that occurred when obtaining a Transform component from a pool.
+            // Issue: https://github.com/decentraland/unity-explorer/issues/7701
+            T component;
 
             while (true)
             {
-                var component = gameObjectPool.Get();
+                component = gameObjectPool.Get();
 
                 if (component == null)
                     ReportHub.LogError(ReportCategory.ENGINE,
                         $"{typeof(T).Name} has been destroyed while in the pool.");
                 else
-                    return component;
+                    break;
             }
+
+            component.gameObject.SetActive(true);
+            onGet?.Invoke(component);
+            return component;
         }
 
         public void Clear() =>
@@ -81,22 +93,15 @@ namespace DCL.Optimization.Pools
             return go.TryAddComponent<T>();
         }
 
-        private void HandleGet(T component)
-        {
-            if (UnityObjectUtils.IsQuitting)
-            {
-                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
-                return;
-            }
-
-            component.gameObject.SetActive(true);
-            onGet?.Invoke(component);
-        }
-
         private void HandleRelease(T component)
         {
-            if (component == null || UnityObjectUtils.IsQuitting)
-                return;
+            if (UnityObjectUtils.IsQuitting)
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"{nameof(HandleRelease)} called while the game is quitting. This should have been caught by {nameof(Release)} already.");
+
+            if (component == null)
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"{nameof(HandleRelease)} called with a null object. This should have been caught by {nameof(Release)} already.");
 
             onRelease?.Invoke(component);
 
