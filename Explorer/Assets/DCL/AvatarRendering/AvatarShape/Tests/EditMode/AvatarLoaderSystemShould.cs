@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(avatarShapeComponent.ID, FAKE_ID);
             Assert.AreEqual(avatarShapeComponent.SkinColor, fakeSkinColor.ToUnityColor());
             Assert.AreEqual(avatarShapeComponent.HairColor, fakeHairColor.ToUnityColor());
-            Assert.AreEqual(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.ToArray(), fakePointers);
+            Assert.AreEqual(avatarShapeComponent.WearableLoading.LoadingIntention.Pointers.ToArray(), fakePointers);
         }
 
         [Test]
@@ -112,7 +112,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0);
 
             ref AvatarShapeComponent avatarShapeComponent = ref world.Get<AvatarShapeComponent>(entity);
-            Entity originalPromise = avatarShapeComponent.WearablePromise.Entity;
+            Entity originalPromise = avatarShapeComponent.WearableLoading.PromiseEntity;
 
             pbAvatarShape.BodyShape = BODY_SHAPE_FEMALE;
             pbAvatarShape.IsDirty = true;
@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             //Assert
             //Should be different ids, because the promise was cancelled and a new one was created
             Assert.That(world.IsAlive(originalPromise), Is.False);
-            Assert.AreNotEqual(avatarShapeComponent.WearablePromise.Entity, originalPromise);
+            Assert.AreNotEqual(avatarShapeComponent.WearableLoading.PromiseEntity, originalPromise);
         }
 
         [Test]

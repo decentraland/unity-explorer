@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
         public static void Dereference(this in AvatarShapeComponent avatarShapeComponent)
         {
-            var resolution = avatarShapeComponent.WearablePromise.Result;
+            var resolution = avatarShapeComponent.WearableLoading.Result;
 
             if (!resolution.HasValue) return;
             var wearables = resolution.Value.Asset.Wearables;

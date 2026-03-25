@@ -29,7 +29,7 @@ namespace DCL.Analytics.Systems
         private void ReportAvatarInstantiationFinished([Data] float timestamp, Entity entity, in AvatarShapeComponent avatarShapeComponent, ref AvatarAnalytics avatarAnalytics)
         {
             // But the avatar may be not instantiated yet
-            if (avatarShapeComponent.WearablePromise.IsConsumed)
+            if (avatarShapeComponent.WearableLoading.Status != AvatarShapeComponent.WearableLoadingStatus.Loading)
             {
                 analyticsController.Track(AnalyticsEvents.Endpoints.AVATAR_RESOLVED, new JObject
                 {

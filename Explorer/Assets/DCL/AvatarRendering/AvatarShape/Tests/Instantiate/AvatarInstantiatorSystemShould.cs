@@ -79,8 +79,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
                 GetMockWearable("hair", WearableCategories.Categories.HAIR),
             })));
 
-            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, wearablePromise,
+            avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE,
                 randomSkinColor, randomHairColor, randomEyesColor, NoAcquiredBudget.INSTANCE);
+            avatarShapeComponent.WearableLoading.SetPromise(wearablePromise);
 
             Material? celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_Toon_TestAsset");
             IExtendedObjectPool<Material>? materialPool = Substitute.For<IExtendedObjectPool<Material>>();
@@ -197,7 +198,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             world.Add(newWearablePromise.Entity, new StreamableLoadingResult<WearablesResolution>(new WearablesResolution(new List<IWearable> { GetMockWearable("body_shape", WearableCategories.Categories.BODY_SHAPE) })));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
-            world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newWearablePromise;
+            world.Get<AvatarShapeComponent>(avatarEntity).WearableLoading.SetPromise(newWearablePromise);
 
             system.Update(0);
 

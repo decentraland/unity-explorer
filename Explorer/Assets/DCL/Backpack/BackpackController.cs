@@ -249,7 +249,7 @@ namespace DCL.Backpack
             backpackGridController.RequestPage(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.BACKPACK_PREVIEW_POSITION);
 
-            while (!avatarShapeComponent.WearablePromise.IsConsumed)
+            while (avatarShapeComponent.WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.Loading)
             {
                 avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
                 await UniTask.Yield();

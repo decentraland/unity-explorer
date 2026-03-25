@@ -75,7 +75,7 @@ namespace DCL.CharacterPreview
             if (globalWorld.Capacity > 0)
             {
                 ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
-                if (!avatarShape.WearablePromise.IsConsumed) avatarShape.WearablePromise.ForgetLoading(globalWorld);
+                avatarShape.WearableLoading.ForgetLoading(globalWorld);
                 globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
             }
 
@@ -100,14 +100,14 @@ namespace DCL.CharacterPreview
             avatarShape.EyesColor = avatarModel.EyesColor;
             avatarShape.BodyShape = BodyShape.FromStringSafe(avatarModel.BodyShape);
 
-            avatarShape.WearablePromise.ForgetLoading(globalWorld);
+            avatarShape.WearableLoading.ForgetLoading(globalWorld);
 
-            avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
+            avatarShape.WearableLoading.SetPromise(AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Wearables ?? (IReadOnlyCollection<URN>)Array.Empty<URN>(), avatarModel.ForceRenderCategories),
                 PartitionComponent.TOP_PRIORITY
-            );
+            ));
 
             Entity emotePromiseEntity = builderEmotesPreview
                 ? Entity.Null

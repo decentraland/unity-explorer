@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
+            if (!avatarShapeComponent.WearableLoading.SafeTryConsume(World, GetReportData(), out WearablesLoadResult wearablesResult)) return false;
 
             var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
@@ -181,7 +181,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
+            if (!avatarShapeComponent.WearableLoading.SafeTryConsume(World, GetReportData(), out WearablesLoadResult wearablesResult)) return;
 
             // Main player bones are stable across wearable changes — no need to release/re-register the pipeline
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
@@ -213,7 +213,7 @@ namespace DCL.AvatarRendering.AvatarShape
             in WearablesLoadResult wearablesResult,
             AvatarBase avatarBase)
         {
-            GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
+            GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearableLoading.LoadingIntention;
 
             HashSet<string> wearablesToHide = wearablesResult.Succeeded ? wearablesResult.Asset.HiddenCategories : EMPTY_STRING_HASH_SET;
             HashSet<string> usedCategories = HashSetPool<string>.Get();
@@ -284,6 +284,9 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
-            avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+            avatarShapeComponent.IsDirty
+            && avatarShapeComponent.WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.Loading
+            && instantiationFrameTimeBudget.TrySpendBudget()
+            && memoryBudget.TrySpendBudget();
     }
 }

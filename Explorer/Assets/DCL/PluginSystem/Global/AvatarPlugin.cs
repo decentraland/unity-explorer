@@ -326,7 +326,7 @@ namespace DCL.PluginSystem.Global
             public int defaultMaterialCapacity = 100;
 
             [field: SerializeField]
-            public int maxConcurrentAvatarLoads = 3;
+            public int maxConcurrentAvatarLoads = 5;
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;

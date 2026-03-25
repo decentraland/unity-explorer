@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void LimitConcurrentAvatarLoading()
+        public void AlwaysCreateAvatarShapeComponentForAllEntities()
         {
             var entities = new Entity[5];
 
@@ -48,20 +48,34 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system.Update(0);
 
-            int loaded = 0;
+            for (int i = 0; i < 5; i++)
+                Assert.That(world.Has<AvatarShapeComponent>(entities[i]), Is.True, $"Entity {i} should always get AvatarShapeComponent");
+        }
+
+        [Test]
+        public void LimitConcurrentWearableLoading()
+        {
+            var entities = new Entity[5];
+
+            for (int i = 0; i < 5; i++)
+                entities[i] = CreateProfileEntity($"user_{i}");
+
+            system.Update(0);
+
+            int loading = 0;
 
             for (int i = 0; i < 5; i++)
             {
-                if (world.Has<AvatarShapeComponent>(entities[i]))
-                    loaded++;
+                if (world.Get<AvatarShapeComponent>(entities[i]).WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.Loading)
+                    loading++;
             }
 
-            Assert.AreEqual(MAX_CONCURRENT, loaded, "Only budgeted number of avatars should get AvatarShapeComponent");
+            Assert.AreEqual(MAX_CONCURRENT, loading, "Only budgeted number of avatars should be loading wearables");
             Assert.AreEqual(0, budget.currentBudget, "All budget slots should be consumed");
         }
 
         [Test]
-        public void DeferAvatarsWhenBudgetExhausted()
+        public void DeferWearableLoadingWhenBudgetExhausted()
         {
             var entities = new Entity[5];
 
@@ -74,11 +88,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             for (int i = 0; i < 5; i++)
             {
-                if (!world.Has<AvatarShapeComponent>(entities[i]))
+                if (world.Get<AvatarShapeComponent>(entities[i]).WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.None)
                     deferred++;
             }
 
-            Assert.AreEqual(2, deferred, "Avatars beyond budget should be deferred");
+            Assert.AreEqual(2, deferred, "Avatars beyond budget should have deferred wearable loading");
         }
 
         [Test]
@@ -91,25 +105,27 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system.Update(0);
 
-            // Release budget for entities that got loaded (simulating instantiation completing)
+            // Release budget for entities that started loading
             for (int i = 0; i < 5; i++)
             {
-                if (world.Has<AvatarShapeComponent>(entities[i]))
-                    world.Get<AvatarShapeComponent>(entities[i]).LoadingBudget.Release();
+                ref AvatarShapeComponent shape = ref world.Get<AvatarShapeComponent>(entities[i]);
+
+                if (shape.WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.Loading)
+                    shape.LoadingBudget.Release();
             }
 
             // Next update should pick up deferred entities
             system.Update(0);
 
-            int totalLoaded = 0;
+            int totalLoading = 0;
 
             for (int i = 0; i < 5; i++)
             {
-                if (world.Has<AvatarShapeComponent>(entities[i]))
-                    totalLoaded++;
+                if (world.Get<AvatarShapeComponent>(entities[i]).WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.Loading)
+                    totalLoading++;
             }
 
-            Assert.AreEqual(5, totalLoaded, "All avatars should eventually load after budget is freed");
+            Assert.AreEqual(5, totalLoading, "All avatars should eventually start loading after budget is freed");
         }
 
         [Test]
@@ -129,6 +145,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             system.Update(0);
 
             Assert.That(world.Has<AvatarShapeComponent>(player), Is.True, "Main player should always get AvatarShapeComponent");
+
+            ref AvatarShapeComponent shape = ref world.Get<AvatarShapeComponent>(player);
+            Assert.AreEqual(AvatarShapeComponent.WearableLoadingStatus.Loading, shape.WearableLoading.Status, "Main player should always start loading");
         }
 
         [Test]
@@ -174,12 +193,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system.Update(0);
 
-            // Budget should be re-acquired for the update
+            // Budget should be re-acquired by start loading query
             Assert.AreEqual(MAX_CONCURRENT - 1, budget.currentBudget);
         }
 
         [Test]
-        public void DeferProfileUpdateWhenBudgetExhausted()
+        public void DeferWearableLoadingOnProfileUpdateWhenBudgetExhausted()
         {
             // Fill budget
             for (int i = 0; i < MAX_CONCURRENT; i++)
@@ -187,7 +206,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system.Update(0);
 
-            // Release one budget slot and trigger its profile update
+            // Release one budget slot
             Entity[] entities = new Entity[MAX_CONCURRENT];
             int idx = 0;
 
@@ -204,10 +223,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             ref Profile profile1 = ref world.Get<Profile>(entities[1]);
             profile1.IsDirty = true;
 
-            // The profile update should be deferred (IsDirty stays true)
             system.Update(0);
 
-            Assert.That(profile1.IsDirty, Is.True, "Profile update should be deferred when budget is exhausted");
+            // Profile update runs (clears IsDirty, sets Status=None), but start loading is deferred
+            ref AvatarShapeComponent shape = ref world.Get<AvatarShapeComponent>(entities[1]);
+            Assert.AreEqual(AvatarShapeComponent.WearableLoadingStatus.None, shape.WearableLoading.Status, "Wearable loading should be deferred when budget is exhausted");
+            Assert.That(shape.IsDirty, Is.True, "IsDirty should remain true until wearables start loading");
         }
 
         [Test]
@@ -225,9 +246,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             // Simulate AvatarCleanUpSystem's DestroyPendingAvatar
             ref AvatarShapeComponent shape = ref world.Get<AvatarShapeComponent>(entity);
 
-            if (!shape.WearablePromise.IsConsumed)
-                shape.WearablePromise.ForgetLoading(world);
-
+            shape.WearableLoading.ForgetLoading(world);
             shape.LoadingBudget.Release();
 
             Assert.AreEqual(MAX_CONCURRENT, budget.currentBudget, "Budget should be freed when pending avatar is deleted");

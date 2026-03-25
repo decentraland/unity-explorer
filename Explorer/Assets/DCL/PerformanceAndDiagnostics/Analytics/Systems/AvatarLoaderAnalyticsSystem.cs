@@ -29,30 +29,35 @@ namespace DCL.Analytics.Systems
 
         [Query]
         [None(typeof(AvatarAnalytics), typeof(AvatarCustomSkinningComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent))]
-        private void InitializeAnalytics(Entity entity, in AvatarShapeComponent avatarShapeComponent) =>
+        private void InitializeAnalytics(Entity entity, in AvatarShapeComponent avatarShapeComponent)
+        {
+            if (avatarShapeComponent.WearableLoading.Status == AvatarShapeComponent.WearableLoadingStatus.None)
+                return;
+
             World.Add(entity, new AvatarAnalytics(
                 UnityEngine.Time.realtimeSinceStartup,
-                avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count));
+                avatarShapeComponent.WearableLoading.LoadingIntention.Pointers.Count));
+        }
 
         [Query]
         private void ReInitializeAnalyticsFromProfile(Profile profile, in AvatarShapeComponent avatarShapeComponent, ref AvatarAnalytics avatarAnalytics)
         {
-            if (profile.IsDirty)
+            if (profile.IsDirty && avatarShapeComponent.WearableLoading.Status != AvatarShapeComponent.WearableLoadingStatus.None)
             {
                 avatarAnalytics = new AvatarAnalytics(
                     UnityEngine.Time.realtimeSinceStartup,
-                    avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count);
+                    avatarShapeComponent.WearableLoading.LoadingIntention.Pointers.Count);
             }
         }
 
         [Query]
         private void ReInitializeAnalyticsFromSDKComponent(PBAvatarShape avatarShape, in AvatarShapeComponent avatarShapeComponent, ref AvatarAnalytics avatarAnalytics)
         {
-            if (avatarShape.IsDirty)
+            if (avatarShape.IsDirty && avatarShapeComponent.WearableLoading.Status != AvatarShapeComponent.WearableLoadingStatus.None)
             {
                 avatarAnalytics = new AvatarAnalytics(
                     UnityEngine.Time.realtimeSinceStartup,
-                    avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count);
+                    avatarShapeComponent.WearableLoading.LoadingIntention.Pointers.Count);
             }
         }
     }

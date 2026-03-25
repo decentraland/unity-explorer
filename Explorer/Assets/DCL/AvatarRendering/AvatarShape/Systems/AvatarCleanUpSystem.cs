@@ -84,15 +84,16 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         [Query]
-        [None(typeof(AvatarBase))]
-        private void DestroyPendingAvatar(ref AvatarShapeComponent avatarShapeComponent, ref DeleteEntityIntention deleteEntityIntention)
+        [None(typeof(AvatarTransformMatrixComponent))]
+        private void DestroyPendingAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref DeleteEntityIntention deleteEntityIntention)
         {
             deleteEntityIntention.DeferDeletion = false;
 
-            if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                avatarShapeComponent.WearablePromise.ForgetLoading(World);
-
+            avatarShapeComponent.WearableLoading.ForgetLoading(World);
             avatarShapeComponent.LoadingBudget.Release();
+
+            if (World.TryGet(entity, out AvatarBase avatarBase))
+                avatarPoolRegistry.Release(avatarBase);
         }
 
         private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
