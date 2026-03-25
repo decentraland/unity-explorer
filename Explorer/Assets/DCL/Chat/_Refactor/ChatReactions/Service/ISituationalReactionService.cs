@@ -41,5 +41,11 @@ namespace DCL.Chat.ChatReactions
         /// No-op if the avatar is not in the scene or the world simulation is inactive.
         /// </summary>
         void TriggerWorldReactionForAvatar(string walletId, int emojiIndex, int count);
+
+        /// <summary>
+        /// Spawn UI-lane particles only, without world-space side-effects or network broadcast.
+        /// Used for displaying reactions received from remote players.
+        /// </summary>
+        void TriggerRemoteUIReaction(int emojiIndex, int count);
     }
 }

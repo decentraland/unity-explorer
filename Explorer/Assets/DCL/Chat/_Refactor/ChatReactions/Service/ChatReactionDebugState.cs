@@ -11,6 +11,8 @@ namespace DCL.Chat.ChatReactions
         /// <summary>Active instance set at init, cleared on dispose. Used by editor debug window.</summary>
         public static ChatReactionDebugState? Current { get; private set; }
 
+        public bool IsDebugNearbyActive { get; set; }
+
         public ChatReactionStats LastStats { get; private set; }
 
         public ChatReactionDebugState()

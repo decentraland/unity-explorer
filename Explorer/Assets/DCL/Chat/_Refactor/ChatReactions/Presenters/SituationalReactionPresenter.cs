@@ -62,7 +62,7 @@ namespace DCL.Chat.ChatReactions
                     {
                         ApplyDebugToggles();
                         Profiler.BeginSample("ChatReactions.DebugStats");
-                        debugState.UpdateStats(service.GetStats());
+                        debugState.UpdateStats(service.GetStats(debugState.IsDebugNearbyActive));
                         Profiler.EndSample();
                     }
 
@@ -97,9 +97,15 @@ namespace DCL.Chat.ChatReactions
             {
                 prevStreamRemote = config.StreamRemotePlayers;
                 if (prevStreamRemote)
+                {
                     service.BeginDebugNearby();
+                    debugState.IsDebugNearbyActive = true;
+                }
                 else
+                {
                     service.EndDebugNearby();
+                    debugState.IsDebugNearbyActive = false;
+                }
             }
         }
 

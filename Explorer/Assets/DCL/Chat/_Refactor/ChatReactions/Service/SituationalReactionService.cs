@@ -15,19 +15,12 @@ namespace DCL.Chat.ChatReactions
         private readonly IReactionMessageBus? reactionBus;
 
         /// <summary>
-        /// When false, incoming remote reactions are not shown in the UI lane.
-        /// User's own reactions are always displayed.
-        /// </summary>
-        public bool ShowRemoteUIReactions { get; set; } = true;
-
-        /// <summary>
         /// When false, no world-space reactions (particles above avatar heads) are spawned.
         /// Controlled by the In-World Chat Bubbles &amp; Reactions setting.
         /// </summary>
         public bool WorldReactionsEnabled { get; set; } = true;
 
         private readonly Func<List<Vector3>>? cachedNearbyGetter;
-        private bool debugActive;
 
         public SituationalReactionService(ChatReactionsConfig config, RectTransform laneRect,
             IAvatarReactionPosition? avatarPosition = null, IReactionMessageBus? reactionBus = null)
@@ -44,16 +37,10 @@ namespace DCL.Chat.ChatReactions
                 cachedLocalHeadGetter = avatarPosition.GetLocalPlayerHeadPosition;
                 cachedNearbyGetter = avatarPosition.GetAllNearbyHeadPositions;
             }
-
-            if (reactionBus != null)
-                reactionBus.ReactionReceived += OnRemoteReaction;
         }
 
         public void Dispose()
         {
-            if (reactionBus != null)
-                reactionBus.ReactionReceived -= OnRemoteReaction;
-
             worldReactionSimulation.EndStream();
             chatReactionSimulation.EndDebugUIStream();
             worldReactionSimulation.EndDebugNearby();
@@ -171,22 +158,14 @@ namespace DCL.Chat.ChatReactions
         {
             if (cachedNearbyGetter == null) return;
             worldReactionSimulation.BeginDebugNearby(cachedNearbyGetter);
-            debugActive = true;
         }
 
         public void EndDebugNearby()
         {
             worldReactionSimulation.EndDebugNearby();
-            debugActive = false;
         }
 
-        public void ToggleDebugNearbyReactions()
-        {
-            if (debugActive) EndDebugNearby();
-            else BeginDebugNearby();
-        }
-
-        public ChatReactionStats GetStats() =>
+        public ChatReactionStats GetStats(bool debugNearbyActive) =>
             new (
                 chatReactionSimulation.AliveCount,
                 chatReactionSimulation.PoolCapacity,
@@ -197,20 +176,12 @@ namespace DCL.Chat.ChatReactions
                 avatarPosition?.GetNearbyAvatarCount() ?? 0,
                 chatReactionSimulation.IsStreaming,
                 worldReactionSimulation.IsStreaming,
-                debugActive);
+                debugNearbyActive);
+
+        public void TriggerRemoteUIReaction(int emojiIndex, int count) =>
+            chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
 
         private int StreamEmojiIndex => -1;
-
-        private void OnRemoteReaction(ReactionReceivedArgs args)
-        {
-            if (args.Type != ReactionType.Situational) return;
-
-            if (WorldReactionsEnabled)
-                TriggerWorldReactionForAvatar(args.WalletId, args.EmojiIndex, args.Count);
-
-            if (ShowRemoteUIReactions)
-                chatReactionSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);
-        }
 
         private void TriggerWorldForLocalPlayer(int emojiIndex)
         {

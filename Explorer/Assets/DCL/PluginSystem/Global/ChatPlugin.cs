@@ -274,16 +274,20 @@ namespace DCL.PluginSystem.Global
 
             chatSettingsAsset = settings.ChatSettingsAsset;
 
-            situationalReactionService.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
             situationalReactionService.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
-
-            onReactionsEnabledChanged = enabled => situationalReactionService.ShowRemoteUIReactions = enabled;
-            chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
 
             onBubblesVisibilityChanged = visibility => situationalReactionService.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
             chatSettingsAsset.BubblesVisibilityChanged += onBubblesVisibilityChanged;
 
             pluginScope.Add(situationalReactionService);
+
+            var remoteReactionRouter = new RemoteReactionRouter(situationalReactionService, reactionBus);
+            remoteReactionRouter.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
+
+            onReactionsEnabledChanged = enabled => remoteReactionRouter.ShowRemoteUIReactions = enabled;
+            chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
+
+            pluginScope.Add(remoteReactionRouter);
 
             var reactionDebugState = new ChatReactionDebugState();
             pluginScope.Add(reactionDebugState);
