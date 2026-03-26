@@ -68,8 +68,6 @@ namespace DCL.Communities.CommunityCreation
         private string originalCommunityDescriptionForEdition;
         private CommunityPrivacy? originalCommunityPrivacyForEdition;
         private CommunityVisibility? originalCommunityVisibilityForEdition;
-        private readonly List<string> originalCommunityLandsForEdition = new ();
-        private readonly List<string> originalCommunityWorldsForEdition = new ();
 
         private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
@@ -381,8 +379,6 @@ namespace DCL.Communities.CommunityCreation
             originalCommunityDescriptionForEdition = getCommunityResult.Value.data.description;
             originalCommunityPrivacyForEdition = getCommunityResult.Value.data.privacy;
             originalCommunityVisibilityForEdition = getCommunityResult.Value.data.visibility;
-            originalCommunityLandsForEdition.Clear();
-            originalCommunityWorldsForEdition.Clear();
 
             viewInstance!.SetProfileSelectedImage(getCommunityResult.Value.data.thumbnailUrl, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
@@ -465,12 +461,6 @@ namespace DCL.Communities.CommunityCreation
                             break;
                         }
 
-
-                        if (string.IsNullOrEmpty(placeInfo.world_name))
-                            originalCommunityLandsForEdition.Add(placeInfo.id);
-                        else
-                            originalCommunityWorldsForEdition.Add(placeInfo.id);
-
                         AddPlaceTag(new CommunityPlace(
                             placeInfo.id,
                             !string.IsNullOrEmpty(placeInfo.world_name),
@@ -536,8 +526,8 @@ namespace DCL.Communities.CommunityCreation
                 inputData.CommunityId,
                 originalCommunityNameForEdition == name ? null : name,
                 originalCommunityDescriptionForEdition == description ? null : description,
-                originalCommunityLandsForEdition.Count == lands.Count && !originalCommunityLandsForEdition.Except(lands).Any() ? null : lands,
-                originalCommunityWorldsForEdition.Count == worlds.Count && !originalCommunityWorldsForEdition.Except(worlds).Any() ? null : worlds,
+                lands,
+                worlds,
                 originalCommunityPrivacyForEdition == privacy ? null : privacy,
                 originalCommunityVisibilityForEdition == visibility ? null : visibility,
                 createCommunityCts.Token).Forget();
