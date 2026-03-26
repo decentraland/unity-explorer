@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
-            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
+            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, definition, reportCategory, ct);
             var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
             (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
@@ -96,12 +96,35 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
 
-        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
+        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, SceneEntityDefinition definition, ReportData reportCategory, CancellationToken ct)
         {
             const string NAME = "main.crdt";
 
-            // if scene does not contain main.crdt, do nothing
-            if (!sceneContent.TryGetContentUrl(NAME, out var url))
+            // Try the asset bundle CDN first when the scene has an AB manifest version.
+            // This avoids relying on the catalyst for scenes served from the asset bundle registry.
+            // If CDN does not have the file yet (e.g. conversion is in progress), fall back to catalyst.
+            if (definition.assetBundleManifestVersion != null && !definition.assetBundleManifestVersion.IsEmpty())
+            {
+                string? abVersion = definition.assetBundleManifestVersion.GetAssetBundleManifestVersion();
+
+                if (!string.IsNullOrEmpty(abVersion))
+                {
+                    URLAddress cdnUrl = assetBundleURL.Append(URLPath.FromString($"{abVersion}/{definition.id}/{NAME}"));
+
+                    try
+                    {
+                        return await webRequestController.GetAsync(new CommonArguments(cdnUrl), ct, reportCategory).GetDataCopyAsync();
+                    }
+                    catch (System.OperationCanceledException) { throw; }
+                    catch (System.Exception e)
+                    {
+                        ReportHub.LogWarning(reportCategory, $"Failed to load {NAME} from CDN ({cdnUrl}), falling back to catalyst: {e.Message}");
+                    }
+                }
+            }
+
+            // Fall back to catalyst: resolve URL through the hashed content map
+            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
             return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
