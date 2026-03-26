@@ -76,8 +76,7 @@ namespace DCL.VoiceChat
                 catch (OperationCanceledException) { return; }
                 catch (Exception ex)
                 {
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId}: {ex.Message}");
-                    return;
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally: {ex.Message}");
                 }
             }
 
