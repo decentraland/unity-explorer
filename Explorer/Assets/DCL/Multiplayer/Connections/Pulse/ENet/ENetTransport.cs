@@ -99,7 +99,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
         public UniTask DisconnectAsync(ITransport.DisconnectReason reason, CancellationToken ct)
         {
-            serverPeer?.Disconnect((uint) reason);
+            serverPeer?.Disconnect((uint)reason);
             return UniTask.CompletedTask;
         }
 
@@ -158,11 +158,13 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                 case EventType.Disconnect:
                     serverPeer = null;
+                    messagePipe.OnDisconnected((ITransport.DisconnectReason)netEvent.Data);
                     lifeCycleCts.SafeCancelAndDispose();
                     break;
 
                 case EventType.Timeout:
                     serverPeer = null;
+                    messagePipe.OnDisconnected(ITransport.DisconnectReason.None);
                     lifeCycleCts.SafeCancelAndDispose();
                     break;
 

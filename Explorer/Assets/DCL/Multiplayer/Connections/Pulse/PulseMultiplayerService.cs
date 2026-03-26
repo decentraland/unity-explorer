@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -14,12 +15,16 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerService : IDisposable
     {
+        private const int RECONNECTION_DELAY_MS = 10000;
+        private const int MAX_CONNECT_ATTEMPTS = 3;
+
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<ServerMessage.MessageOneofCase, ISubscriber> subscribers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private CancellationTokenSource? connectionLifeCycleCts;
+        private CancellationTokenSource? reconnectCts;
 
         public PulseMultiplayerService(
             ITransport transport,
@@ -33,6 +38,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Dispose()
         {
+            reconnectCts.SafeCancelAndDispose();
             connectionLifeCycleCts.SafeCancelAndDispose();
             transport.Dispose();
         }
@@ -42,6 +48,37 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (transport.State is ITransport.TransportState.CONNECTED or ITransport.TransportState.CONNECTING)
                 return;
 
+            await ConnectWithRetriesAsync(ct);
+
+            reconnectCts = reconnectCts.SafeRestartLinked(ct);
+            TryReconnectInCaseOfDisconnectionAsync(reconnectCts.Token).Forget();
+        }
+
+        public async UniTask DisconnectAsync(CancellationToken ct)
+        {
+            reconnectCts.SafeCancelAndDispose();
+            connectionLifeCycleCts.SafeCancelAndDispose();
+            await transport.DisconnectAsync(ITransport.DisconnectReason.Graceful, ct);
+        }
+
+        private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
+        {
+            for (var attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++)
+            {
+                try
+                {
+                    await ConnectInternalAsync(ct);
+                    return;
+                }
+                catch (TimeoutException) when (attempt < MAX_CONNECT_ATTEMPTS)
+                {
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt}/{MAX_CONNECT_ATTEMPTS} timed out, retrying...");
+                }
+            }
+        }
+
+        private async UniTask ConnectInternalAsync(CancellationToken ct)
+        {
             // TODO: get the address from IDecentralandUrlsSource (?)
             await transport.ConnectAsync("127.0.0.1", 7777, ct);
 
@@ -66,10 +103,28 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        public async UniTask DisconnectAsync(CancellationToken ct)
+        private async UniTaskVoid TryReconnectInCaseOfDisconnectionAsync(CancellationToken ct)
         {
-            connectionLifeCycleCts.SafeCancelAndDispose();
-            await transport.DisconnectAsync(ITransport.DisconnectReason.Graceful, ct);
+            try
+            {
+                await foreach (ITransport.DisconnectReason reason in pipe.ReadDisconnectsAsync(ct))
+                {
+                    if (reason is not (ITransport.DisconnectReason.None or ITransport.DisconnectReason.Graceful)) continue;
+
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse transport disconnected unexpectedly: {reason}. Attempting reconnection...");
+
+                    connectionLifeCycleCts.SafeCancelAndDispose();
+
+                    await UniTask.Delay(RECONNECTION_DELAY_MS, cancellationToken: ct);
+
+                    try { await ConnectWithRetriesAsync(ct); }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        ReportHub.LogException(e, ReportCategory.MULTIPLAYER);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
         }
 
         public IUniTaskAsyncEnumerable<T> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
