@@ -29,12 +29,15 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;
+        private event Action<string> OTPSendSuccess;
 
-        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
+        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, Action<string> onOTPSendSuccess, int? identityExpirationDuration = null)
         {
             this.web3AccountFactory = web3AccountFactory;
             this.client = client;
             this.identityExpirationDuration = identityExpirationDuration;
+
+            OTPSendSuccess += onOTPSendSuccess.Invoke;
         }
 
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
@@ -154,29 +157,22 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask SendOtpAsync(string email, CancellationToken ct)
+        private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(email))
-                throw new ArgumentException("Email is required for OTP authentication", nameof(email));
-
-            await UniTask.SwitchToMainThread(ct);
-
             pendingWallet = await InAppWallet.Create(
                 client,
                 email,
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
                                              .AsUniTask().AttachExternalCancellation(ct);
 
-            await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct);
-            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
-        }
+            try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
+            catch (Exception ex) when (ContainsInvalidEmailError(ex))
+            {
+                throw new InvalidEmailException(ex.Message, ex);
+            }
 
-        private async UniTask<InAppWallet> OTPLoginFlowAsync(string? email, CancellationToken ct)
-        {
-            if (pendingWallet == null)
-                await SendOtpAsync(email!, ct);
-            else
-                await UniTask.SwitchToMainThread(ct);
+            ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
+            OTPSendSuccess.Invoke(email);
 
             // Wait for successful login via SubmitOtp
             loginCompletionSource = new UniTaskCompletionSource<bool>();
@@ -212,6 +208,22 @@ namespace DCL.Web3.Authenticators
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
+        }
+
+        private static bool ContainsInvalidEmailError(Exception ex)
+        {
+            const string INVALID_EMAIL_MESSAGE = "Invalid email.";
+            Exception? current = ex;
+
+            while (current != null)
+            {
+                if (current.Message == INVALID_EMAIL_MESSAGE)
+                    return true;
+
+                current = current.InnerException;
+            }
+
+            return false;
         }
 
         public async UniTask ResendOtpAsync(CancellationToken ct)

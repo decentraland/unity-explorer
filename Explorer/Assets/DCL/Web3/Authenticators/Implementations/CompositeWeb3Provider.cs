@@ -30,6 +30,12 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
+        public event Action<string>? OTPSendSuccess
+        {
+            add => thirdWebAuth.OTPSendSuccess += value;
+            remove => thirdWebAuth.OTPSendSuccess -= value;
+        }
+
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
@@ -76,9 +82,6 @@ namespace DCL.Web3.Authenticators
 
         public UniTask ResendOtpAsync(CancellationToken ct = default) =>
             thirdWebAuth.ResendOtpAsync(ct);
-
-        public UniTask SendOtpAsync(string email, CancellationToken ct = default) =>
-            thirdWebAuth.SendOtpAsync(email, ct);
 
         public UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
         {

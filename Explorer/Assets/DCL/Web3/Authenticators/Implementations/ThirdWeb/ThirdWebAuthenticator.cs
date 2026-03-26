@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
@@ -36,6 +37,8 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebLoginService loginService;
         private readonly ThirdWebEthereumApi ethereumApi;
 
+        public event Action<string>? OTPSendSuccess;
+
         private IThirdwebWallet? activeWallet => loginService.ActiveWallet;
 
         internal ThirdWebAuthenticator(
@@ -58,7 +61,7 @@ namespace DCL.Web3.Authenticators
                 rpcOverrides: RPC_OVERRIDES
             );
 
-            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
+            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, s => OTPSendSuccess?.Invoke(s), identityExpirationDuration);
             ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment, RPC_OVERRIDES);
         }
 
@@ -83,9 +86,6 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask ResendOtpAsync(CancellationToken ct = default) =>
             await loginService.ResendOtpAsync(ct);
-
-        public async UniTask SendOtpAsync(string email, CancellationToken ct = default) =>
-            await loginService.SendOtpAsync(email, ct);
 
         // Ethereum API
         public UniTask<EthApiResponse> SendAsync(EthApiRequest request, Web3RequestSource source, CancellationToken ct) =>
