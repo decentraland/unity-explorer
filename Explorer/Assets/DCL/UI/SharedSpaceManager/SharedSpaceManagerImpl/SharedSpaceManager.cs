@@ -217,6 +217,7 @@ namespace DCL.UI.SharedSpaceManager
                         break;
                     }
                     case PanelsSharingSpace.Skybox:
+                    case PanelsSharingSpace.NearbyVoice:
                     case PanelsSharingSpace.EmotesWheel:
                     case PanelsSharingSpace.Explore:
                     case PanelsSharingSpace.SidebarProfile:
@@ -237,7 +238,6 @@ namespace DCL.UI.SharedSpaceManager
                     }
                     case PanelsSharingSpace.Notifications:
                     case PanelsSharingSpace.SidebarSettings:
-                    case PanelsSharingSpace.NearbyVoice:
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace)
                         {

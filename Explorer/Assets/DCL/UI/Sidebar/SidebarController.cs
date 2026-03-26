@@ -25,6 +25,7 @@ using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat.Proximity;
 using DCL.Utility.Types;
 using ECS;
 using MVC;
@@ -42,6 +43,7 @@ namespace DCL.UI.Sidebar
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
+        private readonly NearbyVoicePanelController nearbyVoicePanelController;
         private readonly ControlsPanelController controlsPanelController;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
         private readonly IWebBrowser webBrowser;
@@ -75,6 +77,7 @@ namespace DCL.UI.Sidebar
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
+            NearbyVoicePanelController nearbyVoicePanelController,
             ControlsPanelController controlsPanelController,
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
             IWebBrowser webBrowser,
@@ -95,6 +98,7 @@ namespace DCL.UI.Sidebar
             this.profileMenuController = profileMenuMenuWidgetController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
+            this.nearbyVoicePanelController = nearbyVoicePanelController;
             this.controlsPanelController = controlsPanelController;
             this.smartWearablesTooltipController = smartWearablesTooltipController;
             this.webBrowser = webBrowser;
@@ -156,7 +160,7 @@ namespace DCL.UI.Sidebar
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-            viewInstance.ProximityVoiceChatButton.Button.onClick.AddListener(OpenNearbyVoiceWidgetAsync);
+            viewInstance.ProximityVoiceChatButton.Button?.onClick.AddListener(OpenNearbyVoiceWidgetAsync);
 
 
             if (includeCameraReel)
@@ -197,6 +201,7 @@ namespace DCL.UI.Sidebar
             //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
+            mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(profileMenuController);
             mvcManager.RegisterController(smartWearablesTooltipController);
             mvcManager.OnViewShowed += OnMvcManagerViewShowed;
@@ -208,7 +213,7 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.NearbyVoice, viewInstance!.NearbyVoiceWidget);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.NearbyVoice, nearbyVoicePanelController);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();

@@ -155,6 +155,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
+                new DCL.VoiceChat.Proximity.NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget),
                 new ControlsPanelController(() => controlsPanelView),
                 new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache),
                 webBrowser,
