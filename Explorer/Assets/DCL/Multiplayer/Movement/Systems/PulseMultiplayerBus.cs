@@ -270,7 +270,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     Inbox(movementMessage, walletId);
                 }
 
-                float timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+                double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
                 emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
             }
         }
