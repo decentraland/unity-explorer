@@ -8,11 +8,11 @@
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
     "avprovideo": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#chore/avpro-3-3-6-upgrade",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "85c179e410bbc7741e10b9a2799fa0ac9d0e6c7e"
+      "hash": "4d22d9dae8da01c3d631d2511af301a9819a5a7f"
     },
     "com.alttester.sdk": {
       "version": "2.3.0",
