@@ -1,4 +1,4 @@
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using DCL.Diagnostics;
 using Microsoft.ClearScript.V8;
 

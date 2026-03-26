@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly EntityEventsBuilder EntityEventsBuilder;
         public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
         public readonly ISystemsUpdateGate EcsSystemsGate;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public readonly MultiThreadSync MultiThreadSync;
 #endif
 
@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.World.Dependencies
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneStateProvider sceneStateProvider,
             EntityEventsBuilder entityEventsBuilder,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             MultiThreadSync multiThreadSync,
 #endif
             ISystemGroupsUpdateGate ecsGroupThrottler,
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.World.Dependencies
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
             EntitiesMap = entitiesMap;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             MultiThreadSync = multiThreadSync;
 #endif
             ScenePartition = scenePartition;

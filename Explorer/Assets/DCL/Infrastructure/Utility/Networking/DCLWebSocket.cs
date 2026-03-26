@@ -7,7 +7,7 @@ namespace Utility.Networking
 {
     public class DCLWebSocketOptions
     {
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private readonly System.Net.WebSockets.ClientWebSocketOptions options;
 
         internal DCLWebSocketOptions(System.Net.WebSockets.ClientWebSocketOptions options)

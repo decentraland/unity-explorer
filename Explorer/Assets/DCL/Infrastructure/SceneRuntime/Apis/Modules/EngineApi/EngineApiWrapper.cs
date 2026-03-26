@@ -7,7 +7,7 @@ using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
 
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 #endif

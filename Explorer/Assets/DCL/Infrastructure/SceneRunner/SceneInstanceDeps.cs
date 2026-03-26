@@ -45,7 +45,7 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Utility.Multithreading;
 #endif
 
@@ -74,7 +74,7 @@ namespace SceneRunner
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private readonly MultiThreadSync ecsMultiThreadSync;
 #endif
 
@@ -155,7 +155,7 @@ namespace SceneRunner
             WebGLSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.permissionsProvider = permissionsProvider;
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
 #endif
             CRDTProtocol = new CRDTProtocol();
@@ -182,7 +182,7 @@ namespace SceneRunner
                 entityCollidersGlobalCache,
                 SceneStateProvider,
                 entityEventsBuilder,
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
                     ecsMultiThreadSync,
 #endif
                 systemGroupThrottler,

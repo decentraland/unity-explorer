@@ -1,5 +1,6 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using DCL.Diagnostics;
 using System;
 using System.Threading;
@@ -10,7 +11,6 @@ using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
-#if !UNITY_WEBGL
     public class MultiThreadSync : IDisposable
     {
         internal readonly struct AcquisitionInfo

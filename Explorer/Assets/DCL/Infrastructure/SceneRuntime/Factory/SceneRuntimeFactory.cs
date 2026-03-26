@@ -96,7 +96,7 @@ namespace SceneRuntime.Factory
                 await DCLTask.SwitchToThreadPool();
 
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
