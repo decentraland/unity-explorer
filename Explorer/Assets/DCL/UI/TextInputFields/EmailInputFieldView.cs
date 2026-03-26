@@ -60,6 +60,7 @@ namespace DCL.UI
             // Listeners
             inputField.onValueChanged.AddListener(OnInputValueChanged);
             inputField.onEndEdit.AddListener(OnInputEndEdit);
+            inputField.onSubmit.AddListener(OnInputSubmitted);
             inputField.onSelect.AddListener(OnInputSelected);
 
             startButton.onClick.AddListener(EmitStartButtonPressedEvent);
@@ -82,6 +83,7 @@ namespace DCL.UI
             // Listeners
             inputField.onValueChanged.RemoveAllListeners();
             inputField.onEndEdit.RemoveAllListeners();
+            inputField.onSubmit.RemoveAllListeners();
             inputField.onSelect.RemoveAllListeners();
 
             startButton.onClick.RemoveAllListeners();
@@ -105,13 +107,29 @@ namespace DCL.UI
         private void EmitStartButtonPressedEvent() =>
             Submitted?.Invoke();
 
-        private void OnInputEndEdit(string text)
+        private void OnInputEndEdit(string text) =>
+            ValidateInput(text);
+
+        private bool ValidateInput(string text)
         {
             if (text == string.Empty)
+            {
                 outline.enabled = false;
-            else if (!IsValidEmail(text))
+                return false;
+            }
+
+            if (!IsValidEmail(text))
+            {
                 SetErrorState(true);
-            else
+                return false;
+            }
+
+            return true;
+        }
+
+        private void OnInputSubmitted(string text)
+        {
+            if (ValidateInput(text))
                 Submitted?.Invoke();
         }
 
