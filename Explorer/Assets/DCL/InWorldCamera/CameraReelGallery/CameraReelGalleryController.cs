@@ -476,6 +476,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(CAMERA_REEL_RESPONSES_POOL, ct);
+            if (ct.IsCancellationRequested) return;
 
             foreach (var bucket in result)
             {
