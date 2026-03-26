@@ -196,8 +196,8 @@ jobs:
           token: ${{ secrets.PERFORMANCE_TESTING_PAT }}
           client-payload: |-
             {
+              "run_name": "${{ github.event.workflow_run.display_title }}",
               "pr_number": "${{ needs.pre-validation.outputs.pr-number }}",
-              "pr_title": "${{ github.event.workflow_run.display_title }}",
               "win_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_windows64.zip",
               "win_base_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/@dcl/unity-explorer/releases/${{ env.RELEASE_TAG }}/Decentraland_windows64.zip",
               "mac_change_build_url": "${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.ARTIFACT_S3_DESTINATION_PATH }}/Decentraland_macos.zip",
