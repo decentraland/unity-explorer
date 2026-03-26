@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.zendesk.messaging": "https://github.com/zendesk/zendesk_messaging_unity.git",
     "arch.systemgroups.visualiser": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
     "avprovideo": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
     "com.alttester.sdk": "2.3.0",
@@ -44,6 +43,7 @@
     "com.unity.timeline": "1.8.10",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualeffectgraph": "17.3.0",
+    "com.zendesk.messaging": "4.2.2",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#4.0.0",
@@ -87,6 +87,13 @@
         "com.brunomikoski",
         "com.mackysoft",
         "com.alttester.sdk"
+      ]
+    },
+    {
+      "name": "Zendesk",
+      "url": "https://zendesk.jfrog.io/artifactory/api/npm/unity-sdk",
+      "scopes": [
+        "com.zendesk.messaging"
       ]
     }
   ],
