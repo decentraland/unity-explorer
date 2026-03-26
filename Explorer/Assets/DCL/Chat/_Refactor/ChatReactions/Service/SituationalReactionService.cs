@@ -15,6 +15,12 @@ namespace DCL.Chat.ChatReactions
         private readonly IReactionMessageBus? reactionBus;
         private readonly SituationalReactionDebouncer? debouncer;
 
+#if UNITY_EDITOR
+        private IChatReactionEventBus? eventBus;
+
+        public void SetEventBus(IChatReactionEventBus bus) => eventBus = bus;
+#endif
+
         private const int STREAM_EMOJI_INDEX = -1;
         private const int MAX_RECEIVE_EXPAND = 20;
 
@@ -118,6 +124,9 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
             TriggerLocalPlayerWorldReaction(emojiIndex);
             BroadcastToNetwork(emojiIndex);
+#if UNITY_EDITOR
+            eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
+#endif
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
@@ -125,6 +134,9 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, count);
             TriggerLocalPlayerWorldReaction(emojiIndex);
             BroadcastToNetwork(emojiIndex);
+#if UNITY_EDITOR
+            eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
+#endif
         }
 
         public void TriggerDefaultUIReaction()
@@ -133,6 +145,9 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.TriggerUIReaction(emojiIndex, config.UILane.StreamBurst);
             TriggerLocalPlayerWorldReaction(emojiIndex);
             BroadcastToNetwork(emojiIndex);
+#if UNITY_EDITOR
+            eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, config.UILane.StreamBurst, Time.unscaledTime, ReactionType.Situational));
+#endif
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
@@ -141,6 +156,9 @@ namespace DCL.Chat.ChatReactions
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, config.UILane.StreamBurst);
             TriggerLocalPlayerWorldReaction(emojiIndex);
             BroadcastToNetwork(emojiIndex);
+#if UNITY_EDITOR
+            eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, config.UILane.StreamBurst, Time.unscaledTime, ReactionType.Situational));
+#endif
         }
 
         public void BeginUIStream(RectTransform sourceRect)
@@ -193,12 +211,18 @@ namespace DCL.Chat.ChatReactions
         {
             float baseTimestamp = Time.unscaledTime;
             int offset = 0;
+            int totalCount = 0;
 
             foreach (var kvp in emojiCounts)
             {
                 reactionBus?.SendSituationalReaction(kvp.Key, kvp.Value, baseTimestamp + offset * 0.001f);
+                totalCount += kvp.Value;
                 offset++;
             }
+
+#if UNITY_EDITOR
+            eventBus?.NotifyFlushed(new ReactionFlushedEvent(emojiCounts.Count, totalCount, baseTimestamp));
+#endif
         }
 
         private void DrainReceiveQueue(float dt)
@@ -233,6 +257,12 @@ namespace DCL.Chat.ChatReactions
 
             if (ShowRemoteUIReactions)
                 TriggerRemoteUIReaction(args.EmojiIndex, args.Count);
+
+#if UNITY_EDITOR
+            eventBus?.NotifyReceived(new ReactionReceivedEvent(
+                args.WalletId, args.EmojiIndex, args.Count,
+                args.Type, args.MessageId, args.IsRemoval));
+#endif
         }
     }
 }

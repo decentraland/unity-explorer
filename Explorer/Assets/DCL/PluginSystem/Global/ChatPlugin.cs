@@ -111,6 +111,10 @@ namespace DCL.PluginSystem.Global
         private ChatSettingsAsset.ChatReactionsEnabledDelegate? onReactionsEnabledChanged;
         private ChatSettingsAsset.ChatBubblesVisibilityDelegate? onBubblesVisibilityChanged;
 
+#if UNITY_EDITOR
+        private ChatReactionDebugView? reactionDebugView;
+#endif
+
         public ChatPlugin(
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
@@ -211,6 +215,12 @@ namespace DCL.PluginSystem.Global
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
             chatStorage?.Dispose();
+
+#if UNITY_EDITOR
+            reactionDebugView?.Dispose();
+            reactionDebugView = null;
+#endif
+
             pluginScope.Dispose();
             pluginCts.SafeCancelAndDispose();
             fallbackFontsProvider?.Dispose();
@@ -303,6 +313,16 @@ namespace DCL.PluginSystem.Global
 
             var reactionDebugState = new ChatReactionDebugState();
             pluginScope.Add(reactionDebugState);
+
+#if UNITY_EDITOR
+            var reactionEventBus = new ChatReactionEventBus();
+            pluginScope.Add(reactionEventBus);
+            situationalReactionService.SetEventBus(reactionEventBus);
+
+            var debugGo = new UnityEngine.GameObject("[Debug] ChatReactions");
+            reactionDebugView = debugGo.AddComponent<ChatReactionDebugView>();
+            reactionDebugView.Init(reactionsConfig, reactionEventBus);
+#endif
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
