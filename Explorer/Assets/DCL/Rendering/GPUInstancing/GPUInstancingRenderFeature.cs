@@ -12,27 +12,27 @@ namespace DCL.Rendering.GPUInstancing
         public GPUInstancingRenderFeature_Settings Settings => m_Settings;
 
         private GPUInstancingService instancingService;
-        private GPUInstancingRenderPass instancingRenderPass;
+        //private GPUInstancingRenderPass instancingRenderPass;
 
         public override void Create()
         {
-            instancingRenderPass = new GPUInstancingRenderPass(instancingService)
-            {
-                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
-            };
+            // instancingRenderPass = new GPUInstancingRenderPass(instancingService)
+            // {
+            //     renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
+            // };
         }
 
         public void Initialize(GPUInstancingService service, IRealmData realmData)
         {
             instancingService = service;
-            instancingRenderPass?.SetService(service, realmData);
+            //instancingRenderPass?.SetService(service, realmData);
         }
 
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (instancingRenderPass != null)
-                renderer.EnqueuePass(instancingRenderPass);
+            // if (instancingRenderPass != null)
+            //     renderer.EnqueuePass(instancingRenderPass);
         }
 
         protected override void Dispose(bool _bDisposing)
