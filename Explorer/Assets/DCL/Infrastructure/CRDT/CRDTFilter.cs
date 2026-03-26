@@ -9,8 +9,11 @@ namespace CRDT
 {
     public class CRDTFilter
     {
-        // “asset-packs::VideoControlState” is 2092194694
-        private static readonly uint NO_SYNC_COMPONENT_ID = 2092194694;
+        // Components that must NOT be synced between clients.
+        // ComponentId is at body offset 4 (after entityId) for all relevant message types.
+        private const uint VIDEO_CONTROL_STATE = 2092194694;   // asset-packs::VideoControlState
+        private const uint PHYSICS_COMBINED_IMPULSE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_IMPULSE;    // Player-specific physics impulse
+        private const uint PHYSICS_COMBINED_FORCE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_FORCE;      // Player-specific physics force
 
         /// <summary>
         /// Output must be equal or bigger than memory
@@ -75,11 +78,19 @@ namespace CRDT
             totalWrite += filteredLength; // Already counted: type byte + address length + address bytes, now add filtered data
         }
 
-        private static uint ComponentIdOfPutNetworkComponentType(ReadOnlySpan<byte> memory) =>
-            memory.Slice(4).ReadConst<uint>(); // offset entityId
+        /// <summary>
+        /// Reads the componentId from the message body. Located at offset 4 (after 4-byte entityId)
+        /// for PUT_COMPONENT_NETWORK, DELETE_COMPONENT_NETWORK, and APPEND_COMPONENT messages.
+        /// </summary>
+        private static uint ReadComponentId(ReadOnlySpan<byte> messageBody) =>
+            messageBody.Slice(4).ReadConst<uint>();
+
+        private static bool IsNoSyncComponent(uint componentId) =>
+            componentId is VIDEO_CONTROL_STATE or PHYSICS_COMBINED_IMPULSE or PHYSICS_COMBINED_FORCE;
 
         /// <summary>
-        /// Filters CRDT messages from a span, removing PUT_COMPONENT_NETWORK messages with NO_SYNC_COMPONENT_ID.
+        /// Filters CRDT messages from a span, removing messages with no-sync component IDs.
+        /// Handles PUT_COMPONENT_NETWORK, DELETE_COMPONENT_NETWORK, and APPEND_COMPONENT.
         /// This is the core filtering logic shared by both FilterSceneMessageBatch and FilterCRDTState.
         /// </summary>
         private static void FilterCRDTMessages(ReadOnlySpan<byte> crdtMessages, Span<byte> output, out int totalWrite)
@@ -103,8 +114,10 @@ namespace CRDT
 
                 uint bodyLength = CRDTMessageTypeUtils.TypeLengthBytes(messageType, crdtMessages);
 
-                // Filter out PUT_COMPONENT_NETWORK messages with NO_SYNC_COMPONENT_ID
-                if (messageType is not CRDTMessageType.PUT_COMPONENT_NETWORK || ComponentIdOfPutNetworkComponentType(crdtMessages) != NO_SYNC_COMPONENT_ID)
+                bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
+                                  && IsNoSyncComponent(ReadComponentId(crdtMessages));
+
+                if (!shouldDrop)
                 {
                     output.Write(messageLength);
                     output.Write((uint)messageType);

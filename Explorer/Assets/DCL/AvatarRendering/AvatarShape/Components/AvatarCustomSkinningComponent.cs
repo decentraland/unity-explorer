@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray, int boneStride)
+        public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
@@ -127,7 +127,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 return Result.ErrorResult("ComputeSkinning error: Cannot get bones (ComputeBuffer)");
             }
 
-            bones.SetData(bonesResult, validIndex * boneStride, 0, BoneCount);
+            bones.SetData(bonesResult, validIndex * ComputeShaderConstants.MAX_BONE_COUNT, 0, BoneCount);
             computeShaderInstance.Dispatch(buffers.kernel, (VertCount / 64) + 1, 1, 1);
             return Result.SuccessResult();
         }

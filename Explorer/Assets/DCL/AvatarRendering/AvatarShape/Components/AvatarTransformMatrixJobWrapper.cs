@@ -1,159 +1,101 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Diagnostics;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.Profiling;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public class AvatarTransformMatrixJobWrapper : IDisposable
     {
-        private bool disposed;
-
-        private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
+        // Each task processes one full avatar (62 bone multiplies). Small batch count keeps
+        // worker utilisation high without excessive scheduling overhead.
+        private const int BONE_MATRIX_BATCH_COUNT = 4;
 
         internal const int AVATAR_ARRAY_SIZE = 100;
+        private const int BONES_ARRAY_LENGTH = ComputeShaderConstants.MAX_BONE_COUNT;
+        private const int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
-        private QuickArray<Matrix4x4> matrixFromAllAvatars;
-        private QuickArray<bool> updateAvatar;
+        private bool disposed;
 
-        private QuickArray<Matrix4x4> bonesCombined;
-        public BoneMatrixCalculationJob job;
+        // Placeholder transform for released or unassigned slots in the TAAs.
+        private readonly Transform dummyTransform;
 
-        private JobHandle handle;
+        private readonly MainPlayerPipeline mainPlayerAvatar;
+        private readonly RemoteAvatarPipeline remoteAvatars;
 
-        private readonly Stack<GlobalJobArrayIndex> releasedIndexes;
+        public NativeArray<float4x4> MainPlayerBonesResult => mainPlayerAvatar.Job.BonesMatricesResult;
 
-        private int avatarIndex;
-        private int nextResizeValue;
-        private int currentAvatarAmountSupported;
-        private int currentBoneStride;
-
-        public int CurrentBoneStride => currentBoneStride;
+        public NativeArray<float4x4> RemoteAvatarsBonesResult  => remoteAvatars.Job.BonesMatricesResult;
 
 #if UNITY_INCLUDE_TESTS
-        public int MatrixFromAllAvatarsLength => matrixFromAllAvatars.Length;
-        public int UpdateAvatarLength => updateAvatar.Length;
-        public int CurrentAvatarAmountSupported => currentAvatarAmountSupported;
+        public int MatrixFromAllAvatarsLength => remoteAvatars.MatrixFromAllAvatarsLength;
+        public int UpdateAvatarLength => remoteAvatars.UpdateAvatarLength;
+        public int CurrentAvatarAmountSupported => remoteAvatars.CurrentAvatarAmountSupported;
 #endif
 
         public AvatarTransformMatrixJobWrapper()
         {
-            currentBoneStride = ComputeShaderConstants.BASE_BONE_COUNT;
-            int bonesPerAvatarLength = AVATAR_ARRAY_SIZE * currentBoneStride;
+            var dummyGO = new GameObject("AvatarTransformMatrixDummy") { hideFlags = HideFlags.HideAndDontSave };
+            dummyTransform = dummyGO.transform;
 
-            bonesCombined = new QuickArray<Matrix4x4>(bonesPerAvatarLength);
-
-            job = new BoneMatrixCalculationJob(currentBoneStride, bonesPerAvatarLength, bonesCombined.InnerNativeArray());
-
-            matrixFromAllAvatars = new QuickArray<Matrix4x4>(AVATAR_ARRAY_SIZE);
-            updateAvatar = new QuickArray<bool>(AVATAR_ARRAY_SIZE);
-
-            currentAvatarAmountSupported = AVATAR_ARRAY_SIZE;
-
-            nextResizeValue = 2;
-            releasedIndexes = new Stack<GlobalJobArrayIndex>();
+            remoteAvatars = new RemoteAvatarPipeline(AVATAR_ARRAY_SIZE, BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, dummyTransform);
+            mainPlayerAvatar = new MainPlayerPipeline(BONES_ARRAY_LENGTH);
         }
 
+        /// <summary>
+        ///     Schedules bone gather + matrix calculation for all avatars.
+        ///     The main player pipeline is completed immediately so its transforms are unlocked
+        ///     before InterpolateCharacterSystem runs.
+        /// </summary>
         public void ScheduleBoneMatrixCalculation()
         {
-            job.AvatarTransform = matrixFromAllAvatars.InnerNativeArray();
-            job.UpdateAvatar = updateAvatar.InnerNativeArray();
-            handle = job.Schedule(ActiveBonesCount(), INNER_LOOP_BATCH_COUNT);
+            mainPlayerAvatar.ScheduleAndComplete();
+            remoteAvatars.Schedule(BONE_MATRIX_BATCH_COUNT);
         }
 
         public void CompleteBoneMatrixCalculations()
         {
-            handle.Complete();
+            remoteAvatars.Complete();
         }
 
-        public void UpdateAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        /// <summary>
+        ///     Registers the main player avatar into a dedicated pipeline whose transforms
+        ///     are gathered and released before the remote batch, preventing TransformAccessArray
+        ///     locks from blocking InterpolateCharacterSystem.
+        /// </summary>
+        /// <summary>
+        ///     Registers from a local (pre-Add) component. Sets index and flag on the component
+        ///     so the caller can pass it into World.Add already registered.
+        /// </summary>
+        public void RegisterMainPlayerAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            int avatarBoneCount = transformMatrixComponent.bones.Count;
+            transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(0);
+            transformMatrixComponent.IsMainPlayer = true;
 
-            if (avatarBoneCount > currentBoneStride)
-                ResizeBoneStride(avatarBoneCount);
-
-            if (transformMatrixComponent.IndexInGlobalJobArray.IsValid() == false)
-            {
-                if (releasedIndexes.Count > 0)
-                    transformMatrixComponent.IndexInGlobalJobArray = releasedIndexes.Pop();
-                else
-                {
-                    transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(avatarIndex);
-                    avatarIndex++;
-                }
-            }
-
-            if (transformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
-            {
-                ReportHub.LogError(ReportCategory.AVATAR, "Invalid index after direct assignment");
-                return;
-            }
-
-            Profiler.BeginSample("Calculate localToWorldMatrix on MainThread");
-
-            int globalIndexOffset = validIndex * currentBoneStride;
-
-            //Add all bones to the bonesCombined array with the current available index
-            for (int i = 0; i < avatarBoneCount; i++)
-                bonesCombined[globalIndexOffset + i] = transformMatrixComponent.bones[i].localToWorldMatrix;
-
-            Profiler.EndSample();
-
-            //Setup of data
-            matrixFromAllAvatars[validIndex] = avatarBase.transform.worldToLocalMatrix;
-            updateAvatar[validIndex] = true;
-
-            if (avatarIndex >= currentAvatarAmountSupported - 1)
-                ResizeArrays();
+            mainPlayerAvatar.Register(avatarBase.transform, transformMatrixComponent.bones.Inner, dummyTransform);
         }
 
-        private void ResizeBoneStride(int requiredBoneCount)
+        /// <summary>
+        ///     Registers a remote avatar for bone matrix calculation.
+        ///     Subsequent calls for already-registered avatars are no-ops; per-frame work is handled by the gather jobs.
+        /// </summary>
+        public void RegisterAvatar(AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            currentBoneStride = Math.Min(requiredBoneCount, ComputeShaderConstants.MAX_BONE_COUNT);
-            int totalBones = currentBoneStride * currentAvatarAmountSupported;
-
-            bonesCombined.ReAlloc(totalBones);
-
-            job.Dispose();
-            job = new BoneMatrixCalculationJob(currentBoneStride, totalBones, bonesCombined.InnerNativeArray());
-
-            // Invalidate all avatars for one frame — data layout changed
-            for (int i = 0; i < currentAvatarAmountSupported; i++)
-                updateAvatar[i] = false;
+            remoteAvatars.Register(avatarBase, ref transformMatrixComponent);
         }
-
-        private void ResizeArrays()
-        {
-            int totalBones = currentBoneStride * AVATAR_ARRAY_SIZE * nextResizeValue;
-
-            bonesCombined.ReAlloc(totalBones);
-            matrixFromAllAvatars.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
-            updateAvatar.ReAlloc(AVATAR_ARRAY_SIZE * nextResizeValue);
-
-            job.Dispose();
-            job = new BoneMatrixCalculationJob(currentBoneStride, totalBones, bonesCombined.InnerNativeArray());
-
-            currentAvatarAmountSupported = AVATAR_ARRAY_SIZE * nextResizeValue;
-            nextResizeValue++;
-        }
-
-        private int ActiveBonesCount() =>
-            avatarIndex * currentBoneStride;
 
         public void Dispose()
         {
-            handle.Complete();
-            bonesCombined.Dispose();
-            updateAvatar.Dispose();
-            job.Dispose();
+            remoteAvatars.Complete();
+
+            remoteAvatars.Dispose();
+            mainPlayerAvatar.Dispose();
+
+            if (dummyTransform != null)
+                UnityEngine.Object.Destroy(dummyTransform.gameObject);
+
             disposed = true;
         }
 
@@ -161,79 +103,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             if (disposed) return;
 
-            if (avatarTransformMatrixComponent.IndexInGlobalJobArray.TryGetValue(out int validIndex) == false)
+            //Main player avatar never gets released
+            if (avatarTransformMatrixComponent.IsMainPlayer)
                 return;
 
-            //Dont update this index anymore until reset
-            updateAvatar[validIndex] = false;
-            releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
-
-            avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
-        }
-
-        /// <summary>
-        /// Implementation operates on NativeArray and mitigates runtime checks for elements access. Supports realloc
-        /// </summary>
-        private unsafe struct QuickArray<T> : IDisposable where T: unmanaged
-        {
-            private const Allocator ALLOCATOR = Allocator.Persistent;
-
-            private NativeArray<T> array;
-            private T* accessPtr;
-
-            public int Length => array.Length;
-
-            public T this[int index]
-            {
-                get => accessPtr[index];
-                set => accessPtr[index] = value;
-            }
-
-            public QuickArray(int length)
-            {
-                Assert.IsTrue(length > 0, "length > 0, length must be greater than 0");
-                array = new NativeArray<T>(length, ALLOCATOR);
-                accessPtr = (T*)array.GetUnsafePtr();
-            }
-
-            /// <summary>
-            /// Reallocate to exactly newLength, preserving min(old,new) items.
-            /// </summary>
-            public void ReAlloc(int newLength, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
-            {
-                if (!array.IsCreated)
-                {
-                    // Fresh allocate
-                    array = new NativeArray<T>(newLength, ALLOCATOR, options);
-                    accessPtr = (T*)array.GetUnsafePtr();
-                    return;
-                }
-
-                if (newLength == array.Length) return;
-
-                NativeArray<T> newArray = new NativeArray<T>(newLength, ALLOCATOR, options);
-
-                int count = Mathf.Min(array.Length, newLength);
-                long bytesToCopy = count * UnsafeUtility.SizeOf<T>();
-
-                UnsafeUtility.MemCpy(
-                    destination: newArray.GetUnsafePtr()!,
-                    source: array.GetUnsafeReadOnlyPtr()!,
-                    size: bytesToCopy
-                );
-
-                array.Dispose();
-                array = newArray;
-                accessPtr = (T*)array.GetUnsafePtr();
-            }
-
-            public readonly NativeArray<T> InnerNativeArray() =>
-                array;
-
-            public void Dispose()
-            {
-                array.Dispose();
-            }
+            remoteAvatars.Release(ref avatarTransformMatrixComponent);
         }
     }
 }

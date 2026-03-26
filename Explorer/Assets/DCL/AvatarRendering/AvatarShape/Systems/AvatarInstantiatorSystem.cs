@@ -86,39 +86,42 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
+            EnsureAvatarBaseQuery(World);
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
-        private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(AvatarBase))]
+        private void EnsureAvatarBase(Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
         {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
-
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
-
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             Transform avatarTransform = avatarBase.transform;
+            avatarTransform.SetParent(transformComponent.Transform, false);
+            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
-            if (transformComponent.Transform != null)
+            for (var index = 0; index < children.Value.Count; index++)
             {
-                avatarTransform.SetParent(transformComponent.Transform, false);
+                Transform child = children.Value[index];
 
-                using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-                for (var index = 0; index < children.Value.Count; index++)
-                {
-                    Transform child = children.Value[index];
-
-                    if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
-                }
+                if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
             }
 
             avatarTransform.ResetLocalTRS();
+
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent), typeof(DeleteEntityIntention))]
+        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
+        {
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
+
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
 
             var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
 
@@ -126,8 +129,6 @@ namespace DCL.AvatarRendering.AvatarShape
                 InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(finalBoneArray);
-
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
 
             // Only enable the rig if head-sync is enabled
             // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
@@ -139,15 +140,17 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarBase.HandsIKRig.enabled = false;
             avatarBase.FeetIKRig.enabled = false;
 
-            return avatarBase;
+            World.Add(entity, avatarTransformMatrixComponent, skinningComponent);
+
+            return true;
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
-        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref AvatarBase avatarBase)
         {
-            var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
+            if (!InstantiateNewAvatar(entity, ref avatarShapeComponent, ref avatarBase)) return;
 
             if (avatarBase != null)
             {
@@ -171,6 +174,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
 
+            // Main player bones are stable across wearable changes — no need to release/re-register the pipeline
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);

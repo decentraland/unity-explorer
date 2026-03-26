@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -17,23 +17,21 @@ namespace DCL.AvatarRendering.AvatarShape
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
-        private readonly CustomSkinning skinningStrategy;
         private readonly AvatarTransformMatrixJobWrapper jobWrapper;
-        private NativeArray<float4x4> currentResult;
-        private int currentBoneStride;
+        private NativeArray<float4x4> remoteResult;
+        private NativeArray<float4x4> mainPlayerResult;
 
-        internal FinishAvatarMatricesCalculationSystem(World world, CustomSkinning skinningStrategy,
-            AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
+        internal FinishAvatarMatricesCalculationSystem(World world, AvatarTransformMatrixJobWrapper jobWrapper) : base(world)
         {
-            this.skinningStrategy = skinningStrategy;
             this.jobWrapper = jobWrapper;
         }
 
         protected override void Update(float t)
         {
             jobWrapper.CompleteBoneMatrixCalculations();
-            currentResult = jobWrapper.job.BonesMatricesResult;
-            currentBoneStride = jobWrapper.CurrentBoneStride;
+            remoteResult = jobWrapper.RemoteAvatarsBonesResult;
+            mainPlayerResult = jobWrapper.MainPlayerBonesResult;
+
             ExecuteQuery(World);
         }
 
@@ -45,7 +43,12 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarCustomSkinningComponent computeShaderSkinning
         )
         {
-            Result result = computeShaderSkinning.ComputeSkinning(currentResult, avatarTransformMatrixComponent.IndexInGlobalJobArray, currentBoneStride);
+            NativeArray<float4x4> bonesResult = avatarTransformMatrixComponent.IsMainPlayer
+                ? mainPlayerResult
+                : remoteResult;
+
+            Result result = computeShaderSkinning.ComputeSkinning(bonesResult, avatarTransformMatrixComponent.IndexInGlobalJobArray);
+
             if (result.Success == false)
                 ReportHub.LogException(new Exception(result.ErrorMessage), ReportCategory.AVATAR);
         }

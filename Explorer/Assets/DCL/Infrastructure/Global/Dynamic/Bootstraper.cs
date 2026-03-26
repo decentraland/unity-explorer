@@ -2,7 +2,6 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -14,13 +13,10 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
@@ -38,8 +34,6 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Text;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -323,13 +317,17 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
+            IWeb3Authenticator authenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController,
+                bootstrapContainer.Web3AccountFactory);
+
+            if (EnableAnalytics)
+                authenticator = new TrackedTokenFileAuthenticator((TokenFileAuthenticator)authenticator, bootstrapContainer.Analytics.Controller);
+
             try
             {
-                IWeb3Identity identity = await new TokenFileAuthenticator(
-                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                          webRequestsContainer.WebRequestController,
-                          bootstrapContainer.Web3AccountFactory)
-                     .LoginAsync(new LoginPayload(), ct); // doesn't use payload
+                IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
 
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
