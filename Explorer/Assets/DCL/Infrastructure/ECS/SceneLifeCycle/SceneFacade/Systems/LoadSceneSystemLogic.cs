@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -36,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
             for (var i = 0; i < CDN_FILE_NAMES.Length; i++)
             {
                 URLAddress cdnUrl = assetBundleURL.Append(URLPath.FromString($"{cdnBasePath}{CDN_FILE_NAMES[i]}"));
-                headTasks[i] = CheckCdnFileExistsAsync(cdnUrl, reportCategory, ct);
+                headTasks[i] = webRequestController.IsHeadReachableAsync(reportCategory, cdnUrl, ct);
             }
 
             bool[] results = await UniTask.WhenAll(headTasks);
@@ -44,24 +43,8 @@ namespace ECS.SceneLifeCycle.Systems
             if (results[0] && results[1] && results[2])
                 return new SceneHashedContentWithCDN(hashedContent, definition.metadata.main, assetBundleURL, cdnBasePath);
 
+            UnityEngine.Debug.Log("JUANI FAILED");
             return hashedContent;
-        }
-
-        private async UniTask<bool> CheckCdnFileExistsAsync(URLAddress url, ReportData reportCategory, CancellationToken ct)
-        {
-            try
-            {
-                int statusCode = await webRequestController
-                                      .HeadAsync(new CommonArguments(url, RetryPolicy.NONE), ct, reportCategory)
-                                      .StatusCodeAsync();
-
-                return statusCode >= 200 && statusCode < 300;
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception)
-            {
-                return false;
-            }
         }
     }
 }
