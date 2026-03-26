@@ -626,7 +626,7 @@ namespace DCL.Tests
         }
 
         [Test]
-        public void PauseAllOnSceneNotCurrent()
+        public void StopAllOnSceneNotCurrent()
         {
             testParticleSystem.Play();
 
@@ -636,13 +636,13 @@ namespace DCL.Tests
             world.Create(pb, component);
             system.OnSceneIsCurrentChanged(false);
 
-            Assert.IsTrue(testParticleSystem.isPaused);
+            Assert.IsTrue(testParticleSystem.isStopped);
         }
 
         [Test]
         public void ResumePlayingOnSceneCurrent()
         {
-            testParticleSystem.Pause();
+            testParticleSystem.Stop();
 
             var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
             var pb = new PBParticleSystem { PlaybackState = PBParticleSystem.Types.PlaybackState.PsPlaying };

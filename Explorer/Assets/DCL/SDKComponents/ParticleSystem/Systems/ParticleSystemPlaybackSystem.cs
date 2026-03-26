@@ -65,14 +65,14 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             if (enteredScene)
                 ResumeAllParticleSystemsQuery(World);
             else
-                PauseAllParticleSystemsQuery(World);
+                StopAllParticleSystemsQuery(World);
         }
 
         [Query]
-        private void PauseAllParticleSystems(ref ParticleSystemComponent component)
+        private void StopAllParticleSystems(ref ParticleSystemComponent component)
         {
             if (component.ParticleSystemInstance.isPlaying)
-                component.ParticleSystemInstance.Pause();
+                component.ParticleSystemInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
         [Query]
