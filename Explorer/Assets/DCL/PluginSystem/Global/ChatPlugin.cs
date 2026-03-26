@@ -266,9 +266,15 @@ namespace DCL.PluginSystem.Global
             messageReactionService = new ChatMessageReactionService(reactionBus, chatHistory, web3IdentityCache);
             pluginScope.Add(messageReactionService);
 
+            var uiSimulation = new ChatReactionUISimulation(reactionsConfig,
+                mainUIView.ChatMainView.SituationalReactionView.LaneRect);
+            var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig,
+                avatarReactionPosition);
+
             var situationalReactionService = new SituationalReactionService(
                 reactionsConfig,
-                mainUIView.ChatMainView.SituationalReactionView.LaneRect,
+                uiSimulation,
+                worldSimulation,
                 avatarReactionPosition,
                 reactionBus);
 
@@ -282,8 +288,8 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(situationalReactionService);
 
             var reactionDebugController = new SituationalReactionDebugController(
-                situationalReactionService.UISimulation,
-                situationalReactionService.WorldSimulation,
+                uiSimulation,
+                worldSimulation,
                 avatarReactionPosition);
             pluginScope.Add(reactionDebugController);
 

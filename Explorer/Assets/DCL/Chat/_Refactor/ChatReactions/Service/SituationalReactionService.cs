@@ -21,24 +21,21 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public bool WorldReactionsEnabled { get; set; } = true;
 
-        // Temporary: exposed for debug controller wiring. Removed in Task 5 (DIP).
-        public ChatReactionUISimulation UISimulation => chatReactionSimulation;
-        public ChatReactionWorldSimulation WorldSimulation => worldReactionSimulation;
-
-        public SituationalReactionService(ChatReactionsConfig config, RectTransform laneRect,
-            IAvatarReactionPosition? avatarPosition = null, IReactionMessageBus? reactionBus = null)
+        public SituationalReactionService(
+            ChatReactionsConfig config,
+            ChatReactionUISimulation uiSimulation,
+            ChatReactionWorldSimulation worldSimulation,
+            IAvatarReactionPosition? avatarPosition = null,
+            IReactionMessageBus? reactionBus = null)
         {
             this.config = config;
+            this.chatReactionSimulation = uiSimulation;
+            this.worldReactionSimulation = worldSimulation;
             this.avatarPosition = avatarPosition;
             this.reactionBus = reactionBus;
 
-            chatReactionSimulation = new ChatReactionUISimulation(config, laneRect);
-            worldReactionSimulation = new ChatReactionWorldSimulation(config, avatarPosition);
-
             if (avatarPosition != null)
-            {
                 cachedLocalHeadGetter = avatarPosition.GetLocalPlayerHeadPosition;
-            }
         }
 
         public void Dispose()
@@ -89,27 +86,31 @@ namespace DCL.Chat.ChatReactions
         public void TriggerUIReaction(int emojiIndex, int count)
         {
             chatReactionSimulation.TriggerUIReaction(emojiIndex, count);
-            TriggerWorldForLocalPlayer(emojiIndex);
+            TriggerLocalPlayerWorldReaction(emojiIndex);
+            BroadcastToNetwork(emojiIndex);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, count);
-            TriggerWorldForLocalPlayer(emojiIndex);
+            TriggerLocalPlayerWorldReaction(emojiIndex);
+            BroadcastToNetwork(emojiIndex);
         }
 
         public void TriggerDefaultUIReaction()
         {
             int emojiIndex = chatReactionSimulation.GetRandomEmojiIndex();
             chatReactionSimulation.TriggerUIReaction(emojiIndex, config.UILane.StreamBurst);
-            TriggerWorldForLocalPlayer(emojiIndex);
+            TriggerLocalPlayerWorldReaction(emojiIndex);
+            BroadcastToNetwork(emojiIndex);
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
         {
             int emojiIndex = chatReactionSimulation.GetRandomEmojiIndex();
             chatReactionSimulation.TriggerUIReactionFromRect(sourceRect, emojiIndex, config.UILane.StreamBurst);
-            TriggerWorldForLocalPlayer(emojiIndex);
+            TriggerLocalPlayerWorldReaction(emojiIndex);
+            BroadcastToNetwork(emojiIndex);
         }
 
         public void BeginUIStream(RectTransform sourceRect)
@@ -140,16 +141,18 @@ namespace DCL.Chat.ChatReactions
                 worldReactionSimulation.EndStream();
         }
 
-        private void TriggerWorldForLocalPlayer(int emojiIndex)
+        private void TriggerLocalPlayerWorldReaction(int emojiIndex)
         {
+            if (!WorldReactionsEnabled) return;
             if (avatarPosition == null) return;
 
             Vector3? headPos = avatarPosition.GetLocalPlayerHeadPosition();
-            if (!headPos.HasValue) return;
-
-            if (WorldReactionsEnabled)
+            if (headPos.HasValue)
                 worldReactionSimulation.TriggerAnchoredReactionLocalPlayer(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
+        }
 
+        private void BroadcastToNetwork(int emojiIndex)
+        {
             reactionBus?.SendSituationalReaction(emojiIndex);
         }
     }
