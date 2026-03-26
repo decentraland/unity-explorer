@@ -144,7 +144,6 @@ namespace DCL.PluginSystem.Global
 
 // TODO initialize on WebGL
 #if !UNITY_WEBGL || (UNITY_EDITOR)
-            IFFIClient.Default.EnsureAssigned();
             IFFIClient.Default.EnsureInitialize();
 #endif
 
