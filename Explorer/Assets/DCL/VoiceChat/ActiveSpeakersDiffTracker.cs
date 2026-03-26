@@ -34,7 +34,7 @@ namespace DCL.VoiceChat
             {
                 newActiveSpeakers.Add(speakerId);
 
-                if (!activeSpeakers.Contains(speakerId))
+                if (!activeSpeakers.Contains(speakerId) || !touchedParticipants.Contains(speakerId))
                     SetSpeakingState(speakerId, true);
             }
 

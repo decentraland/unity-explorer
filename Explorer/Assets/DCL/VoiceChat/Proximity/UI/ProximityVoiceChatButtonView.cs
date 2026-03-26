@@ -13,6 +13,7 @@ namespace DCL.VoiceChat.Proximity
             public Sprite hover;
         }
 
+        [SerializeField] private Button? button;
         [SerializeField] private Image? unselectedImage;
         [SerializeField] private Image? hoverStateImage;
 
@@ -21,6 +22,8 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private MetaStateSprites hearingSprites;
         [SerializeField] private MetaStateSprites speakingSprites;
         [SerializeField] private MetaStateSprites blockedSprites;
+
+        public Button? Button => button;
 
         private void Awake()
         {

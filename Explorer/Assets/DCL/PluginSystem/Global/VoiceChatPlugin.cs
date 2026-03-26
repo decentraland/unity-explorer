@@ -47,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProximityMuteService proximityMuteService;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ProximityVoiceChatButtonView? proximityVoiceChatButtonView;
+        private readonly NearbyVoiceWidgetView? nearbyVoiceWidgetView;
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private ProximityNametagsHandler? proximityNametagsHandler;
         private ProximityVoiceChatStateModel? proximityStateModel;
         private ProximityVoiceChatButtonController? proximityButtonController;
+        private NearbyVoiceWidgetController? nearbyVoiceWidgetController;
         private VoiceChatConfiguration? storedVoiceChatConfig;
 
         public VoiceChatPlugin(
@@ -79,7 +81,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainer,
             ProximityMuteService proximityMuteService,
             IWeb3IdentityCache identityCache,
-            ProximityVoiceChatButtonView? proximityVoiceChatButtonView)
+            ProximityVoiceChatButtonView? proximityVoiceChatButtonView,
+            NearbyVoiceWidgetView? nearbyVoiceWidgetView)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -95,6 +98,7 @@ namespace DCL.PluginSystem.Global
             this.proximityMuteService = proximityMuteService;
             this.identityCache = identityCache;
             this.proximityVoiceChatButtonView = proximityVoiceChatButtonView;
+            this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -219,6 +223,13 @@ namespace DCL.PluginSystem.Global
                 proximityButtonController = new ProximityVoiceChatButtonController(
                     proximityVoiceChatButtonView, proximityStateModel);
                 pluginScope.Add(proximityButtonController);
+            }
+
+            if (nearbyVoiceWidgetView != null)
+            {
+                nearbyVoiceWidgetController = new NearbyVoiceWidgetController(
+                    nearbyVoiceWidgetView, proximityStateModel);
+                pluginScope.Add(nearbyVoiceWidgetController);
             }
         }
 

@@ -271,7 +271,7 @@
     display: none;
     width: 14px;
     height: 14px;
-    background-image: url('/Assets/DCL/VoiceChat/Proximity/Textures/HushedIcn.png');
+    background-image: url('/Assets/DCL/VoiceChat/Proximity/UI/Textures/HushedIcn.png');
     -unity-background-scale-mode: scale-to-fit;
 }
 

@@ -959,7 +959,7 @@ GameObject:
   - component: {fileID: 1762814490784345320}
   - component: {fileID: 576444685409359194}
   - component: {fileID: 3518324366372321960}
-  - component: {fileID: 4006369574402566707}
+  - component: {fileID: 615725343870955021}
   - component: {fileID: 1674241877427284860}
   m_Layer: 5
   m_Name: NearbyVoiceMenuView
@@ -1095,7 +1095,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &4006369574402566707
+--- !u!114 &615725343870955021
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1104,19 +1104,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 6080012563186225582}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 619848039f8e4fad9bf86037459cd6d2, type: 3}
+  m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.NearbyVoiceWidgetView
   <canvas>k__BackingField: {fileID: 1762814490784345320}
   <raycaster>k__BackingField: {fileID: 576444685409359194}
   <viewAnimationElement>k__BackingField: {fileID: 1674241877427284860}
-  <TimeProgressionToggle>k__BackingField: {fileID: 5975531749364629377}
-  <TimeSlider>k__BackingField: {fileID: 8598501768903546571}
-  <TimeText>k__BackingField: {fileID: 0}
-  <CloseButton>k__BackingField: {fileID: 5018798167616832090}
-  <TimeProgressionGroup>k__BackingField: {fileID: 8299736261256846239}
-  <TopSliderGroup>k__BackingField: {fileID: 984261470361807546}
-  <TextSliderGroup>k__BackingField: {fileID: 0}
+  <HearOthersToggle>k__BackingField: {fileID: 5975531749364629377}
+  <VolumeSlider>k__BackingField: {fileID: 8598501768903546571}
+  <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
+  <closeAreaButton>k__BackingField: {fileID: 5018798167616832090}
 --- !u!114 &1674241877427284860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1831,6 +1828,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
   m_PrefabInstance: {fileID: 3628167466339284318}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3614453859414897071 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+  m_PrefabInstance: {fileID: 3628167466339284318}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4267517581178736721
 PrefabInstance:
   m_ObjectHideFlags: 0

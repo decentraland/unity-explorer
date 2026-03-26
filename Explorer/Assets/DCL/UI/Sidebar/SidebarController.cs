@@ -156,6 +156,7 @@ namespace DCL.UI.Sidebar
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            viewInstance.ProximityVoiceChatButton.Button?.onClick.AddListener(OpenNearbyVoiceWidgetAsync);
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
@@ -206,6 +207,7 @@ namespace DCL.UI.Sidebar
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SmartWearables, smartWearablesTooltipController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.NearbyVoice, viewInstance!.NearbyVoiceWidget);
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
@@ -409,6 +411,15 @@ namespace DCL.UI.Sidebar
 
             viewInstance.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile);
+            viewInstance.UnblockSidebar();
+        }
+
+        private async void OpenNearbyVoiceWidgetAsync()
+        {
+            if (viewInstance == null) return;
+
+            viewInstance.BlockSidebar();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.NearbyVoice);
             viewInstance.UnblockSidebar();
         }
 

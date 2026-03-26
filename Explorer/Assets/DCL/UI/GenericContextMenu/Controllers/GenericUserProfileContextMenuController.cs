@@ -148,8 +148,8 @@ namespace DCL.UI
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
             contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
 
-            muteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearProximityButtonConfig.Text, contextMenuSettings.HearProximityButtonConfig.Sprite, new StringDelegate(OnMuteProximityClicked));
-            unmuteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HushProximityButtonConfig.Text, contextMenuSettings.HushProximityButtonConfig.Sprite, new StringDelegate(OnUnmuteProximityClicked));
+            muteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HushProximityButtonConfig.Text, contextMenuSettings.HushProximityButtonConfig.Sprite, new StringDelegate(OnMuteProximityClicked));
+            unmuteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearProximityButtonConfig.Text, contextMenuSettings.HearProximityButtonConfig.Sprite, new StringDelegate(OnUnmuteProximityClicked));
             contextMenuMuteProximityButton = new GenericContextMenuElement(muteProximityButtonControlSettings, false);
             contextMenuUnmuteProximityButton = new GenericContextMenuElement(unmuteProximityButtonControlSettings, false);
 

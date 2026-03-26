@@ -1094,7 +1094,8 @@ namespace Global.Dynamic
                         debugBuilder,
                         proximityMuteService,
                         identityCache,
-                        mainUIView.SidebarView.ProximityVoiceChatButton)
+                        mainUIView.SidebarView.ProximityVoiceChatButton,
+                        mainUIView.SidebarView.NearbyVoiceWidget)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
