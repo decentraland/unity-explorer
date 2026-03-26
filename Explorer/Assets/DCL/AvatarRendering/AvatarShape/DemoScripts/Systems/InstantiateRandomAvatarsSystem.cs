@@ -68,6 +68,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
         private bool networkAvatar;
+        private bool forceMaleOnly;
 
         internal InstantiateRandomAvatarsSystem(
             World world,
@@ -85,6 +86,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddToggleField("Network avatar", evt => networkAvatar = evt.newValue, true)
+                        .AddToggleField("Force male only", evt => forceMaleOnly = evt.newValue, false)
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
@@ -256,7 +258,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             for (var i = 0; i < avatarRandomizerAsset.Avatars.Count && i < randomAvatarsToInstantiate; i++)
             {
-                AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                AvatarRandomizer currentRandomizer = GetRandomizer();
                 var wearables = new List<string>();
 
                 foreach (string avatarWearable in avatarRandomizerAsset.Avatars[i].pointers)
@@ -267,7 +269,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             for (int i = avatarRandomizerAsset.Avatars.Count; i < randomAvatarsToInstantiate; i++)
             {
-                AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                AvatarRandomizer currentRandomizer = GetRandomizer();
                 avatarIndex++;
                 var wearables = new List<string>();
 
@@ -277,6 +279,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 CreateAvatar(characterControllerSettings, startXPosition, startZPosition, wearables, currentRandomizer.BodyShape, i, randomAvatarsToInstantiate);
             }
         }
+
+        private AvatarRandomizer GetRandomizer() =>
+            forceMaleOnly ? randomizers[0] : randomizers[Random.Range(0, randomizers.Length)];
 
         private void CreateAvatar(ICharacterControllerSettings characterControllerSettings, float startXPosition, float startZPosition, List<string> wearables, string bodyShape,
             int avatarIndex, int randomAvatarToInstantiate)

@@ -182,7 +182,7 @@ namespace DCL.PluginSystem.Global
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler, computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, wearableStorage, avatarTransformMatrixJobWrapper, facialFeaturesTextures);
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
-            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy, avatarTransformMatrixJobWrapper);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
 
             if (includeGhosts)
