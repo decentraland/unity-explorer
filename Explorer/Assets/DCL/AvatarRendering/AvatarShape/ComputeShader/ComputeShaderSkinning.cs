@@ -137,36 +137,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return list;
         }
 
-        /// <summary>
-        /// Aggregates pre-collected spring bone transforms from all cached wearables.
-        /// Spring bones are collected in SMR.bones order during InstantiateWearable to ensure
-        /// bone indices match the mesh's BoneWeight references.
-        /// </summary>
-        public static Transform[] CollectSpringBones(IList<CachedAttachment> wearables)
-        {
-            int totalCount = 0;
-
-            for (var i = 0; i < wearables.Count; i++)
-                totalCount += wearables[i].SpringBones.Length;
-
-            if (totalCount == 0)
-                return Array.Empty<Transform>();
-
-            var result = new Transform[totalCount];
-            int offset = 0;
-
-            for (var i = 0; i < wearables.Count; i++)
-            {
-                SpringBoneData[] bones = wearables[i].SpringBones;
-
-                for (var j = 0; j < bones.Length; j++)
-                    result[offset + j] = bones[j].Transform;
-
-                offset += bones.Length;
-            }
-
-            return result;
-        }
 
         private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
         {

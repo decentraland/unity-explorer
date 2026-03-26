@@ -24,12 +24,10 @@ namespace DCL.AvatarRendering.Loading.Assets
         public readonly float GravityPower;
         public readonly float HitRadius;
         public readonly Quaternion DefaultLocalRotation;
-        public readonly Vector3 DefaultLocalPosition;
-        public readonly Vector3 DefaultLocalScale;
 
         public SpringBoneData(Transform transform, string skeletonParentName,
             float stiffness, float drag, Vector3 gravityDir, float gravityPower, float hitRadius,
-            Quaternion defaultLocalRotation, Vector3 defaultLocalPosition, Vector3 defaultLocalScale)
+            Quaternion defaultLocalRotation)
         {
             Transform = transform;
             SkeletonParentName = skeletonParentName;
@@ -39,8 +37,6 @@ namespace DCL.AvatarRendering.Loading.Assets
             GravityPower = gravityPower;
             HitRadius = hitRadius;
             DefaultLocalRotation = defaultLocalRotation;
-            DefaultLocalPosition = defaultLocalPosition;
-            DefaultLocalScale = defaultLocalScale;
         }
 
         public bool IsChainRoot => SkeletonParentName != null;

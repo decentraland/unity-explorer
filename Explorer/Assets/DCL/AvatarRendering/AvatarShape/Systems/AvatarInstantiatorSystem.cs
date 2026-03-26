@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
+using DCL.SpringBones;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
@@ -233,9 +234,10 @@ namespace DCL.AvatarRendering.AvatarShape
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
-            // Collect spring bone transforms from wearable SMRs before Initialize destroys them
-            Transform[] springBones = ComputeShaderSkinning.CollectSpringBones(avatarShapeComponent.InstantiatedWearables);
-            ReparentSpringBonesToAvatarSkeleton(avatarShapeComponent.InstantiatedWearables, baseBoneArray);
+            // Collect spring bone transforms from wearable SMRs before Initialize destroys them.
+            // These are the ORIGINAL transforms in the wearable hierarchy. The SpringBoneRegistrationSystem
+            // will later create clone transforms under the avatar skeleton and patch the BoneArray.
+            Transform[] springBones = SpringBoneCloneHelper.CollectSpringBones(avatarShapeComponent.InstantiatedWearables);
             BoneArray finalBoneArray = BoneArray.WithAppendedBones(baseBoneArray, springBones, GetReportCategory());
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
@@ -265,43 +267,5 @@ namespace DCL.AvatarRendering.AvatarShape
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
 
-        /// <summary>
-        ///     Reparents spring bone chain roots from the wearable hierarchy to the avatar skeleton
-        ///     so they follow animation. Only chain roots (spring bones whose parent is a skeleton bone
-        ///     like Neck) are reparented — chain children follow automatically as transform children.
-        ///     Uses worldPositionStays:false to preserve the local offset for correct bind-pose alignment.
-        /// </summary>
-        private static void ReparentSpringBonesToAvatarSkeleton(IList<CachedAttachment> wearables, BoneArray baseBoneArray)
-        {
-            Transform[] avatarBones = baseBoneArray.Inner;
-            Dictionary<string, Transform> bonesByName = DictionaryPool<string, Transform>.Get();
-
-            for (var i = 0; i < avatarBones.Length; i++)
-            {
-                Transform bone = avatarBones[i];
-
-                if (bone != null)
-                    bonesByName.TryAdd(bone.name, bone);
-            }
-
-            for (var w = 0; w < wearables.Count; w++)
-            {
-                SpringBoneData[] springBones = wearables[w].SpringBones;
-
-                for (var i = 0; i < springBones.Length; i++)
-                {
-                    if (!springBones[i].IsChainRoot)
-                        continue;
-
-                    if (bonesByName.TryGetValue(springBones[i].SkeletonParentName, out Transform targetBone)
-                        && springBones[i].Transform.parent != targetBone)
-                        springBones[i].Transform.SetParent(targetBone, false);
-                    else
-                        ReportHub.LogWarning(ReportCategory.AVATAR, $"Spring bone '{springBones[i].Transform.name}' could not find avatar skeleton bone '{springBones[i].SkeletonParentName}', leaving in wearable hierarchy");
-                }
-            }
-
-            DictionaryPool<string, Transform>.Release(bonesByName);
-        }
     }
 }

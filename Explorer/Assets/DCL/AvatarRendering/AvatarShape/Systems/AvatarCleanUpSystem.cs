@@ -93,8 +93,6 @@ namespace DCL.AvatarRendering.AvatarShape
             if (mainPlayerAvatarBaseProxy.Object == avatarBase)
                 mainPlayerAvatarBaseProxy.ReleaseObject();
 
-            wearableAssetsCache.ReleaseSpringBones(avatarShapeComponent.InstantiatedWearables);
-
             ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler,
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);

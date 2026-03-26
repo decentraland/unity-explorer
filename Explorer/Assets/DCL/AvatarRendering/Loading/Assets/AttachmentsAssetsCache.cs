@@ -120,30 +120,5 @@ namespace DCL.AvatarRendering.Loading.Assets
             ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;
         }
 
-        public void ReleaseSpringBones(IList<CachedAttachment> wearables)
-        {
-            for (var w = 0; w < wearables.Count; w++)
-            {
-                SpringBoneData[] springBones = wearables[w].SpringBones;
-
-                if (springBones.Length == 0)
-                    continue;
-
-                Transform wearableRoot = wearables[w].Instance.transform;
-
-                for (var i = 0; i < springBones.Length; i++)
-                {
-                    if (springBones[i].Transform != null)
-                    {
-                        if (springBones[i].IsChainRoot)
-                            springBones[i].Transform.SetParent(wearableRoot, false);
-
-                        springBones[i].Transform.localRotation = springBones[i].DefaultLocalRotation;
-                        springBones[i].Transform.localPosition = springBones[i].DefaultLocalPosition;
-                        springBones[i].Transform.localScale = springBones[i].DefaultLocalScale;
-                    }
-                }
-            }
-        }
     }
 }

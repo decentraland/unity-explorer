@@ -1,4 +1,5 @@
 using UniGLTF.SpringBoneJobs.InputPorts;
+using UnityEngine;
 
 namespace DCL.SpringBones
 {
@@ -6,5 +7,6 @@ namespace DCL.SpringBones
     {
         public FastSpringBoneBuffer Buffer;
         public int LastKnownVersion;
+        public Transform[] Clones;
     }
 }

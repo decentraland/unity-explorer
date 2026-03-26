@@ -10,8 +10,6 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         void Release(CachedAttachment cachedAttachment);
 
-        void ReleaseSpringBones(System.Collections.Generic.IList<CachedAttachment> wearables);
-
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
     }
 }

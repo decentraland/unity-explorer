@@ -1,8 +1,10 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Optimization.Pools;
 using DCL.SpringBones;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UniVRM10.FastSpringBones;
@@ -13,28 +15,34 @@ namespace DCL.PluginSystem.Global
     public class SpringBonesPlugin : IDCLGlobalPlugin<SpringBonesPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private FastSpringBoneService springBoneService;
+        private GameObjectPool<Transform> transformPool;
 
-        public SpringBonesPlugin(IAssetsProvisioner assetsProvisioner)
+        public SpringBonesPlugin(IAssetsProvisioner assetsProvisioner, IComponentPoolsRegistry poolsRegistry)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.poolsRegistry = poolsRegistry;
         }
 
         public void Dispose()
         {
+            transformPool?.Dispose();
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             var springBoneServicePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.SpringBonesSimulationPrefab, ct)).Value;
             springBoneService = (await Object.InstantiateAsync(springBoneServicePrefab))[0];
+            transformPool = new GameObjectPool<Transform>(poolsRegistry.RootContainerTransform());
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService);
-            SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService);
+            var pendingCloneRelease = new List<Transform>();
+            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, transformPool, pendingCloneRelease);
+            SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService, transformPool, pendingCloneRelease);
         }
 
         [Serializable]
