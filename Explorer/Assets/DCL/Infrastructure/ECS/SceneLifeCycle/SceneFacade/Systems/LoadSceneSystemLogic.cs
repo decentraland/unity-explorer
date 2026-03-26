@@ -43,7 +43,6 @@ namespace ECS.SceneLifeCycle.Systems
             if (results[0] && results[1] && results[2])
                 return new SceneHashedContentWithCDN(hashedContent, definition.metadata.main, assetBundleURL, cdnBasePath);
 
-            UnityEngine.Debug.Log("JUANI FAILED");
             return hashedContent;
         }
     }
