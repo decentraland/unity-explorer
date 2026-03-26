@@ -4,38 +4,64 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using SceneRunner.Scene;
+using System;
+using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     public class LoadSceneSystemLogic : LoadSceneSystemLogicBase
     {
+        private static readonly string[] CDN_FILE_NAMES = { "index.js", "scene.json", "main.crdt" };
+
         public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
             : base(webRequestController, assetBundleURL) { }
 
         protected override string GetAssetBundleSceneId(string ipfsPathEntityId) =>
             ipfsPathEntityId;
 
-        protected override UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory)
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct)
         {
             var hashedContent = new SceneHashedContent(definition.content!, contentBaseUrl);
 
-            // When the scene has an asset bundle manifest, redirect the main script URL to the CDN
-            // so the Explorer desktop client does not need to fetch it from the catalyst.
-            // main.crdt has its own CDN-first logic with catalyst fallback in LoadMainCrdtAsync.
-            if (definition.assetBundleManifestVersion != null
-                && !definition.assetBundleManifestVersion.IsEmpty()
-                && !string.IsNullOrEmpty(definition.metadata?.main))
-            {
-                string? abVersion = definition.assetBundleManifestVersion.GetAssetBundleManifestVersion();
+            string? abVersion = definition.assetBundleManifestVersion?.GetAssetBundleManifestVersion();
 
-                if (!string.IsNullOrEmpty(abVersion))
-                {
-                    URLAddress cdnMainScriptUrl = assetBundleURL.Append(URLPath.FromString($"{abVersion}/{definition.id}/index.js"));
-                    return UniTask.FromResult<ISceneContent>(new SceneHashedContentWithCDN(hashedContent, definition.metadata.main, cdnMainScriptUrl));
-                }
+            if (string.IsNullOrEmpty(abVersion) || string.IsNullOrEmpty(definition.metadata?.main))
+                return hashedContent;
+
+            var cdnBasePath = $"{abVersion}/{definition.id}/";
+
+            // Check all three CDN files in parallel with HEAD requests
+            var headTasks = new UniTask<bool>[CDN_FILE_NAMES.Length];
+
+            for (var i = 0; i < CDN_FILE_NAMES.Length; i++)
+            {
+                URLAddress cdnUrl = assetBundleURL.Append(URLPath.FromString($"{cdnBasePath}{CDN_FILE_NAMES[i]}"));
+                headTasks[i] = CheckCdnFileExistsAsync(cdnUrl, reportCategory, ct);
             }
 
-            return UniTask.FromResult<ISceneContent>(hashedContent);
+            bool[] results = await UniTask.WhenAll(headTasks);
+
+            if (results[0] && results[1] && results[2])
+                return new SceneHashedContentWithCDN(hashedContent, definition.metadata.main, assetBundleURL, cdnBasePath);
+
+            return hashedContent;
+        }
+
+        private async UniTask<bool> CheckCdnFileExistsAsync(URLAddress url, ReportData reportCategory, CancellationToken ct)
+        {
+            try
+            {
+                int statusCode = await webRequestController
+                                      .HeadAsync(new CommonArguments(url, RetryPolicy.NONE), ct, reportCategory)
+                                      .StatusCodeAsync();
+
+                return statusCode >= 200 && statusCode < 300;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

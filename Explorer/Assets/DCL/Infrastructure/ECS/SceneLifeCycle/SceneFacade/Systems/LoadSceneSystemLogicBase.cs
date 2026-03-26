@@ -41,9 +41,9 @@ namespace ECS.SceneLifeCycle.Systems
 
             ReportHub.LogProductionInfo( $"Loading scene '{definition?.GetLogSceneName()}' began");
 
-            var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory);
+            ISceneContent? hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
-            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, definition, reportCategory, ct);
+            UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
             var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
             (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
@@ -94,36 +94,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
-        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, SceneEntityDefinition definition, ReportData reportCategory, CancellationToken ct)
+        protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
             const string NAME = "main.crdt";
 
-            // Try the asset bundle CDN first when the scene has an AB manifest version.
-            // This avoids relying on the catalyst for scenes served from the asset bundle registry.
-            // If CDN does not have the file yet (e.g. conversion is in progress), fall back to catalyst.
-            if (definition.assetBundleManifestVersion != null && !definition.assetBundleManifestVersion.IsEmpty())
-            {
-                string? abVersion = definition.assetBundleManifestVersion.GetAssetBundleManifestVersion();
-
-                if (!string.IsNullOrEmpty(abVersion))
-                {
-                    URLAddress cdnUrl = assetBundleURL.Append(URLPath.FromString($"{abVersion}/{definition.id}/{NAME}"));
-
-                    try
-                    {
-                        return await webRequestController.GetAsync(new CommonArguments(cdnUrl), ct, reportCategory).GetDataCopyAsync();
-                    }
-                    catch (System.OperationCanceledException) { throw; }
-                    catch (System.Exception e)
-                    {
-                        ReportHub.LogWarning(reportCategory, $"Failed to load {NAME} from CDN ({cdnUrl}), falling back to catalyst: {e.Message}");
-                    }
-                }
-            }
-
-            // Fall back to catalyst: resolve URL through the hashed content map
+            // CDN-first resolution is handled by SceneHashedContentWithCDN when available.
+            // TryGetContentUrl will return the CDN URL if HEAD-validated, otherwise the catalyst URL.
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 

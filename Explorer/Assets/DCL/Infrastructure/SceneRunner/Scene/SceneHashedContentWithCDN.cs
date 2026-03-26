@@ -1,41 +1,54 @@
 using CommunicationData.URLHelpers;
+using System;
 
 namespace SceneRunner.Scene
 {
     /// <summary>
-    ///     Wraps <see cref="SceneHashedContent" /> and overrides the URL for the scene's main script
-    ///     (usually <c>index.js</c>) to point to the asset bundle CDN instead of the catalyst.
-    ///     This avoids relying on the catalyst for scenes already served from the asset bundle registry.
+    ///     Wraps <see cref="SceneHashedContent" /> and redirects <c>index.js</c>, <c>scene.json</c>,
+    ///     and <c>main.crdt</c> to the asset bundle CDN instead of the catalyst.
+    ///     Only used when all three files have been validated via HEAD requests.
     /// </summary>
-    /// <remarks>
-    ///     <c>main.crdt</c> is handled separately in
-    ///     <see cref="ECS.SceneLifeCycle.Systems.LoadSceneSystemLogicBase" /> with an async CDN-first
-    ///     strategy and a catalyst fallback, so it is NOT overridden here.
-    /// </remarks>
     public class SceneHashedContentWithCDN : ISceneContent
     {
+        private const string SCENE_JSON = "scene.json";
+        private const string MAIN_CRDT = "main.crdt";
+
         private readonly SceneHashedContent innerContent;
         private readonly string mainScriptFileName;
-        private readonly URLAddress cdnMainScriptUrl;
+        private readonly URLDomain cdnBaseUrl;
+        private readonly string cdnBasePath;
 
         public URLDomain ContentBaseUrl => innerContent.ContentBaseUrl;
 
         public SceneHashedContentWithCDN(
             SceneHashedContent innerContent,
             string mainScriptFileName,
-            URLAddress cdnMainScriptUrl)
+            URLDomain cdnBaseUrl,
+            string cdnBasePath)
         {
             this.innerContent = innerContent;
             this.mainScriptFileName = mainScriptFileName;
-            this.cdnMainScriptUrl = cdnMainScriptUrl;
+            this.cdnBaseUrl = cdnBaseUrl;
+            this.cdnBasePath = cdnBasePath;
         }
 
         public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
-            // Redirect the main script to the CDN URL
-            if (string.Equals(contentPath, mainScriptFileName, System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(contentPath, mainScriptFileName, StringComparison.OrdinalIgnoreCase))
             {
-                result = cdnMainScriptUrl;
+                result = cdnBaseUrl.Append(URLPath.FromString($"{cdnBasePath}index.js"));
+                return true;
+            }
+
+            if (string.Equals(contentPath, SCENE_JSON, StringComparison.OrdinalIgnoreCase))
+            {
+                result = cdnBaseUrl.Append(URLPath.FromString($"{cdnBasePath}{SCENE_JSON}"));
+                return true;
+            }
+
+            if (string.Equals(contentPath, MAIN_CRDT, StringComparison.OrdinalIgnoreCase))
+            {
+                result = cdnBaseUrl.Append(URLPath.FromString($"{cdnBasePath}{MAIN_CRDT}"));
                 return true;
             }
 

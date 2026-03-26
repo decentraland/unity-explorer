@@ -5,7 +5,7 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using Global.Dynamic;
 using SceneRunner.Scene;
-using UnityEngine;
+using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override string GetAssetBundleSceneId(string _) =>
             hybridSceneHashedContent!.remoteSceneID;
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory)
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct)
         {
             hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
 
