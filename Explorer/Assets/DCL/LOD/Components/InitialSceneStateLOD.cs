@@ -32,6 +32,8 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> AssetBundlePromise;
 
+        public int Generation { get; private set; }
+
         public void ForgetLoading(World world)
         {
             if (CurrentState is State.FAILED or State.RESOLVED)
@@ -40,7 +42,10 @@ namespace DCL.LOD.Components
             AssetBundlePromise.ForgetLoading(world);
 
             if (CurrentState is State.PROCESSING)
+            {
+                Generation++;
                 Clear();
+            }
 
             CurrentState = State.UNINITIALIZED;
         }
@@ -57,13 +62,13 @@ namespace DCL.LOD.Components
             }
 
             Assets.Clear();
-            UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
         public void Dispose(World world)
         {
             AssetBundlePromise.ForgetLoading(world);
             Clear();
+            UnityObjectUtils.SafeDestroy(ParentContainer);
         }
 
         public void AddResolvedAsset(string assetHash, GltfContainerAsset asset) =>
@@ -83,7 +88,8 @@ namespace DCL.LOD.Components
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
-            ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
+            if (ParentContainer == null)
+                ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
             AssetBundleData = resultAsset;
             gltfCache = gltfContainerAssetsCache;

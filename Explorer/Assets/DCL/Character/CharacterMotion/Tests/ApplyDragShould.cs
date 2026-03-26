@@ -25,7 +25,7 @@ namespace DCL.CharacterMotion.Tests
             rigidTransform.MoveVelocity.Velocity = Vector3.forward;
             rigidTransform.IsGrounded = true;
 
-            ApplyAirDrag.Execute(settings, ref rigidTransform, 0.05f);
+            ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, 0.05f);
 
             Assert.IsTrue(Mathf.Approximately(1, rigidTransform.MoveVelocity.Velocity.z), "Velocity didn't change");
         }
@@ -37,7 +37,7 @@ namespace DCL.CharacterMotion.Tests
             rigidTransform.MoveVelocity.Velocity = Vector3.forward;
             rigidTransform.IsGrounded = false;
 
-            ApplyAirDrag.Execute(settings, ref rigidTransform, 0.05f);
+            ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, 0.05f);
 
             Assert.IsTrue(rigidTransform.MoveVelocity.Velocity.magnitude < 1, "Velocity is lower");
         }
@@ -49,7 +49,7 @@ namespace DCL.CharacterMotion.Tests
             rigidTransform.MoveVelocity.Velocity = Vector3.one;
             rigidTransform.IsGrounded = false;
 
-            ApplyAirDrag.Execute(settings, ref rigidTransform, 0.05f);
+            ApplyHorizontalAirDrag.Execute(settings, ref rigidTransform, 0.05f);
 
             Assert.IsTrue(Mathf.Approximately(1, rigidTransform.MoveVelocity.Velocity.y), "Vertical velocity is same");
             Assert.IsTrue(rigidTransform.MoveVelocity.Velocity.x < 1, "Horizontal Z velocity is less");
