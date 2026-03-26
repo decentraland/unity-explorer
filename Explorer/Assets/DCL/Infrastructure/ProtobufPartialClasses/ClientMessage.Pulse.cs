@@ -12,6 +12,8 @@ namespace Decentraland.Pulse
                    {
                        MessageOneofCase.Handshake => Handshake,
                        MessageOneofCase.Input => Input,
+                       MessageOneofCase.EmoteStart => EmoteStart,
+                       MessageOneofCase.EmoteStop => EmoteStop,
                        _ => null,
                    };
         }

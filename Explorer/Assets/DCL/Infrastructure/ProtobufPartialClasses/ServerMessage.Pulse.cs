@@ -16,6 +16,8 @@ namespace Decentraland.Pulse
                        MessageOneofCase.PlayerJoined => PlayerJoined,
                        MessageOneofCase.PlayerLeft => PlayerLeft,
                        MessageOneofCase.PlayerProfileVersionAnnounced => PlayerProfileVersionAnnounced,
+                       MessageOneofCase.EmoteStarted => EmoteStarted,
+                       MessageOneofCase.EmoteStopped => EmoteStopped,
                        _ => null,
                    };
         }

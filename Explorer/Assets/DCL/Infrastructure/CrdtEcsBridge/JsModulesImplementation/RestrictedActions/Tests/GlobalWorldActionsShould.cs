@@ -10,14 +10,12 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.Emotes;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
-using DCL.Multiplayer.Profiles.Bunches;
 using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using ECS.StreamableLoading.InitialSceneState;
@@ -31,7 +29,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
     {
         private World world;
         private Entity playerEntity;
-        private MockEmotesMessageBus mockMessageBus;
         private GlobalWorldActions globalWorldActions;
         private GameObject playerGameObject;
 
@@ -45,8 +42,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             playerGameObject.transform.position = Vector3.zero;
 
             playerEntity = world.Create(new CharacterTransform(playerGameObject.transform));
-            mockMessageBus = new MockEmotesMessageBus();
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
 
             // camera entity for camera global actions
             world.Create(new CameraComponent());
@@ -203,10 +199,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.AreEqual(emoteUrn, intent.EmoteId);
             Assert.IsTrue(intent.Spatial);
             Assert.AreEqual(TriggerSource.SCENE, intent.TriggerSource);
-
-            Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);
-            Assert.AreEqual(emoteUrn, mockMessageBus.SentEmotes[0].emoteId);
-            Assert.AreEqual(isLooping, mockMessageBus.SentEmotes[0].isLooping);
         }
 
         [Test]
@@ -218,13 +210,12 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             globalWorldActions.TriggerEmote(emoteUrn, false);
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
         public void CreatePromiseForLocalSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData { SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "localSceneTest") };
@@ -245,7 +236,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void NotCreatePromiseForLocalSceneSceneEmoteInvalidSrc()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, true, false, false); // local development, no remote ABs
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false, false); // local development, no remote ABs
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.MALE, IsVisible = true });
 
             var mockSceneData = new MockSceneData();
@@ -268,7 +259,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void CreatePromiseForRealmSceneSceneEmote()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = true });
 
             var sceneId = "remoteSceneId";
@@ -290,7 +281,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         [Test]
         public void ShouldNotTriggerSceneEmoteIfAvatarNotVisible()
         {
-            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus, false, true, false);
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, false, true, false);
             world.Add(playerEntity, new AvatarShapeComponent { BodyShape = BodyShape.FEMALE, IsVisible = false });
 
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };
@@ -298,23 +289,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, CancellationToken.None);
 
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
-        }
-
-        // Mocks
-        private class MockEmotesMessageBus : IEmotesMessageBus
-        {
-            public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
-
-            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
-            {
-                SentEmotes.Add((urn, loopCyclePassed));
-            }
-
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData
