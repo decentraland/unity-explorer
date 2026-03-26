@@ -287,5 +287,5 @@ namespace Utility.Multithreading
             }
         }
     }
-#endif
 }
+#endif

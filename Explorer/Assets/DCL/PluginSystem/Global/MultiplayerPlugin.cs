@@ -36,7 +36,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+#if !UNITY_WEBGL || (UNITY_EDITOR)
 using DCL.Multiplayer.Connections.FfiClients;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
