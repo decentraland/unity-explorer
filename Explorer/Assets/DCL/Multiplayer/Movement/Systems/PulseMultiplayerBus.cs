@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     // TODO: This class should be moved into another package as it resolves many kind of multiplayer messages
     public class PulseMultiplayerBus : IDisposable
     {
-        private const float SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001f;
+        private const double SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001;
 
         private readonly PulseMultiplayerService pulseService;
         private readonly PeerIdCache peerIdCache;

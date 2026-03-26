@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Profiles.Entities
     public class RemoteEntities : IRemoteEntities
     {
         private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly MovementInbox movementInbox;
         private readonly List<string> tempRemoveAll = new ();
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         public RemoteEntities(
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool,
             IEntityCollidersGlobalCache collidersGlobalCache,
             MovementInbox movementInbox)
         {

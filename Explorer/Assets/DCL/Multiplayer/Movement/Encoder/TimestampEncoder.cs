@@ -1,5 +1,5 @@
 ﻿using DCL.Multiplayer.Movement.Settings;
-using UnityEngine;
+using System;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -8,33 +8,33 @@ namespace DCL.Multiplayer.Movement
     /// </summary>
     public class TimestampEncoder
     {
-        private const float WRAPAROUND_THRESHOLD = 0.75f;
+        private const double WRAPAROUND_THRESHOLD = 0.75;
 
         private readonly MessageEncodingSettings settings;
 
-        private float lastOriginalTimestamp;
-        private float timestampOffset;
+        private double lastOriginalTimestamp;
+        private double timestampOffset;
 
         private int steps => 1 << settings.TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
         private int mask => steps - 1;
 
-        public float BufferSize => steps * settings.TIMESTAMP_QUANTUM;
+        public double BufferSize => steps * (double)settings.TIMESTAMP_QUANTUM;
 
         public TimestampEncoder(MessageEncodingSettings settings)
         {
             this.settings = settings;
         }
 
-        public int Compress(float timestamp)
+        public int Compress(double timestamp)
         {
-            float normalizedTimestamp = timestamp % BufferSize; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / settings.TIMESTAMP_QUANTUM) % steps;
+            double normalizedTimestamp = timestamp % BufferSize; // Normalize timestamp within the round buffer
+            return (int)Math.Round(normalizedTimestamp / settings.TIMESTAMP_QUANTUM) % steps;
         }
 
-        public float Decompress(long data)
+        public double Decompress(long data)
         {
-            float decompressedTimestamp = (int)(data & mask) * settings.TIMESTAMP_QUANTUM % BufferSize;
-            float adjustedTimestamp = decompressedTimestamp + timestampOffset;
+            double decompressedTimestamp = (int)(data & mask) * (double)settings.TIMESTAMP_QUANTUM % BufferSize;
+            double adjustedTimestamp = decompressedTimestamp + timestampOffset;
 
             // Adjust to buffer wraparound
             if (adjustedTimestamp < lastOriginalTimestamp - (BufferSize * WRAPAROUND_THRESHOLD))

@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
             }
 
-            float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
+            var timeDiff = (float)(UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
             bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
 
@@ -136,7 +136,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
-            float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
+            var speed = (float)(dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp));
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 

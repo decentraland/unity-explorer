@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Movement
 
         public bool Enabled { get; private set; }
 
-        public float Present => Start.timestamp + Time;
+        public double Present => Start.timestamp + Time;
 
         public void Restart(NetworkMovementMessage from, NetworkMovementMessage to, InterpolationType interpolationType, ICharacterControllerSettings settings)
         {
@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement
             End = to;
 
             Time = 0f;
-            TotalDuration = End.timestamp - Start.timestamp;
+            TotalDuration = (float)(End.timestamp - Start.timestamp);
 
             End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(TotalDuration, Start.animState.MovementBlendValue,
                 End.movementKind, End.velocitySqrMagnitude, settings);

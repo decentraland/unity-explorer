@@ -15,8 +15,8 @@ namespace DCL.Multiplayer.Movement
         public const string TEST_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
+        private readonly SimplePriorityQueue<NetworkMovementMessage, double> queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
+        public readonly SimplePriorityQueue<NetworkMovementMessage, double>? Queue => disposed ? null : queue;
 
         public float InitialCooldownTime;
 
@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Movement
         public bool HeadIKPitchEnabled;
         public float2 HeadIKYawAndPitch;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
@@ -64,7 +64,7 @@ namespace DCL.Multiplayer.Movement
         {
             if (!WasTeleported)
             {
-                float totalDuration = message.timestamp - PastMessage.timestamp;
+                var totalDuration = (float)(message.timestamp - PastMessage.timestamp);
 
                 message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
                     message.movementKind, message.velocitySqrMagnitude, settings);

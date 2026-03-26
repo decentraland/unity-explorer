@@ -170,7 +170,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
-            movement.Timestamp = message.timestamp;
+            movement.Timestamp = (float)message.timestamp;
 
             movement.PositionX = message.position.x;
             movement.PositionY = message.position.y;

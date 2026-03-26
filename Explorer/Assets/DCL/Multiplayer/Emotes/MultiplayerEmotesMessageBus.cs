@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
-            float timestamp = Time.unscaledTime;
+            double timestamp = Time.unscaledTime;
 
             SendTo(emote, timestamp, messagePipesHub.IslandPipe());
             SendTo(emote, timestamp, messagePipesHub.ScenePipe());
@@ -74,17 +74,17 @@ namespace DCL.Multiplayer.Emotes
         public void OnPlayerRemoved(string walletId) =>
             messageScheduler.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe)
+        private void SendTo(URN emoteId, double timestamp, IMessagePipe messagePipe)
         {
             MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
 
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Urn = emoteId;
-            emote.Payload.Timestamp = timestamp;
+            emote.Payload.Timestamp = (float)timestamp;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, double timestamp)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
             Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp);
@@ -101,7 +101,7 @@ namespace DCL.Multiplayer.Emotes
                 }
 
                 // Use timestamp from message if present (non-zero), otherwise fallback to current Unity time
-                float timestamp = receivedMessage.Payload.Timestamp != 0f
+                double timestamp = receivedMessage.Payload.Timestamp != 0f
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
@@ -112,7 +112,7 @@ namespace DCL.Multiplayer.Emotes
         private bool IsUserBlocked(string userAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, float timestamp)
+        private void Inbox(string walletId, URN emoteURN, double timestamp)
         {
             if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;

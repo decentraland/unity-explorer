@@ -344,8 +344,8 @@ namespace DCL.Character.Tests
                 globalWorld, movementSettings, characterControllerSettings);
 
             // Setup movement component
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 
@@ -419,8 +419,8 @@ namespace DCL.Character.Tests
             var movementSystem = new RemotePlayersMovementSystem(
                 globalWorld, movementSettings, characterControllerSettings);
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 
