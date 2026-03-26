@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.CharacterMotion.Components;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
@@ -197,12 +198,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool fullBodyIsPlaying = globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent ec)
                 && ec.CurrentEmoteReference != null;
 
-            bool shouldPlay = isInScene && !fullBodyIsPlaying;
+            bool isGliding = globalWorld.TryGet(globalPlayerEntity, out GlideState glideState)
+                && glideState.Value is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
+
+            bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
-            {
                 ReplayMaskedEmote(ref masked);
-            }
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
             {
                 TryStopMaskedEmote(ref masked);
