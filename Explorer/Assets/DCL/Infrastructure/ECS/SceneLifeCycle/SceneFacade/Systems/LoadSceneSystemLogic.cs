@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using SceneRunner.Scene;
 using System.Threading;
@@ -35,7 +36,7 @@ namespace ECS.SceneLifeCycle.Systems
             for (var i = 0; i < CDN_FILE_NAMES.Length; i++)
             {
                 URLAddress cdnUrl = assetBundleURL.Append(URLPath.FromString($"{cdnBasePath}{CDN_FILE_NAMES[i]}"));
-                headTasks[i] = webRequestController.IsHeadReachableAsync(reportCategory, cdnUrl, ct);
+                headTasks[i] = webRequestController.IsHeadReachableAsync(reportCategory, cdnUrl, ct).SuppressAnyExceptionWithFallback(false);
             }
 
             bool[] results = await UniTask.WhenAll(headTasks);
