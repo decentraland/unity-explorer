@@ -22,6 +22,7 @@ using UnityEngine;
 using Utility;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.SDK.Components;
+using System.Collections.Generic;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -37,23 +38,24 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private readonly IEntityCollidersSceneCache collidersSceneCache;
         private readonly ISceneData sceneData;
 
+        private readonly Queue<(PBTriggerAreaResult payloadsInUse, PBTriggerAreaResult.Types.Trigger trigger)> usedResults = new();
+
         public TriggerAreaHandlerSystem(
             World world,
             World globalWorld,
             IECSToCRDTWriter ecsToCRDTWriter,
-            IComponentPool<PBTriggerAreaResult> triggerAreaResultPool,
-            IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool,
             ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache collidersSceneCache,
             ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.triggerAreaResultPool = triggerAreaResultPool;
-            this.triggerAreaResultTriggerPool = triggerAreaResultTriggerPool;
             this.sceneStateProvider = sceneStateProvider;
             this.collidersSceneCache = collidersSceneCache;
             this.sceneData = sceneData;
+
+            triggerAreaResultPool = new ComponentPool.WithDefaultCtor<PBTriggerAreaResult>();
+            triggerAreaResultTriggerPool = new ComponentPool.WithDefaultCtor<PBTriggerAreaResult.Types.Trigger>();
         }
 
         protected override void Update(float t)
@@ -63,6 +65,13 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
             SetupTriggerAreaQuery(World);
             UpdateTriggerAreaQuery(World);
+
+            while (usedResults.Count > 0)
+            {
+                (PBTriggerAreaResult result, PBTriggerAreaResult.Types.Trigger trigger) = usedResults.Dequeue();
+                triggerAreaResultPool.Release(result);
+                triggerAreaResultTriggerPool.Release(trigger);
+            }
         }
 
         [Query]
@@ -168,6 +177,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             resultComponent.Trigger.Position = triggerEntityPos;
             resultComponent.Trigger.Rotation = triggerEntityRot;
             resultComponent.Trigger.Scale = triggerEntityScale;
+            usedResults.Enqueue((resultComponent, resultComponent.Trigger));
 
             if (avatarEntity != Entity.Null)
                 resultComponent.Trigger.Entity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
@@ -187,9 +197,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 },
                 triggerAreaCRDTEntity, (int)incrementalTick, (resultComponent, incrementalTick)
             );
-
-            triggerAreaResultTriggerPool.Release(resultComponent.Trigger);
-            triggerAreaResultPool.Release(resultComponent);
         }
 
         [Query]
@@ -218,6 +225,12 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+        }
+
+        protected override void OnDispose()
+        {
+            triggerAreaResultPool.Dispose();
+            triggerAreaResultTriggerPool.Dispose();
         }
 
         private bool TryGetAvatarEntity(Transform transform, out Entity entity)

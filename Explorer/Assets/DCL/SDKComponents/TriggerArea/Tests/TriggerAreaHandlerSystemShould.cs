@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TriggerArea.Systems;
 using DCL.SDKEntityTriggerArea.Components;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -23,8 +22,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         private IECSToCRDTWriter ecsToCRDTWriter;
         private IEntityCollidersSceneCache collidersSceneCache;
         private ISceneStateProvider sceneStateProvider;
-        private IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
-        private IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
         private ISceneData sceneData;
         private PBTriggerAreaResult capturedResult;
         private Entity entity;
@@ -40,12 +37,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
 
-            triggerAreaResultPool = Substitute.For<IComponentPool<PBTriggerAreaResult>>();
-            triggerAreaResultPool.Get().Returns(_ => new PBTriggerAreaResult());
-
-            triggerAreaResultTriggerPool = Substitute.For<IComponentPool<PBTriggerAreaResult.Types.Trigger>>();
-            triggerAreaResultTriggerPool.Get().Returns(_ => new PBTriggerAreaResult.Types.Trigger());
-
             sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
 
@@ -53,8 +44,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
                 world,
                 globalWorld,
                 ecsToCRDTWriter,
-                triggerAreaResultPool,
-                triggerAreaResultTriggerPool,
                 sceneStateProvider,
                 collidersSceneCache,
                 sceneData);
