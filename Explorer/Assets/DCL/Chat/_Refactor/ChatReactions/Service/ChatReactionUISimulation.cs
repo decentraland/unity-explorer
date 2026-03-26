@@ -152,10 +152,14 @@ namespace DCL.Chat.ChatReactions
         private void SpawnBurst(Vector2 basePx, int emojiIndex, int count, float jitterH, float jitterV)
         {
             var ui = config.UILane;
+            int softCap = ui.MaxVisibleParticles;
             int n = Mathf.Max(1, count);
 
             for (int i = 0; i < n; i++)
             {
+                if (softCap > 0 && uiStore.Count >= softCap)
+                    return;
+
                 float endSizePx = rng.NextFloat(ui.SizeRange.x, ui.SizeRange.y);
                 float startSizePx = endSizePx * rng.NextFloat(config.SpawnSizeMinRatio, config.SpawnSizeMaxRatio);
                 float lifetime = rng.NextFloat(ui.LifetimeRange.x, ui.LifetimeRange.y);

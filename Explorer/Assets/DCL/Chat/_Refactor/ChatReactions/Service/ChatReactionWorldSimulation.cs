@@ -26,6 +26,7 @@ namespace DCL.Chat.ChatReactions
         private readonly AvatarAnchorTable anchorTable = new ();
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly float maxSpawnDistanceSqr;
+        private readonly int[] alivePerAnchor = new int[256];
 
         private float streamAccumulator;
         private bool isStreaming;
@@ -108,6 +109,9 @@ namespace DCL.Chat.ChatReactions
                 Profiler.EndSample();
             }
 
+            if (store.Count > 0)
+                RefreshAlivePerAnchor();
+
             EmitStreamParticles(dt);
             EmitDebugNearbyParticles(dt);
         }
@@ -155,20 +159,34 @@ namespace DCL.Chat.ChatReactions
         {
             byte anchor = anchorTable.Allocate(walletId, headPos);
             var lane = config.WorldLane;
+            int maxPerAvatar = lane.MaxParticlesPerAvatar;
             int n = Mathf.Max(1, count);
 
             for (int i = 0; i < n; i++)
+            {
+                if (maxPerAvatar > 0 && alivePerAnchor[anchor] >= maxPerAvatar)
+                    break;
+
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
+                alivePerAnchor[anchor]++;
+            }
         }
 
         public void TriggerAnchoredReactionLocalPlayer(Vector3 headPos, int emojiIndex, int count)
         {
             byte anchor = anchorTable.Allocate(AvatarAnchorTable.LOCAL_PLAYER_ID, headPos);
             var lane = config.WorldLane;
+            int maxPerAvatar = lane.MaxParticlesPerAvatar;
             int n = Mathf.Max(1, count);
 
             for (int i = 0; i < n; i++)
+            {
+                if (maxPerAvatar > 0 && alivePerAnchor[anchor] >= maxPerAvatar)
+                    break;
+
                 SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
+                alivePerAnchor[anchor]++;
+            }
         }
 
         public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex, string? walletId = null)
@@ -232,6 +250,21 @@ namespace DCL.Chat.ChatReactions
             }
 
             Profiler.EndSample();
+        }
+
+        private void RefreshAlivePerAnchor()
+        {
+            Array.Clear(alivePerAnchor, 0, alivePerAnchor.Length);
+            var buffer = store.Buffer;
+            int count = store.Count;
+
+            for (int i = 0; i < count; i++)
+            {
+                ref readonly var p = ref buffer[i];
+
+                if (p.anchorIndex != ChatReactionsParticle.ANCHOR_NONE)
+                    alivePerAnchor[p.anchorIndex]++;
+            }
         }
 
         private void SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,

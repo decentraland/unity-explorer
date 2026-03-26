@@ -49,10 +49,16 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(1, 20)]
         [field: SerializeField] public int MaxReactionTypesPerMessage { get; private set; } = 6;
 
-        [field: Note("NOT YET WIRED UP — debounce delay (seconds) before sending reaction updates to the network. " +
-                     "Prevents flooding the backend with rapid taps.")]
+        [field: Note("Debounce delay (seconds) before sending situational reactions to the network. " +
+                     "Clicks within this window are deduplicated per emoji. " +
+                     "0 = disabled (sends immediately). Enable only after deploying protocol with count field.")]
         [field: Range(0f, 2f)]
-        [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0.5f;
+        [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0f;
+
+        [field: Note("Minimum interval (seconds) between processing queued incoming situational reactions. " +
+                     "Creates a visual cascade instead of all reactions appearing at once. 0 = disabled (process all immediately).")]
+        [field: Range(0f, 0.5f)]
+        [field: SerializeField] public float ReceiveStaggerInterval { get; private set; } = 0.08f;
 
         [field: Header("Hover")]
         [field: Note("Scale applied to reaction count pills on pointer hover.")]

@@ -63,6 +63,12 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(1, 20)]
         [field: SerializeField] public int BurstCount { get; private set; } = 5;
 
+        [field: Note("Maximum concurrent alive particles per avatar anchor. " +
+                     "New bursts are dropped when an avatar already has this many active particles. " +
+                     "0 = disabled (unlimited).")]
+        [field: Range(0, 100)]
+        [field: SerializeField] public int MaxParticlesPerAvatar { get; private set; } = 15;
+
         [field: Header("Streaming (hold-to-emit)")]
         [field: Note("Emission ticks per second while world stream is active. Each tick spawns BurstCount particles.")]
         [field: Range(0f, 30f)]

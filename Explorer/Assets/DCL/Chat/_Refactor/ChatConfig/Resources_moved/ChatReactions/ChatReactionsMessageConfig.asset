@@ -17,7 +17,8 @@ MonoBehaviour:
   <FixedDefaultEmojiUnicodes>k__BackingField: 642700004ff4010022f6010023f9010025f501002df60100
   <MaxRecentEmojis>k__BackingField: 3
   <MaxReactionTypesPerMessage>k__BackingField: 6
-  <NetworkDebounceSeconds>k__BackingField: 0.5
+  <NetworkDebounceSeconds>k__BackingField: 0.3
+  <ReceiveStaggerInterval>k__BackingField: 0.2
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
   <AppearDuration>k__BackingField: 0.15

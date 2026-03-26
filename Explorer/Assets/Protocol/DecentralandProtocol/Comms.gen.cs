@@ -92,10 +92,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "BVZvaWNlEhcKD2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEo",
             "DRI/CgVjb2RlYxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMu",
             "cmZjNC5Wb2ljZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BV",
-            "UxAAIjIKCFJlYWN0aW9uEhMKC2Vtb2ppX2luZGV4GAEgASgFEhEKCXRpbWVz",
-            "dGFtcBgCIAEoAiJICgxDaGF0UmVhY3Rpb24SEwoLZW1vamlfaW5kZXgYASAB",
-            "KAUSEgoKbWVzc2FnZV9pZBgCIAEoCRIPCgdhZGRyZXNzGAMgASgJYgZwcm90",
-            "bzM="));
+            "UxAAIkEKCFJlYWN0aW9uEhMKC2Vtb2ppX2luZGV4GAEgASgFEhEKCXRpbWVz",
+            "dGFtcBgCIAEoAhINCgVjb3VudBgDIAEoBSJICgxDaGF0UmVhY3Rpb24SEwoL",
+            "ZW1vamlfaW5kZXgYASABKAUSEgoKbWVzc2FnZV9pZBgCIAEoCRIPCgdhZGRy",
+            "ZXNzGAMgASgJYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -112,7 +112,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Chat), global::Decentraland.Kernel.Comms.Rfc4.Chat.Parser, new[]{ "Message", "Timestamp", "ForwardedFrom" }, new[]{ "ForwardedFrom" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Scene), global::Decentraland.Kernel.Comms.Rfc4.Scene.Parser, new[]{ "SceneId", "Data" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice), global::Decentraland.Kernel.Comms.Rfc4.Voice.Parser, new[]{ "EncodedSamples", "Index", "Codec" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice.Types.VoiceCodec) }, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Reaction), global::Decentraland.Kernel.Comms.Rfc4.Reaction.Parser, new[]{ "EmojiIndex", "Timestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Reaction), global::Decentraland.Kernel.Comms.Rfc4.Reaction.Parser, new[]{ "EmojiIndex", "Timestamp", "Count" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ChatReaction), global::Decentraland.Kernel.Comms.Rfc4.ChatReaction.Parser, new[]{ "EmojiIndex", "MessageId", "Address" }, null, null, null, null)
           }));
     }
@@ -5543,6 +5543,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     public Reaction(Reaction other) : this() {
       emojiIndex_ = other.emojiIndex_;
       timestamp_ = other.timestamp_;
+      count_ = other.count_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -5576,6 +5577,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "count" field.</summary>
+    public const int CountFieldNumber = 3;
+    private int count_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Count {
+      get { return count_; }
+      set {
+        count_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -5593,6 +5606,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (EmojiIndex != other.EmojiIndex) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (Count != other.Count) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -5602,6 +5616,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       int hash = 1;
       if (EmojiIndex != 0) hash ^= EmojiIndex.GetHashCode();
       if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (Count != 0) hash ^= Count.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -5628,6 +5643,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(21);
         output.WriteFloat(Timestamp);
       }
+      if (Count != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(Count);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -5646,6 +5665,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(21);
         output.WriteFloat(Timestamp);
       }
+      if (Count != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(Count);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -5661,6 +5684,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (Timestamp != 0F) {
         size += 1 + 4;
+      }
+      if (Count != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Count);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -5679,6 +5705,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.Timestamp != 0F) {
         Timestamp = other.Timestamp;
+      }
+      if (other.Count != 0) {
+        Count = other.Count;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -5703,6 +5732,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             Timestamp = input.ReadFloat();
             break;
           }
+          case 24: {
+            Count = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -5724,6 +5757,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 21: {
             Timestamp = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            Count = input.ReadInt32();
             break;
           }
         }

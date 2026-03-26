@@ -56,19 +56,20 @@ namespace DCL.Chat.ChatReactions
             messagePipesHub.ChatPipe().Subscribe<ChatReaction>(Packet.MessageOneofCase.ChatReaction, OnChatReactionReceived);
         }
 
-        public void SendSituationalReaction(int emojiIndex)
+        public void SendSituationalReaction(int emojiIndex, int count = 1, float overrideTimestamp = 0f)
         {
             if (cts.IsCancellationRequested) return;
 
-            float timestamp = Time.unscaledTime;
+            float timestamp = overrideTimestamp > 0f ? overrideTimestamp : Time.unscaledTime;
+            int sendCount = Mathf.Max(1, count);
 
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Sending situational reaction: emoji={emojiIndex} ts={timestamp}");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Sending situational reaction: emoji={emojiIndex} count={sendCount} ts={timestamp}");
 
-            SendReactionTo(emojiIndex, timestamp, messagePipesHub.IslandPipe());
-            SendReactionTo(emojiIndex, timestamp, messagePipesHub.ScenePipe());
+            SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.IslandPipe());
+            SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.ScenePipe());
 
             if (selfSendEnabled)
-                SelfSendSituationalAsync(emojiIndex, timestamp).Forget();
+                SelfSendSituationalAsync(emojiIndex, sendCount, timestamp).Forget();
         }
 
         public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing)
@@ -112,11 +113,12 @@ namespace DCL.Chat.ChatReactions
             cts.SafeCancelAndDispose();
         }
 
-        private void SendReactionTo(int emojiIndex, float timestamp, IMessagePipe messagePipe)
+        private void SendReactionTo(int emojiIndex, int count, float timestamp, IMessagePipe messagePipe)
         {
             MessageWrap<Reaction> reaction = messagePipe.NewMessage<Reaction>();
             reaction.Payload.EmojiIndex = emojiIndex;
             reaction.Payload.Timestamp = timestamp;
+            reaction.Payload.Count = count;
             reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
         }
 
@@ -136,11 +138,11 @@ namespace DCL.Chat.ChatReactions
             reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        private async UniTaskVoid SelfSendSituationalAsync(int emojiIndex, float timestamp)
+        private async UniTaskVoid SelfSendSituationalAsync(int emojiIndex, int count, float timestamp)
         {
             string walletId = identityCache.Identity?.Address ?? string.Empty;
-            await DelaySelfSendAsync(new ReactionReceivedArgs(walletId, emojiIndex, 1, ReactionType.Situational, string.Empty),
-                $"Self-send situational reaction: emoji={emojiIndex} wallet={walletId}");
+            await DelaySelfSendAsync(new ReactionReceivedArgs(walletId, emojiIndex, count, ReactionType.Situational, string.Empty),
+                $"Self-send situational reaction: emoji={emojiIndex} count={count} wallet={walletId}");
         }
 
         private async UniTaskVoid SelfSendChatReactionAsync(int wireEmojiIndex, string messageId, string address)
@@ -178,12 +180,14 @@ namespace DCL.Chat.ChatReactions
                 if (!situationalDedup.TryPass(receivedMessage.FromWalletId, timestamp))
                     return;
 
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received situational reaction: emoji={receivedMessage.Payload.EmojiIndex} from={receivedMessage.FromWalletId}");
+                int count = Mathf.Max(1, receivedMessage.Payload.Count);
+
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received situational reaction: emoji={receivedMessage.Payload.EmojiIndex} count={count} from={receivedMessage.FromWalletId}");
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     receivedMessage.FromWalletId,
                     receivedMessage.Payload.EmojiIndex,
-                    1,
+                    count,
                     ReactionType.Situational,
                     string.Empty));
             }

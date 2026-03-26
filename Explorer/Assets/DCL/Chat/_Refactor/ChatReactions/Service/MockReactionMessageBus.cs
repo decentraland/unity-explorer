@@ -32,7 +32,7 @@ namespace DCL.Chat.ChatReactions
             SimulationLoopAsync(cts.Token).Forget();
         }
 
-        public void SendSituationalReaction(int emojiIndex) { }
+        public void SendSituationalReaction(int emojiIndex, int count = 1, float overrideTimestamp = 0f) { }
 
         public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing) { }
 

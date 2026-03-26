@@ -45,7 +45,7 @@ namespace DCL.Chat.ChatReactions
     {
         event Action<ReactionReceivedArgs> ReactionReceived;
 
-        void SendSituationalReaction(int emojiIndex);
+        void SendSituationalReaction(int emojiIndex, int count = 1, float overrideTimestamp = 0f);
 
         void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing);
     }

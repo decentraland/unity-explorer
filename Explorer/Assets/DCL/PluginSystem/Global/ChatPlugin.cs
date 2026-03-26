@@ -294,9 +294,9 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(reactionDebugController);
 
             var remoteReactionRouter = new RemoteReactionRouter(situationalReactionService, reactionBus);
-            remoteReactionRouter.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
+            situationalReactionService.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
 
-            onReactionsEnabledChanged = enabled => remoteReactionRouter.ShowRemoteUIReactions = enabled;
+            onReactionsEnabledChanged = enabled => situationalReactionService.ShowRemoteUIReactions = enabled;
             chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
 
             pluginScope.Add(remoteReactionRouter);

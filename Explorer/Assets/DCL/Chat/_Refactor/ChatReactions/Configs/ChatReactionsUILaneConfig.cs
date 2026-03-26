@@ -18,6 +18,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(64, 1023)]
         [field: SerializeField] public int MaxParticles { get; private set; } = 1023;
 
+        [field: Note("Soft cap on visible UI particles. New particles are dropped when alive count exceeds this. " +
+                     "Must be ≤ MaxParticles. 0 = disabled (uses MaxParticles pool cap only).")]
+        [field: Range(0, 1023)]
+        [field: SerializeField] public int MaxVisibleParticles { get; private set; } = 50;
+
         [field: Header("Placement")]
         [field: Note("How far in front of the camera (world units) the particle quads are rendered. " +
                      "Too close clips through UI; too far gets occluded by geometry.")]
