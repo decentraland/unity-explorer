@@ -247,7 +247,7 @@ PrefabInstance:
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 63a492ae4b817664b96657f07a7c2511, type: 3}
+      objectReference: {fileID: 21300000, guid: 4b974e2f52d43ab4481cdf49145dc862, type: 3}
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Color.b
       value: 0.988
@@ -304,6 +304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ff05dbcd27013f4da6ed6fe6de0cbc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.ProximityVoiceChatButtonView
+  button: {fileID: 5839845052108196698}
   unselectedImage: {fileID: 3379401566610532616}
   hoverStateImage: {fileID: 7958809184563542825}
   disconnectedSprites:
@@ -327,6 +328,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5839845052108196698 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1500693959885502415, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 5032989285250759829}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817535700602156706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &7958809184563542825 stripped

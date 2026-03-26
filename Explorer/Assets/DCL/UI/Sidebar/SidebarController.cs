@@ -156,7 +156,8 @@ namespace DCL.UI.Sidebar
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
             viewInstance.SmartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.SmartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-            viewInstance.ProximityVoiceChatButton.Button?.onClick.AddListener(OpenNearbyVoiceWidgetAsync);
+            viewInstance.ProximityVoiceChatButton.Button.onClick.AddListener(OpenNearbyVoiceWidgetAsync);
+
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.CameraReel));
