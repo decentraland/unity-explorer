@@ -1,4 +1,4 @@
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -27,7 +27,7 @@ namespace SceneRuntime.WebClient
     ///         The update loop calls <c>onStart</c> / <c>onUpdate</c> on the compiled scene module and synchronises
     ///         completion via a <see cref="JSTaskResolverResetable" /> that is polled by the JS promise chain.
     ///     </para>
-    ///     <para>Only compiled for <c>WEBGL_ACTIVE</c> builds (or <c>EDITOR_DEBUG_WEBGL</c> in the editor).</para>
+    ///     <para>Only compiled for <c>UNITY_WEBGL</c> builds (or <c>EDITOR_DEBUG_WEBGL</c> in the editor).</para>
     /// </summary>
     public sealed class WebClientSceneRuntimeImpl : ISceneRuntime
     {

@@ -8,7 +8,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using RichTypes;
 using System;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => NullDataPipe.INSTANCE;
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
         public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;

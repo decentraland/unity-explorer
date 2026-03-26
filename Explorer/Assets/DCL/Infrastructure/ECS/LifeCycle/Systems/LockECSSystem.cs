@@ -1,6 +1,6 @@
 ﻿// MultiThreadSync is not required in WebGL because it's always the single threaded environment
 // Even if we use WebWorkers they still provide message passing to the main thread safely
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
 
 using Arch.Core;
 using Arch.SystemGroups;

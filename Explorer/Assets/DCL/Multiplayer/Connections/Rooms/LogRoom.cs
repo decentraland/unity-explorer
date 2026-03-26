@@ -13,7 +13,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using RichTypes;
 using DCL.LiveKit.Public;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe { get; }
         public IRoomInfo Info { get; }
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public IVideoStreams VideoStreams { get; }
         public IAudioStreams AudioStreams { get; }
         public ILocalTracks LocalTracks { get; }
@@ -73,13 +73,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             DataPipe = new LogDataPipe(origin.DataPipe);
             Info = new LogRoomInfo(origin.Info);
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             VideoStreams = new LogVideoStreams(origin.VideoStreams);
             AudioStreams = new LogAudioStreams(origin.AudioStreams);
             LocalTracks = new LogLocalTracks(origin.LocalTracks);
 #endif
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             this.origin.LocalTrackPublished += OriginOnLocalTrackPublished;
             this.origin.LocalTrackUnpublished += OriginOnLocalTrackUnpublished;
             this.origin.TrackPublished += OriginOnTrackPublished;
@@ -142,7 +142,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private void OriginOnTrackUnmuted(TrackPublication publication, LKParticipant participant)
         {
             ReportHub

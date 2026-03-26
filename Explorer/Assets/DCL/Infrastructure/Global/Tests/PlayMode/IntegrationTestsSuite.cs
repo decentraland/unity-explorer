@@ -21,7 +21,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.Clipboard;
 using ECS;
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using MVC;
@@ -149,7 +149,7 @@ namespace Global.Tests.PlayMode
                 webJsSources,
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>()
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 , new WebGLSceneUpdateQueue()
 #endif
             );

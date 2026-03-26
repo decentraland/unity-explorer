@@ -27,7 +27,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using ECS.SceneLifeCycle.WebGL;
 #endif
 using MVC;
@@ -45,7 +45,7 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
 using Utility.Multithreading;
 #endif
 
@@ -74,11 +74,11 @@ namespace SceneRunner
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
         private readonly MultiThreadSync ecsMultiThreadSync;
 #endif
 
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         public readonly WebGLSceneUpdateQueue WebGLSceneUpdateQueue;
 #endif
 
@@ -105,7 +105,7 @@ namespace SceneRunner
             URLAddress sceneCodeUrl,
             SceneEcsExecutor ecsExecutor,
             ISceneData sceneData,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             MultiThreadSync ecsMultiThreadSync,
 #endif
             ICRDTDeserializer crdtDeserializer,
@@ -126,7 +126,7 @@ namespace SceneRunner
             SceneCodeUrl = sceneCodeUrl;
             EcsExecutor = ecsExecutor;
             this.sceneData = sceneData;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             this.ecsMultiThreadSync = ecsMultiThreadSync;
 #endif
             this.crdtDeserializer = crdtDeserializer;
@@ -144,18 +144,18 @@ namespace SceneRunner
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
             ISceneEntityFactory entityFactory
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
            ,
             WebGLSceneUpdateQueue webglSceneUpdateQueue
 #endif
         )
         {
             this.sceneData = sceneData;
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             WebGLSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.permissionsProvider = permissionsProvider;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
 #endif
             CRDTProtocol = new CRDTProtocol();
@@ -182,7 +182,7 @@ namespace SceneRunner
                 entityCollidersGlobalCache,
                 SceneStateProvider,
                 entityEventsBuilder,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                     ecsMultiThreadSync,
 #endif
                 systemGroupThrottler,
@@ -214,7 +214,7 @@ namespace SceneRunner
             systemGroupThrottler.Dispose();
             systemsUpdateGate.Dispose();
             EntityCollidersCache.Dispose();
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             ecsMultiThreadSync.Dispose();
 #endif
             ExceptionsHandler.Dispose();
@@ -305,7 +305,7 @@ namespace SceneRunner
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                 MultiThreadSync.Owner syncOwner,
 #endif
                 IProfileRepository profileRepository,
@@ -336,7 +336,7 @@ namespace SceneRunner
             (SceneInstanceDependencies syncDeps, ISceneRuntime sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                 MultiThreadSync.Owner syncOwner,
 #endif
                 IProfileRepository profileRepository, ISystemClipboard systemClipboard, IRoomHub roomHub,

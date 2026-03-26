@@ -34,7 +34,7 @@ namespace Utility.Networking
     // Desktop / WebGL friendly implementation
     public class DCLWebSocket : IDisposable
     {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         private DCL.WebSockets.JS.WebGLWebSocket ws = new ();
         private readonly DCLWebSocketOptions options = new ();
 #else
@@ -46,7 +46,7 @@ namespace Utility.Networking
         {
             get
             {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return options;
 #else
                 return options ??= new DCLWebSocketOptions(ws.Options);
@@ -59,7 +59,7 @@ namespace Utility.Networking
         {
             get
             {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return ws.State;
 #else
                 return (WebSocketState) ws.State; // Direct mapping
@@ -76,7 +76,7 @@ namespace Utility.Networking
         {
             try
             {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
 #else
 
@@ -95,7 +95,7 @@ namespace Utility.Networking
         {
             try
             {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 return await ws.ReceiveAsync(buffer, cancellationToken);
 #else
                 System.Net.WebSockets.ValueWebSocketReceiveResult result = await ws.ReceiveAsync(buffer, cancellationToken);
@@ -133,7 +133,7 @@ namespace Utility.Networking
             try
             {
 
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 await ws.CloseAsync(status, description, cancellationToken);
 #else
                 System.Net.WebSockets.WebSocketCloseStatus statusType = (System.Net.WebSockets.WebSocketCloseStatus)status;
@@ -148,7 +148,7 @@ namespace Utility.Networking
 
         public void Abort()
         {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // Ignore, WebGL doesn't expose raw TCP sockets to hard interrupt
 #else
             ws.Abort();

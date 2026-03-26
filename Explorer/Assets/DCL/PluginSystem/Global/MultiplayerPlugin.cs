@@ -36,7 +36,8 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using DCL.Multiplayer.Connections.FfiClients;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using DCL.UserInAppInitializationFlow;
@@ -126,7 +127,7 @@ namespace DCL.PluginSystem.Global
             archipelagoIslandRoom.Dispose();
             gateKeeperSceneRoom.Dispose();
 
-#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
+#if !NO_LIVEKIT_MODE && (!UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL))
             IFFIClient.Default.Dispose();
 #endif
         }
@@ -142,8 +143,9 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
 
 // TODO initialize on WebGL
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR)
             IFFIClient.Default.EnsureAssigned();
+            IFFIClient.Default.EnsureInitialize();
 #endif
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);

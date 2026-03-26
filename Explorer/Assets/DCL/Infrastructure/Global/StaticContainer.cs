@@ -241,7 +241,7 @@ namespace Global
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
             var createMediaContainer = true;
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             createMediaContainer  = !BrowserUtils.IsSafari();
 #endif
             if (createMediaContainer)
@@ -271,7 +271,7 @@ namespace Global
 
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache, URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)), container.GltfContainerAssetsCache);
 
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
             var textureDiskCache = IDiskCache<TextureData>.Null.INSTANCE;
 #else
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
@@ -348,7 +348,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                 new AudioAnalysisPlugin(sharedDependencies),
 #endif
                 assetBundlePlugin,
@@ -372,7 +372,7 @@ namespace Global
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
                 new SkyboxTimePlugin(),
 #endif
                 new AvatarLocomotionOverridesWorldPlugin(globalWorld, playerEntity),

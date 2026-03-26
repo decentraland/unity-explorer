@@ -12,7 +12,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using RichTypes;
 using DCL.LiveKit.Public;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Proto;
@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorParticipantsHub participants = new ();
         private readonly InteriorDataPipe dataPipe = new ();
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
         private readonly InteriorLocalTracks localTracks = new ();
@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IDataPipe DataPipe => dataPipe;
         public IRoomInfo Info => assigned.Info;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
         public ILocalTracks LocalTracks => localTracks;
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event Room.MetaDelegate? RoomMetadataChanged;
         public event Room.SidDelegate? RoomSidChanged;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
         public event PublishDelegate? TrackPublished;
@@ -168,7 +168,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             participants.Assign(room.Participants);
             dataPipe.Assign(room.DataPipe);
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
             localTracks.Assign(room.LocalTracks);
@@ -177,7 +177,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             room.LocalTrackPublished += RoomOnLocalTrackPublished;
             room.LocalTrackUnpublished += RoomOnLocalTrackUnpublished;
             room.TrackPublished += RoomOnTrackPublished;
@@ -198,7 +198,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.RoomMetadataChanged -= RoomOnRoomMetadataChanged;
             previous.RoomSidChanged -= RoomOnRoomSidChanged;
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             previous.LocalTrackPublished -= RoomOnLocalTrackPublished;
             previous.LocalTrackUnpublished -= RoomOnLocalTrackUnpublished;
             previous.TrackPublished -= RoomOnTrackPublished;
@@ -230,7 +230,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             ConnectionQualityChanged?.Invoke(quality, participant);
         }
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private void RoomOnTrackUnmuted(global::LiveKit.Rooms.TrackPublications.TrackPublication publication, LKParticipant participant)
         {
             TrackUnmuted?.Invoke(publication, participant);

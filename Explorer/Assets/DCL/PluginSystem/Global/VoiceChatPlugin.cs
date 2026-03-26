@@ -21,7 +21,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using RustAudio;
 using DCL.WebRequests;
 #endif
@@ -92,7 +92,8 @@ namespace DCL.PluginSystem.Global
 
             if (voiceChatPluginSettingsAsset.Value != null)
                 voiceChatPluginSettingsAsset.Dispose();
-#if !WEBGL_ACTIVE
+
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             RustAudioClient.DeInit();
 #endif
         }

@@ -1,4 +1,4 @@
-#if UNITY_WEBGL
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

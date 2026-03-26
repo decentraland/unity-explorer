@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
 
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL
                 var enableRawGltfWearables = false;
 #else
                 bool enableRawGltfWearables = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);

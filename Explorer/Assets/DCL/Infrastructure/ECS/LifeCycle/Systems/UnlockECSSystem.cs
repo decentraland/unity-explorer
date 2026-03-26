@@ -1,4 +1,7 @@
-﻿#if !WEBGL_ACTIVE
+﻿#if !UNITY_WEBGL
+// MultiThreadSync is not required in WebGL because it's always the single threaded environment
+// Even if we use WebWorkers they still provide message passing to the main thread safely
+
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
@@ -8,9 +11,6 @@ using Utility.Multithreading;
 
 namespace ECS.LifeCycle.Systems
 {
-
-// MultiThreadSync is not required in WebGL because it's always the single threaded environment
-// Even if we use WebWorkers they still provide message passing to the main thread safely
     /// <summary>
     ///     Unlocks ECS when the whole cycle of the player loop has processed
     /// </summary>

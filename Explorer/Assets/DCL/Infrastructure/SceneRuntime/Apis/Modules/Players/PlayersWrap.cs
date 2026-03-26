@@ -30,10 +30,10 @@ namespace SceneRuntime.Apis.Modules.Players
 
         public PlayersWrap(
 #if !NO_LIVEKIT_MODE
-                IRoomHub roomHub,
+                IRoomHub roomHub, 
 #endif
-                IProfileRepository profileRepository,
-                IRemoteMetadata remoteMetadata,
+                IProfileRepository profileRepository, 
+                IRemoteMetadata remoteMetadata, 
                 CancellationTokenSource disposeCts
                 ) : base(disposeCts)
         {
@@ -103,7 +103,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 {
                     foreach ((string identity, _) in identities)
                     {
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL || UNITY_EDITOR
                         LKParticipant remote = participantsHub.RemoteParticipant(identity)!;
 #else
                         LKParticipant remote = participantsHub.RemoteParticipant(identity).Value;

@@ -21,7 +21,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // WebGL has no direct memory access — build the payload in managed memory then bulk-copy to JS
             var array = jsOperations.GetTempUint8Array();
             string walletId = message.FromWalletId;

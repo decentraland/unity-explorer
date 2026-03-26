@@ -87,7 +87,7 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-#if !WEBGL_ACTIVE
+#if !UNITY_WEBGL
             var scope = new MultiThreadSync.BoxedScope(sharedDependencies.MultiThreadSync);
             var mutexOwner = new MultiThreadSync.Owner("ECSLoopSystem");
 

@@ -7,7 +7,7 @@ namespace Global
     /// </summary>
     public static class BrowserUtils
     {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         [DllImport("__Internal")]
         private static extern int IsBrowserSafari();
 #endif
@@ -18,7 +18,7 @@ namespace Global
         /// </summary>
         public static bool IsSafari()
         {
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             return IsBrowserSafari() != 0;
 #else
             return false;

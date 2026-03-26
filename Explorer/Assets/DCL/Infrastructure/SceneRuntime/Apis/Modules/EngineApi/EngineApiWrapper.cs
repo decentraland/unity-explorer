@@ -6,7 +6,9 @@ using System;
 using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
-#if !WEBGL_ACTIVE
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 #endif
 
@@ -35,7 +37,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         [UsedImplicitly]
         public PoolableByteArray CrdtSendToRenderer(
-#if WEBGL_ACTIVE
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 object data
 #else
                 ITypedArray<byte> data
