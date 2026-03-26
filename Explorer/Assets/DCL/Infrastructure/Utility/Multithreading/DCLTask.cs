@@ -1,6 +1,7 @@
 // DCLTask is designed as WebGL / Desktop friendly
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace Utility.Multithreading
@@ -53,6 +54,22 @@ namespace Utility.Multithreading
             bool configureAwait = true,
             CancellationToken cancellationToken = default) =>
             UniTask.RunOnThreadPool(action, configureAwait, cancellationToken);
+#endif
+
+        /// <summary>
+        ///     Platform-aware delay.
+        ///     On non-WebGL uses <see cref="Task.Delay(int, CancellationToken)" /> which resumes on a thread-pool thread.
+        ///     On WebGL uses <see cref="UniTask.Delay(int, DelayType, PlayerLoopTiming, CancellationToken)" />
+        ///     since Task is not supported.
+        /// </summary>
+#if UNITY_WEBGL
+        public static UniTask Delay(int millisecondsDelay, CancellationToken cancellationToken = default) =>
+            UniTask.Delay(millisecondsDelay, cancellationToken: cancellationToken);
+#else
+        public static async UniTask Delay(int millisecondsDelay, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(millisecondsDelay, cancellationToken); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        }
 #endif
     }
 }
