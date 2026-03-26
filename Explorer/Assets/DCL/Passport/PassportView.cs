@@ -73,6 +73,9 @@ namespace DCL.Passport
         public SoftMask ViewportSoftMask { get; private set; }
 
         [field: SerializeField]
+        public Image ViewportMaskGraphic { get; private set; }
+
+        [field: SerializeField]
         public GameObject FriendInteractionContainer { get; private set; }
 
         [field: SerializeField]
@@ -175,7 +178,9 @@ namespace DCL.Passport
 
             BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
 
-            ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
+            bool isNotPhotos = passportSection != PassportSection.PHOTOS;
+            ViewportSoftMask.enabled = isNotPhotos;
+            ViewportMaskGraphic.enabled = isNotPhotos;
 
             MainScroll.verticalNormalizedPosition = 1;
         }
