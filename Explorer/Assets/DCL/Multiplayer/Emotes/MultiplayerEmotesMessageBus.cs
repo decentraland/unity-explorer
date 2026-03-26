@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed)
+        public void Send(URN emote, bool loopCyclePassed, uint durationMs = 0)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
@@ -70,6 +70,8 @@ namespace DCL.Multiplayer.Emotes
             if (settings.SelfSending)
                 SelfSendWithDelayAsync(emote, timestamp).Forget();
         }
+
+        public void SendStop() { }
 
         public void OnPlayerRemoved(string walletId) =>
             messageScheduler.RemoveWallet(walletId);

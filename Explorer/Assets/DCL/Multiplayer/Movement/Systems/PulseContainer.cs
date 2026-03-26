@@ -31,6 +31,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
         internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
         internal PulseProfilePropagationBus? pulseProfilePropagationBus { get; private set; }
+        internal PulseEmotesMessageBus? pulseEmotesMessageBus { get; private set; }
 
         private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox, ParcelEncoder parcelEncoder,
             PulseIncomingProfileAnnouncements incomingProfiles, PulseRemoveIntentions removeIntentions)
@@ -60,7 +61,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
             pulseMultiplayerService = new PulseMultiplayerService(transport, messagePipe, identityCache);
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, incomingProfiles, removeIntentions);
+            pulseEmotesMessageBus = new PulseEmotesMessageBus(pulseMultiplayerService);
+
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, incomingProfiles, removeIntentions, pulseEmotesMessageBus);
             pulseMultiplayerBus.SubscribeToIncomingMessages(lifeCycleCts.Token);
 
             pulseProfilePropagationBus = new PulseProfilePropagationBus(pulseMultiplayerService);
@@ -71,6 +74,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public override void Dispose()
         {
             lifeCycleCts?.SafeCancelAndDispose();
+            pulseEmotesMessageBus?.Dispose();
             pulseMultiplayerBus?.Dispose();
             pulseMultiplayerService?.Dispose();
         }

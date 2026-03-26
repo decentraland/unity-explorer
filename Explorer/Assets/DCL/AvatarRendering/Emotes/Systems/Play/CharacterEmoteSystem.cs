@@ -86,8 +86,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByDeletion(in Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
@@ -96,8 +96,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByTeleportIntention(in Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         /// <summary>
         /// Stops emote playback when smooth movement with duration is initiated.
@@ -105,8 +105,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerMoveToWithDurationIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByMoveToWithDuration(in Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
@@ -127,7 +127,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
-                StopEmote(ref emoteComponent, avatarView);
+                StopEmote(entity, ref emoteComponent, avatarView);
                 return;
             }
 
@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
                 if (isOnAnotherTag)
-                    StopEmote(ref emoteComponent, avatarView);
+                    StopEmote(entity, ref emoteComponent, avatarView);
             }
         }
 
@@ -157,6 +157,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
         private void CancelEmotesByMovementInput(
+            in Entity entity,
             ref CharacterEmoteComponent emoteComponent,
             in IAvatarView avatarView,
             ref JumpInputComponent jumpInputComponent,
@@ -174,11 +175,11 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
 
-            StopEmote(ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
+        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
 
@@ -191,6 +192,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
             avatarView.ResetArmatureInclination();
+
+            // Propagate emote stop only for local player
+            if (World.Has<PlayerComponent>(entity))
+                messageBus.SendStop();
 
             emoteComponent.Reset();
         }
@@ -268,8 +273,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                    bool isLooping = emote.IsLooping();
+
+                    if (!emotePlayer.Play(mainAsset, audioClip, isLooping, emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                    // Only propagate the emotes for the local player
+                    else if (World.Has<PlayerComponent>(entity))
+                    {
+                        uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                        messageBus.Send(emoteId, false, durationMs);
+                    }
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }

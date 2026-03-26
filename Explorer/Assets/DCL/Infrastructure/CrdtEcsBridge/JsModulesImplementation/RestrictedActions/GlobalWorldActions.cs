@@ -10,7 +10,6 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -33,16 +32,14 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
         private readonly bool isBuilderCollectionPreview;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles, bool isBuilderCollectionPreview)
+        public GlobalWorldActions(World world, Entity playerEntity, bool localSceneDevelopment, bool useRemoteAssetBundles, bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
-            this.messageBus = messageBus;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
@@ -105,7 +102,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping);
         }
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)

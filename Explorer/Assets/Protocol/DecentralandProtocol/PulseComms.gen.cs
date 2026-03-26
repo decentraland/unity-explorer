@@ -32,78 +32,96 @@ namespace Decentraland.Pulse {
             "GAEgASgIEhIKBWVycm9yGAIgASgJSACIAQFCCAoGX2Vycm9yIi0KGlByb2Zp",
             "bGVWZXJzaW9uQW5ub3VuY2VtZW50Eg8KB3ZlcnNpb24YASABKAUiRQoeUGxh",
             "eWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2VkEhIKCnN1YmplY3RfaWQYASAB",
-            "KA0SDwoHdmVyc2lvbhgCIAEoBSKRAgoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
+            "KA0SDwoHdmVyc2lvbhgCIAEoBSL9AgoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
             "c2hha2UYASABKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVx",
             "dWVzdEgAEjUKBWlucHV0GAIgASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLlBs",
             "YXllclN0YXRlSW5wdXRIABIzCgZyZXN5bmMYAyABKAsyIS5kZWNlbnRyYWxh",
             "bmQucHVsc2UuUmVzeW5jUmVxdWVzdEgAEk4KFHByb2ZpbGVfYW5ub3VuY2Vt",
             "ZW50GAQgASgLMi4uZGVjZW50cmFsYW5kLnB1bHNlLlByb2ZpbGVWZXJzaW9u",
-            "QW5ub3VuY2VtZW50SABCCQoHbWVzc2FnZSKzAwoNU2VydmVyTWVzc2FnZRI6",
-            "CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNo",
-            "YWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3RhdGVfZnVsbBgCIAEoCzIjLmRl",
-            "Y2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGxIABJHChJwbGF5ZXJf",
-            "c3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVy",
-            "U3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVyX2pvaW5lZBgEIAEoCzIgLmRl",
-            "Y2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2luZWRIABI1CgtwbGF5ZXJfbGVm",
-            "dBgFIAEoCzIeLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJMZWZ0SAASXgog",
-            "cGxheWVyX3Byb2ZpbGVfdmVyc2lvbl9hbm5vdW5jZWQYBiABKAsyMi5kZWNl",
-            "bnRyYWxhbmQucHVsc2UuUGxheWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2Vk",
-            "SABCCQoHbWVzc2FnZSJCChBQbGF5ZXJTdGF0ZUlucHV0Ei4KBXN0YXRlGAEg",
-            "ASgLMh8uZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlItoCCgtQbGF5",
-            "ZXJTdGF0ZRIUCgxwYXJjZWxfaW5kZXgYASABKAUSLgoIcG9zaXRpb24YAiAB",
-            "KAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSLgoIdmVsb2NpdHkY",
-            "AyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSEgoKcm90YXRp",
-            "b25feRgEIAEoAhIWCg5tb3ZlbWVudF9ibGVuZBgFIAEoAhITCgtzbGlkZV9i",
-            "bGVuZBgGIAEoAhIVCghoZWFkX3lhdxgHIAEoAkgAiAEBEhcKCmhlYWRfcGl0",
-            "Y2gYCCABKAJIAYgBARITCgtzdGF0ZV9mbGFncxgJIAEoDRIzCgtnbGlkZV9z",
-            "dGF0ZRgKIAEoDjIeLmRlY2VudHJhbGFuZC5wdWxzZS5HbGlkZVN0YXRlQgsK",
-            "CV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaCLNBgoVUGxheWVyU3RhdGVEZWx0",
-            "YVRpZXIwEhIKCnN1YmplY3RfaWQYASABKA0SDwoHbmV3X3NlcRgCIAEoDRIT",
-            "CgtzZXJ2ZXJfdGljaxgDIAEoDRIZCgxwYXJjZWxfaW5kZXgYBCABKAVIAIgB",
-            "ARIkCgpwb3NpdGlvbl94GAUgASgNQguKtRgHFQAAgEEYCEgBiAEBEiQKCnBv",
-            "c2l0aW9uX3kYBiABKA1CC4q1GAcVAABIQxgNSAKIAQESJAoKcG9zaXRpb25f",
-            "ehgHIAEoDUILirUYBxUAAIBBGAhIA4gBARIpCgp2ZWxvY2l0eV94GAggASgN",
-            "QhCKtRgMDQAASMIVAABIQhgISASIAQESKQoKdmVsb2NpdHlfeRgJIAEoDUIQ",
-            "irUYDA0AAEjCFQAASEIYCEgFiAEBEikKCnZlbG9jaXR5X3oYCiABKA1CEIq1",
-            "GAwNAABIwhUAAEhCGAhIBogBARIkCgpyb3RhdGlvbl95GAsgASgNQguKtRgH",
-            "FQAAtEMYB0gHiAEBEigKDm1vdmVtZW50X2JsZW5kGAwgASgNQguKtRgHFQAA",
-            "gD8YBEgIiAEBEiUKC3NsaWRlX2JsZW5kGA0gASgNQguKtRgHFQAAgD8YBEgJ",
-            "iAEBEiIKCGhlYWRfeWF3GA4gASgNQguKtRgHFQAAtEMYB0gKiAEBEiQKCmhl",
-            "YWRfcGl0Y2gYDyABKA1CC4q1GAcVAAA0QxgGSAuIAQESGAoLc3RhdGVfZmxh",
-            "Z3MYECABKA1IDIgBARI4CgtnbGlkZV9zdGF0ZRgRIAEoDjIeLmRlY2VudHJh",
-            "bGFuZC5wdWxzZS5HbGlkZVN0YXRlSA2IAQFCDwoNX3BhcmNlbF9pbmRleEIN",
-            "CgtfcG9zaXRpb25feEINCgtfcG9zaXRpb25feUINCgtfcG9zaXRpb25fekIN",
-            "CgtfdmVsb2NpdHlfeEINCgtfdmVsb2NpdHlfeUINCgtfdmVsb2NpdHlfekIN",
-            "Cgtfcm90YXRpb25feUIRCg9fbW92ZW1lbnRfYmxlbmRCDgoMX3NsaWRlX2Js",
-            "ZW5kQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaEIOCgxfc3RhdGVfZmxh",
-            "Z3NCDgoMX2dsaWRlX3N0YXRlInwKD1BsYXllclN0YXRlRnVsbBISCgpzdWJq",
-            "ZWN0X2lkGAEgASgNEhAKCHNlcXVlbmNlGAIgASgNEhMKC3NlcnZlcl90aWNr",
-            "GAMgASgNEi4KBXN0YXRlGAQgASgLMh8uZGVjZW50cmFsYW5kLnB1bHNlLlBs",
-            "YXllclN0YXRlImwKDFBsYXllckpvaW5lZBIPCgd1c2VyX2lkGAEgASgJEhcK",
-            "D3Byb2ZpbGVfdmVyc2lvbhgCIAEoBRIyCgVzdGF0ZRgDIAEoCzIjLmRlY2Vu",
-            "dHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1bGwiIAoKUGxheWVyTGVmdBIS",
-            "CgpzdWJqZWN0X2lkGAEgASgNIjYKDVJlc3luY1JlcXVlc3QSEgoKc3ViamVj",
-            "dF9pZBgBIAEoDRIRCglrbm93bl9zZXEYAiABKA0qZgoUUGxheWVyQW5pbWF0",
-            "aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1Q",
-            "EAISDQoJTE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5ORUQQECpO",
-            "CgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9Q",
-            "EAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJPUBADYgZwcm90bzM="));
+            "QW5ub3VuY2VtZW50SAASNQoLZW1vdGVfc3RhcnQYBSABKAsyHi5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuRW1vdGVTdGFydEgAEjMKCmVtb3RlX3N0b3AYBiABKAsy",
+            "HS5kZWNlbnRyYWxhbmQucHVsc2UuRW1vdGVTdG9wSABCCQoHbWVzc2FnZSKp",
+            "BAoNU2VydmVyTWVzc2FnZRI6CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuSGFuZHNoYWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3Rh",
+            "dGVfZnVsbBgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
+            "ZUZ1bGxIABJHChJwbGF5ZXJfc3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuUGxheWVyU3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVy",
+            "X2pvaW5lZBgEIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2lu",
+            "ZWRIABI1CgtwbGF5ZXJfbGVmdBgFIAEoCzIeLmRlY2VudHJhbGFuZC5wdWxz",
+            "ZS5QbGF5ZXJMZWZ0SAASXgogcGxheWVyX3Byb2ZpbGVfdmVyc2lvbl9hbm5v",
+            "dW5jZWQYBiABKAsyMi5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyUHJvZmls",
+            "ZVZlcnNpb25zQW5ub3VuY2VkSAASOQoNZW1vdGVfc3RhcnRlZBgHIAEoCzIg",
+            "LmRlY2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0YXJ0ZWRIABI5Cg1lbW90ZV9z",
+            "dG9wcGVkGAggASgLMiAuZGVjZW50cmFsYW5kLnB1bHNlLkVtb3RlU3RvcHBl",
+            "ZEgAQgkKB21lc3NhZ2UiQgoQUGxheWVyU3RhdGVJbnB1dBIuCgVzdGF0ZRgB",
+            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSLaAgoLUGxh",
+            "eWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEi4KCHBvc2l0aW9uGAIg",
+            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEi4KCHZlbG9jaXR5",
+            "GAMgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEhIKCnJvdGF0",
+            "aW9uX3kYBCABKAISFgoObW92ZW1lbnRfYmxlbmQYBSABKAISEwoLc2xpZGVf",
+            "YmxlbmQYBiABKAISFQoIaGVhZF95YXcYByABKAJIAIgBARIXCgpoZWFkX3Bp",
+            "dGNoGAggASgCSAGIAQESEwoLc3RhdGVfZmxhZ3MYCSABKA0SMwoLZ2xpZGVf",
+            "c3RhdGUYCiABKA4yHi5kZWNlbnRyYWxhbmQucHVsc2UuR2xpZGVTdGF0ZUIL",
+            "CglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2gizQYKFVBsYXllclN0YXRlRGVs",
+            "dGFUaWVyMBISCgpzdWJqZWN0X2lkGAEgASgNEg8KB25ld19zZXEYAiABKA0S",
+            "EwoLc2VydmVyX3RpY2sYAyABKA0SGQoMcGFyY2VsX2luZGV4GAQgASgFSACI",
+            "AQESJAoKcG9zaXRpb25feBgFIAEoDUILirUYBxUAAIBBGAhIAYgBARIkCgpw",
+            "b3NpdGlvbl95GAYgASgNQguKtRgHFQAASEMYDUgCiAEBEiQKCnBvc2l0aW9u",
+            "X3oYByABKA1CC4q1GAcVAACAQRgISAOIAQESKQoKdmVsb2NpdHlfeBgIIAEo",
+            "DUIQirUYDA0AAEjCFQAASEIYCEgEiAEBEikKCnZlbG9jaXR5X3kYCSABKA1C",
+            "EIq1GAwNAABIwhUAAEhCGAhIBYgBARIpCgp2ZWxvY2l0eV96GAogASgNQhCK",
+            "tRgMDQAASMIVAABIQhgISAaIAQESJAoKcm90YXRpb25feRgLIAEoDUILirUY",
+            "BxUAALRDGAdIB4gBARIoCg5tb3ZlbWVudF9ibGVuZBgMIAEoDUILirUYBxUA",
+            "AIA/GARICIgBARIlCgtzbGlkZV9ibGVuZBgNIAEoDUILirUYBxUAAIA/GARI",
+            "CYgBARIiCghoZWFkX3lhdxgOIAEoDUILirUYBxUAALRDGAdICogBARIkCgpo",
+            "ZWFkX3BpdGNoGA8gASgNQguKtRgHFQAANEMYBkgLiAEBEhgKC3N0YXRlX2Zs",
+            "YWdzGBAgASgNSAyIAQESOAoLZ2xpZGVfc3RhdGUYESABKA4yHi5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuR2xpZGVTdGF0ZUgNiAEBQg8KDV9wYXJjZWxfaW5kZXhC",
+            "DQoLX3Bvc2l0aW9uX3hCDQoLX3Bvc2l0aW9uX3lCDQoLX3Bvc2l0aW9uX3pC",
+            "DQoLX3ZlbG9jaXR5X3hCDQoLX3ZlbG9jaXR5X3lCDQoLX3ZlbG9jaXR5X3pC",
+            "DQoLX3JvdGF0aW9uX3lCEQoPX21vdmVtZW50X2JsZW5kQg4KDF9zbGlkZV9i",
+            "bGVuZEILCglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2hCDgoMX3N0YXRlX2Zs",
+            "YWdzQg4KDF9nbGlkZV9zdGF0ZSJ8Cg9QbGF5ZXJTdGF0ZUZ1bGwSEgoKc3Vi",
+            "amVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGlj",
+            "axgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5Q",
+            "bGF5ZXJTdGF0ZSJsCgxQbGF5ZXJKb2luZWQSDwoHdXNlcl9pZBgBIAEoCRIX",
+            "Cg9wcm9maWxlX3ZlcnNpb24YAiABKAUSMgoFc3RhdGUYAyABKAsyIy5kZWNl",
+            "bnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVGdWxsIiAKClBsYXllckxlZnQS",
+            "EgoKc3ViamVjdF9pZBgBIAEoDSI2Cg1SZXN5bmNSZXF1ZXN0EhIKCnN1Ympl",
+            "Y3RfaWQYASABKA0SEQoJa25vd25fc2VxGAIgASgNIkgKCkVtb3RlU3RhcnQS",
+            "EAoIZW1vdGVfaWQYASABKAkSGAoLZHVyYXRpb25fbXMYAiABKA1IAIgBAUIO",
+            "CgxfZHVyYXRpb25fbXMiCwoJRW1vdGVTdG9wIoABCgxFbW90ZVN0YXJ0ZWQS",
+            "EgoKc3ViamVjdF9pZBgBIAEoDRITCgtzZXJ2ZXJfdGljaxgCIAEoDRIQCghl",
+            "bW90ZV9pZBgDIAEoCRI1CgxwbGF5ZXJfc3RhdGUYBCABKAsyHy5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuUGxheWVyU3RhdGUibAoMRW1vdGVTdG9wcGVkEhIKCnN1",
+            "YmplY3RfaWQYASABKA0SEwoLc2VydmVyX3RpY2sYAiABKA0SMwoGcmVhc29u",
+            "GAMgASgOMiMuZGVjZW50cmFsYW5kLnB1bHNlLkVtb3RlU3RvcFJlYXNvbipm",
+            "ChRQbGF5ZXJBbmltYXRpb25GbGFncxIICgROT05FEAASDAoIR1JPVU5ERUQQ",
+            "ARINCglMT05HX0pVTVAQAhINCglMT05HX0ZBTEwQBBILCgdGQUxMSU5HEAgS",
+            "CwoHU1RVTk5FRBAQKk4KCkdsaWRlU3RhdGUSDwoLUFJPUF9DTE9TRUQQABIQ",
+            "CgxPUEVOSU5HX1BST1AQARILCgdHTElESU5HEAISEAoMQ0xPU0lOR19QUk9Q",
+            "EAMqLwoPRW1vdGVTdG9wUmVhc29uEg0KCUNPTVBMRVRFRBAAEg0KCUNBTkNF",
+            "TExFRBABYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeRequest), global::Decentraland.Pulse.HandshakeRequest.Parser, new[]{ "AuthChain", "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeResponse), global::Decentraland.Pulse.HandshakeResponse.Parser, new[]{ "Success", "Error" }, new[]{ "Error" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ProfileVersionAnnouncement), global::Decentraland.Pulse.ProfileVersionAnnouncement.Parser, new[]{ "Version" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerProfileVersionsAnnounced), global::Decentraland.Pulse.PlayerProfileVersionsAnnounced.Parser, new[]{ "SubjectId", "Version" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement", "EmoteStart", "EmoteStop" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced", "EmoteStarted", "EmoteStopped" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateInput), global::Decentraland.Pulse.PlayerStateInput.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "NewSeq", "ServerTick", "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "ProfileVersion", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerLeft), global::Decentraland.Pulse.PlayerLeft.Parser, new[]{ "SubjectId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ResyncRequest), global::Decentraland.Pulse.ResyncRequest.Parser, new[]{ "SubjectId", "KnownSeq" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ResyncRequest), global::Decentraland.Pulse.ResyncRequest.Parser, new[]{ "SubjectId", "KnownSeq" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStart), global::Decentraland.Pulse.EmoteStart.Parser, new[]{ "EmoteId", "DurationMs" }, new[]{ "DurationMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStop), global::Decentraland.Pulse.EmoteStop.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStarted), global::Decentraland.Pulse.EmoteStarted.Parser, new[]{ "SubjectId", "ServerTick", "EmoteId", "PlayerState" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStopped), global::Decentraland.Pulse.EmoteStopped.Parser, new[]{ "SubjectId", "ServerTick", "Reason" }, null, null, null, null)
           }));
     }
     #endregion
@@ -124,6 +142,17 @@ namespace Decentraland.Pulse {
     [pbr::OriginalName("OPENING_PROP")] OpeningProp = 1,
     [pbr::OriginalName("GLIDING")] Gliding = 2,
     [pbr::OriginalName("CLOSING_PROP")] ClosingProp = 3,
+  }
+
+  public enum EmoteStopReason {
+    /// <summary>
+    /// one-shot timer expired on the server
+    /// </summary>
+    [pbr::OriginalName("COMPLETED")] Completed = 0,
+    /// <summary>
+    /// client sent EmoteStop (looping emotes)
+    /// </summary>
+    [pbr::OriginalName("CANCELLED")] Cancelled = 1,
   }
 
   #endregion
@@ -1098,6 +1127,12 @@ namespace Decentraland.Pulse {
         case MessageOneofCase.ProfileAnnouncement:
           ProfileAnnouncement = other.ProfileAnnouncement.Clone();
           break;
+        case MessageOneofCase.EmoteStart:
+          EmoteStart = other.EmoteStart.Clone();
+          break;
+        case MessageOneofCase.EmoteStop:
+          EmoteStop = other.EmoteStop.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -1157,6 +1192,30 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "emote_start" field.</summary>
+    public const int EmoteStartFieldNumber = 5;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.EmoteStart EmoteStart {
+      get { return messageCase_ == MessageOneofCase.EmoteStart ? (global::Decentraland.Pulse.EmoteStart) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.EmoteStart;
+      }
+    }
+
+    /// <summary>Field number for the "emote_stop" field.</summary>
+    public const int EmoteStopFieldNumber = 6;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.EmoteStop EmoteStop {
+      get { return messageCase_ == MessageOneofCase.EmoteStop ? (global::Decentraland.Pulse.EmoteStop) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.EmoteStop;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1165,6 +1224,8 @@ namespace Decentraland.Pulse {
       Input = 2,
       Resync = 3,
       ProfileAnnouncement = 4,
+      EmoteStart = 5,
+      EmoteStop = 6,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1199,6 +1260,8 @@ namespace Decentraland.Pulse {
       if (!object.Equals(Input, other.Input)) return false;
       if (!object.Equals(Resync, other.Resync)) return false;
       if (!object.Equals(ProfileAnnouncement, other.ProfileAnnouncement)) return false;
+      if (!object.Equals(EmoteStart, other.EmoteStart)) return false;
+      if (!object.Equals(EmoteStop, other.EmoteStop)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1211,6 +1274,8 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.Input) hash ^= Input.GetHashCode();
       if (messageCase_ == MessageOneofCase.Resync) hash ^= Resync.GetHashCode();
       if (messageCase_ == MessageOneofCase.ProfileAnnouncement) hash ^= ProfileAnnouncement.GetHashCode();
+      if (messageCase_ == MessageOneofCase.EmoteStart) hash ^= EmoteStart.GetHashCode();
+      if (messageCase_ == MessageOneofCase.EmoteStop) hash ^= EmoteStop.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1246,6 +1311,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(34);
         output.WriteMessage(ProfileAnnouncement);
       }
+      if (messageCase_ == MessageOneofCase.EmoteStart) {
+        output.WriteRawTag(42);
+        output.WriteMessage(EmoteStart);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStop) {
+        output.WriteRawTag(50);
+        output.WriteMessage(EmoteStop);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1272,6 +1345,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(34);
         output.WriteMessage(ProfileAnnouncement);
       }
+      if (messageCase_ == MessageOneofCase.EmoteStart) {
+        output.WriteRawTag(42);
+        output.WriteMessage(EmoteStart);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStop) {
+        output.WriteRawTag(50);
+        output.WriteMessage(EmoteStop);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1293,6 +1374,12 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.ProfileAnnouncement) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(ProfileAnnouncement);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStart) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStart);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStop) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStop);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1330,6 +1417,18 @@ namespace Decentraland.Pulse {
             ProfileAnnouncement = new global::Decentraland.Pulse.ProfileVersionAnnouncement();
           }
           ProfileAnnouncement.MergeFrom(other.ProfileAnnouncement);
+          break;
+        case MessageOneofCase.EmoteStart:
+          if (EmoteStart == null) {
+            EmoteStart = new global::Decentraland.Pulse.EmoteStart();
+          }
+          EmoteStart.MergeFrom(other.EmoteStart);
+          break;
+        case MessageOneofCase.EmoteStop:
+          if (EmoteStop == null) {
+            EmoteStop = new global::Decentraland.Pulse.EmoteStop();
+          }
+          EmoteStop.MergeFrom(other.EmoteStop);
           break;
       }
 
@@ -1388,6 +1487,24 @@ namespace Decentraland.Pulse {
             ProfileAnnouncement = subBuilder;
             break;
           }
+          case 42: {
+            global::Decentraland.Pulse.EmoteStart subBuilder = new global::Decentraland.Pulse.EmoteStart();
+            if (messageCase_ == MessageOneofCase.EmoteStart) {
+              subBuilder.MergeFrom(EmoteStart);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStart = subBuilder;
+            break;
+          }
+          case 50: {
+            global::Decentraland.Pulse.EmoteStop subBuilder = new global::Decentraland.Pulse.EmoteStop();
+            if (messageCase_ == MessageOneofCase.EmoteStop) {
+              subBuilder.MergeFrom(EmoteStop);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStop = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1441,6 +1558,24 @@ namespace Decentraland.Pulse {
             }
             input.ReadMessage(subBuilder);
             ProfileAnnouncement = subBuilder;
+            break;
+          }
+          case 42: {
+            global::Decentraland.Pulse.EmoteStart subBuilder = new global::Decentraland.Pulse.EmoteStart();
+            if (messageCase_ == MessageOneofCase.EmoteStart) {
+              subBuilder.MergeFrom(EmoteStart);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStart = subBuilder;
+            break;
+          }
+          case 50: {
+            global::Decentraland.Pulse.EmoteStop subBuilder = new global::Decentraland.Pulse.EmoteStop();
+            if (messageCase_ == MessageOneofCase.EmoteStop) {
+              subBuilder.MergeFrom(EmoteStop);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStop = subBuilder;
             break;
           }
         }
@@ -1503,6 +1638,12 @@ namespace Decentraland.Pulse {
           break;
         case MessageOneofCase.PlayerProfileVersionAnnounced:
           PlayerProfileVersionAnnounced = other.PlayerProfileVersionAnnounced.Clone();
+          break;
+        case MessageOneofCase.EmoteStarted:
+          EmoteStarted = other.EmoteStarted.Clone();
+          break;
+        case MessageOneofCase.EmoteStopped:
+          EmoteStopped = other.EmoteStopped.Clone();
           break;
       }
 
@@ -1587,6 +1728,30 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "emote_started" field.</summary>
+    public const int EmoteStartedFieldNumber = 7;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.EmoteStarted EmoteStarted {
+      get { return messageCase_ == MessageOneofCase.EmoteStarted ? (global::Decentraland.Pulse.EmoteStarted) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.EmoteStarted;
+      }
+    }
+
+    /// <summary>Field number for the "emote_stopped" field.</summary>
+    public const int EmoteStoppedFieldNumber = 8;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.EmoteStopped EmoteStopped {
+      get { return messageCase_ == MessageOneofCase.EmoteStopped ? (global::Decentraland.Pulse.EmoteStopped) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.EmoteStopped;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1597,6 +1762,8 @@ namespace Decentraland.Pulse {
       PlayerJoined = 4,
       PlayerLeft = 5,
       PlayerProfileVersionAnnounced = 6,
+      EmoteStarted = 7,
+      EmoteStopped = 8,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1633,6 +1800,8 @@ namespace Decentraland.Pulse {
       if (!object.Equals(PlayerJoined, other.PlayerJoined)) return false;
       if (!object.Equals(PlayerLeft, other.PlayerLeft)) return false;
       if (!object.Equals(PlayerProfileVersionAnnounced, other.PlayerProfileVersionAnnounced)) return false;
+      if (!object.Equals(EmoteStarted, other.EmoteStarted)) return false;
+      if (!object.Equals(EmoteStopped, other.EmoteStopped)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1647,6 +1816,8 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.PlayerJoined) hash ^= PlayerJoined.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerLeft) hash ^= PlayerLeft.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) hash ^= PlayerProfileVersionAnnounced.GetHashCode();
+      if (messageCase_ == MessageOneofCase.EmoteStarted) hash ^= EmoteStarted.GetHashCode();
+      if (messageCase_ == MessageOneofCase.EmoteStopped) hash ^= EmoteStopped.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1690,6 +1861,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(50);
         output.WriteMessage(PlayerProfileVersionAnnounced);
       }
+      if (messageCase_ == MessageOneofCase.EmoteStarted) {
+        output.WriteRawTag(58);
+        output.WriteMessage(EmoteStarted);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStopped) {
+        output.WriteRawTag(66);
+        output.WriteMessage(EmoteStopped);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1724,6 +1903,14 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(50);
         output.WriteMessage(PlayerProfileVersionAnnounced);
       }
+      if (messageCase_ == MessageOneofCase.EmoteStarted) {
+        output.WriteRawTag(58);
+        output.WriteMessage(EmoteStarted);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStopped) {
+        output.WriteRawTag(66);
+        output.WriteMessage(EmoteStopped);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1751,6 +1938,12 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(PlayerProfileVersionAnnounced);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStarted) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStarted);
+      }
+      if (messageCase_ == MessageOneofCase.EmoteStopped) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStopped);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1800,6 +1993,18 @@ namespace Decentraland.Pulse {
             PlayerProfileVersionAnnounced = new global::Decentraland.Pulse.PlayerProfileVersionsAnnounced();
           }
           PlayerProfileVersionAnnounced.MergeFrom(other.PlayerProfileVersionAnnounced);
+          break;
+        case MessageOneofCase.EmoteStarted:
+          if (EmoteStarted == null) {
+            EmoteStarted = new global::Decentraland.Pulse.EmoteStarted();
+          }
+          EmoteStarted.MergeFrom(other.EmoteStarted);
+          break;
+        case MessageOneofCase.EmoteStopped:
+          if (EmoteStopped == null) {
+            EmoteStopped = new global::Decentraland.Pulse.EmoteStopped();
+          }
+          EmoteStopped.MergeFrom(other.EmoteStopped);
           break;
       }
 
@@ -1876,6 +2081,24 @@ namespace Decentraland.Pulse {
             PlayerProfileVersionAnnounced = subBuilder;
             break;
           }
+          case 58: {
+            global::Decentraland.Pulse.EmoteStarted subBuilder = new global::Decentraland.Pulse.EmoteStarted();
+            if (messageCase_ == MessageOneofCase.EmoteStarted) {
+              subBuilder.MergeFrom(EmoteStarted);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStarted = subBuilder;
+            break;
+          }
+          case 66: {
+            global::Decentraland.Pulse.EmoteStopped subBuilder = new global::Decentraland.Pulse.EmoteStopped();
+            if (messageCase_ == MessageOneofCase.EmoteStopped) {
+              subBuilder.MergeFrom(EmoteStopped);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStopped = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1947,6 +2170,24 @@ namespace Decentraland.Pulse {
             }
             input.ReadMessage(subBuilder);
             PlayerProfileVersionAnnounced = subBuilder;
+            break;
+          }
+          case 58: {
+            global::Decentraland.Pulse.EmoteStarted subBuilder = new global::Decentraland.Pulse.EmoteStarted();
+            if (messageCase_ == MessageOneofCase.EmoteStarted) {
+              subBuilder.MergeFrom(EmoteStarted);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStarted = subBuilder;
+            break;
+          }
+          case 66: {
+            global::Decentraland.Pulse.EmoteStopped subBuilder = new global::Decentraland.Pulse.EmoteStopped();
+            if (messageCase_ == MessageOneofCase.EmoteStopped) {
+              subBuilder.MergeFrom(EmoteStopped);
+            }
+            input.ReadMessage(subBuilder);
+            EmoteStopped = subBuilder;
             break;
           }
         }
@@ -4800,6 +5041,1026 @@ namespace Decentraland.Pulse {
           }
           case 16: {
             KnownSeq = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Client → Server. Client requests to start an emote.
+  /// Client stops sending MovementInput while emoting.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class EmoteStart : pb::IMessage<EmoteStart>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<EmoteStart> _parser = new pb::MessageParser<EmoteStart>(() => new EmoteStart());
+    private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<EmoteStart> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[13]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStart() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStart(EmoteStart other) : this() {
+      _hasBits0 = other._hasBits0;
+      emoteId_ = other.emoteId_;
+      durationMs_ = other.durationMs_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStart Clone() {
+      return new EmoteStart(this);
+    }
+
+    /// <summary>Field number for the "emote_id" field.</summary>
+    public const int EmoteIdFieldNumber = 1;
+    private string emoteId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string EmoteId {
+      get { return emoteId_; }
+      set {
+        emoteId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "duration_ms" field.</summary>
+    public const int DurationMsFieldNumber = 2;
+    private readonly static uint DurationMsDefaultValue = 0;
+
+    private uint durationMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint DurationMs {
+      get { if ((_hasBits0 & 1) != 0) { return durationMs_; } else { return DurationMsDefaultValue; } }
+      set {
+        _hasBits0 |= 1;
+        durationMs_ = value;
+      }
+    }
+    /// <summary>Gets whether the "duration_ms" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasDurationMs {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "duration_ms" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearDurationMs() {
+      _hasBits0 &= ~1;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as EmoteStart);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(EmoteStart other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmoteId != other.EmoteId) return false;
+      if (DurationMs != other.DurationMs) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmoteId.Length != 0) hash ^= EmoteId.GetHashCode();
+      if (HasDurationMs) hash ^= DurationMs.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (EmoteId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(EmoteId);
+      }
+      if (HasDurationMs) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(DurationMs);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (EmoteId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(EmoteId);
+      }
+      if (HasDurationMs) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(DurationMs);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmoteId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(EmoteId);
+      }
+      if (HasDurationMs) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(DurationMs);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(EmoteStart other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmoteId.Length != 0) {
+        EmoteId = other.EmoteId;
+      }
+      if (other.HasDurationMs) {
+        DurationMs = other.DurationMs;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            EmoteId = input.ReadString();
+            break;
+          }
+          case 16: {
+            DurationMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            EmoteId = input.ReadString();
+            break;
+          }
+          case 16: {
+            DurationMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Client → Server. Client requests to stop a looping emote.
+  /// One-shot emotes are terminated by the server timer.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class EmoteStop : pb::IMessage<EmoteStop>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<EmoteStop> _parser = new pb::MessageParser<EmoteStop>(() => new EmoteStop());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<EmoteStop> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[14]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStop() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStop(EmoteStop other) : this() {
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStop Clone() {
+      return new EmoteStop(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as EmoteStop);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(EmoteStop other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(EmoteStop other) {
+      if (other == null) {
+        return;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Server → All Observers
+  /// Full player state is piggybacked to ensure the emote is played in the right place.
+  /// Observers use server_tick to scrub animation forward by transit latency.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class EmoteStarted : pb::IMessage<EmoteStarted>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<EmoteStarted> _parser = new pb::MessageParser<EmoteStarted>(() => new EmoteStarted());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<EmoteStarted> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[15]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStarted() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStarted(EmoteStarted other) : this() {
+      subjectId_ = other.subjectId_;
+      serverTick_ = other.serverTick_;
+      emoteId_ = other.emoteId_;
+      playerState_ = other.playerState_ != null ? other.playerState_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStarted Clone() {
+      return new EmoteStarted(this);
+    }
+
+    /// <summary>Field number for the "subject_id" field.</summary>
+    public const int SubjectIdFieldNumber = 1;
+    private uint subjectId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint SubjectId {
+      get { return subjectId_; }
+      set {
+        subjectId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "server_tick" field.</summary>
+    public const int ServerTickFieldNumber = 2;
+    private uint serverTick_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ServerTick {
+      get { return serverTick_; }
+      set {
+        serverTick_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "emote_id" field.</summary>
+    public const int EmoteIdFieldNumber = 3;
+    private string emoteId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string EmoteId {
+      get { return emoteId_; }
+      set {
+        emoteId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "player_state" field.</summary>
+    public const int PlayerStateFieldNumber = 4;
+    private global::Decentraland.Pulse.PlayerState playerState_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.PlayerState PlayerState {
+      get { return playerState_; }
+      set {
+        playerState_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as EmoteStarted);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(EmoteStarted other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (SubjectId != other.SubjectId) return false;
+      if (ServerTick != other.ServerTick) return false;
+      if (EmoteId != other.EmoteId) return false;
+      if (!object.Equals(PlayerState, other.PlayerState)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
+      if (EmoteId.Length != 0) hash ^= EmoteId.GetHashCode();
+      if (playerState_ != null) hash ^= PlayerState.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ServerTick);
+      }
+      if (EmoteId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(EmoteId);
+      }
+      if (playerState_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(PlayerState);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ServerTick);
+      }
+      if (EmoteId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(EmoteId);
+      }
+      if (playerState_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(PlayerState);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (SubjectId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
+      }
+      if (ServerTick != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
+      }
+      if (EmoteId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(EmoteId);
+      }
+      if (playerState_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PlayerState);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(EmoteStarted other) {
+      if (other == null) {
+        return;
+      }
+      if (other.SubjectId != 0) {
+        SubjectId = other.SubjectId;
+      }
+      if (other.ServerTick != 0) {
+        ServerTick = other.ServerTick;
+      }
+      if (other.EmoteId.Length != 0) {
+        EmoteId = other.EmoteId;
+      }
+      if (other.playerState_ != null) {
+        if (playerState_ == null) {
+          PlayerState = new global::Decentraland.Pulse.PlayerState();
+        }
+        PlayerState.MergeFrom(other.PlayerState);
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 26: {
+            EmoteId = input.ReadString();
+            break;
+          }
+          case 34: {
+            if (playerState_ == null) {
+              PlayerState = new global::Decentraland.Pulse.PlayerState();
+            }
+            input.ReadMessage(PlayerState);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 26: {
+            EmoteId = input.ReadString();
+            break;
+          }
+          case 34: {
+            if (playerState_ == null) {
+              PlayerState = new global::Decentraland.Pulse.PlayerState();
+            }
+            input.ReadMessage(PlayerState);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Server → All Observers
+  /// Client resumes MovementInput only after receiving this.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class EmoteStopped : pb::IMessage<EmoteStopped>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<EmoteStopped> _parser = new pb::MessageParser<EmoteStopped>(() => new EmoteStopped());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<EmoteStopped> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Pulse.PulseCommsReflection.Descriptor.MessageTypes[16]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStopped() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStopped(EmoteStopped other) : this() {
+      subjectId_ = other.subjectId_;
+      serverTick_ = other.serverTick_;
+      reason_ = other.reason_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public EmoteStopped Clone() {
+      return new EmoteStopped(this);
+    }
+
+    /// <summary>Field number for the "subject_id" field.</summary>
+    public const int SubjectIdFieldNumber = 1;
+    private uint subjectId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint SubjectId {
+      get { return subjectId_; }
+      set {
+        subjectId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "server_tick" field.</summary>
+    public const int ServerTickFieldNumber = 2;
+    private uint serverTick_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ServerTick {
+      get { return serverTick_; }
+      set {
+        serverTick_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "reason" field.</summary>
+    public const int ReasonFieldNumber = 3;
+    private global::Decentraland.Pulse.EmoteStopReason reason_ = global::Decentraland.Pulse.EmoteStopReason.Completed;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.EmoteStopReason Reason {
+      get { return reason_; }
+      set {
+        reason_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as EmoteStopped);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(EmoteStopped other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (SubjectId != other.SubjectId) return false;
+      if (ServerTick != other.ServerTick) return false;
+      if (Reason != other.Reason) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
+      if (Reason != global::Decentraland.Pulse.EmoteStopReason.Completed) hash ^= Reason.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ServerTick);
+      }
+      if (Reason != global::Decentraland.Pulse.EmoteStopReason.Completed) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) Reason);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (SubjectId != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(SubjectId);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ServerTick);
+      }
+      if (Reason != global::Decentraland.Pulse.EmoteStopReason.Completed) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) Reason);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (SubjectId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
+      }
+      if (ServerTick != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
+      }
+      if (Reason != global::Decentraland.Pulse.EmoteStopReason.Completed) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Reason);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(EmoteStopped other) {
+      if (other == null) {
+        return;
+      }
+      if (other.SubjectId != 0) {
+        SubjectId = other.SubjectId;
+      }
+      if (other.ServerTick != 0) {
+        ServerTick = other.ServerTick;
+      }
+      if (other.Reason != global::Decentraland.Pulse.EmoteStopReason.Completed) {
+        Reason = other.Reason;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            Reason = (global::Decentraland.Pulse.EmoteStopReason) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            SubjectId = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            ServerTick = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            Reason = (global::Decentraland.Pulse.EmoteStopReason) input.ReadEnum();
             break;
           }
         }

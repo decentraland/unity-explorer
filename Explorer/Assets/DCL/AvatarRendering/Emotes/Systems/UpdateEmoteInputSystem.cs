@@ -7,7 +7,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.Abstract;
@@ -25,7 +24,6 @@ namespace DCL.AvatarRendering.Emotes
     {
         private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
         private readonly Dictionary<string, int> actionNameById = new ();
-        private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.EmotesActions emotesActions;
 
@@ -33,11 +31,10 @@ namespace DCL.AvatarRendering.Emotes
         private EmoteTriggerSource? triggeredEmoteSource;
         private int framesAfterWheelWasClosed;
 
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmoteWheelShortcutHandler emoteWheelShortcutHandler)
+        private UpdateEmoteInputSystem(World world, EmoteWheelShortcutHandler emoteWheelShortcutHandler)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
-            this.messageBus = messageBus;
             this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
 
             GetReportData();
@@ -104,8 +101,6 @@ namespace DCL.AvatarRendering.Emotes
             var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true, TriggerSource = TriggerSource.SELF};
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
-
-            messageBus.Send(emoteId, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
