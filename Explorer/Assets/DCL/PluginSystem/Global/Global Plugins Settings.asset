@@ -419,6 +419,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <QualityPresets>k__BackingField: {fileID: 11400000, guid: d8c17d5ed6e4b5e41b9155c640906ef2, type: 2}
     - rid: 1709771649487732831
       type: {class: WearablePlugin/Settings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:
@@ -896,6 +897,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         faceFeatureMaterial:
           m_AssetGUID: 00657accebbe6c348b5208e385e5ec73
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        ghostMaterial:
+          m_AssetGUID: 2bd30078b12df4679bed329bf3c002ad
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

@@ -54,8 +54,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
 
-        [field: SerializeField] public ParcelsRef ParsedParcels;
-
 
 
 
@@ -87,12 +85,6 @@ namespace DCL.PluginSystem.Global
         public class RoadDataRef : AssetReferenceT<RoadSettingsAsset>
         {
             public RoadDataRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class ParcelsRef : AssetReferenceT<ParcelData>
-        {
-            public ParcelsRef(string guid) : base(guid) { }
         }
     }
 }

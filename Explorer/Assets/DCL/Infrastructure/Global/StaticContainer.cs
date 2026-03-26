@@ -325,11 +325,7 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.WorldManifestProvider = new WorldManifestProvider(
-                    assetsProvisioner,
-                    container.WebRequestsContainer.WebRequestController,
-                    staticSettings.ParsedParcels
-                );
+            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController);
 
             return (container, true);
         }

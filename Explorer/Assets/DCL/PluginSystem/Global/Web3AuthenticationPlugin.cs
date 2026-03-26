@@ -114,7 +114,6 @@ namespace DCL.PluginSystem.Global
                 settings.EmotesSettings,
                 inputBlock,
                 backgroundMusic,
-                appArgs,
                 wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource);
