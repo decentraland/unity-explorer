@@ -10,6 +10,8 @@ namespace DCL.Character.CharacterMotion.Systems
     public static class HandPointAtHelper
     {
         private const float MAX_ROTATION_SPEED_MULTIPLIER = 3;
+        private const float ZERO_EPSILON = 1e-6f;
+        private const float NEAR_ZERO = 0.001f;
 
         public struct RotationInfo
         {
@@ -71,7 +73,7 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 horizontal = new Vector3(direction.x, 0f, direction.z);
             float horizontalMag = horizontal.magnitude;
 
-            if (horizontalMag < 1e-6f)
+            if (horizontalMag < ZERO_EPSILON)
                 return direction;
 
             float elevation = Mathf.Atan2(direction.y, horizontalMag);
@@ -113,7 +115,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             Vector3 backOfHand = Vector3.up - Vector3.Dot(Vector3.up, pointDirection) * pointDirection;
 
-            if (backOfHand.sqrMagnitude < 0.001f)
+            if (backOfHand.sqrMagnitude < NEAR_ZERO)
                 backOfHand = Vector3.forward - Vector3.Dot(Vector3.forward, pointDirection) * pointDirection;
 
             backOfHand.Normalize();
@@ -137,7 +139,7 @@ namespace DCL.Character.CharacterMotion.Systems
             Vector3 lookH = new Vector3(lookDirection.x, 0f, lookDirection.z);
             float lookHMag = lookH.magnitude;
 
-            if (horizontalMag > 1e-6f && lookHMag > 1e-6f)
+            if (horizontalMag > ZERO_EPSILON && lookHMag > ZERO_EPSILON)
             {
                 Vector3 dirHNorm = dirHorizontal / horizontalMag;
                 Vector3 lookHNorm = lookH / lookHMag;
