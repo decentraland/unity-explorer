@@ -16,8 +16,6 @@ namespace DCL.SDKComponents.ParticleSystem
         public AssetPromise<TextureData, GetTextureIntention>? TexturePromise;
         public Material ParticleMaterial;
 
-        public uint LastRestartCount;
-
         // Cached objects to avoid allocations on dirty updates
         public Gradient CachedGradient;
         public GradientColorKey[] CachedColorKeys;

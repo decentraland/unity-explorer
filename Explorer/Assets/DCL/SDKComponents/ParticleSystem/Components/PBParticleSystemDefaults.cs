@@ -57,5 +57,16 @@ namespace DCL.SDKComponents.ParticleSystem.Components
 
         public static float GetFramesPerSecond(this PBParticleSystem.Types.SpriteSheetAnimation self) =>
             self.HasFramesPerSecond ? self.FramesPerSecond : 30f;
+
+        // --- Burst ---
+
+        public static int GetCycles(this PBParticleSystem.Types.Burst self) =>
+            self.HasCycles ? self.Cycles : 1;
+
+        public static float GetInterval(this PBParticleSystem.Types.Burst self) =>
+            self.HasInterval ? self.Interval : 0.01f;
+
+        public static float GetProbability(this PBParticleSystem.Types.Burst self) =>
+            self.HasProbability ? self.Probability : 1f;
     }
 }

@@ -13,7 +13,9 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using Decentraland.Common;
 using UnityEngine.Pool;
+using Entity = Arch.Core.Entity;
 
 namespace DCL.Tests
 {
@@ -315,6 +317,27 @@ namespace DCL.Tests
             var spriteSheet = new PBParticleSystem.Types.SpriteSheetAnimation();
             Assert.AreEqual(30f, spriteSheet.GetFramesPerSecond());
         }
+
+        [Test]
+        public void ReturnDefaultBurstCyclesWhenNotSet()
+        {
+            var burst = new PBParticleSystem.Types.Burst();
+            Assert.AreEqual(1, burst.GetCycles());
+        }
+
+        [Test]
+        public void ReturnDefaultBurstIntervalWhenNotSet()
+        {
+            var burst = new PBParticleSystem.Types.Burst();
+            Assert.AreEqual(0.01f, burst.GetInterval());
+        }
+
+        [Test]
+        public void ReturnDefaultBurstProbabilityWhenNotSet()
+        {
+            var burst = new PBParticleSystem.Types.Burst();
+            Assert.AreEqual(1f, burst.GetProbability());
+        }
     }
 
     public class ParticleSystemApplyPropertiesSystemShould : UnitySystemTestBase<ParticleSystemApplyPropertiesSystem>
@@ -473,7 +496,7 @@ namespace DCL.Tests
             var pb = new PBParticleSystem
             {
                 IsDirty = true,
-                SizeOverTime = new PBParticleSystem.Types.FloatRange { Start = 0.5f, End = 2f }
+                SizeOverTime = new FloatRange { Start = 0.5f, End = 2f }
             };
 
             var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
@@ -520,6 +543,34 @@ namespace DCL.Tests
             // Rate should not be applied since IsDirty is false
             Assert.AreNotEqual(99f, testParticleSystem.emission.rateOverTime.constant);
         }
+
+        [Test]
+        public void ApplyEmissionBursts()
+        {
+            var pb = new PBParticleSystem
+            {
+                IsDirty = true,
+                Bursts = { new PBParticleSystem.Types.Burst { Time = 0f, Count = 10 } }
+            };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.AreEqual(1, testParticleSystem.emission.burstCount);
+        }
+
+        [Test]
+        public void ClearBurstsWhenEmpty()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.AreEqual(0, testParticleSystem.emission.burstCount);
+        }
     }
 
     public class ParticleSystemPlaybackSystemShould : UnitySystemTestBase<ParticleSystemPlaybackSystem>
@@ -540,21 +591,6 @@ namespace DCL.Tests
         {
             if (testGameObject != null)
                 Object.DestroyImmediate(testGameObject);
-        }
-
-        [Test]
-        public void TriggerRestartOnRestartCountIncrement()
-        {
-            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
-            component.LastRestartCount = 0;
-
-            var pb = new PBParticleSystem { RestartCount = 1, IsDirty = true };
-
-            Entity entity = world.Create(pb, component);
-            system.Update(0);
-
-            ref var updatedComponent = ref world.Get<ParticleSystemComponent>(entity);
-            Assert.AreEqual(1u, updatedComponent.LastRestartCount);
         }
 
         [Test]

@@ -30,15 +30,6 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         {
             var particleSystem = component.ParticleSystemInstance;
 
-            // Handle restart: any increment to restart_count triggers stop+clear+play
-            if (particleSystemData.RestartCount > component.LastRestartCount)
-            {
-                component.LastRestartCount = particleSystemData.RestartCount;
-                particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                particleSystem.Play();
-                return;
-            }
-
             if (!particleSystemData.IsDirty) return;
 
             var state = particleSystemData.GetPlaybackState();

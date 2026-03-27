@@ -115,6 +115,33 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             var emissionModule = particleSystem.emission;
             emissionModule.enabled = particleSystemData.GetActive();
             emissionModule.rateOverTime = particleSystemData.GetRate();
+
+            int burstCount = particleSystemData.Bursts.Count;
+
+            if (burstCount == 0)
+            {
+                emissionModule.burstCount = 0;
+                return;
+            }
+
+            var bursts = new UnityEngine.ParticleSystem.Burst[burstCount];
+
+            for (int i = 0; i < burstCount; i++)
+            {
+                var protoBurst = particleSystemData.Bursts[i];
+                short count = (short)protoBurst.Count;
+                bursts[i] = new UnityEngine.ParticleSystem.Burst(
+                    protoBurst.Time,
+                    count,
+                    count,
+                    protoBurst.GetCycles(),
+                    protoBurst.GetInterval()
+                );
+                bursts[i].probability = protoBurst.GetProbability();
+            }
+
+            emissionModule.SetBursts(bursts);
+            emissionModule.burstCount = burstCount;
         }
 
         private static void ApplyShape(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
@@ -271,12 +298,6 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             int tilesY = particleSystemData.SpriteSheet.TilesY > 0 ? (int)particleSystemData.SpriteSheet.TilesY : 1;
             textureSheetAnimationModule.numTilesX = tilesX;
             textureSheetAnimationModule.numTilesY = tilesY;
-
-            int totalFrames = tilesX * tilesY;
-            int startFrame = (int)particleSystemData.SpriteSheet.StartFrame;
-            int endFrame = particleSystemData.SpriteSheet.EndFrame > 0 ? (int)particleSystemData.SpriteSheet.EndFrame : totalFrames - 1;
-
-            textureSheetAnimationModule.frameOverTime = BuildLinearCurve(startFrame, endFrame, ref component.CachedCurve);
 
             float framesPerSecond = particleSystemData.SpriteSheet.GetFramesPerSecond();
             textureSheetAnimationModule.timeMode = ParticleSystemAnimationTimeMode.FPS;
