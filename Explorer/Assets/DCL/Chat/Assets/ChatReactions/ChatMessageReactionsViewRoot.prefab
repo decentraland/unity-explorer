@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2351675984859963697
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6702014391314189959}
+  - component: {fileID: 4027491819525330204}
+  m_Layer: 5
+  m_Name: ChatMessageReactionsViewRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6702014391314189959
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2351675984859963697}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 300, y: 32}
+  m_SizeDelta: {x: 295, y: 22.48}
+  m_Pivot: {x: 1, y: 0}
+--- !u!114 &4027491819525330204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2351675984859963697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d74b9c1884357ca44bf9b95f6d86e532, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatMessages.MessageReactionsView
+  rowPrefab: {fileID: 8538971556644917970, guid: ffbb6ece8c614d4488d872c7b66e5912, type: 3}
+  itemPrefab: {fileID: 6616656429978940896, guid: 330091c639e626f46aeb9bdaf3e0685e, type: 3}
+  rowHeight: 32
+  startRowY: -5

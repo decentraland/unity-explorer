@@ -151,8 +151,7 @@ namespace DCL.Chat
 
             string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
             view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,
-                reactionsConfig.MessageReactions.HoverScale,
-                reactionsConfig.MessageReactions.HoverAnimDuration);
+                reactionsConfig.MessageReactions);
 
             ReactionTooltipPresenter? tooltipPresenter = null;
             if (view.ReactionTooltipView != null)

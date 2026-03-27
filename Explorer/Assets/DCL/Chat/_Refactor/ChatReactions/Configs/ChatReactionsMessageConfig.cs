@@ -107,6 +107,10 @@ namespace DCL.Chat.ChatReactions.Configs
         public TooltipPositioningConfig TooltipConfig =>
             new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
 
+        [Header("Debug — Reactions")]
+        [Note("Replace reaction counts with random numbers (1-99) for layout testing.")]
+        public bool DebugRandomizeReactionCounts;
+
         [Header("Debug — Tooltip")]
         [Note("Simulate a loading delay before showing tooltip content.")]
         public bool TooltipMockLoadingEnabled;

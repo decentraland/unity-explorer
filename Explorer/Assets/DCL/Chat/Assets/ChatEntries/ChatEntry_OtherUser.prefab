@@ -184,6 +184,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 69.5
       objectReference: {fileID: 0}
+    - target: {fileID: 3693646657073107079, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: rowPrefab
+      value: 
+      objectReference: {fileID: 3813263842844955162, guid: b35a94ea6fb89cb44834c1249ae5b55f, type: 3}
     - target: {fileID: 3834491662067739590, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_ReverseArrangement
       value: 0
@@ -389,7 +393,9 @@ PrefabInstance:
       value: -0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 477305738296462910, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+    - {fileID: 5716287153533479614, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 3320147361370125729, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       insertIndex: -1

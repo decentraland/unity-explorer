@@ -3,85 +3,81 @@ using DCL.Chat.History;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Chat.ChatMessages
 {
     public class MessageReactionsView : MonoBehaviour
     {
         private const int MAX_PER_ROW = 6;
-        private const int MAX_REACTIONS = 12;
 
-        [SerializeField] private RectTransform row1;
-        [SerializeField] private RectTransform row2;
+        [SerializeField] private RectTransform rowPrefab;
         [SerializeField] private ReactionCountItemView itemPrefab;
-        [SerializeField] private float singleRowHeight = 32f;
-        [SerializeField] private float doubleRowHeight = 64f;
+        [SerializeField] private float rowHeight = 32f;
+        [SerializeField] private float baseRowY = 3f;
 
         private readonly List<ReactionCountItemView> activeItems = new ();
         private readonly List<ReactionCountItemView> pool = new ();
         private readonly List<(int EmojiIndex, int Count)> countsBuffer = new ();
 
+        private readonly List<RectTransform> activeRows = new ();
+        private readonly List<RectTransform> rowPool = new ();
+
         private ChatReactionsAtlasConfig? atlasConfig;
         private string? ownWalletAddress;
+        private ChatReactionsMessageConfig? messageConfig;
         private float hoverScale = 1.2f;
         private float hoverAnimDuration = 0.1f;
 
-        // Captured once in Awake from prefab-authored row positions.
-        private float bottomRowY;
-        private float topRowY;
-
-        /// <summary>
-        /// The messageId of the message this view is currently bound to.
-        /// Set by the presenter during OnGetItemByIndex to avoid closure allocations.
-        /// </summary>
         public string? CurrentMessageId { get; set; }
 
-        /// <summary>
-        /// Returns the height contribution of the reactions area.
-        /// 0 when no reactions, singleRowHeight for 1-6, doubleRowHeight for 7+.
-        /// </summary>
         public float CurrentHeight { get; private set; }
 
         public event Action<string, int>? OnReactionClicked;
         public event Action<int, RectTransform, string>? OnReactionHoverEnter;
         public event Action<int>? OnReactionHoverExit;
 
-        private void Awake()
-        {
-            bottomRowY = Mathf.Min(row1.anchoredPosition.y, row2.anchoredPosition.y);
-            topRowY = Mathf.Max(row1.anchoredPosition.y, row2.anchoredPosition.y);
-        }
-
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
-            float hoverScale, float hoverAnimDuration)
+            ChatReactionsMessageConfig messageConfig)
         {
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
-            this.hoverScale = hoverScale;
-            this.hoverAnimDuration = hoverAnimDuration;
+            this.messageConfig = messageConfig;
+            hoverScale = messageConfig.HoverScale;
+            hoverAnimDuration = messageConfig.HoverAnimDuration;
         }
 
         public void UpdateReactions(ReactionSet? reactions)
         {
             ReturnAllToPool();
+            ReturnAllRows();
 
             if (reactions == null || reactions.IsEmpty || atlasConfig == null)
             {
-                HideRows();
+                CurrentHeight = 0f;
                 return;
             }
 
             reactions.GetAggregateCounts(countsBuffer);
-            int totalCount = Mathf.Min(countsBuffer.Count, MAX_REACTIONS);
+
+            int totalCount = countsBuffer.Count;
 
             PopulateItems(totalCount, reactions);
-            LayoutRows(totalCount > MAX_PER_ROW);
+            LayoutRows();
         }
 
         public void SetInteractable(bool interactable)
         {
             for (int i = 0; i < activeItems.Count; i++)
                 activeItems[i].SetInteractable(interactable);
+        }
+
+        public void Clear()
+        {
+            ReturnAllToPool();
+            ReturnAllRows();
+            CurrentHeight = 0f;
+            CurrentMessageId = null;
         }
 
         private void OnItemClicked(int emojiIndex)
@@ -101,30 +97,31 @@ namespace DCL.Chat.ChatMessages
             OnReactionHoverExit?.Invoke(emojiIndex);
         }
 
-        private void HideRows()
-        {
-            row1.gameObject.SetActive(false);
-            row2.gameObject.SetActive(false);
-            CurrentHeight = 0f;
-        }
-
         private void PopulateItems(int totalCount, ReactionSet reactions)
         {
+            int rowCount = Mathf.CeilToInt(totalCount / (float)MAX_PER_ROW);
+
+            for (int r = 0; r < rowCount; r++)
+                AcquireRow();
+
             for (int i = 0; i < totalCount; i++)
             {
                 (int emojiIndex, int count) = countsBuffer[i];
 
-                bool isFirstRow = i < MAX_PER_ROW;
-                RectTransform targetRow = isFirstRow ? row1 : row2;
+                int rowIndex = i / MAX_PER_ROW;
+                int indexInRow = i % MAX_PER_ROW;
+                RectTransform targetRow = activeRows[rowIndex];
+
                 ReactionCountItemView item = GetOrCreateItem(targetRow);
                 item.Configure(hoverScale, hoverAnimDuration);
-                item.transform.SetSiblingIndex(isFirstRow ? i : i - MAX_PER_ROW);
+                item.transform.SetSiblingIndex(indexInRow);
 
                 bool isOwn = !string.IsNullOrEmpty(ownWalletAddress)
                              && reactions.HasReacted(emojiIndex, ownWalletAddress);
 
                 Rect uvRect = atlasConfig!.GetUVRect(emojiIndex);
-                item.SetData(emojiIndex, count, isOwn, uvRect, atlasConfig.Atlas);
+                int displayCount = messageConfig != null && messageConfig.DebugRandomizeReactionCounts ? Random.Range(1, 100) : count;
+                item.SetData(emojiIndex, displayCount, isOwn, uvRect, atlasConfig.Atlas);
                 SubscribeItemEvents(item);
                 activeItems.Add(item);
             }
@@ -140,25 +137,20 @@ namespace DCL.Chat.ChatMessages
             item.OnHoverExit += OnItemHoverExit;
         }
 
-        /// <summary>
-        /// Positions rows and sets visibility. When both rows are active the filled
-        /// row sits at topRowY (close to the message bubble) and overflow at bottomRowY.
-        /// </summary>
-        private void LayoutRows(bool needsSecondRow)
+        private void LayoutRows()
         {
-            if (needsSecondRow)
+            int rowCount = activeRows.Count;
+
+            if (rowCount == 0)
             {
-                SetRowY(row1, topRowY);
-                SetRowY(row2, bottomRowY);
-            }
-            else
-            {
-                SetRowY(row1, bottomRowY);
+                CurrentHeight = 0f;
+                return;
             }
 
-            row1.gameObject.SetActive(true);
-            row2.gameObject.SetActive(needsSecondRow);
-            CurrentHeight = needsSecondRow ? doubleRowHeight : singleRowHeight;
+            for (int i = 0; i < rowCount; i++)
+                SetRowY(activeRows[i], baseRowY + (rowCount - 1 - i) * rowHeight);
+
+            CurrentHeight = rowCount * rowHeight;
         }
 
         private static void SetRowY(RectTransform row, float y)
@@ -187,17 +179,42 @@ namespace DCL.Chat.ChatMessages
             for (int i = 0; i < activeItems.Count; i++)
             {
                 activeItems[i].Hide();
+                activeItems[i].transform.SetParent(transform, false);
                 pool.Add(activeItems[i]);
             }
 
             activeItems.Clear();
         }
 
-        public void Clear()
+        private RectTransform AcquireRow()
         {
-            ReturnAllToPool();
-            HideRows();
-            CurrentMessageId = null;
+            RectTransform row;
+
+            if (rowPool.Count > 0)
+            {
+                int last = rowPool.Count - 1;
+                row = rowPool[last];
+                rowPool.RemoveAt(last);
+            }
+            else
+            {
+                row = Instantiate(rowPrefab, transform);
+            }
+
+            row.gameObject.SetActive(true);
+            activeRows.Add(row);
+            return row;
+        }
+
+        private void ReturnAllRows()
+        {
+            for (int i = 0; i < activeRows.Count; i++)
+            {
+                activeRows[i].gameObject.SetActive(false);
+                rowPool.Add(activeRows[i]);
+            }
+
+            activeRows.Clear();
         }
     }
 }

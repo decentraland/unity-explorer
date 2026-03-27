@@ -424,11 +424,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d74b9c1884357ca44bf9b95f6d86e532, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatMessages.MessageReactionsView
-  row1: {fileID: 7728191724019989410}
-  row2: {fileID: 4000618137078915722}
+  rowPrefab: {fileID: 8538971556644917970, guid: ffbb6ece8c614d4488d872c7b66e5912, type: 3}
   itemPrefab: {fileID: 6616656429978940896, guid: 330091c639e626f46aeb9bdaf3e0685e, type: 3}
-  singleRowHeight: 32
-  doubleRowHeight: 64
+  rowHeight: 32
+  startRowY: -5
 --- !u!1001 &6511439565802127949
 PrefabInstance:
   m_ObjectHideFlags: 0

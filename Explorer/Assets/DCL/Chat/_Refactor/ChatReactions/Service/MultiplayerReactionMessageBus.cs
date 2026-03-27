@@ -219,14 +219,18 @@ namespace DCL.Chat.ChatReactions
                 bool isRemoval = rawEmojiIndex < 0;
                 int emojiIndex = isRemoval ? ~rawEmojiIndex : rawEmojiIndex;
 
-                // Use raw value in dedup key so add/remove have distinct keys
+                // Use raw value in dedup key so add/remove have distinct keys.
+                // Evict the opposite key so toggling (add→remove→add) isn't blocked.
                 string dedupKey = $"{receivedMessage.Payload.MessageId}:{rawEmojiIndex}";
+                string oppositeKey = $"{receivedMessage.Payload.MessageId}:{~rawEmojiIndex}";
 
                 if (!chatReactionDedup.TryPass(walletId, dedupKey))
                 {
                     ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] OnChatReactionReceived skipped — dedup: {dedupKey} from={walletId}");
                     return;
                 }
+
+                chatReactionDedup.Remove(walletId, oppositeKey);
 
                 ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received chat reaction: emoji={emojiIndex} isRemoval={isRemoval} messageId={receivedMessage.Payload.MessageId} from={walletId}");
 

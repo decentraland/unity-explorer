@@ -26,11 +26,11 @@ MonoBehaviour:
   <CountIncrementBounceDuration>k__BackingField: 0.12
   <ShortcutsBarOffset>k__BackingField: {x: -10, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: -10, y: 15}
-  <EmojiPanelOffsetChat>k__BackingField: {x: 0, y: 15}
   <TooltipOffset>k__BackingField: {x: -20, y: 78}
   <TooltipArrowMinX>k__BackingField: -140
   <TooltipArrowMaxX>k__BackingField: 140
   <TooltipArrowXOffset>k__BackingField: 10
+  DebugRandomizeReactionCounts: 0
   TooltipMockLoadingEnabled: 1
   TooltipMockLoadingDelay: 1
   TooltipMockUsersEnabled: 1

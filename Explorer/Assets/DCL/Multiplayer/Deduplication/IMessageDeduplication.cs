@@ -7,6 +7,8 @@ namespace DCL.Chat.MessageBus.Deduplication
         bool Contains(string walletId, T timestamp);
 
         void Register(string walletId, T timestamp);
+
+        void Remove(string walletId, T timestamp);
     }
 
     public static class MessageDeduplicationExtensions

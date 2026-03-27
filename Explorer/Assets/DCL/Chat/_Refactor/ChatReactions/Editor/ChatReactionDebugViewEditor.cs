@@ -86,6 +86,12 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Stream Remote Players", StateText(config.StreamRemotePlayers));
             Label("Mock Enabled", StateText(config.MockEnabled));
             Label("Self Send Enabled", StateText(config.SelfSendEnabled));
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Message Reactions", EditorStyles.miniBoldLabel);
+            Label("Randomize Counts", StateText(config.MessageReactions.DebugRandomizeReactionCounts));
+            Label("Tooltip Mock Users", StateText(config.MessageReactions.TooltipMockUsersEnabled));
+            Label("Tooltip Mock Loading", StateText(config.MessageReactions.TooltipMockLoadingEnabled));
             EditorGUI.indentLevel--;
 
             DrawSeparator();
