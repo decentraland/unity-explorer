@@ -266,7 +266,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 if (emoteStarted.PlayerState != null)
                 {
-                    NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isEmoting: true);
+                    NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isInstant: true, isEmoting: true);
                     Inbox(movementMessage, walletId);
                 }
 
@@ -438,9 +438,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
-            ToNetworkMovementMessage(full.State, full.ServerTick);
+            ToNetworkMovementMessage(full.State, full.ServerTick, false);
 
-        private NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState, uint serverTick, bool isEmoting = false)
+        private NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState, uint serverTick, bool isInstant, bool isEmoting = false)
         {
             Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
 
@@ -475,7 +475,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
-                isInstant = false,
+                isInstant = isInstant,
                 isEmoting = isEmoting,
 
                 headIKYawEnabled = playerState.HasHeadYaw,
