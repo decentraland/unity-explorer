@@ -45,10 +45,7 @@ namespace DCL.Events
         {
             base.Configure(eventInfo, thumbnailLoader, placeInfo, friends, profileRepositoryWrapper, communityInfo);
 
-            eventCommunityThumbnail.gameObject.SetActive(communityInfo != null);
-
-            if (communityInfo != null)
-                eventCommunityThumbnail.Configure(communityInfo, thumbnailLoader);
+            UpdateCommunityData(communityInfo, thumbnailLoader);
         }
 
         public void UpdateCommunityData(GetUserCommunitiesData.CommunityData? communityInfo, ThumbnailLoader thumbnailLoader)

@@ -163,25 +163,7 @@ namespace DCL.Places
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
             featuredTag.SetActive(placeInfo.highlighted);
 
-            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
-            friendsConnected.root.SetActive(showFriendsConnected);
-            if (showFriendsConnected)
-            {
-                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
-                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
-
-                var friendsThumbnails = friendsConnected.thumbnails;
-                for (var i = 0; i < friendsThumbnails.Length; i++)
-                {
-                    bool friendExists = i < friends.Count;
-                    friendsThumbnails[i].root.SetActive(friendExists);
-                    if (!friendExists) continue;
-                    Profile.CompactInfo friendInfo = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
-                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
-                }
-            }
-
+            UpdateFriendsData(friends, profileRepositoryWrapper);
             UpdateLiveEventData(placeInfo.live, liveEvent);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
