@@ -514,6 +514,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //ScrollRect gets updated in LateUpdate, therefore waiting for PostLateUpdate ensures that the layout has been correctly updated
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, ct);
 
+            if (ct.IsCancellationRequested)
+            {
+                isLoading = false;
+                return;
+            }
+
             HandleElementsVisibility(ScrollDirection.UP);
 
             previousY = view.scrollRect.verticalNormalizedPosition;
