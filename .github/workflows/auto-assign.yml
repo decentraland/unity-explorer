@@ -1,6 +1,7 @@
 name: 'Auto Assign Reviewers'
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, ready_for_review]
 
