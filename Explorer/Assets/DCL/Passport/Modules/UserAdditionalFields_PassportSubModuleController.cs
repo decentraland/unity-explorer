@@ -229,7 +229,7 @@ namespace DCL.Passport.Modules
             }
         }
 
-        public void SaveDataIntoProfile()
+        public void SaveDataIntoProfile(Profile profile)
         {
             foreach (var additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
             {
@@ -237,40 +237,40 @@ namespace DCL.Passport.Modules
                 switch (additionalFieldForEdition.Type)
                 {
                     case AdditionalFieldType.GENDER:
-                        currentProfile.Gender = valueToSave;
+                        profile.Gender = valueToSave;
                         break;
                     case AdditionalFieldType.COUNTRY:
-                        currentProfile.Country = valueToSave;
+                        profile.Country = valueToSave;
                         break;
                     case AdditionalFieldType.BIRTH_DATE:
                         if (valueToSave != null)
-                            currentProfile.Birthdate = DateTime.SpecifyKind(DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None), DateTimeKind.Utc);
+                            profile.Birthdate = DateTime.SpecifyKind(DateTime.ParseExact(valueToSave, validInputFormatsForDate, CultureInfo.InvariantCulture, DateTimeStyles.None), DateTimeKind.Utc);
                         else
-                            currentProfile.Birthdate = null;
+                            profile.Birthdate = null;
                         break;
                     case AdditionalFieldType.PRONOUNS:
-                        currentProfile.Pronouns = valueToSave;
+                        profile.Pronouns = valueToSave;
                         break;
                     case AdditionalFieldType.RELATIONSHIP_STATUS:
-                        currentProfile.RelationshipStatus = valueToSave;
+                        profile.RelationshipStatus = valueToSave;
                         break;
                     case AdditionalFieldType.SEXUAL_ORIENTATION:
-                        currentProfile.SexualOrientation = valueToSave;
+                        profile.SexualOrientation = valueToSave;
                         break;
                     case AdditionalFieldType.LANGUAGE:
-                        currentProfile.Language = valueToSave;
+                        profile.Language = valueToSave;
                         break;
                     case AdditionalFieldType.PROFESSION:
-                        currentProfile.Profession = valueToSave;
+                        profile.Profession = valueToSave;
                         break;
                     case AdditionalFieldType.EMPLOYMENT_STATUS:
-                        currentProfile.EmploymentStatus = valueToSave;
+                        profile.EmploymentStatus = valueToSave;
                         break;
                     case AdditionalFieldType.HOBBIES:
-                        currentProfile.Hobbies = valueToSave;
+                        profile.Hobbies = valueToSave;
                         break;
                     case AdditionalFieldType.REAL_NAME:
-                        currentProfile.RealName = valueToSave;
+                        profile.RealName = valueToSave;
                         break;
                 }
             }
