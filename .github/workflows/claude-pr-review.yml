@@ -83,16 +83,47 @@ jobs:
             Use Bash(gh pr comment) for a top-level summary comment.
             Do NOT include praise, style preferences, or nice-to-have suggestions.
 
-            IMPORTANT: At the very end, output a single line in this exact format:
-            REVIEW_RESULT: PASS ✅
-            or
-            REVIEW_RESULT: FAIL ❌
-            PASS means no blocking issues found. FAIL means there are issues that must be fixed before merging.
+            --- COMPLEXITY ASSESSMENT ---
+            After reviewing the diff, classify the PR complexity as SIMPLE or COMPLEX.
+
+            A PR is SIMPLE when ALL of the following are true:
+            - Touches 3 or fewer files with under ~150 lines of meaningful changes
+            - Changes are straightforward: typo fixes, config tweaks, log/comment changes,
+              dependency bumps, small bug fixes with obvious cause and fix
+            - Does not modify ECS systems, components, queries, or system execution order
+            - Does not touch entity structural changes (Add/Remove component operations)
+            - Does not alter cross-world ECS access, propagation systems, or bridge components
+            - Does not modify async/UniTask patterns, cancellation flows, or Result types
+            - Does not change plugin registration, containers, dependency injection, or assembly definitions
+            - Does not touch the avatar rendering pipeline (GPU skinning, GVB, wearable loading, compute shaders)
+            - Does not modify scene runtime, CRDT synchronization, or JS module system
+            - Does not affect asset promise lifecycle, memory budgeting, pooling, or cache unloading
+            - Does not change networking, LiveKit rooms, movement encoding, or multiplayer sync
+            - Does not alter physics, player/camera singletons, or input handling
+            - Does not modify auth, web3 signing, or security-sensitive code paths
+
+            A PR is COMPLEX when ANY of the following are true:
+            - Touches core ECS infrastructure (systems, components, queries, world management)
+            - Modifies cross-world access patterns (global ↔ scene propagation, PersistentEntities)
+            - Changes component structural operations (ref invalidation risk from Add/Remove)
+            - Alters async flow (new UniTask/UniTaskVoid, cancellation, SuppressToResultAsync)
+            - Modifies plugin/container wiring, system registration, or assembly structure
+            - Touches avatar system, scene runtime, CRDT bridge, or asset loading pipeline
+            - Changes networking, multiplayer sync, or movement interpolation
+            - Affects memory management, object pooling, or resource cleanup paths
+            - Modifies shared interfaces, public APIs, or abstractions used across assemblies
+            - Introduces new dependencies or changes dependency injection
+            - Risk of silent data corruption or subtle regressions is non-trivial
+            - Large diff (4+ files or significant logic changes)
+
+            IMPORTANT: At the very end of your output, emit exactly these two lines:
+            REVIEW_RESULT: PASS ✅  (or FAIL ❌)
+            COMPLEXITY: SIMPLE  (or COMPLEX)
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
             --max-turns 40
 
-      - name: Set status and approve if passed
+      - name: Set status and approve if eligible
         if: steps.check-type.outputs.is-auto-review == 'true' && always()
         uses: actions/github-script@v7
         with:
@@ -111,18 +142,37 @@ jobs:
               .find(c => c.user?.login === 'claude[bot]');
 
             const output = claudeComment?.body ?? '';
-            console.log('Claude comment preview:', output.slice(0, 200));
+            console.log('Claude comment preview:', output.slice(0, 300));
 
             const failed = output.includes('REVIEW_RESULT: FAIL');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
+            const isSimple = output.includes('COMPLEXITY: SIMPLE');
+            const passed = !failed && !errored;
 
-            if (!failed && !errored) {
+            if (passed && isSimple) {
+              // Simple fix/chore with no issues — auto-approve
               await github.rest.pulls.createReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: prNumber,
                 event: 'APPROVE',
-                body: 'Auto-approved by Claude — no blocking issues found in this bug fix/chore PR. QA approval is still required.'
+                body: 'Auto-approved by Claude — simple fix/chore with no blocking issues. QA approval is still required.'
+              });
+
+              // Add label so enforce-group-approvals knows to skip DEV requirement
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: ['claude-approved']
+              });
+            } else if (passed && !isSimple) {
+              // Complex but no issues — flag for human review
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '🔍 Claude reviewed this PR and found no blocking issues, but assessed it as **complex** — human DEV review is still required before merging.'
               });
             }
 
@@ -131,7 +181,9 @@ jobs:
               ? 'Claude review encountered an error'
               : failed
               ? 'Claude found issues that must be resolved'
-              : 'No blocking issues found — PR auto-approved';
+              : isSimple
+              ? 'No blocking issues found — PR auto-approved'
+              : 'No blocking issues — complex change, DEV review required';
 
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
