@@ -23,10 +23,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget performanceBudget;
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
+        private readonly IYouTubeUrlResolver youTubeUrlResolver;
 
         public MediaFactoryBuilder(ObjectProxy<IRoomHub> roomHub, IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache)
+            AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver)
         {
             this.roomHub = roomHub;
             this.webRequestController = webRequestController;
@@ -34,12 +35,14 @@ namespace DCL.SDKComponents.MediaStream
             this.videoTexturesPool = videoTexturesPool;
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
+            this.youTubeUrlResolver = youTubeUrlResolver;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
             new (sceneDeps.SceneData, roomHub.StrictObject.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
-                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache);
+                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
+                youTubeUrlResolver);
     }
 }

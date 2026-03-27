@@ -83,6 +83,8 @@ namespace DCL.SDKComponents.MediaStream
 
             component.UpdateState();
 
+            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
+
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
             if (component.State != VideoState.VsError)
@@ -127,6 +129,8 @@ namespace DCL.SDKComponents.MediaStream
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
+
+            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
@@ -246,6 +250,18 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
+        private bool TryReInitializeOnExpiredYouTubeUrl(in Entity entity, ref MediaPlayerComponent component)
+        {
+            if (component.State != VideoState.VsError) return false;
+            if (component.ResolvedUrlExpiresAt <= 0f) return false;
+            if (Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
+
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, "[YouTubeResolver] Resolved URL expired, triggering re-resolution");
+            component.Dispose();
+            World.Remove<MediaPlayerComponent>(entity);
+            return true;
+        }
+
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
         {
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
@@ -290,18 +306,25 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
+                // Transfer YouTube resolution metadata from the promise to the component
+                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
+                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
+
+                // Use the resolved media address (which may be a direct URL after YouTube resolution)
+                MediaAddress resolvedAddress = component.OpenMediaPromise.mediaAddress;
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
                 lastOpenMediaTime = currentTime;
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+                    $"[OpenMedia] Opening media: {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 #endif
 
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"
                     : "MediaPlayer.InitialiseAndOpenMedia");
 
-                try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
+                try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
 
                 return true;
