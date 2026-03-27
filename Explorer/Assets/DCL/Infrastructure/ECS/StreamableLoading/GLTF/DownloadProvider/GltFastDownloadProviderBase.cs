@@ -14,10 +14,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
+using Utility.CodeConventions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
+    [IgnoreAsyncNaming("/Explorer/Library/PackageCache/com.atteneder.gltfast@faa0bde05e4f/Runtime/Scripts/Loading/IDownloadProvider.cs does not follow async naming code conventions.")]
     internal abstract class GltFastDownloadProviderBase : IGLTFastDisposableDownloadProvider
     {
         protected const int ATTEMPTS_COUNT = 6;
@@ -37,10 +39,8 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.acquiredBudget = acquiredBudget;
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             acquiredBudget.Release();
-        }
 
         public virtual void SetContentMappings(ContentDefinition[] contentMappings)
         {
