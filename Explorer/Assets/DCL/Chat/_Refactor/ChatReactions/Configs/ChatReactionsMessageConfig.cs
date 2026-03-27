@@ -86,7 +86,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public Vector2 ShortcutsBarOffset { get; private set; } = new (0f, 40f);
 
         [field: Header("Emoji Panel Positioning")]
-        [field: Note("Offset applied to the + button position when opening the emoji panel from reactions.")]
+        [field: Note("Offset applied to the + button position when opening the emoji panel from situational reactions.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 0f);
 
         [field: Header("Tooltip Positioning")]

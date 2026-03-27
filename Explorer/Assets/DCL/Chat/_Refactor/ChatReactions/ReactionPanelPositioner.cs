@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatReactions
         private readonly RectTransform messageSelectorRect;
         private readonly EmojiPanelView emojiPanelView;
         private readonly Vector2 shortcutsBarOffset;
-        private readonly Vector2 emojiPanelOffset;
+        private readonly Vector2 emojiPanelOffsetForSituational;
 
         public ReactionPanelPositioner(
             RectTransform messageSelectorRect,
@@ -24,7 +24,7 @@ namespace DCL.Chat.ChatReactions
             this.messageSelectorRect = messageSelectorRect;
             this.emojiPanelView = emojiPanelView;
             shortcutsBarOffset = messageConfig.ShortcutsBarOffset;
-            emojiPanelOffset = messageConfig.EmojiPanelOffset;
+            emojiPanelOffsetForSituational = messageConfig.EmojiPanelOffset;
         }
 
         /// <summary>
@@ -47,17 +47,21 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public void PositionEmojiPanelForSituational(RectTransform addButton)
         {
-            emojiPanelView.MoveTo(addButton.position + (Vector3)emojiPanelOffset);
+            emojiPanelView.MoveTo(addButton.position + (Vector3)emojiPanelOffsetForSituational);
         }
 
         /// <summary>
         /// Positions the emoji panel centered horizontally at its default X,
-        /// with its bottom aligned to the shortcuts bar's current Y position.
-        /// Used in message mode so the panel stays horizontally stable in the chat panel.
+        /// with its Y aligned to the selector's bottom edge.
+        /// Computes the bottom edge from the selector's center pivot and scaled height,
+        /// so no manual pixel offset is needed.
         /// </summary>
         public void PositionEmojiPanelForMessage()
         {
-            emojiPanelView.PositionCenteredAtWorldY(messageSelectorRect.position.y);
+            float selectorBottomWorldY = messageSelectorRect.position.y
+                - messageSelectorRect.rect.height * 0.5f * messageSelectorRect.lossyScale.y;
+
+            emojiPanelView.PositionCenteredAtWorldY(selectorBottomWorldY);
         }
     }
 }
