@@ -188,7 +188,7 @@ namespace DCL.AuthenticationScreenFlow
             view.SetEmailInputFieldSpinnerActive(true);
 
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
-                payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
+                payload: (view.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
 
         private void OnOTPSendSuccess(string _)
