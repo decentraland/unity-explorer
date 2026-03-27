@@ -29,14 +29,12 @@ namespace DCL.SpringBones
     {
         private readonly FastSpringBoneService springBoneService;
         private readonly IComponentPool<Transform> transformPool;
-        private readonly List<Transform> pendingCloneRelease;
 
         internal SpringBoneRegistrationSystem(World world, FastSpringBoneService springBoneService,
-            IComponentPool<Transform> transformPool, List<Transform> pendingCloneRelease) : base(world)
+            IComponentPool<Transform> transformPool) : base(world)
         {
             this.springBoneService = springBoneService;
             this.transformPool = transformPool;
-            this.pendingCloneRelease = pendingCloneRelease;
         }
 
         protected override void Update(float t)
@@ -73,21 +71,23 @@ namespace DCL.SpringBones
                 Buffer = buffer,
                 LastKnownVersion = avatarShapeComponent.InstantiationVersion,
                 Clones = clones,
-            });
+            },
+            new SpringBonePendingCloneRelease { Clones = new List<Transform>() });
         }
 
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void ReRegisterOnChange(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
-            ref SpringBoneRegistrationComponent registration, ref AvatarTransformMatrixComponent transformMatrixComponent)
+            ref SpringBoneRegistrationComponent registration, ref AvatarTransformMatrixComponent transformMatrixComponent,
+            ref SpringBonePendingCloneRelease pendingRelease)
         {
             if (avatarShapeComponent.InstantiationVersion == registration.LastKnownVersion) return;
 
             registration.LastKnownVersion = avatarShapeComponent.InstantiationVersion;
 
             // Defer release of old clones — they're still in the combined TAA until ManualUpdate flushes
-            DeferCloneRelease(registration.Clones);
+            AddClonesToPendingRelease(registration.Clones, ref pendingRelease);
 
             FastSpringBoneBuffer oldBuffer = registration.Buffer;
 
@@ -109,19 +109,30 @@ namespace DCL.SpringBones
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CleanupOnDelete(in Entity entity, ref SpringBoneRegistrationComponent registration)
+        private void CleanupOnDelete(in Entity entity, ref SpringBoneRegistrationComponent registration, ref SpringBonePendingCloneRelease pendingRelease)
         {
-            UnregisterAndDispose(ref registration);
+            UnregisterBuffer(ref registration);
+            AddClonesToPendingRelease(registration.Clones, ref pendingRelease);
+            registration.Clones = null;
             World.Remove<SpringBoneRegistrationComponent>(entity);
         }
 
         [Query]
         private void CleanupOnDispose(ref SpringBoneRegistrationComponent registration)
         {
-            UnregisterAndDispose(ref registration);
+            UnregisterBuffer(ref registration);
+
+            // World is tearing down — release clones directly, no next frame
+            if (registration.Clones != null)
+            {
+                foreach (Transform clone in registration.Clones)
+                    if (clone != null) transformPool.Release(clone);
+
+                registration.Clones = null;
+            }
         }
 
-        private void UnregisterAndDispose(ref SpringBoneRegistrationComponent registration)
+        private void UnregisterBuffer(ref SpringBoneRegistrationComponent registration)
         {
             if (registration.Buffer != null)
             {
@@ -129,17 +140,14 @@ namespace DCL.SpringBones
                 registration.Buffer.Dispose();
                 registration.Buffer = null;
             }
-
-            DeferCloneRelease(registration.Clones);
-            registration.Clones = null;
         }
 
-        private void DeferCloneRelease(Transform[] clones)
+        private static void AddClonesToPendingRelease(Transform[] clones, ref SpringBonePendingCloneRelease pendingRelease)
         {
             if (clones == null) return;
 
             foreach (Transform clone in clones)
-                if (clone != null) pendingCloneRelease.Add(clone);
+                if (clone != null) pendingRelease.Clones.Add(clone);
         }
 
         private static void PatchBoneArray(ref AvatarTransformMatrixComponent transformMatrixComponent, Dictionary<Transform, Transform> originalToClone)

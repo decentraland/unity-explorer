@@ -18,8 +18,10 @@ namespace DCL.SpringBones
         ///     For each spring bone chain root, clones the entire chain under the corresponding avatar
         ///     skeleton bone. Returns the clone transforms and populates the original-to-clone mapping.
         /// </summary>
-        public static Transform[] CloneSpringBoneChains(IList<CachedAttachment> wearables, Transform[] avatarSkeletonBones,
-            IComponentPool<Transform> transformPool, Dictionary<Transform, Transform> originalToClone)
+        public static Transform[] CloneSpringBoneChains(IList<CachedAttachment> wearables,
+            Transform[] avatarSkeletonBones,
+            IComponentPool<Transform> transformPool,
+            Dictionary<Transform, Transform> originalToClone)
         {
             using var bonesByNameScope = DictionaryPool<string, Transform>.Get(out var bonesByName);
             using var allClonesScope = ListPool<Transform>.Get(out var allClones);
@@ -70,26 +72,23 @@ namespace DCL.SpringBones
             return result;
         }
 
-        /// <summary>
-        ///     Returns clone transforms to the pool.
-        /// </summary>
-        public static void ReleaseClones(Transform[] clones, IComponentPool<Transform> transformPool)
-        {
-            if (clones == null) return;
-
-            foreach (Transform clone in clones)
-                if (clone != null) transformPool.Release(clone);
-        }
-
-        private static void CloneChain(Transform originalRoot, Transform skeletonParent, SpringBoneData[] allSpringBones,
-            IComponentPool<Transform> transformPool, Dictionary<Transform, Transform> originalToClone, List<Transform> allClones)
+        private static void CloneChain(Transform originalRoot,
+            Transform skeletonParent,
+            SpringBoneData[] allSpringBones,
+            IComponentPool<Transform> transformPool,
+            Dictionary<Transform, Transform> originalToClone,
+            List<Transform> allClones)
         {
             Transform cloneRoot = CloneSingleBone(originalRoot, skeletonParent, transformPool, originalToClone, allClones);
             CloneChildren(originalRoot, cloneRoot, allSpringBones, transformPool, originalToClone, allClones);
         }
 
-        private static void CloneChildren(Transform originalParent, Transform cloneParent, SpringBoneData[] allSpringBones,
-            IComponentPool<Transform> transformPool, Dictionary<Transform, Transform> originalToClone, List<Transform> allClones)
+        private static void CloneChildren(Transform originalParent,
+            Transform cloneParent,
+            SpringBoneData[] allSpringBones,
+            IComponentPool<Transform> transformPool,
+            Dictionary<Transform, Transform> originalToClone,
+            List<Transform> allClones)
         {
             for (var i = 0; i < originalParent.childCount; i++)
             {
@@ -102,8 +101,11 @@ namespace DCL.SpringBones
             }
         }
 
-        private static Transform CloneSingleBone(Transform original, Transform parent, IComponentPool<Transform> transformPool,
-            Dictionary<Transform, Transform> originalToClone, List<Transform> allClones)
+        private static Transform CloneSingleBone(Transform original,
+            Transform parent,
+            IComponentPool<Transform> transformPool,
+            Dictionary<Transform, Transform> originalToClone,
+            List<Transform> allClones)
         {
             Transform clone = transformPool.Get();
             clone.SetParent(parent, false);
@@ -116,10 +118,11 @@ namespace DCL.SpringBones
             return clone;
         }
 
-        private static bool IsSpringBone(Transform t, SpringBoneData[] springBones)
+        private static bool IsSpringBone(Transform t,
+            SpringBoneData[] springBones)
         {
-            foreach (SpringBoneData sbd in springBones)
-                if (sbd.Transform == t) return true;
+            foreach (SpringBoneData springBone in springBones)
+                if (springBone.Transform == t) return true;
 
             return false;
         }

@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.Optimization.Pools;
 using DCL.SpringBones;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UniVRM10.FastSpringBones;
@@ -40,9 +39,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var pendingCloneRelease = new List<Transform>();
-            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, transformPool, pendingCloneRelease);
-            SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService, transformPool, pendingCloneRelease);
+            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService);
+            SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService, transformPool);
+            SpringBoneCloneCleanupSystem.InjectToWorld(ref builder, transformPool);
         }
 
         [Serializable]
