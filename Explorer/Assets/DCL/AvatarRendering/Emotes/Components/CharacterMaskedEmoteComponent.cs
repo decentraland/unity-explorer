@@ -15,6 +15,8 @@ namespace DCL.AvatarRendering.Emotes
 
         private int currentAnimationTag;
 
+        public readonly int CurrentAnimationTag => currentAnimationTag;
+
         public readonly bool IsPlaying
         {
             get

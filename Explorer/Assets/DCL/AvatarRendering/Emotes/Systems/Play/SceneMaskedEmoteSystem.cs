@@ -74,6 +74,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelMaskedEmotesQuery(World);
             ConsumeMaskedEmoteIntentQuery(World, t);
             UpdateMaskedEmoteVisibilityQuery(World);
+            ReplicateLoopingMaskedEmotesQuery(World);
             UpdateMaskedEmoteTagsQuery(World);
         }
 
@@ -90,10 +91,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             masked.Reset();
         }
 
-        public void FinalizeComponents(in Query query)
-        {
+        public void FinalizeComponents(in Query query) =>
             FinalizeComponentsQuery(World);
-        }
 
         [Query]
         private void CancelMaskedEmotes(ref CharacterMaskedEmoteComponent masked)
@@ -239,6 +238,28 @@ namespace DCL.AvatarRendering.Emotes.Play
             masked.SetAnimationTag(0);
 
             cachedMessageBus.Send(masked.EmoteUrn, emote.IsLooping(), masked.Mask);
+        }
+
+        /// <summary>
+        /// Re-broadcasts the masked emote on every loop cycle so that late-joining
+        /// players receive the message and can start playing the emote.
+        /// Mirrors ReplicateLoopingEmotes in CharacterEmoteSystem for full-body emotes.
+        /// Must run before UpdateMaskedEmoteTags so it can detect the tag transition.
+        /// </summary>
+        [Query]
+        [None(typeof(CharacterEmoteIntent))]
+        private void ReplicateLoopingMaskedEmotes(ref CharacterMaskedEmoteComponent masked)
+        {
+            int prevTag = masked.CurrentAnimationTag;
+            if (prevTag == 0) return;
+
+            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+            int currentTag = cachedAvatarView.GetAnimatorCurrentStateTag(layer);
+
+            if ((prevTag != AnimationHashes.MASKED_EMOTE || currentTag != AnimationHashes.MASKED_EMOTE_LOOP)
+                && (prevTag != AnimationHashes.MASKED_EMOTE_LOOP || currentTag != AnimationHashes.MASKED_EMOTE)) return;
+
+            cachedMessageBus.Send(masked.EmoteUrn, true, masked.Mask);
         }
 
         [Query]
