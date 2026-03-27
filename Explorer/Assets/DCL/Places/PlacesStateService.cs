@@ -50,6 +50,34 @@ namespace DCL.Places
             }
         }
 
+        public void RefreshFriendsData()
+        {
+            var placeIds = new List<string>(CurrentPlaces.Keys);
+            foreach (string placeId in placeIds)
+            {
+                var existing = CurrentPlaces[placeId];
+                var place = existing.PlaceInfo;
+                List<Profile.CompactInfo> friendsConnectedToPlace = new();
+                if (place.connected_addresses != null)
+                    foreach (string addr in place.connected_addresses)
+                        if (TryGetFriendById(addr, out Profile.CompactInfo friend))
+                            friendsConnectedToPlace.Add(friend);
+
+                CurrentPlaces[placeId] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, existing.LiveEvent);
+            }
+        }
+
+        public void RefreshLiveEventsData()
+        {
+            var placeIds = new List<string>(CurrentPlaces.Keys);
+            foreach (string placeId in placeIds)
+            {
+                var existing = CurrentPlaces[placeId];
+                TryGetLiveEventByPlaceId(placeId, out EventDTO? liveEvent);
+                CurrentPlaces[placeId] = new PlaceInfoWithConnectedFriends(existing.PlaceInfo, existing.ConnectedFriends, liveEvent);
+            }
+        }
+
         public void ClearPlaces() =>
             CurrentPlaces.Clear();
 

@@ -241,24 +241,47 @@ namespace DCL.Places
             else
                 view.SetPlacesGridLoadingMoreActive(true);
 
-            if (!allFriendsLoaded)
-            {
-                List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
-                placesStateService.SetAllFriends(allFriends);
-                allFriendsLoaded = true;
-            }
+            await UniTask.WhenAll(
+                LoadPlacesCoreAsync(pageNumber, section, ct),
+                LoadFriendsAndRefreshCardsAsync(ct),
+                LoadLiveEventsAndRefreshCardsAsync(ct)
+            );
+        }
 
-            if (!liveEventsLoaded)
-            {
-                List<EventDTO> liveEvents = await GetLiveEventsAsync(ct);
-                placesStateService.SetLiveEvents(liveEvents);
-                liveEventsLoaded = true;
-            }
-
-            Profile? ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
+        private async UniTask LoadFriendsAndRefreshCardsAsync(CancellationToken ct)
+        {
+            if (allFriendsLoaded)
                 return;
 
+            List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
+            placesStateService.SetAllFriends(allFriends);
+            allFriendsLoaded = true;
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            placesStateService.RefreshFriendsData();
+            view.RefreshVisibleCardsFriendsData();
+        }
+
+        private async UniTask LoadLiveEventsAndRefreshCardsAsync(CancellationToken ct)
+        {
+            if (liveEventsLoaded)
+                return;
+
+            List<EventDTO> liveEvents = await GetLiveEventsAsync(ct);
+            placesStateService.SetLiveEvents(liveEvents);
+            liveEventsLoaded = true;
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            placesStateService.RefreshLiveEventsData();
+            view.RefreshVisibleCardsLiveEventData();
+        }
+
+        private async UniTask LoadPlacesCoreAsync(int pageNumber, PlacesSection section, CancellationToken ct)
+        {
             Result<PlacesData.IPlacesAPIResponse> placesResult;
 
             switch (section)
@@ -285,6 +308,8 @@ namespace DCL.Places
                                                          .SuppressToResultAsync(ReportCategory.PLACES);
                     break;
                 case PlacesSection.MY_PLACES:
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    if (ownProfile == null) return;
                     placesResult = await placesAPIService.GetDestinationsByOwnerAsync(
                                                               ownerAddress: ownProfile.UserId,
                                                               ct: ct,
@@ -399,6 +424,7 @@ namespace DCL.Places
             if (!friendServiceProxy.Configured)
                 return emptyResult;
 
+            await UniTask.Delay(5000, cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             var result = await friendServiceProxy.StrictObject
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.PLACES);
@@ -419,6 +445,7 @@ namespace DCL.Places
         {
             var emptyResult = new List<EventDTO>();
 
+            await UniTask.Delay(10000, cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
                                                                                      .SuppressToResultAsync(ReportCategory.PLACES);
 

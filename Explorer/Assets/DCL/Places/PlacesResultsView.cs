@@ -163,6 +163,36 @@ namespace DCL.Places
             }
         }
 
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateFriendsData(placeData.ConnectedFriends, profileRepositoryWrapper);
+            }
+        }
+
+        public void RefreshVisibleCardsLiveEventData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateLiveEventData(placeData.PlaceInfo.live, placeData.LiveEvent);
+            }
+        }
+
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
