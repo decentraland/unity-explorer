@@ -75,19 +75,20 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     }
 
     /// <summary>
-    /// Guarantees amount of bones in the array is within valid range.
+    ///     Bone transform array with separate count and capacity. The internal array never shrinks —
+    ///     <see cref="Append"/> reuses existing capacity when possible, avoiding heap allocation.
     /// </summary>
-    public readonly struct BoneArray
+    public struct BoneArray
     {
-        public readonly Transform[] Inner;
-
-        public int Count => Inner.Length;
+        public Transform[] Inner;
+        public int Count;
 
         public Transform this[int i] => Inner[i];
 
-        private BoneArray(Transform[] inner)
+        private BoneArray(Transform[] inner, int count)
         {
-            this.Inner = inner;
+            Inner = inner;
+            Count = count;
         }
 
         public static Result<BoneArray> From(Transform[] bones)
@@ -95,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             if (bones.Length < ComputeShaderConstants.BASE_BONE_COUNT || bones.Length > ComputeShaderConstants.MAX_BONE_COUNT)
                 return Result<BoneArray>.ErrorResult($"Cannot map bone array, count {bones.Length} outside valid range [{ComputeShaderConstants.BASE_BONE_COUNT}, {ComputeShaderConstants.MAX_BONE_COUNT}]");
 
-            return Result<BoneArray>.SuccessResult(new BoneArray(bones));
+            return Result<BoneArray>.SuccessResult(new BoneArray(bones, bones.Length));
         }
 
         public static BoneArray FromOrDefault(Transform[] bones, ReportData reportData)
@@ -115,30 +116,30 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             var inner = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
             for (int i = 0; i < ComputeShaderConstants.BASE_BONE_COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
-            return new BoneArray(inner);
+            return new BoneArray(inner, ComputeShaderConstants.BASE_BONE_COUNT);
         }
 
-        public static BoneArray WithAppendedBones(BoneArray baseArray, List<Transform> appendedBones, ReportData reportData)
+        public void Append(List<Transform> extra, ReportData reportData)
         {
-            if (appendedBones.Count == 0) return baseArray;
+            if (extra.Count == 0) return;
 
-            int totalCount = baseArray.Count + appendedBones.Count;
+            int newCount = Count + extra.Count;
 
-            if (totalCount > ComputeShaderConstants.MAX_BONE_COUNT)
+            if (newCount > ComputeShaderConstants.MAX_BONE_COUNT)
             {
-                ReportHub.LogWarning(reportData, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {totalCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
-                totalCount = ComputeShaderConstants.MAX_BONE_COUNT;
+                ReportHub.LogWarning(reportData, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {newCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
+                newCount = ComputeShaderConstants.MAX_BONE_COUNT;
             }
 
-            var combined = new Transform[totalCount];
-            Array.Copy(baseArray.Inner, 0, combined, 0, baseArray.Count);
+            if (Inner.Length < newCount)
+                Array.Resize(ref Inner, newCount);
 
-            int extraCount = totalCount - baseArray.Count;
+            int extraCount = newCount - Count;
 
             for (int i = 0; i < extraCount; i++)
-                combined[baseArray.Count + i] = appendedBones[i];
+                Inner[Count + i] = extra[i];
 
-            return new BoneArray(combined);
+            Count = newCount;
         }
     }
 }

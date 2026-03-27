@@ -37,14 +37,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesArrayLength, bonesCombined);
         }
 
-        public void Register(Transform rootTransform, Transform[] boneTransforms, Transform dummyTransform)
+        public void Register(Transform rootTransform, BoneArray bones, Transform dummyTransform)
         {
             updateFlag[0] = true;
 
-            int actualCount = Mathf.Min(boneTransforms.Length, bonesArrayLength);
+            int actualCount = Mathf.Min(bones.Count, bonesArrayLength);
 
             for (int i = 0; i < actualCount; i++)
-                boneArray[i] = boneTransforms[i];
+                boneArray[i] = bones[i];
 
             for (int i = actualCount; i < bonesArrayLength; i++)
                 boneArray[i] = dummyTransform;

@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(0);
             transformMatrixComponent.IsMainPlayer = true;
 
-            mainPlayerAvatar.Register(avatarBase.transform, transformMatrixComponent.bones.Inner, dummyTransform);
+            mainPlayerAvatar.Register(avatarBase.transform, transformMatrixComponent.bones, dummyTransform);
         }
 
         /// <summary>

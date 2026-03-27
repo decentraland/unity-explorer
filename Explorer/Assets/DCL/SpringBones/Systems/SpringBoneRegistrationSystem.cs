@@ -132,7 +132,7 @@ namespace DCL.SpringBones
 
             if (clones.Count > 0)
             {
-                transformMatrixComponent.bones = BoneArray.WithAppendedBones(transformMatrixComponent.bones, clones, GetReportCategory());
+                transformMatrixComponent.bones.Append(clones, GetReportCategory());
                 transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Uninitialized();
             }
 

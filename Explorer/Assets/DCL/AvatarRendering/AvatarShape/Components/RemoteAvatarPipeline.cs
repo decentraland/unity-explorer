@@ -90,8 +90,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             // Write into flat backing arrays
             int offset = validIndex * bonesArrayLength;
-            Transform[] bones = transformMatrixComponent.bones.Inner;
-            int actualCount = Mathf.Min(bones.Length, bonesArrayLength);
+            BoneArray bones = transformMatrixComponent.bones;
+            int actualCount = Mathf.Min(bones.Count, bonesArrayLength);
 
             for (int b = 0; b < actualCount; b++)
                 flatBones[offset + b] = bones[b];
