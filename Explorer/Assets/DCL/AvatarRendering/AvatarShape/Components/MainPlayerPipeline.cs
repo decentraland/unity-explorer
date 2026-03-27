@@ -48,6 +48,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             for (int i = actualCount; i < bonesArrayLength; i++)
                 boneArray[i] = dummyTransform;
 
+            if (bonesTA.isCreated) bonesTA.Dispose();
+            if (rootTA.isCreated) rootTA.Dispose();
+
             bonesTA = new TransformAccessArray(boneArray);
             rootTA = new TransformAccessArray(new[] { rootTransform });
             registered = true;

@@ -150,6 +150,10 @@ namespace DCL.SpringBones
 
             for (var i = 0; i < bones.Length; i++)
                 if (bones[i] != null && originalToClone.TryGetValue(bones[i], out Transform clone)) bones[i] = clone;
+
+            // Force pipeline re-registration so the TAA is rebuilt with clone transforms.
+            // StartAvatarMatricesCalculationSystem checks IsValid() and re-registers when false.
+            transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Uninitialized();
         }
     }
 }
