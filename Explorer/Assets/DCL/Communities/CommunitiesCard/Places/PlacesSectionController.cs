@@ -218,7 +218,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
-            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetDestinationsByIdsAsync(slice, ct)
                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
