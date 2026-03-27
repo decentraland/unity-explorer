@@ -8,7 +8,7 @@ description: >
   the relevant source files, identifies the root cause, provides reproduction steps, suggests
   fixes grounded in the project's patterns, and offers to set up a fix branch. Use this skill
   even if the user just pastes an issue ID without asking a specific question.
-user-invocable: false
+user-invocable: true
 ---
 
 # Sentry Issue Investigator
