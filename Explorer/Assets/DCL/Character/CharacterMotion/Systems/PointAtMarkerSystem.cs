@@ -64,11 +64,12 @@ namespace DCL.Character.CharacterMotion.Systems
 
             SpawnMarkerQuery(World);
             UpdateMarkerQuery(World, cameraForward, cameraUp, cameraPosition);
-            ReleaseMarkerQuery(World);
+            FadeOutMarkerQuery(World);
+            ReleaseFadedMarkerQuery(World);
         }
 
         [Query]
-        [None(typeof(PointAtMarkerHolder), typeof(DeleteEntityIntention))]
+        [None(typeof(PointAtMarkerHolder), typeof(PointAtMarkerFadingOut), typeof(DeleteEntityIntention))]
         private void SpawnMarker(
             in Entity entity,
             in HandPointAtComponent pointAt,
@@ -99,7 +100,7 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(PointAtMarkerFadingOut), typeof(DeleteEntityIntention))]
         private void UpdateMarker(
             [Data] in float3 cameraForward,
             [Data] in float3 cameraUp,
@@ -122,8 +123,8 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void ReleaseMarker(
+        [None(typeof(PointAtMarkerFadingOut), typeof(DeleteEntityIntention))]
+        private void FadeOutMarker(
             in Entity entity,
             in HandPointAtComponent pointAt,
             in AvatarBase avatarBase,
@@ -132,8 +133,22 @@ namespace DCL.Character.CharacterMotion.Systems
             if (pointAt.IsPointing && (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude <= MAX_POINT_AT_DISTANCE_SQR)
                 return;
 
-            marker.FadeOutAndRelease(markerPool);
-            World.Remove<PointAtMarkerHolder>(entity);
+            marker.FadeOut();
+            World.Add(entity, new PointAtMarkerFadingOut());
+        }
+
+        [Query]
+        [All(typeof(PointAtMarkerFadingOut))]
+        [None(typeof(DeleteEntityIntention))]
+        private void ReleaseFadedMarker(
+            in Entity entity,
+            ref PointAtMarkerHolder marker)
+        {
+            if (!marker.IsFadedOut)
+                return;
+
+            markerPool.Release(marker);
+            World.Remove<PointAtMarkerHolder, PointAtMarkerFadingOut>(entity);
         }
     }
 }

@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape.Assets
@@ -30,6 +29,8 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
 
         private Color originalColor;
 
+        public bool IsFadedOut { get; private set; }
+
         private void Awake()
         {
             mpb = new MaterialPropertyBlock();
@@ -46,17 +47,19 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             AnimateColorAsync(1f, fadeCts.Token).Forget();
         }
 
-        public void FadeOutAndRelease(IObjectPool<PointAtMarkerHolder> pool)
+        public void FadeOut()
         {
+            IsFadedOut = false;
+
             Color color = originalColor;
             color.a = 1f;
             SpriteRenderer.color = color;
 
             fadeCts = fadeCts.SafeRestart();
-            AnimateColorAsync(0f, fadeCts.Token, pool).Forget();
+            AnimateColorAsync(0f, fadeCts.Token).Forget();
         }
 
-        private async UniTaskVoid AnimateColorAsync(float endAlpha, CancellationToken ct, IObjectPool<PointAtMarkerHolder>? pool = null)
+        private async UniTaskVoid AnimateColorAsync(float endAlpha, CancellationToken ct)
         {
             Color color = SpriteRenderer.color;
             float startAlpha = color.a;
@@ -77,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             color.a = endAlpha;
             SpriteRenderer.color = color;
 
-            pool?.Release(this);
+            IsFadedOut = true;
         }
 
         public void UpdateData(Sprite sprite, Color backgroundColor, string profileId, float sqrDistance)
@@ -108,6 +111,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
 
         public void ResetState()
         {
+            IsFadedOut = false;
             lastProfileId = null;
             SpriteRenderer.sprite = null;
             fadeCts?.SafeCancelAndDispose();
