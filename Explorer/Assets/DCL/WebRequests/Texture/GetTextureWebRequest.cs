@@ -96,14 +96,17 @@ namespace DCL.WebRequests
                 // TODO: .data creates an array
                 using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
 
-                var result = await ktxTexture.LoadFromBytes(
-                    bufferWrapped.nativeArray,
-                    webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
-                    0,
-                    0,
-                    0,
-                    true
+                ErrorCode openError = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly());
+
+                if (openError != ErrorCode.Success)
+                    throw new Exception($"Failed to open ktx texture from data: {webRequest.url} (error: {openError})");
+
+                var result = await ktxTexture.LoadTexture2D(
+                    linear: webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
+                    readable: true
                 );
+
+                ktxTexture.Dispose();
 
                 if (result == null)
                     throw new Exception($"Failed to load ktx texture from data: {webRequest.url}");

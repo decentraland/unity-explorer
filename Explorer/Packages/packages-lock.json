@@ -38,15 +38,6 @@
       "dependencies": {},
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
-    "com.atteneder.draco": {
-      "version": "4.0.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.burst": "1.4.11"
-      },
-      "url": "https://package.openupm.com"
-    },
     "com.atteneder.gltfast": {
       "version": "https://github.com/atteneder/glTFast.git",
       "depth": 0,
@@ -229,6 +220,17 @@
       "source": "registry",
       "dependencies": {
         "com.unity.test-framework": "1.1.31"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.cloud.draco": {
+      "version": "5.4.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.8.24",
+        "com.unity.collections": "1.2.4",
+        "com.unity.mathematics": "1.2.6"
       },
       "url": "https://packages.unity.com"
     },
