@@ -4,7 +4,6 @@ using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.SpringBones
 {
@@ -14,62 +13,41 @@ namespace DCL.SpringBones
     /// </summary>
     public static class SpringBoneCloneHelper
     {
+        private static readonly Dictionary<string, Transform> BONE_LOOKUP = new (StringComparer.Ordinal);
+
         /// <summary>
         ///     For each spring bone chain root, clones the entire chain under the corresponding avatar
-        ///     skeleton bone. Returns the clone transforms and populates the original-to-clone mapping.
+        ///     skeleton bone. Appends clone transforms to the provided list and populates the original-to-clone mapping.
         /// </summary>
-        public static Transform[] CloneSpringBoneChains(IList<CachedAttachment> wearables,
+        public static void CloneSpringBoneChains(IList<CachedAttachment> wearables,
             Transform[] avatarSkeletonBones,
             IComponentPool<Transform> transformPool,
-            Dictionary<Transform, Transform> originalToClone)
+            Dictionary<Transform, Transform> originalToClone,
+            List<Transform> outClones)
         {
-            using var bonesByNameScope = DictionaryPool<string, Transform>.Get(out var bonesByName);
-            using var allClonesScope = ListPool<Transform>.Get(out var allClones);
-
-            foreach (Transform bone in avatarSkeletonBones)
-                if (bone != null) bonesByName.TryAdd(bone.name, bone);
-
-            foreach (CachedAttachment wearable in wearables)
+            try
             {
-                foreach (SpringBoneData sbd in wearable.SpringBones)
-                {
-                    if (!sbd.IsChainRoot) continue;
+                foreach (Transform bone in avatarSkeletonBones)
+                    if (bone != null) BONE_LOOKUP.TryAdd(bone.name, bone);
 
-                    if (!bonesByName.TryGetValue(sbd.SkeletonParentName, out Transform skeletonParent))
+                foreach (CachedAttachment wearable in wearables)
+                foreach (SpringBoneData springBone in wearable.SpringBones)
+                {
+                    if (!springBone.IsChainRoot) continue;
+
+                    if (!BONE_LOOKUP.TryGetValue(springBone.SkeletonParentName, out Transform skeletonParent))
                     {
-                        ReportHub.LogError(ReportCategory.AVATAR, $"Spring bone '{sbd.Transform.name}' could not find avatar skeleton bone '{sbd.SkeletonParentName}'");
+                        ReportHub.LogError(ReportCategory.AVATAR, $"Spring bone '{springBone.Transform.name}' could not find avatar skeleton bone '{springBone.SkeletonParentName}'");
                         continue;
                     }
 
-                    CloneChain(sbd.Transform, skeletonParent, wearable.SpringBones, transformPool, originalToClone, allClones);
+                    CloneChain(springBone.Transform, skeletonParent, wearable.SpringBones, transformPool, originalToClone, outClones);
                 }
             }
-
-            return allClones.Count > 0 ? allClones.ToArray() : Array.Empty<Transform>();
-        }
-
-        /// <summary>
-        ///     Collects all spring bone transforms from wearables into a flat array.
-        /// </summary>
-        public static Transform[] CollectSpringBones(IList<CachedAttachment> wearables)
-        {
-            int totalCount = 0;
-
-            foreach (CachedAttachment wearable in wearables)
-                totalCount += wearable.SpringBones.Length;
-
-            if (totalCount == 0) return Array.Empty<Transform>();
-
-            var result = new Transform[totalCount];
-            int offset = 0;
-
-            foreach (CachedAttachment wearable in wearables)
+            finally
             {
-                foreach (SpringBoneData bone in wearable.SpringBones)
-                    result[offset++] = bone.Transform;
+                BONE_LOOKUP.Clear();
             }
-
-            return result;
         }
 
         private static void CloneChain(Transform originalRoot,
@@ -90,7 +68,7 @@ namespace DCL.SpringBones
             Dictionary<Transform, Transform> originalToClone,
             List<Transform> allClones)
         {
-            for (var i = 0; i < originalParent.childCount; i++)
+            for (int i = 0; i < originalParent.childCount; i++)
             {
                 Transform originalChild = originalParent.GetChild(i);
 
@@ -108,13 +86,18 @@ namespace DCL.SpringBones
             List<Transform> allClones)
         {
             Transform clone = transformPool.Get();
+
             clone.SetParent(parent, false);
             clone.localPosition = original.localPosition;
             clone.localRotation = original.localRotation;
             clone.localScale = original.localScale;
+#if UNITY_EDITOR
             clone.gameObject.name = original.name;
+#endif
+
             originalToClone[original] = clone;
             allClones.Add(clone);
+
             return clone;
         }
 

@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.SpringBones;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
@@ -238,14 +237,17 @@ namespace DCL.AvatarRendering.AvatarShape
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
-            // Collect spring bone transforms from wearable SMRs before Initialize destroys them.
-            // These are the ORIGINAL transforms in the wearable hierarchy. The SpringBoneRegistrationSystem
-            // will later create clone transforms under the avatar skeleton and patch the BoneArray.
-            Transform[] springBones = SpringBoneCloneHelper.CollectSpringBones(avatarShapeComponent.InstantiatedWearables);
-            BoneArray finalBoneArray = BoneArray.WithAppendedBones(baseBoneArray, springBones, GetReportCategory());
+            // Count spring bones so the skinning compute buffer is sized correctly.
+            // The SpringBoneRegistrationSystem will expand the BoneArray with clone transforms later this frame.
+            int springBoneCount = 0;
+            foreach (CachedAttachment attachment in avatarShapeComponent.InstantiatedWearables) springBoneCount += attachment.SpringBones.Length;
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTextures, finalBoneArray.Count);
+                computeShaderSkinningPool.Get(),
+                avatarMaterialPoolHandler,
+                avatarShapeComponent,
+                facialFeatureTextures,
+                baseBoneArray.Count + springBoneCount);
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -265,7 +267,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.InstantiationVersion++;
             avatarShapeComponent.IsDirty = false;
 
-            return (skinningComponent, finalBoneArray);
+            return (skinningComponent, baseBoneArray);
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>

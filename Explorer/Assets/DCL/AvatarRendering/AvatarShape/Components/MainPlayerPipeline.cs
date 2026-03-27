@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     internal class MainPlayerPipeline : IDisposable
     {
         private readonly int bonesArrayLength;
+        private readonly Transform[] boneArray;
 
         private bool registered;
         private TransformAccessArray bonesTA;
@@ -28,6 +29,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         internal MainPlayerPipeline(int bonesArrayLength)
         {
             this.bonesArrayLength = bonesArrayLength;
+            boneArray = new Transform[bonesArrayLength];
 
             bonesCombined = new NativeArray<float4x4>(bonesArrayLength, Allocator.Persistent);
             avatarMatrix = new NativeArray<float4x4>(1, Allocator.Persistent);
@@ -39,7 +41,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             updateFlag[0] = true;
 
-            var boneArray = new Transform[bonesArrayLength];
             int actualCount = Mathf.Min(boneTransforms.Length, bonesArrayLength);
 
             for (int i = 0; i < actualCount; i++)

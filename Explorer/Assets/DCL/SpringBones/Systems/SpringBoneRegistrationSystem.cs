@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -17,11 +18,6 @@ using UnityEngine.Pool;
 
 namespace DCL.SpringBones
 {
-    /// <summary>
-    ///     Manages spring bone buffer registration with the FastSpringBone simulation service.
-    ///     Creates clone transforms under the avatar skeleton, builds simulation buffers,
-    ///     and patches the BoneArray for the skinning compute shader.
-    /// </summary>
     [LogCategory(ReportCategory.AVATAR)]
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
@@ -30,7 +26,8 @@ namespace DCL.SpringBones
         private readonly FastSpringBoneService springBoneService;
         private readonly IComponentPool<Transform> transformPool;
 
-        internal SpringBoneRegistrationSystem(World world, FastSpringBoneService springBoneService,
+        internal SpringBoneRegistrationSystem(World world,
+            FastSpringBoneService springBoneService,
             IComponentPool<Transform> transformPool) : base(world)
         {
             this.springBoneService = springBoneService;
@@ -44,124 +41,123 @@ namespace DCL.SpringBones
             CleanupOnDeleteQuery(World);
         }
 
-        protected override void OnDispose()
-        {
+        protected override void OnDispose() =>
             CleanupOnDisposeQuery(World);
-        }
 
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(AvatarCustomSkinningComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent))]
         [None(typeof(SpringBoneRegistrationComponent), typeof(DeleteEntityIntention))]
-        private void RegisterNew(in Entity entity, ref AvatarShapeComponent avatarShapeComponent,
-            AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent)
+        private void RegisterNew(in Entity entity,
+            ref AvatarShapeComponent avatarShapeComponent,
+            AvatarBase avatarBase,
+            ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            using var scope = DictionaryPool<Transform, Transform>.Get(out var originalToClone);
+            List<Transform> boneClones = ListPool<Transform>.Get();
 
-            Transform[] clones = SpringBoneCloneHelper.CloneSpringBoneChains(
-                avatarShapeComponent.InstantiatedWearables, avatarBase.AvatarSkinnedMeshRenderer.bones, transformPool, originalToClone);
+            FastSpringBoneBuffer buffer = BuildSpringBoneBuffer(avatarShapeComponent.InstantiatedWearables,
+                avatarBase,
+                ref transformMatrixComponent,
+                boneClones,
+                null);
 
-            PatchBoneArray(ref transformMatrixComponent, originalToClone);
-
-            FastSpringBoneBuffer buffer = SpringBoneBufferBuilder.Build(avatarBase.transform, avatarShapeComponent.InstantiatedWearables, originalToClone);
-
-            if (buffer != null) springBoneService.BufferCombiner.Register(buffer, null);
-
-            World.Add(entity, new SpringBoneRegistrationComponent
-            {
-                Buffer = buffer,
-                LastKnownVersion = avatarShapeComponent.InstantiationVersion,
-                Clones = clones,
-            },
-            new SpringBonePendingCloneRelease { Clones = new List<Transform>() });
+            World.Add(entity,
+                new SpringBoneRegistrationComponent
+                {
+                    Buffer = buffer,
+                    AvatarVersion = avatarShapeComponent.InstantiationVersion,
+                    BoneClones = boneClones,
+                },
+                new SpringBonePendingCloneRelease { Pending = ListPool<Transform>.Get() });
         }
 
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void ReRegisterOnChange(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
-            ref SpringBoneRegistrationComponent registration, ref AvatarTransformMatrixComponent transformMatrixComponent,
+        private void ReRegisterOnChange(ref AvatarShapeComponent avatarShapeComponent,
+            AvatarBase avatarBase,
+            ref SpringBoneRegistrationComponent registration,
+            ref AvatarTransformMatrixComponent transformMatrixComponent,
             ref SpringBonePendingCloneRelease pendingRelease)
         {
-            if (avatarShapeComponent.InstantiationVersion == registration.LastKnownVersion) return;
+            if (avatarShapeComponent.InstantiationVersion == registration.AvatarVersion) return;
 
-            registration.LastKnownVersion = avatarShapeComponent.InstantiationVersion;
+            registration.AvatarVersion = avatarShapeComponent.InstantiationVersion;
 
-            // Defer release of old clones — they're still in the combined TAA until ManualUpdate flushes
-            AddClonesToPendingRelease(registration.Clones, ref pendingRelease);
+            MoveToPendingRelease(registration.BoneClones, ref pendingRelease);
 
-            FastSpringBoneBuffer oldBuffer = registration.Buffer;
-
-            using var scope = DictionaryPool<Transform, Transform>.Get(out var originalToClone);
-
-            Transform[] clones = SpringBoneCloneHelper.CloneSpringBoneChains(
-                avatarShapeComponent.InstantiatedWearables, avatarBase.AvatarSkinnedMeshRenderer.bones, transformPool, originalToClone);
-
-            PatchBoneArray(ref transformMatrixComponent, originalToClone);
-
-            FastSpringBoneBuffer newBuffer = SpringBoneBufferBuilder.Build(avatarBase.transform, avatarShapeComponent.InstantiatedWearables, originalToClone);
-
-            springBoneService.BufferCombiner.Register(newBuffer, oldBuffer);
-            oldBuffer?.Dispose();
-
-            registration.Buffer = newBuffer;
-            registration.Clones = clones;
+            registration.Buffer = BuildSpringBoneBuffer(avatarShapeComponent.InstantiatedWearables,
+                avatarBase,
+                ref transformMatrixComponent,
+                registration.BoneClones,
+                registration.Buffer);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CleanupOnDelete(in Entity entity, ref SpringBoneRegistrationComponent registration, ref SpringBonePendingCloneRelease pendingRelease)
+        private void CleanupOnDelete(in Entity entity,
+            ref SpringBoneRegistrationComponent registration,
+            ref SpringBonePendingCloneRelease pendingRelease)
         {
-            UnregisterBuffer(ref registration);
-            AddClonesToPendingRelease(registration.Clones, ref pendingRelease);
-            registration.Clones = null;
+            CleanUpSpringBoneBuffer(ref registration);
+
+            MoveToPendingRelease(registration.BoneClones, ref pendingRelease);
+
+            ListPool<Transform>.Release(registration.BoneClones);
+            registration.BoneClones = null;
+
             World.Remove<SpringBoneRegistrationComponent>(entity);
         }
 
         [Query]
-        private void CleanupOnDispose(ref SpringBoneRegistrationComponent registration)
-        {
-            UnregisterBuffer(ref registration);
+        private void CleanupOnDispose(ref SpringBoneRegistrationComponent registration) =>
+            CleanUpSpringBoneBuffer(ref registration);
 
-            // World is tearing down — release clones directly, no next frame
-            if (registration.Clones != null)
+        /// <summary>
+        ///     Shared pipeline: clone spring bone chains, expand the BoneArray, build and register
+        ///     the simulation buffer. If <paramref name="oldBuffer"/> is non-null it is replaced and disposed.
+        /// </summary>
+        private FastSpringBoneBuffer BuildSpringBoneBuffer(IList<CachedAttachment> wearables,
+            AvatarBase avatarBase,
+            ref AvatarTransformMatrixComponent transformMatrixComponent,
+            List<Transform> clones,
+            FastSpringBoneBuffer? oldBuffer)
+        {
+            using var _ = DictionaryPool<Transform, Transform>.Get(out var originalToClone);
+
+            SpringBoneCloneHelper.CloneSpringBoneChains(wearables,
+                avatarBase.AvatarSkinnedMeshRenderer.bones,
+                transformPool,
+                originalToClone,
+                clones);
+
+            if (clones.Count > 0)
             {
-                foreach (Transform clone in registration.Clones)
-                    if (clone != null) transformPool.Release(clone);
-
-                registration.Clones = null;
+                transformMatrixComponent.bones = BoneArray.WithAppendedBones(transformMatrixComponent.bones, clones, GetReportCategory());
+                transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Uninitialized();
             }
+
+            FastSpringBoneBuffer newBuffer = SpringBoneBufferBuilder.Build(avatarBase.transform, wearables, originalToClone);
+
+            springBoneService.BufferCombiner.Register(newBuffer, oldBuffer);
+            oldBuffer?.Dispose();
+
+            return newBuffer;
         }
 
-        private void UnregisterBuffer(ref SpringBoneRegistrationComponent registration)
+        private void CleanUpSpringBoneBuffer(ref SpringBoneRegistrationComponent registration)
         {
-            if (registration.Buffer != null)
-            {
-                springBoneService.BufferCombiner.Register(null, registration.Buffer);
-                registration.Buffer.Dispose();
-                registration.Buffer = null;
-            }
+            if (registration.Buffer == null) return;
+
+            springBoneService.BufferCombiner.Register(null, registration.Buffer);
+
+            registration.Buffer.Dispose();
+            registration.Buffer = null;
         }
 
-        private static void AddClonesToPendingRelease(Transform[] clones, ref SpringBonePendingCloneRelease pendingRelease)
+        private static void MoveToPendingRelease(List<Transform> clones, ref SpringBonePendingCloneRelease pendingRelease)
         {
-            if (clones == null) return;
-
-            foreach (Transform clone in clones)
-                if (clone != null) pendingRelease.Clones.Add(clone);
-        }
-
-        private static void PatchBoneArray(ref AvatarTransformMatrixComponent transformMatrixComponent, Dictionary<Transform, Transform> originalToClone)
-        {
-            if (originalToClone.Count == 0) return;
-
-            Transform[] bones = transformMatrixComponent.bones.Inner;
-
-            for (var i = 0; i < bones.Length; i++)
-                if (bones[i] != null && originalToClone.TryGetValue(bones[i], out Transform clone)) bones[i] = clone;
-
-            // Force pipeline re-registration so the TAA is rebuilt with clone transforms.
-            // StartAvatarMatricesCalculationSystem checks IsValid() and re-registers when false.
-            transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Uninitialized();
+            foreach (Transform clone in clones) pendingRelease.Pending.Add(clone);
+            clones.Clear();
         }
     }
 }

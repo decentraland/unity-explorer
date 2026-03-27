@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utility.Types;
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -117,12 +118,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             return new BoneArray(inner);
         }
 
-        public static BoneArray WithAppendedBones(BoneArray baseArray, Transform[] extraBones, ReportData reportData)
+        public static BoneArray WithAppendedBones(BoneArray baseArray, List<Transform> appendedBones, ReportData reportData)
         {
-            if (extraBones.Length == 0)
-                return baseArray;
+            if (appendedBones.Count == 0) return baseArray;
 
-            int totalCount = baseArray.Count + extraBones.Length;
+            int totalCount = baseArray.Count + appendedBones.Count;
 
             if (totalCount > ComputeShaderConstants.MAX_BONE_COUNT)
             {
@@ -134,7 +134,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Array.Copy(baseArray.Inner, 0, combined, 0, baseArray.Count);
 
             int extraCount = totalCount - baseArray.Count;
-            Array.Copy(extraBones, 0, combined, baseArray.Count, extraCount);
+
+            for (int i = 0; i < extraCount; i++)
+                combined[baseArray.Count + i] = appendedBones[i];
 
             return new BoneArray(combined);
         }

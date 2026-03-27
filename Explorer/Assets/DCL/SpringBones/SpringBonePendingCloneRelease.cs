@@ -5,6 +5,6 @@ namespace DCL.SpringBones
 {
     public struct SpringBonePendingCloneRelease
     {
-        public List<Transform> Clones;
+        public List<Transform> Pending;
     }
 }
