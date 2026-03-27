@@ -458,8 +458,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
             async UniTaskVoid RefreshInvitesCounterAsync(CancellationToken ct)
             {
-                int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
-                int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
+                int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, ct);
+                int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, ct);
                 view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
             }
         }
