@@ -369,11 +369,16 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             uint flags = delta.StateFlags;
 
+            bool wasGrounded = lastAnimState.IsGrounded;
+
             lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
             lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
             lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
             lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
             last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
+
+            if (wasGrounded && !lastAnimState.IsGrounded)
+                lastAnimState.JumpCount++;
 
             if (movementBlendChanged)
             {
