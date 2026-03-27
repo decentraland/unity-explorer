@@ -9,7 +9,18 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - uses: actions/github-script@v7
+      - name: Check PR type
+        id: check-type
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title || '';
+            const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
+            core.setOutput('is-auto-review', isAutoReview.toString());
+
+      - name: Set pending status for feature PRs
+        if: steps.check-type.outputs.is-auto-review == 'false'
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.repos.createCommitStatus({

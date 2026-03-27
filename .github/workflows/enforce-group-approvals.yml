@@ -64,6 +64,14 @@ jobs:
             echo "ℹ️ 'no QA needed' label not found — QA approval required."
           fi
 
+          # Check if PR is a bug fix or chore (Claude auto-approves these)
+          PR_TITLE=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json title -q '.title')
+          REQUIRES_DEV=true
+          if echo "$PR_TITLE" | grep -qiE '^(fix|chore)(\(.*\))?!?:'; then
+            REQUIRES_DEV=false
+            echo "ℹ️ Bug fix/chore PR — DEV approval handled by Claude auto-review."
+          fi
+
           echo "🔍 Fetching team members..."
           QA_TEAM="qa"
           DEV_TEAM="explorer-devs"
@@ -114,10 +122,15 @@ jobs:
             fi
           done
 
-          if { [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ]; } || [ "$HAS_DEV_APPROVAL" != true ]; then
+          QA_MISSING=false
+          DEV_MISSING=false
+          [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && QA_MISSING=true
+          [ "$REQUIRES_DEV" == true ] && [ "$HAS_DEV_APPROVAL" != true ] && DEV_MISSING=true
+
+          if [ "$QA_MISSING" == true ] || [ "$DEV_MISSING" == true ]; then
             MISSING=()
-            [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
-            [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
+            [ "$QA_MISSING" == true ] && MISSING+=("QA approval")
+            [ "$DEV_MISSING" == true ] && MISSING+=("DEV approval")
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
             echo "❌ PR must have at least 1: $MISSING_MSG."
             echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
