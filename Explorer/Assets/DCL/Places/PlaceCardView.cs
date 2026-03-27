@@ -182,11 +182,7 @@ namespace DCL.Places
                 }
             }
 
-            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
-            if (liveEvent != null)
-                liveTagWithTooltip.Configure(liveEvent.Value.name);
-
-            RefreshHeaderGradient();
+            UpdateLiveEventData(placeInfo.live, liveEvent);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
@@ -235,6 +231,8 @@ namespace DCL.Places
             liveTagWithTooltip.gameObject.SetActive(isLive);
             if (liveEvent != null)
                 liveTagWithTooltip.Configure(liveEvent.Value.name);
+
+            liveTagWithTooltip.SetHoverActive(liveEvent != null);
 
             RefreshHeaderGradient();
         }

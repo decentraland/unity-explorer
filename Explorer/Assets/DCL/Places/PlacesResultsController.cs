@@ -424,7 +424,6 @@ namespace DCL.Places
             if (!friendServiceProxy.Configured)
                 return emptyResult;
 
-            await UniTask.Delay(5000, cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             var result = await friendServiceProxy.StrictObject
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.PLACES);
@@ -445,7 +444,6 @@ namespace DCL.Places
         {
             var emptyResult = new List<EventDTO>();
 
-            await UniTask.Delay(10000, cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             Result<IReadOnlyList<EventDTO>> result = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
                                                                                      .SuppressToResultAsync(ReportCategory.PLACES);
 
