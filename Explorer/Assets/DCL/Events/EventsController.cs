@@ -148,17 +148,11 @@ namespace DCL.Events
             isCommunitiesLoaded = true;
         }
 
-        public async UniTask RefreshFriendsAndCommunitiesDataAsync(CancellationToken ct)
-        {
-            await UniTask.WhenAll(RefreshFriendsDataAsync(ct), RefreshCommunitiesDataAsync(ct));
-        }
-
         private async UniTask GetAllFriendsAsync(CancellationToken ct)
         {
             if (!friendServiceProxy.Configured)
                 return;
 
-            await UniTask.Delay(TimeSpan.FromSeconds(5f), cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             var result = await friendServiceProxy.StrictObject
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -177,7 +171,6 @@ namespace DCL.Events
 
         private async UniTask GetMyCommunitiesAsync(CancellationToken ct)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(10f), cancellationToken: ct); // TODO (SANTI): REMOVE IT!!
             var result = await communitiesDataProvider.GetUserCommunitiesAsync(
                                                            name: string.Empty,
                                                            onlyMemberOf: true,

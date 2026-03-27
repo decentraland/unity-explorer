@@ -205,7 +205,6 @@ namespace DCL.Events
         {
             highlightedEventsCache = null;
 
-            await UniTask.Delay(TimeSpan.FromSeconds(20f), cancellationToken: ct); // TODO: REMOVE IT!!
             Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 10, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
 
