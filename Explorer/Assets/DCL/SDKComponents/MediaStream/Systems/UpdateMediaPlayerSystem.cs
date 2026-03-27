@@ -254,7 +254,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (component.State != VideoState.VsError) return false;
             if (component.ResolvedUrlExpiresAt <= 0f) return false;
-            if (Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
+            if (UnityEngine.Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
 
             ReportHub.Log(ReportCategory.MEDIA_STREAM, "[YouTubeResolver] Resolved URL expired, triggering re-resolution");
             component.Dispose();

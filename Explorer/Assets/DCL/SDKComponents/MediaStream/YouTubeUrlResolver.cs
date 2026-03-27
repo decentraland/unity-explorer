@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (cache.TryGetValue(videoId, out cached))
             {
-                if (Time.realtimeSinceStartup < cached.ExpiresAtRealtimeSinceStartup)
+                if (UnityEngine.Time.realtimeSinceStartup < cached.ExpiresAtRealtimeSinceStartup)
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Cache hit for {videoId}");
                     return true;
@@ -118,7 +118,7 @@ namespace DCL.SDKComponents.MediaStream
             return new ResolvedYouTubeUrl(
                 hlsUrl,
                 isLiveStream: true,
-                Time.realtimeSinceStartup + CACHE_TTL_SECONDS
+                UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
             );
         }
 
@@ -143,7 +143,7 @@ namespace DCL.SDKComponents.MediaStream
             return new ResolvedYouTubeUrl(
                 selectedStream.Url,
                 isLiveStream: false,
-                Time.realtimeSinceStartup + CACHE_TTL_SECONDS
+                UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
             );
         }
 

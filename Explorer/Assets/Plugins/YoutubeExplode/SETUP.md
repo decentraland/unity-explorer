@@ -4,8 +4,8 @@ YouTube URL resolver for AVPro Video integration.
 
 ## DLLs
 
-- **YoutubeExplode.dll** (v6.4.3) - YouTube video metadata and stream extraction
-- **AngleSharp.dll** (v1.1.2) - HTML parser (YoutubeExplode dependency)
+- **YoutubeExplode.dll** (v6.5.7) - YouTube video metadata and stream extraction
+- **AngleSharp.dll** (v1.4.0) - HTML parser (YoutubeExplode dependency)
 - **System.Text.Encoding.CodePages.dll** (v6.0.0) - Encoding support (AngleSharp dependency)
 
 ## Transitive Dependencies (already in project)
