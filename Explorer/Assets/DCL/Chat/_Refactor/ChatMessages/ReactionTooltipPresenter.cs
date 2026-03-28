@@ -26,6 +26,7 @@ namespace DCL.Chat.ChatMessages
         private readonly List<string> lastReactors = new (8);
 
         private CancellationTokenSource? asyncCts;
+        private CancellationTokenSource? delayCts;
         private string? shownMessageId;
         private int shownEmojiIndex = -1;
 
@@ -58,6 +59,8 @@ namespace DCL.Chat.ChatMessages
             if (IsAlreadyShowing(messageId, emojiIndex))
                 return;
 
+            delayCts.SafeCancelAndDispose();
+            delayCts = null;
             asyncCts.SafeCancelAndDispose();
             asyncCts = null;
 
@@ -74,14 +77,80 @@ namespace DCL.Chat.ChatMessages
                 return;
             }
 
+            float hoverDelay = messageConfig.TooltipHoverDelay;
+
+            if (hoverDelay > 0f)
+            {
+                delayCts = new CancellationTokenSource();
+                DelayedShowAsync(reactions, emojiIndex, pillTransform, messageId, hoverDelay, delayCts.Token).Forget();
+            }
+            else
+            {
+                ShowTooltipImmediate(reactions, emojiIndex, pillTransform, messageId);
+            }
+        }
+
+        public void ShowOfflineTooltip(RectTransform pillTransform)
+        {
+            delayCts.SafeCancelAndDispose();
+            delayCts = null;
+            asyncCts.SafeCancelAndDispose();
+            asyncCts = null;
+            shownMessageId = null;
+            shownEmojiIndex = -1;
+
+            float hoverDelay = messageConfig.TooltipHoverDelay;
+
+            if (hoverDelay > 0f)
+            {
+                delayCts = new CancellationTokenSource();
+                DelayedShowOfflineAsync(pillTransform, hoverDelay, delayCts.Token).Forget();
+            }
+            else
+            {
+                view.ShowOfflineMessage(pillTransform);
+            }
+        }
+
+        public void Hide()
+        {
+            delayCts.SafeCancelAndDispose();
+            delayCts = null;
+            asyncCts.SafeCancelAndDispose();
+            asyncCts = null;
+            shownMessageId = null;
+            shownEmojiIndex = -1;
+            view.Hide();
+        }
+
+        public void HideIfShowingMessage(string messageId)
+        {
+            if (string.Equals(shownMessageId, messageId, StringComparison.Ordinal))
+                Hide();
+        }
+
+        public void Dispose()
+        {
+            delayCts.SafeCancelAndDispose();
+            delayCts = null;
+            asyncCts.SafeCancelAndDispose();
+            asyncCts = null;
+        }
+
+        private void ShowTooltipImmediate(ReactionSet reactions, int emojiIndex, RectTransform pillTransform, string messageId)
+        {
             shownMessageId = messageId;
             shownEmojiIndex = emojiIndex;
 
             Rect uvRect = atlasConfig.GetUVRect(emojiIndex);
 
             lastReactors.Clear();
-            foreach (string wallet in reactors)
-                lastReactors.Add(wallet);
+            IReadOnlyCollection<string>? reactors = reactions.GetReactors(emojiIndex);
+            if (reactors != null)
+            {
+                foreach (string wallet in reactors)
+                    lastReactors.Add(wallet);
+            }
 
             int mockUserCount = messageConfig.TooltipMockUsersEnabled
                 ? messageConfig.TooltipMockUserCount
@@ -107,34 +176,32 @@ namespace DCL.Chat.ChatMessages
             }
         }
 
-        public void ShowOfflineTooltip(RectTransform pillTransform)
+        private async UniTaskVoid DelayedShowAsync(ReactionSet reactions, int emojiIndex, RectTransform pillTransform, string messageId, float delay, CancellationToken ct)
         {
-            asyncCts.SafeCancelAndDispose();
-            asyncCts = null;
-            shownMessageId = null;
-            shownEmojiIndex = -1;
-            view.ShowOfflineMessage(pillTransform);
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: ct);
+
+                if (ct.IsCancellationRequested) return;
+
+                ShowTooltipImmediate(reactions, emojiIndex, pillTransform, messageId);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
         }
 
-        public void Hide()
+        private async UniTaskVoid DelayedShowOfflineAsync(RectTransform pillTransform, float delay, CancellationToken ct)
         {
-            asyncCts.SafeCancelAndDispose();
-            asyncCts = null;
-            shownMessageId = null;
-            shownEmojiIndex = -1;
-            view.Hide();
-        }
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: ct);
 
-        public void HideIfShowingMessage(string messageId)
-        {
-            if (string.Equals(shownMessageId, messageId, StringComparison.Ordinal))
-                Hide();
-        }
+                if (ct.IsCancellationRequested) return;
 
-        public void Dispose()
-        {
-            asyncCts.SafeCancelAndDispose();
-            asyncCts = null;
+                view.ShowOfflineMessage(pillTransform);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
         }
 
         private bool IsAlreadyShowing(string messageId, int emojiIndex) =>

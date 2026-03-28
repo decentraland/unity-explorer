@@ -21,6 +21,7 @@ MonoBehaviour:
   <ReceiveStaggerInterval>k__BackingField: 0.2
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
+  <TooltipHoverDelay>k__BackingField: 0.5
   <AppearDuration>k__BackingField: 0.15
   <DisappearDuration>k__BackingField: 0.1
   <CountIncrementBounceDuration>k__BackingField: 0.12

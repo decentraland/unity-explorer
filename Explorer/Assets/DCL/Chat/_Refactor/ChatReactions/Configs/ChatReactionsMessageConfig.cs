@@ -68,6 +68,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 1f)]
         [field: SerializeField] public float HoverAnimDuration { get; private set; } = 0.1f;
 
+        [field: Note("Delay (seconds) before showing the tooltip after hovering a reaction pill. " +
+                     "Prevents tooltip flickering when scrolling through messages. 0 = instant (no delay).")]
+        [field: Range(0f, 1f)]
+        [field: SerializeField] public float TooltipHoverDelay { get; private set; } = 0.3f;
+
         [field: Header("Animations")]
         [field: Note("NOT YET WIRED UP — reaction bubble appear animation duration (seconds).")]
         [field: Range(0f, 1f)]
