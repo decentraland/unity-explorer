@@ -35,14 +35,16 @@ namespace DCL.SDKComponents.MediaStream
             if (TryGetCached(videoIdStr, out ResolvedYouTubeUrl cached))
                 return cached;
 
+            bool urlHintsLive = youtubeUrl.Contains("/live/");
+
             // First attempt
-            ResolvedYouTubeUrl? result = await TryResolveInternalAsync(videoId.Value, ct);
+            ResolvedYouTubeUrl? result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
 
             // Single retry on failure
             if (result == null)
             {
                 ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] First attempt failed for {videoIdStr}, retrying...");
-                result = await TryResolveInternalAsync(videoId.Value, ct);
+                result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
             }
 
             if (result != null)
@@ -67,7 +69,7 @@ namespace DCL.SDKComponents.MediaStream
             return false;
         }
 
-        private async UniTask<ResolvedYouTubeUrl?> TryResolveInternalAsync(VideoId videoId, CancellationToken ct)
+        private async UniTask<ResolvedYouTubeUrl?> TryResolveInternalAsync(VideoId videoId, bool urlHintsLive, CancellationToken ct)
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(TIMEOUT_MS);
@@ -75,16 +77,28 @@ namespace DCL.SDKComponents.MediaStream
 
             try
             {
-                // Check if the video is a live stream
-                Video video = await youtubeClient.Videos.GetAsync(videoId, token);
+                bool isLive = urlHintsLive;
 
-                if (video.Duration == null) // Live streams have no duration
+                if (!isLive)
+                {
+                    Video video = await youtubeClient.Videos.GetAsync(videoId, token);
+                    isLive = video.Duration == null;
+                }
+
+                if (isLive)
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Detected live stream: {videoId}");
                     return await ResolveLiveStreamAsync(videoId, token);
                 }
 
-                return await ResolveVodAsync(videoId, token);
+                // Try VOD first, fall back to live stream if it fails
+                ResolvedYouTubeUrl? vodResult = await TryResolveVodAsync(videoId, token);
+
+                if (vodResult != null)
+                    return vodResult;
+
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] VOD failed for {videoId}, trying live stream path...");
+                return await ResolveLiveStreamAsync(videoId, token);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -122,29 +136,37 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        private async UniTask<ResolvedYouTubeUrl?> ResolveVodAsync(VideoId videoId, CancellationToken token)
+        private async UniTask<ResolvedYouTubeUrl?> TryResolveVodAsync(VideoId videoId, CancellationToken token)
         {
-            StreamManifest manifest = await youtubeClient.Videos.Streams.GetManifestAsync(videoId, token);
-
-            // Prefer muxed MP4 streams (video+audio combined) for best AVPro compatibility
-            IStreamInfo? selectedStream = SelectBestMuxedStream(manifest)
-                                          ?? SelectBestAdaptiveVideoStream(manifest);
-
-            if (selectedStream == null)
+            try
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] No suitable stream found for {videoId}");
+                StreamManifest manifest = await youtubeClient.Videos.Streams.GetManifestAsync(videoId, token);
+
+                IStreamInfo? selectedStream = SelectBestMuxedStream(manifest)
+                                              ?? SelectBestAdaptiveVideoStream(manifest);
+
+                if (selectedStream == null)
+                {
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] No suitable stream found for {videoId}");
+                    return null;
+                }
+
+                ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                    $"[YouTubeResolver] Resolved VOD {videoId}: {selectedStream.Container} " +
+                    $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")}");
+
+                return new ResolvedYouTubeUrl(
+                    selectedStream.Url,
+                    isLiveStream: false,
+                    UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
+                );
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] VOD resolution failed for {videoId}: {ex.Message}");
                 return null;
             }
-
-            ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                $"[YouTubeResolver] Resolved VOD {videoId}: {selectedStream.Container} " +
-                $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")}");
-
-            return new ResolvedYouTubeUrl(
-                selectedStream.Url,
-                isLiveStream: false,
-                UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
-            );
         }
 
         private static IStreamInfo? SelectBestMuxedStream(StreamManifest manifest)
