@@ -67,7 +67,7 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
         public event Action<string, int>? OnReactionPillClicked;
-        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
+        public event Action<int, RectTransform, string, bool>? OnReactionHoverEnter;
         public event Action<int>? OnReactionHoverExit;
 
         private Sequence? _fadeSequenceTween;
@@ -347,9 +347,9 @@ namespace DCL.Chat.ChatMessages
             OnReactionPillClicked?.Invoke(messageId, emojiIndex);
         }
 
-        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
+        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId, bool isOffline)
         {
-            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
+            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId, isOffline);
         }
 
         private void HandleReactionHoverExit(int emojiIndex)

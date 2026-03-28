@@ -107,6 +107,15 @@ namespace DCL.Chat.ChatMessages
             }
         }
 
+        public void ShowOfflineTooltip(RectTransform pillTransform)
+        {
+            asyncCts.SafeCancelAndDispose();
+            asyncCts = null;
+            shownMessageId = null;
+            shownEmojiIndex = -1;
+            view.ShowOfflineMessage(pillTransform);
+        }
+
         public void Hide()
         {
             asyncCts.SafeCancelAndDispose();

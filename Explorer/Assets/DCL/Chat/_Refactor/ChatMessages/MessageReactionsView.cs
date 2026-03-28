@@ -28,13 +28,14 @@ namespace DCL.Chat.ChatMessages
         private ChatReactionsMessageConfig? messageConfig;
         private float hoverScale = 1.2f;
         private float hoverAnimDuration = 0.1f;
+        private bool isOffline;
 
         public string? CurrentMessageId { get; set; }
 
         public float CurrentHeight { get; private set; }
 
         public event Action<string, int>? OnReactionClicked;
-        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
+        public event Action<int, RectTransform, string, bool>? OnReactionHoverEnter;
         public event Action<int>? OnReactionHoverExit;
 
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
@@ -68,6 +69,8 @@ namespace DCL.Chat.ChatMessages
 
         public void SetInteractable(bool interactable)
         {
+            isOffline = !interactable;
+
             for (int i = 0; i < activeItems.Count; i++)
                 activeItems[i].SetInteractable(interactable);
         }
@@ -89,7 +92,7 @@ namespace DCL.Chat.ChatMessages
         private void OnItemHoverEnter(int emojiIndex, RectTransform pillRect)
         {
             if (CurrentMessageId != null)
-                OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId);
+                OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId, isOffline);
         }
 
         private void OnItemHoverExit(int emojiIndex)
