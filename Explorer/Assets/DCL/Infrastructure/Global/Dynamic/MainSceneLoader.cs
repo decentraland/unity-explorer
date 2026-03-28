@@ -88,6 +88,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -192,6 +193,10 @@ namespace Global.Dynamic
             var assetsProvisioner = new AddressablesProvisioner();
 
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
@@ -394,7 +399,7 @@ namespace Global.Dynamic
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
-            ControllerBase<BlockedScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+            ControllerBase<BlockedScreenView, BlockedScreenParameters>.ViewFactoryMethod viewFactory =
                 BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
@@ -722,6 +727,29 @@ namespace Global.Dynamic
             await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
 
             return input.SelectedOption;
+        }
+
+        private void InstantiateAltTester(IAppArgs appArgs)
+        {
+#if ALTTESTER
+            var instance = Instantiate(altTesterPrefab);
+
+            if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
+            {
+                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+
+                var split = endpoint.Split(':');
+
+                if (split.Length != 2 || !int.TryParse(split[1], out var port))
+                {
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"Invalid Alttester endpoint (needs to be host:port): {endpoint}");
+                    return;
+                }
+
+                runner.InstrumentationSettings.AltServerHost = split[0];
+                runner.InstrumentationSettings.AltServerPort = port;
+            }
+#endif
         }
 
         /// <summary>
