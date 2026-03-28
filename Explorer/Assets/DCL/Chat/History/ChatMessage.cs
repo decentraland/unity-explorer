@@ -58,7 +58,7 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
-                DateTime.UtcNow.ToOADate(),
+                chatMessage.SentTimestampRaw,
                 chatMessage.IsMention,
                 false);
 
@@ -82,16 +82,5 @@ namespace DCL.Chat.History
         /// </summary>
         public static string GetId(string walletId, double timestampRaw) =>
             $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
-
-        /// <summary>
-        /// Creates a stable key for cross-client reaction matching. Rounds the timestamp
-        /// to the nearest second so relay drift (~0.5s) doesn't cause mismatches.
-        /// </summary>
-        public static string GetStableReactionKey(string walletId, double timestampRaw)
-        {
-            // Floor to 1-second buckets (OADate → seconds) to absorb relay drift.
-            long bucket = (long)Math.Floor(timestampRaw * 86400.0);
-            return $"{walletId}:{bucket.ToString(CultureInfo.InvariantCulture)}";
-        }
     }
 }
