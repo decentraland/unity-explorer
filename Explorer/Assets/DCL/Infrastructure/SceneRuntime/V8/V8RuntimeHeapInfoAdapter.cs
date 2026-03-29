@@ -8,11 +8,16 @@ namespace SceneRuntime
     /// </summary>
     public class V8RuntimeHeapInfoAdapter : IRuntimeHeapInfo
     {
-        private readonly V8RuntimeHeapInfo v8HeapInfo;
+        private V8RuntimeHeapInfo v8HeapInfo;
 
         public V8RuntimeHeapInfoAdapter(V8RuntimeHeapInfo v8HeapInfo)
         {
             this.v8HeapInfo = v8HeapInfo;
+        }
+
+        internal void Update(V8RuntimeHeapInfo heapInfo)
+        {
+            v8HeapInfo = heapInfo;
         }
 
         public ulong TotalHeapSize => v8HeapInfo.TotalHeapSize;

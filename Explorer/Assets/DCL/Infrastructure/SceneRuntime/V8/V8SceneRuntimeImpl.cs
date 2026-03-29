@@ -34,6 +34,7 @@ namespace SceneRuntime.V8
         private readonly JSTaskResolverResetable resetableSource;
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
 
+        private readonly V8RuntimeHeapInfoAdapter cachedHeapInfo = new (default);
         private int nextUint8Array;
         private EngineApiWrapper? engineApi;
         private ScriptObject updateFunc;
@@ -154,7 +155,8 @@ namespace SceneRuntime.V8
         public UniTask UpdateScene(float dt)
         {
             nextUint8Array = 0;
-            RuntimeHeapInfo = (V8RuntimeHeapInfoAdapter)engineAdapter.GetRuntimeHeapInfo();
+            cachedHeapInfo.Update(engineAdapter.V8Engine.GetRuntimeHeapInfo());
+            RuntimeHeapInfo = cachedHeapInfo;
             resetableSource.Reset();
             try
             {
