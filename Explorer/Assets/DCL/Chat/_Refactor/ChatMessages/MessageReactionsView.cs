@@ -15,6 +15,7 @@ namespace DCL.Chat.ChatMessages
         [SerializeField] private ReactionCountItemView itemPrefab;
         [SerializeField] private float rowHeight = 32f;
         [SerializeField] private float baseRowY = 3f;
+        [SerializeField] private float reactionBottomPadding = 20f;
 
         private readonly List<ReactionCountItemView> activeItems = new ();
         private readonly List<ReactionCountItemView> pool = new ();
@@ -150,10 +151,12 @@ namespace DCL.Chat.ChatMessages
                 return;
             }
 
-            for (int i = 0; i < rowCount; i++)
-                SetRowY(activeRows[i], baseRowY + (rowCount - 1 - i) * rowHeight);
+            float baseOffset = baseRowY + reactionBottomPadding;
 
-            CurrentHeight = rowCount * rowHeight;
+            for (int i = 0; i < rowCount; i++)
+                SetRowY(activeRows[i], baseOffset + (rowCount - 1 - i) * rowHeight);
+
+            CurrentHeight = rowCount * rowHeight + reactionBottomPadding;
         }
 
         private static void SetRowY(RectTransform row, float y)
