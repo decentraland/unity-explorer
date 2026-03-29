@@ -39,6 +39,12 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public bool ShowRemoteUIReactions { get; set; } = true;
 
+        /// <summary>
+        /// Fired when the local user triggers a situational reaction.
+        /// Parameter: emojiIndex used.
+        /// </summary>
+        public event Action<int>? UserReactedToSituation;
+
         public SituationalReactionService(
             ChatReactionsConfig config,
             ChatReactionUISimulation uiSimulation,
@@ -127,6 +133,7 @@ namespace DCL.Chat.ChatReactions
 #if UNITY_EDITOR
             eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
 #endif
+            UserReactedToSituation?.Invoke(emojiIndex);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
@@ -137,6 +144,7 @@ namespace DCL.Chat.ChatReactions
 #if UNITY_EDITOR
             eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
 #endif
+            UserReactedToSituation?.Invoke(emojiIndex);
         }
 
         public void TriggerDefaultUIReaction()
@@ -148,6 +156,7 @@ namespace DCL.Chat.ChatReactions
 #if UNITY_EDITOR
             eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, config.UILane.StreamBurst, Time.unscaledTime, ReactionType.Situational));
 #endif
+            UserReactedToSituation?.Invoke(emojiIndex);
         }
 
         public void TriggerDefaultUIReactionFromRect(RectTransform sourceRect)
@@ -159,6 +168,7 @@ namespace DCL.Chat.ChatReactions
 #if UNITY_EDITOR
             eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, config.UILane.StreamBurst, Time.unscaledTime, ReactionType.Situational));
 #endif
+            UserReactedToSituation?.Invoke(emojiIndex);
         }
 
         public void BeginUIStream(RectTransform sourceRect)

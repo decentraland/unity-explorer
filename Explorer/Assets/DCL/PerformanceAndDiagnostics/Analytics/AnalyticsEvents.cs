@@ -189,6 +189,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
         }
 
+        public static class Reactions
+        {
+            public const string REACT_CHAT_MESSAGE = "react_chat_message";
+            public const string REACT_SITUATION = "react_situation";
+            public const string REACTION_VISUALIZATION = "reaction_visualization";
+        }
+
         public static class FeatureFlags
         {
             public const string ENABLED_FEATURES = "feature_flags";

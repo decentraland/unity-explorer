@@ -42,6 +42,8 @@ using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Settings;
 using DCL.Translation;
@@ -101,6 +103,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMessagePipesHub messagePipesHub;
         private readonly DecentralandEnvironment decentralandEnvironment;
+        private readonly IAnalyticsController analytics;
         private readonly CurrentChannelService? externalCurrentChannelService;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
@@ -154,6 +157,7 @@ namespace DCL.PluginSystem.Global
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
+            IAnalyticsController analytics,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -194,6 +198,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.messagePipesHub = messagePipesHub;
             this.decentralandEnvironment = decentralandEnvironment;
+            this.analytics = analytics;
             this.externalCurrentChannelService = externalCurrentChannelService;
 
             pluginCts = new CancellationTokenSource();
@@ -296,6 +301,14 @@ namespace DCL.PluginSystem.Global
             chatSettingsAsset.BubblesVisibilityChanged += onBubblesVisibilityChanged;
 
             pluginScope.Add(situationalReactionService);
+
+            var chatReactionsAnalytics = new ChatReactionsAnalytics(
+                analytics,
+                messageReactionService,
+                situationalReactionService,
+                chatSettingsAsset);
+
+            pluginScope.Add(chatReactionsAnalytics);
 
             var reactionDebugController = new SituationalReactionDebugController(
                 uiSimulation,

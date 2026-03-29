@@ -874,6 +874,7 @@ namespace Global.Dynamic
                     chatSharedAreaEventBus,
                     messagePipesHub,
                     bootstrapContainer.Environment,
+                    bootstrapContainer.Analytics.Controller,
                     currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,

@@ -19,6 +19,12 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public event Action<ChatChannel.ChannelId, string, int, string, bool>? ReactionPersistenceRequested;
 
+        /// <summary>
+        /// Fired when the local user adds a reaction to a message (not on removal, not on remote receive).
+        /// Parameters: emojiIndex, isParticipation (true if others already reacted with this emoji).
+        /// </summary>
+        public event Action<int, bool>? UserReactedToMessage;
+
         private readonly IReactionMessageBus reactionBus;
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
@@ -78,9 +84,11 @@ namespace DCL.Chat.ChatReactions
             }
             else
             {
+                bool othersReacted = reactions != null && reactions.GetReactors(emojiIndex) is { Count: > 0 };
                 channel.AddReaction(messageId, emojiIndex, ownWallet);
                 ReactionPersistenceRequested?.Invoke(channelId, messageId, emojiIndex, ownWallet, false);
                 SendReactionToNetwork(emojiIndex, messageId, channel.ChannelType, channelId);
+                UserReactedToMessage?.Invoke(emojiIndex, othersReacted);
             }
         }
 
