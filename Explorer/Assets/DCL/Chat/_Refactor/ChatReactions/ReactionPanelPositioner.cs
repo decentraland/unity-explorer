@@ -13,6 +13,7 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly RectTransform messageSelectorRect;
         private readonly EmojiPanelView emojiPanelView;
+        private readonly RectTransform emojiPanelRect;
         private readonly Vector2 shortcutsBarOffset;
         private readonly Vector2 emojiPanelOffsetForSituational;
 
@@ -23,6 +24,7 @@ namespace DCL.Chat.ChatReactions
         {
             this.messageSelectorRect = messageSelectorRect;
             this.emojiPanelView = emojiPanelView;
+            emojiPanelRect = (RectTransform)emojiPanelView.transform;
             shortcutsBarOffset = messageConfig.ShortcutsBarOffset;
             emojiPanelOffsetForSituational = messageConfig.EmojiPanelOffset;
         }
@@ -44,10 +46,17 @@ namespace DCL.Chat.ChatReactions
 
         /// <summary>
         /// Positions the emoji panel relative to the [+] button for situational mode.
+        /// Uses local-space conversion so the offset remains resolution-independent.
         /// </summary>
         public void PositionEmojiPanelForSituational(RectTransform addButton)
         {
-            emojiPanelView.MoveTo(addButton.position + (Vector3)emojiPanelOffsetForSituational);
+            var panelParent = (RectTransform)emojiPanelRect.parent;
+            Vector3 localPos = panelParent.InverseTransformPoint(addButton.position);
+
+            emojiPanelRect.localPosition = new Vector3(
+                localPos.x + emojiPanelOffsetForSituational.x,
+                localPos.y + emojiPanelOffsetForSituational.y,
+                0f);
         }
 
         /// <summary>
