@@ -18,6 +18,7 @@ namespace DCL.Settings.ModuleControllers
                 view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_CHAT_REACTIONS_ENABLED);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetReactionsEnabled);
+            chatSettingsAsset.ChatReactionsEnabledChanged += OnExternalSettingChanged;
             SetReactionsEnabled(view.ToggleView.Toggle.isOn);
         }
 
@@ -27,7 +28,15 @@ namespace DCL.Settings.ModuleControllers
             DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_CHAT_REACTIONS_ENABLED, enabled, save: true);
         }
 
-        public override void Dispose() =>
+        private void OnExternalSettingChanged(bool enabled)
+        {
+            view.ConfigureWithoutNotify(enabled);
+        }
+
+        public override void Dispose()
+        {
             view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
+            chatSettingsAsset.ChatReactionsEnabledChanged -= OnExternalSettingChanged;
+        }
     }
 }

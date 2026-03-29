@@ -147,7 +147,8 @@ namespace DCL.Chat
                 fixedDefaults,
                 view.EmojiPanelView,
                 emojiPanelPresenter,
-                reactionsConfig.MessageReactions);
+                reactionsConfig.MessageReactions,
+                chatSettingsAsset);
 
             string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
             view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,

@@ -2,6 +2,8 @@ using System;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
+using DCL.Prefs;
+using DCL.Settings.Settings;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
@@ -26,6 +28,8 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatClickDetectionHandler clickDetectionHandler;
         private readonly ReactionPanelPositioner panelPositioner;
         private readonly RectTransform buttonRect;
+        private readonly ChatSettingsAsset chatSettingsAsset;
+        private readonly ChatReactionsSelectorView situationalSelectorView;
 
         private bool emojiPanelOpenedByReactions;
         private ReactionMode currentMode = ReactionMode.Situational;
@@ -45,11 +49,14 @@ namespace DCL.Chat.ChatReactions
             int[] fixedDefaults,
             EmojiPanelView emojiPanelView,
             EmojiPanelPresenter emojiPanelPresenter,
-            ChatReactionsMessageConfig messageReactionsConfig)
+            ChatReactionsMessageConfig messageReactionsConfig,
+            ChatSettingsAsset chatSettingsAsset)
         {
             this.reactionService = reactionService;
             this.emojiPanelPresenter = emojiPanelPresenter;
             this.atlasConfig = atlasConfig;
+            this.chatSettingsAsset = chatSettingsAsset;
+            this.situationalSelectorView = situationalSelectorView;
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
@@ -89,6 +96,12 @@ namespace DCL.Chat.ChatReactions
             situationalSelectorPresenter.AddClicked += OnAddClicked;
             messageSelectorPresenter.ReactionClicked += OnSelectorReactionClicked;
             messageSelectorPresenter.AddClicked += OnAddClicked;
+
+            if (situationalSelectorView.ShowOthersToggle != null)
+            {
+                situationalSelectorView.ShowOthersToggle.Toggle.onValueChanged.AddListener(OnShowOthersToggleChanged);
+                chatSettingsAsset.ChatReactionsEnabledChanged += OnReactionsEnabledSettingChanged;
+            }
         }
 
         private bool IsInMessageMode => currentMode == ReactionMode.Message;
@@ -138,7 +151,9 @@ namespace DCL.Chat.ChatReactions
             }
             else
             {
+                situationalSelectorView.SetOptionsVisible(true);
                 situationalSelectorPresenter.Show();
+                SyncShowOthersToggle();
                 clickDetectionHandler.Resume();
             }
         }
@@ -147,7 +162,11 @@ namespace DCL.Chat.ChatReactions
         {
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
-            HideBar();
+
+            if (IsInMessageMode)
+                HideBar();
+            else
+                HideEmojiPanel();
         }
 
         private void OnClickOutside()
@@ -224,7 +243,9 @@ namespace DCL.Chat.ChatReactions
 
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
-            HideBar();
+
+            if (IsInMessageMode)
+                HideBar();
         }
 
         private bool TryResolveEmojiAtlasIndex(string emojiUnicode, out int atlasIndex)
@@ -263,6 +284,30 @@ namespace DCL.Chat.ChatReactions
             buttonPresenter.Hide();
         }
 
+        private void SyncShowOthersToggle()
+        {
+            SetShowOthersToggleSilently(chatSettingsAsset.chatReactionsEnabled);
+        }
+
+        private void OnShowOthersToggleChanged(bool enabled)
+        {
+            chatSettingsAsset.SetReactionsEnabled(enabled);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_CHAT_REACTIONS_ENABLED, enabled, save: true);
+        }
+
+        private void OnReactionsEnabledSettingChanged(bool enabled)
+        {
+            SetShowOthersToggleSilently(enabled);
+        }
+
+        private void SetShowOthersToggleSilently(bool value)
+        {
+            if (situationalSelectorView.ShowOthersToggle == null) return;
+
+            situationalSelectorView.ShowOthersToggle.Toggle.SetIsOnWithoutNotify(value);
+            situationalSelectorView.ShowOthersToggle.SetToggleGraphics(value);
+        }
+
         public void Dispose()
         {
             HideEmojiPanel();
@@ -274,6 +319,12 @@ namespace DCL.Chat.ChatReactions
             situationalSelectorPresenter.AddClicked -= OnAddClicked;
             messageSelectorPresenter.ReactionClicked -= OnSelectorReactionClicked;
             messageSelectorPresenter.AddClicked -= OnAddClicked;
+
+            if (situationalSelectorView.ShowOthersToggle != null)
+            {
+                situationalSelectorView.ShowOthersToggle.Toggle.onValueChanged.RemoveListener(OnShowOthersToggleChanged);
+                chatSettingsAsset.ChatReactionsEnabledChanged -= OnReactionsEnabledSettingChanged;
+            }
 
             buttonPresenter.Dispose();
             situationalSelectorPresenter.Dispose();

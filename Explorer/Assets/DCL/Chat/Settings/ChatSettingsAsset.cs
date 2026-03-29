@@ -47,6 +47,8 @@ namespace DCL.Settings.Settings
 
         public void SetReactionsEnabled(bool enabled)
         {
+            if (chatReactionsEnabled == enabled) return;
+
             chatReactionsEnabled = enabled;
             ChatReactionsEnabledChanged?.Invoke(enabled);
         }
