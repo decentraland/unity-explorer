@@ -145,9 +145,9 @@ namespace DCL.Chat.ChatReactions
 
         private void OnSelectorReactionClicked(int atlasIndex)
         {
-            HideEmojiPanel();
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
+            HideBar();
         }
 
         private void OnClickOutside()
@@ -224,6 +224,7 @@ namespace DCL.Chat.ChatReactions
 
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
+            HideBar();
         }
 
         private bool TryResolveEmojiAtlasIndex(string emojiUnicode, out int atlasIndex)
