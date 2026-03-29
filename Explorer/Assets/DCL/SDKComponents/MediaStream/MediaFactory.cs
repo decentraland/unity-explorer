@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
@@ -44,10 +45,11 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly IYouTubeUrlResolver youTubeUrlResolver;
+        private readonly IAnalyticsController analyticsController;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver)
+            AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver, IAnalyticsController analyticsController)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -61,6 +63,7 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
             this.youTubeUrlResolver = youTubeUrlResolver;
+            this.analyticsController = analyticsController;
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -197,7 +200,7 @@ namespace DCL.SDKComponents.MediaStream
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
             if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, youTubeUrlResolver).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, youTubeUrlResolver, analyticsController).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 

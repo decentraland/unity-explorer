@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -28,11 +29,12 @@ namespace DCL.SDKComponents.MediaStream
         private readonly CacheCleaner cacheCleaner;
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IYouTubeUrlResolver youTubeUrlResolver;
+        private readonly IAnalyticsController analyticsController;
 
         private readonly MediaVolume mediaVolume;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver)
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver, IAnalyticsController analyticsController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
@@ -41,6 +43,7 @@ namespace DCL.SDKComponents.MediaStream
             this.cacheCleaner = cacheCleaner;
             this.assetPreLoadCache = assetPreLoadCache;
             this.youTubeUrlResolver = youTubeUrlResolver;
+            this.analyticsController = analyticsController;
 
             mediaVolume = new MediaVolume(volumeBus);
         }
@@ -69,7 +72,7 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, youTubeUrlResolver);
+            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, youTubeUrlResolver, analyticsController);
         }
 
         public override void Dispose() =>
