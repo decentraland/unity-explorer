@@ -233,6 +233,7 @@ namespace DCL.Chat.ChatMessages
             ChatMessageViewModel newViewModel = InsertNewMessageViewModel(destinationChannel, addedMessage, index);
             bool needsSeparator = UpdateSeparatorAfterNewMessage(wasAtBottom, isSentByOwnUser, separatorIndexBeforeInsert);
 
+            reactionInteraction.HideTooltip();
             view.ReconstructScrollView(false);
             ScrollToBottomIfNeeded(needsSeparator);
 
@@ -562,7 +563,7 @@ namespace DCL.Chat.ChatMessages
             if (viewModel == null) return;
 
             viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
-            reactionInteraction.OnReactionChanged(messageId);
+            reactionInteraction.HideTooltip();
             view.ReconstructScrollView(false);
         }
 
