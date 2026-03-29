@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
@@ -8,9 +6,5 @@ namespace DCL.Chat.ChatReactions
     public interface IRemoteReactionTarget
     {
         void HandleRemoteReaction(ReactionReceivedArgs args);
-
-        void TriggerWorldReaction(Vector3 worldPos, int emojiIndex, int count);
-        void TriggerWorldReactionForAvatar(string walletId, int emojiIndex, int count);
-        void TriggerRemoteUIReaction(int emojiIndex, int count);
     }
 }
