@@ -6,7 +6,7 @@ namespace DCL.Chat.ChatMessages
 {
     public class ReactionTooltipView : MonoBehaviour
     {
-        private const string OFFLINE_MESSAGE = "Offline user \u2014 reactions unavailable.";
+        private const string OFFLINE_MESSAGE = "Offline user — reactions unavailable.";
 
         [SerializeField] private TMP_Text namesText;
         [SerializeField] private RawImage emojiImage;
