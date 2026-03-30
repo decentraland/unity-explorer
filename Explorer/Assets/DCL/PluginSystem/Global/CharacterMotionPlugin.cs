@@ -84,6 +84,7 @@ namespace DCL.PluginSystem.Global
                 new GlideState(),
                 new JumpState());
 
+            UpdatePointAndClickInputSystem.InjectToWorld(ref builder);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
