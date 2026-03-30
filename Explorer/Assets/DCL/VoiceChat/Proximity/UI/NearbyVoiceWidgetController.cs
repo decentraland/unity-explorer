@@ -59,7 +59,7 @@ namespace DCL.VoiceChat.Proximity
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
             view.VolumeSliderContainer.SetActive(isConnected);
-            view.SpeakButton.gameObject.SetActive(isConnected);
+            view.SpeakButtonContainer.SetActive(isConnected);
             view.HearText.SetActive(isConnected);
         }
 

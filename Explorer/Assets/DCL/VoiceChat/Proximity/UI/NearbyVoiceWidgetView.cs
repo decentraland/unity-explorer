@@ -12,6 +12,7 @@ namespace DCL.VoiceChat.Proximity
         [field: SerializeField] public Toggle HearOthersToggle { get; private set; } = null!;
         [field: SerializeField] public GameObject VolumeSliderContainer { get; private set; } = null!;
         [field: SerializeField] public Slider VolumeSlider { get; private set; } = null!;
+        [field: SerializeField] public GameObject SpeakButtonContainer { get; private set; } = null!;
         [field: SerializeField] public Button SpeakButton { get; private set; } = null!;
         [field: SerializeField] public GameObject HearText { get; private set; } = null!;
     }

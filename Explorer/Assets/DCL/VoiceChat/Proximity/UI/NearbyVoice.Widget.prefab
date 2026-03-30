@@ -1050,10 +1050,13 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1762814490784345320}
   <raycaster>k__BackingField: {fileID: 576444685409359194}
   <viewAnimationElement>k__BackingField: {fileID: 1674241877427284860}
+  <CloseAreaButton>k__BackingField: {fileID: 5018798167616832090}
   <HearOthersToggle>k__BackingField: {fileID: 5975531749364629377}
+  <VolumeSliderContainer>k__BackingField: {fileID: 1850643027331355941}
   <VolumeSlider>k__BackingField: {fileID: 8598501768903546571}
+  <SpeakButtonContainer>k__BackingField: {fileID: 3426060694064645244}
   <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
-  <closeAreaButton>k__BackingField: {fileID: 5018798167616832090}
+  <HearText>k__BackingField: {fileID: 1750879125718927294}
 --- !u!114 &1674241877427284860
 MonoBehaviour:
   m_ObjectHideFlags: 0
