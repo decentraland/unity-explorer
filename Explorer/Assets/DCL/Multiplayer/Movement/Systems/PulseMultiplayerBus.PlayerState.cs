@@ -40,14 +40,16 @@ namespace DCL.Multiplayer.Connections.Pulse
                     break;
                 }
 
-                incomingProfiles.Enqueue(playerJoined.UserId, playerJoined.ProfileVersion);
+                string resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
-                peerIdCache.Set(playerJoined.UserId, playerJoined.State.SubjectId);
+                incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
+
+                peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
 
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
                 lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
 
-                Inbox(movementMessage, playerJoined.UserId);
+                Inbox(movementMessage, resolvedWallet);
             }
         }
 
