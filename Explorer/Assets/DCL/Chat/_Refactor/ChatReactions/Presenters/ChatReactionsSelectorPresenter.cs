@@ -128,6 +128,7 @@ namespace DCL.Chat.ChatReactions
                 var item = itemPool.Get();
                 item.Initialize(recents[i], atlasConfig);
                 item.OnClicked += HandleReactionClicked;
+                item.transform.SetAsLastSibling();
                 recentItems.Add(item);
             }
 

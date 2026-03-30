@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DCL.Prefs;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions
 {
@@ -19,7 +20,16 @@ namespace DCL.Chat.ChatReactions
         private readonly List<int> topRecents = new();
         private readonly System.Text.StringBuilder saveBuilder = new();
 
+        private bool dirty;
+
+        /// <summary>Active instance for editor debug tools. Same pattern as <see cref="ChatReactionDebugState.Current"/>.</summary>
+        public static ChatReactionRecentsService? Current { get; private set; }
+
         public IReadOnlyList<int> Recents => topRecents;
+
+        public bool IsDirty => dirty;
+
+        public int TotalTrackedEmojis => usageEntries.Count;
 
         public ChatReactionRecentsService(int[] fixedDefaults, int maxRecent)
         {
@@ -27,6 +37,7 @@ namespace DCL.Chat.ChatReactions
             this.maxRecent = maxRecent;
             Load();
             RebuildTopRecents();
+            Current = this;
         }
 
         /// <summary>
@@ -35,8 +46,13 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public void RecordUsage(int atlasIndex)
         {
+            Profiler.BeginSample("ChatReactions.Recents.RecordUsage");
+
             if (IsFixedDefault(atlasIndex))
+            {
+                Profiler.EndSample();
                 return;
+            }
 
             bool found = false;
 
@@ -54,9 +70,46 @@ namespace DCL.Chat.ChatReactions
             if (!found)
                 usageEntries.Add(new EmojiUsage(atlasIndex, 1));
 
+            Profiler.BeginSample("ChatReactions.Recents.RebuildTop");
             RebuildTopRecents();
-            Save();
+            Profiler.EndSample();
+
+            dirty = true;
+
+            Profiler.EndSample();
         }
+
+        /// <summary>
+        /// Persists accumulated usage changes to disk if any were recorded
+        /// since the last flush. Safe to call multiple times — no-op when clean.
+        /// </summary>
+        public void FlushIfDirty()
+        {
+            if (!dirty) return;
+
+            Profiler.BeginSample("ChatReactions.Recents.Flush");
+            Save();
+            dirty = false;
+            Profiler.EndSample();
+        }
+
+        /// <summary>
+        /// Clears all tracked usage data in memory and on disk.
+        /// </summary>
+        public void ClearAll()
+        {
+            usageEntries.Clear();
+            topRecents.Clear();
+            dirty = false;
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, string.Empty);
+        }
+
+        /// <summary>
+        /// Returns atlas index and usage count for the entry at the given position.
+        /// For editor debug display only.
+        /// </summary>
+        public (int atlasIndex, int count) GetUsageEntry(int i) =>
+            (usageEntries[i].AtlasIndex, usageEntries[i].Count);
 
         public bool IsFixedDefault(int atlasIndex)
         {
@@ -101,12 +154,15 @@ namespace DCL.Chat.ChatReactions
 
         private void Load()
         {
+            Profiler.BeginSample("ChatReactions.Recents.Load");
             usageEntries.Clear();
 
             string saved = ReadSavedFavorites();
 
             if (saved != null)
                 ParseSavedEntries(saved);
+
+            Profiler.EndSample();
         }
         private static string ReadSavedFavorites()
         {
@@ -181,7 +237,7 @@ namespace DCL.Chat.ChatReactions
         {
             if (usageEntries.Count == 0)
             {
-                DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, string.Empty, save: true);
+                DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, string.Empty);
                 return;
             }
 
@@ -195,7 +251,7 @@ namespace DCL.Chat.ChatReactions
                 saveBuilder.Append(usageEntries[i].Count);
             }
 
-            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, saveBuilder.ToString(), save: true);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, saveBuilder.ToString());
         }
 
         private bool ContainsIndex(int atlasIndex)

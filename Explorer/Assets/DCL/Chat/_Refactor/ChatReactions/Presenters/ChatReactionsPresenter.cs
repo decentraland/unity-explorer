@@ -30,6 +30,7 @@ namespace DCL.Chat.ChatReactions
         private readonly RectTransform buttonRect;
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ChatReactionsSelectorView situationalSelectorView;
+        private readonly ChatReactionRecentsService recentsService;
 
         private bool emojiPanelOpenedByReactions;
         private ReactionMode currentMode = ReactionMode.Situational;
@@ -57,6 +58,7 @@ namespace DCL.Chat.ChatReactions
             this.atlasConfig = atlasConfig;
             this.chatSettingsAsset = chatSettingsAsset;
             this.situationalSelectorView = situationalSelectorView;
+            this.recentsService = recentsService;
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
@@ -181,6 +183,7 @@ namespace DCL.Chat.ChatReactions
             messageSelectorPresenter.Hide();
             clickDetectionHandler.Pause();
             ClearMessageMode();
+            recentsService.FlushIfDirty();
         }
 
         private void ClearMessageMode()
@@ -310,6 +313,7 @@ namespace DCL.Chat.ChatReactions
 
         public void Dispose()
         {
+            recentsService.FlushIfDirty();
             HideEmojiPanel();
             ClearMessageMode();
             clickDetectionHandler.OnClickOutside -= OnClickOutside;

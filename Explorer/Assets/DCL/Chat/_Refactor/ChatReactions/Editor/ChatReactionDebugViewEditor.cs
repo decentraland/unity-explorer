@@ -30,6 +30,7 @@ namespace DCL.Chat.ChatReactions.Editor
             var stats = view.LastStats;
 
             DrawLiveStats(stats, config);
+            DrawRecents();
             DrawDebugToggles(config);
             DrawConfigReferences(config);
             DrawSentLog(view);
@@ -69,6 +70,69 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Nearby", stats.NearbyAvatarCount.ToString());
             Label("Debug Nearby", StateText(stats.IsDebugNearbyActive));
             EditorGUI.indentLevel--;
+
+            DrawSeparator();
+        }
+
+        private static void DrawRecents()
+        {
+            var service = ChatReactionRecentsService.Current;
+
+            EditorGUILayout.LabelField("Recents", EditorStyles.boldLabel);
+
+            if (service == null)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.LabelField("(service not available)", EditorStyles.miniLabel);
+                EditorGUI.indentLevel--;
+                DrawSeparator();
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            Label("Tracked Emojis", service.TotalTrackedEmojis.ToString());
+            Label("Top Recents", service.Recents.Count.ToString());
+            Label("Dirty", service.IsDirty ? "[Yes]" : "[No]");
+
+            if (service.Recents.Count > 0)
+            {
+                EditorGUILayout.Space(2);
+                EditorGUILayout.LabelField("Shortcuts Bar (by usage)", EditorStyles.miniBoldLabel);
+
+                for (int i = 0; i < service.Recents.Count; i++)
+                    EditorGUILayout.LabelField($"  [{i}] atlasIndex={service.Recents[i]}", EditorStyles.miniLabel);
+            }
+
+            if (service.TotalTrackedEmojis > 0)
+            {
+                EditorGUILayout.Space(2);
+                EditorGUILayout.LabelField("All Tracked (index : count)", EditorStyles.miniBoldLabel);
+
+                for (int i = 0; i < service.TotalTrackedEmojis; i++)
+                {
+                    var (atlasIndex, count) = service.GetUsageEntry(i);
+                    EditorGUILayout.LabelField($"  [{i}] atlasIndex={atlasIndex}  count={count}", EditorStyles.miniLabel);
+                }
+            }
+
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Clear Recents"))
+            {
+                service.ClearAll();
+                Debug.Log("[ChatReactions] Recents cleared.");
+            }
+
+            if (service.IsDirty && GUILayout.Button("Flush to Disk"))
+            {
+                service.FlushIfDirty();
+                Debug.Log("[ChatReactions] Recents flushed to disk.");
+            }
+
+            EditorGUILayout.EndHorizontal();
 
             DrawSeparator();
         }
