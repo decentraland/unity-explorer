@@ -85,7 +85,6 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Stream Local Player", StateText(config.StreamLocalPlayer));
             Label("Stream Remote Players", StateText(config.StreamRemotePlayers));
             Label("Mock Enabled", StateText(config.MockEnabled));
-            Label("Self Send Enabled", StateText(config.SelfSendEnabled));
 
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Message Reactions", EditorStyles.miniBoldLabel);

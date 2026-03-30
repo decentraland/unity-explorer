@@ -20,14 +20,11 @@ namespace DCL.Chat.ChatReactions
 {
     public sealed class MultiplayerReactionMessageBus : IReactionMessageBus
     {
-        private const float SELF_SEND_DELAY = 0.05f;
-
         private readonly IMessagePipesHub messagePipesHub;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IWeb3IdentityCache identityCache;
         private readonly string routingUser;
         private readonly CancellationTokenSource cts = new ();
-        private readonly bool selfSendEnabled;
         private readonly IMessageDeduplication<float> situationalDedup = new MessageDeduplication<float>();
         private readonly IMessageDeduplication<string> chatReactionDedup = new MessageDeduplication<string>();
 
@@ -37,14 +34,12 @@ namespace DCL.Chat.ChatReactions
             IMessagePipesHub messagePipesHub,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IWeb3IdentityCache identityCache,
-            string routingUser,
-            bool selfSendEnabled = false)
+            string routingUser)
         {
             this.messagePipesHub = messagePipesHub;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.identityCache = identityCache;
             this.routingUser = routingUser;
-            this.selfSendEnabled = selfSendEnabled;
 
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[MultiplayerReactionBus] Subscribing to Reaction and ChatReaction on Island/Scene/Chat pipes");
 
@@ -67,9 +62,6 @@ namespace DCL.Chat.ChatReactions
 
             SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.IslandPipe());
             SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.ScenePipe());
-
-            if (selfSendEnabled)
-                SelfSendSituationalAsync(emojiIndex, sendCount, timestamp).Forget();
         }
 
         public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing)
@@ -103,9 +95,6 @@ namespace DCL.Chat.ChatReactions
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            if (selfSendEnabled)
-                SelfSendChatReactionAsync(emojiIndex, messageId, address).Forget();
         }
 
         public void Dispose()
@@ -136,34 +125,6 @@ namespace DCL.Chat.ChatReactions
             reaction.Payload.MessageId = messageId;
             reaction.Payload.Address = address;
             reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
-        }
-
-        private async UniTaskVoid SelfSendSituationalAsync(int emojiIndex, int count, float timestamp)
-        {
-            string walletId = identityCache.Identity?.Address ?? string.Empty;
-            await DelaySelfSendAsync(new ReactionReceivedArgs(walletId, emojiIndex, count, ReactionType.Situational, string.Empty),
-                $"Self-send situational reaction: emoji={emojiIndex} count={count} wallet={walletId}");
-        }
-
-        private async UniTaskVoid SelfSendChatReactionAsync(int wireEmojiIndex, string messageId, string address)
-        {
-            bool isRemoval = wireEmojiIndex < 0;
-            int emojiIndex = isRemoval ? ~wireEmojiIndex : wireEmojiIndex;
-
-            await DelaySelfSendAsync(new ReactionReceivedArgs(address, emojiIndex, 1, ReactionType.Message, messageId, isRemoval),
-                $"Self-send chat reaction: emoji={emojiIndex} isRemoval={isRemoval} messageId={messageId}");
-        }
-
-        private async UniTask DelaySelfSendAsync(ReactionReceivedArgs args, string logMessage)
-        {
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(SELF_SEND_DELAY), cancellationToken: cts.Token);
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] {logMessage}");
-                ReactionReceived?.Invoke(args);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES); }
         }
 
         private void OnSituationalReactionReceived(ReceivedMessage<Reaction> receivedMessage)

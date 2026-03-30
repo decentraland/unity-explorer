@@ -44,9 +44,6 @@ namespace DCL.Chat.ChatReactions.Configs
               "Nearby avatars will appear to send random reactions without a real connection.")]
         public bool MockEnabled;
 
-        [Note("Echo your own reactions back to yourself for testing without a second client.")]
-        public bool SelfSendEnabled;
-
         [Header("Debug — Streaming")]
         [Note("Master toggle — enables debug toggles and live stats. Disable in production.")]
         public bool DebugEnabled;

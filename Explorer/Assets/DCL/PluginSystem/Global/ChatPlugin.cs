@@ -267,13 +267,12 @@ namespace DCL.PluginSystem.Global
             }
             else
             {
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (selfSend={reactionsConfig.SelfSendEnabled}, routingUser={routingUser})");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (routingUser={routingUser})");
                 reactionBus = new MultiplayerReactionMessageBus(
                     messagePipesHub,
                     userBlockingCacheProxy,
                     web3IdentityCache,
-                    routingUser,
-                    reactionsConfig.SelfSendEnabled);
+                    routingUser);
             }
 
             pluginScope.Add(reactionBus);
@@ -316,13 +315,13 @@ namespace DCL.PluginSystem.Global
                 avatarReactionPosition);
             pluginScope.Add(reactionDebugController);
 
-            var remoteReactionRouter = new RemoteReactionRouter(situationalReactionService, reactionBus);
+            var reactionRouter = new ReactionRouter(reactionBus, situationalReactionService, messageReactionService);
             situationalReactionService.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
 
             onReactionsEnabledChanged = enabled => situationalReactionService.ShowRemoteUIReactions = enabled;
             chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
 
-            pluginScope.Add(remoteReactionRouter);
+            pluginScope.Add(reactionRouter);
 
             var reactionDebugState = new ChatReactionDebugState();
             pluginScope.Add(reactionDebugState);

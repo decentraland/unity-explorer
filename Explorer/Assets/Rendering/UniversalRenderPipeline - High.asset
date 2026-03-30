@@ -24,11 +24,11 @@ MonoBehaviour:
   m_RequireOpaqueTexture: 1
   m_OpaqueDownsampling: 0
   m_SupportsTerrainHoles: 1
-  m_SupportsHDR: 1
+  m_SupportsHDR: 0
   m_HDRColorBufferPrecision: 0
-  m_MSAA: 8
+  m_MSAA: 2
   m_RenderScale: 1
-  m_UpscalingFilter: 0
+  m_UpscalingFilter: 3
   m_FsrOverrideSharpness: 0
   m_FsrSharpness: 0.92
   m_EnableLODCrossFade: 1
@@ -46,22 +46,22 @@ MonoBehaviour:
   m_MainLightShadowsSupported: 1
   m_MainLightShadowmapResolution: 1024
   m_AdditionalLightsRenderingMode: 1
-  m_AdditionalLightsPerObjectLimit: 8
+  m_AdditionalLightsPerObjectLimit: 6
   m_AdditionalLightShadowsSupported: 1
   m_AdditionalLightsShadowmapResolution: 8192
-  m_AdditionalLightsShadowResolutionTierLow: 512
-  m_AdditionalLightsShadowResolutionTierMedium: 1024
-  m_AdditionalLightsShadowResolutionTierHigh: 1024
+  m_AdditionalLightsShadowResolutionTierLow: 256
+  m_AdditionalLightsShadowResolutionTierMedium: 256
+  m_AdditionalLightsShadowResolutionTierHigh: 512
   m_ReflectionProbeBlending: 0
   m_ReflectionProbeBoxProjection: 0
   m_ReflectionProbeAtlas: 0
-  m_ShadowDistance: 56
-  m_ShadowCascadeCount: 4
+  m_ShadowDistance: 60
+  m_ShadowCascadeCount: 1
   m_Cascade2Split: 0.25
   m_Cascade3Split: {x: 0.1, y: 0.3}
   m_Cascade4Split: {x: 0.049999997, y: 0.14999999, z: 0.29999998}
   m_CascadeBorder: 0.42857143
-  m_ShadowDepthBias: 1.56
+  m_ShadowDepthBias: 1.75
   m_ShadowNormalBias: 0
   m_AnyShadowsSupported: 1
   m_SoftShadowsSupported: 1
@@ -131,12 +131,12 @@ MonoBehaviour:
   m_PrefilterScreenCoord: 1
   m_PrefilterScreenSpaceIrradiance: 1
   m_PrefilterNativeRenderPass: 1
-  m_PrefilterUseLegacyLightmaps: 1
+  m_PrefilterUseLegacyLightmaps: 0
   m_PrefilterBicubicLightmapSampling: 1
   m_PrefilterReflectionProbeRotation: 1
-  m_PrefilterReflectionProbeBlending: 0
+  m_PrefilterReflectionProbeBlending: 1
   m_PrefilterReflectionProbeBoxProjection: 1
-  m_PrefilterReflectionProbeAtlas: 0
+  m_PrefilterReflectionProbeAtlas: 1
   m_ShaderVariantLogLevel: 0
   m_ShadowCascades: 2
   m_Textures:

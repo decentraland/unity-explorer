@@ -41,7 +41,6 @@ namespace DCL.Chat.ChatReactions
             this.chatHistory = chatHistory;
             this.identityCache = identityCache;
 
-            reactionBus.ReactionReceived += OnReactionReceived;
             chatHistory.MessageAdded += OnMessageAdded;
             chatHistory.ChannelCleared += OnChannelCleared;
             chatHistory.ChannelRemoved += OnChannelRemoved;
@@ -120,7 +119,6 @@ namespace DCL.Chat.ChatReactions
 
         public void Dispose()
         {
-            reactionBus.ReactionReceived -= OnReactionReceived;
             chatHistory.MessageAdded -= OnMessageAdded;
             chatHistory.ChannelCleared -= OnChannelCleared;
             chatHistory.ChannelRemoved -= OnChannelRemoved;
@@ -150,11 +148,11 @@ namespace DCL.Chat.ChatReactions
                 messageIdToChannel.Remove(purgeBuffer[i]);
         }
 
-        private void OnReactionReceived(ReactionReceivedArgs args)
+        /// <summary>
+        /// Handles an incoming remote message reaction routed by <see cref="ReactionRouter"/>.
+        /// </summary>
+        internal void HandleRemoteReaction(ReactionReceivedArgs args)
         {
-            if (args.Type != ReactionType.Message)
-                return;
-
             if (!TryResolveIncomingReaction(args.MessageId, out string localMessageId, out ChatChannel channel))
             {
                 ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,
