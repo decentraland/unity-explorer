@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -96,6 +97,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
+            IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
@@ -146,7 +148,9 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 profileRepositoryWrapper,
                 voiceChatOrchestrator,
-                decentralandUrlsSource
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

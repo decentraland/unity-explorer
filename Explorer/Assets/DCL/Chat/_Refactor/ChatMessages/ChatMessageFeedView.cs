@@ -308,33 +308,12 @@ namespace DCL.Chat.ChatMessages
 
         internal void StartChatEntriesFadeout()
         {
-            // Kill any previous sequence or
-            // tweens touching this CanvasGroup
-            _fadeSequenceTween?.Kill();
-            chatEntriesCanvasGroup.DOKill();
-
-            chatEntriesCanvasGroup.alpha = 1f;
-
-            bool completed = false;
+            StopChatEntriesFadeout();
             float waitSeconds = chatEntriesWaitBeforeFading / 1000f;
 
             _fadeSequenceTween = DOTween.Sequence()
                 .AppendInterval(waitSeconds)
-                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime))
-                .OnComplete(() =>
-                {
-                    completed = true;
-                    _fadeSequenceTween = null;
-                })
-                .OnKill(() =>
-                {
-                    // If killed before completion,
-                    // snap back to fully visible
-                    if (!completed && chatEntriesCanvasGroup)
-                        chatEntriesCanvasGroup.alpha = 1f;
-
-                    _fadeSequenceTween = null;
-                });
+                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime));
         }
 
         internal void StopChatEntriesFadeout()
@@ -342,7 +321,6 @@ namespace DCL.Chat.ChatMessages
             _fadeSequenceTween?.Kill();
             chatEntriesCanvasGroup.DOKill();
             chatEntriesCanvasGroup.alpha = 1f;
-            _fadeSequenceTween = null;
         }
 
         public void SetScrollToBottomButtonVisibility(bool isVisible, int unreadCount, bool useAnimation)
