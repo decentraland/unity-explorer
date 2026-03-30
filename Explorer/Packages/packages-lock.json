@@ -86,7 +86,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "9365d4b0f148605d08c5944de3fec3ac76ee607c"
+      "hash": "9449523943a0939f6700a1038c0e7de004b0f982"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -513,7 +513,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
