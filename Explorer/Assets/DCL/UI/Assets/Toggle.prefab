@@ -299,13 +299,13 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9098039, g: 0.89411765, b: 0.94509804, a: 1}
     m_PressedColor: {r: 0.9098039, g: 0.89411765, b: 0.94509804, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
+    m_FadeDuration: 0
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 0}
@@ -361,27 +361,6 @@ MonoBehaviour:
   <canvasGroup>k__BackingField: {fileID: 4090642556362700737}
   <interactableAlpha>k__BackingField: 1
   <nonInteractableAlpha>k__BackingField: 0.5
-  <colorableElements>k__BackingField:
-  - <element>k__BackingField: {fileID: 6975587278961672583}
-    <interactableOnColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
-    <interactableOffColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.14901961}
-    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-  - <element>k__BackingField: {fileID: 3667918575240206737}
-    <interactableOnColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
-    <interactableOffColor>k__BackingField: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 0.5019608}
-    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-  - <element>k__BackingField: {fileID: 1027324785593132713}
-    <interactableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <interactableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-  - <element>k__BackingField: {fileID: 1528761235184241228}
-    <interactableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <interactableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOnColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
-    <nonInteractableOffColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &8806659310530846726
 GameObject:
   m_ObjectHideFlags: 0
