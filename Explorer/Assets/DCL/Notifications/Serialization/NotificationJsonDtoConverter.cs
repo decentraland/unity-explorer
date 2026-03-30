@@ -42,6 +42,9 @@ namespace DCL.Notifications.Serialization
         private const string TRANSFER_RECEIVED_TYPE = "transfer_received";
         private const string COMMUNITY_VOICE_CHAT_STARTED_TYPE = "community_voice_chat_started";
         private const string TIP_RECEIVED_TYPE = "tip_received";
+        private const string BAN_WARNING_TYPE = "ban_warning";
+        private const string BANNED_TYPE = "banned";
+        private const string BAN_LIFTED_TYPE = "ban_lifted";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -118,6 +121,9 @@ namespace DCL.Notifications.Serialization
                     TRANSFER_RECEIVED_TYPE => new GiftReceivedNotification(),
                     COMMUNITY_VOICE_CHAT_STARTED_TYPE => new CommunityVoiceChatStartedNotification(),
                     TIP_RECEIVED_TYPE => new TipReceivedNotification(),
+                    BAN_WARNING_TYPE => new BanWarningNotification(),
+                    BANNED_TYPE => new BannedNotification(),
+                    BAN_LIFTED_TYPE => new BanLiftedNotification(),
                     _ => null,
                 };
 
