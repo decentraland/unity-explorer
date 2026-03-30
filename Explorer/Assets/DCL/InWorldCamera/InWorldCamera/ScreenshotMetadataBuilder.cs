@@ -91,7 +91,7 @@ namespace DCL.InWorldCamera
             else
                 placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
-            return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
+            return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, string.IsNullOrEmpty(placeInfo.world_name) ? placeInfo.id : placeInfo.world_name);
         }
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
