@@ -46,6 +46,8 @@ In `unity-explorer`:
 
 Create example test scene in `sdk7-test-scenes`.
 
+**SDK `getOrNull` vs `getMutableOrNull` (CRITICAL):** In scene-side TypeScript, `getMutableOrNull` marks the component dirty in the CRDT system, which triggers `IsDirty = true` on the Explorer side and causes a full property re-apply. **Only use `getMutableOrNull` when you are about to write to the component.** For read-only access (e.g., reading values to display in a UI panel), always use `getOrNull`. Calling `getMutableOrNull` every frame in a UI render function will make the component permanently dirty, causing unintended side effects like re-triggering emission bursts, restarting animations, or redundant material/texture reloads.
+
 ### PR Merge Order
 
 Protocol first -> update both `js-sdk-toolchain` and `unity-explorer` -> merge in any order.
