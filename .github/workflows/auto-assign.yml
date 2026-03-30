@@ -6,7 +6,23 @@ on:
     types: [opened, ready_for_review]
 
 jobs:
+  detect-pr-type:
+    runs-on: ubuntu-latest
+    outputs:
+      is-feature: ${{ steps.check.outputs.is-feature }}
+    steps:
+      - name: Check PR type
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title || '';
+            const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
+            core.setOutput('is-feature', (!isAutoReview).toString());
+
   assign-devs:
+    needs: detect-pr-type
+    if: needs.detect-pr-type.outputs.is-feature == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: kentaro-m/auto-assign-action@v2.0.0
