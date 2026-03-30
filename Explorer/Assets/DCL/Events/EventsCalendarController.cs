@@ -173,11 +173,17 @@ namespace DCL.Events
 
             eventsController.CurrentCalendarFromDate = fromDate;
 
+            // Resolve highlighted banner first to know how many days to load
+            await LoadHighlightedAndAdjustBannerAsync(fromDate, ct);
+            if (ct.IsCancellationRequested)
+                return;
+
+            int daysToLoad = highlightedEventsCache is { Count: > 0 } ? DAYS_WITH_BANNER : MAX_DAYS;
+
             await UniTask.WhenAll(
-                LoadEventsAsync(fromDate, MAX_DAYS, ct),
+                LoadEventsAsync(fromDate, daysToLoad, ct),
                 LoadFriendsAndRefreshCardsAsync(ct),
-                LoadCommunitiesAndRefreshCardsAsync(ct),
-                LoadHighlightedAndAdjustBannerAsync(fromDate, ct)
+                LoadCommunitiesAndRefreshCardsAsync(ct)
             );
         }
 
