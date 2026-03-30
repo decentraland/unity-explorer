@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.Web3.Identities;
 using NUnit.Framework;
 
@@ -17,6 +18,9 @@ namespace DCL.Chat.ChatReactions.Tests
         [SetUp]
         public void SetUp()
         {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+            OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
+
             chatHistory = new ChatHistory();
             fakeBus = new FakeReactionBus();
 
@@ -32,6 +36,8 @@ namespace DCL.Chat.ChatReactions.Tests
         public void TearDown()
         {
             service.Dispose();
+            OfficialWalletsHelper.Reset();
+            FeatureFlagsConfiguration.Reset();
         }
 
         [Test]
