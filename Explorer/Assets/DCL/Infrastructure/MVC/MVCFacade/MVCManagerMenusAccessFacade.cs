@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.ChangeRealmPrompt;
 using DCL.Chat.EventBus;
 using DCL.Communities;
@@ -23,6 +24,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using DCL.Passport;
+using DCL.Profiles.Self;
 
 namespace MVC
 {
@@ -47,8 +49,10 @@ namespace MVC
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProximityMuteService proximityMuteService;
+        private readonly ISelfProfile selfProfile;
 
         private CancellationTokenSource cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
@@ -72,7 +76,9 @@ namespace MVC
             IVoiceChatOrchestrator voiceChatOrchestrator,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
+            IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile,
             ProximityMuteService proximityMuteService)
         {
             this.mvcManager = mvcManager;
@@ -92,7 +98,9 @@ namespace MVC
             this.communitiesDataProvider = communitiesDataProvider;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
             this.proximityMuteService = proximityMuteService;
         }
 
@@ -150,7 +158,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, decentralandUrlsSource, proximityMuteService);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, proximityMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
         }
 

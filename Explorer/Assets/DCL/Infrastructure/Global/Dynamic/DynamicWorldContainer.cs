@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -141,6 +142,7 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
+        private readonly BannedNotificationHandler bannedNotificationHandler;
 
         public IMVCManager MvcManager { get; }
 
@@ -182,7 +184,8 @@ namespace Global.Dynamic
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            BannedNotificationHandler bannedNotificationHandler)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -200,10 +203,12 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
+            this.bannedNotificationHandler = bannedNotificationHandler;
         }
 
         public override void Dispose()
         {
+            bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
@@ -485,6 +490,15 @@ namespace Global.Dynamic
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
+            var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var bannedNotificationHandler = new BannedNotificationHandler(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.IdentityCache!,
+                moderationDataProvider,
+                mvcManager,
+                bootstrapContainer.WebBrowser);
+
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
@@ -499,7 +513,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                moderationDataProvider);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -697,7 +712,9 @@ namespace Global.Dynamic
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
                 communitiesDataProvider,
+                bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
+                selfProfile,
                 proximityMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
@@ -1144,6 +1161,7 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.WebBrowser,
                     bootstrapContainer.DecentralandUrlsSource
                 );
 
@@ -1302,7 +1320,8 @@ namespace Global.Dynamic
                 roomHub,
                 socialServiceContainer,
                 selfProfile,
-                clipboard
+                clipboard,
+                bannedNotificationHandler
             );
 
             // Init itself

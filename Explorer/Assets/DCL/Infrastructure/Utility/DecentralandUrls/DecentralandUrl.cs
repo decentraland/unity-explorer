@@ -136,6 +136,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         WorldPermissions = 82,
         WorldComms = 83,
 
-        SocialServiceMutes = 84,
+        ReportUserForm = 84,
+        BannedUsers = 85,
+
+        SocialServiceMutes = 86,
     }
 }

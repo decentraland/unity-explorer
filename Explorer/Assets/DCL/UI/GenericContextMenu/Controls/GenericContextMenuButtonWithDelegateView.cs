@@ -16,7 +16,9 @@ namespace DCL.UI.Controls
         public void Configure(ButtonWithDelegateContextMenuControlSettings<T> settings)
         {
             TextComponent.SetText(settings.buttonText);
+            TextComponent.color = settings.buttonTextColor;
             ImageComponent.sprite = settings.buttonIcon;
+            ImageComponent.color = settings.buttonIconColor;
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
             HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
