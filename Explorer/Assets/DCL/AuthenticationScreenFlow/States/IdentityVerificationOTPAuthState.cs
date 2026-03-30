@@ -95,7 +95,7 @@ namespace DCL.AuthenticationScreenFlow
             {
                 controller.CurrentRequestID = string.Empty;
 
-                compositeWeb3Provider.OTPSendSuccess += OnOTPSendSuccess;
+                compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
@@ -131,10 +131,10 @@ namespace DCL.AuthenticationScreenFlow
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
             }
-            finally{ compositeWeb3Provider.OTPSendSuccess -= OnOTPSendSuccess; }
+            finally{ compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded; }
         }
 
-        private void OnOTPSendSuccess(string emailAddress)
+        private void OnOTPSendSucceeded(string emailAddress)
         {
             view.Show(emailAddress);
 
