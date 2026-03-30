@@ -12,25 +12,29 @@ namespace DCL.Multiplayer.Connections.Pulse
     internal readonly struct AutoDisposeAsyncEnumerable<T> : IUniTaskAsyncEnumerable<T> where T: IDisposable
     {
         private readonly IUniTaskAsyncEnumerable<T> source;
+        private readonly Action onDispose;
 
-        public AutoDisposeAsyncEnumerable(IUniTaskAsyncEnumerable<T> source)
+        public AutoDisposeAsyncEnumerable(IUniTaskAsyncEnumerable<T> source, Action onDispose)
         {
             this.source = source;
+            this.onDispose = onDispose;
         }
 
         public IUniTaskAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) =>
-            new Enumerator(source.GetAsyncEnumerator(cancellationToken));
+            new Enumerator(source.GetAsyncEnumerator(cancellationToken), onDispose);
 
         private sealed class Enumerator : IUniTaskAsyncEnumerator<T>
         {
             private readonly IUniTaskAsyncEnumerator<T> inner;
+            private readonly Action onDispose;
             private bool hasCurrent;
 
             public T Current => inner.Current;
 
-            public Enumerator(IUniTaskAsyncEnumerator<T> inner)
+            public Enumerator(IUniTaskAsyncEnumerator<T> inner, Action onDispose)
             {
                 this.inner = inner;
+                this.onDispose = onDispose;
             }
 
             public async UniTask<bool> MoveNextAsync()
@@ -51,6 +55,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     hasCurrent = false;
                 }
 
+                onDispose();
                 return inner.DisposeAsync();
             }
         }

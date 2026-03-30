@@ -134,7 +134,10 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             subscribers.Add(type, subscriber);
 
-            return new AutoDisposeAsyncEnumerable<IncomingMessage<T>>(subscriber.Channel.ReadAllAsync(ct));
+            return new AutoDisposeAsyncEnumerable<IncomingMessage<T>>(
+                subscriber.Channel.ReadAllAsync(ct),
+                () => subscribers.Remove(type)
+            );
         }
 
         public void Send(OutgoingMessage outgoingMessage)
