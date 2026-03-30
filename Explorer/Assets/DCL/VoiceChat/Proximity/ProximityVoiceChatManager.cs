@@ -418,7 +418,7 @@ namespace DCL.VoiceChat
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
-            if (status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            if (status.IsInCallOrStarting())
                 stateModel.Suppress();
             else if (status.IsNotConnected())
                 stateModel.Resume();
