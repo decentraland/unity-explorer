@@ -10,7 +10,6 @@ using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -22,7 +21,6 @@ using UnityEngine;
 using Utility;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.SDK.Components;
-using System.Collections.Generic;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -30,32 +28,59 @@ namespace DCL.SDKComponents.TriggerArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class TriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        /// <summary>
+        ///     Value-type snapshot of all result data passed into the CRDT writer closure,
+        ///     avoiding shared pooled references that could be overwritten before deferred serialization.
+        /// </summary>
+        internal readonly struct ResultData
+        {
+            public readonly TriggerAreaEventType EventType;
+            public readonly uint TriggeredEntity;
+            public readonly uint Timestamp;
+            public readonly Decentraland.Common.Vector3 TriggeredEntityPosition;
+            public readonly Decentraland.Common.Quaternion TriggeredEntityRotation;
+            public readonly uint TriggerEntity;
+            public readonly uint TriggerLayers;
+            public readonly Decentraland.Common.Vector3 TriggerEntityPosition;
+            public readonly Decentraland.Common.Quaternion TriggerEntityRotation;
+            public readonly Decentraland.Common.Vector3 TriggerEntityScale;
+
+            public ResultData(
+                TriggerAreaEventType eventType, uint triggeredEntity, uint timestamp,
+                Decentraland.Common.Vector3 triggeredEntityPosition, Decentraland.Common.Quaternion triggeredEntityRotation,
+                uint triggerEntity, uint triggerLayers,
+                Decentraland.Common.Vector3 triggerEntityPosition, Decentraland.Common.Quaternion triggerEntityRotation,
+                Decentraland.Common.Vector3 triggerEntityScale)
+            {
+                EventType = eventType;
+                TriggeredEntity = triggeredEntity;
+                Timestamp = timestamp;
+                TriggeredEntityPosition = triggeredEntityPosition;
+                TriggeredEntityRotation = triggeredEntityRotation;
+                TriggerEntity = triggerEntity;
+                TriggerLayers = triggerLayers;
+                TriggerEntityPosition = triggerEntityPosition;
+                TriggerEntityRotation = triggerEntityRotation;
+                TriggerEntityScale = triggerEntityScale;
+            }
+        }
+
         private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
-        private readonly IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
         private readonly ISceneData sceneData;
-
-        private readonly Queue<(PBTriggerAreaResult payloadsInUse, PBTriggerAreaResult.Types.Trigger trigger)> usedResults = new();
 
         public TriggerAreaHandlerSystem(
             World world,
             World globalWorld,
             IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache collidersSceneCache,
             ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.sceneStateProvider = sceneStateProvider;
             this.collidersSceneCache = collidersSceneCache;
             this.sceneData = sceneData;
-
-            triggerAreaResultPool = new ComponentPool.WithDefaultCtor<PBTriggerAreaResult>();
-            triggerAreaResultTriggerPool = new ComponentPool.WithDefaultCtor<PBTriggerAreaResult.Types.Trigger>();
         }
 
         protected override void Update(float t)
@@ -65,13 +90,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
 
             SetupTriggerAreaQuery(World);
             UpdateTriggerAreaQuery(World);
-
-            while (usedResults.Count > 0)
-            {
-                (PBTriggerAreaResult result, PBTriggerAreaResult.Types.Trigger trigger) = usedResults.Dequeue();
-                triggerAreaResultPool.Release(result);
-                triggerAreaResultTriggerPool.Release(trigger);
-            }
         }
 
         [Query]
@@ -164,38 +182,37 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 triggerEntityScale = characterTransform.Transform.localScale.ToProtoVector();
             }
 
-            var resultComponent = triggerAreaResultPool.Get();
-            resultComponent.EventType = eventType;
-            resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-            resultComponent.Timestamp = incrementalTick;
-            resultComponent.TriggeredEntityPosition = triggerAreaTransform.localPosition.ToProtoVector();
-            resultComponent.TriggeredEntityRotation = triggerAreaTransform.localRotation.ToProtoQuaternion();
+            uint triggerLayers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
 
-            // 'Trigger' Entity (the entity that provokes the trigger event)
-            resultComponent.Trigger = triggerAreaResultTriggerPool.Get();
-            resultComponent.Trigger.Layers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
-            resultComponent.Trigger.Position = triggerEntityPos;
-            resultComponent.Trigger.Rotation = triggerEntityRot;
-            resultComponent.Trigger.Scale = triggerEntityScale;
-            usedResults.Enqueue((resultComponent, resultComponent.Trigger));
-
+            uint triggerEntity;
             if (avatarEntity != Entity.Null)
-                resultComponent.Trigger.Entity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
+                triggerEntity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
             else
-                resultComponent.Trigger.Entity = (uint)entityInfo.SDKEntity.Id;
+                triggerEntity = (uint)entityInfo.SDKEntity.Id;
 
-            ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
+            var data = new ResultData(
+                eventType, (uint)triggerAreaCRDTEntity.Id, incrementalTick,
+                triggerAreaTransform.localPosition.ToProtoVector(), triggerAreaTransform.localRotation.ToProtoQuaternion(),
+                triggerEntity, triggerLayers, triggerEntityPos, triggerEntityRot, triggerEntityScale);
+
+            ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, ResultData>
             (
                 prepareMessage: static (pbTriggerAreaResult, data) =>
                 {
-                    pbTriggerAreaResult.EventType = data.result.EventType;
-                    pbTriggerAreaResult.TriggeredEntity = data.result.TriggeredEntity;
-                    pbTriggerAreaResult.Timestamp = data.timestamp;
-                    pbTriggerAreaResult.TriggeredEntityRotation = data.result.TriggeredEntityRotation;
-                    pbTriggerAreaResult.TriggeredEntityPosition = data.result.TriggeredEntityPosition;
-                    pbTriggerAreaResult.Trigger = data.result.Trigger;
+                    pbTriggerAreaResult.EventType = data.EventType;
+                    pbTriggerAreaResult.TriggeredEntity = data.TriggeredEntity;
+                    pbTriggerAreaResult.Timestamp = data.Timestamp;
+                    pbTriggerAreaResult.TriggeredEntityPosition = data.TriggeredEntityPosition;
+                    pbTriggerAreaResult.TriggeredEntityRotation = data.TriggeredEntityRotation;
+
+                    pbTriggerAreaResult.Trigger ??= new PBTriggerAreaResult.Types.Trigger();
+                    pbTriggerAreaResult.Trigger.Entity = data.TriggerEntity;
+                    pbTriggerAreaResult.Trigger.Layers = data.TriggerLayers;
+                    pbTriggerAreaResult.Trigger.Position = data.TriggerEntityPosition;
+                    pbTriggerAreaResult.Trigger.Rotation = data.TriggerEntityRotation;
+                    pbTriggerAreaResult.Trigger.Scale = data.TriggerEntityScale;
                 },
-                triggerAreaCRDTEntity, (int)incrementalTick, (resultComponent, incrementalTick)
+                triggerAreaCRDTEntity, (int)incrementalTick, data
             );
         }
 
@@ -227,11 +244,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             FinalizeComponentsQuery(World);
         }
 
-        protected override void OnDispose()
-        {
-            triggerAreaResultPool.Dispose();
-            triggerAreaResultTriggerPool.Dispose();
-        }
+        protected override void OnDispose() { }
 
         private bool TryGetAvatarEntity(Transform transform, out Entity entity)
         {
@@ -243,6 +256,3 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
     }
 }
-
-
-

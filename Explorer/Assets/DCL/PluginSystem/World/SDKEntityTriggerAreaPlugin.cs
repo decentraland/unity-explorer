@@ -88,7 +88,6 @@ namespace DCL.PluginSystem.World
                 ref builder,
                 globalWorld,
                 sharedDependencies.EcsToCRDTWriter,
-                sharedDependencies.SceneStateProvider,
                 sharedDependencies.EntityCollidersSceneCache,
                 sharedDependencies.SceneData));
             finalizeWorldSystems.Add(SDKEntityTriggerAreaCleanupSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!));
