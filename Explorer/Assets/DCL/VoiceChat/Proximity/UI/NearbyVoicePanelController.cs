@@ -22,14 +22,14 @@ namespace DCL.VoiceChat.Proximity
             panelCts.SafeCancelAndDispose();
 
             if (!viewInstance) return;
-            viewInstance.closeAreaButton.onClick.RemoveAllListeners();
+            viewInstance.CloseAreaButton.onClick.RemoveAllListeners();
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
 
-            viewInstance!.closeAreaButton.onClick.AddListener(OnClose);
+            viewInstance!.CloseAreaButton.onClick.AddListener(OnClose);
         }
 
         protected override void OnBeforeViewShow()

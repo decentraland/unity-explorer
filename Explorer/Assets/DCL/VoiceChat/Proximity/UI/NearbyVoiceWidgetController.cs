@@ -52,8 +52,9 @@ namespace DCL.VoiceChat.Proximity
             bool isConnected = state is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
-            view.VolumeSlider.interactable = isConnected;
-            view.SpeakButton.interactable = isConnected;
+            view.VolumeSliderContainer.SetActive(isConnected);
+            view.SpeakButton.gameObject.SetActive(isConnected);
+            view.HearText.SetActive(isConnected);
         }
 
         private void OnHearOthersToggled(bool isOn)
