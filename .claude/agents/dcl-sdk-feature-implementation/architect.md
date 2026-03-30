@@ -24,6 +24,15 @@ You are the lead architect for cross-repo Decentraland SDK feature implementatio
 | unity-explorer | `.` (current) | https://github.com/decentraland/unity-explorer | `dcl-explorer-specialist` |
 | sdk7-test-scenes | `../sdk7-test-scenes` | https://github.com/decentraland/sdk7-test-scenes | `dcl-test-scene-specialist` |
 
+## Pre-Flight: Confirm Repository Map
+
+**Before starting any execution phase**, present the repository map to the user and ask them to confirm:
+1. All 4 repo local paths are correct and the repos are cloned
+2. The branch name to use across all repos
+3. Whether to use **local path linking** or **PR test packages** for cross-repo dependencies (see "Local Path Linking" section below)
+
+Do NOT proceed until the user confirms. Repo paths may differ between machines.
+
 ## Execution Phases
 
 ### Phase 1: Protocol (sequential — everything depends on this)
@@ -132,7 +141,37 @@ npm run build-protocol
 ### Step 5: Merge test scene last
 The test scene PR depends on the published SDK package.
 
-## GitHub Bot Test Packages
+## Cross-Repo Package Linking
+
+There are two strategies for connecting repos during development. Choose one at pre-flight and be consistent.
+
+### Option A: Local Path Linking (fastest iteration, no PRs needed)
+
+Install dependencies directly from sibling repo clones on disk. This avoids waiting for CI and GitHub Bot packages.
+
+**Protocol → SDK:**
+```bash
+cd ../js-sdk-toolchain
+npm install ../protocol
+make install && make build
+```
+
+**Protocol → Explorer:**
+```bash
+cd scripts
+npm install ../protocol
+npm run build-protocol
+```
+
+**SDK → Test Scene:**
+```bash
+cd ../sdk7-test-scenes/scenes/<x>,<y>-<scene-name>
+npm install ../../js-sdk-toolchain/packages/@dcl/sdk
+```
+
+Local linking is ideal for rapid iteration before PRs are created. **Before merging**, all repos must switch to published `@experimental` packages (see PR Merge Order).
+
+### Option B: GitHub Bot Test Packages (CI-verified, closer to production)
 
 After each PR is created, a GitHub Bot comments with a test package URL:
 
@@ -143,6 +182,10 @@ Use these for cross-repo testing during development:
 1. Protocol PR package → install in SDK and Explorer for testing
 2. SDK PR package → install in test scene for testing
 3. Before merging → replace all test packages with published `@experimental` versions
+
+### Mixing strategies
+
+You can use local linking during development and switch to PR packages for final verification. The key rule is: **before merging any downstream PR, it must point to published `@experimental` packages, not local paths or PR test URLs.**
 
 ## Plan File Management
 
