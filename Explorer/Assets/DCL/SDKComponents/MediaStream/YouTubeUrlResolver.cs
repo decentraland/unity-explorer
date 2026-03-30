@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using YoutubeExplode;
@@ -16,6 +15,7 @@ namespace DCL.SDKComponents.MediaStream
         private const int TIMEOUT_MS = 10_000;
         private const float CACHE_TTL_SECONDS = 90f * 60f; // 90 minutes
         private const int PREFERRED_HEIGHT = 1080;
+        private const int MAX_CACHE_ENTRIES = 50;
 
         private readonly YoutubeClient youtubeClient = new ();
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
@@ -48,7 +48,12 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             if (result != null)
+            {
+                if (cache.Count >= MAX_CACHE_ENTRIES)
+                    EvictExpiredEntries();
+
                 cache[videoIdStr] = result.Value;
+            }
 
             return result;
         }
@@ -67,6 +72,25 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             return false;
+        }
+
+        private void EvictExpiredEntries()
+        {
+            float now = UnityEngine.Time.realtimeSinceStartup;
+            List<string> expired = null;
+
+            foreach (var kvp in cache)
+            {
+                if (now >= kvp.Value.ExpiresAtRealtimeSinceStartup)
+                {
+                    expired ??= new List<string>();
+                    expired.Add(kvp.Key);
+                }
+            }
+
+            if (expired != null)
+                foreach (string key in expired)
+                    cache.Remove(key);
         }
 
         private async UniTask<ResolvedYouTubeUrl?> TryResolveInternalAsync(VideoId videoId, bool urlHintsLive, CancellationToken ct)
@@ -142,8 +166,8 @@ namespace DCL.SDKComponents.MediaStream
             {
                 StreamManifest manifest = await youtubeClient.Videos.Streams.GetManifestAsync(videoId, token);
 
-                IStreamInfo? selectedStream = SelectBestMuxedStream(manifest)
-                                              ?? SelectBestAdaptiveVideoStream(manifest);
+                IStreamInfo selectedStream = SelectBestStream(manifest.GetMuxedStreams())
+                                             ?? SelectBestStream(manifest.GetVideoOnlyStreams());
 
                 if (selectedStream == null)
                 {
@@ -169,22 +193,30 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private static IStreamInfo? SelectBestMuxedStream(StreamManifest manifest)
+        private static IStreamInfo SelectBestStream(IEnumerable<IStreamInfo> streams)
         {
-            return manifest.GetMuxedStreams()
-                           .Where(s => s.Container == Container.Mp4)
-                           .OrderByDescending(s => s.VideoResolution.Height <= PREFERRED_HEIGHT ? s.VideoResolution.Height : 0)
-                           .ThenByDescending(s => s.Bitrate)
-                           .FirstOrDefault();
-        }
+            IStreamInfo best = null;
+            int bestHeight = -1;
+            long bestBitrate = -1;
 
-        private static IStreamInfo? SelectBestAdaptiveVideoStream(StreamManifest manifest)
-        {
-            return manifest.GetVideoOnlyStreams()
-                           .Where(s => s.Container == Container.Mp4)
-                           .OrderByDescending(s => s.VideoResolution.Height <= PREFERRED_HEIGHT ? s.VideoResolution.Height : 0)
-                           .ThenByDescending(s => s.Bitrate)
-                           .FirstOrDefault();
+            foreach (IStreamInfo stream in streams)
+            {
+                if (stream.Container != Container.Mp4) continue;
+                if (stream is not IVideoStreamInfo videoStream) continue;
+
+                int height = videoStream.VideoResolution.Height <= PREFERRED_HEIGHT
+                    ? videoStream.VideoResolution.Height
+                    : 0;
+
+                if (height > bestHeight || (height == bestHeight && stream.Bitrate.BitsPerSecond > bestBitrate))
+                {
+                    best = stream;
+                    bestHeight = height;
+                    bestBitrate = stream.Bitrate.BitsPerSecond;
+                }
+            }
+
+            return best;
         }
     }
 }
