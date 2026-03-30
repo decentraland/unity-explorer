@@ -87,7 +87,6 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SDKComponents.AvatarLocomotion;
-using DCL.Settings.ScreenMode;
 using DCL.SkyBox;
 using DCL.SocialService;
 using DCL.Translation;
@@ -380,7 +379,7 @@ namespace Global.Dynamic
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity, pulseContainer.pulseProfilePropagationBus!);
 
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
