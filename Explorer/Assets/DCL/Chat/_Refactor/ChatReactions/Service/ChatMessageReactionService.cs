@@ -29,8 +29,8 @@ namespace DCL.Chat.ChatReactions
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
 
-        private readonly List<string> purgeBuffer = new ();
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
+        private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> channelToMessageIds = new ();
 
         public ChatMessageReactionService(
             IReactionMessageBus reactionBus,
@@ -108,12 +108,21 @@ namespace DCL.Chat.ChatReactions
         {
             ChatChannel.ChannelId channelId = channel.Id;
 
+            if (!channelToMessageIds.TryGetValue(channelId, out HashSet<string>? idSet))
+            {
+                idSet = new HashSet<string>();
+                channelToMessageIds[channelId] = idSet;
+            }
+
             for (int i = 0; i < channel.Messages.Count; i++)
             {
                 ChatMessage msg = channel.Messages[i];
 
                 if (!string.IsNullOrEmpty(msg.MessageId))
+                {
                     messageIdToChannel[msg.MessageId] = channelId;
+                    idSet.Add(msg.MessageId);
+                }
             }
         }
 
@@ -136,16 +145,16 @@ namespace DCL.Chat.ChatReactions
 
         private void PurgeChannelEntries(ChatChannel.ChannelId channelId)
         {
-            purgeBuffer.Clear();
+            if (!channelToMessageIds.TryGetValue(channelId, out HashSet<string>? idSet))
+                return;
 
-            foreach (var kvp in messageIdToChannel)
-            {
-                if (kvp.Value.Equals(channelId))
-                    purgeBuffer.Add(kvp.Key);
-            }
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,
+                $"[ChatMessageReactionService] Purging {idSet.Count} message(s) for channel {channelId.Id}");
 
-            for (int i = 0; i < purgeBuffer.Count; i++)
-                messageIdToChannel.Remove(purgeBuffer[i]);
+            foreach (string messageId in idSet)
+                messageIdToChannel.Remove(messageId);
+
+            channelToMessageIds.Remove(channelId);
         }
 
         /// <summary>
@@ -184,8 +193,18 @@ namespace DCL.Chat.ChatReactions
 
         private void OnMessageAdded(ChatChannel channel, ChatMessage message, int index)
         {
-            if (!string.IsNullOrEmpty(message.MessageId))
-                messageIdToChannel[message.MessageId] = channel.Id;
+            if (string.IsNullOrEmpty(message.MessageId))
+                return;
+
+            messageIdToChannel[message.MessageId] = channel.Id;
+
+            if (!channelToMessageIds.TryGetValue(channel.Id, out HashSet<string>? idSet))
+            {
+                idSet = new HashSet<string>();
+                channelToMessageIds[channel.Id] = idSet;
+            }
+
+            idSet.Add(message.MessageId);
         }
     }
 }
