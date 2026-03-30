@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void OverwriteIndexZeroWhenFull()
+        public void OverwriteRoundRobinWhenFull()
         {
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
@@ -25,9 +25,37 @@ namespace DCL.Chat.ChatReactions.Tests
 
             Assert.That(store.Count, Is.EqualTo(64));
 
-            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 999 });
+            // First overflow → index 0
+            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 900 });
             Assert.That(store.Count, Is.EqualTo(64));
-            Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(999));
+            Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(900));
+
+            // Second overflow → index 1 (round-robin), NOT index 0 again
+            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 901 });
+            Assert.That(store.Buffer[1].emojiIndex, Is.EqualTo(901));
+            Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(900));
+        }
+
+        [Test]
+        public void DistributeOverflowAcrossSlots()
+        {
+            var store = new DenseParticleStore<ChatReactionsParticle>(64);
+
+            for (int i = 0; i < 64; i++)
+                store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = i });
+
+            // Overflow 3 times — should hit indices 0, 1, 2 in order
+            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 100 });
+            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 101 });
+            store.Add(new ChatReactionsParticle { alive = 1, emojiIndex = 102 });
+
+            Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(100));
+            Assert.That(store.Buffer[1].emojiIndex, Is.EqualTo(101));
+            Assert.That(store.Buffer[2].emojiIndex, Is.EqualTo(102));
+
+            // Remaining slots untouched
+            Assert.That(store.Buffer[3].emojiIndex, Is.EqualTo(3));
+            Assert.That(store.Buffer[63].emojiIndex, Is.EqualTo(63));
         }
 
         [Test]

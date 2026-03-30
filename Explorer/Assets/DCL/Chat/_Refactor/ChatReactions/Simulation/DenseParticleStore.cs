@@ -10,6 +10,7 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly T[] buffer;
         private int count;
+        private int overwriteCursor;
 
         public T[] Buffer => buffer;
         public int Count => count;
@@ -21,13 +22,14 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Appends a particle. When full, overwrites index 0 (round-robin eviction, not LRU).
+        /// Appends a particle. When full, evicts via round-robin cursor.
         /// </summary>
         public void Add(T particle)
         {
             if (count >= buffer.Length)
             {
-                buffer[0] = particle;
+                buffer[overwriteCursor] = particle;
+                overwriteCursor = (overwriteCursor + 1) % buffer.Length;
                 return;
             }
 
