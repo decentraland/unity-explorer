@@ -226,7 +226,8 @@ namespace DCL.Landscape
             int2 maxParcel, int padding)
         {
             int absMax = cmax(abs(int4(minParcel, maxParcel)));
-            int textureSize = ceilpow2((absMax * 2) + 2);
+            long requiredSize = ((long)absMax * 2) + 2;
+            int textureSize = ceilpow2((int)min(requiredSize, TERRAIN_SIZE_LIMIT));
             int textureHalfSize = textureSize / 2;
 
             var occupancyMap = new Texture2D(textureSize, textureSize, TextureFormat.R8, false, true);
