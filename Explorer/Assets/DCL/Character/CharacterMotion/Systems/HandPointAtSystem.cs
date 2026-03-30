@@ -135,41 +135,36 @@ namespace DCL.Character.CharacterMotion.Systems
             in AvatarBase avatarBase)
         {
             HitInfo result = HitInfo.Empty();
+            Camera cam = cameraComponent.Camera;
 
             Ray ray = cameraComponent.Camera.ScreenPointToRay(cursorInfo.pointerPos);
 
-            bool needRaycastFallback = true;
             // Did we hit anything with a collider?
             if (Physics.Raycast(ray.origin, ray.direction, out RaycastHit hit, settings.PointAtMaxDistance, RAYCAST_LAYER_MASK))
             {
                 if (hit.collider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
                 {
-                    // If we hit a remote avatar, the user must be far from us (1.5m away) otherwise we interrupt the pointing action to avoid "weird" interactions
+                    // If we hit a remote avatar, the user must be far from us (2m away) otherwise we interrupt the pointing action to avoid "weird" interactions
                     if ((hit.point - avatarBase.transform.position).sqrMagnitude <= AVATAR_MAX_DISTANCE_SQR)
                     {
                         result.ForceInterrupt = true;
                         return result;
                     }
 
-                    // Recalculate the ray so that we still aim towards the player, but in reality we hit the far clipping plane using the fallback below
-                    // (if we remove this, the drift caused by the ray angle is too visible on the far clipping plane and leads to a point direction that is not in line with the avatar)
+                    // If we hit a player, project the hit-point to the far clipping plane so that it visually points the player but the
+                    // actual point cannot be rendered
                     Vector3 shoulderPos = avatarBase.RightShoulderAnchorPoint.position;
                     Vector3 dirFromShoulder = (hit.point - shoulderPos).normalized;
-                    ray = new Ray(shoulderPos, dirFromShoulder);
+
+                    result.HitPoint = shoulderPos + (dirFromShoulder * cam.farClipPlane);
                 }
                 else
-                {
                     // Random scenery -> hit point is valid
                     result.HitPoint = hit.point;
-                    needRaycastFallback = false;
-                }
             }
-
             // Fallback: If we didn't hit anything with a collider (either a mesh without one or the actual sky), we just hit the far clipping plane
-            if (needRaycastFallback)
+            else
             {
-                Camera cam = cameraComponent.Camera;
-
                 Plane farPlane = new Plane(
                     -cam.transform.forward,
                     cam.transform.position + (cam.transform.forward * cam.farClipPlane)
