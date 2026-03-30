@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using static Unity.Mathematics.math;
 
 namespace DCL.Landscape
 {
@@ -136,6 +137,9 @@ namespace DCL.Landscape
 
         private static (int2 min,int2 max) CalculateMinMaxParcels(NativeHashSet<int2> ownedParcels)
         {
+            if (ownedParcels.IsEmpty)
+                return (int2(0, 0), int2(-1, -1));
+
             var minParcel = new int2(int.MaxValue, int.MaxValue);
             var maxParcel = new int2(int.MinValue, int.MinValue);
 

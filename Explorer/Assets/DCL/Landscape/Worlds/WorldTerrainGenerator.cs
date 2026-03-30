@@ -3,10 +3,10 @@ using DCL.Landscape.Settings;
 using DCL.Utilities;
 using System;
 using System.Collections.Generic;
-using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Landscape
 {
@@ -85,6 +85,11 @@ namespace DCL.Landscape
             boundariesGenerator.SpawnBorderColliders(TerrainModel.MinInUnits, TerrainModel.MaxInUnits, TerrainModel.SizeInUnits);
 
             if (processReport != null) processReport.SetProgress(0.5f);
+
+            if (OccupancyMap != null &&
+                OccupancyMap != Texture2D.blackTexture &&
+                OccupancyMap != Texture2D.whiteTexture)
+                Object.Destroy(OccupancyMap);
 
             OccupancyMap = TerrainGenerator.CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
                 TerrainModel.MaxParcel, 0);

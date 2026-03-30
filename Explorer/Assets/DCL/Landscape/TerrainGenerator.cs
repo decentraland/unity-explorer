@@ -225,7 +225,19 @@ namespace DCL.Landscape
         internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
+            if (ownedParcels.IsEmpty)
+                return Texture2D.whiteTexture;
+
             int absMax = cmax(abs(int4(minParcel, maxParcel)));
+
+            if (absMax > TERRAIN_SIZE_LIMIT / 2)
+            {
+                ReportHub.LogError(ReportCategory.LANDSCAPE,
+                    $"Occupancy half-size {nameof(absMax)} is {absMax}, which is more than half of {nameof(TERRAIN_SIZE_LIMIT)} of {TERRAIN_SIZE_LIMIT / 2}. Returning an all-occupied texture.");
+
+                return Texture2D.blackTexture;
+            }
+
             int textureSize = ceilpow2((absMax * 2) + 2);
             int textureHalfSize = textureSize / 2;
 
