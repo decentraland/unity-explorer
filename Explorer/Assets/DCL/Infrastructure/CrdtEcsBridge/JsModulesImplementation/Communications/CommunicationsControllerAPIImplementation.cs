@@ -4,6 +4,7 @@ using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -23,7 +24,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             // WebGL has no direct memory access — build the payload in managed memory then bulk-copy to JS
-            var array = jsOperations.GetTempUint8Array();
+            IDCLTypedArray<byte> array = jsOperations.GetTempUint8Array();
             string walletId = message.FromWalletId;
             int dataLength = message.Data.Length;
 
