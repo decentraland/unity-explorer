@@ -2,6 +2,7 @@ using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.InputSystem;
 
 namespace DCL.VoiceChat.Proximity
 {
@@ -13,6 +14,8 @@ namespace DCL.VoiceChat.Proximity
         private readonly ProximityVoiceChatStateModel stateModel;
         private readonly AudioMixerGroup? proximityMixerGroup;
         private readonly ReactivePropertyExtensions.DisposableSubscription<ProximityVoiceChatState> stateSubscription;
+
+        private bool pushToTalkSubscribed;
 
         public NearbyVoiceWidgetController(
             NearbyVoiceWidgetView view,
@@ -39,6 +42,7 @@ namespace DCL.VoiceChat.Proximity
             view.HearOthersToggle.onValueChanged.RemoveListener(OnHearOthersToggled);
             view.SpeakButton.onClick.RemoveListener(OnSpeakButtonClicked);
             view.VolumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+            UnsubscribePushToTalk();
         }
 
         private void OnStateChanged(ProximityVoiceChatState state)
@@ -48,14 +52,18 @@ namespace DCL.VoiceChat.Proximity
 
         private void SyncViewWithState(ProximityVoiceChatState state)
         {
-            if (state == ProximityVoiceChatState.Blocked)
+            switch (state)
             {
-                view.CloseAreaButton.onClick.Invoke();
-                return;
+                case ProximityVoiceChatState.Blocked or ProximityVoiceChatState.Disconnected:
+                    UnsubscribePushToTalk();
+                    view.CloseAreaButton.onClick.Invoke();
+                    break;
+                case ProximityVoiceChatState.Hearing:
+                    SubscribePushToTalk(); break;
             }
 
-            bool isConnected = state is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking;
             bool isSpeaking = state == ProximityVoiceChatState.Speaking;
+            bool isConnected = isSpeaking || state is ProximityVoiceChatState.Hearing;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
             view.VolumeSliderContainer.SetActive(isConnected);
@@ -80,6 +88,34 @@ namespace DCL.VoiceChat.Proximity
                 stateModel.StopSpeaking();
             else if (stateModel.State.Value == ProximityVoiceChatState.Hearing)
                 stateModel.StartSpeaking();
+        }
+
+        private void SubscribePushToTalk()
+        {
+            if (pushToTalkSubscribed) return;
+            pushToTalkSubscribed = true;
+
+            DCLInput.Instance.VoiceChat.Talk!.performed += OnPushToTalkPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled += OnPushToTalkReleased;
+        }
+
+        private void UnsubscribePushToTalk()
+        {
+            if (!pushToTalkSubscribed) return;
+            pushToTalkSubscribed = false;
+
+            DCLInput.Instance.VoiceChat.Talk!.performed -= OnPushToTalkPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled -= OnPushToTalkReleased;
+        }
+
+        private void OnPushToTalkPressed(InputAction.CallbackContext ctx)
+        {
+            stateModel.StartSpeaking();
+        }
+
+        private void OnPushToTalkReleased(InputAction.CallbackContext ctx)
+        {
+            stateModel.StopSpeaking();
         }
 
         private void OnVolumeChanged(float value)
