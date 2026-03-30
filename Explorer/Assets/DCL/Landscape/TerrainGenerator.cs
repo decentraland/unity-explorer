@@ -233,7 +233,7 @@ namespace DCL.Landscape
             if (absMax > TERRAIN_SIZE_LIMIT / 2)
             {
                 ReportHub.LogError(ReportCategory.LANDSCAPE,
-                    $"Occupancy half-size {nameof(absMax)} is {absMax}, which is more than half of {nameof(TERRAIN_SIZE_LIMIT)} of {TERRAIN_SIZE_LIMIT / 2}. Returning an all-occupied texture.");
+                    $"Occupancy half-size {nameof(absMax)} is {absMax}, which is more than half of {nameof(TERRAIN_SIZE_LIMIT)} of {TERRAIN_SIZE_LIMIT}. Returning an all-occupied texture.");
 
                 return Texture2D.blackTexture;
             }
