@@ -1,26 +1,37 @@
 using DCL.Utilities;
 using System;
+using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.VoiceChat.Proximity
 {
     public class NearbyVoiceWidgetController : IDisposable
     {
+        private const string VOLUME_PARAM = "ProximityVoiceChat_Volume";
+        private const float MIN_VOLUME_DB = -80f;
+
         private readonly NearbyVoiceWidgetView view;
         private readonly ProximityVoiceChatStateModel stateModel;
+        private readonly AudioMixerGroup? proximityMixerGroup;
         private readonly ReactivePropertyExtensions.DisposableSubscription<ProximityVoiceChatState> stateSubscription;
 
         public NearbyVoiceWidgetController(
             NearbyVoiceWidgetView view,
-            ProximityVoiceChatStateModel stateModel)
+            ProximityVoiceChatStateModel stateModel,
+            AudioMixerGroup? proximityMixerGroup)
         {
             this.view = view;
             this.stateModel = stateModel;
+            this.proximityMixerGroup = proximityMixerGroup;
 
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             SyncViewWithState(stateModel.State.Value);
 
             view.HearOthersToggle.onValueChanged.AddListener(OnHearOthersToggled);
             view.SpeakButton.onClick.AddListener(OnSpeakButtonClicked);
+            view.VolumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+
+            ApplySliderVolume(view.VolumeSlider.value);
         }
 
         public void Dispose()
@@ -28,6 +39,7 @@ namespace DCL.VoiceChat.Proximity
             stateSubscription.Dispose();
             view.HearOthersToggle.onValueChanged.RemoveListener(OnHearOthersToggled);
             view.SpeakButton.onClick.RemoveListener(OnSpeakButtonClicked);
+            view.VolumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
         }
 
         private void OnStateChanged(ProximityVoiceChatState state)
@@ -58,6 +70,22 @@ namespace DCL.VoiceChat.Proximity
                 stateModel.StopSpeaking();
             else if (stateModel.State.Value == ProximityVoiceChatState.Hearing)
                 stateModel.StartSpeaking();
+        }
+
+        private void OnVolumeChanged(float value)
+        {
+            ApplySliderVolume(value);
+        }
+
+        private void ApplySliderVolume(float sliderValue)
+        {
+            if (proximityMixerGroup == null) return;
+
+            float db = sliderValue > 0.0001f
+                ? Mathf.Log10(sliderValue) * 20f
+                : MIN_VOLUME_DB;
+
+            proximityMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
         }
     }
 }

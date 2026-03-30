@@ -228,7 +228,8 @@ namespace DCL.PluginSystem.Global
             if (nearbyVoiceWidgetView != null)
             {
                 nearbyVoiceWidgetController = new NearbyVoiceWidgetController(
-                    nearbyVoiceWidgetView, proximityStateModel);
+                    nearbyVoiceWidgetView, proximityStateModel,
+                    storedVoiceChatConfig!.ProximityChatAudioMixerGroup);
                 pluginScope.Add(nearbyVoiceWidgetController);
             }
         }
