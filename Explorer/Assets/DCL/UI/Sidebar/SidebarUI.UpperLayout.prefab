@@ -4327,6 +4327,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SidebarSettingsButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4466871651195778395, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4694019954775888957, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_IgnoreParentGroups
       value: 0
