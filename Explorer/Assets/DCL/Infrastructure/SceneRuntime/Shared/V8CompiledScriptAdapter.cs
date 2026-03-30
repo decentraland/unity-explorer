@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 namespace SceneRuntime
 {
     /// <summary>
@@ -14,3 +15,4 @@ namespace SceneRuntime
         public Microsoft.ClearScript.V8.V8Script V8Script { get; }
     }
 }
+#endif

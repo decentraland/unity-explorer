@@ -35,6 +35,11 @@ namespace SceneRuntime
         object GetProperty(string name, params object[] args);
 
         /// <summary>
+        ///     Gets the value of a named script object property (no extra args, avoids params array allocation).
+        /// </summary>
+        object GetProperty(string name);
+
+        /// <summary>
         ///     Sets the value of a named script object property.
         /// </summary>
         /// <param name="name">The name of the property to set.</param>
@@ -44,6 +49,11 @@ namespace SceneRuntime
         ///     property value must be the last element of the array.
         /// </remarks>
         void SetProperty(string name, params object[] args);
+
+        /// <summary>
+        ///     Sets the value of a named script object property to the specified value (avoids params array allocation).
+        /// </summary>
+        void SetProperty(string name, object value);
 
         /// <summary>
         ///     Sets the value of an indexed script object property.

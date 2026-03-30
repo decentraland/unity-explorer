@@ -17,7 +17,7 @@ namespace SceneRuntime
     /// </summary>
     public interface IJavaScriptEngine : IDisposable
     {
-        IDCLScriptObject Global { get; }
+        object Global { get; }
 
         void Execute(string code);
 

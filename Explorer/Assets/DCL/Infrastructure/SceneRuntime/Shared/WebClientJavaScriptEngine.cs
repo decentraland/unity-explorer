@@ -1,3 +1,4 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -46,7 +47,7 @@ namespace SceneRuntime.WebClient
         private bool disposed;
         internal bool IsDisposed => disposed;
 
-        public IDCLScriptObject Global
+        public object Global
         {
             get
             {
@@ -926,3 +927,4 @@ namespace SceneRuntime.WebClient
             error;
     }
 }
+#endif

@@ -24,12 +24,12 @@ namespace SceneRuntime.V8
     /// Manages the V8 engine lifecycle, compiles and executes scene JavaScript, drives the module system,
     /// and pools <c>Uint8Array</c> instances for CRDT communication.
     /// </summary>
-    public sealed class V8SceneRuntimeImpl : ISceneRuntime
+    public sealed class V8SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         private readonly V8JavaScriptEngineAdapter engineAdapter;
         private readonly ScriptObject arrayCtor;
         private readonly ScriptObject unit8ArrayCtor;
-        private readonly List<IDCLTypedArray<byte>> uint8Arrays;
+        private readonly List<V8TypedArrayAdapter> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
         private readonly JSTaskResolverResetable resetableSource;
         private readonly CancellationTokenSource isDisposingTokenSource = new ();
@@ -79,9 +79,10 @@ namespace SceneRuntime.V8
             // Setup unitask resolver
             engineAdapter.AddHostObject("__resetableSource", resetableSource);
 
-            arrayCtor = (ScriptObject)engineAdapter.Global.GetProperty("Array");
-            unit8ArrayCtor = (ScriptObject)engineAdapter.Global.GetProperty("Uint8Array");
-            uint8Arrays = new List<IDCLTypedArray<byte>>();
+            var globalObj = (V8ScriptObjectAdapter)engineAdapter.Global;
+            arrayCtor = (ScriptObject)globalObj.GetProperty("Array");
+            unit8ArrayCtor = (ScriptObject)globalObj.GetProperty("Uint8Array");
+            uint8Arrays = new List<V8TypedArrayAdapter>();
             nextUint8Array = 0;
         }
 
@@ -175,16 +176,16 @@ namespace SceneRuntime.V8
             Assert.IsTrue(result.IsEmpty);
         }
 
-        IDCLScriptObject IJsOperations.NewArray()
+        V8ScriptObjectAdapter IJsOperations.NewArray()
         {
             ScriptObject result = (ScriptObject)arrayCtor.Invoke(true);
             return new V8ScriptObjectAdapter(result);
         }
 
-        IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length) =>
+        V8TypedArrayAdapter IJsOperations.NewUint8Array(int length) =>
             new V8TypedArrayAdapter((ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length));
 
-        IDCLTypedArray<byte> IJsOperations.GetTempUint8Array()
+        V8TypedArrayAdapter IJsOperations.GetTempUint8Array()
         {
             if (nextUint8Array >= uint8Arrays.Count)
             {

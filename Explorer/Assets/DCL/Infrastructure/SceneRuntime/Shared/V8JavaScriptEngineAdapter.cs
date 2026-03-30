@@ -12,7 +12,8 @@ namespace SceneRuntime.V8
     /// </summary>
     public class V8JavaScriptEngineAdapter : IJavaScriptEngine
     {
-        public IDCLScriptObject Global => new V8ScriptObjectAdapter(V8Engine.Global);
+        private V8ScriptObjectAdapter? _cachedGlobal;
+        public object Global => _cachedGlobal ??= new V8ScriptObjectAdapter(V8Engine.Global);
 
         public V8ScriptEngine V8Engine { get; }
 

@@ -1,3 +1,4 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using System;
 using System.Collections.Generic;
 
@@ -59,3 +60,4 @@ namespace SceneRuntime.WebClient
         }
     }
 }
+#endif

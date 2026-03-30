@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Microsoft.ClearScript.JavaScript;
 using System;
 using Utility;
@@ -34,3 +35,4 @@ namespace SceneRuntime.V8
             arrayBuffer.InvokeWithDirectAccess(func);
     }
 }
+#endif

@@ -19,6 +19,10 @@ namespace SceneRuntime.V8
 
         public ScriptObject ScriptObject { get; }
 
+        // Reused per-instance to avoid per-call array allocation in hot paths
+        private readonly object[] _subarrayArgs = new object[2];
+        private V8ArrayBufferAdapter? _cachedArrayBuffer;
+
         ulong IDCLTypedArray<byte>.Length => TypedArray.Length;
 
         ulong IDCLTypedArray<byte>.Size => TypedArray.Size;
@@ -27,8 +31,9 @@ namespace SceneRuntime.V8
         {
             get
             {
-                IArrayBuffer arrayBuffer = TypedArray.ArrayBuffer;
-                return new V8ArrayBufferAdapter(arrayBuffer);
+                if (_cachedArrayBuffer == null)
+                    _cachedArrayBuffer = new V8ArrayBufferAdapter(TypedArray.ArrayBuffer);
+                return _cachedArrayBuffer;
             }
         }
 
@@ -86,11 +91,24 @@ namespace SceneRuntime.V8
             }
         }
 
+        IDCLTypedArray<byte> IDCLTypedArray<byte>.Subarray(int from, int to)
+        {
+            _subarrayArgs[0] = from;
+            _subarrayArgs[1] = to;
+            return new V8TypedArrayAdapter((ITypedArray<byte>)TypedArray.InvokeMethod("subarray", _subarrayArgs));
+        }
+
         object IDCLScriptObject.GetProperty(string name, params object[] args) =>
             ScriptObject.GetProperty(name, args);
 
+        object IDCLScriptObject.GetProperty(string name) =>
+            ScriptObject.GetProperty(name);
+
         void IDCLScriptObject.SetProperty(string name, params object[] args) =>
             ScriptObject.SetProperty(name, args);
+
+        void IDCLScriptObject.SetProperty(string name, object value) =>
+            ScriptObject.SetProperty(name, value);
 
         void IDCLScriptObject.SetProperty(int index, object value) =>
             ScriptObject.SetProperty(index, value);

@@ -39,8 +39,16 @@ namespace SceneRuntime.V8
             ScriptObject.GetProperty(name, args);
 
         /// <inheritdoc />
+        public object GetProperty(string name) =>
+            ScriptObject.GetProperty(name);
+
+        /// <inheritdoc />
         public void SetProperty(string name, params object[] args) =>
             ScriptObject.SetProperty(name, args);
+
+        /// <inheritdoc />
+        public void SetProperty(string name, object value) =>
+            ScriptObject.SetProperty(name, value);
 
         //TODO FRAN: Check this logic
         /// <inheritdoc />

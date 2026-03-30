@@ -1,3 +1,4 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -161,11 +162,32 @@ namespace SceneRuntime.WebClient
         [DllImport("__Internal")]
         private static extern void JSContext_ReadObjectBytesIntoBuffer(IntPtr contextId, IntPtr objectId, int srcOffset, int count, IntPtr dstPtr);
 
+        // Reused per-instance to avoid per-call array allocation in hot paths
+        private readonly object[] _subarrayArgs = new object[2];
+
+        IDCLTypedArray<byte> IDCLTypedArray<byte>.Subarray(int from, int to)
+        {
+            _subarrayArgs[0] = from;
+            _subarrayArgs[1] = to;
+            object result = ScriptObject.InvokeMethod("subarray", _subarrayArgs);
+
+            if (result is WebClientScriptObject wso)
+                return new WebClientTypedArrayAdapter(wso);
+
+            throw new InvalidOperationException("subarray did not return a WebClientScriptObject");
+        }
+
         object IDCLScriptObject.GetProperty(string name, params object[] args) =>
             ScriptObject.GetProperty(name, args);
 
+        object IDCLScriptObject.GetProperty(string name) =>
+            ScriptObject.GetProperty(name);
+
         void IDCLScriptObject.SetProperty(string name, params object[] args) =>
             ScriptObject.SetProperty(name, args);
+
+        void IDCLScriptObject.SetProperty(string name, object value) =>
+            ScriptObject.SetProperty(name, value);
 
         void IDCLScriptObject.SetProperty(int index, object value) =>
             ScriptObject.SetProperty(index, value);
@@ -198,3 +220,4 @@ namespace SceneRuntime.WebClient
             ScriptObject;
     }
 }
+#endif

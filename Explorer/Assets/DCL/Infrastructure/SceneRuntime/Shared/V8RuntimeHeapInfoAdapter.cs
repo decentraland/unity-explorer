@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Microsoft.ClearScript.V8;
 
 namespace SceneRuntime
@@ -29,3 +30,4 @@ namespace SceneRuntime
         public ulong TotalExternalSize => v8HeapInfo.TotalExternalSize;
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using System;
 using Utility;
 
@@ -65,6 +66,15 @@ namespace SceneRuntime.WebClient
         public int InvokeWithDirectAccess(Func<IntPtr, int> func) =>
             throw new NotSupportedException("WebGL does not support direct memory access");
 
+        public IDCLTypedArray<byte> Subarray(int from, int to)
+        {
+            int length = Math.Min(to, data.Length) - Math.Max(from, 0);
+            if (length <= 0) return new WebClientByteArrayWrapper(Array.Empty<byte>());
+            var slice = new byte[length];
+            Array.Copy(data, from, slice, 0, length);
+            return new WebClientByteArrayWrapper(slice);
+        }
+
         /// <summary>
         /// Simple array buffer implementation wrapping a byte array.
         /// </summary>
@@ -113,3 +123,4 @@ namespace SceneRuntime.WebClient
         }
     }
 }
+#endif

@@ -29,14 +29,14 @@ namespace SceneRuntime.WebClient
     ///     </para>
     ///     <para>Only compiled for <c>UNITY_WEBGL</c> builds (or <c>EDITOR_DEBUG_WEBGL</c> in the editor).</para>
     /// </summary>
-    public sealed class WebClientSceneRuntimeImpl : ISceneRuntime
+    public sealed class WebClientSceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         private readonly IJavaScriptEngine engine;
         private readonly WebClientScriptObject arrayCtor;
         private readonly WebClientScriptObject uint8ArrayCtor;
         private WebClientScriptObject updateFunc;
         private WebClientScriptObject startFunc;
-        private readonly List<IDCLTypedArray<byte>> uint8Arrays;
+        private readonly List<WebClientTypedArrayAdapter> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
 
         private readonly JSTaskResolverResetable resetableSource;
@@ -95,7 +95,7 @@ namespace SceneRuntime.WebClient
 
             arrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Array");
             uint8ArrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Uint8Array");
-            uint8Arrays = new List<IDCLTypedArray<byte>>();
+            uint8Arrays = new List<WebClientTypedArrayAdapter>();
             nextUint8Array = 0;
         }
 
@@ -248,14 +248,13 @@ namespace SceneRuntime.WebClient
             Assert.IsTrue(result.IsEmpty);
         }
 
-        IDCLScriptObject IJsOperations.NewArray()
+        WebClientScriptObject IJsOperations.NewArray()
         {
             object result = arrayCtor.Invoke(true);
-            WebClientScriptObject webglResult = (WebClientScriptObject)result;
-            return webglResult;
+            return (WebClientScriptObject)result;
         }
 
-        IDCLTypedArray<byte> IJsOperations.NewUint8Array(int length)
+        WebClientTypedArrayAdapter IJsOperations.NewUint8Array(int length)
         {
             object result = uint8ArrayCtor.Invoke(true, length);
             if (result is WebClientScriptObject webglScriptObject)
@@ -263,7 +262,7 @@ namespace SceneRuntime.WebClient
             throw new InvalidCastException($"Expected WebGLScriptObject but got {result?.GetType()}");
         }
 
-        IDCLTypedArray<byte> IJsOperations.GetTempUint8Array()
+        WebClientTypedArrayAdapter IJsOperations.GetTempUint8Array()
         {
             if (nextUint8Array >= uint8Arrays.Count)
             {

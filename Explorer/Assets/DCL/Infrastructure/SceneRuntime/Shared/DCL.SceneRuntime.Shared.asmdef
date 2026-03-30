@@ -1,8 +1,8 @@
 {
-    "name": "DCL.SceneRuntime.V8",
+    "name": "DCL.SceneRuntime.Shared",
     "rootNamespace": "",
     "references": [
-        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce", 
+        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
         "GUID:9659fcb6593e30b46909c1245ed056df",
@@ -10,9 +10,7 @@
         "GUID:d414ef88f3b15f746a4b97636b50dfb4"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [
-        "WebGL"
-    ],
+    "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],

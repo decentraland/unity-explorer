@@ -327,7 +327,7 @@ namespace SceneRunner
                         , syncOwner
 #endif
                         ),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
+                    syncDeps, sceneRuntime, (IJsOperations)sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -358,7 +358,7 @@ namespace SceneRunner
                     ),
                     syncDeps,
                     sceneRuntime,
-                    sceneRuntime,
+                    (IJsOperations)sceneRuntime,
                     mvcManager,
                     globalWorldActions,
                     realmData,

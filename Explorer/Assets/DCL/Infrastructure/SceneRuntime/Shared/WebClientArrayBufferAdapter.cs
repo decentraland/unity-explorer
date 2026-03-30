@@ -1,3 +1,4 @@
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
 using System;
 using System.Runtime.InteropServices;
 using Utility;
@@ -104,3 +105,4 @@ namespace SceneRuntime.WebClient
         private static extern int JSContext_WriteObjectBytesFromBuffer(IntPtr contextId, IntPtr objectId, IntPtr srcPtr, int count, int dstOffset);
     }
 }
+#endif

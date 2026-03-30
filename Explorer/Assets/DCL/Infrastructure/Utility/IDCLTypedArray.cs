@@ -45,5 +45,11 @@ namespace Utility
         void ReadBytes(ulong @ulong, ulong eventBytesLength, byte[] eventBytes, ulong ulong1);
 
         void WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset);
+
+        /// <summary>
+        /// Returns a new typed array view over the same buffer, from <paramref name="from"/> (inclusive) to
+        /// <paramref name="to"/> (exclusive). Equivalent to calling <c>typedArray.subarray(from, to)</c> in JS.
+        /// </summary>
+        IDCLTypedArray<byte> Subarray(int from, int to);
     }
 }
