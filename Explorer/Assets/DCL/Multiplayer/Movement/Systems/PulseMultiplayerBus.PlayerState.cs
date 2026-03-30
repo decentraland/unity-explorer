@@ -241,16 +241,15 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             uint flags = delta.StateFlags;
 
-            bool wasGrounded = lastAnimState.IsGrounded;
-
             lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
             lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
             lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
             lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
-            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
 
-            if (wasGrounded && !lastAnimState.IsGrounded)
-                lastAnimState.JumpCount++;
+            if (delta.HasJumpCount)
+                lastAnimState.JumpCount = delta.JumpCount;
+
+            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
 
             if (movementBlendChanged)
             {
@@ -288,6 +287,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             state.SlideBlend = message.animState.SlideBlendValue;
             state.StateFlags = BuildStateFlags(message);
             state.GlideState = (GlideState)message.animState.GlideState;
+            state.JumpCount = message.animState.JumpCount;
 
             if (message.headIKYawEnabled)
                 state.HeadYaw = message.headYawAndPitch[0];
@@ -332,6 +332,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
                     IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
                     IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
+                    JumpCount = playerState.JumpCount,
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
                 isInstant = isInstant,
