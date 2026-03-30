@@ -66,11 +66,11 @@ namespace Decentraland.Pulse
         }
 
         private float? _movementBlend;
-        /// <summary>Float accessor for <see cref="MovementBlend"/>. Range [0.0f, 1.0f], 4 bits, step ≈ 0.0666667.</summary>
+        /// <summary>Float accessor for <see cref="MovementBlend"/>. Range [0.0f, 3.0f], 5 bits, step ≈ 0.0967742.</summary>
         public float MovementBlendQuantized
         {
-            get => _movementBlend ??= Quantize.Decode(MovementBlend, 0.0f, 1.0f, 4);
-            set { _movementBlend = value; MovementBlend = Quantize.Encode(value, 0.0f, 1.0f, 4); }
+            get => _movementBlend ??= Quantize.Decode(MovementBlend, 0.0f, 3.0f, 5);
+            set { _movementBlend = value; MovementBlend = Quantize.Encode(value, 0.0f, 3.0f, 5); }
         }
 
         private float? _slideBlend;

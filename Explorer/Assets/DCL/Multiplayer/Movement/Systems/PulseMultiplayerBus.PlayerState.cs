@@ -219,7 +219,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (delta.HasMovementBlend)
             {
-                float movementBlend = Mathf.Clamp(delta.MovementBlendQuantized, 0, 3);
+                float movementBlend = delta.MovementBlendQuantized;
                 lastAnimState.MovementBlendValue = movementBlend;
                 movementBlendChanged = true;
             }
@@ -264,8 +264,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (delta.HasGlideState)
                 last.animState.GlideState = ToNetworkMovementGlideState(delta.GlideState);
-
-            // TODO: isInstant, isEmoting
 
             return last;
         }
