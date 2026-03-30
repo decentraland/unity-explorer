@@ -52,6 +52,20 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             if (!TryGetComponentBridge<TMessage>(out SDKComponentBridge componentBridge)) return null;
 
+            // take the component from the pool and prepare it
+            // avoid serialization on the site of the caller
+            // serialization will be called from EngineAPIImplementation
+            var message = (TMessage)componentBridge.Pool.Rent();
+            prepareMessage?.Invoke(message, data);
+            var newMessage = new PendingMessage(message, componentBridge, entity, CRDTMessageType.PUT_COMPONENT);
+            AddLwwMessage(entity, componentBridge, newMessage);
+            return message;
+        }
+
+        public TMessage AddPutMessage_Optimised<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, TData data) where TMessage: class, IMessage
+        {
+            if (!TryGetComponentBridge<TMessage>(out SDKComponentBridge componentBridge)) return null;
+
             lock (messages)
             {
                 var key = new OutgoingMessageKey(entity, componentBridge.Id);
