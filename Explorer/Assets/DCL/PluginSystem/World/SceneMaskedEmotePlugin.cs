@@ -43,9 +43,9 @@ namespace DCL.PluginSystem.World
                 globalWorld,
                 globalPlayerEntity,
                 mainPlayerAvatarBaseProxy,
-                emotePlayerProxy,
-                emoteStorageProxy,
-                messageBusProxy,
+                emotePlayerProxy.Object!,
+                emoteStorageProxy.Object!,
+                messageBusProxy.Object!,
                 sharedDependencies.SceneStateProvider);
 
             finalizeWorldSystems.Add(system);

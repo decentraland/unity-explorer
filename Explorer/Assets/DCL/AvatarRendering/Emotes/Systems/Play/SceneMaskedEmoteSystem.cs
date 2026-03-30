@@ -30,46 +30,33 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly World globalWorld;
         private readonly Entity globalPlayerEntity;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly ObjectProxy<EmotePlayer> emotePlayerProxy;
-        private readonly ObjectProxy<IEmoteStorage> emoteStorageProxy;
-        private readonly ObjectProxy<IEmotesMessageBus> messageBusProxy;
+        private readonly EmotePlayer emotePlayer;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IEmotesMessageBus messageBus;
         private readonly ISceneStateProvider sceneStateProvider;
-
-        // Cached per-frame to avoid repeated proxy dereferences across queries
-        private IAvatarView cachedAvatarView;
-        private EmotePlayer cachedEmotePlayer;
-        private IEmoteStorage cachedEmoteStorage;
-        private IEmotesMessageBus cachedMessageBus;
 
         internal SceneMaskedEmoteSystem(
             World world,
             World globalWorld,
             Entity globalPlayerEntity,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ObjectProxy<EmotePlayer> emotePlayerProxy,
-            ObjectProxy<IEmoteStorage> emoteStorageProxy,
-            ObjectProxy<IEmotesMessageBus> messageBusProxy,
+            EmotePlayer emotePlayer,
+            IEmoteStorage emoteStorage,
+            IEmotesMessageBus messageBus,
             ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
-            this.emotePlayerProxy = emotePlayerProxy;
-            this.emoteStorageProxy = emoteStorageProxy;
-            this.messageBusProxy = messageBusProxy;
+            this.emotePlayer = emotePlayer;
+            this.emoteStorage = emoteStorage;
+            this.messageBus = messageBus;
             this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
-            if (!mainPlayerAvatarBaseProxy.Configured || !emotePlayerProxy.Configured
-                || !emoteStorageProxy.Configured || !messageBusProxy.Configured) return;
-
-            // Cache proxy objects once per frame
-            cachedAvatarView = mainPlayerAvatarBaseProxy.Object!;
-            cachedEmotePlayer = emotePlayerProxy.Object!;
-            cachedEmoteStorage = emoteStorageProxy.Object!;
-            cachedMessageBus = messageBusProxy.Object!;
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
 
             CancelMaskedEmotesQuery(World);
             ConsumeMaskedEmoteIntentQuery(World, t);
@@ -85,7 +72,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (masked.CurrentEmoteReference != null)
             {
                 TryStopMaskedEmote(ref masked);
-                messageBusProxy.Object?.SendStop();
+                messageBus.SendStop();
             }
 
             masked.Reset();
@@ -107,7 +94,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = cachedAvatarView.GetAnimatorCurrentStateTag(layer);
+            int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
             if (isOnAnotherTag)
@@ -123,7 +110,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             try
             {
-                if (!cachedEmoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
+                if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
 
                 if (emote.IsLoading)
                     return;
@@ -152,7 +139,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (emote.AssetResults[bodyShape] == null)
                     return;
 
-                StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
+                StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
                 GameObject? mainAsset;
 
                 if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -178,10 +165,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 masked.EmoteUrn = emoteId;
                 masked.Mask = emoteIntent.Mask;
 
-                if (!cachedEmotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in cachedAvatarView, ref masked))
+                if (!mainPlayerAvatarBaseProxy.Configured) return;
+
+                IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
+
+                if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarBase, ref masked))
                     ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
-                cachedMessageBus.Send(emoteId, emote.IsLooping(), emoteIntent.Mask);
+                messageBus.Send(emoteId, emote.IsLooping(), emoteIntent.Mask);
 
                 World.Remove<CharacterEmoteIntent>(entity);
             }
@@ -207,13 +198,13 @@ namespace DCL.AvatarRendering.Emotes.Play
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
             {
                 TryStopMaskedEmote(ref masked);
-                cachedMessageBus.SendStop();
+                messageBus.SendStop();
             }
         }
 
         private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked)
         {
-            if (!cachedEmoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
+            if (!emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
             if (emote.IsLoading) return;
 
             if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShape)) return;
@@ -222,7 +213,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emote.AssetResults[bodyShape] == null) return;
 
-            StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape].Value;
+            StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
 
             if (streamableAssetValue is { Succeeded: false } || streamableAssetValue.Asset?.MainAsset == null) return;
 
@@ -230,14 +221,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
             AudioClip? audioClip = audioAssetResult?.Asset;
 
-            if (!cachedEmotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), true, in cachedAvatarView, ref masked))
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
+
+            IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
+
+            if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), true, in avatarBase, ref masked))
                 return;
 
             // Reset stored tag so CancelMaskedEmotes doesn't fire on the next frame
             // before UpdateMaskedEmoteTags has a chance to set the real animator state.
             masked.SetAnimationTag(0);
 
-            cachedMessageBus.Send(masked.EmoteUrn, emote.IsLooping(), masked.Mask);
+            messageBus.Send(masked.EmoteUrn, emote.IsLooping(), masked.Mask);
         }
 
         /// <summary>
@@ -254,17 +249,17 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (prevTag == 0) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = cachedAvatarView.GetAnimatorCurrentStateTag(layer);
+            int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
 
             if ((prevTag != AnimationHashes.MASKED_EMOTE || currentTag != AnimationHashes.MASKED_EMOTE_LOOP)
                 && (prevTag != AnimationHashes.MASKED_EMOTE_LOOP || currentTag != AnimationHashes.MASKED_EMOTE)) return;
 
-            cachedMessageBus.Send(masked.EmoteUrn, true, masked.Mask);
+            messageBus.Send(masked.EmoteUrn, true, masked.Mask);
         }
 
         [Query]
         private void UpdateMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked) =>
-            EmotePlayer.UpdateMaskedEmoteTag(ref masked, cachedAvatarView);
+            EmotePlayer.UpdateMaskedEmoteTag(ref masked, mainPlayerAvatarBaseProxy.Object!);
 
         /// <summary>
         /// Stops the masked emote animation and releases pool references.
@@ -281,7 +276,10 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            cachedEmotePlayer.StopMasked(masked.CurrentEmoteReference, in cachedAvatarView, masked.Mask);
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
+
+            IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
+            emotePlayer.StopMasked(masked.CurrentEmoteReference, in avatarBase, masked.Mask);
 
             if (permanent)
                 masked.Reset();
