@@ -105,7 +105,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3522537539153028840}
-  - component: {fileID: 7037513104609345146}
   - component: {fileID: 7565306012700345226}
   - component: {fileID: 4740140118192889816}
   - component: {fileID: 7198675678233442299}
@@ -135,26 +134,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7037513104609345146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1750879125718927294}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
-  m_IgnoreLayout: 0
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: 15
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
 --- !u!222 &7565306012700345226
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -294,7 +273,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1850643027331355941}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -369,7 +348,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3426060694064645244}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -893,14 +872,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5098951253346654651}
+  - component: {fileID: 615725343870955021}
+  - component: {fileID: 1674241877427284860}
   - component: {fileID: 4866702889447262789}
   - component: {fileID: 3849781752387288967}
   - component: {fileID: 7681758915595620354}
   - component: {fileID: 1762814490784345320}
   - component: {fileID: 576444685409359194}
   - component: {fileID: 3518324366372321960}
-  - component: {fileID: 615725343870955021}
-  - component: {fileID: 1674241877427284860}
   - component: {fileID: 7344374376804625327}
   m_Layer: 5
   m_Name: NearbyVoiceMenuView
@@ -930,11 +909,47 @@ RectTransform:
   - {fileID: 3522537539153028840}
   m_Father: {fileID: 4435310192039594706}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 50, y: 0}
   m_SizeDelta: {x: 272, y: 0}
-  m_Pivot: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!114 &615725343870955021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6080012563186225582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.NearbyVoiceWidgetView
+  <canvas>k__BackingField: {fileID: 1762814490784345320}
+  <raycaster>k__BackingField: {fileID: 576444685409359194}
+  <viewAnimationElement>k__BackingField: {fileID: 1674241877427284860}
+  <CloseAreaButton>k__BackingField: {fileID: 5018798167616832090}
+  <HearOthersToggle>k__BackingField: {fileID: 5975531749364629377}
+  <VolumeSliderContainer>k__BackingField: {fileID: 1850643027331355941}
+  <VolumeSlider>k__BackingField: {fileID: 8598501768903546571}
+  <SpeakButtonContainer>k__BackingField: {fileID: 3426060694064645244}
+  <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
+  <HearText>k__BackingField: {fileID: 1750879125718927294}
+--- !u!114 &1674241877427284860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6080012563186225582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <fadeTime>k__BackingField: 0.3
+  <canvasGroup>k__BackingField: {fileID: 3518324366372321960}
 --- !u!222 &4866702889447262789
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -960,7 +975,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 16
     m_Bottom: 16
-  m_ChildAlignment: 1
+  m_ChildAlignment: 0
   m_Spacing: 16
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
@@ -1035,42 +1050,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &615725343870955021
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6080012563186225582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.NearbyVoiceWidgetView
-  <canvas>k__BackingField: {fileID: 1762814490784345320}
-  <raycaster>k__BackingField: {fileID: 576444685409359194}
-  <viewAnimationElement>k__BackingField: {fileID: 1674241877427284860}
-  <CloseAreaButton>k__BackingField: {fileID: 5018798167616832090}
-  <HearOthersToggle>k__BackingField: {fileID: 5975531749364629377}
-  <VolumeSliderContainer>k__BackingField: {fileID: 1850643027331355941}
-  <VolumeSlider>k__BackingField: {fileID: 8598501768903546571}
-  <SpeakButtonContainer>k__BackingField: {fileID: 3426060694064645244}
-  <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
-  <HearText>k__BackingField: {fileID: 1750879125718927294}
---- !u!114 &1674241877427284860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6080012563186225582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <fadeTime>k__BackingField: 0.3
-  <canvasGroup>k__BackingField: {fileID: 3518324366372321960}
 --- !u!114 &7344374376804625327
 MonoBehaviour:
   m_ObjectHideFlags: 0
