@@ -20,8 +20,15 @@ namespace SceneRuntime.V8
         public ScriptObject ScriptObject { get; }
 
         // Reused per-instance to avoid per-call array allocation in hot paths
+        private static readonly object s_boxedZero = (object)0;
         private readonly object[] _subarrayArgs = new object[2];
         private V8ArrayBufferAdapter? _cachedArrayBuffer;
+
+        // Cached delegate + fields to eliminate per-WriteBytes-call closure allocation
+        private IntPtr _writeSrcPtr;
+        private ulong _writeCount;
+        private ulong _writeOffset;
+        private readonly Action<IntPtr> _writeBytesDelegate;
 
         ulong IDCLTypedArray<byte>.Length => TypedArray.Length;
 
@@ -49,6 +56,8 @@ namespace SceneRuntime.V8
         {
             TypedArray = typedArray;
             ScriptObject = (ScriptObject)typedArray;
+            _subarrayArgs[0] = s_boxedZero;
+            _writeBytesDelegate = ExecuteWriteBytes;
         }
 
         public static implicit operator ScriptObject(V8TypedArrayAdapter adapter) =>
@@ -72,28 +81,28 @@ namespace SceneRuntime.V8
                 return;
 
             // ReadOnlySpan is a ref struct and cannot be captured in a lambda.
-            // Pin the data here and pass it as IntPtr so the lambda can use it safely.
+            // Store call data in fields and use a pre-allocated delegate to avoid a closure allocation per call.
             unsafe
             {
                 fixed (byte* srcPtr = &MemoryMarshal.GetReference(source))
                 {
-                    IntPtr srcIntPtr = new IntPtr(srcPtr + sourceIndex);
-
-                    TypedArray.InvokeWithDirectAccess(pData =>
-                    {
-                        unsafe
-                        {
-                            byte* destPtr = (byte*)pData.ToPointer() + offset;
-                            Buffer.MemoryCopy(srcIntPtr.ToPointer(), destPtr, count, count);
-                        }
-                    });
+                    _writeSrcPtr = new IntPtr(srcPtr + sourceIndex);
+                    _writeCount = count;
+                    _writeOffset = offset;
+                    TypedArray.InvokeWithDirectAccess(_writeBytesDelegate);
                 }
             }
         }
 
+        private unsafe void ExecuteWriteBytes(IntPtr pData)
+        {
+            byte* destPtr = (byte*)pData.ToPointer() + _writeOffset;
+            Buffer.MemoryCopy(_writeSrcPtr.ToPointer(), destPtr, _writeCount, _writeCount);
+        }
+
         IDCLTypedArray<byte> IDCLTypedArray<byte>.Subarray(int from, int to)
         {
-            _subarrayArgs[0] = from;
+            _subarrayArgs[0] = from == 0 ? s_boxedZero : (object)from;
             _subarrayArgs[1] = to;
             return new V8TypedArrayAdapter((ITypedArray<byte>)TypedArray.InvokeMethod("subarray", _subarrayArgs));
         }
@@ -110,8 +119,15 @@ namespace SceneRuntime.V8
         void IDCLScriptObject.SetProperty(string name, object value) =>
             ScriptObject.SetProperty(name, value);
 
-        void IDCLScriptObject.SetProperty(int index, object value) =>
-            ScriptObject.SetProperty(index, value);
+        void IDCLScriptObject.SetProperty(int index, object value)
+        {
+            object valueToSet = value;
+            if (value is V8ScriptObjectAdapter v8Adapter)
+                valueToSet = v8Adapter.ScriptObject;
+            else if (value is V8TypedArrayAdapter v8TypedAdapter)
+                valueToSet = v8TypedAdapter.ScriptObject;
+            ScriptObject.SetProperty(index, valueToSet);
+        }
 
         object IDCLScriptObject.Invoke(bool asConstructor, params object[] args)
         {
@@ -134,12 +150,7 @@ namespace SceneRuntime.V8
                 return new V8TypedArrayAdapter(ta);
 
             if (result is ScriptObject so)
-            {
-                if (so is ITypedArray<byte> soAsTypedArray)
-                    return new V8TypedArrayAdapter(soAsTypedArray);
-
                 return new V8ScriptObjectAdapter(so);
-            }
 
             return result;
         }

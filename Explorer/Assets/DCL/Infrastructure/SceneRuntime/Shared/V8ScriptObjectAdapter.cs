@@ -50,7 +50,6 @@ namespace SceneRuntime.V8
         public void SetProperty(string name, object value) =>
             ScriptObject.SetProperty(name, value);
 
-        //TODO FRAN: Check this logic
         /// <inheritdoc />
         public void SetProperty(int index, object value)
         {
