@@ -9,7 +9,6 @@ namespace DCL.VoiceChat.Proximity
     {
         private const string VOLUME_PARAM = "ProximityVoiceChat_Volume";
         private const float MIN_VOLUME_DB = -80f;
-
         private readonly NearbyVoiceWidgetView view;
         private readonly ProximityVoiceChatStateModel stateModel;
         private readonly AudioMixerGroup? proximityMixerGroup;
@@ -31,7 +30,7 @@ namespace DCL.VoiceChat.Proximity
             view.SpeakButton.onClick.AddListener(OnSpeakButtonClicked);
             view.VolumeSlider.onValueChanged.AddListener(OnVolumeChanged);
 
-            ApplySliderVolume(view.VolumeSlider.value);
+            SyncSliderWithMixer();
         }
 
         public void Dispose()
@@ -56,10 +55,14 @@ namespace DCL.VoiceChat.Proximity
             }
 
             bool isConnected = state is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking;
+            bool isSpeaking = state == ProximityVoiceChatState.Speaking;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
             view.VolumeSliderContainer.SetActive(isConnected);
             view.SpeakButtonContainer.SetActive(isConnected);
+            view.SpeakStateVisuals.SetActive(isConnected && !isSpeaking);
+            view.SpeakingStateVisuals.SetActive(isSpeaking);
+            view.SetSpeaking(isSpeaking);
             view.HearText.SetActive(isConnected);
         }
 
@@ -82,6 +85,19 @@ namespace DCL.VoiceChat.Proximity
         private void OnVolumeChanged(float value)
         {
             ApplySliderVolume(value);
+        }
+
+        private void SyncSliderWithMixer()
+        {
+            if (proximityMixerGroup != null &&
+                proximityMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
+            {
+                float linear = db > MIN_VOLUME_DB
+                    ? Mathf.Pow(10f, db / 20f)
+                    : 0f;
+
+                view.VolumeSlider.SetValueWithoutNotify(linear);
+            }
         }
 
         private void ApplySliderVolume(float sliderValue)
