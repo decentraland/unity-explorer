@@ -83,6 +83,7 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();
             view.InputField.CodeEntered -= OnOTPEntered;
+            compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded;
 
             email = string.Empty;
             loginCt = CancellationToken.None;
