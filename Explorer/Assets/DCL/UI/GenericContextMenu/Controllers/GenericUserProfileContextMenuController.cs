@@ -99,12 +99,14 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuUnmuteProximityButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProximityMuteService proximityMuteService;
+        private readonly GenericContextMenuElement contextMenuMentionButton;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
         private Profile.CompactInfo targetProfile;
 
         private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private GenericContextMenuElement invitationButton;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -166,11 +168,12 @@ namespace DCL.UI
             unmuteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearProximityButtonConfig.Text, contextMenuSettings.HearProximityButtonConfig.Sprite, new StringDelegate(OnUnmuteProximityClicked));
             contextMenuMuteProximityButton = new GenericContextMenuElement(muteProximityButtonControlSettings, false);
             contextMenuUnmuteProximityButton = new GenericContextMenuElement(unmuteProximityButtonControlSettings, false);
+            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, true);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(mentionUserButtonControlSettings)
+                         .AddControl(contextMenuMentionButton)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton);
@@ -187,7 +190,7 @@ namespace DCL.UI
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+                invitationButton = invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
 
             contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
@@ -199,7 +202,8 @@ namespace DCL.UI
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null,
+            bool isOpenedOnWorldAvatar = false)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -254,6 +258,22 @@ namespace DCL.UI
                 contextMenuUnmuteProximityButton.Enabled = isMuted;
                 muteProximityButtonControlSettings.SetData(profile.UserId);
                 unmuteProximityButtonControlSettings.SetData(profile.UserId);
+            }
+
+            if (isOpenedOnWorldAvatar)
+            {
+                contextMenuMentionButton.Enabled = false;
+                contextMenuJumpInButton.Enabled = false;
+
+                if (invitationButton != null)
+                    invitationButton.Enabled = false;
+            }
+            else
+            {
+                contextMenuMentionButton.Enabled = true;
+
+                if (invitationButton != null)
+                    invitationButton.Enabled = true;
             }
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
