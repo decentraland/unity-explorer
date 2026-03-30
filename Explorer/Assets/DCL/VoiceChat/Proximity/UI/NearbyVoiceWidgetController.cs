@@ -49,6 +49,12 @@ namespace DCL.VoiceChat.Proximity
 
         private void SyncViewWithState(ProximityVoiceChatState state)
         {
+            if (state == ProximityVoiceChatState.Blocked)
+            {
+                view.CloseAreaButton.onClick.Invoke();
+                return;
+            }
+
             bool isConnected = state is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);

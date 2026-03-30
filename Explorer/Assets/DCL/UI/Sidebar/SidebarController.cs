@@ -424,6 +424,14 @@ namespace DCL.UI.Sidebar
         {
             if (viewInstance == null) return;
 
+            ProximityVoiceChatButtonView buttonView = viewInstance.ProximityVoiceChatButton;
+
+            if (buttonView.IsBlocked)
+            {
+                buttonView.ShowDisabledTooltip();
+                return;
+            }
+
             viewInstance.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.NearbyVoice);
             viewInstance.UnblockSidebar();

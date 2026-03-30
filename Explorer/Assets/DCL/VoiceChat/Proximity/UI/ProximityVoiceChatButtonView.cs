@@ -16,6 +16,8 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private Button? button;
         [SerializeField] private Image? unselectedImage;
         [SerializeField] private Image? hoverStateImage;
+        [field: SerializeField] public GameObject? DisabledTooltip { get; private set; }
+        [field: SerializeField] public Button CloseAreaButton { get; private set; } = null!;
 
         [Space]
         [SerializeField] private MetaStateSprites disconnectedSprites;
@@ -24,6 +26,8 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private MetaStateSprites blockedSprites;
 
         public Button? Button => button;
+
+        public bool IsBlocked { get; set; }
 
         private void Awake()
         {
@@ -43,6 +47,22 @@ namespace DCL.VoiceChat.Proximity
 
             unselectedImage!.sprite = sprites.unselected;
             hoverStateImage!.sprite = sprites.hover;
+        }
+
+        public void ShowDisabledTooltip()
+        {
+            if (DisabledTooltip == null) return;
+
+            DisabledTooltip.SetActive(true);
+            CloseAreaButton.gameObject.SetActive(true);
+        }
+
+        public void HideDisabledTooltip()
+        {
+            if (DisabledTooltip != null)
+                DisabledTooltip.SetActive(false);
+
+            CloseAreaButton.gameObject.SetActive(false);
         }
     }
 }
