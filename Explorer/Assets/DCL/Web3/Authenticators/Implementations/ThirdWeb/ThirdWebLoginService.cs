@@ -29,15 +29,13 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;
-        private event Action<string> OTPSendSucceeded;
+        public event Action<string>? OTPSendSucceeded;
 
-        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, Action<string> onOTPSendSucceeded, int? identityExpirationDuration = null)
+        public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
             this.web3AccountFactory = web3AccountFactory;
             this.client = client;
             this.identityExpirationDuration = identityExpirationDuration;
-
-            OTPSendSucceeded += onOTPSendSucceeded.Invoke;
         }
 
         public async UniTask<bool> TryAutoLoginAsync(CancellationToken ct)
@@ -172,7 +170,7 @@ namespace DCL.Web3.Authenticators
             }
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
-            OTPSendSucceeded.Invoke(email);
+            OTPSendSucceeded?.Invoke(email);
 
             // Wait for successful login via SubmitOtp
             loginCompletionSource = new UniTaskCompletionSource<bool>();

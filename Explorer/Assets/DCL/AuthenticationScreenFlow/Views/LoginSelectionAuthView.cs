@@ -118,6 +118,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             mainElementsPanel.SetActive(false);
             loadingSpinner.SetActive(false);
+            SetEmailInputFieldSpinnerActive(false);
 
             HideAsync(CancellationToken.None).Forget();
         }

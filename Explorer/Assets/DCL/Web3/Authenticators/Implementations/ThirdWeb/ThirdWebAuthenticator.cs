@@ -37,7 +37,11 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdWebLoginService loginService;
         private readonly ThirdWebEthereumApi ethereumApi;
 
-        public event Action<string>? OTPSendSucceeded;
+        public event Action<string>? OTPSendSucceeded
+        {
+            add => loginService.OTPSendSucceeded += value;
+            remove => loginService.OTPSendSucceeded -= value;
+        }
 
         private IThirdwebWallet? activeWallet => loginService.ActiveWallet;
 
@@ -61,7 +65,7 @@ namespace DCL.Web3.Authenticators
                 rpcOverrides: RPC_OVERRIDES
             );
 
-            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, s => OTPSendSucceeded?.Invoke(s), identityExpirationDuration);
+            loginService = new ThirdWebLoginService(thirdwebClient, web3AccountFactory, identityExpirationDuration);
             ethereumApi = new ThirdWebEthereumApi(thirdwebClient, whitelistMethods, readOnlyMethods, decentralandUrlsSource, environment, RPC_OVERRIDES);
         }
 

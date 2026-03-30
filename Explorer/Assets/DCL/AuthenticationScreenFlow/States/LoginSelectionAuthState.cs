@@ -40,8 +40,6 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
 
-            compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
-
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
         }
@@ -189,12 +187,6 @@ namespace DCL.AuthenticationScreenFlow
 
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
                 payload: (view.EmailInputField.Text, controller.GetRestartedLoginToken()));
-        }
-
-        private void OnOTPSendSucceeded(string _)
-        {
-            view.SetEmailInputFieldSpinnerActive(false);
-            view.Hide();
         }
 
         private void OnRetryFromError()

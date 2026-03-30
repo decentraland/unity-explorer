@@ -136,6 +136,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnOTPSendSucceeded(string emailAddress)
         {
+            viewInstance.LoginSelectionAuthView.Hide();
+
             view.Show(emailAddress);
 
             // Listeners
