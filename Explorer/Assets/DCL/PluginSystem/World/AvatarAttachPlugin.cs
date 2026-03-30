@@ -10,6 +10,7 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -19,17 +20,20 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly Arch.Core.World globalWorld;
         private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly ExposedTransform exposedPlayerTransform;
 
         public AvatarAttachPlugin(
             Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy)
+            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy,
+            ExposedTransform exposedPlayerTransform)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.exposedPlayerTransform = exposedPlayerTransform;
         }
 
         public void Dispose()
@@ -46,8 +50,10 @@ namespace DCL.PluginSystem.World
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder,
                 globalWorld,
                 mainPlayerAvatarBaseProxy,
+                exposedPlayerTransform,
                 sharedDependencies.SceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTableProxy,
+                sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
 

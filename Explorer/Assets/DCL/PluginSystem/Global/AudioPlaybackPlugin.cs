@@ -30,7 +30,6 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettings;
 
         public AudioPlaybackPlugin(
-
 #if !UNITY_WEBGL
                 TerrainGenerator terrainGenerator,
                 WorldTerrainGenerator worldTerrainGenerator,

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using DCL.PrivateWorlds;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
@@ -23,7 +24,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 RealmName == other.RealmName && Parcel.Equals(other.Parcel);
 
             public bool Equals(MetaData other) =>
-                RealmName == other.realmName && Parcel.Equals(other.Parcel);
+                RealmName == other.realmName && Parcel.Equals(other.parcel);
 
             public override bool Equals(object? obj) =>
                 obj is Input other && Equals(other);
@@ -50,28 +51,53 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         /// <summary>
         ///     Parcel metadata was requested for, not necessarily the base parcel of the scene
         /// </summary>
-        [NonSerialized]
-        public readonly Vector2Int Parcel;
+        public string parcel;
 
         /// <summary>
         ///     Base Parcel of the scene
+        ///     Not required from BE
         /// </summary>
+        [NonSerialized]
         public readonly Vector2Int BaseParcel;
+
+        private readonly string intent;
+        private readonly string signer;
+        private readonly bool isGuest;
 
         public MetaData(string? sceneId, Vector2Int baseParcel, Input input)
         {
             realmName = input.RealmName;
             realm = new Realm { serverName = input.RealmName };
-            Parcel = input.Parcel;
+            parcel = $"{input.Parcel.x},{input.Parcel.y}";
             this.sceneId = sceneId;
             BaseParcel = baseParcel;
+            intent = "dcl:explorer:comms-handshake";
+            signer = "dcl:explorer";
+            isGuest = false;
         }
 
         public string ToJson() =>
             JsonUtility.ToJson(this)!;
 
+        public string BuildWithSecret(string secret)
+        {
+            var metadata = new SceneCommsHandshakeMetadata
+            {
+                realmName = realmName,
+                realm = realm,
+                sceneId = sceneId,
+                parcel = parcel,
+                intent = CommsHandshakeMetadata.INTENT,
+                signer = CommsHandshakeMetadata.SIGNER,
+                isGuest = false,
+                secret = secret,
+            };
+
+            return JsonUtility.ToJson(metadata);
+        }
+
         public override string ToString() =>
-            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {Parcel}";
+            $"Realm: {realmName}, Scene: {sceneId}, Parcel: {parcel}";
 
         public bool Equals(MetaData other) =>
             realmName == other.realmName && sceneId == other.sceneId;
@@ -81,5 +107,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public override int GetHashCode() =>
             HashCode.Combine(realmName, sceneId);
+
+        [Serializable]
+        private struct SceneCommsHandshakeMetadata
+        {
+            public string realmName;
+            public Realm realm;
+            public string? sceneId;
+            public string parcel;
+            public string intent;
+            public string signer;
+            public bool isGuest;
+            public string secret;
+        }
     }
 }

@@ -27,6 +27,8 @@ namespace DCL.FeatureFlags
             variants = new Dictionary<string, FeatureFlagVariantDto>(),
         };
 
+        public bool IsEmpty => flags.Count == 0 && variants.Count == 0;
+
         public Dictionary<string, bool> flags;
         public Dictionary<string, FeatureFlagVariantDto> variants;
     }

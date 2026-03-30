@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -33,7 +31,7 @@ namespace DCL.Chat.Commands
         public bool ValidateParameters(string[] parameters)
         {
             if (parameters.Length != 3) return false;
-            
+
             string action = parameters[0];
             return IsValidAction(action);
         }
@@ -41,7 +39,7 @@ namespace DCL.Chat.Commands
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             string action = parameters[0];
-            
+
             return action switch
             {
                 "enable" => ExecuteEnableCommand(parameters[1], parameters[2]),
@@ -72,7 +70,7 @@ namespace DCL.Chat.Commands
 
         private static bool IsValidAction(string action)
         {
-            for (int i = 0; i < VALID_ACTIONS.Length; i++)
+            for (var i = 0; i < VALID_ACTIONS.Length; i++)
             {
                 if (string.Equals(action, VALID_ACTIONS[i], StringComparison.OrdinalIgnoreCase))
                     return true;
@@ -82,7 +80,7 @@ namespace DCL.Chat.Commands
 
         private static bool TryParseLogType(string severity, out LogType logType)
         {
-            for (int i = 0; i < VALID_SEVERITIES.Length; i++)
+            for (var i = 0; i < VALID_SEVERITIES.Length; i++)
             {
                 if (string.Equals(severity, VALID_SEVERITIES[i], StringComparison.OrdinalIgnoreCase))
                 {
@@ -90,7 +88,7 @@ namespace DCL.Chat.Commands
                     return true;
                 }
             }
-            
+
             logType = (LogType)(-1);
             return false;
         }

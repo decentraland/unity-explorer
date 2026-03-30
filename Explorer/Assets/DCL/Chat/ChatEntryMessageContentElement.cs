@@ -7,15 +7,20 @@ namespace DCL.Chat
 {
     public class ChatEntryMessageContentElement : MonoBehaviour
     {
-        [field: SerializeField] internal RectTransform messageContentRectTransform { get; private set; }
-        [field: SerializeField] internal ContentSizeFitter messageContentSizeFitter { get; private set; }
-        [field: SerializeField] internal TMP_Text messageContentText { get; private set; }
-        [field: SerializeField] internal TextHyperlinkHandlerElement textHyperlinkHandler { get; private set; }
+        [field: SerializeField] internal RectTransform messageContentRectTransform { get; private set; } = null!;
+        [field: SerializeField] internal ContentSizeFitter messageContentSizeFitter { get; private set; } = null!;
+        [field: SerializeField] internal TMP_Text messageContentText { get; private set; } = null!;
 
-        [field: SerializeField] private CanvasGroup messageContentCanvas;
+        [field: SerializeField] private CanvasGroup messageContentCanvas = null!;
+
+        private string lastSetText = string.Empty;
 
         public void SetMessageContent(string content)
         {
+            if (lastSetText == content)
+                return;
+
+            lastSetText = content;
             messageContentText.SetText(content);
 
             //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text

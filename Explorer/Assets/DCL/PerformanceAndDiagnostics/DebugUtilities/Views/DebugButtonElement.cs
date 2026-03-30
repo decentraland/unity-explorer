@@ -2,7 +2,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugButtonElement : DebugElementBase<DebugButtonElement, DebugButtonDef>
+    [UxmlElement]
+    public partial class DebugButtonElement : DebugElementBase<DebugButtonElement, DebugButtonDef>
     {
         protected override void ConnectBindings()
         {
@@ -10,7 +11,5 @@ namespace DCL.DebugUtilities.Views
             definition.Text.Connect(button);
             button.clicked += definition.OnClick;
         }
-
-        public new class UxmlFactory : UxmlFactory<DebugButtonElement> { }
     }
 }

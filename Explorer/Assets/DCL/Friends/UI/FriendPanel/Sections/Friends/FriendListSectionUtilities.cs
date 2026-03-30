@@ -2,8 +2,10 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.BlockUserPrompt;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.VoiceChat;
@@ -22,7 +24,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public static class FriendListSectionUtilities
     {
-        private const string WORLDS_BASE_URL = "https://worlds-content-server.decentraland.org/world/";
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
@@ -32,6 +33,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             string[] getUserPositionBuffer,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
             Action<Vector2Int>? parcelCalculatedCallback = null)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
@@ -51,7 +53,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (userData.IsInWorld)
                 {
-                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct).Forget();
+                    string worldUrl = new ENS(userData.worldName).ConvertEnsToWorldUrl(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
+                    realmNavigator.TryChangeRealmAsync(
+                        URLDomain.FromString(worldUrl),
+                        ct,
+                        default,
+                        isWorld: true,
+                        allowsSpawnPointerOverride: true).Forget();
                 }
                 else
                 {
@@ -65,7 +73,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
-        internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
+        internal static void OpenProfilePassport(Profile.CompactInfo profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
 
         internal static string FormatDate(DateTime date)

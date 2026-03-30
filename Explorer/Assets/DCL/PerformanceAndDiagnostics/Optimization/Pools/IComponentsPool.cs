@@ -10,7 +10,7 @@ namespace DCL.Optimization.Pools
     }
 
     /// <summary>
-    ///     Threadsafe Component Pool
+    ///     Thread-safe Component Pool
     /// </summary>
     /// <typeparam name="T">Type of Component</typeparam>
     public interface IComponentPool<T> : IExtendedObjectPool<T>, IComponentPool where T: class

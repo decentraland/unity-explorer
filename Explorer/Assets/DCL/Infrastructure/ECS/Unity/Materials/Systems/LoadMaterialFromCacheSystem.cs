@@ -16,8 +16,8 @@ namespace ECS.Unity.Materials.Systems
     [Obsolete("the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear, consider revising when and if needed")]
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
-    [UpdateBefore(typeof(CreatePBRMaterialSystem))]
     [UpdateBefore(typeof(CreateBasicMaterialSystem))]
+    [UpdateBefore(typeof(CreatePBRMaterialSystem))]
     [ThrottlingEnabled]
     public partial class LoadMaterialFromCacheSystem : BaseUnityLoopSystem
     {

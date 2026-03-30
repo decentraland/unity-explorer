@@ -6,7 +6,9 @@ using DCL.Chat.EventBus;
 #endif
 
 using DCL.Multiplayer.Connectivity;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Web3;
@@ -26,6 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -52,6 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
 
 #if !NO_LIVEKIT_MODE
@@ -64,6 +68,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
 
 #if !NO_LIVEKIT_MODE
@@ -102,7 +107,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             view.SetScrollViewState(true);
         }
 
-        protected override void ElementClicked(FriendProfile profile)
+        protected override void ElementClicked(Profile.CompactInfo profile)
         {
             if (elementClicked)
             {
@@ -117,7 +122,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
         }
 
-        private async UniTaskVoid WaitAndOpenPassportAsync(FriendProfile profile, CancellationToken ct)
+        private async UniTaskVoid WaitAndOpenPassportAsync(Profile.CompactInfo profile, CancellationToken ct)
         {
             elementClicked = true;
 
@@ -130,33 +135,33 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             await passportBridge.ShowAsync(profile.Address);
         }
 
-        private void OnContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
+        private void OnContextMenuClicked(Profile.CompactInfo friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             popupCts = popupCts.SafeRestart();
             elementView.CanUnHover = false;
 
-            bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE;
+            bool isFriendOnline = friendsConnectivityStatusTracker.GetFriendStatus(friendProfile.UserId) != OnlineStatus.OFFLINE;
 
             if (isFriendOnline)
-                OnlineFriendClicked?.Invoke(friendProfile.Address);
+                OnlineFriendClicked?.Invoke(friendProfile.UserId);
 
-            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.UserId),
                 buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: panelLifecycleTask!.Task, onHide: () => elementView.CanUnHover = true
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
-        private void OnJumpInClicked(FriendProfile profile)
+        private void OnJumpInClicked(Profile.CompactInfo profile)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
         }
 
-        private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
+        private void OnChatButtonClicked(Profile.CompactInfo elementViewUserProfile)
         {
             OnOpenConversationAsync(elementViewUserProfile).Forget();
         }
 
-        private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
+        private async UniTaskVoid OnOpenConversationAsync(Profile.CompactInfo profile)
         {
 #if !NO_LIVEKIT_MODE
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));

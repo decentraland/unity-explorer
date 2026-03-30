@@ -39,7 +39,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 
 namespace SceneRuntime
 {
-    public interface ISceneRuntime : IJsOperations
+    public interface ISceneRuntime : IDisposable
     {
         public CancellationTokenSource IsDisposingTokenSource { get; }
 

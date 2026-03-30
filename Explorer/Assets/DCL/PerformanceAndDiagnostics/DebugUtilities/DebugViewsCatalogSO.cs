@@ -59,5 +59,8 @@ namespace DCL.DebugUtilities
 
         [field: SerializeField]
         public VisualTreeAsset AverageFpsBanner { get; private set; }
+
+        [field: SerializeField]
+        public VisualTreeAsset OngoingRequestsWidget { get; private set; }
     }
 }

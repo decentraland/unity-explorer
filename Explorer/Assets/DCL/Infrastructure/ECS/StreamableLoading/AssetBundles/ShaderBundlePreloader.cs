@@ -93,9 +93,9 @@ namespace ECS.StreamableLoading.AssetBundles
 #if UNITY_WEBGL
         private static readonly string[] SHADER_BUNDLES =
         {
-            "dcl/scene_ignore",
-            "dcl/universal render pipeline/lit_ignore",
-            "dcl/toon_ignore",
+            "dcl/scene_ignore_webgl",
+            "dcl/universal render pipeline/lit_ignore_webgl",
+            "dcl/toon_ignore_webgl",
         };
 
         private static readonly Dictionary<string, AssetBundle> PRELOADED_BUNDLES = new ();

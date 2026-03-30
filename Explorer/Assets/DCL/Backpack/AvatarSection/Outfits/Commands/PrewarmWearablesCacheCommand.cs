@@ -45,11 +45,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                     baseUrns.Add(fullUrn);
                 }
             }
-        
+
             try
             {
                 // 2) Ensure base DTOs exist in the cache (required by save/profile code paths)
-                await wearablesProvider.RequestPointersAsync(baseUrns, BodyShape.MALE, ct);
+                await wearablesProvider.GetByPointersAsync(baseUrns, BodyShape.MALE, ct);
 
                 // 3) Persist ownership so save/profile can resolve full URNs with tokens
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)

@@ -1,24 +1,23 @@
-using Cysharp.Threading.Tasks;
-using ECS.Abstract;
-using UnityEngine;
-
-#if !UNITY_WEBGL
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.RealmNavigation;
+using DCL.Utility;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using ECS;
-using Global.Dynamic.LaunchModes;
+using ECS.Abstract;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-#endif
+using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -35,7 +34,8 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
-#if !UNITY_WEBGL
+            IFFIClient.Default.EnsureInitialize();
+
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), DecentralandEnvironment.Zone);
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory(), DecentralandEnvironment.Zone);
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 loonCharacterObject,
@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 system.Update(UnityEngine.Time.deltaTime);
                 await UniTask.Yield();
             }
-#endif
         }
     }
 }
+#endif

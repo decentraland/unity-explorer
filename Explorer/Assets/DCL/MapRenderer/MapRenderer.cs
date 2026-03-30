@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -52,16 +52,11 @@ namespace DCL.MapRenderer
                     layers[pair.Key] = new MapLayerStatus(pair.Value);
                 }
 
-                if (layers.TryGetValue(MapLayer.SatelliteAtlas, out var satelliteStatus))
-                    satelliteStatus.SharedActive = true;
-                if (layers.TryGetValue(MapLayer.SearchResults, out var searchResultsStatus))
-                    searchResultsStatus.SharedActive = true;
-                if (layers.TryGetValue(MapLayer.LiveEvents, out var liveEventsStatus))
-                    liveEventsStatus.SharedActive = false;
-                if (layers.TryGetValue(MapLayer.Category, out var categoryStatus))
-                    categoryStatus.SharedActive = false;
-                if (layers.TryGetValue(MapLayer.ParcelsAtlas, out var parcelsStatus))
-                    parcelsStatus.SharedActive = false;
+                layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.SearchResults].SharedActive = true;
+                layers[MapLayer.LiveEvents].SharedActive = false;
+                layers[MapLayer.Category].SharedActive = false;
+                layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.TEXTURES)); }

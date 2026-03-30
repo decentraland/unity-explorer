@@ -4,6 +4,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities;
 using DCL.WebRequests;
+using ECS.Unity.AssetLoad.Cache;
 using RenderHeads.Media.AVProVideo;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -25,6 +26,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget performanceBudget;
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         public MediaFactoryBuilder(
 
@@ -36,7 +38,8 @@ namespace DCL.SDKComponents.MediaStream
                 MediaVolume volumeBus,
                 IPerformanceBudget performanceBudget,
                 MediaPlayer mediaPlayerPrefab,
-                IObjectPool<RenderTexture> videoTexturesPool)
+                IObjectPool<RenderTexture> videoTexturesPool,
+                AssetPreLoadCache assetPreLoadCache)
         {
 
 #if !NO_LIVEKIT_MODE
@@ -47,8 +50,9 @@ namespace DCL.SDKComponents.MediaStream
             this.performanceBudget = performanceBudget;
             this.videoTexturesPool = videoTexturesPool;
             this.volumeBus = volumeBus;
+            this.assetPreLoadCache = assetPreLoadCache;
 
-            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
@@ -65,6 +69,7 @@ namespace DCL.SDKComponents.MediaStream
                     sceneDeps.EntitiesMap,
                     world,
                     webRequestController,
-                    performanceBudget);
+                    performanceBudget,
+                    assetPreLoadCache);
     }
 }

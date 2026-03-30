@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
@@ -108,7 +108,7 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory, string? worldContentServerBaseUrl = null)
         {
             IGetHash getHash;
             switch (remoteContentServer)
@@ -120,7 +120,7 @@ namespace SceneRunner.Scene
                     getHash = new GetHashGoerli();
                     break;
                 case HybridSceneContentServer.World:
-                    getHash = new GetHashWorld(world);
+                    getHash = new GetHashWorld(world, worldContentServerBaseUrl);
                     break;
                 default:
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Unexistent remote content domain {remoteContentServer.ToString()}");

@@ -18,6 +18,7 @@ using DCL.FeatureFlags;
 using DCL.InWorldCamera;
 using DCL.Multiplayer.Movement;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -85,6 +86,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
@@ -152,7 +154,7 @@ namespace DCL.CharacterMotion.Systems
         // This prevents all random avatars from moving the head when the player's camera is moved
         [None(typeof(RandomAvatar))]
 #endif
-        [None(typeof(RemotePlayerMovementComponent))]
+        [None(typeof(RemotePlayerMovementComponent), typeof(DeleteEntityIntention))]
         private void UpdateIK([Data] float dt,
             [Data] in CameraComponent cameraComponent,
             [Data] bool inWorldCameraActive,
@@ -185,6 +187,7 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         [All(typeof(RemotePlayerMovementComponent))]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateRemoteIK([Data] float dt, [Data] Vector3 playerPosition, ref HeadIKComponent headIK, ref AvatarBase avatarBase, in CharacterTransform transform)
         {
             // Head IK enabled flag and look-at vector are received from the remote client

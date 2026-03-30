@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -12,6 +13,7 @@ using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -97,13 +99,13 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ProfileRepositoryWrapper profileDataProvider
+            ProfileRepositoryWrapper profileDataProvider,
 
 #if !NO_LIVEKIT_MODE
-            , IVoiceChatOrchestrator voiceChatOrchestrator
+            IVoiceChatOrchestrator voiceChatOrchestrator,
 #endif
-
-            )
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -156,7 +158,10 @@ namespace DCL.PluginSystem.Global
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatOrchestrator
+                voiceChatOrchestrator,
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

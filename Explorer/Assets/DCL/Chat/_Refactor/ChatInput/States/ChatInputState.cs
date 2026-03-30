@@ -1,11 +1,12 @@
-﻿#if !NO_LIVEKIT_MODE
-
+#if !NO_LIVEKIT_MODE
 using MVC;
 
 namespace DCL.Chat.ChatInput
 {
-    public abstract class ChatInputState : MVCState<ChatInputState, ChatInputStateContext>
+    public abstract class ChatInputState : IExitableState
     {
+        public virtual void Exit() { }
+
         internal void OnBlockedUpdated(bool isUnblocked)
         {
             if (isUnblocked)
@@ -19,5 +20,4 @@ namespace DCL.Chat.ChatInput
         protected virtual void OnInputUnblocked() { }
     }
 }
-
 #endif

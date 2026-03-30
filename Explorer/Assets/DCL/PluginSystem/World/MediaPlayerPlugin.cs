@@ -18,7 +18,9 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly ExposedCameraData exposedCameraData;
         private readonly MediaFactoryBuilder mediaFactory;
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper = null!;
+#endif
 
         public MediaPlayerPlugin(
             IPerformanceBudget frameTimeBudget,
@@ -32,11 +34,16 @@ namespace DCL.PluginSystem.World
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        {
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies, finalizeWorldSystems, sceneIsCurrentListeners);
+#endif
+        }
 
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
                 frameTimeBudget,
                 exposedCameraData,
@@ -45,7 +52,7 @@ namespace DCL.PluginSystem.World
                 mediaFactory,
                 settings.FlipMaterial
             );
-
+#endif
             return UniTask.CompletedTask;
         }
 

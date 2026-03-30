@@ -7,7 +7,7 @@ using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public interface IAnalyticsController
+    public interface IAnalyticsController : IDisposable
     {
         public const string UNDEFINED = "UNDEFINED";
 
@@ -18,8 +18,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         string ServiceInfo { get; }
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
-
-        void Initialize(IWeb3Identity? web3Identity);
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform);
 
@@ -51,6 +49,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void Identify(IWeb3Identity? _) { }
 
             public void Flush() { }
+
+            public void Dispose() { }
         }
     }
 }

@@ -54,8 +54,8 @@ namespace DCL.UI.ConfirmationDialog
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
 
-            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
-            bool hasFromProfileImage = !string.IsNullOrEmpty(dialogData.FromUserInfo.Address);
+            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.UserId);
+            bool hasFromProfileImage = !string.IsNullOrEmpty(dialogData.FromUserInfo.UserId);
 
             profilePicturesContainer.SetActive(hasProfileImage);
             profilePictureView.gameObject.SetActive(hasProfileImage);
@@ -88,10 +88,10 @@ namespace DCL.UI.ConfirmationDialog
             if (!hasProfileImage) return;
 
             profilePictureView.SetDefaultThumbnail();
-            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+            profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo);
 
             fromProfilePictureView.SetDefaultThumbnail();
-            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo.Color, dialogData.FromUserInfo.ThumbnailUrl);
+            fromProfilePictureView.Setup(profileRepositoryWrapper, dialogData.FromUserInfo);
 
 
             additonalUrlText.gameObject.SetActive(false);

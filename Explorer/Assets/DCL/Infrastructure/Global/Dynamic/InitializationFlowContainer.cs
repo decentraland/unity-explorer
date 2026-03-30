@@ -1,14 +1,11 @@
+using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
-using DCL.Character;
 using DCL.Character.Plugin;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-
 #if !NO_LIVEKIT_MODE
 using DCL.Multiplayer.Connections.RoomHubs;
 #endif
-
 using DCL.Multiplayer.HealthChecks;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
@@ -16,7 +13,6 @@ using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using ECS.SceneLifeCycle.Realm;
 using DCL.SceneLoadingScreens.LoadingScreen;
-using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities.Extensions;
 using Global;
 using Global.AppArgs;
@@ -42,7 +38,6 @@ namespace DCL.UserInAppInitializationFlow
 #if !NO_LIVEKIT_MODE
             IHealthCheck liveKitHealthCheck,
 #endif
-            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
@@ -55,7 +50,8 @@ namespace DCL.UserInAppInitializationFlow
 #if !UNITY_WEBGL
             bool localSceneDevelopment,
 #endif
-            CharacterContainer characterContainer)
+            CharacterContainer characterContainer,
+            ModerationDataProvider moderationDataProvider)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -64,14 +60,11 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
 #if !UNITY_WEBGL
-            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
 #endif
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
-
             var loadingOperations = new List<IStartupOperation>()
             {
 
@@ -96,14 +89,14 @@ namespace DCL.UserInAppInitializationFlow
 #if UNITY_WEBGL
             IAnalyticsController analyticsForOps = IAnalyticsController.Null;
 #else
-            IAnalyticsController analyticsForOps = bootstrapContainer.Analytics.EnsureNotNull();
+            IAnalyticsController analyticsForOps = bootstrapContainer.Analytics.Controller;
 #endif
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                analyticsForOps,
+                bootstrapContainer.Analytics.Controller,
                 "start-up");
 
             startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Initialization Flow");
@@ -112,53 +105,40 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 loadingOperations,
                 ReportCategory.STARTUP,
-                analyticsForOps,
+                bootstrapContainer.Analytics.Controller,
                 "re-login");
 
             reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
 
             return new InitializationFlowContainer
             {
-                InitializationFlow = new RealUserInAppInitializationFlow(
-                        loadingStatus: loadingStatus,
-                        decentralandUrlsSource: bootstrapContainer.DecentralandUrlsSource,
-                        mvcManager: mvcManager,
-                        backgroundMusic: backgroundMusic,
-                        realmNavigator: realmNavigator,
-                        loadingScreen: loadingScreen,
-                        realmController: realmContainer.RealmController,
-                        portableExperiencesController: staticContainer.PortableExperiencesController,
+                InitializationFlow = new RealUserInAppInitializationFlow(loadingStatus,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    mvcManager,
+                    backgroundMusic,
+                    realmNavigationContainer.RealmNavigator,
+                    loadingScreen,
+                    realmContainer.RealmController,
+                    staticContainer.PortableExperiencesController,
 #if !NO_LIVEKIT_MODE
-                        roomHub,
+                    roomHub,
 #endif
-                        initOps: startUpOps,
-                        reloginOps: reLoginOps,
-                        checkOnboardingStartupOperation: checkOnboardingStartupOperation,
-                        identityCache: bootstrapContainer.IdentityCache.EnsureNotNull(),
-
+                    startUpOps,
+                    reLoginOps,
+                    bootstrapContainer.IdentityCache.EnsureNotNull(),
 #if !NO_LIVEKIT_MODE
-                        ensureLivekitConnectionStartupOperation,
+                    ensureLivekitConnectionStartupOperation,
 #endif
-
-                        appArgs: appArgs,
-                        characterObject: characterContainer.CharacterObject,
-                        characterExposedTransform: characterContainer.Transform,
-                        startParcel: dynamicWorldParams.StartParcel
+                    appArgs,
+                    characterContainer.CharacterObject,
+                    characterContainer.Transform,
+                    dynamicWorldParams.StartParcel
 #if !UNITY_WEBGL
-                            , localSceneDevelopment
+                  , localSceneDevelopment
 #endif
-                            ),
+
+                    ),
             };
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

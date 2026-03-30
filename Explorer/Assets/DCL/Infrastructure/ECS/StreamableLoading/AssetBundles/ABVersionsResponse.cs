@@ -19,8 +19,8 @@ namespace ECS.StreamableLoading.AssetBundles
         [Serializable]
         public struct ABAssets
         {
-            public ABAssetVersionInfo mac;
-            public ABAssetVersionInfo windows;
+            public ABAssetVersionInfo? mac;
+            public ABAssetVersionInfo? windows;
             public ABAssetVersionInfo? webgl;
         }
 
@@ -43,6 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             public string mac;
             public string windows;
+            public string webgl;
         }
     }
 }

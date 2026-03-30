@@ -138,7 +138,7 @@ namespace DCL.UI.SelectorButton
         public void SetAsInteractable(bool isInteractable) =>
             selectorButton.interactable = isInteractable;
 
-        private void ClearOptions()
+        public void ClearOptions()
         {
             foreach (SelectorButtonOptionItemView optionItemView in currentOptions)
                 optionsPool.Release(optionItemView);

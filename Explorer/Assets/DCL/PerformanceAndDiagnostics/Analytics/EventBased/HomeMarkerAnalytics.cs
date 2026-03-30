@@ -14,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 		{
 			this.analytics = analytics;
 			scope = new EventSubscriptionScope();
-			
+
 			scope.Add(eventBus.Subscribe<HomeMarkerEvents.MessageHomePositionChanged>(OnHomeChanged));
 		}
 
@@ -28,12 +28,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 			var properties = new JObject
 			{
 				{ "is_home_set", evt.IsHomeSet },
-				{ "coordinates", evt.Coordinates.ToString() }
+				{ "coordinates", evt.Coordinates.ToString() },
+				{ "world_name", evt.WorldName ?? string.Empty }
 			};
-			
+
 			analytics.Track(AnalyticsEvents.UI.HOME_POSITION_SET, properties);
 		}
 
-		
+
 	}
 }

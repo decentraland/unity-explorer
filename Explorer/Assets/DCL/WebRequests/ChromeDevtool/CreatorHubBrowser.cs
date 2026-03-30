@@ -16,13 +16,13 @@ namespace DCL.WebRequests.ChromeDevtool
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         // path for: C:\Users\<YourUsername>\AppData\Local\Programs\creator-hub\Decentraland Creator Hub.exe
-        private static readonly string DEFAULT_CREATOR_HUB_BIN_PATH =
+        public static readonly string DEFAULT_CREATOR_HUB_BIN_PATH =
             Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Programs", "creator-hub", "Decentraland Creator Hub.exe"
             );
 #else
-        private static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
+        public static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
 #endif
 
         public CreatorHubBrowser(IAppArgs appArgs, int port)

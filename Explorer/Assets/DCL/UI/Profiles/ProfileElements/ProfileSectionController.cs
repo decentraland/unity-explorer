@@ -51,13 +51,13 @@ namespace DCL.UI.ProfileElements
                 return;
             }
 
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
+            Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(identityCache.Identity!.Address, ct);
 
             if (profile == null) return;
 
-            nameElementController.Setup(profile);
-            walletAddressElementController.Setup(profile);
-            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            nameElementController.Setup(profile.Value);
+            walletAddressElementController.Setup(profile.Value);
+            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.Value);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;

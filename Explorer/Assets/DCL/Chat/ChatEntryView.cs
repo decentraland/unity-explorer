@@ -19,7 +19,7 @@ namespace DCL.Chat
         private const float PROFILE_BUTTON_Y_OFFSET = -18;
         private const float USERNAME_Y_OFFSET = -13f;
         private const string DATE_DIVIDER_TODAY = "Today";
-        private const string DATE_DIVIDER_YESTERDAY = "Today";
+        private const string DATE_DIVIDER_YESTERDAY = "Yesterday";
 
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
@@ -46,7 +46,7 @@ namespace DCL.Chat
 
         [field: SerializeField] private CanvasGroup usernameElementCanvas;
 
-        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel.WithColor>? profileSubscription;
+        private ReactivePropertyExtensions.DisposableSubscription<ProfileThumbnailViewModel>? profileSubscription;
         private ReactivePropertyExtensions.DisposableSubscription<ProfileOptionalBasicInfo>? profileDataSubscription;
 
         private ChatMessage chatMessage;
@@ -133,7 +133,7 @@ namespace DCL.Chat
                     ProfilePictureView.ConfigureThumbnailClickData(OnUsernameClicked, chatMessage.SenderWalletAddress);
             }
             else
-                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Thumbnail.Sprite!);
+                ProfilePictureView.SetImage(viewModel.ProfileData.Value.Sprite!);
 
             profileSubscription?.Dispose();
             profileSubscription = viewModel.ProfileData.UseCurrentValueAndSubscribeToUpdate(usernameElement.userName, (vM, text) => text.color = vM.ProfileColor, viewModel.cancellationToken);
@@ -147,6 +147,7 @@ namespace DCL.Chat
                 {
                     view.usernameElement.UserNameClicked += OnUsernameClicked;
                     view.usernameElement.SetUsername(profileInfo.UserName, profileInfo.UserWalletId, profileInfo.IsOfficial);
+                    view.messageBubbleElement.UpdateName(viewModel.DisplayText, chatMessage, profileInfo.UserName, profileInfo.UserWalletId);
                 }
                 else
                     view.usernameElement.UserNameClicked -= OnUsernameClicked;

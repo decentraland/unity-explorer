@@ -15,6 +15,8 @@ namespace DCL.Chat
         private IDisposable? communityCallIdSubscription;
 
         private IReadonlyReactiveProperty<string>? currentCommunityCallId;
+        private IReadonlyReactiveProperty<bool>? communityActiveCallState;
+        private bool wasListeningToThisCommunity;
 
         [SerializeField] private Sprite listeningToCallIcon  = null!;
         [SerializeField] private Sprite hasCallIcon  = null!;
@@ -41,10 +43,12 @@ namespace DCL.Chat
             communitySubscription = communityUpdates.Subscribe(OnCommunityStateUpdated);
 
             this.currentCommunityCallId = communityCallId;
+            this.communityActiveCallState = communityUpdates;
 
             communityCallIdSubscription?.Dispose();
             communityCallIdSubscription = communityCallId.Subscribe(OnCommunityCallIdChanged);
 
+            wasListeningToThisCommunity = communityCallId.Value.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase);
 
             connectionStatusIndicatorContainer.SetActive(communityUpdates.Value);
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Setup Community Item -> is Streaming: {communityUpdates.Value} - current community ID: {communityCallId.Value}");
@@ -55,11 +59,21 @@ namespace DCL.Chat
         private void OnCommunityCallIdChanged(string currentCallId)
         {
             bool isCurrentCommunity = currentCallId.Equals(ChatChannel.GetCommunityIdFromChannelId(Id), StringComparison.InvariantCultureIgnoreCase);
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"On Community Call ID Updated -> Is current: {isCurrentCommunity}");
-            if (isCurrentCommunity)
-                connectionStatusIndicatorContainer.SetActive(true);
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"On Community Call ID Updated -> Is current: {isCurrentCommunity}, was listening: {wasListeningToThisCommunity}");
 
-            iconImage.sprite = isCurrentCommunity? listeningToCallIcon : hasCallIcon;
+            if (isCurrentCommunity)
+            {
+                connectionStatusIndicatorContainer.SetActive(true);
+                wasListeningToThisCommunity = true;
+            }
+            else if (wasListeningToThisCommunity)
+            {
+                bool hasActiveCall = communityActiveCallState?.Value ?? false;
+                connectionStatusIndicatorContainer.SetActive(hasActiveCall);
+                wasListeningToThisCommunity = false;
+            }
+
+            iconImage.sprite = isCurrentCommunity ? listeningToCallIcon : hasCallIcon;
         }
 
         private void OnCommunityStateUpdated(bool hasActiveCall)

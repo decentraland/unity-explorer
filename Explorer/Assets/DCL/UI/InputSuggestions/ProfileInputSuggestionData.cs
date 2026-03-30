@@ -5,10 +5,10 @@ namespace DCL.UI.SuggestionPanel
 {
     public readonly struct ProfileInputSuggestionData : IInputSuggestionElementData
     {
-        public Profile ProfileData { get; }
+        public Profile.CompactInfo ProfileData { get; }
         public ProfileRepositoryWrapper ProfileDataProvider { get; }
 
-        public ProfileInputSuggestionData(Profile profileData, ProfileRepositoryWrapper profileDataProvider)
+        public ProfileInputSuggestionData(Profile.CompactInfo profileData, ProfileRepositoryWrapper profileDataProvider)
         {
             ProfileData = profileData;
             ProfileDataProvider = profileDataProvider;

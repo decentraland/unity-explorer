@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Load;
 using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -11,8 +12,10 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
 using DCL.UI.SharedSpaceManager;
@@ -26,18 +29,21 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
-using LoadOwnedEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadOwnedEmotesSystem;
 using LoadSceneEmotesSystem = DCL.AvatarRendering.Emotes.Load.LoadSceneEmotesSystem;
 
 namespace DCL.PluginSystem.Global
 {
     public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
     {
+        private static readonly URLSubdirectory EMOTES_COMPLEMENT_URL = URLSubdirectory.FromString("/emotes/");
+        private static readonly URLSubdirectory EMOTES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Emotes/");
+
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteStorage emoteStorage;
         private readonly IRealmData realmData;
@@ -61,6 +67,11 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
+        private TimeSpan batchHeartbeat;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -82,7 +93,10 @@ namespace DCL.PluginSystem.Global
             bool builderCollectionsPreview,
             IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            EntitiesAnalytics entitiesAnalytics,
+            ITrimmedEmoteStorage trimmedEmoteStorage)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -104,6 +118,9 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
+            this.entitiesAnalytics = entitiesAnalytics;
+            this.trimmedEmoteStorage = trimmedEmoteStorage;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -116,17 +133,18 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
-
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                emoteStorage, realmData, customStreamingSubdirectory);
+                new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
+                emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics);
 
-            LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
-                new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteStorage, builderContentURL);
+            BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
+
+            LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
+                new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
+                emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
+                decentralandUrlsSource, builderContentURL);
 
             if(builderCollectionsPreview)
                 ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
@@ -137,11 +155,21 @@ namespace DCL.PluginSystem.Global
 
             RemoteEmotesSystem.InjectToWorld(ref builder, entityParticipantTable, messageBus);
 
-            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, EMOTES_EMBEDDED_SUBDIRECTORY);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
         {
+            batchHeartbeat = TimeSpan.FromMilliseconds(settings.BatchHeartbeatMs);
+
+            IReadOnlyCollection<URN> baseEmotesUrns = settings.BaseEmotesAsURN();
+
+            // Initialize the embedded emote URN mapping for legacy emote conversion
+            EmoteComponentsUtils.InitializeLegacyToOnChainEmoteMapping(baseEmotesUrns);
+
+            // Set default emotes (used in case of empty emote wheel)
+            emoteStorage.SetBaseEmotesUrns(baseEmotesUrns);
+
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
 
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
@@ -150,7 +178,7 @@ namespace DCL.PluginSystem.Global
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
-                emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
+                emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
@@ -173,6 +201,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+            [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>
@@ -185,6 +214,16 @@ namespace DCL.PluginSystem.Global
             {
                 public EmoteAudioSourceReference(string guid) : base(guid) { }
             }
+
+            /// <summary>
+            /// Ordered list of base emote URNs.
+            /// The order defines the default emote order for users with no equipped emotes.
+            /// </summary>
+            [field: SerializeField]
+            public string[] BaseEmotes { get; private set; }
+
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
+                BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

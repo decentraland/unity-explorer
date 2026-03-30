@@ -1,15 +1,15 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
-using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -20,7 +20,12 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadStaticPointersSystem : LoadScenePointerSystemBase
     {
-        internal LoadStaticPointersSystem(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData) : base(world, roadCoordinates, realmData) { }
+        private readonly IDecentralandUrlsSource urlsSource;
+
+        internal LoadStaticPointersSystem(World world, HashSet<Vector2Int> roadCoordinates, IRealmData realmData, IDecentralandUrlsSource urlsSource) : base(world, roadCoordinates, realmData)
+        {
+            this.urlsSource = urlsSource;
+        }
 
         protected override void Update(float t)
         {
@@ -28,16 +33,16 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
+        [All(typeof(RealmComponent))]
         [None(typeof(FixedScenePointers))]
-        private void ResolvePromise(ref RealmComponent realm, ref StaticScenePointers staticScenePointers)
+        private void ResolvePromise(ref StaticScenePointers staticScenePointers)
         {
             if (staticScenePointers.Promise == null)
             {
-                WebGLDebugLog.Log("LoadStaticPointersSystem", "Promise created", $"parcelsCount={staticScenePointers.Value.Count}", "H1");
                 // start loading
                 staticScenePointers.Promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                     new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
-                        new CommonLoadingArguments(realm.Ipfs.AssetBundleRegistry)), PartitionComponent.TOP_PRIORITY);
+                        new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))), PartitionComponent.TOP_PRIORITY);
             }
             else
             {
@@ -51,8 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < result.Asset.Value.Count; i++)
                     {
                         SceneEntityDefinition definition = result.Asset.Value[i];
-                        var path = new IpfsPath(definition.id, URLDomain.EMPTY);
-                        WebGLDebugLog.Log("LoadStaticPointersSystem", "CreateSceneEntity", $"parcel={definition.metadata.scene.DecodedBase}", "H1");
+                        var path = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
                         CreateSceneEntity(definition, path);
                     }
                 }

@@ -1,6 +1,6 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 
 using Newtonsoft.Json;
 using System;
@@ -166,20 +166,31 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            Task.Run(() =>
-            {
-                lock (fileStream)
-                lock (userData)
-                {
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    fileStream.SetLength(0);
+            Task.Run(WriteToDisk);
+        }
 
-                    using var writer = new StreamWriter(fileStream, Encoding.UTF8, 1024, true);
-                    string json = JsonConvert.SerializeObject(userData);
-                    writer.Write(json);
-                    writer.Flush();
-                }
-            });
+        public void SaveSync()
+        {
+            if (!dataChanged) return;
+
+            dataChanged = false;
+
+            WriteToDisk();
+        }
+
+        private void WriteToDisk()
+        {
+            lock (fileStream)
+            lock (userData)
+            {
+                fileStream.Seek(0, SeekOrigin.Begin);
+                fileStream.SetLength(0);
+
+                using var writer = new StreamWriter(fileStream, Encoding.UTF8, 1024, true);
+                string json = JsonConvert.SerializeObject(userData);
+                writer.Write(json);
+                writer.Flush();
+            }
         }
 
         private void MigrateString(string key)

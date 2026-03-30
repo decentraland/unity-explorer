@@ -1,4 +1,5 @@
-﻿using DCL.ChangeRealmPrompt;
+﻿using Cysharp.Threading.Tasks;
+using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
@@ -8,6 +9,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
@@ -74,13 +76,15 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector3? testAvatarTarget = withCameraTarget ? new Vector3(2, 6, -3) : null;
 
             // Act
-            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget, testAvatarTarget);
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testNewRelativePosition, testCameraTarget, testAvatarTarget, 0f, CancellationToken.None).Forget();
 
             // Assert
-            globalWorldActions.Received(1).MoveAndRotatePlayer(
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
                 sceneData.Geometry.BaseParcelPosition + testNewRelativePosition,
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
-                testAvatarTarget);
+                testAvatarTarget,
+                0f,
+                Arg.Any<CancellationToken>());
 
             globalWorldActions.Received(1).RotateCamera(
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
@@ -165,11 +169,11 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             // Act
             LogAssert.Expect(LogType.Error, "MovePlayerTo: Position is out of scene");
-            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(relativePosition, null, null, 0f, CancellationToken.None).Forget();
 
             // Assert
-            // Should not call MoveAndRotatePlayer because position is invalid
-            globalWorldActions.DidNotReceive().MoveAndRotatePlayer(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>());
+            // Should not call MoveAndRotatePlayerAsync because position is invalid
+            globalWorldActions.DidNotReceive().MoveAndRotatePlayerAsync(Arg.Any<Vector3>(), Arg.Any<Vector3?>(), Arg.Any<Vector3?>(), Arg.Any<float>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -182,14 +186,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector3 relativePosition = positionOutsideScene - sceneData.Geometry.BaseParcelPosition;
 
             // Act
-            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(relativePosition, null, null, 0f, CancellationToken.None).Forget();
 
             // Assert
             // Portable Experiences should allow positions outside their scene boundaries
-            globalWorldActions.Received(1).MoveAndRotatePlayer(
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
                 positionOutsideScene,
                 null,
-                null);
+                null,
+                0f,
+                Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -202,14 +208,78 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Vector3 relativePosition = positionInsideScene - sceneData.Geometry.BaseParcelPosition;
 
             // Act
-            restrictedActionsAPIImplementation.TryMovePlayerTo(relativePosition, null, null);
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(relativePosition, null, null, 0f, CancellationToken.None).Forget();
 
             // Assert
             // Regular scenes should allow positions within their scene boundaries
-            globalWorldActions.Received(1).MoveAndRotatePlayer(
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
                 positionInsideScene,
                 null,
-                null);
+                null,
+                0f,
+                Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void MovePlayerTo_PassesDurationParameter()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+            float testDuration = 2.5f;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, null, null, testDuration, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                Arg.Any<Vector3>(),
+                Arg.Any<Vector3?>(),
+                Arg.Any<Vector3?>(),
+                testDuration,
+                Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void MovePlayerTo_WithDuration_CallsGlobalWorldActions()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+            Vector3 cameraTarget = new Vector3(10, 5, 10);
+            Vector3 avatarTarget = new Vector3(15, 0, 10);
+            float testDuration = 3f;
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, cameraTarget, avatarTarget, testDuration, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                sceneData.Geometry.BaseParcelPosition + testPosition,
+                sceneData.Geometry.BaseParcelPosition + cameraTarget,
+                avatarTarget,
+                testDuration,
+                Arg.Any<CancellationToken>());
+
+            globalWorldActions.Received(1).RotateCamera(
+                sceneData.Geometry.BaseParcelPosition + cameraTarget,
+                sceneData.Geometry.BaseParcelPosition + testPosition);
+        }
+
+        [Test]
+        public void MovePlayerTo_WithZeroDuration_CallsGlobalWorldActionsWithZeroDuration()
+        {
+            // Arrange
+            Vector3 testPosition = new Vector3(5, 0, 5);
+
+            // Act
+            restrictedActionsAPIImplementation.TryMovePlayerToAsync(testPosition, null, null, 0f, CancellationToken.None).Forget();
+
+            // Assert
+            globalWorldActions.Received(1).MoveAndRotatePlayerAsync(
+                Arg.Any<Vector3>(),
+                Arg.Any<Vector3?>(),
+                Arg.Any<Vector3?>(),
+                0f,
+                Arg.Any<CancellationToken>());
         }
     }
 }

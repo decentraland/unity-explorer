@@ -3,7 +3,12 @@ using System.Collections.Generic;
 
 namespace Utility.Multithreading
 {
-    // WebGL friendly implementation of concurrent bag
+    /// <summary>
+    ///     WebGL-compatible drop-in replacement for <see cref="System.Collections.Concurrent.ConcurrentBag{T}" />.
+    ///     On non-WebGL platforms the real <c>ConcurrentBag</c> is used for thread-safe access.
+    ///     On WebGL (single-threaded) a plain <see cref="System.Collections.Generic.List{T}" /> is used instead,
+    ///     since WebGL has no OS threads and the locking overhead of <c>ConcurrentBag</c> is unnecessary.
+    /// </summary>
     public class DCLConcurrentBag<TValue> : IEnumerable<TValue>
     {
 #if !UNITY_WEBGL

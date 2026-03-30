@@ -13,5 +13,7 @@ namespace CommunicationData.URLHelpers
         public static URLDomain Append(in this URLDomain address, in URLSubdirectory subdirectory) =>
             URLBuilder.Combine(address, subdirectory);
 
+        public static bool IsFile(in this URLAddress urlAddress) =>
+            urlAddress.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase);
     }
 }

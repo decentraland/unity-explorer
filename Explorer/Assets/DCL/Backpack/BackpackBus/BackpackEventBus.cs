@@ -5,6 +5,7 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
@@ -27,6 +28,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
+        public event Action<BackpackEquipOutfitCommand, IWearable[]>? EquipOutfitEvent;
 
         public void SendWearableSelect(IWearable equipWearable) =>
             SelectWearableEvent?.Invoke(equipWearable);
@@ -74,5 +76,8 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendBackpackDeactivateEvent() =>
             DeactivateEvent?.Invoke();
+        
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
+            EquipOutfitEvent?.Invoke(command, wearables);
     }
 }

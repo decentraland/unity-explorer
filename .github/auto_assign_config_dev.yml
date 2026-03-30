@@ -9,6 +9,7 @@ reviewGroups:
   techleads:
     - mikhail-dcl
     - dalkia
+    - alejandro-jimenez-dcl
   devs:      
     - lorux0
     - davidejensen
@@ -16,7 +17,6 @@ reviewGroups:
     - pravusjif
     - fcolarich
     - NickKhalow
-    - QThund
     - lorenzo-ranciaffi
     - mihakrajnc
     - AnsisMalins

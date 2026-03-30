@@ -87,31 +87,33 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents![validIndex]!;
                 PBPointerEvents.Types.Info info = entry.EventInfo!;
 
-                RaycastHit raycastHit = raycastHitPool.Get()!;
-                raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
-
                 //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.
                 //This logic is extracted from previous renderer in ECSPointerInputSystem.
                 InputAction inputAction = entry.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave ? InputAction.IaPointer : info.Button;
-                AppendMessage(sdkEntity, raycastHit, inputAction, entry.EventType);
+                AppendSingleResult(sdkEntity, scenePosition, intent, inputAction, entry.EventType);
             }
 
             if (intent.ValidInputActions != null)
-
-                // ReSharper disable once ForCanBeConvertedToForeach
+            {
                 for (var i = 0; i < intent.ValidInputActions.Count; i++)
                 {
-                    (InputAction inputAction, PointerEventType pointerEventType) inputAction = intent.ValidInputActions[i];
-                    RaycastHit raycastHit = raycastHitPool.Get()!;
-                    raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
-                    AppendMessage(sdkEntity, raycastHit, inputAction.inputAction, inputAction.pointerEventType);
-
-                    //We don't consider hover events to disable global input messages
-                    if (inputAction.pointerEventType != PointerEventType.PetHoverEnter && inputAction.pointerEventType != PointerEventType.PetHoverLeave)
-                        messageSent = true;
+                    (InputAction inputAction, PointerEventType pointerEventType) entry = intent.ValidInputActions[i];
+                    messageSent |= AppendSingleResult(sdkEntity, scenePosition, intent, entry.inputAction, entry.pointerEventType);
                 }
+            }
 
             intent.Clear();
+        }
+
+        /// <summary>
+        /// Appends one pointer event result. Returns true if the event should suppress global input (non-hover).
+        /// </summary>
+        private bool AppendSingleResult(CRDTEntity sdkEntity, in Vector3 scenePosition, in AppendPointerEventResultsIntent intent, InputAction button, PointerEventType eventType)
+        {
+            RaycastHit raycastHit = raycastHitPool.Get();
+            raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
+            AppendMessage(sdkEntity, raycastHit, button, eventType);
+            return eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)

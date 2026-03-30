@@ -18,7 +18,6 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -46,7 +45,6 @@ using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -58,6 +56,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
 using UnityEngine;
@@ -81,7 +80,6 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
-
         private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
         private readonly ICursor cursor;
@@ -91,6 +89,7 @@ namespace DCL.Passport
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly World world;
@@ -98,7 +97,6 @@ namespace DCL.Passport
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
-        private readonly IWebRequestController webRequestController;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
@@ -141,6 +139,7 @@ namespace DCL.Passport
         private readonly ISystemClipboard systemClipboard;
         private readonly CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration;
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly ColorPresetsSO colorPresets;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -162,14 +161,15 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
-        private readonly bool isGiftingEnabled;
-        private GenericContextMenuElement contextMenuGiftButton;
         private CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private NameColorPickerController? colorPickerController;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
+        private readonly ImageControllerProvider imageControllerProvider;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -188,6 +188,7 @@ namespace DCL.Passport
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             CharacterPreviewEventBus characterPreviewEventBus,
+            ProfileChangesBus profileChangesBus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             World world,
@@ -196,7 +197,6 @@ namespace DCL.Passport
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
-            IWebRequestController webRequestController,
             IInputBlock inputBlock,
 
 #if !NO_LIVEKIT_MODE
@@ -231,7 +231,9 @@ namespace DCL.Passport
             GalleryEventBus galleryEventBus,
             ISystemClipboard systemClipboard,
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
-            CommunitiesDataProvider communitiesDataProvider) : base(viewFactory)
+            CommunitiesDataProvider communitiesDataProvider,
+            ImageControllerProvider imageControllerProvider,
+            ColorPresetsSO colorPresets) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -240,6 +242,7 @@ namespace DCL.Passport
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.profileChangesBus = profileChangesBus;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
@@ -247,7 +250,6 @@ namespace DCL.Passport
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
-            this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
 
 #if !NO_LIVEKIT_MODE
@@ -271,13 +273,10 @@ namespace DCL.Passport
             this.enableFriendshipInteractions = enableFriendshipInteractions;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
-            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);;
-            isGiftingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.GIFTING_ENABLED);
-
+            this.isCallEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
 #if !NO_LIVEKIT_MODE
             this.chatEventBus = chatEventBus;
 #endif
-
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
@@ -285,6 +284,8 @@ namespace DCL.Passport
             this.cameraReelGalleryMessagesConfiguration = cameraReelGalleryMessagesConfiguration;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.imageControllerProvider = imageControllerProvider;
+            this.colorPresets = colorPresets;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -306,13 +307,25 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+
+            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView,
+                characterPreviewFactory,
+                world,
+                characterPreviewEventBus);
 
             characterPreviewController = new PassportCharacterPreviewController(
                 viewInstance.CharacterPreviewView,
                 characterPreviewFactory,
                 world,
                 characterPreviewEventBus);
+
+            colorPickerController = new NameColorPickerController(
+                mvcManager,
+                selfProfile,
+                profileChangesBus,
+                viewInstance!.UserBasicInfoModuleView.NameColorPickerView,
+                colorPresets);
+            colorPickerController.OnColorChanged += SetNewUserNameColor;
 
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
@@ -321,6 +334,7 @@ namespace DCL.Passport
                 mvcManager,
                 nftNamesProvider,
                 decentralandUrlsSource,
+                colorPickerController,
                 isNameEditorEnabled);
 
             userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
@@ -349,16 +363,16 @@ namespace DCL.Passport
                 viewInstance.BadgesOverviewModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController));
+                imageControllerProvider));
 
             badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
-                webRequestController,
                 selfProfile,
-                badge3DPreviewCamera);
+                badge3DPreviewCamera,
+                imageControllerProvider);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,
@@ -412,28 +426,62 @@ namespace DCL.Passport
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
 
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH,
+                              CONTEXT_MENU_OFFSET,
+                              CONTEXT_MENU_VERTICAL_LAYOUT_PADDING,
+                              CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings)
-                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
-                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                        parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false));
+                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT,
+                                  -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left,
+                                  -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
+                              false))
+                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText,
+                                  viewInstance.JumpInSprite,
+                                  () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId,
+                                      jumpToFriendLocationCts,
+                                      getUserPositionBuffer,
+                                      onlineUsersProvider,
+                                      realmNavigator,
+                                      decentralandUrlsSource,
+                                      parcel => JumpToFriendClicked?.Invoke(inputData.UserId,
+                                          parcel))),
+                              false));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
-            {
-                contextMenu.AddControl(contextMenuGiftButton =
-                    new GenericContextMenuElement(
-                        new ButtonContextMenuControlSettings(viewInstance.GiftText,
-                            viewInstance.GiftSprite, GiftUserClicked), true));
-            }
-
-            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.GiftText,
+                            viewInstance.GiftSprite,
+                            GiftUserClicked));
 
             if (includeCommunities)
             {
-                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, CONTEXT_MENU_SUBMENU_OFFSET, viewInstance.InviteToCommunityText, viewInstance.InviteToCommunitySprite);
+                invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider,
+                    CONTEXT_MENU_ELEMENTS_SPACING);
+
+                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu,
+                    CONTEXT_MENU_SUBMENU_OFFSET,
+                    viewInstance.InviteToCommunityText,
+                    viewInstance.InviteToCommunitySprite);
             }
+
+            contextMenu.AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
+                false));
+
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
+                    viewInstance.BlockSprite,
+                    BlockUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor),
+                false));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
+                    viewInstance.ReportOptionSprite,
+                    ReportUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor));
         }
 
         private void OnStartCallButtonClicked()
@@ -469,7 +517,7 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, decentralandUrlsSource,
                 parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
         }
 
@@ -535,6 +583,7 @@ namespace DCL.Passport
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Clear();
@@ -548,6 +597,34 @@ namespace DCL.Passport
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
+
+            if(isOwnProfile)
+                TrySaveAsync(CancellationToken.None).Forget();
+            return;
+
+            async UniTaskVoid TrySaveAsync(CancellationToken ct)
+            {
+                if (colorPickerController == null)
+                    return;
+
+                Profile? profile = await selfProfile.ProfileAsync(ct);
+                if (profile != null)
+                {
+                    // Create a copy to avoid mutating the cached profile in-place,
+                    // which would cause UpdateProfileAsync to see no changes (IdenticalProfileUpdateException)
+                    Profile newProfile = new ProfileBuilder().From(profile).Build();
+                    newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
+                    try
+                    {
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+
+                        if (updatedProfile != null)
+                            profileChangesBus.PushUpdate(updatedProfile);
+                    }
+                    catch (IdenticalProfileUpdateException) { }
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+                }
+            }
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -569,6 +646,7 @@ namespace DCL.Passport
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
 
@@ -580,6 +658,11 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
+
+            if (colorPickerController == null) return;
+
+            colorPickerController.OnColorChanged -= SetNewUserNameColor;
+            colorPickerController.Dispose();
         }
 
         private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct, string? badgeIdSelected = null)
@@ -595,17 +678,17 @@ namespace DCL.Passport
                     characterPreviewController!.OnBeforeShow();
 
                 // Load user profile
-                Profile? profile = await profileRepository.GetAsync(userId, 0, 
-
+                Profile? profile = await profileRepository.GetAsync(
+                    userId,
+                    0,
 #if !NO_LIVEKIT_MODE
-                        remoteMetadata.GetLambdaDomainOrNull(userId), 
+                    remoteMetadata.GetLambdaDomainOrNull(userId),
 #else
-                        null,
+                    null,
 #endif
-
-                        ct, 
-                        batchBehaviour: IProfileRepository.BatchBehaviour.ENFORCE_SINGLE_GET
-                        );
+                    ct,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.ENFORCE_SINGLE_GET | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED
+                    );
 
                 if (profile == null)
                     return;
@@ -615,7 +698,7 @@ namespace DCL.Passport
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
                     // Load avatar preview
-                    characterPreviewController!.Initialize(profile.Avatar, CharacterPreviewUtils.AVATAR_POSITION_3);
+                    characterPreviewController!.Initialize(profile.Avatar, CharacterPreviewUtils.PASSPORT_PREVIEW_POSITION);
                     characterPreviewController.OnShow();
                 }
 
@@ -631,10 +714,23 @@ namespace DCL.Passport
             }
         }
 
-        private void UpdateBackgroundColor(Color profileColor)
+        private void SetNewUserNameColor(Color color)
         {
-            Color.RGBToHSV(profileColor, out float h, out float s, out float v);
+            UpdateBackgroundColor(color);
+            UpdateUserNameTextColor(color);
+        }
+
+        private void UpdateBackgroundColor(Color newColor)
+        {
+            Color.RGBToHSV(newColor, out float h, out float s, out float v);
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
+            viewInstance?.BackgroundImage.SetMaterialDirty();
+        }
+
+        private void UpdateUserNameTextColor(Color color)
+        {
+            if (viewInstance != null)
+                viewInstance.UserBasicInfoModuleView.UserNameElement.UserNameText.color = color;
         }
 
         private void SetupPassportModules(Profile profile, PassportSection passportSection, string? badgeIdSelected = null)
@@ -814,6 +910,7 @@ namespace DCL.Passport
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
                     // Dont show any interaction for our own user
                     if (ownProfile?.UserId == inputData.UserId) return;
 
@@ -876,7 +973,7 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Compact, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
         private void GiftUserClicked()
@@ -905,6 +1002,21 @@ namespace DCL.Passport
 
                 ShowFriendshipInteraction();
             }
+        }
+
+        private void ReportUserClicked()
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                viewInstance!.ReportSprite,
+                ReportCategory.PROFILE,
+                targetProfile!.UserId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void ShowMutualFriends()
@@ -948,8 +1060,8 @@ namespace DCL.Passport
                     bool friendExists = i < mutualFriendsResult.Friends.Count;
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
-                    FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    Profile.CompactInfo mutualFriend = mutualFriendsResult.Friends[i];
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend);
                 }
             }
         }

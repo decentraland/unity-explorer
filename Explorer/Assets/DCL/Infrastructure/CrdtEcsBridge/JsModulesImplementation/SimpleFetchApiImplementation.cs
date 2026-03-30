@@ -1,9 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.ScenePermissions;
@@ -29,11 +30,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private readonly SceneShortInfo sceneShortInfo;
         private readonly IJsApiPermissionsProvider permissionsProvider;
+        private readonly IProfileRepository profileRepository;
 
-        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider)
+        public SimpleFetchApiImplementation(SceneShortInfo sceneShortInfo, IJsApiPermissionsProvider permissionsProvider, IProfileRepository profileRepository)
         {
             this.sceneShortInfo = sceneShortInfo;
             this.permissionsProvider = permissionsProvider;
+            this.profileRepository = profileRepository;
         }
 
         public void Dispose() { }
@@ -76,7 +79,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     case RequestMethod.POST:
                         string postContentType = webRequestHeaders.HeaderContentType();
                         var postArguments = GenericPostArguments.Create(body, postContentType);
-                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, ISimpleFetchApi.Response>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, GetReportData(), webRequestHeaders);
+                        return await webController.InterceptPostAsync(profileRepository, commonArguments, postArguments, ct, GetReportData(), webRequestHeaders);
                     case RequestMethod.PUT:
                         string putContentType = webRequestHeaders.HeaderContentType();
                         var putArguments = GenericPostArguments.Create(body, putContentType);

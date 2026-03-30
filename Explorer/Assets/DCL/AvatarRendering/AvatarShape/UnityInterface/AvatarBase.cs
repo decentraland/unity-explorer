@@ -12,7 +12,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
         public int RandomID;
+
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
+        private AnimationClip lastEmote;
+        private AnimatorOverrideController overrideController;
+
+        [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+
+        public Animation? LegacyAnimation { get; private set; }
+
         [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
@@ -61,7 +72,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
         [field: Header("OTHER")]
-
         // Anchor points to attach entities to, through the SDK
         [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
         [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
@@ -90,6 +100,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
         [field: SerializeField] public Transform Armature { get; private set; }
 
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; }
+
+        public Renderer GhostRenderer { get; private set; }
+
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
@@ -100,12 +114,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
-
-        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
-        private AnimationClip lastEmote;
-
-        private AnimatorOverrideController overrideController;
+        private Vector3 headArmatureBoneStartPosition;
 
         private void Awake()
         {
@@ -121,12 +131,21 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             // to avoid setting all animations to 'null' after replacing an emote, we set all overrides to their original clips
             animationOverrides = animationOverrides.Select(a => new KeyValuePair<AnimationClip, AnimationClip>(a.Key, a.Key)).ToList();
             overrideController.ApplyOverrides(animationOverrides);
-        }
 
-        [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+            headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+
+            GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
+        }
 
         public Transform GetTransform() =>
             transform;
+
+        public Animation AddOrGetLegacyAnimation()
+        {
+            if (LegacyAnimation != null) return LegacyAnimation;
+            LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
+            return LegacyAnimation;
+        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -168,6 +187,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.eulerAngles = angles;
         }
 
+        // Called onRelease of the pool. Resets stuff to avoid:
+        //   - Armature inclination that could be caused by emotes
+        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        public void ResetState()
+        {
+            ResetArmatureInclination();
+            transform.localPosition = Vector3.zero;
+            AvatarAnimator.Rebind();
+            HipsConstraint.data.offset = Vector3.zero;
+            HipsConstraint.weight = 0;
+        }
+
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 
@@ -195,6 +226,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Vector3 GetAdaptiveNametagPosition()
         {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
             Vector3 headPos = headAramatureBone.position;
 
             float maxY = headPos.y;
@@ -215,26 +252,23 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         }
 
         /// <summary>
-        ///     Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
+        /// Updates the cached head wearable offset based on current skinning bounds. Should be called whenever wearables change.
         /// </summary>
         public void UpdateHeadWearableOffset(in Bounds skinningBounds, in GetWearablesByPointersIntention wearable)
         {
-            float maxWearableY = transform.position.y + skinningBounds.max.y; // Convert local to world Y
+            float maxWearableY = skinningBounds.max.y;
 
             // Calculate offset from head bone Y position to the highest point of wearables
-            cachedHeadWearableOffset = maxWearableY - headAramatureBone.position.y + nametagBuffer;
+            cachedHeadWearableOffset = maxWearableY - headArmatureBoneStartPosition.y + nametagBuffer;
 
             // if offset is too high, it means something wrong with the wearable, so we bound it by smaller value than MAX_OFFSET (by BOUNDED_OFFSET)
             if (cachedHeadWearableOffset > nametagMaxOffset)
             {
-                ReportHub.LogError(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
-                ReportHub.LogError(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"Wearable for {wearable.BodyShape.Value} produces very high nametag offset = {cachedHeadWearableOffset} [m]. Bouncing it by {nameof(nametagBoundedOffset)} = {nametagBoundedOffset}");
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"transform.position.y = {transform.position.y} | skinningBounds.max = {skinningBounds.max.ToString()} | skinningBounds.center = {skinningBounds.center.ToString()}");
 
-                /* TODO WEBGL: DISABLED FOR NOW, this spams the console and there is nothing we can do.
                 foreach (URN pointer in wearable.Pointers)
-                {
-                    ReportHub.LogError(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
-                }*/
+                    ReportHub.LogWarning(ReportCategory.WEARABLE, $"Pointer caused high offset {pointer}");
 
                 cachedHeadWearableOffset = nametagBoundedOffset;
             }
@@ -243,9 +277,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public interface IAvatarView
     {
-        Animator AvatarAnimator { get; }
-
         Transform GetTransform();
+
+        Animator AvatarAnimator { get; }
+        Animation? LegacyAnimation { get; }
+
+        Animation AddOrGetLegacyAnimation();
 
         void SetAnimatorFloat(int hash, float value);
 

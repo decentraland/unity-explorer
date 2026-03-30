@@ -8,6 +8,7 @@ namespace DCL.PluginSystem.Global
 {
     public partial class LoadingScreenPlugin
     {
+        [Serializable]
         public struct LoadingScreenPluginSettings : IDCLPluginSettings
         {
             [field: Header(nameof(LoadingScreenPlugin) + "." + nameof(LoadingScreenPluginSettings))]

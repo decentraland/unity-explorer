@@ -1,4 +1,5 @@
 ﻿using DCL.UI.Sidebar;
+using Newtonsoft.Json.Linq;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -14,16 +15,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             this.sidebarController = sidebarController;
 
             this.sidebarController.HelpOpened += OnHelpOpened;
+            this.sidebarController.PlacesOpened += OnPlacesOpened;
+            this.sidebarController.EventsOpened += OnEventsOpened;
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             sidebarController.HelpOpened -= OnHelpOpened;
-        }
 
-        private void OnHelpOpened()
-        {
+        private void OnHelpOpened() =>
             analytics.Track(AnalyticsEvents.UI.OPEN_SUPPORT);
-        }
+
+        private void OnPlacesOpened() =>
+            analytics.Track(AnalyticsEvents.Places.PLACES_SECTION_OPENED, new JObject { { "source", "sidebar" } });
+
+        private void OnEventsOpened() =>
+            analytics.Track(AnalyticsEvents.Events.EVENTS_SECTION_OPENED, new JObject { { "source", "sidebar" } });
     }
 }

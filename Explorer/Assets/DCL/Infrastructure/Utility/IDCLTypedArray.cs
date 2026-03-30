@@ -2,6 +2,17 @@ using System;
 
 namespace Utility
 {
+    /// <summary>
+    ///     Platform-agnostic abstraction over a JavaScript typed array (e.g. <c>Uint8Array</c>) that lives inside a scene's
+    ///     JS engine. Implementations include the ClearScript/V8 desktop path and
+    ///     <see cref="SceneRuntime.WebClient.WebClientTypedArrayAdapter" /> for WebGL.
+    ///     <para>
+    ///         Data can be read/written through managed copies (<see cref="Read" />, <see cref="ReadBytes" />,
+    ///         <see cref="WriteBytes" />) or, on desktop only, through a raw pointer via
+    ///         <see cref="InvokeWithDirectAccess(System.Action{System.IntPtr})" />.
+    ///         Direct pointer access is not supported on WebGL and will throw <see cref="System.NotSupportedException" />.
+    ///     </para>
+    /// </summary>
     public interface IDCLTypedArray<in T> where T : unmanaged
     {
         ulong Length { get; }
@@ -33,6 +44,12 @@ namespace Utility
 
         void ReadBytes(ulong @ulong, ulong eventBytesLength, byte[] eventBytes, ulong ulong1);
 
-        void WriteBytes(byte[] resultArray, ulong @ulong, ulong resultLength, ulong ulong1);
+        void WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset);
+
+        /// <summary>
+        /// Returns a new typed array view over the same buffer, from <paramref name="from"/> (inclusive) to
+        /// <paramref name="to"/> (exclusive). Equivalent to calling <c>typedArray.subarray(from, to)</c> in JS.
+        /// </summary>
+        IDCLTypedArray<byte> Subarray(int from, int to);
     }
 }

@@ -214,6 +214,20 @@ namespace SocketIOClient
             _resources.Clear();
         }
 
+        private void SetWebSocketHeaders()
+        {
+            if (Options.ExtraHeaders is null) { return; }
+
+            foreach (KeyValuePair<string, string> item in Options.ExtraHeaders) { Transport.AddHeader(item.Key, item.Value); }
+        }
+
+        private void SetHttpHeaders()
+        {
+            if (Options.ExtraHeaders is null) { return; }
+
+            foreach (KeyValuePair<string, string> header in Options.ExtraHeaders) { HttpClient.AddHeader(header.Key, header.Value); }
+        }
+
         private void ConnectInBackground(CancellationToken cancellationToken)
         {
             DCLTask.RunOnThreadPool(async () =>

@@ -1,11 +1,12 @@
 #if !NO_LIVEKIT_MODE
-
 using MVC;
 
 namespace DCL.Chat.ChatStates
 {
-    public class ChatState : MVCState<ChatState, ChatStateContext>
+    public abstract class ChatState : IExitableState
     {
+        public virtual void Exit() { }
+
         public virtual void OnClickOutside() { }
 
         public virtual void OnClickInside() { }
@@ -23,5 +24,4 @@ namespace DCL.Chat.ChatStates
         public virtual void OnPointerExit() { }
     }
 }
-
 #endif

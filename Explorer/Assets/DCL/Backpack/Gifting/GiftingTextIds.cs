@@ -1,4 +1,4 @@
-﻿namespace DCL.Backpack.Gifting
+namespace DCL.Backpack.Gifting
 {
     public static class GiftingTextIds
     {
@@ -16,6 +16,9 @@
         // Transfer in-progress
         public const string WaitingForWalletMessage =
             "A browser window should open for you to confirm the transaction.";
+
+        public const string WaitingForWalletMessageThirdWeb =
+            "A window should open for you to confirm the transaction.";
 
         public const string PreparingGiftTitle =
             "Preparing Gift for";

@@ -1,5 +1,4 @@
 #if !NO_LIVEKIT_MODE
-
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -167,7 +166,7 @@ namespace DCL.Chat
 
         private void CommunityMetadataUpdated(CommunityMetadataUpdatedEvent evt)
         {
-            // Only care if we’re viewing a Community channel and it matches
+            // Only care if we're viewing a Community channel and it matches
             if (currentViewModel == null || currentViewModel.ViewMode != TitlebarViewMode.Community)
                 return;
 
@@ -401,10 +400,7 @@ namespace DCL.Chat
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
-                {
-                    Username = "Error"
-                });
+                view.defaultTitlebarView.Setup(new ChatTitlebarViewModel("Error"));
 
                 ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
             }
@@ -494,5 +490,4 @@ namespace DCL.Chat
         }
     }
 }
-
 #endif

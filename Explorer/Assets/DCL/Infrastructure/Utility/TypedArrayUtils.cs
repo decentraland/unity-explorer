@@ -53,7 +53,7 @@ namespace Utility
             ulong byteOffset = index * bytesPerElement;
             int maxBytes = (int)Math.Min(length, totalLength - index) * (int)bytesPerElement;
             int bytesToCopy = Math.Min(maxBytes, srcSpan.Length);
-            array.WriteBytes(srcSpan[..bytesToCopy].ToArray(), 0, (ulong)bytesToCopy, byteOffset);
+            array.WriteBytes(srcSpan[..bytesToCopy], 0, (ulong)bytesToCopy, byteOffset);
         }
 #endif
     }

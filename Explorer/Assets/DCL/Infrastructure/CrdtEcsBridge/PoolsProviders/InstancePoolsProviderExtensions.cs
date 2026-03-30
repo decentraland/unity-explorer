@@ -1,9 +1,27 @@
 using Utility;
 
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using Microsoft.ClearScript.JavaScript;
+#endif
+
 namespace CrdtEcsBridge.PoolsProviders
 {
     public static class InstancePoolsProviderExtensions
     {
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+        // Desktop V8 path: receive ITypedArray<byte> directly from ClearScript — no wrapper, no allocation
+        public static void RenewCrdtRawDataPoolFromScriptArray(
+            this IInstancePoolsProvider instancePoolsProvider, ITypedArray<byte> scriptArray,
+            ref PoolableByteArray lastInput)
+        {
+            EnsureArrayLength(instancePoolsProvider, (int)scriptArray.Length, ref lastInput);
+
+            // V8ScriptItem does not support zero length
+            if (scriptArray.Length > 0)
+                scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
+        }
+#else
+        // WebGL path: receive IDCLTypedArray<byte> from the WebClient bridge
         public static void RenewCrdtRawDataPoolFromScriptArray(
             this IInstancePoolsProvider instancePoolsProvider, IDCLTypedArray<byte> scriptArray,
             ref PoolableByteArray lastInput)
@@ -14,6 +32,7 @@ namespace CrdtEcsBridge.PoolsProviders
             if (scriptArray.Length > 0)
                 scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
         }
+#endif
 
         private static void EnsureArrayLength(IInstancePoolsProvider instancePoolsProvider,
             int scriptArrayLength, ref PoolableByteArray lastInput)

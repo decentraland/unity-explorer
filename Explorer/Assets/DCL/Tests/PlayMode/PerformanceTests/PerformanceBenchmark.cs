@@ -1,31 +1,35 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
-using Global.Dynamic.LaunchModes;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.PerformanceTesting;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
-    public class PerformanceBenchmark
+    public abstract class PerformanceBenchmark
     {
+        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
         protected SampleGroup? iterationTotalTime;
+        protected SampleGroup? iterationDownloadedData;
 
         protected IWebRequestController? controller;
         protected PerformanceTestWebRequestsAnalytics analytics;
-
-        protected readonly IWeb3IdentityCache identityCache = Substitute.For<IWeb3IdentityCache>();
 
         private MockedReportScope? reportScope;
 
@@ -33,52 +37,90 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         public void SetUpBenchmark()
         {
             iterationTotalTime = new SampleGroup("Iteration Total Time", SampleUnit.Microsecond);
+            iterationDownloadedData = new SampleGroup("Iteration Downloaded Data", SampleUnit.Megabyte);
             reportScope = new MockedReportScope();
+        }
+
+        [OneTimeSetUp]
+        public void SetupFF()
+        {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(new FeatureFlagsResultDto
+            {
+                flags = new Dictionary<string, bool> { [FeatureFlagsStrings.USE_GATEWAY] = true },
+                variants = new Dictionary<string, FeatureFlagVariantDto>(),
+            }));
+        }
+
+        [OneTimeTearDown]
+        public void ResetFF()
+        {
+            FeatureFlagsConfiguration.Reset();
         }
 
         [TearDown]
         public void TearDown() =>
             reportScope?.Dispose();
 
-        public void CreateController(int concurrency, bool disableABCache = false)
+        protected void EnableErrors()
+        {
+            reportScope!.Mock.When(x => x.LogException(Arg.Any<Exception>(),
+                             Arg.Is<ReportData>(data => data.Category == ReportCategory.GENERIC_WEB_REQUEST), Arg.Any<Object?>()))
+                        .Do(x => Debug.unityLogger.LogException(x.Arg<Exception>()));
+        }
+
+        protected void CreateController(int concurrency, bool disableABCache = false, DecentralandEnvironment env = DecentralandEnvironment.Zone, bool ktxEnabled = true, bool useGateway = false)
         {
             analytics = new PerformanceTestWebRequestsAnalytics();
 
-            controller = new WebRequestController(analytics, identityCache,
-                new RequestHub(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), disableABCache),
-                ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
+            var hub = new RequestHub(useGateway ? GatewayUrlsSource.CreateForTest(env, ILaunchMode.PLAY) : DecentralandUrlsSource.CreateForTest(env, ILaunchMode.PLAY), disableABCache);
+            hub.SetKTXEnabled(ktxEnabled);
+
+            controller = new WebRequestController(analytics, identityCache, hub, new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
         }
 
-        protected async UniTask BenchmarkAsync<TParam>(int concurrency, Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
+        protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,
             int iterationsCount, TimeSpan delayBetweenIterations, Action? onIterationFinished = null)
         {
             analytics.WarmingUp = true;
 
             // Warmup a few times (DNS/TLS/JIT)
-            for (int i = 0; i < warmupCount; i++)
+            for (var i = 0; i < warmupCount; i++)
                 await UniTask.WhenAll(loopThrough.Select(createRequest));
 
             analytics.WarmingUp = false;
 
-            for (int i = 0; i < iterationsCount; i++)
+            for (var i = 0; i < iterationsCount; i++)
             {
                 long ts = Stopwatch.GetTimestamp();
+
+                double downloadedData = Sum(analytics.downloadedDataSize);
 
                 // Loop though parameters to fill up all required tasks
 
                 var tasks = new UniTask[targetRequestsCount];
 
-                for (int j = 0; j < targetRequestsCount; j++)
-                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync();
+                for (var j = 0; j < targetRequestsCount; j++)
+                    tasks[j] = createRequest(loopThrough[j % loopThrough.Count]).SuppressToResultAsync(ReportCategory.GENERIC_WEB_REQUEST);
 
                 await UniTask.WhenAll(tasks);
 
                 Measure.Custom(iterationTotalTime, PerformanceTestWebRequestsAnalytics.ToMs(ts, Stopwatch.GetTimestamp()));
+                Measure.Custom(iterationDownloadedData, Sum(analytics.downloadedDataSize) - downloadedData);
 
                 onIterationFinished?.Invoke();
 
                 await UniTask.Delay(delayBetweenIterations);
             }
+        }
+
+        protected static double Sum(SampleGroup sampleGroup)
+        {
+            var sum = 0.0;
+
+            foreach (double sample in sampleGroup.Samples)
+                sum += sample;
+
+            return sum;
         }
     }
 }

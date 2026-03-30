@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
@@ -22,22 +23,22 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateEmoteInputSystem : BaseUnityLoopSystem
     {
-        private readonly EmotesBus emotesBus;
+        private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
         private readonly Dictionary<string, int> actionNameById = new ();
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.EmotesActions emotesActions;
 
         private int triggeredEmote = -1;
-        private bool isWheelBlocked;
+        private EmoteTriggerSource? triggeredEmoteSource;
         private int framesAfterWheelWasClosed;
-        
-        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmotesBus emotesBus) 
+
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, EmoteWheelShortcutHandler emoteWheelShortcutHandler)
             : base(world)
         {
             emotesActions = DCLInput.Instance.Emotes;
             this.messageBus = messageBus;
-            this.emotesBus = emotesBus;
+            this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
 
             GetReportData();
 
@@ -53,8 +54,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
-            isWheelBlocked = true;
-            emotesBus.OnQuickActionEmotePlayed();
+            triggeredEmoteSource = EmoteTriggerSource.SHORTCUT;
         }
 
         protected override void Update(float t)
@@ -64,6 +64,11 @@ namespace DCL.AvatarRendering.Emotes
             if (triggeredEmote >= 0)
             {
                 TriggerEmoteQuery(World, triggeredEmote);
+                if (triggeredEmoteSource.HasValue)
+                {
+                    emoteWheelShortcutHandler.NotifyEmotePlayed(triggeredEmoteSource.Value);
+                    triggeredEmoteSource = null;
+                }
                 triggeredEmote = -1;
             }
         }
@@ -73,15 +78,21 @@ namespace DCL.AvatarRendering.Emotes
         private void TriggerEmoteBySlotIntent(in Entity entity, ref TriggerEmoteBySlotIntent intent)
         {
             triggeredEmote = intent.Slot;
+            triggeredEmoteSource = EmoteTriggerSource.WHEEL_SLOT;
             World.Remove<TriggerEmoteBySlotIntent>(entity);
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void TriggerEmote([Data] int emoteIndex, in Entity entity, in Profile profile, in InputModifierComponent inputModifier, in AvatarShapeComponent avatarShapeComponent)
+        private void TriggerEmote([Data] int emoteIndex,
+            in Entity entity,
+            in Profile profile,
+            in InputModifierComponent inputModifier,
+            in AvatarShapeComponent avatarShapeComponent,
+            in GlideState glideState)
         {
-            if(inputModifier.DisableEmote || !avatarShapeComponent.IsVisible) return;
+            if (inputModifier.DisableEmote || !avatarShapeComponent.IsVisible || glideState.Value != GlideStateValue.PROP_CLOSED) return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;

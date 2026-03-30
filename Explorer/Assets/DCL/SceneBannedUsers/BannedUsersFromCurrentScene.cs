@@ -3,8 +3,10 @@
 using CodeLess.Attributes;
 using DCL.Multiplayer.Connections.RoomHubs;
 using LiveKit.Proto;
+using LiveKit.Rooms;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using DCL.LiveKit.Public;
 
@@ -22,6 +24,7 @@ namespace DCL.SceneBannedUsers
         private CancellationTokenSource checkIfPlayerIsBannedCts;
         private string roomMetadata = string.Empty;
         private BannedUsersRoomMetadata bannedUsersRoomMetadata;
+        private HashSet<string> bannedAddressesSet;
 
         public BannedUsersFromCurrentScene(
             IRoomHub roomHub,
@@ -30,12 +33,31 @@ namespace DCL.SceneBannedUsers
             this.roomHub = roomHub;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
+            roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
+        }
+
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
+        {
+            if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
+                OnRoomMetadataChanged(room.Info.Metadata);
         }
 
         private void OnRoomMetadataChanged(string metadata)
         {
+            UpdateBannedList(metadata);
+        }
+
+        private void UpdateBannedList(string metadata)
+        {
+            if (string.IsNullOrEmpty(metadata)) return;
+
             roomMetadata = metadata;
             bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
+
+            if (bannedUsersRoomMetadata.BannedAddresses is { Length: > 0 })
+                bannedAddressesSet = new HashSet<string>(bannedUsersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
+            else
+                bannedAddressesSet = null;
         }
 
         /// <summary>
@@ -51,19 +73,7 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return false;
 
-            if (string.IsNullOrEmpty(roomMetadata))
-                return false;
-
-            if (bannedUsersRoomMetadata.bannedAddresses == null)
-                return false;
-
-            foreach (string wallet in bannedUsersRoomMetadata.bannedAddresses)
-            {
-                if (string.Equals(wallet, userId, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-
-            return false;
+            return bannedAddressesSet?.Contains(userId) ?? false;
         }
     }
 }

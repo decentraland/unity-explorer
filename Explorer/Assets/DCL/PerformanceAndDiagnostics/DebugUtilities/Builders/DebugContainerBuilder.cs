@@ -6,10 +6,9 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities
 {
-    public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<DebugWidgetBuilder>
+    public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<string>
     {
-        private readonly List<DebugWidgetBuilder> widgetBuilders = new (100);
-        private readonly HashSet<string> names = new (100);
+        private readonly SortedDictionary<string, DebugWidgetBuilder> widgetBuilders;
         private readonly Dictionary<string, DebugWidget> widgets = new (100);
 
         private readonly Func<DebugWidget> widgetFactoryMethod;
@@ -60,9 +59,10 @@ namespace DCL.DebugUtilities
             this.controlFactoryMethod = controlFactoryMethod;
             this.factories = factories;
             this.allowOnlyNames = allowOnlyNames;
+            widgetBuilders = new SortedDictionary<string, DebugWidgetBuilder>(this);
         }
 
-        public Result<DebugWidgetBuilder> AddWidget(WidgetName widgetName)
+        public Result<DebugWidgetBuilder> GetOrAddWidget(WidgetName widgetName)
         {
             string name = widgetName.Name;
 
@@ -74,12 +74,11 @@ namespace DCL.DebugUtilities
 
             name = name.ToUpper();
 
-            if (names.Contains(name))
-                throw new InvalidOperationException($"Name is already added: {name}");
+            if (widgetBuilders.TryGetValue(name, out DebugWidgetBuilder? widget))
+                return Result<DebugWidgetBuilder>.SuccessResult(widget);
 
             var w = new DebugWidgetBuilder(name);
-            names.Add(name);
-            widgetBuilders.Add(w);
+            widgetBuilders.Add(name, w);
             return Result<DebugWidgetBuilder>.SuccessResult(w);
         }
 
@@ -90,18 +89,15 @@ namespace DCL.DebugUtilities
 
             isBuilt = true;
 
-            // Sort by name
-            widgetBuilders.Sort(this);
-
             container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
             container.style.display = DisplayStyle.Flex;
             Container.Initialize();
 
             // Instantiate widgets
-            foreach (DebugWidgetBuilder widgetBuilder in widgetBuilders)
+            foreach ((string name, DebugWidgetBuilder widgetBuilder) in widgetBuilders)
             {
                 DebugWidget widget = widgetBuilder.Build(widgetFactoryMethod, controlFactoryMethod, factories);
-                widget.name = widgetBuilder.name;
+                widget.name = name;
                 widget.visible = false;
 
                 widgets.Add(widget.name, widget);
@@ -111,12 +107,7 @@ namespace DCL.DebugUtilities
             Container.visible = false;
         }
 
-        public int Compare(DebugWidgetBuilder x, DebugWidgetBuilder y)
-        {
-            if (ReferenceEquals(x, y)) return 0;
-            if (ReferenceEquals(null, y)) return 1;
-            if (ReferenceEquals(null, x)) return -1;
-            return string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase);
-        }
+        public int Compare(string x, string y) =>
+            string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
     }
 }

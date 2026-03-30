@@ -7,7 +7,7 @@ namespace DCL.AvatarRendering.DemoScripts.Components
 {
     public class RandomAvatarRequest
     {
-        public List<AssetPromise<WearablesResponse, GetWearableByParamIntention>> CollectionPromise;
+        public List<AssetPromise<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>> CollectionPromise;
         public int RandomAvatarsToInstantiate;
     }
 }

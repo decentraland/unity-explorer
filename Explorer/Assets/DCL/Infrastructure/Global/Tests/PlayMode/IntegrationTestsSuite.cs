@@ -13,33 +13,40 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.Profiles;
+using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.Clipboard;
 using ECS;
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+using ECS.SceneLifeCycle.WebGL;
+#endif
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using System;
 using System.Threading;
 using DCL.Audio;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.SDKComponents.InputModifier.Components;
+using DCL.Utilities;
+using DCL.Utility;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
-#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-using ECS.SceneLifeCycle.WebGL;
-#endif
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
+using Global.Versioning;
 using SceneRuntime.Factory.WebSceneSource;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
-using DCL.Settings;
 
 namespace Global.Tests.PlayMode
 {
@@ -57,13 +64,13 @@ namespace Global.Tests.PlayMode
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
+            IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
             IWebJsSources webJsSources = new WebJsSources(
                 new JsCodeResolver(
-                    IWebRequestController.DEFAULT
+                    IWebRequestController.TEST
                 )
             );
 
@@ -73,20 +80,31 @@ namespace Global.Tests.PlayMode
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
             var world = World.Create();
-            Entity cameraEntity = world.Create();
+            var cameraEntity = world.Create();
 
             var cameraGameObject = new GameObject("TestCamera");
-            Camera? camera = cameraGameObject.AddComponent<Camera>();
+            var camera = cameraGameObject.AddComponent<Camera>();
 
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
+            Entity playerEntity = world.Create(new PlayerComponent(),
+                new CharacterTransform(),
+                new PlayerMovementNetworkComponent(),
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
+
+            IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
+
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                analyticsContainer,
                 dclUrls,
+                new RealmData(),
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
-                Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), Substitute.For<IDebugContainerBuilder>(), dclUrls, ChromeDevtoolProtocolClient.NewForTest(), 1000, 1000),
+                debugBuilder,
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -94,11 +112,10 @@ namespace Global.Tests.PlayMode
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
                 world,
-                new Entity(),
+                playerEntity,
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,
-                Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 DecentralandEnvironment.Org,
@@ -133,8 +150,7 @@ namespace Global.Tests.PlayMode
                 DecentralandEnvironment.Org,
                 Substitute.For<ISystemClipboard>()
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-               ,
-                new WebGLSceneUpdateQueue()
+                , new WebGLSceneUpdateQueue()
 #endif
             );
 

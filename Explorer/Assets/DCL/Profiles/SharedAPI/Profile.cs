@@ -6,16 +6,13 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Profiles
 {
-    public class Profile : IDirtyMarker, IDisposable
+    public partial class Profile : IDirtyMarker, IDisposable
     {
-        public static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
-
-        private static readonly ThreadSafeObjectPool<Profile> POOL = new (
+        internal static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());
 
@@ -23,73 +20,10 @@ namespace DCL.Profiles
         internal List<string>? interests;
         internal List<LinkJsonDto>? links;
 
-        private string userId;
-        private string name;
-        private bool hasClaimedName;
-
-        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
-
-        /// <summary>
-        /// Is the complete wallet address of the user
-        /// </summary>
-        public string UserId
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture
         {
-            get => userId;
-
-            set
-            {
-                userId = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        public string Name
-        {
-            get => name;
-            set
-            {
-                name = value;
-                GenerateAndValidateName();
-            }
-        }
-
-        /// <summary>
-        ///     The color calculated for this username
-        /// </summary>
-        public Color UserNameColor { get; set; } = Color.white;
-
-        /// <summary>
-        ///     The name of the user after passing character validation, without the # part
-        ///     For users with claimed names would be the same as DisplayName
-        /// </summary>
-        public string ValidatedName { get; private set; }
-
-        /// <summary>
-        ///     The # part of the name for users without claimed name, will be null for users with a claimed name, includes the # character at the beginning
-        /// </summary>
-        public string? WalletId { get; private set; }
-
-        /// <summary>
-        ///     The name of the user after passing character validation, including the
-        ///     Wallet Id (if the user doesnt have a claimed name)
-        /// </summary>
-        public string DisplayName { get; private set; }
-        public string UnclaimedName { get; internal set; }
-
-        /// <summary>
-        /// The Display Name with @ before it. Cached here to avoid re-allocations.
-        /// </summary>
-        public string MentionName { get; private set; }
-
-        public bool HasClaimedName
-        {
-            get => hasClaimedName;
-
-            set
-            {
-                hasClaimedName = value;
-                GenerateAndValidateName();
-            }
+            get => compact.ProfilePicture;
+            set => GetCompact().ProfilePicture = value;
         }
 
         public bool HasConnectedWeb3 { get; set; }
@@ -108,12 +42,12 @@ namespace DCL.Profiles
         public string? Hobbies { get; set; }
         public DateTime? Birthdate { get; set; }
         public int Version { get; set; }
-        public Avatar Avatar { get; internal set; }
+        public Avatar Avatar { get; set; }
 
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
         /// </summary>
-        public bool IsDirty { get; set; } = true;
+        public bool IsDirty { get; set; }
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
@@ -124,18 +58,25 @@ namespace DCL.Profiles
             set => links = value;
         }
 
-        public Profile() { }
+        private CompactInfo compact;
+
+        public CompactInfo Compact => compact;
+
+        public Profile()
+        {
+            compact = new CompactInfo();
+            Avatar = new Avatar();
+        }
 
         public Profile(string userId, string name, Avatar avatar)
         {
-            UserId = userId;
-            Name = name;
+            compact = new CompactInfo(userId, name);
             Avatar = avatar;
         }
 
         public void Dispose()
         {
-            ProfilePicture.TryDereference();
+            GetCompact().Dispose();
             POOL.Release(this);
         }
 
@@ -145,51 +86,61 @@ namespace DCL.Profiles
         public static Profile Create(string userId, string name, Avatar avatar)
         {
             Profile profile = Create();
-            profile.UserId = userId;
-            profile.Name = name;
+            profile.GetCompact().UserId = userId;
+            profile.GetCompact().Name = name;
             profile.Avatar = avatar;
             return profile;
         }
 
         public void Clear()
         {
-            blocked?.Clear();
-            interests?.Clear();
-            links?.Clear();
+            // Replace the struct instead of calling Compact.Clear() which operates on a copy
+            GetCompact().Dispose();
+            compact = new CompactInfo();
+
+            blocked = null;
+            interests = null;
+            links = null;
             Birthdate = null;
-            Avatar.Clear();
-            Country = default(string?);
-            Email = default(string?);
-            Gender = default(string?);
-            Description = default(string?);
-            Hobbies = default(string?);
-            Language = default(string?);
-            Profession = default(string?);
-            Pronouns = default(string?);
+
+            // Avatars on the pool should always have an empty avatar for reusage.
+            // We cannot just clear its values because Profile may not be the original avatar owner
+            // To be fully safe to clear it, the scope should be tighter
+            Avatar = new Avatar();
+            Country = null;
+            Email = null;
+            Gender = null;
+            Description = null;
+            Hobbies = null;
+            Language = null;
+            Profession = null;
+            Pronouns = null;
             Version = default(int);
-            HasClaimedName = default(bool);
-            EmploymentStatus = default(string?);
-            UserId = string.Empty;
-            Name = string.Empty;
-            MentionName = string.Empty;
+            EmploymentStatus = null;
+            RealName = null;
+            RelationshipStatus = null;
+            SexualOrientation = null;
             TutorialStep = default(int);
             HasConnectedWeb3 = default(bool);
-            ProfilePicture = null;
             IsDirty = false;
         }
 
-        public static Profile NewRandomProfile(string? userId) =>
-            new (
+        public static Profile NewRandomProfile(string? userId)
+        {
+            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+
+            return new Profile(
                 userId: userId ?? IProfileRepository.GUEST_RANDOM_ID,
-                IProfileRepository.PLAYER_RANDOM_ID,
-                new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                name: IProfileRepository.PLAYER_RANDOM_ID,
+                avatar: new Avatar(
+                    bodyShape,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor()
                 )
             );
+        }
 
         public static Profile NewProfileWithAvatar(string? userId, Avatar avatar) =>
             new (
@@ -197,32 +148,6 @@ namespace DCL.Profiles
                 IProfileRepository.PLAYER_RANDOM_ID,
                 avatar
             );
-
-        private void GenerateAndValidateName()
-        {
-            ValidatedName = string.Empty;
-            DisplayName = string.Empty;
-            WalletId = null;
-
-            if (string.IsNullOrEmpty(Name)) return;
-
-            string result = string.Empty;
-            MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
-
-            foreach (Match match in matches)
-                result += match.Value;
-
-            ValidatedName = result;
-            DisplayName = result;
-
-            if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
-            {
-                WalletId = $"#{UserId[^4..]}";
-                DisplayName = $"{result}{WalletId}";
-            }
-
-            MentionName = "@" + DisplayName;
-        }
 
         public void ClearLinks()
         {
@@ -236,9 +161,7 @@ namespace DCL.Profiles
         {
             if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
 
-            return UserId == profile.UserId
-                   && Name == profile.Name
-                   && HasClaimedName == profile.HasClaimedName
+            return Compact.Equals(profile.Compact)
                    && HasConnectedWeb3 == profile.HasConnectedWeb3
                    && AreStringsEquivalent(Description, profile.Description)
                    && TutorialStep == profile.TutorialStep
@@ -247,13 +170,18 @@ namespace DCL.Profiles
                    && AreStringsEquivalent(EmploymentStatus, profile.EmploymentStatus)
                    && AreStringsEquivalent(Gender, profile.Gender)
                    && AreStringsEquivalent(Pronouns, profile.Pronouns)
+                   && AreStringsEquivalent(RelationshipStatus, profile.RelationshipStatus)
+                   && AreStringsEquivalent(SexualOrientation, profile.SexualOrientation)
                    && AreStringsEquivalent(Language, profile.Language)
                    && AreStringsEquivalent(Profession, profile.Profession)
+                   && AreStringsEquivalent(RealName, profile.RealName)
+                   && AreStringsEquivalent(Hobbies, profile.Hobbies)
                    && Birthdate == profile.Birthdate
                    && Version == profile.Version
-                   && AreLinksSame(links, profile.links);
+                   && AreLinksSame(links, profile.links)
+                   && ClaimedNameColor == profile.ClaimedNameColor;
         }
-        
+
         private static bool AreStringsEquivalent(string? a, string? b) =>
             (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) || a == b;
 

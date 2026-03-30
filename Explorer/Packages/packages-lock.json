@@ -12,7 +12,24 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "b716fb630f9ba13af4956ebb66bea35e17548cad"
+      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+    },
+    "com.alttester.sdk": {
+      "version": "2.3.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.editorcoroutines": "1.0.0",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.physics2d": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0",
+        "com.unity.modules.ui": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.nuget.newtonsoft-json": "3.1.0",
+        "com.unity.test-framework": "1.1.33",
+        "com.unity.ugui": "2.0.0"
+      },
+      "url": "https://package.openupm.com"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -48,7 +65,7 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
       "depth": 0,
       "source": "git",
       "dependencies": {},
@@ -59,7 +76,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d53770b979b6f53b8e74720e773707813788813e"
+      "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#feat/webgl_support",
@@ -69,7 +86,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "2f41cf6e30a6fe2becc84086be03d3612dd313d4"
+      "hash": "9b03eb8501c4d3d0f2f860f5946dcdb23ae11657"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -78,22 +95,29 @@
       "dependencies": {},
       "hash": "e575f070763099574e254c2a177281c3a92ccfea"
     },
-    "com.decentraland.rpc-csharp": {
-      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
+    "com.decentraland.renum.sourcegen": {
+      "version": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
+      "hash": "6dbce7af5c48df0c682b26d4f78bdbb605c2bfb9"
+    },
+    "com.decentraland.rpc-csharp": {
+      "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src#f3dd251c7837cc2d844e1c07e741177a53676064",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/webgpu-shader-compat",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8ec9ea2c5325c7ef6ca5afada5f2b9b7271b60e3"
+      "hash": "298aaa791bc74c1fadfe9f7182c8f90868dd80f2"
     },
     "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -101,16 +125,16 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "9bb6c3aeb99d181705337968081d871734b77a78"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#feat/webgl-support",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "a46452ddbbdad24be9044e282b0f0ba0dff99744"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -124,9 +148,10 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum"
+        "com.decentraland.renum": "https://github.com/NickKhalow/REnum.git?path=REnum",
+        "com.decentraland.renum.sourcegen": "https://github.com/NickKhalow/REnum.git#sourcegen/1.1.4"
       },
-      "hash": "bad0a5c9cc068c1d6a0fbcb9ee6f4f9b9e3ebab1"
+      "hash": "5ea7798478c66648d0da3c4475e2f02a189b7baa"
     },
     "com.nickkhalow.richtypes": {
       "version": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
@@ -194,6 +219,17 @@
       "source": "registry",
       "dependencies": {
         "com.unity.test-framework": "1.1.31"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.cloud.draco": {
+      "version": "5.4.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.8.24",
+        "com.unity.collections": "1.2.4",
+        "com.unity.mathematics": "1.2.6"
       },
       "url": "https://packages.unity.com"
     },
@@ -470,13 +506,14 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "decentraland.renderfeatures": {
-      "version": "file:decentraland.renderfeatures",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
       "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
+      "source": "git",
+      "dependencies": {},
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
@@ -485,14 +522,14 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       },
-      "hash": "2b43ecc35222c1d4dcad66679f463e6773831653"
+      "hash": "8bf26fd1f54a278b887a7951a3935f1ffff71494"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#2.4.0",
+      "version": "https://github.com/getsentry/unity.git#4.0.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0d89de3f508ea316df4cef40d3739691c51b6af8"
+      "hash": "ad36b581ab86a846c33a7d509acb9a0dd9016bde"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
@@ -508,7 +545,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "5f5056828cd3d60baf35b4473878bbb77138b46b"
+      "hash": "6d422ccc8835130dbe5664074405773b7bdc70f0"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

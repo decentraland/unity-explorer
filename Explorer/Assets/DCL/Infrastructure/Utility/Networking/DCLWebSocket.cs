@@ -1,17 +1,58 @@
 using System;
+using System.Net;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Utility.Networking
 {
+    public class DCLWebSocketOptions
+    {
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+        private readonly System.Net.WebSockets.ClientWebSocketOptions options;
+
+        internal DCLWebSocketOptions(System.Net.WebSockets.ClientWebSocketOptions options)
+        {
+            this.options = options;
+        }
+
+        public IWebProxy Proxy
+        {
+            get => options.Proxy;
+            set => options.Proxy = value;
+        }
+
+        public void SetRequestHeader(string headerName, string headerValue) =>
+            options.SetRequestHeader(headerName, headerValue);
+#else
+        // WebGL WebSocket API does not support custom headers or proxy settings
+        public IWebProxy? Proxy { get; set; }
+
+        public void SetRequestHeader(string headerName, string headerValue) { }
+#endif
+    }
+
     // Desktop / WebGL friendly implementation
     public class DCLWebSocket : IDisposable
     {
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         private DCL.WebSockets.JS.WebGLWebSocket ws = new ();
+        private readonly DCLWebSocketOptions options = new ();
 #else
         private System.Net.WebSockets.ClientWebSocket ws = new ();
+        private DCLWebSocketOptions? options;
 #endif
+
+        public DCLWebSocketOptions Options
+        {
+            get
+            {
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                return options;
+#else
+                return options ??= new DCLWebSocketOptions(ws.Options);
+#endif
+            }
+        }
 
 
         public WebSocketState State

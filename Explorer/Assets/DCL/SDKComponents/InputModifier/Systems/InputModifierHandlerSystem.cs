@@ -1,6 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -32,10 +34,13 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         protected override void Update(float t)
         {
-            ApplyModifiersQuery(World);
+            if (!sceneStateProvider.IsCurrent) return;
+
+            ApplyModifiersQuery(World, false);
+            HandleComponentRemovalQuery(World);
         }
 
-        private void SendBusMessage(InputModifierComponent inputModifier)
+        private void SendBusMessage(in InputModifierComponent inputModifier)
         {
             SceneRestrictionsAction currentAction = inputModifier is { DisableAll: false, DisableWalk: false, DisableJog: false, DisableRun: false, DisableJump: false, DisableEmote: false } ? SceneRestrictionsAction.REMOVED : SceneRestrictionsAction.APPLIED;
 
@@ -45,26 +50,20 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
             lastBusMessageAction = currentAction;
         }
 
-        private void ResetModifiersOnLeave()
+        private void ResetModifiers()
         {
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
-            inputModifier.DisableAll = false;
-            inputModifier.DisableWalk = false;
-            inputModifier.DisableJog = false;
-            inputModifier.DisableRun = false;
-            inputModifier.DisableJump = false;
-            inputModifier.DisableEmote = false;
+            inputModifier.RemoveAllModifiers();
 
             SendBusMessage(inputModifier);
         }
 
         [Query]
-        private void ApplyModifiers(in PBInputModifier pbInputModifier)
+        private void ApplyModifiers([Data] bool skipDirtyCheck, Entity entity, in PBInputModifier pbInputModifier, in CRDTEntity crdtEntity)
         {
-            if (!sceneStateProvider.IsCurrent) return;
-            if(pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None) return;
-
-            if (!pbInputModifier.IsDirty) return;
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY
+                || pbInputModifier.ModeCase == PBInputModifier.ModeOneofCase.None
+                || (!skipDirtyCheck && !pbInputModifier.IsDirty)) return;
 
             ref var inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             PBInputModifier.Types.StandardInput? pb = pbInputModifier.Standard;
@@ -79,20 +78,40 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
                 inputModifier.DisableRun = pb.DisableRun;
                 inputModifier.DisableJump = pb.DisableJump;
                 inputModifier.DisableEmote = pb.DisableEmote;
+                inputModifier.DisableDoubleJump = pb.DisableDoubleJump;
+                inputModifier.DisableGliding = pb.DisableGliding;
             }
 
             SendBusMessage(inputModifier);
+
+            // Mark scene Entity with component as well to know later when the PB component gets removed
+            World.AddOrGet<InputModifierComponent>(entity);
+        }
+
+        [Query]
+        [None(typeof(PBInputModifier))]
+        [All(typeof(InputModifierComponent))]
+        private void HandleComponentRemoval(Entity entity, in CRDTEntity crdtEntity)
+        {
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY)
+                return;
+
+            ResetModifiers();
+
+            World.Remove<InputModifierComponent>(entity);
         }
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            if (!value)
-                ResetModifiersOnLeave();
+            if (value)
+                ApplyModifiersQuery(World, true);
+            else
+                ResetModifiers();
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ResetModifiersOnLeave();
+            ResetModifiers();
         }
     }
 }

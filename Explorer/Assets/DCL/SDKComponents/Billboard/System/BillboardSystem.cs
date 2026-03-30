@@ -26,8 +26,25 @@ namespace DCL.Billboard.System
 
         protected override void Update(float t)
         {
-            var cameraRotationAxisZ = Quaternion.Euler(0, 0, exposedCameraData.WorldRotation.Value.eulerAngles.z);
-            Vector3 cameraPosition = exposedCameraData.WorldPosition;
+            // Get the active camera position and rotation from CinemachineBrain if available,
+            // otherwise fall back to exposedCameraData values (player camera)
+            Vector3 cameraPosition;
+            Quaternion cameraRotation;
+
+            var activeVirtualCamera = exposedCameraData.CinemachineBrain?.ActiveVirtualCamera;
+            if (activeVirtualCamera != null)
+            {
+                var cameraTransform = activeVirtualCamera.VirtualCameraGameObject.transform;
+                cameraPosition = cameraTransform.position;
+                cameraRotation = cameraTransform.rotation;
+            }
+            else
+            {
+                cameraPosition = exposedCameraData.WorldPosition;
+                cameraRotation = exposedCameraData.WorldRotation.Value;
+            }
+
+            var cameraRotationAxisZ = Quaternion.Euler(0, 0, cameraRotation.eulerAngles.z);
             UpdateRotationQuery(World, cameraPosition, cameraRotationAxisZ);
         }
 

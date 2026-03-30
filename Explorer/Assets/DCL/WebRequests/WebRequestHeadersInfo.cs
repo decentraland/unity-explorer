@@ -93,9 +93,10 @@ namespace DCL.WebRequests
         public readonly Dictionary<string, string> AsMutableDictionary() =>
             values?.ToDictionary(e => e.Name, e => e.Value) ?? new Dictionary<string, string>();
 
-        public readonly PooledObject<Dictionary<string, string>> AsPooledDictionary(out Dictionary<string, string> headers)
+        public readonly PoolExtensions.Scope<Dictionary<string, string>> AsPooledDictionary(out Dictionary<string, string> headers)
         {
-            PooledObject<Dictionary<string, string>> pooledObject = ThreadSafeDictionaryPool<string, string>.SHARED.Get(out headers);
+            PoolExtensions.Scope<Dictionary<string, string>> pooledObject = ThreadSafeDictionaryPool<string, string>.SHARED.AutoScope();
+            headers = pooledObject.Value;
 
             if (values != null)
                 foreach (WebRequestHeader webRequestHeader in values)

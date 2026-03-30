@@ -27,6 +27,19 @@ namespace DCL.CharacterMotion.Settings
         float LongJumpTime { get; set; }
         float LongJumpGravityScale { get; set; }
         float JumpGravityFactor { get; }
+        int AirJumpCount { get; set; }
+        float AirJumpHeight { get; set; }
+        float AirJumpDelay { get; set; }
+        float AirJumpGravityDuringDelay { get; set; }
+        float CooldownBetweenJumps { get; set; }
+        float AirJumpDirectionChangeImpulse { get; set; }
+        public float GlideSpeed { get; }
+        public float GlideMinGroundDistance { get; }
+        public float GlideMaxGravity { get; }
+        public float JumpToGlideTimeInterval { get; }
+        public float GlideCooldown { get; }
+        public float GlideAnimMaxAngle { get; }
+        public float GlideAnimBlendSpeed { get; }
         float JumpGraceTime { get; }
         float JumpHeightStun { get; }
         float LongFallStunTime { get; }
@@ -81,5 +94,11 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
+
+        // Impulse / External Velocity settings
+        float CharacterMass { get; set; }
+        float ExternalEnvDrag { get; set; }
+        float ExternalGroundFriction { get; set; }
+        float MaxExternalVelocity { get; set; }
     }
 }

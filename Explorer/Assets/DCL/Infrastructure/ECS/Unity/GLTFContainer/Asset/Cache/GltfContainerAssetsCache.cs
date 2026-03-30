@@ -4,6 +4,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
 
         private bool isDisposed { get; set; }
+        private AssetPreLoadCache? assetLoadCache;
 
         public GltfContainerAssetsCache(IComponentPoolsRegistry poolsRegistry)
         {
@@ -54,8 +56,20 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             isDisposed = true;
         }
 
+        public void SetAssetLoadCache(AssetPreLoadCache assetPreLoadCache)
+        {
+            this.assetLoadCache = assetPreLoadCache;
+        }
+
         public bool TryGet(in string key, out GltfContainerAsset? asset)
         {
+            // First check if the asset is being handled by the AssetLoadCache
+            if (assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset cachedAsset))
+            {
+                asset = cachedAsset;
+                return true;
+            }
+
             if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
             {
                 // Remove from the tail of the list
@@ -74,8 +88,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// <summary>
         ///     Return to the pool
         /// </summary>
-        public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false)
+        public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true)
         {
+            // If the asset is being handled by the AssetLoadCache, we don't need to add it to this cache
+            if (handleAssetLoad && assetLoadCache != null && assetLoadCache.TryGet(key, out GltfContainerAsset _))
+            {
+                DereferenceFinalOperation(asset, putInBridge);
+                return;
+            }
+
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
                 assets = new List<GltfContainerAsset>();
@@ -91,6 +112,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
+            DereferenceFinalOperation(asset, putInBridge);
+        }
+
+        private void DereferenceFinalOperation(GltfContainerAsset asset, bool putInBridge)
+        {
             if (putInBridge)
                 asset.Root.transform.SetParent(sceneLODBridge, true);
             else

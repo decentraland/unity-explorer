@@ -1,16 +1,18 @@
-using Cysharp.Threading.Tasks;
-
 #if !NO_LIVEKIT_MODE
+using DCL.Browser;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 #endif
 
+using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
@@ -82,7 +84,10 @@ namespace DCL.Friends.UI.FriendPanel
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
 #if !NO_LIVEKIT_MODE
@@ -101,6 +106,7 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
+                    decentralandUrlsSource,
                     friendsConnectivityStatusTracker,
 
 #if !NO_LIVEKIT_MODE
@@ -120,11 +126,10 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-
+                    decentralandUrlsSource,
 #if !NO_LIVEKIT_MODE
                     chatEventBus,
 #endif
-
                     sharedSpaceManager,
                     voiceChatOrchestrator);
 
@@ -134,7 +139,10 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, profileDataProvider, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                includeUserBlocking);
+                includeUserBlocking,
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile);
 
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,

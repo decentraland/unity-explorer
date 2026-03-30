@@ -1,4 +1,4 @@
-using DCL.MapRenderer.CommonBehavior;
+﻿using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;

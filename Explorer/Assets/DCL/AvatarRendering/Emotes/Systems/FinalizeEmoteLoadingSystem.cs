@@ -10,7 +10,6 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using Temp.Helper.WebClient;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
@@ -19,7 +18,7 @@ using ECS.StreamableLoading.GLTF;
 using System;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesDTOByPointersFromRealmIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
@@ -29,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes
     [LogCategory(ReportCategory.EMOTE)]
     [UpdateAfter(typeof(LoadEmotesByPointersSystem))]
     [UpdateAfter(typeof(LoadSceneEmotesSystem))]
-    public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
+    public partial class FinalizeEmoteLoadingSystem : FinalizeElementsLoadingSystem<GetEmotesDTOByPointersFromRealmIntention, IEmote, EmoteDTO, EmotesDTOList>
     {
         public FinalizeEmoteLoadingSystem(World world, IEmoteStorage emoteStorage) : base(world, emoteStorage, new ListObjectPool<URN>()) { }
 
@@ -43,12 +42,9 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeEmoteDTO(
-            Entity entity,
-            ref EmotesFromRealmPromise promise
-        )
+        private void FinalizeEmoteDTO(Entity entity, ref EmotesFromRealmPromise promise)
         {
-            if (TryFinalizeIfCancelled(entity, promise))
+            if (TryFinalizeIfCancelled(entity, ref promise))
                 return;
 
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<EmotesDTOList> promiseResult))
@@ -66,6 +62,7 @@ namespace DCL.AvatarRendering.Emotes
                             component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
+                promise.LoadingIntention.ReleasePointers();
                 World.Destroy(entity);
             }
         }
@@ -83,9 +80,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> gltfAssetResult))
             {
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
-                {
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
-                }
                 else
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
 

@@ -7,11 +7,15 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -71,11 +75,7 @@ namespace DCL.InWorldCamera.Playground
 
             var realmData = new RealmData(
                 new LogIpfsRealm(
-                    new IpfsRealm(
-                        web3IdentityCache,
-                        IWebRequestController.DEFAULT,
-                        URLDomain.FromString("TestRealm"),
-                        URLDomain.EMPTY,
+                    new IpfsRealm(URLDomain.FromString("TestRealm"),
                         new ServerAbout(
                             lambdas: new ContentEndpoint(profileUrl)
                         )
@@ -83,12 +83,17 @@ namespace DCL.InWorldCamera.Playground
                 )
             );
 
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, realmData, ILaunchMode.PLAY);
+
             var world = World.Create();
             Entity playerEntity = world.Create();
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), ProfilesDebug.Create(new NullDebugContainerBuilder()))
+                    new RealmProfileRepository(IWebRequestController.TEST,
+                        new PublishIpfsEntityCommand(web3IdentityCache, IWebRequestController.TEST, urlsSource, realmData),
+                        urlsSource,
+                        new DefaultProfileCache(), new ProfilesAnalytics(ProfilesDebug.Create(null, new EntitiesAnalyticsDebug(null)), IAnalyticsController.Null), false)
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

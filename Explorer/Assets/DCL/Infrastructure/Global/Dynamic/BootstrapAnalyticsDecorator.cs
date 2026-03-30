@@ -9,6 +9,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
+using ECS;
 using Global.AppArgs;
 using Global.Versioning;
 using Newtonsoft.Json.Linq;
@@ -53,6 +54,7 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             IAppArgs appArgs,
@@ -60,13 +62,13 @@ namespace Global.Dynamic
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, appArgs, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, realmData, playerEntity, memoryCap, appArgs, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "1 - static container loaded" },
+                { STAGE_KEY, "2 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
@@ -121,7 +123,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JObject
             {
-                { STAGE_KEY, "2 - feature flag initialized" },
+                { STAGE_KEY, "1 - feature flag initialized" },
             });
         }
 

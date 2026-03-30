@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -105,6 +106,7 @@ namespace DCL.PluginSystem.World
             light.cookie = null;
         }
 
+        [Serializable]
         public class LightSourcePluginSettings : IDCLPluginSettings
         {
             public AssetReferenceGameObject LightSourcePrefab;

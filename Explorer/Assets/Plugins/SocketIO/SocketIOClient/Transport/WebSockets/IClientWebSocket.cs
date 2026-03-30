@@ -16,5 +16,9 @@ namespace SocketIOClient.Transport.WebSockets
         UniTask SendAsync(ReadOnlyMemory<byte> bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
 
         UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken);
+
+        void AddHeader(string key, string val);
+
+        void SetProxy(IWebProxy proxy);
     }
 }

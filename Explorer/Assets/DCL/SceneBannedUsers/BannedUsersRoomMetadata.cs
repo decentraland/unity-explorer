@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Text.Json.Serialization;
 
 namespace DCL.SceneBannedUsers
 {
     [Serializable]
     public struct BannedUsersRoomMetadata
     {
-        public string[] bannedAddresses;
+        [JsonProperty("bannedAddresses")] public string[] BannedAddresses;
     }
 }

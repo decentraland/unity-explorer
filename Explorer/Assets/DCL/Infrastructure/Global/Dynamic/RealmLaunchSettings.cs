@@ -10,7 +10,7 @@ using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Prefs;
 using DCL.UserInAppInitializationFlow.StartupOperations;
-using Global.Dynamic.LaunchModes;
+using DCL.Utility;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -42,7 +42,6 @@ namespace Global.Dynamic
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
         private bool isLocalSceneDevelopmentRealm;
-        private Vector2Int? genesisIsolatedParcel;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -56,9 +55,6 @@ namespace Global.Dynamic
 
         public IReadOnlyList<int2> GetPredefinedParcels()
         {
-            if (genesisIsolatedParcel.HasValue)
-                return new List<int2> { new (genesisIsolatedParcel.Value.x, genesisIsolatedParcel.Value.y) };
-
             if (predefinedScenes.enabled)
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
@@ -97,13 +93,6 @@ namespace Global.Dynamic
 
             if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
                 ParsePositionAppParameter(parcelToTeleportOverride);
-
-            if (applicationParameters.TryGetValue(AppArgsFlags.GENESIS_SCENE, out string? genesisSceneValue)
-                && RealmHelper.TryParseParcelFromString(genesisSceneValue, out Vector2Int parcel))
-            {
-                genesisIsolatedParcel = parcel;
-                targetScene = parcel;
-            }
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
@@ -171,14 +160,10 @@ namespace Global.Dynamic
 
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            // URL-driven genesis scene (?genesisScene=x,y) wins over feature flags and home position
-            if (genesisIsolatedParcel.HasValue)
-                return;
-
             // Priority 1: App argument position (highest - from command line/Creator Hub)
             if (HasAppArgPosition(appArgs))
                 return;
-    
+
             // Priority 2: Editor position override (for development convenience)
             if (HasEditorPositionOverride())
                 return;
@@ -189,11 +174,20 @@ namespace Global.Dynamic
                                            FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride)
                                        && parcelToTeleportOverride != null;
 
-            // Priority 3: Serialized home position (used when no feature flag exists, or feature flag is set to "0,0")
-            if (HomeMarkerController.HasSerializedPosition() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
+            // Priority 3: Serialized home (used when no feature flag exists, or feature flag is set to "0,0")
+            if (HomeMarkerController.HasSerializedHome() && (!hasDefaultSpawnFlag || parcelToTeleportOverride == "0,0"))
             {
-                targetScene = HomeMarkerController.Deserialize()!.Value;
-                return;
+                if (HomeMarkerController.HasSerializedWorldName())
+                {
+                    SetWorldRealm(HomeMarkerController.DeserializeWorldName()!);
+                    return;
+                }
+
+                if (HomeMarkerController.HasSerializedPosition())
+                {
+                    targetScene = HomeMarkerController.Deserialize()!.Value;
+                    return;
+                }
             }
 
             // Priority 4: Feature flag override (used as fallback if home position not available or feature flag has specific value)

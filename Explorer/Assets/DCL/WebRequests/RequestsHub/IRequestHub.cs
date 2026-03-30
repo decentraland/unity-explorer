@@ -1,3 +1,5 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
+
 namespace DCL.WebRequests.RequestsHub
 {
     public interface IRequestHub
@@ -7,5 +9,7 @@ namespace DCL.WebRequests.RequestsHub
             where TWebRequest: struct, ITypedWebRequest;
 
         public void SetKTXEnabled(bool enabled);
+
+        public IDecentralandUrlsSource UrlsSource { get; }
     }
 }

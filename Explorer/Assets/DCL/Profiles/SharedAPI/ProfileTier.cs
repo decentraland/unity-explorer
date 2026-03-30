@@ -1,0 +1,52 @@
+﻿using CommunicationData.URLHelpers;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
+using REnum;
+using System;
+using System.Runtime.CompilerServices;
+
+namespace DCL.Profiles
+{
+    [REnum(EnumUnderlyingType.Byte)]
+    [REnumField(typeof(Profile.CompactInfo), "Compact")]
+    [REnumField(typeof(Profile), "Full")]
+    public readonly partial struct ProfileTier : IDisposable
+    {
+        public string UserId => Match(c => c.UserId, f => f.UserId);
+        public string DisplayName => Match(c => c.DisplayName, f => f.DisplayName);
+        public URLAddress FaceSnapshotUrl => Match(c => c.FaceSnapshotUrl, f => f.Compact.FaceSnapshotUrl);
+
+        public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture
+        {
+            get => Match(c => c.ProfilePicture, f => f.ProfilePicture);
+            set => Match(value, static (pic, c) => c.ProfilePicture = pic, static (pic, f) => f.ProfilePicture = pic);
+        }
+
+        public int Version => Match(c => 0, f => f.Version);
+
+        public void Dispose() =>
+            Match(_ => { }, full => full.Dispose());
+
+        public static implicit operator Profile.CompactInfo(ProfileTier profileTier) =>
+            profileTier.Match(c => c, f => f.Compact);
+
+        public static implicit operator ProfileTier?(Profile? profile) =>
+            profile == null ? (ProfileTier?) null : FromFull(profile);
+
+        public static implicit operator ProfileTier(Profile profile) =>
+            FromFull(profile);
+
+        public static implicit operator ProfileTier(Profile.CompactInfo profile) =>
+            FromCompact(profile);
+    }
+
+    public static class ProfileTierExtensions
+    {
+        public static Profile? ToProfile(this ProfileTier? tier) =>
+            tier == null ? null :
+            tier.Value.IsFull(out Profile? fullProfile) ? fullProfile! : throw new ArgumentException($"Profile Tier is {tier.Value.GetKind()}, expected: {ProfileTier.Kind.Full}");
+
+        public static Profile.CompactInfo? ToCompact(this ProfileTier? tier) =>
+            tier;
+    }
+}

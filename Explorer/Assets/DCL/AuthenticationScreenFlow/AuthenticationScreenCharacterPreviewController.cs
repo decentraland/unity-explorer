@@ -4,12 +4,10 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
-using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -30,6 +28,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Initialize(Avatar avatar, Vector3 position)
         {
+            view.gameObject.SetActive(true);
             playEmotesCts = playEmotesCts.SafeRestart();
 
             previewAvatarModel.Wearables = ShortenWearables(avatar);
@@ -44,6 +43,8 @@ namespace DCL.AuthenticationScreenFlow
         {
             playEmotesCts.SafeCancelAndDispose();
             base.OnHide(triggerOnHideBusEvent);
+
+            view.gameObject.SetActive(false);
         }
 
         public new void Dispose()

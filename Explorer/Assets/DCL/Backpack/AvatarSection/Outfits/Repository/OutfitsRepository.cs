@@ -1,5 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,10 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS;
+using Newtonsoft.Json;
 using Utility;
+using Utility.Json;
+using Utility.Times;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Repository
 {
@@ -21,58 +25,122 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
     /// </summary>
     public class OutfitsRepository
     {
-        private readonly IRealmData realm;
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
+            { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
+
+        private const int DEFAULT_DEPLOY_WINDOW_IN_SECONDS = 15;
+
+        private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
 
-        public OutfitsRepository(IRealmData realm,
+        private ulong passedTimeSinceLastDeployment = 0;
+        private ulong lastDeployTimestampInSeconds = 0;
+
+        private UniTaskCompletionSource? currentResolutionTask;
+        private List<OutfitItem>? currentOutfits;
+        private int currentVersion;
+
+        public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider)
         {
-            this.realm = realm;
+            this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.nftNamesProvider = nftNamesProvider;
+        }
+
+        private static int deployWindowInSeconds
+        {
+            get
+            {
+                if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.OUTFITS_DEPLOY_WINDOW,
+                        "deploy_window_in_seconds",
+                        out OutfitsDeployWindowConfig? config) && config.HasValue && config.Value.DeployWindowInSeconds > 0)
+                    return config.Value.DeployWindowInSeconds;
+
+                return DEFAULT_DEPLOY_WINDOW_IN_SECONDS;
+            }
+        }
+
+        [Serializable]
+        private struct OutfitsDeployWindowConfig
+        {
+            [JsonProperty("deploy_window_in_seconds")] public int DeployWindowInSeconds;
         }
 
         /// <summary>
         ///     Deploys the complete set of outfits for a user to the Catalyst network.
+        ///     Multiple rapid calls are coalesced: only the latest state is deployed,
+        ///     after a 15-second delay that respects the backend rate limit.
         /// </summary>
         public async UniTask SetAsync(Profile? profile, List<OutfitItem> outfits, CancellationToken ct)
         {
-            if (realm is { Configured: false })
-                return;
-
             if (profile == null)
                 throw new ArgumentException("Cannot save outfits for a null profile");
 
             if (string.IsNullOrEmpty(profile?.UserId))
                 throw new ArgumentException("Cannot save outfits for a user with an empty UserId");
 
-            var namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
-            var metadata = new OutfitsMetadata
-            {
-                outfits = outfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
-                    ? new List<string>
-                    {
-                        namesForExtraSlots.Names[0]
-                    }
-                    : new List<string>()
-            };
+            currentOutfits = outfits;
+            currentVersion++;
+            var deployWindow = (ulong)deployWindowInSeconds;
 
-            var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
+            if (currentResolutionTask != null)
             {
-                version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
-                {
-                    $"{profile.UserId}:outfits"
-                },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>()
-            };
+                await UniTask.WhenAny(currentResolutionTask.Task, UniTask.WaitUntilCanceled(ct));
+                return;
+            }
+
+            currentResolutionTask = new UniTaskCompletionSource();
 
             try
             {
-                await realm.Ipfs.PublishAsync(outfitsEntity, ct, new Dictionary<string, byte[]>());
+                passedTimeSinceLastDeployment = Math.Clamp((DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000) - lastDeployTimestampInSeconds, 0, deployWindow);
+
+                int localVersion;
+
+                do
+                {
+                    localVersion = currentVersion;
+                    List<OutfitItem> localOutfits = currentOutfits!;
+
+                    await UniTask.Delay(TimeSpan.FromSeconds(deployWindow - (double)passedTimeSinceLastDeployment), cancellationToken: ct);
+
+                    INftNamesProvider.PaginatedNamesResponse namesForExtraSlots = await nftNamesProvider.GetAsync(new Web3Address(profile.UserId), 1, 1, ct);
+
+                    var metadata = new OutfitsMetadata
+                    {
+                        outfits = localOutfits, namesForExtraSlots = namesForExtraSlots.Names.Count > 0
+                            ? new List<string>
+                            {
+                                namesForExtraSlots.Names[0],
+                            }
+                            : new List<string>(),
+                    };
+
+                    var outfitsEntity = new OutfitsEntity(string.Empty, metadata)
+                    {
+                        version = OutfitsEntity.DEFAULT_VERSION, pointers = new[]
+                        {
+                            $"{profile.UserId}:outfits",
+                        },
+                        timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), type = IpfsRealmEntityType.Outfits.ToEntityString(), content = Array.Empty<ContentDefinition>(),
+                    };
+
+                    await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, ct, SERIALIZER_SETTINGS);
+                    passedTimeSinceLastDeployment = 0;
+                }
+                while (localVersion != currentVersion);
+
+                currentResolutionTask.TrySetResult();
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.OUTFITS);
+                currentResolutionTask.TrySetException(e);
                 throw;
+            }
+            finally
+            {
+                currentResolutionTask = null;
+                lastDeployTimestampInSeconds = DateTime.UtcNow.UnixTimeAsMilliseconds() / 1000;
             }
         }
     }

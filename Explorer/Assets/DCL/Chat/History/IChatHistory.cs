@@ -7,7 +7,6 @@ namespace DCL.Chat.History
     /// </summary>
     public interface IChatHistory
     {
-        public delegate void AllChannelsRemovedDelegate();
         public delegate void ChannelAddedDelegate(ChatChannel addedChannel);
         public delegate void ChannelRemovedDelegate(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType);
         public delegate void ChannelClearedDelegate(ChatChannel claredChannel);

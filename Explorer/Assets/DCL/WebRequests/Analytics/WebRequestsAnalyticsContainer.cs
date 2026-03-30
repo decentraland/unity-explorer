@@ -1,54 +1,90 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class WebRequestsAnalyticsContainer : IMutableWebRequestsAnalyticsContainer
+    public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
-        private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
+        private readonly Dictionary<UnityWebRequest, DateTime> pendingRequests = new (10);
+        private readonly List<IWebRequestAnalyticsHandler> handlers;
 
-        public IReadOnlyList<IRequestMetric>? GetMetric(Type requestType) =>
-            requestTypesWithMetrics.GetValueOrDefault(requestType);
-
-        public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
-            requestMetricTypes;
-
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new()
+        public WebRequestsAnalyticsContainer(params IWebRequestAnalyticsHandler?[] handlers)
         {
-            requestMetricTypes.Add(typeof(T), () => new T());
-            return this;
+            this.handlers = new List<IWebRequestAnalyticsHandler>(handlers.Where(h => h != null)!);
         }
-        void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
+
+        void IWebRequestsAnalyticsContainer.OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics))
-            {
-                metrics = new List<IRequestMetric>();
+            pendingRequests.Add(request.UnityWebRequest, DateTime.MinValue);
 
-                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
-                    metrics.Add(ctor());
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnBeforeBudgeting(in envelope, request);
+        }
 
-                requestTypesWithMetrics.Add(typeof(T), metrics);
-            }
+        void IWebRequestsAnalyticsContainer.OnRequestStarted<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
+        {
+            DateTime now = DateTime.Now;
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestStarted(request);
-            }
+            if (!pendingRequests.ContainsKey(request.UnityWebRequest)) return;
+
+            pendingRequests[request.UnityWebRequest] = now;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnRequestStarted(in envelope, request, now);
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
-            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics)) return;
+            if (!pendingRequests.TryGetValue(request.UnityWebRequest, out DateTime startTime))
+                return;
 
-            foreach (var metric in metrics)
-            {
-                metric.OnRequestEnded(request);
-            }
+            DateTime now = DateTime.Now;
+            TimeSpan duration = now - startTime;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnRequestFinished(request, duration);
         }
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataStarted<T>(T request) { }
+        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest))
+                return;
 
-        void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request) { }
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnProcessDataFinished(request);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+                return;
+
+            DateTime now = DateTime.Now;
+            TimeSpan duration = now - startTime;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnException(request, exception, duration);
+        }
+
+        void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception)
+        {
+            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+                return;
+
+            DateTime now = DateTime.Now;
+            TimeSpan duration = now - startTime;
+
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.OnException(request, exception, duration);
+        }
+
+        void IWebRequestsAnalyticsContainer.Update(float dt)
+        {
+            foreach (IWebRequestAnalyticsHandler? handler in handlers)
+                handler.Update(dt);
+        }
     }
 }

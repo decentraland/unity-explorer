@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
@@ -36,6 +36,7 @@ namespace DCL.Landscape.Systems
         private static readonly int PARCEL_SIZE_ID = Shader.PropertyToID("_ParcelSize");
         private static readonly int MIN_DIST_OCCUPANCY_ID = Shader.PropertyToID("_MinDistOccupancy");
         private static readonly int OCCUPANCY_MAP_ID = Shader.PropertyToID("_OccupancyMap");
+        private static readonly int OCCUPANCY_MAP_SIZE_ID = Shader.PropertyToID("_OccupancyMapSize");
         private static readonly int TERRAIN_BOUNDS_ID = Shader.PropertyToID("_TerrainBounds");
         private static readonly int DISTANCE_FIELD_SCALE_ID = Shader.PropertyToID("_DistanceFieldScale");
 
@@ -182,6 +183,7 @@ namespace DCL.Landscape.Systems
         {
             materialProperties.SetFloat(DISTANCE_FIELD_SCALE_ID, terrain.MaxHeight);
             materialProperties.SetFloat(MIN_DIST_OCCUPANCY_ID, terrain.OccupancyFloor / 255f);
+            materialProperties.SetFloat(OCCUPANCY_MAP_SIZE_ID, terrain.OccupancyMapSize);
 
             materialProperties.SetTexture(OCCUPANCY_MAP_ID,
                 terrain.OccupancyMap != null ? terrain.OccupancyMap : Texture2D.blackTexture);

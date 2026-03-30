@@ -2,7 +2,8 @@
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugHintElement : DebugElementBase<DebugHintElement, DebugHintDef>
+    [UxmlElement]
+    public partial class DebugHintElement : DebugElementBase<DebugHintElement, DebugHintDef>
     {
         internal const string INFO_STYLE = "debug-hint--info";
         internal const string WARNING_STYLE = "debug-hint--warning";
@@ -51,7 +52,5 @@ namespace DCL.DebugUtilities.Views
                     break;
             }
         }
-
-        public new class UxmlFactory : UxmlFactory<DebugHintElement, UxmlTraits> { }
     }
 }

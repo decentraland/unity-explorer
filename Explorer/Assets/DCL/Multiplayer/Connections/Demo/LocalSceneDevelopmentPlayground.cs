@@ -1,25 +1,24 @@
+#if !NO_LIVEKIT_MODE && !UNITY_WEBGL
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Utility;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
-using Global.Dynamic.LaunchModes;
+using ECS;
+using Global.AppArgs;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
-
-#if !UNITY_WEBGL
-using DCL.Multiplayer.Connections.FfiClients;
-#endif
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -32,22 +31,21 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
-#if !UNITY_WEBGL
 #if UNITY_EDITOR
-            global::LiveKit.Internal.FFIClients.IFFIClient.Default.EnsureInitialize();
+            IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
             var launchMode = ILaunchMode.LOCAL_SCENE_DEVELOPMENT;
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, launchMode);
+            var urlsSource = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, launchMode);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory(), DecentralandEnvironment.Org);
             var totalBudget = 15;
-            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource), ChromeDevtoolProtocolClient.NewForTest(), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget))));
+            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
 
             var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), new RealmData());
 
             new GateKeeperSceneRoom(
                     webRequests,
@@ -55,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 ).StartAsync()
                  .Forget();
 #endif
-#endif
         }
     }
 }
+#endif

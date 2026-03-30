@@ -1,6 +1,5 @@
 ﻿using DCL.DebugUtilities;
 using DCL.Landscape;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
@@ -20,22 +19,13 @@ namespace Global.Dynamic
 
         private bool landscapeEnabled { get; init; }
 
-        public LandscapePlugin CreatePlugin(
-                StaticContainer staticContainer,
-                BootstrapContainer bootstrapContainer,
-                MapRendererContainer? mapRendererContainer,
-                IDebugContainerBuilder debugBuilder
-            ) =>
-            new (staticContainer.RealmData, staticContainer.LoadingStatus, staticContainer.ScenesCache, GenesisTerrain, WorldsTerrain, bootstrapContainer.AssetsProvisioner,
-                debugBuilder, mapRendererContainer?.TextureContainer ?? new MapRendererTextureContainer(),
-                staticContainer.WebRequestsContainer.WebRequestController, staticContainer.LandscapeParcelData, staticContainer.LandscapeParcelController, landscapeEnabled,
-                bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone), (Landscape)Landscape);
+        public LandscapePlugin CreatePlugin(StaticContainer staticContainer, BootstrapContainer bootstrapContainer, MapRendererContainer mapRendererContainer,
+            IDebugContainerBuilder debugBuilder) =>
+            new (staticContainer.RealmData, GenesisTerrain, WorldsTerrain, bootstrapContainer.AssetsProvisioner,
+                debugBuilder, mapRendererContainer.TextureContainer, landscapeEnabled,
+                (Landscape)Landscape);
 
-        public static TerrainContainer Create(
-                StaticContainer staticContainer,
-                RealmContainer realmContainer,
-                bool enableLandscape,
-                bool localSceneDevelopemnt)
+        public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
         {
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();

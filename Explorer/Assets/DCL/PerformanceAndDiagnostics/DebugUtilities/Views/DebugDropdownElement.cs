@@ -2,7 +2,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugDropdownElement : DebugElementBase<DebugDropdownElement, DebugDropdownDef>
+    [UxmlElement]
+    public partial class DebugDropdownElement : DebugElementBase<DebugDropdownElement, DebugDropdownDef>
     {
         protected override void ConnectBindings()
         {
@@ -12,7 +13,5 @@ namespace DCL.DebugUtilities.Views
 
             definition.Binding.Connect(this.Q<DropdownField>());
         }
-
-        public new class UxmlFactory : UxmlFactory<DebugDropdownElement, UxmlTraits> { }
     }
 }

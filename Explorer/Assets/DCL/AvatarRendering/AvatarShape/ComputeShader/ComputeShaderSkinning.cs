@@ -7,7 +7,6 @@ using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Temp.Helper.WebClient;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -24,13 +23,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             in FacialFeaturesTextures facialFeatureTexture)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
-            CreateMeshData(meshesData, gameObjects, out CreateMeshDataDiagnostics diag);
+
+            CreateMeshData(meshesData, gameObjects);
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
-
-            if (vertCount == 0)
-                WebGLDebugLog.LogWarning(ReportCategory.AVATAR,
-                    $"Avatar skinning vertCount=0. Wearables={diag.WearableCount}, meshesAdded={diag.MeshesAdded}, skippedInactive={diag.SkippedInactive}, skippedRendererInfosMismatch={diag.SkippedRendererInfosMismatch}, renderersWithNullMesh={diag.RenderersWithNullMesh}. Check: empty/failed wearable load, inactive renderers, or RendererInfos count mismatch.");
 
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
@@ -141,42 +137,23 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return list;
         }
 
-        private struct CreateMeshDataDiagnostics
+        private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables)
         {
-            internal int WearableCount;
-            internal int MeshesAdded;
-            internal int SkippedInactive;
-            internal int SkippedRendererInfosMismatch;
-            internal int RenderersWithNullMesh;
-        }
-
-        private void CreateMeshData(List<MeshData> targetList, IList<CachedAttachment> wearables, out CreateMeshDataDiagnostics diag)
-        {
-            diag = default;
-            diag.WearableCount = wearables.Count;
-
             for (var i = 0; i < wearables.Count; i++)
             {
                 CachedAttachment cachedWearable = wearables[i];
                 GameObject instance = cachedWearable.Instance;
-                if (instance == null)
-                    continue;
 
                 using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
                     for (var j = 0; j < pooledList.Value.Count; j++)
                     {
                         Renderer meshRenderer = pooledList.Value[j];
-                        if (!meshRenderer.gameObject.activeSelf)
-                        {
-                            diag.SkippedInactive++;
-                            continue;
-                        }
+                        if (!meshRenderer.gameObject.activeSelf) continue;
 
                         if (j < 0 || j >= cachedWearable.OriginalAsset.RendererInfos.Count)
                         {
                             ReportHub.LogError(ReportCategory.AVATAR, $"RendererInfos.Count ({pooledList.Value.Count}) is different than pooledList.Value.Count ({pooledList.Value.Count})");
-                            diag.SkippedRendererInfosMismatch++;
                             continue;
                         }
 
@@ -184,11 +161,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                         if (meshRenderer is SkinnedMeshRenderer renderer)
                         {
-                            if (renderer.sharedMesh == null)
-                            {
-                                diag.RenderersWithNullMesh++;
-                                continue;
-                            }
                             // From Asset Bundle
                             (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
 
@@ -199,16 +171,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                         }
                         else
                         {
-                            MeshFilter filter = meshRenderer.GetComponent<MeshFilter>();
-                            if (filter == null || filter.sharedMesh == null)
-                            {
-                                diag.RenderersWithNullMesh++;
-                                continue;
-                            }
                             cachedWearable.Renderers.Add(meshRenderer);
 
                             // From Pooled Object
-                            targetList.Add(new MeshData(filter, meshRenderer, meshRenderer.transform, instance.transform,
+                            targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
                                 originalMaterial));
                         }
                     }
@@ -216,8 +182,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                 wearables[i] = cachedWearable;
             }
-
-            diag.MeshesAdded = targetList.Count;
         }
 
         private (MeshRenderer, MeshFilter) SetupMesh(SkinnedMeshRenderer skin)

@@ -78,8 +78,7 @@ namespace Global.Dynamic
                 c.MapRenderer = mapRenderer;
             });
 
-            realmData.RealmType.OnUpdate += kind =>
-                mapRendererContainer.MapRenderer!.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
+            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
 
             return mapRendererContainer;
         }
@@ -89,6 +88,7 @@ namespace Global.Dynamic
             mapRendererSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.MapRendererSettings, ct, nameof(settings.MapRendererSettings));
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public MapRendererSettingsRef MapRendererSettings { get; private set; } = null!;

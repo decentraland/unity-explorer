@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
@@ -36,6 +37,7 @@ namespace DCL.SDKComponents.SkyboxTime
             return UniTask.CompletedTask;
         }
 
+        [Serializable]
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
             [field: SerializeField]

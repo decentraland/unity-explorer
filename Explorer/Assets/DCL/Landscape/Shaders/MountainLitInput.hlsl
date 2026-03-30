@@ -26,6 +26,7 @@ CBUFFER_START(UnityPerMaterial)
     half _DistanceFieldScale;
     half _MinDistOccupancy;
     half _ParcelSize;
+    half _OccupancyMapSize;
     UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -48,6 +49,7 @@ UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
     UNITY_DOTS_INSTANCED_PROP(float, _BlendSmoothness)
     UNITY_DOTS_INSTANCED_PROP(float, _DistanceFieldScale)
     UNITY_DOTS_INSTANCED_PROP(float, _MinDistOccupancy)
+    UNITY_DOTS_INSTANCED_PROP(float, _OccupancyMapSize)
 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
 
 static float4   unity_DOTS_Sampled_BaseColor;
@@ -68,6 +70,7 @@ static float    unity_DOTS_Sampled_YellowThreshold;
 static float    unity_DOTS_Sampled_BlendSmoothness;
 static float    unity_DOTS_Sampled_DistanceFieldScale;
 static float    unity_DOTS_Sampled_MinDistOccupancy;
+static float    unity_DOTS_Sampled_OccupancyMapSize;
 
 void SetupDOTSSimpleLitMaterialPropertyCaches()
 {
@@ -88,6 +91,7 @@ void SetupDOTSSimpleLitMaterialPropertyCaches()
     unity_DOTS_Sampled_BlendSmoothness      = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _BlendSmoothness);
     unity_DOTS_Sampled_DistanceFieldScale   = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _DistanceFieldScale);
     unity_DOTS_Sampled_MinDistOccupancy     = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _MinDistOccupancy);
+    unity_DOTS_Sampled_OccupancyMapSize     = UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float , _OccupancyMapSize);
 }
 
 #undef UNITY_SETUP_DOTS_MATERIAL_PROPERTY_CACHES
@@ -110,6 +114,7 @@ void SetupDOTSSimpleLitMaterialPropertyCaches()
 #define _BlendSmoothness        unity_DOTS_Sampled_BlendSmoothness
 #define _DistanceFieldScale     unity_DOTS_Sampled_DistanceFieldScale
 #define _MinDistOccupancy       unity_DOTS_Sampled_MinDistOccupancy
+#define _OccupancyMapSize       unity_DOTS_Sampled_OccupancyMapSize
 
 #endif
 

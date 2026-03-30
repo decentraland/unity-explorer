@@ -36,6 +36,14 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private GameObject fakeTriggerAreaGO;
         private SDKEntityTriggerArea.SDKEntityTriggerArea sdkEntityTriggerArea;
 
+        [OneTimeSetUp]
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
+
         [SetUp]
         public void Setup()
         {

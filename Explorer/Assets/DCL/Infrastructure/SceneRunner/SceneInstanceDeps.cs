@@ -17,8 +17,11 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Clipboard;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiles;
 using DCL.SkyBox;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS;
@@ -42,7 +45,7 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Utility.Multithreading;
 #endif
 
@@ -71,7 +74,7 @@ namespace SceneRunner
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
         private readonly MultiThreadSync ecsMultiThreadSync;
 #endif
 
@@ -152,7 +155,7 @@ namespace SceneRunner
             WebGLSceneUpdateQueue = webglSceneUpdateQueue;
 #endif
             this.permissionsProvider = permissionsProvider;
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             ecsMultiThreadSync = new MultiThreadSync(sceneData.SceneShortInfo);
 #endif
             CRDTProtocol = new CRDTProtocol();
@@ -179,7 +182,7 @@ namespace SceneRunner
                 entityCollidersGlobalCache,
                 SceneStateProvider,
                 entityEventsBuilder,
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
                     ecsMultiThreadSync,
 #endif
                 systemGroupThrottler,
@@ -266,18 +269,23 @@ namespace SceneRunner
                 IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions,
                 IRealmData realmData,
+                IProfileRepository profileRepository,
                 ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
-                ISystemClipboard systemClipboard)
+                ISystemClipboard systemClipboard,
+                IRoomHub roomHub,
+                string installSource)
                 : this(
                     engineApi,
                     new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard),
-                    new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings),
+                    new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),
-                    new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo, syncDeps.permissionsProvider)),
-                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations),
+                    new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo, syncDeps.permissionsProvider, profileRepository)),
+                    new CommunicationsControllerAPIImplementation(
+                        syncDeps.sceneData, messagePipesHub, jsOperations,
+                        syncDeps.PoolsProvider),
                     syncDeps,
                     sceneRuntime) { }
 
@@ -300,7 +308,10 @@ namespace SceneRunner
 #if !UNITY_WEBGL
                 MultiThreadSync.Owner syncOwner,
 #endif
-                ISystemClipboard systemClipboard)
+                IProfileRepository profileRepository,
+                ISystemClipboard systemClipboard,
+                IRoomHub roomHub,
+                string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -312,12 +323,11 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler
 #if !UNITY_WEBGL
-                        ,
-                        syncDeps.ecsMultiThreadSync,
-                        syncOwner
+                        , syncDeps.ecsMultiThreadSync
+                        , syncOwner
 #endif
-                    ),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController, skyboxSettings, systemClipboard) { }
+                        ),
+                    syncDeps, sceneRuntime, (IJsOperations)sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -329,7 +339,8 @@ namespace SceneRunner
 #if !UNITY_WEBGL
                 MultiThreadSync.Owner syncOwner,
 #endif
-                ISystemClipboard systemClipboard)
+                IProfileRepository profileRepository, ISystemClipboard systemClipboard, IRoomHub roomHub,
+                string installSource)
                 : base(new SDKObservableEventsEngineAPIImplementation(
                         sharedPoolsProvider,
                         syncDeps.PoolsProvider,
@@ -341,12 +352,23 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler
 #if !UNITY_WEBGL
-                        ,
-                        syncDeps.ecsMultiThreadSync,
-                        syncOwner
+                        , syncDeps.ecsMultiThreadSync
+                        , syncOwner
 #endif
                     ),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController, skyboxSettings, systemClipboard) { }
+                    syncDeps,
+                    sceneRuntime,
+                    (IJsOperations)sceneRuntime,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData,
+                    profileRepository,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
+                    systemClipboard,
+                    roomHub,
+                    installSource) { }
         }
     }
 }

@@ -37,6 +37,7 @@ namespace DCL.PluginSystem.Global
             interactionsAudioConfigs = await assetsProvisioner.ProvideMainAssetAsync(settings.InteractionsAudioConfigsReference, ct: ct);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public InteractionsAudioConfigsReference InteractionsAudioConfigsReference { get; private set; }

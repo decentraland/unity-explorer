@@ -12,8 +12,18 @@ namespace DCL.Web3.Identities
         IWeb3Account EphemeralAccount { get; }
         bool IsExpired { get; }
         AuthChain AuthChain { get; }
+        Web3IdentitySource Source { get; }
 
         AuthChain Sign(string entityId);
+
+        enum Web3IdentitySource
+        {
+            None,
+            Cached,
+            TokenFile,
+            Dapp,
+            OTP
+        }
 
         class Random : IWeb3Identity
         {
@@ -45,6 +55,7 @@ namespace DCL.Web3.Identities
             public IWeb3Account EphemeralAccount { get; }
             public bool IsExpired { get; }
             public AuthChain AuthChain { get; }
+            public Web3IdentitySource Source { get; set; } = Web3IdentitySource.None;
 
             public AuthChain Sign(string entityId) =>
                 throw new Exception("RandomIdentity cannot sign anything");

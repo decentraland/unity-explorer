@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             if (freeSlots.TryPop(out var freeSlot)) { return freeSlot; }
 
             int arrayIndex = nextFreeIndex / minArraySize;
-            int slotIndex = nextFreeIndex - minArraySize * arrayIndex;
+            int slotIndex = nextFreeIndex - (minArraySize * arrayIndex);
 
             if (arrays.Count <= arrayIndex)
                 arrays.Add(CreateTexture2DArray());

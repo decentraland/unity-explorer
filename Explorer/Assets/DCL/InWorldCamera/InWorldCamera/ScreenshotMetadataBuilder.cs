@@ -15,8 +15,8 @@ namespace DCL.InWorldCamera
     public class ScreenshotMetadataBuilder
     {
         private const string UNKNOWN_USER = "Unknown";
+        private const string UNKNOWN_USER_WALLET = "0x000000000000000000000000000000000000000";
         private const string UNKNOWN_PLACE = "Unknown place";
-        private const string WORLD_PLACE_ID = "not applicable";
 
         private readonly SelfProfile selfProfile;
         private readonly CharacterController characterObjectController;
@@ -65,7 +65,7 @@ namespace DCL.InWorldCamera
                 visiblePeople.Add(new VisiblePerson
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = profile?.UserId ?? UNKNOWN_USER,
+                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
                     isGuest = false,
                     isEmoting = isEmoting,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
@@ -87,7 +87,7 @@ namespace DCL.InWorldCamera
             PlacesData.PlaceInfo? placeInfo;
 
             if (realmData.ScenesAreFixed)
-                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+                placeInfo = await placesAPIService.GetWorldAsync(at, realmData.RealmName, ct);
             else
                 placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
@@ -112,7 +112,7 @@ namespace DCL.InWorldCamera
                 metadata = new ScreenshotMetadata
                 {
                     userName = profile?.Name ?? UNKNOWN_USER,
-                    userAddress = profile?.UserId ?? UNKNOWN_USER,
+                    userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -126,7 +126,7 @@ namespace DCL.InWorldCamera
             else
             {
                 metadata.userName = profile?.Name ?? UNKNOWN_USER;
-                metadata.userAddress = profile?.UserId ?? UNKNOWN_USER;
+                metadata.userAddress = string.IsNullOrEmpty(profile?.UserId) ? UNKNOWN_USER_WALLET : profile!.UserId;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;

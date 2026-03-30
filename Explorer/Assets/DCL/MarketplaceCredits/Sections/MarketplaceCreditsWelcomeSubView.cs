@@ -1,4 +1,4 @@
-using TMPro;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,35 +19,12 @@ namespace DCL.MarketplaceCredits.Sections
         public Button LearnMoreLinkButton { get; private set; }
 
         [field: SerializeField]
-        public GameObject EmailLoginContainer { get; private set; }
+        public EmailInputFieldView EmailLogin { get; private set; }
 
-        [field: SerializeField]
-        public TMP_InputField EmailInput { get; private set; }
-
-        [field: SerializeField]
-        public Image EmailInputOutline { get; private set; }
-
-        [field: SerializeField]
-        public Color OutlineNormalColor { get; private set; }
-
-        [field: SerializeField]
-        public Color OutlineErrorColor { get; private set; }
-
-        [field: SerializeField]
-        public GameObject EmailErrorMark { get; private set; }
-
-        [field: SerializeField]
-        public Button StartWithEmailButton { get; private set; }
-
-        public bool IsEmailLoginActive
+        public void SetEmailLoginVisibility(bool isVisible)
         {
-            get => EmailLoginContainer.activeSelf;
-
-            set
-            {
-                EmailLoginContainer.SetActive(value);
-                StartButton.gameObject.SetActive(!value);
-            }
+            EmailLogin.gameObject.SetActive(isVisible);
+            StartButton.gameObject.SetActive(!isVisible);
         }
 
         public void SetAsLoading(bool isLoading)
@@ -55,17 +32,5 @@ namespace DCL.MarketplaceCredits.Sections
             ContentContainer.SetActive(!isLoading);
             LoadingContainer.SetActive(isLoading);
         }
-
-        public void ShowEmailError(bool show)
-        {
-            EmailInputOutline.color = show ? OutlineErrorColor : OutlineNormalColor;
-            EmailErrorMark.SetActive(show);
-        }
-
-        public void CleanEmailInput() =>
-            EmailInput.text = string.Empty;
-
-        public void SetStartWithEmailButtonInteractable(bool isInteractable) =>
-            StartWithEmailButton.interactable = isInteractable;
     }
 }

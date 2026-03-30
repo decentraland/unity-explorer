@@ -17,6 +17,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public DataDto data = new ();
             public override TrimmedDataBase AbstractData => data;
 
+            public bool isSmart;
+
             [Serializable]
             public class DataDto : TrimmedDataBase
             {

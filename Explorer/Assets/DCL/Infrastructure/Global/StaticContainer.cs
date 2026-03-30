@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -14,7 +13,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
-using DCL.Landscape.Parcel;
+using DCL.Ipfs;
 using DCL.Landscape.Utils;
 using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -54,19 +53,21 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.PhysicsImpulse.Systems;
 using DCL.SDKComponents.SkyboxTime;
-using DCL.SmartWearables;
+using DCL.Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.AppArgs;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using Global.Dynamic.LaunchModes;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using System.Buffers;
-using UnityEngine;
+using DCL.UI;
+using ECS.Unity.AssetLoad.Cache;
+using Global.Dynamic;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
@@ -88,13 +89,13 @@ namespace Global
 
 
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
-        public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
-        public readonly LandscapeParcelData LandscapeParcelData = new ();
 
         private IAssetsProvisioner assetsProvisioner;
         public Entity PlayerEntity { get; set; }
+        public RealmData RealmData { get; private set; }
+        public PublishIpfsEntityCommand PublishIpfsEntityCommand { get; private set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
@@ -129,14 +130,16 @@ namespace Global
         public HttpFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public SmartWearableCache SmartWearableCache { get; private set; }
+        public ImageControllerProvider ImageControllerProvider { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
         public GPUInstancingService GPUInstancingService { get; private set; }
         public ILoadingStatus LoadingStatus { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
-        public LandscapeParcelController LandscapeParcelController { get; private set; }
+        public WorldManifestProvider WorldManifestProvider { get; private set; }
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
+        public AssetPreLoadCache AssetPreLoadCache { get; private set; }
 
         public void Dispose()
         {
@@ -152,7 +155,9 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            AnalyticsContainer analyticsContainer,
             IDecentralandUrlsSource decentralandUrlsSource,
+            RealmData realmData,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IDebugContainerBuilder debugContainerBuilder,
@@ -168,7 +173,6 @@ namespace Global
             ISystemMemoryCap memoryCap,
             VolumeBus volumeBus,
             bool enableAnalytics,
-            IAnalyticsController analyticsController,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             DecentralandEnvironment environment,
@@ -177,13 +181,14 @@ namespace Global
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
-            SentryTransactionManager.Initialize(new SentryTransactionManager());
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
             var container = new StaticContainer();
 
+            container.RealmData = realmData;
+            container.PublishIpfsEntityCommand = new PublishIpfsEntityCommand(web3IdentityProvider, webRequestsContainer.WebRequestController, decentralandUrlsSource, realmData);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
@@ -199,7 +204,7 @@ namespace Global
 
             StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController, web3IdentityProvider) : new LoadingStatus();
+            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsContainer.Controller, web3IdentityProvider) : new LoadingStatus();
 
 #if UNITY_WEBGL
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
@@ -228,15 +233,19 @@ namespace Global
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
 
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+            container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
+            container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
+            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
+
+            var createMediaContainer = true;
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-            if (!BrowserUtils.IsSafari())
-                container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
-#else
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner);
+            createMediaContainer  = !BrowserUtils.IsSafari();
 #endif
-            container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, container.RealmData, container.DebugContainerBuilder);
+            if (createMediaContainer)
+                container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
@@ -252,6 +261,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
+            container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
@@ -274,6 +284,12 @@ namespace Global
                 if (container.ScenesCache.CurrentScene.Value != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Value.Info);
             });
+
+            container.ScenesCache.CurrentScene.OnUpdate += scene =>
+            {
+                if (scene != null)
+                    UnityDiagnosticsCenter.Instance.SetCurrentScene(scene.Info);
+            };
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {
@@ -328,7 +344,7 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
-                new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy),
+                new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy, exposedPlayerTransform),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
@@ -364,7 +380,9 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
-            }.OfType<IDCLWorldPlugin>().ToArray();
+                new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
+                new SDKExternalPhysicsPlugin(globalWorld, playerEntity),
+            };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
 
@@ -375,12 +393,7 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.LandscapeParcelController = new LandscapeParcelController(
-                    assetsProvisioner,
-                    new LandscapeParcelService(webRequestsContainer.WebRequestController,
-                        environment.Equals(DecentralandEnvironment.Zone)),
-                    container.LandscapeParcelData
-                );
+            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController);
 
             return (container, true);
         }

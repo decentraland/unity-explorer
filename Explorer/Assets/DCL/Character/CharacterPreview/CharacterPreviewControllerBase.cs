@@ -24,10 +24,10 @@ namespace DCL.CharacterPreview
         {
             "wave", "fistpump", "dab"
         };
-        
+
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
-        private readonly CharacterPreviewView view;
+        protected readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly CharacterPreviewCursorController cursorController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;

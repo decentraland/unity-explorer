@@ -12,10 +12,13 @@
 [Aa]ssets/AVProVideo
 [Aa]ssets/AVProVideo.meta
 Assets/StreamingAssets/AssetBundles/lods/
-
+Assets/_LocalHidden/
+Assets/_LocalHidden.meta
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
+# Except for _LocalHidden which should remain ignored
+Assets/_LocalHidden.meta
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*

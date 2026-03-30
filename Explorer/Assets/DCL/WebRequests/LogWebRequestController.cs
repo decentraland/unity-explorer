@@ -37,6 +37,6 @@ namespace DCL.WebRequests
             }
         }
 
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+        IRequestHub IWebRequestController.RequestHub => origin.RequestHub;
     }
 }

@@ -14,8 +14,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
-using Temp.Helper.WebClient;
-using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -34,20 +32,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            CreateAvatarShapeFromSDKComponentQuery(World);
             UpdateAvatarFromSDKComponentQuery(World);
-            CreateMainPlayerAvatarShapeFromProfileQuery(World);
-            CreateAvatarShapeFromProfileQuery(World);
             UpdateMainPlayerAvatarFromProfileQuery(World);
             UpdateAvatarFromProfileQuery(World);
+
+            CreateAvatarShapeFromSDKComponentQuery(World);
+            CreateMainPlayerAvatarShapeFromProfileQuery(World);
+            CreateAvatarShapeFromProfileQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
         private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
-            pbAvatarShape.IsDirty = false;
-
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
@@ -55,6 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
                 pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
+            World.Add(entity, new AvatarHighlightComponent());
         }
 
         [Query]
@@ -63,6 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
+            World.Add(entity, new AvatarHighlightComponent());
         }
 
         [Query]
@@ -70,7 +69,6 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape))]
         private void CreateMainPlayerAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
         {
-            WebGLDebugLog.Log($"[AvatarLoader] CreateMainPlayerAvatarShapeFromProfile: profile set, creating avatar shape for userId={profile.UserId}");
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
 
             var avatarShapeComponent = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
@@ -101,7 +99,6 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
             avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
-            pbAvatarShape.IsDirty = false;
         }
 
         [Query]
@@ -111,6 +108,27 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!profile.IsDirty)
                 return;
 
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            profile.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
+            if (!profile.IsDirty)
+                return;
+
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+
+            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
+            LoadAllEmotes(profile, partition);
+            profile.IsDirty = false;
+        }
+
+        private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
@@ -123,19 +141,6 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
             avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
-        }
-
-        [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
-        {
-            UpdateAvatarFromProfile(ref profile, ref avatarShapeComponent, ref partition);
-
-            if (!profile.IsDirty) return;
-
-            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            LoadAllEmotes(profile, partition);
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>

@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -21,12 +22,14 @@ namespace DCL.Backpack.BackpackBus
         public readonly string Id;
         public readonly int? Slot;
         public readonly bool IsManuallyEquipped; // It will be true when the user manually equip an emote from the emotes grid
+        public readonly Action? EndAction;
 
-        public BackpackEquipEmoteCommand(string id, int? slot, bool isManuallyEquipped)
+        public BackpackEquipEmoteCommand(string id, int? slot, bool isManuallyEquipped, Action? endAction = null)
         {
             Id = id;
             Slot = slot;
             IsManuallyEquipped = isManuallyEquipped;
+            EndAction = endAction;
         }
     }
 
@@ -46,11 +49,13 @@ namespace DCL.Backpack.BackpackBus
     {
         public readonly string Id;
         public readonly bool IsManuallyEquipped; // True when the wearable is equipped 'manually' from the user in the backpack UI
+        public readonly Action? EndAction;
 
-        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped)
+        public BackpackEquipWearableCommand(string id, bool isManuallyEquipped, Action? endAction = null)
         {
             Id = id;
             IsManuallyEquipped = isManuallyEquipped;
+            EndAction = endAction;
         }
     }
 
@@ -67,20 +72,24 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackSelectWearableCommand
     {
         public readonly string Id;
+        public readonly Action? EndAction;
 
-        public BackpackSelectWearableCommand(string id)
+        public BackpackSelectWearableCommand(string id, Action? endAction = null)
         {
             Id = id;
+            EndAction = endAction;
         }
     }
 
     public readonly struct BackpackSelectEmoteCommand
     {
         public readonly string Id;
+        public readonly Action? EndAction;
 
-        public BackpackSelectEmoteCommand(string id)
+        public BackpackSelectEmoteCommand(string id, Action? endAction = null)
         {
             Id = id;
+            EndAction = endAction;
         }
     }
 

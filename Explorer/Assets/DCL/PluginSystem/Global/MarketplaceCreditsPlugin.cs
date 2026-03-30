@@ -1,3 +1,4 @@
+using System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -16,6 +17,7 @@ using DCL.WebRequests;
 using ECS;
 using MVC;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -37,7 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ITextFormatter textFormatter;
-
+        private readonly ImageControllerProvider imageControllerProvider;
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
 
@@ -54,7 +56,8 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ITextFormatter textFormatter)
+            ITextFormatter textFormatter,
+            ImageControllerProvider imageControllerProvider)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -68,6 +71,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.textFormatter = textFormatter;
+            this.imageControllerProvider = imageControllerProvider;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -101,7 +105,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 web3IdentityCache,
                 loadingStatus,
-                textFormatter);
+                textFormatter,
+                imageControllerProvider);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
@@ -111,6 +116,7 @@ namespace DCL.PluginSystem.Global
             marketplaceCreditsMenuController?.Dispose();
     }
 
+    [Serializable]
     public class MarketplaceCreditsPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField]

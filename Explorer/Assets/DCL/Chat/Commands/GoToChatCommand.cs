@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
@@ -11,17 +11,19 @@ namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Teleports the player within Genesis to a specific, random, or crowded position,
-    /// or to a different realm and position.
+    /// or to a different world and position.
     ///
     /// Usage:
-    ///     /goto *realm*
-    ///     /goto *realm* *x,y*
-    ///     /goto *x,y | random | crowd*
+    ///     /goto *x,y*          — teleport to parcel
+    ///     /goto random         — teleport to a random parcel
+    ///     /goto crowd          — teleport to the most populated scene
+    ///     /goto *world*        — teleport to a world
+    ///     /goto *world/x,y*    — teleport to a world at specific parcel
     /// </summary>
     public class GoToChatCommand : IChatCommand
     {
         public string Command => "goto";
-        public string Description => "<b>/goto <i><x,y | random | crowd></i></b>\n  Teleport inside of Genesis";
+        public string Description => "<b>/goto <i><x,y | random | crowd | world | world/x,y></i></b>\n  Teleport inside of Genesis or World";
 
         private readonly ChatTeleporter chatTeleporter;
         private readonly IWebRequestController webRequestController;
@@ -35,25 +37,33 @@ namespace DCL.Chat.Commands
         }
 
         public bool ValidateParameters(string[] parameters) =>
-            parameters.Length == 1 || // /goto <realm> OR /goto <x,y | random | crowd>
-            (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // /goto <realm> <x,y>
+            parameters.Length == 1;
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (parameters.Length == 1)
-            {
-                if (ChatParamUtils.IsPositionParameter(parameters[0], true))
-                {
-                    // Case: /goto <x,y | random | crowd>
-                    return await chatTeleporter.TeleportToParcelAsync(await GetPositionAsync(parameters[0], ct), false, ct);
-                }
+            if (ChatParamUtils.IsPositionParameter(parameters[0], true))
+                return await chatTeleporter.TeleportToParcelAsync(await GetPositionAsync(parameters[0], ct), false, ct);
 
-                // LEGACY Case: /goto <realm>
-                return await chatTeleporter.TeleportToRealmAsync(parameters[0], null, ct);
+            if (TryParseWorldWithPosition(parameters[0], out string world, out string position))
+                return await chatTeleporter.TeleportToRealmAsync(world, ChatParamUtils.ParseRawPosition(position), ct);
+
+            return await chatTeleporter.TeleportToRealmAsync(parameters[0], ct);
+        }
+
+        private static bool TryParseWorldWithPosition(string param, out string world, out string position)
+        {
+            int slashIndex = param.IndexOf('/');
+
+            if (slashIndex > 0 && slashIndex < param.Length - 1)
+            {
+                world = param.Substring(0, slashIndex);
+                position = param.Substring(slashIndex + 1);
+                return ChatParamUtils.IsPositionParameter(position, false);
             }
 
-            // LEGACY Case: /goto <realm> <x,y>
-            return await chatTeleporter.TeleportToRealmAsync(parameters[0], await GetPositionAsync(parameters[1], ct), ct);
+            world = null;
+            position = null;
+            return false;
         }
 
         private UniTask<Vector2Int> GetPositionAsync(string positionParameter, CancellationToken ct)

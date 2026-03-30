@@ -14,13 +14,17 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.WebRequests;
 using System;
 using System.Threading;
+using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using RustAudio;
+using DCL.WebRequests;
+#endif
 
 namespace DCL.PluginSystem.Global
 {
@@ -32,7 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatPanelView voiceChatPanelView;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly CommunitiesDataProvider communityDataProvider;
-        private readonly IWebRequestController webRequestController;
+        private readonly ImageControllerProvider  imageControllerProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -62,7 +66,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
-            IWebRequestController webRequestController,
+            ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer)
@@ -74,7 +78,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
-            this.webRequestController = webRequestController;
+            this.imageControllerProvider = imageControllerProvider;
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
@@ -88,6 +92,10 @@ namespace DCL.PluginSystem.Global
 
             if (voiceChatPluginSettingsAsset.Value != null)
                 voiceChatPluginSettingsAsset.Dispose();
+
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+            RustAudioClient.DeInit();
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -107,7 +115,7 @@ namespace DCL.PluginSystem.Global
             voiceChatHandler = new VoiceChatMicrophoneHandler(
 
 #if !UNITY_WEBGL
-            voiceChatConfiguration, 
+            voiceChatConfiguration,
             voiceChatOrchestrator
 #endif
 
@@ -144,7 +152,7 @@ namespace DCL.PluginSystem.Global
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
 
-            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, webRequestController, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
+            voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
 #if !UNITY_WEBGL

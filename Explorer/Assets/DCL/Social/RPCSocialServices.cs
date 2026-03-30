@@ -8,15 +8,18 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 using Utility.Networking;
+using Utility.Multithreading;
 using RpcClient = rpc_csharp.RpcClient;
+using Utility;
 
 namespace DCL.SocialService
 {
     public interface IRPCSocialServices : IDisposable
     {
         public const int FOREGROUND_CONNECTION_RETRIES = 3;
+
+        public RpcClient? Client { get; }
 
         RpcClientModule Module();
 
@@ -52,7 +55,7 @@ namespace DCL.SocialService
         /// </summary>
         private readonly DCLSemaphoreSlim handshakeMutex = new (1, 1);
 
-        private readonly URLAddress apiUrl;
+        private readonly Uri apiUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -62,12 +65,11 @@ namespace DCL.SocialService
         private RpcClientModule? module;
         private RpcClientPort? port;
         private WebSocketRpcTransport? transport;
-        private RpcClient? client;
 
         private bool isConnectionReady => transport != null
                                           && transport.State == WebSocketState.Open
                                           && module != null
-                                          && client != null
+                                          && Client != null
                                           && port != null;
 
         public RPCSocialServices(
@@ -75,15 +77,17 @@ namespace DCL.SocialService
             IWeb3IdentityCache identityCache,
             ISocialServiceEventBus socialServiceEventBus)
         {
-            this.apiUrl = apiUrl;
+            this.apiUrl = new Uri(apiUrl);
             this.identityCache = identityCache;
             this.socialServiceEventBus = socialServiceEventBus;
         }
 
+        public RpcClient? Client { get; private set; }
+
         public void Dispose()
         {
             transport?.Dispose();
-            client?.Dispose();
+            Client?.Dispose();
             connectionEstablishingMutex.Dispose();
             authChainBuffer.Clear();
         }
@@ -105,12 +109,13 @@ namespace DCL.SocialService
                 {
                     await transport.CloseAsync(ct);
                     transport.OnCloseEvent -= OnTransportClosed;
+                    transport.OnErrorEvent -= OnTransportError;
                     transport.Dispose();
                     transport = null;
                 }
 
-                client?.Dispose();
-                client = null;
+                Client?.Dispose();
+                Client = null;
             }
             finally { handshakeMutex.Release(); }
         }
@@ -148,7 +153,7 @@ namespace DCL.SocialService
                         if (connectionRetries > 0)
                         {
                             // Add a breadcrumb to better investigate the issue
-                            SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
+                            Sentry.Unity.SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
 
                             double appliedDelay = retryCurrentDelay;
 
@@ -184,7 +189,7 @@ namespace DCL.SocialService
                 if (!isConnectionReady)
                 {
                     await InitializeConnectionAsync(ct);
-                    SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
+                    Sentry.Unity.SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
                 }
             }
             catch (Exception)
@@ -196,8 +201,8 @@ namespace DCL.SocialService
                 module = null;
                 transport?.Dispose();
                 transport = null;
-                client?.Dispose();
-                client = null;
+                Client?.Dispose();
+                Client = null;
 
                 throw;
             }
@@ -210,12 +215,13 @@ namespace DCL.SocialService
 
         private async UniTask InitializeConnectionAsync(CancellationToken ct)
         {
-            client?.Dispose();
+            Client?.Dispose();
             transport?.Dispose();
 
-            transport = new WebSocketRpcTransport(new Uri(apiUrl));
+            transport = new WebSocketRpcTransport(apiUrl);
             transport.OnCloseEvent += OnTransportClosed;
-            client = new RpcClient(transport);
+            transport.OnErrorEvent += OnTransportError;
+            Client = new RpcClient(transport);
 
             await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
@@ -226,7 +232,7 @@ namespace DCL.SocialService
 
             transport.ListenForIncomingData();
 
-            port = await client.CreatePort(RPC_PORT_NAME);
+            port = await Client.CreatePort(RPC_PORT_NAME);
             module = await port!.LoadModule(RPC_SERVICE_NAME);
 
             socialServiceEventBus.SendWebSocketConnectionEstablishedNotification();
@@ -253,6 +259,9 @@ namespace DCL.SocialService
         }
 
         private void OnTransportClosed() =>
+            socialServiceEventBus.SendTransportClosedNotification();
+
+        private void OnTransportError(Exception _) =>
             socialServiceEventBus.SendTransportClosedNotification();
     }
 }

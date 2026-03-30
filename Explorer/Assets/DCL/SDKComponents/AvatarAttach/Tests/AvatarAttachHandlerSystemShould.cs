@@ -1,17 +1,17 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SDKComponents.AvatarAttach.Components;
 using DCL.SDKComponents.AvatarAttach.Systems;
-using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.TestTools;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AvatarAttach.Tests
@@ -40,6 +41,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private AvatarAttachHandlerSetupSystem setupSystem;
         private IReadOnlyEntityParticipantTable entityParticipantTable;
         private ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private ExposedTransform exposedPlayerTransform;
+        private IECSToCRDTWriter ecsToCRDTWriter;
 
         [SetUp]
         public async void Setup()
@@ -68,11 +71,21 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             entityParticipantTableProxy = new ObjectProxy<IReadOnlyEntityParticipantTable>();
             entityParticipantTableProxy.SetObject(entityParticipantTable);
 
+            // Create exposed player transform and CRDT writer
+            exposedPlayerTransform = new ExposedTransform
+            {
+                Position = new CanBeDirty<Vector3>(playerAvatarBase.transform.position),
+                Rotation = new CanBeDirty<Quaternion>(playerAvatarBase.transform.rotation)
+            };
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+
             system = new AvatarAttachHandlerSystem(world,
                 globalWorld,
                 mainPlayerAvatarBase,
+                exposedPlayerTransform,
                 sceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTableProxy,
+                ecsToCRDTWriter);
 
             setupSystem = new AvatarAttachHandlerSetupSystem(world,
                 globalWorld,
@@ -743,6 +756,256 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
             // Clean up
             Object.DestroyImmediate(targetAvatarBase.gameObject);
+        }
+
+        [Test]
+        public async Task UpdateSDKTransformWithDeltaPositionAndRotation()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set specific player position and rotation
+            Vector3 playerPosition = new Vector3(10, 5, 20);
+            Quaternion playerRotation = Quaternion.Euler(0, 45, 0);
+            exposedPlayerTransform.Position.Value = playerPosition;
+            exposedPlayerTransform.Rotation.Value = playerRotation;
+
+            // Create the PBAvatarAttach component
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Add SDKTransform and CRDTEntity to the entity
+            var sdkTransform = new SDKTransform();
+            var crdtEntity = new CRDTEntity(512); // Some arbitrary SDK entity ID
+            world.Add(entity, sdkTransform, crdtEntity);
+
+            // Setup and run the system to attach to avatar
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify SDK transform is updated with delta values
+            Vector3 expectedDeltaPosition = entityTransformComponent.Transform.position - playerPosition;
+            Quaternion expectedDeltaRotation = Quaternion.Inverse(playerRotation) * entityTransformComponent.Transform.rotation;
+
+            Assert.AreEqual(expectedDeltaPosition, sdkTransform.Position.Value,
+                "SDK transform position should be the delta between entity and player positions");
+            Assert.AreEqual(expectedDeltaRotation.ToString(), sdkTransform.Rotation.Value.ToString(),
+                "SDK transform rotation should be the inverse player rotation multiplied by entity rotation");
+        }
+
+        [Test]
+        public async Task WriteSDKTransformToCRDTWhenAttached()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set specific player position and rotation
+            Vector3 playerPosition = new Vector3(5, 0, 5);
+            Quaternion playerRotation = Quaternion.Euler(0, 90, 0);
+            exposedPlayerTransform.Position.Value = playerPosition;
+            exposedPlayerTransform.Rotation.Value = playerRotation;
+
+            // Create the PBAvatarAttach component
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Add SDKTransform and CRDTEntity to the entity
+            var sdkTransform = new SDKTransform();
+            var crdtEntity = new CRDTEntity(1024);
+            world.Add(entity, sdkTransform, crdtEntity);
+
+            // Clear any previous calls to the mock
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            // Setup and run the system
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Verify that PutMessage was called on the CRDT writer
+            ecsToCRDTWriter.Received(1).PutMessage(
+                Arg.Any<Action<SDKTransform, SDKTransform>>(),
+                crdtEntity,
+                sdkTransform
+            );
+        }
+
+        [Test]
+        public async Task UpdateSDKTransformOnEachSystemUpdate()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set initial player position and rotation
+            Vector3 initialPlayerPosition = new Vector3(0, 0, 0);
+            Quaternion initialPlayerRotation = Quaternion.identity;
+            exposedPlayerTransform.Position.Value = initialPlayerPosition;
+            exposedPlayerTransform.Rotation.Value = initialPlayerRotation;
+
+            // Create the PBAvatarAttach component
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Add SDKTransform and CRDTEntity to the entity
+            var sdkTransform = new SDKTransform();
+            var crdtEntity = new CRDTEntity(2048);
+            world.Add(entity, sdkTransform, crdtEntity);
+
+            // Setup and run the system
+            setupSystem.Update(0);
+            system.Update(0);
+
+            Vector3 firstDeltaPosition = sdkTransform.Position.Value;
+
+            // Move the player
+            Vector3 newPlayerPosition = new Vector3(10, 0, 10);
+            exposedPlayerTransform.Position.Value = newPlayerPosition;
+
+            // Also move the avatar to update entity transform
+            playerAvatarBase.transform.position = newPlayerPosition;
+
+            // Run the system again
+            system.Update(0);
+
+            // The delta position should be recalculated based on new player position
+            Vector3 expectedNewDeltaPosition = entityTransformComponent.Transform.position - newPlayerPosition;
+            Assert.AreEqual(expectedNewDeltaPosition, sdkTransform.Position.Value,
+                "SDK transform position should be updated after player moves");
+
+            // The delta should be different from before since player moved
+            Assert.AreNotEqual(firstDeltaPosition, sdkTransform.Position.Value,
+                "SDK transform delta position should change when player moves");
+        }
+
+        [Test]
+        public async Task UpdateSDKTransformForDifferentAnchorPoints()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set player position and rotation
+            Vector3 playerPosition = new Vector3(0, 0, 0);
+            Quaternion playerRotation = Quaternion.identity;
+            exposedPlayerTransform.Position.Value = playerPosition;
+            exposedPlayerTransform.Rotation.Value = playerRotation;
+
+            // Test with left hand anchor point
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptLeftHand, AvatarId = "", IsDirty = true };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Add SDKTransform and CRDTEntity to the entity
+            var sdkTransform = new SDKTransform();
+            var crdtEntity = new CRDTEntity(4096);
+            world.Add(entity, sdkTransform, crdtEntity);
+
+            // Setup and run the system
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // The entity should be at left hand position
+            Assert.AreEqual(playerAvatarBase.LeftHandAnchorPoint.position, entityTransformComponent.Transform.position,
+                "Entity should be at left hand anchor point");
+
+            // SDK transform should reflect delta from player
+            Vector3 expectedDeltaPosition = playerAvatarBase.LeftHandAnchorPoint.position - playerPosition;
+            Assert.AreEqual(expectedDeltaPosition, sdkTransform.Position.Value,
+                "SDK transform should reflect delta from player to left hand anchor point");
+        }
+
+        [Test]
+        public async Task NotUpdateSDKTransformWhenPBAvatarAttachRemoved()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set player position
+            exposedPlayerTransform.Position.Value = new Vector3(0, 0, 0);
+            exposedPlayerTransform.Rotation.Value = Quaternion.identity;
+
+            // Create the PBAvatarAttach component
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Add SDKTransform and CRDTEntity to the entity
+            var sdkTransform = new SDKTransform();
+            var crdtEntity = new CRDTEntity(8192);
+            world.Add(entity, sdkTransform, crdtEntity);
+
+            // Setup and run the system
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // Clear received calls
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            // Remove PBAvatarAttach component
+            world.Remove<PBAvatarAttach>(entity);
+
+            // Change player position
+            exposedPlayerTransform.Position.Value = new Vector3(100, 100, 100);
+
+            // Run system again
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // SDK transform should not be updated since PBAvatarAttach was removed
+            // The entity no longer qualifies for the UpdateAvatarAttachedEntitySDKTransform query
+            ecsToCRDTWriter.DidNotReceive().PutMessage(
+                Arg.Any<Action<SDKTransform, SDKTransform>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<SDKTransform>()
+            );
+        }
+
+        [Test]
+        public async Task NotUpdateCRDTWhenEntityHasAvatarAttachButNoSDKTransform()
+        {
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            // Set player position
+            exposedPlayerTransform.Position.Value = new Vector3(0, 0, 0);
+            exposedPlayerTransform.Rotation.Value = Quaternion.identity;
+
+            // Create a new entity WITHOUT using AddTransformToEntity (which adds SDKTransform automatically)
+            var entityWithoutSDKTransform = world.Create(PartitionComponent.TOP_PRIORITY);
+
+            // Manually add only TransformComponent (not SDKTransform)
+            var go = new GameObject("EntityWithoutSDKTransform");
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            var transformComponentWithoutSDK = new TransformComponent(go.transform);
+            world.Add(entityWithoutSDKTransform, transformComponentWithoutSDK);
+
+            // Create the PBAvatarAttach component (but do NOT add SDKTransform)
+            var pbAvatarAttachComponent = new PBAvatarAttach { AnchorPointId = AvatarAnchorPointType.AaptPosition, AvatarId = "", IsDirty = true };
+            world.Add(entityWithoutSDKTransform, pbAvatarAttachComponent);
+
+            // Only add CRDTEntity, but NOT SDKTransform
+            var crdtEntity = new CRDTEntity(16384);
+            world.Add(entityWithoutSDKTransform, crdtEntity);
+
+            // Clear any previous calls
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            // Setup and run the system
+            setupSystem.Update(0);
+            system.Update(0);
+
+            // The transform attachment should still work (entity moves to avatar position)
+            Assert.AreEqual(GetExpectedRootPosition(), transformComponentWithoutSDK.Transform.position,
+                "Entity should still be attached to avatar position");
+
+            // But CRDT writer should NOT be called since SDKTransform is missing
+            // The UpdateAvatarAttachedEntitySDKTransform query requires SDKTransform component
+            ecsToCRDTWriter.DidNotReceive().PutMessage(
+                Arg.Any<Action<SDKTransform, SDKTransform>>(),
+                Arg.Any<CRDTEntity>(),
+                Arg.Any<SDKTransform>()
+            );
+
+            // Clean up
+            Object.DestroyImmediate(go);
         }
     }
 }

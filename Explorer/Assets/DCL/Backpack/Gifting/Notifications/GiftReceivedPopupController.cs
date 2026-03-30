@@ -2,7 +2,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Services.GiftItemLoader;
 using DCL.Backpack.Gifting.Styling;
 using DCL.Diagnostics;
@@ -10,7 +9,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
-using DCL.WebRequests;
 using MVC;
 using UnityEngine;
 using Utility;
@@ -23,13 +21,13 @@ namespace DCL.Backpack.Gifting.Notifications
         
         private readonly IProfileRepository profileRepository;
         private readonly WearableStylingCatalog? wearableCatalog;
-        private readonly IWebRequestController webRequestController;
+        private readonly ImageControllerProvider imageControllerProvider;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IGiftItemLoaderService giftItemLoaderService;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        private ImageController? imageController;
+        private ImageController imageController;
         private CancellationTokenSource? lifeCts;
 
         public GiftReceivedPopupController(
@@ -37,27 +35,21 @@ namespace DCL.Backpack.Gifting.Notifications
             IProfileRepository profileRepository,
             IGiftItemLoaderService giftItemLoaderService,
             WearableStylingCatalog wearableCatalog,
-            IWebRequestController webRequestController,
+            ImageControllerProvider imageControllerProvider,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.profileRepository = profileRepository;
             this.giftItemLoaderService = giftItemLoaderService;
             this.wearableCatalog = wearableCatalog;
-            this.webRequestController = webRequestController;
-            
+            this.imageControllerProvider = imageControllerProvider;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-
-            if (viewInstance?.GiftItemView?.ThumbnailImageView != null)
-            {
-                imageController = new ImageController(viewInstance.GiftItemView.ThumbnailImageView, webRequestController);
-                imageController.SpriteLoaded += OnImageLoaded;
-            }
+            imageController = imageControllerProvider.Create(viewInstance!.GiftItemView.ThumbnailImageView);
         }
 
         protected override void OnViewShow()
@@ -67,9 +59,8 @@ namespace DCL.Backpack.Gifting.Notifications
             viewInstance.GiftItemView.SetLoading();
             
             lifeCts = new CancellationTokenSource();
-
-            if (imageController != null)
-                imageController.SpriteLoaded += OnImageLoaded;
+            
+            imageController.SpriteLoaded += OnImageLoaded;
             
             LoadFullDataAsync(inputData, lifeCts.Token)
                 .Forget();
@@ -81,11 +72,8 @@ namespace DCL.Backpack.Gifting.Notifications
         protected override void OnViewClose()
         {
             lifeCts.SafeCancelAndDispose();
-            if (imageController != null)
-            {
-                imageController.SpriteLoaded -= OnImageLoaded;
-                imageController.StopLoading();
-            }
+            imageController.SpriteLoaded -= OnImageLoaded;
+            imageController.StopLoading();
         }
 
 
@@ -121,7 +109,7 @@ namespace DCL.Backpack.Gifting.Notifications
                         );
                     }
 
-                    if (!string.IsNullOrEmpty(data.ImageUrl) && imageController != null)
+                    if (!string.IsNullOrEmpty(data.ImageUrl))
                     {
                         imageController.RequestImage(data.ImageUrl, fitAndCenterImage: true);
                     }

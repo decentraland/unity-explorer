@@ -6,7 +6,8 @@ using System;
 using System.Threading;
 using UnityEngine.Profiling;
 using Utility;
-#if !UNITY_WEBGL || UNITY_EDITOR
+
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 #endif
@@ -50,8 +51,11 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(data);
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref lastInput);
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(TypedArrayConverter.Convert(data), ref lastInput);
+#else
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+#endif
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
                 Profiler.EndThreadProfiling();

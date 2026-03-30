@@ -12,13 +12,14 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunityCreation;
-using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
@@ -65,10 +66,12 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
+        private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
-        private EventInfoController? eventInfoController;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -95,9 +98,13 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            HomePlaceEventBus homePlaceEventBus,
+            ISocialServiceEventBus socialServiceEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -120,15 +127,16 @@ namespace DCL.PluginSystem.Global
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.galleryEventBus = galleryEventBus;
             this.analytics = analytics;
-            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
-            notificationHandler = new NotificationHandler(realmNavigator);
+            this.homePlaceEventBus = homePlaceEventBus;
+            this.socialServiceEventBus = socialServiceEventBus;
+            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
+            notificationHandler = new NotificationHandler(realmNavigator, decentralandUrlsSource);
         }
 
         public void Dispose()
         {
             communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
-            eventInfoController?.Dispose();
             notificationHandler.Dispose();
             rpcCommunitiesService.Dispose();
         }
@@ -165,7 +173,9 @@ namespace DCL.PluginSystem.Global
                 voiceChatOrchestrator,
                 inputBlock,
                 selfProfile,
-                analytics);
+                analytics,
+                homePlaceEventBus,
+                worldPermissionsService);
 
             mvcManager.RegisterController(communityCardController);
 
@@ -185,16 +195,6 @@ namespace DCL.PluginSystem.Global
                 profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
-            EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
-            var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
-            eventInfoController = new EventInfoController(eventInfoViewFactory,
-                webRequestController,
-                clipboard,
-                webBrowser,
-                eventsApiService,
-                realmNavigator);
-            mvcManager.RegisterController(eventInfoController);
-
             rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
@@ -207,9 +207,6 @@ namespace DCL.PluginSystem.Global
 
         [field: Header("Community Creation Edition Wizard")]
         [field: SerializeField] internal AssetReferenceGameObject CommunityCreationEditionPrefab { get; private set; }
-
-        [field: Header("Event info panel")]
-        [field: SerializeField] internal AssetReferenceGameObject EventInfoPrefab { get; private set; }
     }
 }
 

@@ -1,6 +1,8 @@
 ﻿using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.FeatureFlags;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -23,11 +25,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public event Action<string>? CommunityButtonClicked;
         public event Action<string, ICommunityMemberData, InviteRequestIntention>? RequestReceivedManageButtonClicked;
-        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<Profile.CompactInfo, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
         public event Action<ICommunityMemberData>? OpenProfilePassportRequested;
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
 
         public string? CommunityId { get; private set; }
 
@@ -61,13 +64,18 @@ namespace DCL.Communities.CommunitiesBrowser
                     CommunityButtonClicked?.Invoke(CommunityId);
             });
 
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing, showRim: true)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                          .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CallText, contextMenuSettings.CallSprite, () => CallUserRequested?.Invoke(lastClickedProfileCtx)))
-                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx))));
+                         .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                         .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor)));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ReportText, contextMenuSettings.ReportOptionSprite, () => ReportUserRequested?.Invoke(lastClickedProfileCtx), iconColor: redColor, textColor: redColor));
         }
 
         public void Initialize()
@@ -142,7 +150,7 @@ namespace DCL.Communities.CommunitiesBrowser
             lastClickedProfileCtx = profile;
             contextMenuCts = contextMenuCts.SafeRestart();
             UserProfileContextMenuControlSettings.FriendshipStatus status = profile.FriendshipStatus.Convert();
-            userProfileContextMenuControlSettings!.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
+            userProfileContextMenuControlSettings!.SetInitialData(profile.Profile, status == UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND ? status : UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
             elementView.CanUnHover = false;
 
             blockUserContextMenuElement!.Enabled = profile.FriendshipStatus != FriendshipStatus.blocked && profile.FriendshipStatus != FriendshipStatus.blocked_by;

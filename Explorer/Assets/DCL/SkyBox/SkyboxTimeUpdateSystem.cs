@@ -1,8 +1,9 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox.Components;
+using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 
@@ -23,6 +24,7 @@ namespace DCL.SkyBox
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             SkyboxRenderController skyboxRenderController,
+            IRealmData realmData,
             Entity skyboxEntity) : base(world)
         {
             var transition = new InterpolateTimeOfDayState(skyboxSettings);
@@ -33,6 +35,7 @@ namespace DCL.SkyBox
             {
                 new SDKComponentState(skyboxSettings, sceneRestrictionController, transition, scenesCache),
                 new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
+                new RealmSkyboxState(realmData, skyboxSettings, sceneRestrictionController, transition),
                 new UIOverrideState(skyboxSettings, transition),
                 globalTimeState,
             });

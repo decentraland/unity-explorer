@@ -308,11 +308,28 @@ namespace DCL.VoiceChat
                 Result<EndCommunityVoiceChatResponse> result = await voiceChatService.EndCommunityVoiceChatAsync(communityId, ct)
                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
 
+                await UniTask.SwitchToMainThread();
+
+                ResetVoiceChatData();
+
                 if (ct.IsCancellationRequested)
                     return;
 
-                if (result.Success)
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} End stream response: {result.Value.ResponseCase} for community {communityId}");
+                if (!result.Success)
+                    return;
+
+                //Locally clear the community voice chat state so the sidebar icon
+                //is removed for the stream owner. Other clients receive a CommunityVoiceChatEnded websocket update,
+                //but the owner who ended the stream may not
+                activeCommunityVoiceChats.Remove(communityId);
+
+                if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingData))
+                    existingData.UpdateValue(false);
+
+                voiceChatSceneTrackerService.UnregisterCommunityFromScene(communityId);
+                voiceChatSceneTrackerService.RemoveActiveCommunityVoiceChat(communityId);
+
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"{TAG} End stream response: {result.Value.ResponseCase} for community {communityId}");
             }
         }
 

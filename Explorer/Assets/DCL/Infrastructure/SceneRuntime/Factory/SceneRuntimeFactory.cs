@@ -18,10 +18,7 @@ using UnityEngine;
 using Utility.Multithreading;
 
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
-
-// ReSharper disable once RedundantUsingDirective
 using SceneRuntime.WebClient;
-
 #else
 using SceneRuntime.V8;
 #endif
@@ -99,7 +96,7 @@ namespace SceneRuntime.Factory
                 await DCLTask.SwitchToThreadPool();
 
 
-#if !UNITY_WEBGL
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
             // Provide basic Thread Pool synchronization context IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif

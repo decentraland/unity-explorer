@@ -1,0 +1,1732 @@
+{
+	"entries": [
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:12.5636453+03:00",
+			"endTime": "2026-02-02T13:15:15.2846163+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:12.5712049+03:00",
+			"endTime": "2026-02-02T13:15:16.2154251+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:12.5717239+03:00",
+			"endTime": "2026-02-02T13:15:16.1634487+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:12.5722411+03:00",
+			"endTime": "2026-02-02T13:15:15.2805819+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:12.5722411+03:00",
+			"endTime": "2026-02-02T13:15:16.1947017+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:16.248901+03:00",
+			"endTime": "2026-02-02T13:15:17.5176051+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:16.2500035+03:00",
+			"endTime": "2026-02-02T13:15:17.2280427+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/0%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:16.2500035+03:00",
+			"endTime": "2026-02-02T13:15:17.0160263+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:16.250535+03:00",
+			"endTime": "2026-02-02T13:15:17.6839401+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:16.2510743+03:00",
+			"endTime": "2026-02-02T13:15:17.9988839+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:18.0095729+03:00",
+			"endTime": "2026-02-02T13:15:20.5643443+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:18.0101042+03:00",
+			"endTime": "2026-02-02T13:15:20.5633197+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:18.0101042+03:00",
+			"endTime": "2026-02-02T13:15:20.5638268+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:18.0101042+03:00",
+			"endTime": "2026-02-02T13:15:20.5638268+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:18.0101042+03:00",
+			"endTime": "2026-02-02T13:15:20.5638268+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/1%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:20.8245635+03:00",
+			"endTime": "2026-02-02T13:15:22.0754598+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:20.8255639+03:00",
+			"endTime": "2026-02-02T13:15:22.6962988+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:20.8260702+03:00",
+			"endTime": "2026-02-02T13:15:22.0609112+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:20.8260702+03:00",
+			"endTime": "2026-02-02T13:15:22.3377661+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:20.8260702+03:00",
+			"endTime": "2026-02-02T13:15:21.9380426+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:22.7246162+03:00",
+			"endTime": "2026-02-02T13:15:24.385156+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:22.7251225+03:00",
+			"endTime": "2026-02-02T13:15:24.7648369+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:22.7256283+03:00",
+			"endTime": "2026-02-02T13:15:24.3836407+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/2%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:22.7256283+03:00",
+			"endTime": "2026-02-02T13:15:24.2319031+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:22.7256283+03:00",
+			"endTime": "2026-02-02T13:15:24.7648369+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:24.9605949+03:00",
+			"endTime": "2026-02-02T13:15:27.0919037+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:24.9611153+03:00",
+			"endTime": "2026-02-02T13:15:27.107589+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:24.9611153+03:00",
+			"endTime": "2026-02-02T13:15:26.7539731+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:24.9611153+03:00",
+			"endTime": "2026-02-02T13:15:26.9245928+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:24.9611153+03:00",
+			"endTime": "2026-02-02T13:15:27.3040752+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:27.3209798+03:00",
+			"endTime": "2026-02-02T13:15:29.0101334+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/3%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:27.3219871+03:00",
+			"endTime": "2026-02-02T13:15:28.6531831+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:27.3219871+03:00",
+			"endTime": "2026-02-02T13:15:29.2070318+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:27.3219871+03:00",
+			"endTime": "2026-02-02T13:15:28.980891+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:27.322987+03:00",
+			"endTime": "2026-02-02T13:15:29.4695442+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:29.4853745+03:00",
+			"endTime": "2026-02-02T13:15:30.9399206+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:29.4868123+03:00",
+			"endTime": "2026-02-02T13:15:31.0851969+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:29.4868123+03:00",
+			"endTime": "2026-02-02T13:15:31.7907329+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:29.4868123+03:00",
+			"endTime": "2026-02-02T13:15:31.3865732+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/4%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:29.4868123+03:00",
+			"endTime": "2026-02-02T13:15:30.7418657+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:31.8053576+03:00",
+			"endTime": "2026-02-02T13:15:33.3305748+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:31.8063659+03:00",
+			"endTime": "2026-02-02T13:15:33.0370057+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:31.8063659+03:00",
+			"endTime": "2026-02-02T13:15:33.4937238+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:31.8073648+03:00",
+			"endTime": "2026-02-02T13:15:33.6642476+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:31.8078707+03:00",
+			"endTime": "2026-02-02T13:15:33.7784328+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:33.7943688+03:00",
+			"endTime": "2026-02-02T13:15:35.0549971+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:33.7948752+03:00",
+			"endTime": "2026-02-02T13:15:35.4722146+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/5%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:33.7958831+03:00",
+			"endTime": "2026-02-02T13:15:34.9314098+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:33.7958831+03:00",
+			"endTime": "2026-02-02T13:15:35.0245849+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:33.7958831+03:00",
+			"endTime": "2026-02-02T13:15:34.8876999+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:35.4853289+03:00",
+			"endTime": "2026-02-02T13:15:36.7515416+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:35.4853289+03:00",
+			"endTime": "2026-02-02T13:15:37.2154713+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:35.4868354+03:00",
+			"endTime": "2026-02-02T13:15:36.6361261+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:35.4873533+03:00",
+			"endTime": "2026-02-02T13:15:37.186299+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:35.4878725+03:00",
+			"endTime": "2026-02-02T13:15:37.3419297+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/6%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:37.3563628+03:00",
+			"endTime": "2026-02-02T13:15:38.6345775+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C0.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:37.3568695+03:00",
+			"endTime": "2026-02-02T13:15:38.3427198+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C1.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:37.3568695+03:00",
+			"endTime": "2026-02-02T13:15:38.2163161+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C2.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:37.3578775+03:00",
+			"endTime": "2026-02-02T13:15:38.7536643+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C3.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:37.3578775+03:00",
+			"endTime": "2026-02-02T13:15:38.6355771+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C4.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:38.7669077+03:00",
+			"endTime": "2026-02-02T13:15:39.8513888+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C5.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:38.7669077+03:00",
+			"endTime": "2026-02-02T13:15:40.0095055+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C6.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:38.7679077+03:00",
+			"endTime": "2026-02-02T13:15:39.8513888+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		},
+		{
+			"requestType": "DCL.WebRequests.GetTextureWebRequest, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"commonArguments": {
+				"URL": {
+					"Value": "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/7%2C7.jpg"
+				},
+				"Timeout": 0,
+				"RetryPolicy": {
+					"minDelayBetweenAttemptsMs": 1000,
+					"backoffMultiplier": 3,
+					"maxRetriesCount": 1,
+					"strictness": 0,
+					"forceRecoverableCodes": null
+				}
+			},
+			"argsType": "DCL.WebRequests.GetTextureArguments, DCL.Network, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"args": {
+				"TextureType": 0,
+				"UseKtx": true
+			},
+			"status": 2,
+			"startTime": "2026-02-02T13:15:38.7679077+03:00",
+			"endTime": "2026-02-02T13:15:40.420725+03:00",
+			"headersInfo": {
+				"values": null
+			}
+		}
+	]
+}

@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Web3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +15,7 @@ namespace DCL.Profiles
         private Color hairColor;
         private Color skinColor;
         private Color userNameColor;
+        private Color? claimedNameColor;
         private IReadOnlyCollection<URN>? emotes;
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
@@ -54,7 +54,7 @@ namespace DCL.Profiles
             emotes = profile.Avatar.emotes;
             forceRender = profile.Avatar.forceRender.ToHashSet();
             bodySnapshotUrl = profile.Avatar.BodySnapshotUrl;
-            faceSnapshotUrl = profile.Avatar.FaceSnapshotUrl;
+            faceSnapshotUrl = profile.Compact.FaceSnapshotUrl;
             blocked = profile.blocked?.ToHashSet();
             interests = profile.interests?.ToList();
             links = profile.links?.ToList();
@@ -74,11 +74,12 @@ namespace DCL.Profiles
             relationship = profile.RelationshipStatus;
             sexualOrientation = profile.SexualOrientation;
             tutorialStep = profile.TutorialStep;
-            unclaimedName = profile.UnclaimedName;
+            unclaimedName = profile.Compact.UnclaimedName;
             userId = profile.UserId;
             hasClaimedName = profile.HasClaimedName;
             hasConnectedWeb3 = profile.HasConnectedWeb3;
             userNameColor = profile.UserNameColor;
+            claimedNameColor = profile.ClaimedNameColor;
 
             return this;
         }
@@ -142,7 +143,7 @@ namespace DCL.Profiles
         {
             var profile = Profile.Create();
             profile.RealName = realName ?? "";
-            profile.UserId = userId!;
+            profile.GetCompact().UserId = userId!;
             profile.Version = version;
             profile.blocked = blocked;
             profile.interests = interests;
@@ -154,7 +155,7 @@ namespace DCL.Profiles
             profile.Gender = gender ?? "";
             profile.Hobbies = hobbies ?? "";
             profile.Language = language ?? "";
-            profile.Name = name ?? "";
+            profile.GetCompact().Name = name ?? "";
             profile.Profession = profession ?? "";
             profile.Pronouns = pronouns ?? "";
             profile.Version = version;
@@ -162,10 +163,11 @@ namespace DCL.Profiles
             profile.RelationshipStatus = relationship ?? "";
             profile.SexualOrientation = sexualOrientation ?? "";
             profile.TutorialStep = tutorialStep;
-            profile.UnclaimedName = unclaimedName ?? "";
-            profile.HasClaimedName = hasClaimedName;
+            profile.GetCompact().UnclaimedName = unclaimedName ?? "";
+            profile.GetCompact().HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
-            profile.UserNameColor = userNameColor;
+            profile.GetCompact().UserNameColor = userNameColor;
+            profile.ClaimedNameColor = claimedNameColor;
 
             var avatar = new Avatar();
             profile.Avatar = avatar;
@@ -192,7 +194,7 @@ namespace DCL.Profiles
             avatar.SkinColor = skinColor;
             avatar.EyesColor = eyesColor;
             avatar.BodySnapshotUrl = bodySnapshotUrl ?? URLAddress.EMPTY;
-            avatar.FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
+            profile.GetCompact().FaceSnapshotUrl = faceSnapshotUrl ?? URLAddress.EMPTY;
 
             return profile;
         }

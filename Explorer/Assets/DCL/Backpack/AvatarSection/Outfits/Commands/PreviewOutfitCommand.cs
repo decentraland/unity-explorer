@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Logger;
@@ -21,6 +21,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly OutfitsLogger outfitsLogger;
 
         private Outfit? originalOutfit;
+        private List<IWearable>? originalWearables;
 
         public PreviewOutfitCommand(OutfitApplier outfitApplier,
             IEquippedWearables equippedWearables,
@@ -39,7 +40,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         {
             // If this is the first preview, store the current avatar state as the "original".
             if (originalOutfit == null)
+            {
+                // Capture raw data for sync restore
+                CaptureOriginalDataState();
+                
+                // Capture DTO for visual restore
                 originalOutfit = await CreateOutfitFromEquippedAsync(ct);
+            }
 
             // Apply the previewed outfit
             if (outfitToPreview.outfit != null)
@@ -50,16 +57,52 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         public void Restore()
         {
             if (originalOutfit != null)
+            {
+                // Synchronously restore the data source (EquippedWearables).
+                // This ensures that if 'PublishProfile' happens immediately after this call,
+                // it sees the correct (original) data, avoiding race conditions.
+                RestoreDataStateSynchronously();
+
+                //  Trigger the visual update (Async via Event Bus).
+                // This updates the 3D preview and UI to match the data we just restored.
                 outfitApplier.Apply(originalOutfit);
+            }
 
             // Clear the stored state
             originalOutfit = null;
+            originalWearables = null;
         }
 
         // Called when a user permanently equips an outfit, invalidating the "original"
         public void Commit()
         {
             originalOutfit = null;
+            originalWearables = null;
+        }
+
+        private void CaptureOriginalDataState()
+        {
+            originalWearables = new List<IWearable>();
+            foreach (var kvp in equippedWearables.Items())
+            {
+                if (kvp.Value != null)
+                    originalWearables.Add(kvp.Value);
+            }
+        }
+
+        private void RestoreDataStateSynchronously()
+        {
+            if (originalWearables == null || originalOutfit == null) return;
+
+            equippedWearables.UnEquipAll();
+
+            foreach (var w in originalWearables)
+                equippedWearables.Equip(w);
+
+            equippedWearables.SetEyesColor(originalOutfit.eyes.color);
+            equippedWearables.SetHairColor(originalOutfit.hair.color);
+            equippedWearables.SetBodyshapeColor(originalOutfit.skin.color);
+            equippedWearables.SetForceRender(originalOutfit.forceRender);
         }
 
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)

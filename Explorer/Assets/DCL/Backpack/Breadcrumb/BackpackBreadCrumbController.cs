@@ -1,7 +1,9 @@
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using MVC;
 using Runtime.Wearables;
 using System;
 using UnityEngine;
@@ -14,19 +16,19 @@ namespace DCL.Backpack.Breadcrumb
         private readonly IBackpackEventBus eventBus;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly ColorPickerController colorPickerController;
+        private readonly WearablesColorPickerController colorPickerController;
 
-        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle,
+        public BackpackBreadCrumbController(IMVCManager mvcManager, BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons,
             ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.eventBus = eventBus;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
-            colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            colorPickerController = new WearablesColorPickerController(mvcManager, view.WearablesColorPickerView, hairColors, eyesColors, bodyshapeColors);
             colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterEvent += OnFilterEvent;
-            eventBus.ChangeColorEvent += UpdateColorPickerColors;
+            eventBus.EquipOutfitEvent += UpdateColorPickerColors;
 
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
             view.FilterButton.ExitButton.onClick.AddListener(OnExitFilter);
@@ -35,6 +37,7 @@ namespace DCL.Backpack.Breadcrumb
 
         public void Dispose()
         {
+            colorPickerController.OnColorChanged -= OnColorChanged;
             colorPickerController.Dispose();
 
             view.SearchButton.ExitButton.onClick.RemoveAllListeners();
@@ -42,13 +45,11 @@ namespace DCL.Backpack.Breadcrumb
             view.AllButton.NavigateButton.onClick.RemoveAllListeners();
 
             eventBus.FilterEvent -= OnFilterEvent;
-            eventBus.ChangeColorEvent -= UpdateColorPickerColors;
+            eventBus.EquipOutfitEvent -= UpdateColorPickerColors;
         }
 
-        private void UpdateColorPickerColors(Color newColor, string category)
-        {
-            colorPickerController.SetCurrentColor(newColor, category);
-        }
+        private void UpdateColorPickerColors(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
+            colorPickerController.UpdateCategoriesColors(command.EyesColor, command.HairColor, command.SkinColor);
 
         private void OnAllFilter()
         {

@@ -1,4 +1,4 @@
-﻿using Unity.Collections;
+using Unity.Collections;
 using Unity.Mathematics;
 
 namespace DCL.Landscape

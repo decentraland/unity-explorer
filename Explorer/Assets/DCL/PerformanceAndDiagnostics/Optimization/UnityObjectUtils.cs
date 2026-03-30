@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using Sentry;
+using Sentry.Unity;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 

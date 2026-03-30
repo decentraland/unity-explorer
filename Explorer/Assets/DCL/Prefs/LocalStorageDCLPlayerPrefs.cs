@@ -94,6 +94,8 @@ namespace DCL.Prefs
             Save();
         }
 
+        public void SaveSync() => Save();
+
         public void Save()
         {
             string json = JsonConvert.SerializeObject(userData);

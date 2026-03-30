@@ -89,16 +89,8 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
-        public bool Contains(Vector2Int parcel)
-        {
-            foreach (Vector2Int sceneParcel in SceneData.Parcels)
-            {
-                if (sceneParcel != parcel) continue;
-                return true;
-            }
-
-            return false;
-        }
+        public bool Contains(Vector2Int parcel) =>
+            SceneData.SceneEntityDefinition.Contains(parcel);
 
         public bool IsSceneReady() =>
             SceneData.SceneLoadingConcluded;
@@ -176,10 +168,9 @@ namespace SceneRunner
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-                    // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    // UPD - Task is not supported on WebGL, UniTask is used
-                    await UniTask.Delay(sleepMS, cancellationToken: ct);
-                    MultithreadingUtility.AssertMainThread(nameof(UniTask.Delay));
+                    // DCLTask.Delay uses Task.Delay on desktop (stays off main thread) and UniTask.Delay on WebGL
+                    await DCLTask.Delay(sleepMS, ct);
+                    MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay));
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
@@ -206,8 +197,7 @@ namespace SceneRunner
                     return false;
 
                 // Just idle, don't do anything, need to wait for an actual value
-                // WebGL-friendly
-                await UniTask.Delay(10, cancellationToken: ct);
+                await DCLTask.Delay(10, ct);
             }
 
             return true;

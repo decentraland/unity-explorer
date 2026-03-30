@@ -1,50 +1,11 @@
-using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
-using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Collections.Generic;
-using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables
 {
-    public interface IWearablesProvider
+    public interface IWearablesProvider : IElementsProvider<ITrimmedWearable, IWearable, IWearablesProvider.Params>
     {
-        UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetAsync(int pageSize,
-            int pageNumber,
-            CancellationToken ct,
-            SortingField sortingField = SortingField.Date,
-            OrderBy orderBy = OrderBy.Descending,
-            string? category = null,
-            CollectionType collectionType = CollectionType.All,
-            bool smartWearablesOnly = false,
-            string? name = null,
-            List<ITrimmedWearable>? results = null,
-            string? network = null,
-            bool? includeAmount = null,
-            CommonLoadingArguments? loadingArguments = null,
-            bool needsBuilderAPISigning = false
-        );
-
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetOwnedWearablesAsync(
-            int pageSize,
-            int pageNumber,
-            CancellationToken ct,
-            SortingField sortingField = SortingField.Date,
-            OrderBy orderBy = OrderBy.Descending,
-            string? category = null,
-            CollectionType collectionType = CollectionType.All,
-            bool smartWearablesOnly = false,
-            string? name = null,
-            string? network = null,
-            CommonLoadingArguments? loadingArguments = null
-        );
-        
-        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
-            BodyShape bodyShape,
-            CancellationToken ct);
-
         public enum SortingField
         {
             Date,
@@ -52,19 +13,47 @@ namespace DCL.AvatarRendering.Wearables
             Name,
         }
 
-        enum OrderBy
+        public enum OrderBy
         {
             Ascending,
             Descending
         }
 
         [Flags]
-        enum CollectionType
+        public enum CollectionType
         {
             Base = 1 << 0,
             OnChain = 1 << 1,
             ThirdParty = 1 << 2,
             All = -1
+        }
+
+        public struct Params
+        {
+            public int PageSize;
+            public int PageNumber;
+            public SortingField SortingField;
+            public OrderBy OrderBy;
+            public CollectionType CollectionType;
+            public string? Category;
+            public bool SmartWearablesOnly;
+            public string? Name;
+            public string? Network;
+            public bool? IncludeAmount;
+
+            public Params(int pageSize, int pageNumber)
+            {
+                PageSize = pageSize;
+                PageNumber = pageNumber;
+                SortingField = SortingField.Date;
+                OrderBy = OrderBy.Descending;
+                CollectionType = CollectionType.All;
+                Category = null;
+                SmartWearablesOnly = false;
+                Name = null;
+                Network = null;
+                IncludeAmount = null;
+            }
         }
     }
 }

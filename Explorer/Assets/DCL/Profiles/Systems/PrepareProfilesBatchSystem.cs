@@ -32,7 +32,7 @@ namespace DCL.Profiles
 
         protected override void Update(float t)
         {
-            if (nextDispatch > DateTime.Now)
+            if (nextDispatch > DateTime.UtcNow)
                 return;
 
             // Create a separate request for each Lambdas URL
@@ -42,7 +42,7 @@ namespace DCL.Profiles
 
                 IPartitionComponent partition = PartitionComponent.MIN_PRIORITY;
 
-                var intent = new GetProfilesBatchIntent(profileRepository.PostUrl(batch.LambdasUrl), batch.LambdasUrl, cts);
+                var intent = new GetProfilesBatchIntent(profileRepository.PostUrl(batch.LambdasUrl, batch.Tier), batch.LambdasUrl, batch.Tier, cts);
 
                 foreach ((string? userId, ProfilesBatchRequest.Input input) in batch.PendingRequests)
                 {
@@ -57,7 +57,7 @@ namespace DCL.Profiles
                 AssetPromise<ProfilesBatchResult, GetProfilesBatchIntent>.Create(World, intent, partition);
             }
 
-            nextDispatch = DateTime.Now + batchHeartbeat;
+            nextDispatch = DateTime.UtcNow + batchHeartbeat;
         }
 
         protected override void OnDispose() =>

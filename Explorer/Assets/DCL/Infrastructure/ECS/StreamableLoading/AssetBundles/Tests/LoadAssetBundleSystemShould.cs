@@ -29,6 +29,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             new (new CommonLoadingArguments(wrongTypePath));
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, IWebRequestController.DEFAULT, ArrayPool<byte>.Shared, new AssetBundleLoadingMutex(), Substitute.For<IDiskCache<PartialLoadingState>>());
+            new (world, cache, IWebRequestController.TEST, ArrayPool<byte>.Shared, new AssetBundleLoadingMutex(), Substitute.For<IDiskCache<PartialLoadingState>>());
     }
 }

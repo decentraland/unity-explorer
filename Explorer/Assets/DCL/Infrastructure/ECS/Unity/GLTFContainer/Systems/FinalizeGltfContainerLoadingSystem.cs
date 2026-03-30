@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
@@ -78,11 +78,12 @@ namespace ECS.Unity.GLTFContainer.Systems
                     component.State = LoadingState.FinishedWithError;
                     component.RootGameObject = null;
                     eventsBuffer.Add(entity, component);
+                    result.TryLogException(GetReportData());
                     return;
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
-                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
+                ConfigureSceneMaterial.EnableSceneBoundsAndForceCulling(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
 

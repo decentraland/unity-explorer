@@ -1,3 +1,4 @@
+#if !UNITY_WEBGL
 using Arch.Core;
 using CRDT.Deserializer;
 using CRDT.Serializer;
@@ -70,16 +71,20 @@ namespace SceneRunner.Tests
                 Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(),
                 Substitute.For<IWeb3IdentityCache>(),
-                Substitute.For<IDecentralandUrlsSource>(),
-                IWebRequestController.DEFAULT,
+                IWebRequestController.TEST,
+#if !NO_LIVEKIT_MODE
                 NullRoomHub.INSTANCE,
+#endif
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
+#if !NO_LIVEKIT_MODE
                 Substitute.For<IRemoteMetadata>(),
+#endif
                 DecentralandEnvironment.Org,
-                Substitute.For<DCL.Clipboard.ISystemClipboard>()
+                Substitute.For<DCL.Clipboard.ISystemClipboard>(),
+                string.Empty
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
                 , new WebGLSceneUpdateQueue()
 #endif
@@ -140,3 +145,4 @@ namespace SceneRunner.Tests
         }
     }
 }
+#endif

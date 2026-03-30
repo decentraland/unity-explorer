@@ -11,6 +11,7 @@ using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.LightSource;
 using DCL.SDKComponents.MediaStream.Settings;
+using DCL.Utility.Types;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
@@ -66,7 +67,7 @@ namespace DCL.Quality
 
         public void AddDebugViews(IDebugContainerBuilder debugContainerBuilder)
         {
-            var widget = debugContainerBuilder.AddWidget(IDebugContainerBuilder.Categories.QUALITY);
+            Result<DebugWidgetBuilder> widget = debugContainerBuilder.GetOrAddWidget(IDebugContainerBuilder.Categories.QUALITY);
 
             if (widget.Success == false)
                 return;

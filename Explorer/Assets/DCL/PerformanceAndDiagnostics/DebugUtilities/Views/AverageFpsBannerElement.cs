@@ -2,7 +2,8 @@ using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {
-    public class AverageFpsBannerElement : DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>, IBindable, INotifyValueChanged<AverageFpsBannerData>
+    [UxmlElement]
+    public partial class AverageFpsBannerElement : DebugElementBase<AverageFpsBannerElement, AverageFpsBannerDef>, IBindable, INotifyValueChanged<AverageFpsBannerData>
     {
         private const string USS_FPS_VALUE_LABEL_NAME = "FpsValue";
         private const string USS_MS_VALUE_LABEL_NAME = "MsValue";
@@ -106,7 +107,5 @@ namespace DCL.DebugUtilities.Views
             }
             msLabel.style.color = fpsValueLabel.style.color;
         }
-
-        public new class UxmlFactory : UxmlFactory<AverageFpsBannerElement> { }
     }
 }

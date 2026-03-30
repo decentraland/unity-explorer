@@ -22,6 +22,21 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         public UniTask<GetRealmResponse> GetRealmAsync(CancellationToken ct);
 
+        public GetExplorerInformationResponse GetExplorerInformation();
+
+        [Serializable]
+        public struct GetExplorerInformationResponse
+        {
+            public string agent;
+            public string platform;
+
+            /// <summary>
+            ///     JSON-serialized Dictionary&lt;string, string&gt; of custom explorer configurations.
+            ///     Parse with JSON.parse in JS.
+            /// </summary>
+            public string configurationsJson;
+        }
+
         [Serializable]
         public struct GetWorldTimeResponse
         {
@@ -40,10 +55,6 @@ namespace SceneRuntime.Apis.Modules.Runtime
         {
             public RealmInfo? realmInfo;
 
-            public GetRealmResponse(IRealmData? realmData) : this(
-                realmData == null ? null : new RealmInfo(realmData)
-            ) { }
-
             public GetRealmResponse(RealmInfo? realmInfo)
             {
                 this.realmInfo = realmInfo;
@@ -58,22 +69,18 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public int networkId;
             public string commsAdapter;
             public bool isPreview;
+            public string room;
+            public bool isConnectedSceneRoom;
 
-            public RealmInfo(IRealmData realmData) : this(
-                new Uri(realmData.Ipfs.CatalystBaseUrl.Value).GetLeftPart(UriPartial.Authority),
-                realmData.RealmName,
-                realmData.NetworkId,
-                realmData.CommsAdapter,
-                realmData.IsLocalSceneDevelopment
-            ) { }
-
-            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview)
+            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview, string room, bool isConnectedSceneRoom)
             {
                 this.baseUrl = baseUrl;
                 this.realmName = realmName;
                 this.networkId = networkId;
                 this.commsAdapter = commsAdapter;
                 this.isPreview = isPreview;
+                this.room = room;
+                this.isConnectedSceneRoom = isConnectedSceneRoom;
             }
         }
 

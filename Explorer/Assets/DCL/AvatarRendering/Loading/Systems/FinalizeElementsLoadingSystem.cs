@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             this.pointersPool = pointersPool;
         }
 
-        protected bool TryFinalizeIfCancelled(Entity entity, in AssetPromise<TDTOList, TIntention> promise)
+        protected bool TryFinalizeIfCancelled(Entity entity, ref AssetPromise<TDTOList, TIntention> promise)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested == false)
                 return false;

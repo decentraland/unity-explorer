@@ -43,6 +43,7 @@ namespace DCL.FeatureFlags
 
             var config = new FeatureFlagsConfiguration(response);
 
+            FeatureFlagsConfiguration.Reset();
             FeatureFlagsConfiguration.Initialize(config);
 
             return config;

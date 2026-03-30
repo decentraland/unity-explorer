@@ -1,7 +1,8 @@
-#if !UNITY_WEBGL || UNITY_EDITOR
+#if !UNITY_WEBGL || (UNITY_EDITOR)
 
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit;
+using LiveKit.Rooms.Tracks;
 using LiveKit.RtcSources.Video;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Tracks;
@@ -22,6 +23,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         {
             previous = assigned;
             assigned = value;
+
             previous = previous is NullLocalTracks ? null : previous;
         }
     }

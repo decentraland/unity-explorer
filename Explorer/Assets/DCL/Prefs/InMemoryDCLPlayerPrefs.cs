@@ -68,5 +68,10 @@ namespace DCL.Prefs
         {
             // Does nothing
         }
+
+        public void SaveSync()
+        {
+            // Does nothing
+        }
     }
 }

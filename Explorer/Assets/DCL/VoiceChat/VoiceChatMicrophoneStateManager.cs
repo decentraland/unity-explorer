@@ -42,6 +42,21 @@ namespace DCL.VoiceChat
             UpdateMicrophoneState();
         }
 
+        public void OnRoomConnectionChangedMuted(bool connected)
+        {
+            if (isRoomConnected == connected) return;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Room connection changed (muted): {isRoomConnected} -> {connected}");
+            isRoomConnected = connected;
+
+            if (!connected)
+                UpdateMicrophoneState();
+#if !UNITY_WEBGL
+            else
+                microphoneHandler.DisableMicrophoneForCall();
+#endif
+        }
+
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
         {
             if (newStatus == currentCallStatus) return;

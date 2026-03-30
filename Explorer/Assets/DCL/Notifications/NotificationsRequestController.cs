@@ -23,7 +23,7 @@ namespace DCL.Notifications
 
         private readonly JsonSerializerSettings serializerSettings;
         private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CommonArguments commonArgumentsForSetRead;
         private readonly StringBuilder bodyBuilder = new ();
@@ -36,13 +36,13 @@ namespace DCL.Notifications
 
         public NotificationsRequestController(
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache web3IdentityCache,
             bool includeFriendsNotifications
         )
         {
             this.webRequestController = webRequestController;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
 
             serializerSettings = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter(includeFriendsNotifications) } };
@@ -53,7 +53,7 @@ namespace DCL.Notifications
                 new URLBuilder()
                    .AppendDomain(
                         URLDomain.FromString(
-                            $"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications/read"
+                            $"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications/read"
                         )
                     )
                    .Build()
@@ -67,7 +67,7 @@ namespace DCL.Notifications
 
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
+            urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
                       .AppendParameter(limitParameter);
 
             commonArguments = new CommonArguments(urlBuilder.Build());
@@ -78,7 +78,7 @@ namespace DCL.Notifications
                                                commonArguments,
                                                ct,
                                                ReportCategory.UI,
-                                               signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
+                                               signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
@@ -96,7 +96,7 @@ namespace DCL.Notifications
 
                 urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
+                urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
                           .AppendParameter(onlyUnreadParameter)
                           .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
 
@@ -110,7 +110,7 @@ namespace DCL.Notifications
                                                    commonArguments,
                                                    ct,
                                                    ReportCategory.UI,
-                                                   signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
+                                                   signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
@@ -171,7 +171,7 @@ namespace DCL.Notifications
                                            GenericPostArguments.CreateJson(bodyBuilder.ToString()),
                                            ct,
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArgumentsForSetRead.URL), unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithNoOpAsync();
         }

@@ -2,6 +2,10 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
+using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests;
@@ -18,19 +22,19 @@ namespace DCL.Profiles
 
         private readonly IWebRequestController webRequestController;
         private readonly RealmProfileRepository repository;
-        private readonly ProfilesDebug profilesDebug;
+        private readonly ProfilesAnalytics profilesDebug;
 
         public IProfileRepository Repository { get; }
 
-        public ProfilesContainer(IWebRequestController webRequestController, IRealmData realmData, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilesContainer(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource, PublishIpfsEntityCommand publishIpfsEntityCommand, AnalyticsContainer analyticsContainer)
         {
             this.webRequestController = webRequestController;
             Cache = new DefaultProfileCache();
 
-            profilesDebug = ProfilesDebug.Create(debugContainerBuilder);
+            profilesDebug = new ProfilesAnalytics(ProfilesDebug.Create(analyticsContainer.EntitiesAnalytics.AnalyticsDebug.Widget, analyticsContainer.EntitiesAnalytics.AnalyticsDebug), analyticsContainer.Controller);
 
             Repository = new LogProfileRepository(
-                repository = new RealmProfileRepository(webRequestController, realmData, Cache, profilesDebug)
+                repository = new RealmProfileRepository(webRequestController, publishIpfsEntityCommand, urlsSource, Cache, profilesDebug, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.Endpoints.USE_CENTRALIZED_PROFILES))
             );
         }
 
@@ -41,11 +45,11 @@ namespace DCL.Profiles
         {
             private readonly RealmProfileRepository repository;
             private readonly IWebRequestController webRequestController;
-            private readonly ProfilesDebug profilesDebug;
+            private readonly ProfilesAnalytics profilesDebug;
 
             private TimeSpan heartbeat;
 
-            public ProfilesPlugin(RealmProfileRepository repository, IWebRequestController webRequestController, ProfilesDebug profilesDebug)
+            public ProfilesPlugin(RealmProfileRepository repository, IWebRequestController webRequestController, ProfilesAnalytics profilesDebug)
             {
                 this.repository = repository;
                 this.webRequestController = webRequestController;

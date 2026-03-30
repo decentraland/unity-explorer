@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -30,17 +31,19 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneFactory sceneFactory;
         private readonly IWebRequestController webRequestController;
         private readonly SmartWearableCache smartWearableCache;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         public LoadSmartWearableSceneSystem(
             Arch.Core.World world,
             IStreamableCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention> cache,
             IWebRequestController webRequestController,
             ISceneFactory sceneFactory,
-            SmartWearableCache smartWearableCache) : base(world, cache)
+            SmartWearableCache smartWearableCache, IDecentralandUrlsSource urlsSource) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.sceneFactory = sceneFactory;
             this.smartWearableCache = smartWearableCache;
+            this.urlsSource = urlsSource;
         }
 
         protected override async UniTask<StreamableLoadingResult<GetSmartWearableSceneIntention.Result>> FlowInternalAsync(GetSmartWearableSceneIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -56,7 +59,7 @@ namespace ECS.SceneLifeCycle.Systems
             ReadOnlyMemory<byte> crdt = await GetCrdtAsync(sceneContent, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
-            var definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneDefinition, new IpfsPath(sceneDefinition.id!, URLDomain.EMPTY), true);
+            var definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneDefinition, new IpfsPath(sceneDefinition.id!, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))), true);
 
             var sceneData = new SceneData(
                 sceneContent,

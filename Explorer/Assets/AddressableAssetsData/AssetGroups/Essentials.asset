@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05befaedcb2db4303a48d552554db836
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-SemiBold.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0703f7736b8c9b244953ae7c6ff9a037
     m_Address: LODSettings.asset
     m_ReadOnly: 0
@@ -27,6 +32,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0eecf14978c1aa74381023946dde5c78
     m_Address: Character Object
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 123e00daa809b4e31934bfaddb9db160
+    m_Address: NoDiskSpaceScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -65,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd30078b12df4679bed329bf3c002ad
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Ghosts/HologramShader.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2df144b808932744487656f89a42fb11
     m_Address: FlatNormal_256_BC5.DDS
     m_ReadOnly: 0
@@ -72,6 +87,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
     m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c7d798e18864314497aa15d59d3ee1b
+    m_Address: Assets/DCL/Character/CharacterMotion/Assets/GliderProp.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -92,6 +112,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
     m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 502bd975d08eca847807411acf6a73d2
+    m_Address: Assets/DCL/UI/ColorPicker/NameColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 508289f0a6feab048964059d0534fdd7
+    m_Address: PlaceCategories
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -125,6 +155,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63cc526b36c1242aab3ba3e09fb89896
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/Inter_24pt-Regular.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 654e496ed12f12e4f80243ab9f1d97c7
     m_Address: Character Camera
     m_ReadOnly: 0
@@ -137,6 +172,21 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
+    m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77042a6626e1a064f90b622d0381d7df
+    m_Address: JumpIndicator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a0ca548bf4cd42fa9f1c58db4332466
+    m_Address: Assets/DCL/SDKComponents/Fonts/NotoSerif.ttf
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -155,11 +205,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 86bf0204cf3bb75429342452a2a460af
-    m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a91951d2f71f174d998356f01a3603c
     m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
     m_ReadOnly: 0
@@ -170,8 +215,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce65114d99514edba1ead5ffdfb595a
+    m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/Textures/AuthScreenImg.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
     m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 925419b3e8ba740ef9f36530d3e3a0bc
+    m_Address: Assets/DCL/Donations/UI/Prefabs/DonationsPanel.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -205,13 +260,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bda7566751d4243fb842e1a272cb9f83
-    m_Address: MapCategoryIconMapping
+  - m_GUID: b7e9188aeab694320bb4c30078851643
+    m_Address: Assets/DCL/SDKComponents/SceneUI/Fonts/LiberationSans-Regular.ttf
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: be91903945b0c44fdb1908049ce868b1
-    m_Address: Assets/DCL/SceneLoadingScreens/Assets/Textures/ArtWeek.png
+  - m_GUID: bda7566751d4243fb842e1a272cb9f83
+    m_Address: MapCategoryIconMapping
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -232,6 +287,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d08e60223593f4abe8863c64316f3476
     m_Address: FlipLinearToGammaMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b42532e2af88d479961e27dd400651
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown_Unselectable.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -282,6 +342,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f87c3e77ea2e0ec45b0ddef98bfeb066
     m_Address: Assets/DCL/Backpack/Gifting/Notifications/Prefab/GiftReceivedPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa8bec03ac49f9d44abac12af9e4aa39
+    m_Address: AvatarHighlight.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

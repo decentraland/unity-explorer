@@ -1,10 +1,11 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -22,7 +23,7 @@ namespace DCL.RealmNavigation
             // Wait for all pointers resolution, they should be resolved at start-up
 
             var resolved = false;
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null!;
+            List<SceneEntityDefinition> result = null!;
 
             while (!resolved)
             {
@@ -31,17 +32,10 @@ namespace DCL.RealmNavigation
             }
 
             // Check if result contains the requested parcel
-            // TODO O(N)
-            foreach (var sceneDefPromise in result)
+            foreach (var sceneEntityDefinition in result)
             {
-                if (!sceneDefPromise.Result.HasValue) continue;
-                if (!sceneDefPromise.Result!.Value.Succeeded) continue;
-
-                SceneEntityDefinition? sceneDef = sceneDefPromise.Result!.Value.Asset;
-
-                for (var j = 0; j < sceneDef?.metadata.scene.DecodedParcels.Count; j++)
-                    if (sceneDef.metadata.scene.DecodedParcels[j] == parcel)
-                        return sceneDef;
+                if (sceneEntityDefinition.Contains(parcel))
+                    return sceneEntityDefinition;
             }
 
             // No real scene found
@@ -49,13 +43,14 @@ namespace DCL.RealmNavigation
         }
 
         [Query]
-        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result,
+        private void ReadFixedRealm([Data] ref bool resolved, [Data] ref List<SceneEntityDefinition> results,
             in FixedScenePointers fixedScenePointers)
         {
             resolved = fixedScenePointers.AllPromisesResolved;
 
             if (resolved)
-                result = fixedScenePointers.Promises;
+                results = fixedScenePointers.SceneResults;
         }
     }
 }
+

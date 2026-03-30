@@ -25,6 +25,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UserInAppInitializationFlow
@@ -49,7 +50,6 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
         private readonly IPortableExperiencesController portableExperiencesController;
-        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
 
@@ -79,7 +79,6 @@ namespace DCL.UserInAppInitializationFlow
 #endif
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
-            CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
 #if !NO_LIVEKIT_MODE
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
@@ -95,7 +94,6 @@ namespace DCL.UserInAppInitializationFlow
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
-            this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
 #if !NO_LIVEKIT_MODE
             this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
@@ -147,11 +145,16 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 bool shouldShowAuthentication = parameters.ShowAuthentication &&
-                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN);
+                                                !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
+                                                !appArgs.HasFlag(AppArgsFlags.AUTOPILOT);
 
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
+
+                // Only a human user can authenticate currently.
+                if (shouldShowAuthentication && appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
+                    Application.Quit(1);
 
                 if (shouldShowAuthentication)
                 {
@@ -191,10 +194,6 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            // We need to do this before livekit because there is a realm change in this operation
-                            // and we need to ensure that livekit connects to the correct endpoint
-                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
-
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
                                 = characterObject.Controller.transform.position
@@ -215,7 +214,7 @@ namespace DCL.UserInAppInitializationFlow
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
-                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)operationResult.Error.Value.Exception).BanStatusData.ban)), ct).Forget();
                             else
                             {
 #if !NO_LIVEKIT_MODE
@@ -266,8 +265,6 @@ namespace DCL.UserInAppInitializationFlow
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
-
-            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
 
         // TODO should be an operation
@@ -299,7 +296,7 @@ namespace DCL.UserInAppInitializationFlow
                 return UniTask.CompletedTask;
 
             if (result.Error is { Exception: UserBlockedException })
-                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
 
             if (result.Error is { State: TaskError.Timeout })
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(

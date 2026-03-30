@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.CharacterMotion.Components;
@@ -8,7 +8,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Threading;
-using Temp.Helper.WebClient;
 using UnityEngine;
 
 namespace DCL.RealmNavigation
@@ -62,7 +61,6 @@ namespace DCL.RealmNavigation
 
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false)
         {
-            WebGLDebugLog.Log("TeleportController.TeleportAsync", "entry", $"parcel=({parcel.x},{parcel.y})", "H3");
             if (retrieveScene == null)
             {
                 world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport));
@@ -72,7 +70,6 @@ namespace DCL.RealmNavigation
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            WebGLDebugLog.Log("TeleportController.TeleportAsync", "ByParcelAsync result", $"sceneDef={(sceneDef != null ? "ok" : "null")} parcel=({parcel.x},{parcel.y})", "H3");
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
                 parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
@@ -91,7 +88,6 @@ namespace DCL.RealmNavigation
                 return null;
             }
 
-            WebGLDebugLog.Log("TeleportController.TeleportAsync", "return WaitForSceneReadiness", $"parcel=({parcel.x},{parcel.y})", "H3");
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
     }

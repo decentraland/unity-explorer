@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PluginSystem;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -14,8 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -112,12 +109,22 @@ namespace DCL.LOD.Systems
             {
                 if (Result.Succeeded)
                 {
-                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
-                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset, creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                    if (creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
+                        && creationHelper.InitialSceneStateLOD.ParentContainer != null)
+                    {
+                        if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetHash, out GltfContainerAsset asset))
+                            PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.AssetHash, asset,
+                                creationHelper.InitialSceneStateLOD.ParentContainer.transform, Result.Asset.InitialSceneStateMetadata.Value, creationHelper.IndexToCreate);
+                        else
+                        {
+                            ReportHub.LogWarning(GetReportData(), $"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct");
+                            creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                        }
+                    }
                     else
                     {
-                        ReportHub.LogException(new ArgumentException($"Failed to load {creationHelper.AssetHash} for LOD, the result may not look correct"), GetReportData());
-                        creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.AssetHash);
+                        //Means that the ISS loading has been cancelled. We need to remove the reference to keep counting correctly
+                        Result.Asset!.Dereference();
                     }
                 }
                 World.Destroy(entity);
@@ -155,10 +162,12 @@ namespace DCL.LOD.Systems
             InitialSceneStateLOD = initialSceneStateLOD;
             AssetHash = assetHash;
             IndexToCreate = indexToCreate;
+            Generation = initialSceneStateLOD.Generation;
         }
 
-        public InitialSceneStateLOD InitialSceneStateLOD { get;  }
-        public string AssetHash { get;  }
+        public InitialSceneStateLOD InitialSceneStateLOD { get; }
+        public string AssetHash { get; }
         public int IndexToCreate { get; }
+        public int Generation { get; }
     }
 }

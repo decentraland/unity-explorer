@@ -1,4 +1,4 @@
-﻿#ifndef MOUNTAIN_LIT_VERTEX_FUNCTIONS_INCLUDED
+#ifndef MOUNTAIN_LIT_VERTEX_FUNCTIONS_INCLUDED
 #define MOUNTAIN_LIT_VERTEX_FUNCTIONS_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -9,16 +9,19 @@
 int _UseHeightMap; // 0 = use noise, 1 = use HeightMap
 float _HeightMapScale; // 0 = use noise, 1 = use HeightMap
 
+float2 ComputeOccupancyUV(float3 positionWS)
+{
+    return ((positionWS.xz / _ParcelSize) + _OccupancyMapSize * 0.5f) / _OccupancyMapSize;
+}
+
 VertexPositionInputs GetVertexPositionInputs_Mountain(float3 positionOS, float4 terrainBounds, out float fOccupancy)
 {
     VertexPositionInputs input;
     input.positionWS = TransformObjectToWorld(positionOS);
     input.positionWS = ClampPosition(input.positionWS, terrainBounds);
 
-    // Convert extent to parcels and compute pow2 size in pixels (parcels), with 1px border on each side
-    float maxExtent = max(max(abs(terrainBounds.x), abs(terrainBounds.z)), max(abs(terrainBounds.y), abs(terrainBounds.w)));
-    float occupancyMapSize = exp2(ceil(log2(2.0 * maxExtent / _ParcelSize + 2.0)));
-    float2 occupancyUV = ((input.positionWS.xz / _ParcelSize) + occupancyMapSize * 0.5f) / occupancyMapSize;
+    // Use the actual occupancy map size passed from CPU (avoids off-by-one mismatch with CPU-created texture)
+    float2 occupancyUV = ComputeOccupancyUV(input.positionWS);
 
     // IMPORTANT: Should be aligned with CPU TerrainGenerator.CreateOccupancyMap()/GetParcelNoiseHeight() and ScatterFunctions.cginc
     fOccupancy = SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, occupancyUV, 0).r;

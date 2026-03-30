@@ -43,6 +43,7 @@ namespace DCL.PluginSystem.Global
             cacheCleaner.Register(gameObjectPool);
         }
 
+        [Serializable]
         public class CharacterPreviewSettings : IDCLPluginSettings
         {
             [field: Header(nameof(CharacterPreviewPlugin) + "." + nameof(CharacterPreviewSettings))]

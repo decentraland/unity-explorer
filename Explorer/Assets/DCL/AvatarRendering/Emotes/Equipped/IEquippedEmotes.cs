@@ -12,6 +12,8 @@ namespace DCL.AvatarRendering.Emotes.Equipped
 
         int SlotOf(IEmote emote);
 
+        int SlotOf(ITrimmedEmote emote);
+
         void EquipEmote(int slot, IEmote emote);
 
         void UnEquipEmote(int slot, IEmote? emote);

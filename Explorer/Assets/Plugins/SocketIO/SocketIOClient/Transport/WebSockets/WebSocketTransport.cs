@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -153,9 +153,12 @@ namespace SocketIOClient.Transport.WebSockets
 
         public override async UniTask SendAsync(Payload payload, CancellationToken cancellationToken)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync(cancellationToken);
+                lockAcquired = true;
 
                 if (!string.IsNullOrEmpty(payload.Text))
                 {
@@ -177,33 +180,65 @@ namespace SocketIOClient.Transport.WebSockets
                     }
                 }
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public async UniTask ChangeSendChunkSizeAsync(int size)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync();
+                lockAcquired = true;
                 _sendChunkSize = size;
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public async UniTask ChangeReceiveChunkSizeAsync(int size)
         {
+            var lockAcquired = false;
+
             try
             {
                 await _sendLock.WaitAsync();
+                lockAcquired = true;
                 _sendChunkSize = size;
             }
-            finally { _sendLock.Release(); }
+            finally
+            {
+                if (lockAcquired)
+                    _sendLock.Release();
+            }
         }
 
         public override void Dispose()
         {
             base.Dispose();
             _sendLock.Dispose();
+        }
+
+        public override void AddHeader(string key, string val)
+        {
+            if (_dirty) { throw new InvalidOperationException("Unable to add header after connecting"); }
+
+            _ws.AddHeader(key, val);
+        }
+
+        public override void SetProxy(IWebProxy proxy)
+        {
+            if (_dirty) { throw new InvalidOperationException("Unable to set proxy after connecting"); }
+
+            _ws.SetProxy(proxy);
         }
     }
 }

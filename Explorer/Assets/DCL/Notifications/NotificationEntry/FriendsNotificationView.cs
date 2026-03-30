@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.Profiles.Helpers;
 using DCL.Utilities;
@@ -15,6 +16,7 @@ namespace DCL.Notifications.NotificationEntry
     {
         private const string FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE = "<color=#{0}>{1} <color=#ECEBED>{2}";
         private const string FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE = "<color=#{0}>{1}<color=#A09BA8>#{2} <color=#ECEBED>{3}";
+        private const string UKNOWN_USER_TEXT = "Unknown";
 
         public event Action<NotificationType, INotification> NotificationClicked;
         public NotificationType NotificationType { get; set; }
@@ -73,6 +75,40 @@ namespace DCL.Notifications.NotificationEntry
             Color userColor = NameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
+        public void ConfigureFromTipReceivedNotificationData(TipReceivedNotification notification)
+        {
+            string userName;
+            string userAddress;
+            Color userColor;
+            bool hasClaimedName;
+
+            if (notification.SenderProfile.HasValue)
+            {
+                userName = notification.SenderProfile.Value.Name;
+                userAddress = notification.SenderProfile.Value.Address;
+                userColor = notification.SenderProfile.Value.UserNameColor;
+                hasClaimedName = notification.SenderProfile.Value.HasClaimedName;
+            }
+            else
+            {
+                userName = UKNOWN_USER_TEXT;
+                userAddress = string.Empty;
+                userColor = Color.gray;
+                hasClaimedName = true;
+            }
+
+            NotificationImageBackground.color = userColor;
+
+            TitleText.SetText(hasClaimedName
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName,
+                    string.Format(notification.GetTitle(), notification.Metadata.TipAmount))
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), userName, userAddress[^4..],
+                    string.Format(notification.GetTitle(), notification.Metadata.TipAmount)));
+
             Notification = notification;
             NotificationType = notification.Type;
         }

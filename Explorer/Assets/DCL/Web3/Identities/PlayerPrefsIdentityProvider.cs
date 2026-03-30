@@ -36,7 +36,7 @@ namespace DCL.Web3.Identities
                     Clear();
                 else
                 {
-                    DCLPlayerPrefs.SetString(GetIdentityKey(), identitySerializer.Serialize(value));
+                    DCLPlayerPrefs.SetString(GetIdentityKey(), identitySerializer.Serialize(value), save: true);
                     OnIdentityChanged?.Invoke();
                 }
             }
@@ -55,7 +55,7 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            DCLPlayerPrefs.DeleteKey(GetIdentityKey());
+            DCLPlayerPrefs.DeleteKey(GetIdentityKey(), save: true);
             OnIdentityCleared?.Invoke();
         }
     }

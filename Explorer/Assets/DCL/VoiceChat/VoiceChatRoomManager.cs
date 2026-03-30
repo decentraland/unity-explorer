@@ -2,6 +2,7 @@
 
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -129,7 +130,7 @@ namespace DCL.VoiceChat
         {
             if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
             {
-                voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
+                voiceChatMicrophoneStateManager.OnRoomConnectionChangedMuted(true);
                 trackManager.PublishLocalTrackAsync(CancellationToken.None).Forget();
             }
             else

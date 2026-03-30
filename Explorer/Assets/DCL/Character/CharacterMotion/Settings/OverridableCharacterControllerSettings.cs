@@ -1,4 +1,4 @@
-﻿using DCL.SDKComponents.AvatarLocomotion.Components;
+using DCL.SDKComponents.AvatarLocomotion.Components;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
 using UnityEngine;
 
@@ -111,6 +111,56 @@ namespace DCL.CharacterMotion.Settings
         }
 
         public float JumpGravityFactor => impl.JumpGravityFactor;
+
+        public int AirJumpCount
+        {
+            get => impl.AirJumpCount;
+            set => impl.AirJumpCount = value;
+        }
+
+        public float AirJumpHeight
+        {
+            get => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT, impl.AirJumpHeight);
+            set => impl.AirJumpHeight = value;
+        }
+
+        public float AirJumpDelay
+        {
+            get => impl.AirJumpDelay;
+            set => impl.AirJumpDelay = value;
+        }
+
+        public float AirJumpGravityDuringDelay
+        {
+            get => impl.AirJumpGravityDuringDelay;
+            set => impl.AirJumpGravityDuringDelay = value;
+        }
+
+        public float CooldownBetweenJumps
+        {
+            get => impl.CooldownBetweenJumps;
+            set => impl.CooldownBetweenJumps = value;
+        }
+
+        public float AirJumpDirectionChangeImpulse
+        {
+            get => impl.AirJumpDirectionChangeImpulse;
+            set => impl.AirJumpDirectionChangeImpulse = value;
+        }
+
+        public float GlideSpeed => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED, impl.GlideSpeed);
+
+        public float GlideMinGroundDistance => impl.GlideMinGroundDistance;
+
+        public float GlideMaxGravity => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY, impl.GlideMaxGravity);
+
+        public float JumpToGlideTimeInterval => impl.JumpToGlideTimeInterval;
+
+        public float GlideCooldown => impl.GlideCooldown;
+
+        public float GlideAnimMaxAngle => impl.GlideAnimMaxAngle;
+
+        public float GlideAnimBlendSpeed => impl.GlideAnimBlendSpeed;
 
         public float JumpGraceTime => impl.JumpGraceTime;
 
@@ -314,6 +364,30 @@ namespace DCL.CharacterMotion.Settings
         {
             get => impl.StepOffset;
             set => impl.StepOffset = value;
+        }
+
+        public float CharacterMass
+        {
+            get => impl.CharacterMass;
+            set => impl.CharacterMass = value;
+        }
+
+        public float ExternalEnvDrag
+        {
+            get => impl.ExternalEnvDrag;
+            set => impl.ExternalEnvDrag = value;
+        }
+
+        public float ExternalGroundFriction
+        {
+            get => impl.ExternalGroundFriction;
+            set => impl.ExternalGroundFriction = value;
+        }
+
+        public float MaxExternalVelocity
+        {
+            get => impl.MaxExternalVelocity;
+            set => impl.MaxExternalVelocity = value;
         }
 
         public float HeadIKWeightChangeSpeed

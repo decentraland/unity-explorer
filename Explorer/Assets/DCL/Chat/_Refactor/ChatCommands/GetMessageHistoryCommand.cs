@@ -23,11 +23,9 @@ namespace DCL.Chat.ChatCommands
             this.chatHistoryStorage = chatHistoryStorage;
             this.createMessageViewModelCommand = createMessageViewModelCommand;
         }
-        
+
         public async UniTask ExecuteAsync(List<ChatMessageViewModel> targetList, ChatChannel.ChannelId channelId, CancellationToken token)
         {
-            // Return all elements from the list to the pool
-            targetList.ForEach(ChatMessageViewModel.RELEASE);
             targetList.Clear();
 
             token.ThrowIfCancellationRequested();

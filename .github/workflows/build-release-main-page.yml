@@ -2,7 +2,9 @@ name: Create Page Weekly Release
 
 on:
   workflow_run:
-    workflows: ["Unity Cloud Build Release"]
+    workflows:
+      - Unity Cloud Build Release
+      - .github/workflows/build-release-main.yml
     types:
       - completed
 

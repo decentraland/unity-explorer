@@ -24,6 +24,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public SkyboxSettingsAsset SkyboxSettings { get; private set; }
 
+        [field: SerializeField]
+        public BuildData BuildData { get; private set; }
+
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
@@ -50,8 +53,8 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
-        [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
-        [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+
+
 
 
         [Serializable]
@@ -70,6 +73,12 @@ namespace DCL.PluginSystem.Global
         public class AvatarRandomizerSettingsRef : AssetReferenceT<AvatarRandomizerAsset>
         {
             public AvatarRandomizerSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class AvatarOutlineSettingsRef : AssetReferenceT<AvatarHighlightData>
+        {
+            public AvatarOutlineSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]

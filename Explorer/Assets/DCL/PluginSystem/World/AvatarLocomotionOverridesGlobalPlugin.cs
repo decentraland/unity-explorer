@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -31,6 +32,7 @@ namespace DCL.SDKComponents.AvatarLocomotion
             ApplyAvatarLocomotionOverridesSystem.InjectToWorld(ref builder, settings);
         }
 
+        [Serializable]
         public class Settings : IDCLPluginSettings
         {
             public float MaxMovementSpeed = 500;

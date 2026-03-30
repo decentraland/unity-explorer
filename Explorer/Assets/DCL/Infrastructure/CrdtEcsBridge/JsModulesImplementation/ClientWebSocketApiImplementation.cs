@@ -132,8 +132,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             text = Encoding.UTF8.GetString(result.Span),
                         };
 
-                    var binary = jsOperations.NewUint8Array(result.Length);
-                    binary.WriteBytes(result.Array, 0ul, (ulong)result.Length, 0ul);
+                    IDCLTypedArray<byte> binary = jsOperations.NewUint8Array(result.Length);
+                    binary.WriteBytes(result.Span, 0ul, (ulong)result.Length, 0ul);
 
                     return new IWebSocketApi.ReceiveResponse
                     {

@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -12,23 +13,20 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.LaunchModes;
-using Temp.Helper.WebClient;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
@@ -36,7 +34,6 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -59,6 +56,7 @@ namespace Global.Dynamic
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly HttpFeatureFlagsProvider featureFlagsProvider;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -76,6 +74,7 @@ namespace Global.Dynamic
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
+            HttpFeatureFlagsProvider featureFlagsProvider,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -87,6 +86,7 @@ namespace Global.Dynamic
             this.diskCache = diskCache;
             this.partialsDiskCache = partialsDiskCache;
             this.world = world;
+            this.featureFlagsProvider = featureFlagsProvider;
         }
 
         public async UniTask PreInitializeSetupAsync(CancellationToken token)
@@ -95,7 +95,6 @@ namespace Global.Dynamic
 
             string realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
-            WebGLDebugLog.Log("Bootstraper.cs", "PreInitializeSetupAsync resolved realm", realm ?? "(null)");
 
             // Initialize .NET logging ASAP since it might be used by another systems
             // Otherwise we might get exceptions in different platforms
@@ -106,13 +105,16 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
+            RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             IAppArgs appArgs,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
+                bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
+                realmData,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
@@ -120,7 +122,7 @@ namespace Global.Dynamic
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
-                bootstrapContainer.VerifiedEthereumApi,
+                bootstrapContainer.CompositeWeb3Provider,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
@@ -128,7 +130,6 @@ namespace Global.Dynamic
                 memoryCap,
                 bootstrapContainer.VolumeBus,
                 EnableAnalytics,
-                bootstrapContainer.Analytics,
                 diskCache,
                 partialsDiskCache,
                 bootstrapContainer.Environment,
@@ -158,7 +159,7 @@ namespace Global.Dynamic
                 staticContainer,
                 scenePluginSettingsContainer,
                 dynamicSettings,
-                bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.IdentityCache,
                 splashScreen,
                 worldInfoTool
@@ -174,6 +175,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD =
@@ -203,13 +205,10 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: start (ECSWorldPlugins then GlobalPlugins)");
             var anyFailure = false;
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: ECSWorldPlugins done");
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            WebGLDebugLog.Log("Bootstraper.cs", "InitializePluginsAsync: GlobalPlugins done", $"anyFailure={anyFailure}");
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -222,7 +221,7 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
@@ -243,13 +242,11 @@ namespace Global.Dynamic
             Entity playerEntity
         )
         {
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: start WebJsSources");
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
             if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
-                WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: Play mode, CachedWebJsSources");
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
 
@@ -264,7 +261,6 @@ namespace Global.Dynamic
                 webJsSources = new CachedWebJsSources(webJsSources, memoryCache, diskCacheInstance);
             }
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before SceneSharedContainer.Create");
 #if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
             WebGLSceneUpdateQueue webglSceneUpdateQueue = new WebGLSceneUpdateQueue();
 #endif
@@ -296,9 +292,6 @@ namespace Global.Dynamic
 #endif
             );
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after SceneSharedContainer.Create");
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: before GlobalWorldFactory.Create");
-
             GlobalWorld globalWorld;
             try
             {
@@ -311,18 +304,14 @@ namespace Global.Dynamic
             }
             catch (Exception e)
             {
-                WebGLDebugLog.LogError("Bootstraper.cs", $"GlobalWorldFactory.Create THREW: {e.GetType().Name}: {e.Message}", e.StackTrace);
                 throw;
             }
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: after GlobalWorldFactory.Create");
-
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             if (debugUiRoot != null)
                 InitializeDebugPanel(staticContainer.DebugContainerBuilder, debugUiRoot);
 
-            WebGLDebugLog.Log("Bootstraper.cs", "CreateGlobalWorld: done");
             return globalWorld;
         }
 
@@ -333,10 +322,33 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
+            string realm = await realmUrls.StartingRealmAsync(ct);
+            startingRealm = URLDomain.FromString(realm);
+
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
-            WebGLDebugLog.Log("Bootstraper.cs", "LoadStartingRealmAsync about to connect", startingRealm.Value.ToString());
+            if (realmLaunchSettings.initialRealm is InitialRealm.World)
+            {
+                bool isAuthorized = await dynamicWorldContainer.RealmController
+                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
+
+                if (!isAuthorized)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+
+                    dynamicWorldContainer.ChatHistory.AddMessage(
+                        ChatChannel.NEARBY_CHANNEL_ID,
+                        ChatChannel.ChatChannelType.NEARBY,
+                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
+
+                    await dynamicWorldContainer.RealmController
+                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
+                    return;
+                }
+            }
+
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
@@ -352,9 +364,24 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
-            try { await bootstrapContainer.AutoLoginAuthenticator!.LoginAsync(ct, null); }
-            // Exceptions on auto-login should not block the application bootstrap
-            catch (AutoLoginTokenNotFoundException) { }
+            IWeb3Authenticator authenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController,
+                bootstrapContainer.Web3AccountFactory);
+
+            if (EnableAnalytics)
+                authenticator = new TrackedTokenFileAuthenticator((TokenFileAuthenticator)authenticator, bootstrapContainer.Analytics.Controller);
+
+            try
+            {
+                IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
+
+                bootstrapContainer.IdentityCache!.Identity = identity;
+
+                if (EnableAnalytics)
+                    bootstrapContainer.Analytics.Controller.Identify(identity);
+            }
+            catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
@@ -368,6 +395,7 @@ namespace Global.Dynamic
                 ), ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+
             splashScreen.Hide();
         }
 

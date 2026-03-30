@@ -1,4 +1,4 @@
-﻿#if !NO_LIVEKIT_MODE
+#if !NO_LIVEKIT_MODE
 
 using DCL.Audio;
 using DCL.Chat.ChatCommands.DCL.Chat.ChatUseCases;
@@ -89,6 +89,7 @@ namespace DCL.Chat.ChatCommands
                 currentChannelService,
                 privateConversationUserStateService,
                 communityUserStateService,
+                communityDataService,
                 chatMemberListService,
                 translationMemory,
                 translationCache);

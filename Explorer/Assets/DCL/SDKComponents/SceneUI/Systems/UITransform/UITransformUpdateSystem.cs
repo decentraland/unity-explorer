@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -53,7 +53,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 uiTransformComponent.ZIndex = sdkModel.ZIndex;
             }
 
-            UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.SetupTransformVisualElement(uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.EnsureScrollMode(uiTransformComponent, in sdkModel);
 
             // If zIndex changed, mark the parent layout as dirty.
             // This is needed to trigger UITransformSortingSystem.ApplySorting
@@ -63,8 +64,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 ref var parentComponent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
                 parentComponent.RelationData.layoutIsDirty = true;
             }
-
-            sdkModel.IsDirty = false;
         }
 
         [Query]

@@ -103,6 +103,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -387,6 +388,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 493759110962425617, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2598510809469034099 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4096264613019538442, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &3374162131891453127 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3604137211807971006, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
@@ -429,6 +435,8 @@ MonoBehaviour:
   <ContainerTransform>k__BackingField: {fileID: 5337782633102568864}
   <HoverBackgroundTransform>k__BackingField: {fileID: 6749943394813585919}
   <EquipButton>k__BackingField: {fileID: 5665178272263481625}
+  <EquipSpinner>k__BackingField: {fileID: 2598510809469034099}
+  <EquipButtonText>k__BackingField: {fileID: 8456176515738175621}
   <UnEquipButton>k__BackingField: {fileID: 7903757533396073920}
   <EquippedIcon>k__BackingField: {fileID: 1877216464682181992}
   <NewTag>k__BackingField: {fileID: 1516561254018689797}
@@ -498,5 +506,10 @@ MonoBehaviour:
 --- !u!1 &7977896227215181824 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8241648339715965561, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
+  m_PrefabInstance: {fileID: 2078157404631091833}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8456176515738175621 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7605812977785193212, guid: aabac5666448b4345a76347f94ea32a4, type: 3}
   m_PrefabInstance: {fileID: 2078157404631091833}
   m_PrefabAsset: {fileID: 0}

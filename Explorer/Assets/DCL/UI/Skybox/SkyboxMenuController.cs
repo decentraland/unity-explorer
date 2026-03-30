@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
@@ -86,6 +87,8 @@ namespace DCL.UI.Skybox
             skyboxSettings.TimeOfDayNormalized = sliderValue;
             skyboxSettings.TargetTimeOfDayNormalized = sliderValue;
             skyboxSettings.UIOverrideTimeOfDayNormalized = sliderValue;
+
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME, sliderValue);
         }
 
         private void OnTimeProgressionToggleChanged(bool isOn)
@@ -96,7 +99,14 @@ namespace DCL.UI.Skybox
             skyboxSettings.IsUIControlled = !isOn;
 
             if (skyboxSettings.IsUIControlled)
-                skyboxSettings.UIOverrideTimeOfDayNormalized = viewInstance!.TimeSlider.normalizedValue;
+            {
+                float time = viewInstance!.TimeSlider.normalizedValue;
+                skyboxSettings.UIOverrideTimeOfDayNormalized = time;
+
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME, time);
+            }
+            else
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.SKYBOX_FIXED_TIME);
         }
 
         protected override void OnBeforeViewShow()

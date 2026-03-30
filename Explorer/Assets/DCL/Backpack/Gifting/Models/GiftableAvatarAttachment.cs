@@ -24,7 +24,7 @@ namespace DCL.Backpack.Gifting.Models
             Amount = amount;
         }
 
-        public GiftableAvatarAttachment(IEmote trimmed, int amount)
+        public GiftableAvatarAttachment(ITrimmedEmote trimmed, int amount)
         {
             Attachment = trimmed;
             Urn = trimmed.GetUrn();

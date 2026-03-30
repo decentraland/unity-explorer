@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.AssetLoad.Cache;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
@@ -43,6 +44,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
         private readonly World world;
+        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
 
@@ -60,7 +62,8 @@ namespace DCL.SDKComponents.MediaStream
                 IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
                 World world,
                 IWebRequestController webRequestController,
-                IPerformanceBudget frameBudget)
+                IPerformanceBudget frameBudget,
+                AssetPreLoadCache assetPreLoadCache)
         {
             this.sceneData = sceneData;
 
@@ -76,6 +79,7 @@ namespace DCL.SDKComponents.MediaStream
             this.frameBudget = frameBudget;
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
+            this.assetPreLoadCache = assetPreLoadCache;
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -182,13 +186,21 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             var address = MediaAddress.New(url);
+            MediaPlayerComponent component;
 
+            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
+            {
+                component = cachedComponent;
+                component.Cts = new CancellationTokenSource();
+            }
+            else
+            {
 #if !NO_LIVEKIT_MODE && !UNITY_WEBGL
-            MultiMediaPlayer player = address.Match(
-                (streamingRoom, mediaPlayerPool),
-                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
-            );
+                MultiMediaPlayer player = address.Match(
+                    (streamingRoom, mediaPlayerPool),
+                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+                );
 #else
             // For now: LivekitPlayer is not available on WebGL; LiveKit addresses produce a silent no-op AvPro player
             MultiMediaPlayer player = address.Match(
@@ -198,21 +210,23 @@ namespace DCL.SDKComponents.MediaStream
             );
 #endif
 
-            var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
-            {
-                MediaAddress = address,
-                LastPropagatedState = VideoState.VsPaused,
-                LastPropagatedVideoTime = 0,
-                Cts = new CancellationTokenSource(),
-                OpenMediaPromise = new OpenMediaPromise(),
-            };
+                component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+                {
+                    MediaAddress = address,
+                    LastPropagatedVideoState = VideoState.VsPaused,
+                    LastPropagatedVideoTime = 0,
+                    Cts = new CancellationTokenSource(),
+                    OpenMediaPromise = new OpenMediaPromise(),
+                };
+            }
 
             component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
 
             float targetVolume = (hasVolume ? volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);
 
-            if (component.State != VideoState.VsError)
+            //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
+            if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);

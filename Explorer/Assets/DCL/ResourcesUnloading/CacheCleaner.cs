@@ -47,6 +47,7 @@ namespace DCL.ResourcesUnloading
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private ITrimmedWearableStorage? trimmedWearableStorage;
+        private ITrimmedEmoteStorage? trimmedEmoteStorage;
         private IProfileCache? profileCache;
         private IRoadAssetPool? roadCache;
         private IEmoteStorage? emoteCache;
@@ -77,16 +78,17 @@ namespace DCL.ResourcesUnloading
             var budgetToUse = budgeted ? fpsCapBudget : unlimitedFPSBudget;
 
             texturesCache?.Unload(budgetToUse, budgeted ? TEXTURE_UNLOAD_CHUNK : int.MaxValue);
-            audioClipsCache?.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
-            wearableAssetsCache?.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
-            wearableStorage?.Unload(budgetToUse);
-            trimmedWearableStorage?.Unload(budgetToUse);
-            emoteCache?.Unload(budgetToUse);
-            gltfContainerAssetsCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
-            lodCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
-            assetBundleCache?.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
-            profileCache?.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
-            roadCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            audioClipsCache!.Unload(budgetToUse, budgeted ? AUDIO_CLIP_UNLOAD_CHUNK : int.MaxValue);
+            wearableAssetsCache!.Unload(budgetToUse, budgeted ? WEARABLES_UNLOAD_CHUNK : int.MaxValue);
+            wearableStorage!.Unload(budgetToUse);
+            trimmedWearableStorage!.Unload(budgetToUse);
+            trimmedEmoteStorage!.Unload(budgetToUse);
+            emoteCache!.Unload(budgetToUse);
+            gltfContainerAssetsCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            assetBundleCache!.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
+            profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
+            roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             jsSourcesCache?.Unload(budgetToUse);
 
             ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
@@ -128,10 +130,11 @@ namespace DCL.ResourcesUnloading
         public void Register(IWearableStorage storage) =>
             wearableStorage = storage;
 
-        public void Register(ITrimmedWearableStorage storage)
-        {
+        public void Register(ITrimmedWearableStorage storage) =>
             trimmedWearableStorage = storage;
-        }
+
+        public void Register(ITrimmedEmoteStorage storage) =>
+            trimmedEmoteStorage = storage;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             extendedObjectPools.Add(extendedObjectPool);

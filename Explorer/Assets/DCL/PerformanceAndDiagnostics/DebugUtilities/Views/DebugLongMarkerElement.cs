@@ -2,7 +2,8 @@
 
 namespace DCL.DebugUtilities.Views
 {
-    public class DebugLongMarkerElement : DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>, INotifyValueChanged<ulong>
+    [UxmlElement]
+    public partial class DebugLongMarkerElement : DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>, INotifyValueChanged<ulong>
     {
         private Label cachedLabel;
 
@@ -35,7 +36,7 @@ namespace DCL.DebugUtilities.Views
             ((INotifyValueChanged<string>)label).SetValueWithoutNotify(FormatValue(newValue, definition.MarkerUnit));
         }
 
-        private static string FormatValue(ulong value, DebugLongMarkerDef.Unit unit)
+        public static string FormatValue(ulong value, DebugLongMarkerDef.Unit unit)
         {
             switch (unit)
             {
@@ -51,7 +52,5 @@ namespace DCL.DebugUtilities.Views
                     return $"{value}";
             }
         }
-
-        public new class UxmlFactory : UxmlFactory<DebugLongMarkerElement> { }
     }
 }

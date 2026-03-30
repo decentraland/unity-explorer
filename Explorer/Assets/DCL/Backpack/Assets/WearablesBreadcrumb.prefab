@@ -281,7 +281,7 @@ MonoBehaviour:
   <AllButton>k__BackingField: {fileID: 5630423887126403932}
   <FilterButton>k__BackingField: {fileID: 3633724073606676297}
   <SearchButton>k__BackingField: {fileID: 5422405178218898334}
-  <ColorPickerView>k__BackingField: {fileID: 0}
+  <WearablesColorPickerView>k__BackingField: {fileID: 0}
 --- !u!1001 &156683611259045044
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -776,25 +776,29 @@ PrefabInstance:
       propertyPath: m_text
       value: All
       objectReference: {fileID: 0}
+    - target: {fileID: 7056146438816032565, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 7209681529938629120, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7209681529938629120, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7209681529938629120, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 29.7
       objectReference: {fileID: 0}
     - target: {fileID: 7209681529938629120, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 68.854996
+      value: 68.85
       objectReference: {fileID: 0}
     - target: {fileID: 7209681529938629120, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -21
       objectReference: {fileID: 0}
     - target: {fileID: 7378218084941876052, guid: 71102fc2ffbab4b3e8d336913ee9f9f8, type: 3}
       propertyPath: m_Pivot.x

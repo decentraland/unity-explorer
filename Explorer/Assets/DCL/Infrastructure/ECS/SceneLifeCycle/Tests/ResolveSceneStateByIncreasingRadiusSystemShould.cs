@@ -1,12 +1,15 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
+using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -67,7 +70,7 @@ namespace ECS.SceneLifeCycle.Tests
             sceneLoadingLimit.SetEnabled(true);
 
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, realmData, sceneLoadingLimit);
+            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, playerEntity, visualSceneStateResolver, sceneLoadingLimit);
 
             realmComponent = new RealmComponent(realmData);
             world.Create(realmComponent, new VolatileScenePointers());

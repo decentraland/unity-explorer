@@ -36,6 +36,7 @@ namespace DCL.ResourcesUnloading.Tests
         // Caches
         private WearableStorage wearableStorage;
         private TrimmedWearableStorage trimmedWearableStorage;
+        private TrimmedEmoteStorage trimmedEmoteStorage;
         private AttachmentsAssetsCache attachmentsAssetsCache;
         private TexturesCache<GetTextureIntention> texturesCache;
         private AudioClipsCache audioClipsCache;
@@ -66,6 +67,7 @@ namespace DCL.ResourcesUnloading.Tests
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
             wearableStorage = new WearableStorage();
             trimmedWearableStorage = new TrimmedWearableStorage();
+            trimmedEmoteStorage = new TrimmedEmoteStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
             emoteStorage = new MemoryEmotesStorage();
@@ -83,6 +85,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(attachmentsAssetsCache);
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(trimmedWearableStorage);
+            cacheCleaner.Register(trimmedEmoteStorage);
             cacheCleaner.Register(lodAssets);
             cacheCleaner.Register(roadAssets);
             cacheCleaner.Register(emoteStorage);
