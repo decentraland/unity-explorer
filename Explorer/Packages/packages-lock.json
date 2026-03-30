@@ -86,7 +86,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "9449523943a0939f6700a1038c0e7de004b0f982"
+      "hash": "3dbdf8f11632b16a9f8eeb979ccc39b0fd28c0e9"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -125,7 +125,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
@@ -134,7 +134,7 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -506,7 +506,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "ea6bb70b630aa55dc28a9d0c3fff64b3ea0ca8ba"
+      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
