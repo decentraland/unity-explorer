@@ -48,6 +48,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private const float DRAG_THRESHOLD_SQR = 5f * 5f;
         private const float AVATAR_MAX_DISTANCE_SQR = 2f * 2f;
+        private const float MIN_HIT_POINT_DISTANCE_SQR = 1f * 1f;
         private static readonly int RAYCAST_LAYER_MASK = PhysicsLayers.CHARACTER_ONLY_MASK | (1 << PhysicsLayers.OTHER_AVATARS_LAYER);
 
         private readonly DCLInput dclInput;
@@ -132,7 +133,8 @@ namespace DCL.Character.CharacterMotion.Systems
             CursorInfo cursorInfo,
             in CameraComponent cameraComponent,
             in ICharacterControllerSettings settings,
-            in AvatarBase avatarBase)
+            in AvatarBase avatarBase,
+            in CharacterController characterController)
         {
             HitInfo result = HitInfo.Empty();
             Camera cam = cameraComponent.Camera;
@@ -161,6 +163,9 @@ namespace DCL.Character.CharacterMotion.Systems
                 else
                     // Random scenery -> hit point is valid
                     result.HitPoint = hit.point;
+
+                Vector3 avatarMidHeight = avatarBase.transform.position + (Vector3.up * (characterController.height / 2f));
+                result.ForceInterrupt = (result.HitPoint - avatarMidHeight).sqrMagnitude <= MIN_HIT_POINT_DISTANCE_SQR;
             }
             // Fallback: If we didn't hit anything with a collider (either a mesh without one or the actual sky), we just hit the far clipping plane
             else
@@ -208,7 +213,8 @@ namespace DCL.Character.CharacterMotion.Systems
             ref CharacterEmoteComponent emoteComponent,
             in CharacterPlatformComponent platformComponent,
             in ICharacterControllerSettings settings,
-            in AvatarBase avatarBase)
+            in AvatarBase avatarBase,
+            in CharacterController characterController)
         {
             bool canPointAt = rigidTransform.IsGrounded
                               && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
@@ -227,7 +233,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!canPointAt || !cursorInfo.isPressed)
                 return;
 
-            HitInfo hitInfo = PerformRaycast(cursorInfo, cameraComponent, settings, avatarBase);
+            HitInfo hitInfo = PerformRaycast(cursorInfo, cameraComponent, settings, avatarBase, characterController);
 
             if (hitInfo.ForceInterrupt)
             {
