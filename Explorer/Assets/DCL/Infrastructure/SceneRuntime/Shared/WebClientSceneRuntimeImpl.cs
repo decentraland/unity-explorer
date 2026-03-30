@@ -93,8 +93,9 @@ namespace SceneRuntime.WebClient
 
             engine.AddHostObject("__resetableSource", resetableSource);
 
-            arrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Array");
-            uint8ArrayCtor = (WebClientScriptObject)engine.Global.GetProperty("Uint8Array");
+            var globalObj = (IDCLScriptObject)engine.Global;
+            arrayCtor = (WebClientScriptObject)globalObj.GetProperty("Array");
+            uint8ArrayCtor = (WebClientScriptObject)globalObj.GetProperty("Uint8Array");
             uint8Arrays = new List<WebClientTypedArrayAdapter>();
             nextUint8Array = 0;
         }
