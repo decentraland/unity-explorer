@@ -61,6 +61,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ModuleTitle>k__BackingField: {fileID: 8852146151382913035}
   <DescriptionText>k__BackingField: {fileID: 0}
+  showStatusUpdated:
+    m_PersistentCalls:
+      m_Calls: []
   <DropdownView>k__BackingField: {fileID: 1669326828403567488}
   <TooltipButtonView>k__BackingField: {fileID: 2649161340777064733}
 --- !u!1 &7072378744961823622
@@ -167,6 +170,7 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

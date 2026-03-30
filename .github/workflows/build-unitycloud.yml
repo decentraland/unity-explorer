@@ -157,7 +157,11 @@ jobs:
               (github.event.action == 'opened' ||
                github.event.action == 'reopened' ||
                github.event.action == 'synchronize') &&
-              !github.event.pull_request.draft
+              (
+                !github.event.pull_request.draft ||
+                contains(github.event.pull_request.labels.*.name, 'force-build') ||
+                contains(github.event.pull_request.labels.*.name, 'clean-build')
+              )
             ) ||
             github.event.action == 'ready_for_review' ||
             (
@@ -413,6 +417,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
       - name: 'Tar artifact to maintain original permissions'

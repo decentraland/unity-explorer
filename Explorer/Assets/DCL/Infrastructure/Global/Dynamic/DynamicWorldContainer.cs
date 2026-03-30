@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -86,7 +87,6 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SDKComponents.AvatarLocomotion;
-using DCL.Settings.ScreenMode;
 using DCL.SkyBox;
 using DCL.SocialService;
 using DCL.Translation;
@@ -121,6 +121,18 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.Backpack.Gifting.Services;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
+using DCL.Backpack.Gifting.Services.SnapshotEquipped;
+using DCL.NotificationsBus;
+using DCL.PluginSystem.SmartWearables;
+using DCL.Optimization.AdaptivePerformance.Systems;
+using DCL.PluginSystem.World;
+using DCL.SDKComponents.AvatarLocomotion;
+using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
+using DCL.PrivateWorlds;
+using DCL.Translation;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -140,6 +152,7 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
+        private readonly BannedNotificationHandler bannedNotificationHandler;
 
         public IMVCManager MvcManager { get; }
 
@@ -181,7 +194,8 @@ namespace Global.Dynamic
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            BannedNotificationHandler bannedNotificationHandler)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -199,10 +213,12 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
+            this.bannedNotificationHandler = bannedNotificationHandler;
         }
 
         public override void Dispose()
         {
+            bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
@@ -255,7 +271,6 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
-            var screenModeController = new ScreenModeController(appArgs);
             var entityParticipantTable = new EntityParticipantTable();
             var movementInbox = new MovementInbox(entityParticipantTable, globalWorld);
 
@@ -441,6 +456,7 @@ namespace Global.Dynamic
             //     voiceChatRoom
             // );
 
+            // TODO: branch server mode
             IRoomHub roomHub = new NullRoomHub();
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -505,6 +521,15 @@ namespace Global.Dynamic
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
 
+            var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var bannedNotificationHandler = new BannedNotificationHandler(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.IdentityCache!,
+                moderationDataProvider,
+                mvcManager,
+                bootstrapContainer.WebBrowser);
+
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
                 realmContainer,
@@ -512,7 +537,6 @@ namespace Global.Dynamic
                 terrainContainer,
                 loadingScreen,
                 livekitHealthCheck,
-                bootstrapContainer.DecentralandUrlsSource,
                 mvcManager,
                 selfProfile,
                 dynamicWorldParams,
@@ -521,6 +545,7 @@ namespace Global.Dynamic
                 roomHub,
                 localSceneDevelopment,
                 staticContainer.CharacterContainer,
+                moderationDataProvider,
                 pulseContainer.pulseMultiplayerService!,
                 pulseContainer.pulseProfilePropagationBus!);
 
@@ -603,7 +628,7 @@ namespace Global.Dynamic
                 IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
                     staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
                     placesAPIService, bootstrapContainer.Environment,
-                    bootstrapContainer.DecentralandUrlsSource);
+                    bootstrapContainer.DecentralandUrlsSource, localSceneDevelopment);
 
                 donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics.Controller) : coreDonationsService;
             }
@@ -717,7 +742,9 @@ namespace Global.Dynamic
                 voiceChatContainer.VoiceChatOrchestrator,
                 includeCommunities,
                 communitiesDataProvider,
-                bootstrapContainer.DecentralandUrlsSource);
+                bootstrapContainer.WebBrowser,
+                bootstrapContainer.DecentralandUrlsSource,
+                selfProfile);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -955,7 +982,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService
+                    worldPermissionsService,
+                    staticContainer.QualityContainer.RendererFeaturesCache
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -975,7 +1003,6 @@ namespace Global.Dynamic
                     bootstrapContainer.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
                     sharedSpaceManager,
-                    screenModeController,
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
@@ -1164,6 +1191,7 @@ namespace Global.Dynamic
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
+                    bootstrapContainer.WebBrowser,
                     bootstrapContainer.DecentralandUrlsSource
                 );
 
@@ -1321,7 +1349,8 @@ namespace Global.Dynamic
                 roomHub,
                 socialServiceContainer,
                 selfProfile,
-                clipboard
+                clipboard,
+                bannedNotificationHandler
             );
 
             // Init itself
