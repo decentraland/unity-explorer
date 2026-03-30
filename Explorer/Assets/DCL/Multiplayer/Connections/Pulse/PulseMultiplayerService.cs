@@ -85,7 +85,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
             RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
-            var handshakePacket = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
+            var handshakePacket = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
 
             Send(handshakePacket);
@@ -127,17 +127,17 @@ namespace DCL.Multiplayer.Connections.Pulse
             catch (OperationCanceledException) { }
         }
 
-        public IUniTaskAsyncEnumerable<T> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
+        public IUniTaskAsyncEnumerable<IncomingMessage<T>> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
             where T: class, IMessage
         {
             var subscriber = new GenericSubscriber<T>(type);
 
             subscribers.Add(type, subscriber);
 
-            return subscriber.Channel.ReadAllAsync(ct);
+            return new AutoDisposeAsyncEnumerable<IncomingMessage<T>>(subscriber.Channel.ReadAllAsync(ct));
         }
 
-        public void Send(MessagePipe.OutgoingMessage outgoingMessage)
+        public void Send(OutgoingMessage outgoingMessage)
         {
             if (transport.State != ITransport.TransportState.CONNECTED) return;
             pipe.Send(outgoingMessage);
@@ -147,10 +147,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             try
             {
-                await foreach (MessagePipe.IncomingMessage message in pipe.ReadIncomingMessagesAsync(ct))
+                await foreach (IncomingMessage message in pipe.ReadIncomingMessagesAsync(ct))
                 {
                     if (!subscribers.TryGetValue(message.Message.MessageCase, out ISubscriber? subscriber)) continue;
-                    subscriber.TryNotify(message.Message);
+                    subscriber.TryNotify(message);
                 }
             }
             catch (OperationCanceledException)

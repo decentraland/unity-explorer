@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using Decentraland.Pulse;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             // TODO Don't push any messages if connection is not active
             // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
 
-            var clientMessage = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
+            var clientMessage = OutgoingMessage.Create(ITransport.PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
             WritePlayerStateInput(message, clientMessage.Message.Input);
 
             pulseService.Send(clientMessage);
@@ -156,7 +157,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 if (!pendingResyncs.Add(subjectId)) return false;
 
-                MessagePipe.OutgoingMessage resyncMessage = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE,
+                OutgoingMessage resyncMessage = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE,
                     ClientMessage.MessageOneofCase.Resync);
 
                 resyncMessage.Message.Resync = new ResyncRequest
@@ -378,7 +379,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     return GlideStateValue.OPENING_PROP;
                 case GlideState.PropClosed:
                     return GlideStateValue.PROP_CLOSED;
-                default: throw new System.ArgumentOutOfRangeException(nameof(glideState), glideState, null);
+                default: throw new ArgumentOutOfRangeException(nameof(glideState), glideState, null);
             }
         }
     }

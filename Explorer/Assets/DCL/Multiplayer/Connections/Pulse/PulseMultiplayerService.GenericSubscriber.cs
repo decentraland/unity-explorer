@@ -9,20 +9,27 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             private readonly ServerMessage.MessageOneofCase type;
 
-            public SimplePipeChannel<T> Channel { get; } = new ();
+            public SimplePipeChannel<IncomingMessage<T>> Channel { get; } = new ();
 
             public GenericSubscriber(ServerMessage.MessageOneofCase type)
             {
                 this.type = type;
             }
 
-            public bool TryNotify(ServerMessage message)
+            public bool TryNotify(IncomingMessage message)
             {
-                if (message.MessageCase != type) return false;
+                if (message.Message.MessageCase != type) return false;
 
-                var payload = message.GetUnderlyingData() as T;
+                var payload = message.Message.GetUnderlyingData() as T;
 
-                return payload != null && Channel.TryWrite(payload);
+                if (payload == null)
+                {
+                    message.Dispose();
+                    return false;
+                }
+
+                // Disposal is handled automatically by AutoDisposeAsyncEnumerable when the next message is consumed
+                return Channel.TryWrite(new IncomingMessage<T>(message, payload));
             }
         }
     }

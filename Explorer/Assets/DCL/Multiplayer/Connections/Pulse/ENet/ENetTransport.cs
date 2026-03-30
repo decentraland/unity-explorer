@@ -185,11 +185,11 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         /// </summary>
         private void SendOutgoingMessages()
         {
-            while (messagePipe.TryReadOutgoingMessage(out MessagePipe.OutgoingMessage msg))
+            while (messagePipe.TryReadOutgoingMessage(out OutgoingMessage msg))
             {
                 ENetChannel channel = ToENetChannel(msg.PacketMode);
 
-                using MessagePipe.OutgoingMessage _ = msg;
+                using OutgoingMessage _ = msg;
 
                 if (serverPeer != null)
                     SendToPeer(serverPeer.Value, channel, msg.Message);

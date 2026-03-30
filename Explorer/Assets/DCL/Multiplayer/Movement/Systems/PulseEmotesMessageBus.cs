@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (loopCyclePassed)
                 return;
 
-            var outgoing = MessagePipe.OutgoingMessage.Create(
+            var outgoing = OutgoingMessage.Create(
                 ITransport.PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStart);
 
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void SendStop()
         {
-            var outgoing = MessagePipe.OutgoingMessage.Create(
+            var outgoing = OutgoingMessage.Create(
                 ITransport.PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStop);
 

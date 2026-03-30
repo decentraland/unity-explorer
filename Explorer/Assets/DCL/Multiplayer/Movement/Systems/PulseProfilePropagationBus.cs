@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Propagate(Profile profile)
         {
-            var message = MessagePipe.OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);
+            var message = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);
 
             message.Message.ProfileAnnouncement = new ProfileVersionAnnouncement
             {
