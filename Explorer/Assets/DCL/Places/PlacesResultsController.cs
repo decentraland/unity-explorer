@@ -254,14 +254,14 @@ namespace DCL.Places
                 return;
 
             List<Profile.CompactInfo> allFriends = await GetAllFriendsAsync(ct);
-            placesStateService.SetAllFriends(allFriends);
-            allFriendsLoaded = true;
 
             if (ct.IsCancellationRequested)
                 return;
 
+            placesStateService.SetAllFriends(allFriends);
             placesStateService.RefreshFriendsData();
             view.RefreshVisibleCardsFriendsData();
+            allFriendsLoaded = true;
         }
 
         private async UniTask LoadLiveEventsAndRefreshCardsAsync(CancellationToken ct)
@@ -270,14 +270,14 @@ namespace DCL.Places
                 return;
 
             List<EventDTO> liveEvents = await GetLiveEventsAsync(ct);
-            placesStateService.SetLiveEvents(liveEvents);
-            liveEventsLoaded = true;
 
             if (ct.IsCancellationRequested)
                 return;
 
+            placesStateService.SetLiveEvents(liveEvents);
             placesStateService.RefreshLiveEventsData();
             view.RefreshVisibleCardsLiveEventData();
+            liveEventsLoaded = true;
         }
 
         private async UniTask LoadPlacesCoreAsync(int pageNumber, PlacesSection section, CancellationToken ct)

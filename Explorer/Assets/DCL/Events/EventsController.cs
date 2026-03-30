@@ -136,7 +136,6 @@ namespace DCL.Events
                 return;
 
             await GetAllFriendsAsync(ct);
-            isFriendsLoaded = true;
         }
 
         public async UniTask RefreshCommunitiesDataAsync(CancellationToken ct)
@@ -145,7 +144,6 @@ namespace DCL.Events
                 return;
 
             await GetMyCommunitiesAsync(ct);
-            isCommunitiesLoaded = true;
         }
 
         private async UniTask GetAllFriendsAsync(CancellationToken ct)
@@ -167,6 +165,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetAllFriends(result.Value.Friends.ToList());
+            isFriendsLoaded = true;
         }
 
         private async UniTask GetMyCommunitiesAsync(CancellationToken ct)
@@ -190,6 +189,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
+            isCommunitiesLoaded = true;
         }
 
         private void OnGoToTodayButtonClicked() =>
