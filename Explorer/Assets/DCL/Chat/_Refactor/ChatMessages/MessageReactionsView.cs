@@ -141,6 +141,13 @@ namespace DCL.Chat.ChatMessages
             item.OnHoverExit += OnItemHoverExit;
         }
 
+        private void UnsubscribeItemEvents(ReactionCountItemView item)
+        {
+            item.OnClicked -= OnItemClicked;
+            item.OnHoverEnter -= OnItemHoverEnter;
+            item.OnHoverExit -= OnItemHoverExit;
+        }
+
         private void LayoutRows()
         {
             int rowCount = activeRows.Count;
@@ -184,12 +191,22 @@ namespace DCL.Chat.ChatMessages
         {
             for (int i = 0; i < activeItems.Count; i++)
             {
+                UnsubscribeItemEvents(activeItems[i]);
                 activeItems[i].Hide();
                 activeItems[i].transform.SetParent(transform, false);
                 pool.Add(activeItems[i]);
             }
 
             activeItems.Clear();
+        }
+
+        private void OnDestroy()
+        {
+            for (int i = 0; i < activeItems.Count; i++)
+                UnsubscribeItemEvents(activeItems[i]);
+
+            for (int i = 0; i < pool.Count; i++)
+                UnsubscribeItemEvents(pool[i]);
         }
 
         private RectTransform AcquireRow()
