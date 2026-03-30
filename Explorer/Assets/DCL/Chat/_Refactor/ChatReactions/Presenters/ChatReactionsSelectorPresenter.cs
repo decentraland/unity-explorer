@@ -86,7 +86,9 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < defaultItems.Count; i++)
             {
                 defaultItems[i].OnClicked -= HandleReactionClicked;
-                itemPool.Release(defaultItems[i]);
+
+                if (defaultItems[i] != null)
+                    itemPool.Release(defaultItems[i]);
             }
 
             defaultItems.Clear();
@@ -141,7 +143,9 @@ namespace DCL.Chat.ChatReactions
             for (int i = 0; i < recentItems.Count; i++)
             {
                 recentItems[i].OnClicked -= HandleReactionClicked;
-                itemPool.Release(recentItems[i]);
+
+                if (recentItems[i] != null)
+                    itemPool.Release(recentItems[i]);
             }
 
             recentItems.Clear();
