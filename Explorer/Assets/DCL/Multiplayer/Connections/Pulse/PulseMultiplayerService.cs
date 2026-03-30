@@ -15,7 +15,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerService : IDisposable
     {
-        private const int RECONNECTION_DELAY_MS = 10000;
         private const int MAX_CONNECT_ATTEMPTS = 3;
 
         private readonly ITransport transport;
@@ -24,7 +23,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly Dictionary<ServerMessage.MessageOneofCase, ISubscriber> subscribers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private CancellationTokenSource? connectionLifeCycleCts;
-        private CancellationTokenSource? reconnectCts;
 
         public PulseMultiplayerService(
             ITransport transport,
@@ -38,7 +36,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Dispose()
         {
-            reconnectCts.SafeCancelAndDispose();
             connectionLifeCycleCts.SafeCancelAndDispose();
             transport.Dispose();
         }
@@ -49,17 +46,25 @@ namespace DCL.Multiplayer.Connections.Pulse
                 return;
 
             await ConnectWithRetriesAsync(ct);
-
-            reconnectCts = reconnectCts.SafeRestartLinked(ct);
-            TryReconnectInCaseOfDisconnectionAsync(reconnectCts.Token).Forget();
         }
 
         public async UniTask DisconnectAsync(CancellationToken ct)
         {
-            reconnectCts.SafeCancelAndDispose();
             connectionLifeCycleCts.SafeCancelAndDispose();
             await transport.DisconnectAsync(ITransport.DisconnectReason.Graceful, ct);
         }
+
+        /// <summary>
+        ///     Cancels the current connection lifecycle (message routing, subscriptions).
+        ///     Must be called before reconnecting after a transport-level disconnect.
+        /// </summary>
+        public void ResetConnectionLifecycle()
+        {
+            connectionLifeCycleCts.SafeCancelAndDispose();
+        }
+
+        public IUniTaskAsyncEnumerable<ITransport.DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
+            pipe.ReadDisconnectsAsync(ct);
 
         private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
         {
@@ -101,30 +106,6 @@ namespace DCL.Multiplayer.Connections.Pulse
                 // Wait for handshake once
                 break;
             }
-        }
-
-        private async UniTaskVoid TryReconnectInCaseOfDisconnectionAsync(CancellationToken ct)
-        {
-            try
-            {
-                await foreach (ITransport.DisconnectReason reason in pipe.ReadDisconnectsAsync(ct))
-                {
-                    if (reason is not (ITransport.DisconnectReason.None or ITransport.DisconnectReason.Graceful)) continue;
-
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse transport disconnected unexpectedly: {reason}. Attempting reconnection...");
-
-                    connectionLifeCycleCts.SafeCancelAndDispose();
-
-                    await UniTask.Delay(RECONNECTION_DELAY_MS, cancellationToken: ct);
-
-                    try { await ConnectWithRetriesAsync(ct); }
-                    catch (Exception e) when (e is not OperationCanceledException)
-                    {
-                        ReportHub.LogException(e, ReportCategory.MULTIPLAYER);
-                    }
-                }
-            }
-            catch (OperationCanceledException) { }
         }
 
         public IUniTaskAsyncEnumerable<IncomingMessage<T>> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)

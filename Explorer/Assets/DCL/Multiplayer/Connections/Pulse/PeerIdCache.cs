@@ -7,6 +7,8 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly Dictionary<uint, string> peersByWallet = new ();
         private readonly Dictionary<string, uint> walletsByPeerId = new ();
 
+        public Dictionary<uint, string>.ValueCollection Wallets => peersByWallet.Values;
+
         public void Set(string wallet, uint peerId)
         {
             peersByWallet[peerId] = wallet;
@@ -15,8 +17,14 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void Remove(uint peerId)
         {
-            if (peersByWallet.TryGetValue(peerId, out string? wallet))
+            if (peersByWallet.Remove(peerId, out string? wallet))
                 walletsByPeerId.Remove(wallet);
+        }
+
+        public void Clear()
+        {
+            peersByWallet.Clear();
+            walletsByPeerId.Clear();
         }
 
         public bool TryGetWallet(uint peerId, out string wallet) =>

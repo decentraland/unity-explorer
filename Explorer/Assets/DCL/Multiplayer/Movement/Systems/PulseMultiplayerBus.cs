@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
@@ -69,9 +68,20 @@ namespace DCL.Multiplayer.Connections.Pulse
                         SubscribeToProfileAnnouncementsAsync(ct),
                         SubscribeToPlayerLeftAsync(ct),
                         SubscribeToEmoteStartedAsync(ct),
-                        SubscribeToEmoteStoppedAsync(ct))
+                        SubscribeToEmoteStoppedAsync(ct),
+                        MonitorDisconnectsAsync(ct))
                    .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
                    .Forget();
+        }
+
+        private void RemoveAllPeers()
+        {
+            foreach (string wallet in peerIdCache.Wallets)
+                removeIntentions.Enqueue(wallet);
+
+            peerIdCache.Clear();
+            lastMovementMessages.Clear();
+            pendingResyncs.Clear();
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
