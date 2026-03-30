@@ -73,7 +73,7 @@ namespace DCL.Web3.Authenticators
             // Notify emitter that the file has been consumed
             File.Delete(TOKEN_PATH);
 
-            string token = contentResult.Value;
+            string token = contentResult.Value.Trim();
 
             urlBuilder.Clear();
 

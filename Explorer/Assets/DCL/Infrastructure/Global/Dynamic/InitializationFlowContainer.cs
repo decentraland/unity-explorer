@@ -1,3 +1,4 @@
+using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.Character.Plugin;
 using DCL.Diagnostics;
@@ -49,7 +50,8 @@ namespace DCL.UserInAppInitializationFlow
 #if !UNITY_WEBGL
             bool localSceneDevelopment,
 #endif
-            CharacterContainer characterContainer)
+            CharacterContainer characterContainer,
+            ModerationDataProvider moderationDataProvider)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -58,10 +60,10 @@ namespace DCL.UserInAppInitializationFlow
 #endif
 
 #if !UNITY_WEBGL
-            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
 #endif
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadingOperations = new List<IStartupOperation>()
             {

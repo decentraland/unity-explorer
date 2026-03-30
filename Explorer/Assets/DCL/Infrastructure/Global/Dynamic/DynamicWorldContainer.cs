@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -37,6 +38,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
+using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
@@ -151,6 +153,7 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
+        private readonly BannedNotificationHandler bannedNotificationHandler;
 
         public IMVCManager MvcManager { get; }
 
@@ -202,7 +205,8 @@ namespace Global.Dynamic
 
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            BannedNotificationHandler bannedNotificationHandler)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -224,10 +228,12 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
+            this.bannedNotificationHandler = bannedNotificationHandler;
         }
 
         public override void Dispose()
         {
+            bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
@@ -559,6 +565,16 @@ namespace Global.Dynamic
             IEventBus emotesEventBus = new EventBus(true);
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, emotesEventBus);
             var emoteWheelShortcutHandler = new EmoteWheelShortcutHandler(emotesEventBus);
+
+            var moderationDataProvider = new ModerationDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var bannedNotificationHandler = new BannedNotificationHandler(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.IdentityCache!,
+                moderationDataProvider,
+                mvcManager,
+                bootstrapContainer.WebBrowser);
+
             var initializationFlowContainer = InitializationFlowContainer.Create(
                 staticContainer,
                 bootstrapContainer,
@@ -580,8 +596,8 @@ namespace Global.Dynamic
 #if !UNITY_WEBGL
                 localSceneDevelopment,
 #endif
-
-                staticContainer.CharacterContainer);
+                staticContainer.CharacterContainer,
+                moderationDataProvider);
 
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
             IEventBus eventBus = new EventBus(true);
@@ -786,14 +802,14 @@ namespace Global.Dynamic
                 profilesRepository,
                 sharedSpaceManager,
                 communityVoiceChatContextMenuSettingsSo,
-
 #if !NO_LIVEKIT_MODE
                 voiceChatContainer.VoiceChatOrchestrator,
 #endif
-
                 includeCommunities,
                 communitiesDataProvider,
-                bootstrapContainer.DecentralandUrlsSource);
+                bootstrapContainer.WebBrowser,
+                bootstrapContainer.DecentralandUrlsSource,
+                selfProfile);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -1289,6 +1305,7 @@ namespace Global.Dynamic
 #if !NO_LIVEKIT_MODE
                     voiceChatContainer.VoiceChatOrchestrator,
 #endif
+                    bootstrapContainer.WebBrowser,
                     bootstrapContainer.DecentralandUrlsSource
                 );
 
@@ -1465,7 +1482,8 @@ namespace Global.Dynamic
 
                 socialServiceContainer,
                 selfProfile,
-                clipboard
+                clipboard,
+                bannedNotificationHandler
             );
 
             // Init itself
