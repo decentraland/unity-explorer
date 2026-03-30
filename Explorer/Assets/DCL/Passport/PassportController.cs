@@ -915,7 +915,7 @@ namespace DCL.Passport
 
             if (targetProfile == null)
             {
-                ReportHub.Log(LogType.Warning, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
+                ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
                 return;
             }
 
