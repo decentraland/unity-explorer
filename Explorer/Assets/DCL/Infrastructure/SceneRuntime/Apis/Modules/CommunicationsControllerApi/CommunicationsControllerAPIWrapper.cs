@@ -45,19 +45,22 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 for (var i = 0; i < dataList.Count; i++)
                 {
-                    object dataItem = dataList[i];
-                    IDCLTypedArray<byte> dclTypedArray = TypedArrayConverter.Convert(dataItem);
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+                    IDCLTypedArray<byte> typedArray = TypedArrayConverter.Convert(dataList[i]);
+#else
+                    var typedArray = (ITypedArray<byte>)dataList[i];
+#endif
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
                     {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(typedArray, ref element);
                         lastInput.Add(element);
                     }
                     else
                     {
                         element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(dclTypedArray, ref element);
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(typedArray, ref element);
                         lastInput[i] = element;
                     }
                 }

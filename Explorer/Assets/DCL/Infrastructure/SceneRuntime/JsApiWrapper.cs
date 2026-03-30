@@ -6,13 +6,15 @@ namespace SceneRuntime
     public abstract class JsApiWrapper : IDisposable
     {
         internal readonly CancellationTokenSource disposeCts;
+
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
         internal IJavaScriptEngine? engine;
         internal ITypedArrayConverter TypedArrayConverter { get; set; } = null!;
+#endif
 
-        protected JsApiWrapper(CancellationTokenSource disposeCts, IJavaScriptEngine? engine = null)
+        protected JsApiWrapper(CancellationTokenSource disposeCts)
         {
             this.disposeCts = disposeCts;
-            this.engine = engine;
         }
 
         public virtual void Dispose() { }
@@ -24,7 +26,7 @@ namespace SceneRuntime
     {
         public readonly TApi api;
 
-        protected JsApiWrapper(TApi api, CancellationTokenSource disposeCts, IJavaScriptEngine? engine = null) : base(disposeCts, engine)
+        protected JsApiWrapper(TApi api, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.api = api;
         }

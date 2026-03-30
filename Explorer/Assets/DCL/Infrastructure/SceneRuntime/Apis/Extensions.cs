@@ -2,6 +2,10 @@ using Cysharp.Threading.Tasks;
 using System;
 using Utility.Multithreading;
 
+#if !UNITY_WEBGL || (UNITY_EDITOR && !EDITOR_DEBUG_WEBGL)
+using Microsoft.ClearScript.JavaScript;
+#endif
+
 namespace SceneRuntime.Apis
 {
     public static class Extensions
@@ -12,9 +16,6 @@ namespace SceneRuntime.Apis
         /// </summary>
         public static object ToDisconnectedPromise<T>(this UniTask<T> uniTask, JsApiWrapper api)
         {
-            if (api.engine == null)
-                throw new InvalidOperationException("JavaScript engine is not available on JsApiWrapper");
-
             var completionSource = new UniTaskCompletionSource<T>();
 
             DCLTask.RunOnThreadPool(async () =>
@@ -44,7 +45,13 @@ namespace SceneRuntime.Apis
                     })
                    .Forget();
 
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            if (api.engine == null)
+                throw new InvalidOperationException("JavaScript engine is not available on JsApiWrapper");
             return JSPromiseConverter.ToPromise(completionSource.Task, api.engine);
+#else
+            return completionSource.Task.AsTask().ToPromise()!;
+#endif
         }
 
         /// <summary>
@@ -52,9 +59,6 @@ namespace SceneRuntime.Apis
         /// </summary>
         public static object ToDisconnectedPromise(this UniTask uniTask, JsApiWrapper api)
         {
-            if (api.engine == null)
-                throw new InvalidOperationException("JavaScript engine is not available on JsApiWrapper");
-
             var completionSource = new UniTaskCompletionSource();
 
             DCLTask.RunOnThreadPool(async () =>
@@ -84,7 +88,13 @@ namespace SceneRuntime.Apis
                     })
                    .Forget();
 
+#if UNITY_WEBGL && (!UNITY_EDITOR || EDITOR_DEBUG_WEBGL)
+            if (api.engine == null)
+                throw new InvalidOperationException("JavaScript engine is not available on JsApiWrapper");
             return JSPromiseConverter.ToPromise(completionSource.Task, api.engine);
+#else
+            return completionSource.Task.AsTask().ToPromise()!;
+#endif
         }
     }
 }
