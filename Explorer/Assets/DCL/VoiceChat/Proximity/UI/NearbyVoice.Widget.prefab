@@ -1593,11 +1593,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4779129189674161486, guid: 6e9cc21c5ef05427c95cf3c15fd61b42, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4779129189674161486, guid: 6e9cc21c5ef05427c95cf3c15fd61b42, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4849719833439020044, guid: 6e9cc21c5ef05427c95cf3c15fd61b42, type: 3}
       propertyPath: m_Color.a
@@ -1685,7 +1685,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6977679122021685914, guid: 6e9cc21c5ef05427c95cf3c15fd61b42, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -14
+      value: -8
       objectReference: {fileID: 0}
     - target: {fileID: 6977679122021685914, guid: 6e9cc21c5ef05427c95cf3c15fd61b42, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1790,19 +1790,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_DisabledColor.a
-      value: 1
+      value: 0.050980393
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_DisabledColor.b
-      value: 0.09019608
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_DisabledColor.g
-      value: 0.08235294
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_DisabledColor.r
-      value: 0.09019608
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Colors.m_SelectedColor.a
