@@ -203,14 +203,14 @@ namespace DCL.PluginSystem.Global
 
             string localIdentity = identityCache.Identity!.Address.ToString();
 
+            proximityStateModel = new ProximityVoiceChatStateModel();
+            pluginScope.Add(proximityStateModel);
+
             proximityNametagsHandler = new ProximityNametagsHandler(
                 roomHub.IslandRoom(), entityParticipantTable, world,
                 voiceChatOrchestrator.CurrentCallStatus, playerEntity,
-                localIdentity, proximityMuteService);
+                localIdentity, proximityMuteService, proximityStateModel);
             pluginScope.Add(proximityNametagsHandler);
-
-            proximityStateModel = new ProximityVoiceChatStateModel();
-            pluginScope.Add(proximityStateModel);
 
             proximityVoiceChatManager = new ProximityVoiceChatManager(
                 roomHub.IslandRoom(), storedVoiceChatConfig!,

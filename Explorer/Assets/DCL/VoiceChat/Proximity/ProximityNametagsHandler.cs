@@ -25,9 +25,11 @@ namespace DCL.VoiceChat
         private readonly ProximityMuteService muteService;
         private readonly ActiveSpeakersDiffTracker tracker;
         private readonly IDisposable callStatusSubscription;
+        private readonly ReactivePropertyExtensions.DisposableSubscription<ProximityVoiceChatState> proximityStateSubscription;
 
         private bool disposed;
         private bool suppressed;
+        private bool disconnected;
         private bool localPlayerSpeaking;
 
         public ProximityNametagsHandler(
@@ -37,7 +39,8 @@ namespace DCL.VoiceChat
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             Entity playerEntity,
             string localIdentity,
-            ProximityMuteService muteService)
+            ProximityMuteService muteService,
+            ProximityVoiceChatStateModel proximityStateModel)
         {
             this.islandRoom = islandRoom;
             this.entityParticipantTable = entityParticipantTable;
@@ -52,6 +55,7 @@ namespace DCL.VoiceChat
             islandRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             muteService.MuteStateChanged += OnMuteStateChanged;
+            proximityStateSubscription = proximityStateModel.State.Subscribe(OnProximityStateChanged);
         }
 
         public void Dispose()
@@ -60,6 +64,7 @@ namespace DCL.VoiceChat
             disposed = true;
 
             callStatusSubscription.Dispose();
+            proximityStateSubscription.Dispose();
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
             islandRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             muteService.MuteStateChanged -= OnMuteStateChanged;
@@ -68,9 +73,11 @@ namespace DCL.VoiceChat
             MarkLocalPlayerRemoving();
         }
 
+        private bool IsSuppressed => suppressed || disconnected;
+
         private void OnActiveSpeakersUpdated()
         {
-            if (suppressed) return;
+            if (IsSuppressed) return;
 
             tracker.Update(islandRoom.ActiveSpeakers);
             ApplyHushedStateToActiveSpeakers();
@@ -101,7 +108,7 @@ namespace DCL.VoiceChat
 
         private void OnMuteStateChanged(string walletId, bool isMuted)
         {
-            if (suppressed) return;
+            if (IsSuppressed) return;
             if (!IsIdentityAmongActiveSpeakers(walletId)) return;
 
             if (entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
@@ -129,6 +136,27 @@ namespace DCL.VoiceChat
         {
             if (update == UpdateFromParticipant.Disconnected)
                 tracker.RemoveParticipant(participant.Identity);
+        }
+
+        private void OnProximityStateChanged(ProximityVoiceChatState proximityState)
+        {
+            if (proximityState == ProximityVoiceChatState.Disconnected)
+            {
+                disconnected = true;
+                tracker.MarkAllRemoving();
+                MarkLocalPlayerRemoving();
+            }
+            else if (disconnected)
+            {
+                disconnected = false;
+
+                if (!suppressed)
+                {
+                    tracker.Update(islandRoom.ActiveSpeakers);
+                    ApplyHushedStateToActiveSpeakers();
+                    UpdateLocalPlayerSpeakingState();
+                }
+            }
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
