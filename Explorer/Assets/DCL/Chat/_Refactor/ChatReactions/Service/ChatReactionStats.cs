@@ -16,11 +16,17 @@ namespace DCL.Chat.ChatReactions
         public readonly bool IsWorldStreaming;
         public readonly bool IsDebugNearbyActive;
 
+        // Anchor table diagnostics
+        public readonly int ActiveAnchorCount;
+        public readonly int AnchorScanLimit;
+        public readonly int AnchorSlotCapacity;
+
         public ChatReactionStats(
             int uiAlive, int uiCapacity,
             int worldAlive, int worldVisible, int worldVisibleAnchors, int worldCapacity,
             int nearbyAvatars,
-            bool uiStreaming, bool worldStreaming, bool debugNearby)
+            bool uiStreaming, bool worldStreaming, bool debugNearby,
+            int activeAnchors, int anchorScanLimit, int anchorSlotCapacity)
         {
             UIAliveCount = uiAlive;
             UIPoolCapacity = uiCapacity;
@@ -32,6 +38,9 @@ namespace DCL.Chat.ChatReactions
             IsUIStreaming = uiStreaming;
             IsWorldStreaming = worldStreaming;
             IsDebugNearbyActive = debugNearby;
+            ActiveAnchorCount = activeAnchors;
+            AnchorScanLimit = anchorScanLimit;
+            AnchorSlotCapacity = anchorSlotCapacity;
         }
     }
 }

@@ -79,6 +79,9 @@ namespace DCL.Chat.ChatReactions
                 avatarPosition?.GetNearbyAvatarCount() ?? 0,
                 uiSimulation.IsStreaming,
                 worldSimulation.IsStreaming,
-                debugNearbyActive);
+                debugNearbyActive,
+                worldSimulation.ActiveAnchorCount,
+                worldSimulation.AnchorScanLimit,
+                worldSimulation.AnchorSlotCapacity);
     }
 }

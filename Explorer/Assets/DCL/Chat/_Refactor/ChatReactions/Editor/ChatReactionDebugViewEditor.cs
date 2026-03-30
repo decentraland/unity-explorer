@@ -29,6 +29,7 @@ namespace DCL.Chat.ChatReactions.Editor
             var config = view.Config;
             var stats = view.LastStats;
 
+            DrawDebugToggleButton(config);
             DrawLiveStats(stats, config);
             DrawRecents();
             DrawDebugToggles(config);
@@ -69,6 +70,14 @@ namespace DCL.Chat.ChatReactions.Editor
             EditorGUI.indentLevel++;
             Label("Nearby", stats.NearbyAvatarCount.ToString());
             Label("Debug Nearby", StateText(stats.IsDebugNearbyActive));
+            EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(4);
+
+            EditorGUILayout.LabelField("Anchor Table");
+            EditorGUI.indentLevel++;
+            Label("Active Anchors", $"{stats.ActiveAnchorCount} / {stats.AnchorSlotCapacity}");
+            Label("Scan Limit", stats.AnchorScanLimit.ToString());
             EditorGUI.indentLevel--;
 
             DrawSeparator();
@@ -237,6 +246,24 @@ namespace DCL.Chat.ChatReactions.Editor
 
             EditorGUI.indentLevel--;
             EditorGUILayout.EndScrollView();
+        }
+
+        private static void DrawDebugToggleButton(ChatReactionsConfig? config)
+        {
+            if (config == null) return;
+
+            string label = config.DebugEnabled ? "Disable Debug Mode" : "Enable Debug Mode";
+            var color = GUI.backgroundColor;
+            GUI.backgroundColor = config.DebugEnabled ? new Color(1f, 0.4f, 0.4f) : new Color(0.4f, 1f, 0.4f);
+
+            if (GUILayout.Button(label, GUILayout.Height(28)))
+            {
+                config.DebugEnabled = !config.DebugEnabled;
+                EditorUtility.SetDirty(config);
+            }
+
+            GUI.backgroundColor = color;
+            EditorGUILayout.Space(4);
         }
 
         // --- Helpers ---

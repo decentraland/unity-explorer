@@ -44,6 +44,12 @@ namespace DCL.Chat.ChatReactions.Editor
             EditorGUILayout.LabelField("Avatars", EditorStyles.boldLabel);
             DrawReadOnly("Nearby Count", s.NearbyAvatarCount);
             DrawReadOnly("Debug Nearby Active", s.IsDebugNearbyActive);
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Anchor Table", EditorStyles.boldLabel);
+            DrawReadOnly("Active Anchors", s.ActiveAnchorCount);
+            DrawReadOnly("Scan Limit", s.AnchorScanLimit);
+            DrawReadOnly("Slot Capacity", s.AnchorSlotCapacity);
         }
 
         private static void DrawReadOnly(string label, int value)

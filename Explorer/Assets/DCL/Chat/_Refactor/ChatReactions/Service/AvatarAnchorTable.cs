@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -20,12 +21,21 @@ namespace DCL.Chat.ChatReactions
         private readonly Vector3[] positions = new Vector3[MAX_ANCHORS];
         private readonly bool[] active = new bool[MAX_ANCHORS];
         private readonly bool[] visible = new bool[MAX_ANCHORS];
-        private int highWaterMark;
+
+        // O(1) wallet → slot lookup, kept in sync with the parallel arrays.
+        private readonly Dictionary<string, byte> walletToSlot = new ();
+
+        // Upper bound for iteration loops. Shrinks when trailing slots are deactivated.
+        private int slotScanLimit;
+
+        public int ActiveSlotCount => walletToSlot.Count;
+        public int SlotScanLimit => slotScanLimit;
+        public int SlotCapacity => MAX_ANCHORS;
 
         /// <summary>
         /// Returns an existing slot for <paramref name="walletId"/>, or allocates
-        /// the first inactive slot. Falls back to overwriting the oldest active slot
-        /// only when all slots are occupied.
+        /// the first inactive slot. Falls back to force-evicting an occupied slot
+        /// only when all slots are exhausted (unreachable with the current 200-avatar cap).
         /// </summary>
         public byte Allocate(string walletId, Vector3 initialPosition)
         {
@@ -40,13 +50,13 @@ namespace DCL.Chat.ChatReactions
             if (free >= 0)
                 return OccupySlot(free, walletId, initialPosition);
 
-            return OverwriteOldestSlot(walletId, initialPosition);
+            return ForceEvictSlot(walletId, initialPosition);
         }
 
         /// <summary>
         /// Refreshes all active anchor positions from the avatar position provider.
         /// Deactivates anchors whose avatar has left the scene.
-        /// Only scans up to the high-water mark for efficiency.
+        /// Only scans up to the slot scan limit for efficiency.
         /// </summary>
         public void Refresh(IAvatarReactionPosition? avatarPosition)
         {
@@ -54,7 +64,7 @@ namespace DCL.Chat.ChatReactions
 
             Profiler.BeginSample("ChatReactions.AnchorTable.Refresh");
 
-            for (int i = 0; i < highWaterMark; i++)
+            for (int i = 0; i < slotScanLimit; i++)
             {
                 if (!active[i]) continue;
 
@@ -82,7 +92,7 @@ namespace DCL.Chat.ChatReactions
         {
             int count = 0;
 
-            for (int i = 0; i < highWaterMark; i++)
+            for (int i = 0; i < slotScanLimit; i++)
             {
                 if (visible[i])
                     count++;
@@ -99,7 +109,7 @@ namespace DCL.Chat.ChatReactions
         {
             if (cam == null)
             {
-                for (int i = 0; i < highWaterMark; i++)
+                for (int i = 0; i < slotScanLimit; i++)
                     visible[i] = active[i];
 
                 return;
@@ -107,7 +117,7 @@ namespace DCL.Chat.ChatReactions
 
             Vector3 camPos = cam.transform.position;
 
-            for (int i = 0; i < highWaterMark; i++)
+            for (int i = 0; i < slotScanLimit; i++)
             {
                 if (!active[i])
                 {
@@ -138,16 +148,8 @@ namespace DCL.Chat.ChatReactions
             return vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f;
         }
 
-        private byte FindExistingAnchor(string walletId)
-        {
-            for (int i = 0; i < highWaterMark; i++)
-            {
-                if (active[i] && walletIds[i] == walletId)
-                    return (byte)i;
-            }
-
-            return ANCHOR_NONE;
-        }
+        private byte FindExistingAnchor(string walletId) =>
+            walletToSlot.TryGetValue(walletId, out byte slot) ? slot : ANCHOR_NONE;
 
         private int FindFirstInactiveSlot()
         {
@@ -160,20 +162,30 @@ namespace DCL.Chat.ChatReactions
             return -1;
         }
 
-        private byte OverwriteOldestSlot(string walletId, Vector3 position)
+        // NOTE: Currently evicts the slot at (slotScanLimit % MAX_ANCHORS), which is arbitrary.
+        // With the current 200-avatar scene cap and 255 usable slots, this path is unreachable.
+        // If the avatar cap ever exceeds MAX_ANCHORS, consider adding LRU eviction:
+        //   - Track lastUsedFrame[] per slot, updated on Allocate and Refresh
+        //   - Evict the slot with the smallest lastUsedFrame value (true LRU)
+        private byte ForceEvictSlot(string walletId, Vector3 position)
         {
-            int slot = highWaterMark % MAX_ANCHORS;
+            int slot = slotScanLimit % MAX_ANCHORS;
             return OccupySlot(slot, walletId, position);
         }
 
         private byte OccupySlot(int slot, string walletId, Vector3 position)
         {
+            // If overwriting an occupied slot (eviction), remove the old mapping first.
+            if (active[slot] && walletIds[slot] != null)
+                walletToSlot.Remove(walletIds[slot]);
+
             walletIds[slot] = walletId;
             positions[slot] = position;
             active[slot] = true;
+            walletToSlot[walletId] = (byte)slot;
 
-            if (slot >= highWaterMark)
-                highWaterMark = slot + 1;
+            if (slot >= slotScanLimit)
+                slotScanLimit = slot + 1;
 
             return (byte)slot;
         }
@@ -187,8 +199,19 @@ namespace DCL.Chat.ChatReactions
 
         private void DeactivateSlot(int slotIndex)
         {
+            if (walletIds[slotIndex] != null)
+                walletToSlot.Remove(walletIds[slotIndex]);
+
             active[slotIndex] = false;
             walletIds[slotIndex] = null;
+
+            ShrinkScanLimit();
+        }
+
+        private void ShrinkScanLimit()
+        {
+            while (slotScanLimit > 0 && !active[slotScanLimit - 1])
+                slotScanLimit--;
         }
     }
 }

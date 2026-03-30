@@ -47,6 +47,9 @@ namespace DCL.Chat.ChatReactions
         public int VisibleAnchorCount => lastVisibleAnchorCount;
         public bool IsStreaming => isStreaming;
         public bool IsDebugNearbyActive => debugActive;
+        public int ActiveAnchorCount => anchorTable.ActiveSlotCount;
+        public int AnchorScanLimit => anchorTable.SlotScanLimit;
+        public int AnchorSlotCapacity => anchorTable.SlotCapacity;
 
         public bool HasAliveParticles() => store.Count > 0;
 
