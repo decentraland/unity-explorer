@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Communities.CommunitiesBrowser.Commands;
@@ -7,6 +10,7 @@ using DCL.Diagnostics;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
@@ -15,6 +19,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using Utility;
@@ -60,6 +65,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IAnalyticsController analytics;
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly CommunitiesBrowserMyCommunitiesPresenter myCommunitiesPresenter;
         private readonly CommunitiesBrowserStateService browserStateService;
@@ -75,6 +82,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource? rejectCommunityInvitationCts;
         private CancellationTokenSource? loadResultsCts;
         private CancellationTokenSource? manageRequestReceivedCts;
+        private CancellationTokenSource? reportConfirmationDialogCts;
 
         private bool isSectionActivated;
         private string currentSearchText = string.Empty;
@@ -94,7 +102,9 @@ namespace DCL.Communities.CommunitiesBrowser
             ICommunityCallOrchestrator orchestrator,
             IAnalyticsController analytics,
             CommunityDataService communityDataService,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -107,6 +117,8 @@ namespace DCL.Communities.CommunitiesBrowser
             this.analytics = analytics;
             this.communityDataService = communityDataService;
             this.loadingStatus = loadingStatus;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             spriteCache = new SpriteCache(webRequestController);
             browserEventBus = new CommunitiesBrowserEventBus();
@@ -144,6 +156,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.OpenUserChatRequested += OnOpenUserChat;
             view.CallUserRequested += OnCallUser;
             view.BlockUserRequested += OnBlockUserAsync;
+            view.ReportUserRequested += OpenReportUserForm;
             view.ManageRequestReceivedRequested += ManageRequestReceived;
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_RECEIVED, OnJoinRequestReceived);
@@ -192,6 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
             acceptCommunityInvitationCts?.SafeCancelAndDispose();
             rejectCommunityInvitationCts?.SafeCancelAndDispose();
             manageRequestReceivedCts?.SafeCancelAndDispose();
+            reportConfirmationDialogCts?.SafeCancelAndDispose();
 
             view.InvitesAndRequestsView.InvitesAndRequestsButtonClicked -= LoadInvitesAndRequestsResults;
         }
@@ -891,6 +905,21 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
+        }
+
+        private void OpenReportUserForm(ICommunityMemberData profile)
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                view.ReportSprite,
+                ReportCategory.COMMUNITIES,
+                profile.Address,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void ManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention)

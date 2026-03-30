@@ -190,8 +190,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand,
-                screenModeController
+                giftTransferRequestCommand
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController

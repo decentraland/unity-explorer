@@ -204,7 +204,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var item in eventResponse.Value.data.events)
                 eventPlaceIds.Add(item.place_id);
 
-            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
+            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(eventPlaceIds, ct)
                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)

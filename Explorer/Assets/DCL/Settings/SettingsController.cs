@@ -7,6 +7,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -38,6 +39,7 @@ namespace DCL.Settings
 
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly QualitySettingsController qualitySettingsController;
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
@@ -64,6 +66,7 @@ namespace DCL.Settings
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            QualitySettingsController qualitySettingsController,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -83,6 +86,7 @@ namespace DCL.Settings
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.qualitySettingsController = qualitySettingsController;
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
@@ -198,6 +202,7 @@ namespace DCL.Settings
                             await module.CreateModuleAsync
                             (
                                 generalGroupView.ModulesContainer,
+                                qualitySettingsController,
                                 realmPartitionSettingsAsset,
                                 videoPrioritizationSettings,
                                 landscapeData,

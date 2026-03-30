@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
@@ -8,6 +11,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
@@ -59,8 +63,10 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ProfileRepositoryWrapper profileDataProvider,
-            IDecentralandUrlsSource decentralandUrlsSource)
-            : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
 
@@ -104,7 +110,11 @@ namespace DCL.Friends.UI.FriendPanel
                 friendEventBus,
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, profileDataProvider, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
-                passportBridge);
+                passportBridge,
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING),
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile);
 
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,

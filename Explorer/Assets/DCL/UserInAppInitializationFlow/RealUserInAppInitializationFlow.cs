@@ -42,7 +42,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmController realmController;
         private readonly IRoomHub roomHub;
         private readonly IPortableExperiencesController portableExperiencesController;
-        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
@@ -64,7 +63,6 @@ namespace DCL.UserInAppInitializationFlow
             IRoomHub roomHub,
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
-            CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
             IAppArgs appArgs,
@@ -75,7 +73,6 @@ namespace DCL.UserInAppInitializationFlow
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
-            this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
             this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
             this.appArgs = appArgs;
@@ -164,10 +161,6 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            // We need to do this before livekit because there is a realm change in this operation
-                            // and we need to ensure that livekit connects to the correct endpoint
-                            await checkOnboardingStartupOperation.ExecuteAsync(ct);
-
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
                                 = characterObject.Controller.transform.position
@@ -186,7 +179,7 @@ namespace DCL.UserInAppInitializationFlow
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
-                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)operationResult.Error.Value.Exception).BanStatusData.ban)), ct).Forget();
                             else
                             {
                                 // Finally, wait for livekit to end handshake that started before.
@@ -226,8 +219,6 @@ namespace DCL.UserInAppInitializationFlow
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
-
-            await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
         }
 
         // TODO should be an operation
@@ -255,7 +246,7 @@ namespace DCL.UserInAppInitializationFlow
                 return UniTask.CompletedTask;
 
             if (result.Error is { Exception: UserBlockedException })
-                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(new BlockedScreenParameters(((UserBlockedException)result.Error.Value.Exception).BanStatusData.ban)), ct);
 
             if (result.Error is { State: TaskError.Timeout })
                 return mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(new ErrorPopupWithRetryController.Input(

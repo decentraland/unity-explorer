@@ -39,6 +39,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button marketplaceButton { get; private set; } = null!;
         [field: SerializeField] internal Button eventsButton { get; private set; } = null!;
         [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
+        [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; } = null!;
 
 
         [field: Header("Friends")]
@@ -95,7 +96,7 @@ namespace DCL.UI.Sidebar
         public void SetLiveEventsCounter(int count)
         {
             liveEventsCounterText.text = count.ToString();
-            liveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
+            liveEventsCounterContainer.SetActive(count > 0);
         }
     }
 }

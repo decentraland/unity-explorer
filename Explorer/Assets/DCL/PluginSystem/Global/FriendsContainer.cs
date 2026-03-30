@@ -1,6 +1,8 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends;
@@ -88,6 +90,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
@@ -131,7 +135,10 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 profileRepositoryWrapper,
-                decentralandUrlsSource
+                voiceChatOrchestrator,
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile
             );
 
             mvcManager.RegisterController(friendsPanelController);
