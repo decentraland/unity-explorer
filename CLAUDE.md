@@ -123,3 +123,11 @@ Before writing or modifying any code, follow the code-standards skill for naming
 * Interfaces or abstract classes with only one implementation and no test coverage **should be avoided or merged**.
 * Use `ReportHub` instead of `Debug.Log` for all logging.
 * Minimize GC pressure: reuse objects, use object pooling, avoid boxing/unboxing, use `StringBuilder` for string concatenation.
+
+---
+
+## Git commands
+
+When running any git commands in this project, always use the `-C` flag instead of `cd`:
+- Good: `git -C /c/DCL/unity-explorer <command>`
+- Bad: `cd /c/DCL/unity-explorer && git <command>`
