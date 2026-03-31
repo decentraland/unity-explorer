@@ -1,4 +1,5 @@
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +17,7 @@ namespace DCL.VoiceChat.Proximity
         [field: SerializeField] public Button SpeakButton { get; private set; } = null!;
         [field: SerializeField] public GameObject SpeakStateVisuals { get; private set; } = null!;
         [field: SerializeField] public GameObject SpeakingStateVisuals { get; private set; } = null!;
-        [field: SerializeField] public GameObject HearText { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text HearText { get; private set; } = null!;
 
         [Header("Speak Button Color")]
         [SerializeField] private Image speakButtonImage = null!;

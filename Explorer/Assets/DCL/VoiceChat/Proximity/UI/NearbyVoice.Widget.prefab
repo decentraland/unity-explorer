@@ -1148,7 +1148,7 @@ MonoBehaviour:
   <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
   <SpeakStateVisuals>k__BackingField: {fileID: 4812429912670430281}
   <SpeakingStateVisuals>k__BackingField: {fileID: 5690580525799724271}
-  <HearText>k__BackingField: {fileID: 1750879125718927294}
+  <HearText>k__BackingField: {fileID: 4740140118192889816}
   speakButtonImage: {fileID: 2187530246253384382}
   speakingColor: {r: 0.101960786, g: 0.7764706, b: 0.1764706, a: 1}
 --- !u!114 &1674241877427284860
