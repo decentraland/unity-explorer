@@ -62,44 +62,6 @@ namespace CrdtEcsBridge.OutgoingMessages
             return message;
         }
 
-        public TMessage AddPutMessage_Optimised<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, TData data) where TMessage: class, IMessage
-        {
-            if (!TryGetComponentBridge<TMessage>(out SDKComponentBridge componentBridge)) return null;
-
-            lock (messages)
-            {
-                var key = new OutgoingMessageKey(entity, componentBridge.Id);
-
-                if (lwwMessageIndices.TryGetValue(key, out int lwwIndex))
-                {
-                    PendingMessage existing = messages[lwwIndex];
-
-                    if (existing.MessageType == CRDTMessageType.PUT_COMPONENT)
-                    {
-                        // A PUT for this key is already pending (not yet serialized) — update it in place.
-                        // This avoids the pool rent + release cycle that would otherwise happen every frame
-                        // for continuously-updated components such as active tweens.
-                        var existingMsg = (TMessage)existing.Message;
-                        prepareMessage?.Invoke(existingMsg, data);
-                        return existingMsg;
-                    }
-
-                    // Overwriting a pending DELETE with a PUT — rent a new message and replace in-slot
-                    var replacementMsg = (TMessage)componentBridge.Pool.Rent();
-                    prepareMessage?.Invoke(replacementMsg, data);
-                    messages[lwwIndex] = new PendingMessage(replacementMsg, componentBridge, entity, CRDTMessageType.PUT_COMPONENT);
-                    return replacementMsg;
-                }
-
-                // First write for this entity+component in the current batch — rent from pool and add
-                var newMsg = (TMessage)componentBridge.Pool.Rent();
-                prepareMessage?.Invoke(newMsg, data);
-                lwwMessageIndices[key] = messages.Count;
-                messages.Add(new PendingMessage(newMsg, componentBridge, entity, CRDTMessageType.PUT_COMPONENT));
-                return newMsg;
-            }
-        }
-
         public void AddPutMessage<TMessage>(TMessage message, CRDTEntity entity) where TMessage: class, IMessage
         {
             if (!TryGetComponentBridge<TMessage>(out SDKComponentBridge componentBridge)) return;
