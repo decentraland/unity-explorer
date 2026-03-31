@@ -738,6 +738,8 @@ namespace Global.Dynamic
             tempParent.SetActive(false);
             var instance = Instantiate(altTesterPrefab, tempParent.transform);
             instance.name = "AltTesterPrefab";
+            instance.transform.SetParent(null);
+            Destroy(tempParent);
 
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {
@@ -754,9 +756,6 @@ namespace Global.Dynamic
                 runner.InstrumentationSettings.AltServerHost = split[0];
                 runner.InstrumentationSettings.AltServerPort = port;
             }
-
-            instance.transform.SetParent(null);
-            Destroy(tempParent);
 #endif
         }
 
