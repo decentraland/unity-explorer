@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -33,13 +34,15 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(UpdateInputMovementSystem))]
     public partial class UpdatePointAndClickInputSystem : BaseUnityLoopSystem
     {
-        private const float MARKER_RADIUS = 0.2f;
         private const float MARKER_DURATION = 3f;
 
         private SingleInstanceEntity camera;
         private ICharacterControllerSettings cachedSettings;
         private InputAction sprintAction;
         private InputAction walkAction;
+
+        private readonly GameObject markerPrefab;
+        private readonly RuntimeAnimatorController markerAnimatorController;
 
         // Stores the time of the previous left-click to detect double-clicks.
         private float lastClickTime = float.MinValue;
@@ -48,7 +51,11 @@ namespace DCL.CharacterMotion.Systems
         private float markerTimer;
         private bool markerShouldBeDestroyed;
 
-        internal UpdatePointAndClickInputSystem(World world) : base(world) { }
+        internal UpdatePointAndClickInputSystem(World world, GameObject markerPrefab, RuntimeAnimatorController markerAnimatorController) : base(world)
+        {
+            this.markerPrefab = markerPrefab;
+            this.markerAnimatorController = markerAnimatorController;
+        }
 
         protected override void OnDispose()
         {
@@ -76,6 +83,7 @@ namespace DCL.CharacterMotion.Systems
             // Detect a double-click and resolve the world-space target
             bool hasDoubleClick = false;
             Vector3 clickTarget = default;
+            Vector3 clickNormal = Vector3.up;
 
             var mouse = Mouse.current;
 
@@ -92,6 +100,7 @@ namespace DCL.CharacterMotion.Systems
                     if (Physics.Raycast(ray, out RaycastHit hit))
                     {
                         clickTarget = hit.point;
+                        clickNormal = hit.normal;
                         hasDoubleClick = true;
                     }
 
@@ -109,7 +118,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 viewerRight = Vector3.Cross(-viewerForward, Vector3.up);
 
             if (hasDoubleClick)
-                ShowMarker(clickTarget);
+                ShowMarker(clickTarget, clickNormal);
 
             // Tick down the marker lifetime independently of movement state
             if (targetMarker != null)
@@ -119,31 +128,43 @@ namespace DCL.CharacterMotion.Systems
                     DestroyMarker();
             }
 
-            UpdateTargetQuery(World, hasDoubleClick, clickTarget);
+            UpdateTargetQuery(World, hasDoubleClick, clickTarget, clickNormal);
             DriveMovementQuery(World, t, viewerForward, viewerRight);
 
             if (markerShouldBeDestroyed)
                 DestroyMarker();
         }
 
-        private void ShowMarker(Vector3 position)
+        private void ShowMarker(Vector3 position, Vector3 normal)
         {
             DestroyMarker();
 
-            targetMarker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            // Orient the marker so its local-up aligns with the surface normal
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.up, normal);
+
+            targetMarker = markerPrefab != null
+                ? Object.Instantiate(markerPrefab, position, rotation)
+                : CreateFallbackMarker(position, rotation);
+
             targetMarker.name = "PointAndClickMarker";
 
-            targetMarker.transform.SetPositionAndRotation(position, Quaternion.identity);
-
-            targetMarker.transform.localScale = Vector3.one * (MARKER_RADIUS * 2f);
-
-            // Remove the collider so it never intercepts subsequent raycasts
-            Object.Destroy(targetMarker.GetComponent<Collider>());
-
-            // Bright cyan tint — visible against most surfaces
-            targetMarker.GetComponent<Renderer>().material.color = new Color(0f, 0.9f, 1f);
+            if (markerAnimatorController != null)
+            {
+                var view = targetMarker.AddComponent<DestinationMarkerView>();
+                view.Initialize(markerAnimatorController);
+            }
 
             markerTimer = MARKER_DURATION;
+        }
+
+        private static GameObject CreateFallbackMarker(Vector3 position, Quaternion rotation)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.transform.SetPositionAndRotation(position, rotation);
+            go.transform.localScale = Vector3.one * 0.4f;
+            Object.Destroy(go.GetComponent<Collider>());
+            go.GetComponent<Renderer>().material.color = new Color(0f, 0.9f, 1f);
+            return go;
         }
 
         private void DestroyMarker()
@@ -161,6 +182,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateTarget(
             [Data] bool hasDoubleClick,
             [Data] Vector3 clickTarget,
+            [Data] Vector3 clickNormal,
             Entity entity,
             in PlayerComponent _)
         {

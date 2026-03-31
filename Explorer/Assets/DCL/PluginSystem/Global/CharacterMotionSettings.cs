@@ -18,6 +18,12 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public GlidingSettings Gliding { get; private set; }
 
+        [field: SerializeField]
+        public GameObject DestinationMarkerPrefab { get; private set; }
+
+        [field: SerializeField]
+        public RuntimeAnimatorController DestinationMarkerAnimatorController { get; private set; }
+
         [Serializable]
         public class GlidingSettings
         {

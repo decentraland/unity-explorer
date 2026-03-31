@@ -180,6 +180,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 762878a7bf3715b44ac918395f691db6
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker.glb
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 77042a6626e1a064f90b622d0381d7df
     m_Address: JumpIndicator
     m_ReadOnly: 0
