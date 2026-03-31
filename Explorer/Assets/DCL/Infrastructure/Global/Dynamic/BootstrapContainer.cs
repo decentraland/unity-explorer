@@ -123,7 +123,11 @@ namespace Global.Dynamic
                         UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
                 };
 
+#if !UNITY_WEBGL
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
+#else
+                ChromeDevToolHandler? cdpClient = null;
+#endif
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, ct);
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 

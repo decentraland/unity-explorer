@@ -89,7 +89,7 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             IDebugContainerBuilder debugContainerBuilder,
             IDecentralandUrlsSource urlsSource,
-            ChromeDevToolHandler chromeDevtoolProtocolHandler,
+            ChromeDevToolHandler? chromeDevtoolProtocolHandler,
             SentrySampler? sentrySampler,
             CancellationToken ct
         )
