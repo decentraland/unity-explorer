@@ -70,3 +70,6 @@ Explorer/UserSettings
 Explorer/.cursorignore
 .cursorignore
 CLAUDE.md
+
+# API Keys
+.env
