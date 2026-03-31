@@ -7,12 +7,12 @@
       "dependencies": {},
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
-    "avprovideo": {
+    "com.renderheads.avpro.video-ultra": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
     },
     "com.alttester.sdk": {
       "version": "2.3.0",
