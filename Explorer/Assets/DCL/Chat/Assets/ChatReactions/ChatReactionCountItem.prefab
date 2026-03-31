@@ -194,8 +194,8 @@ MonoBehaviour:
   countLabel: {fileID: 3066802429717488273}
   background: {fileID: 7257451997341741022}
   button: {fileID: 5203174036076510605}
-  defaultColor: {r: 0.09411765, g: 0.09411765, b: 0.09411765, a: 0.8}
-  highlightedColor: {r: 0.64705884, g: 0.14117648, b: 0.7019608, a: 1}
+  defaultColor: {r: 0, g: 0, b: 0, a: 0.5019608}
+  highlightedColor: {r: 0.64705884, g: 0.14117648, b: 0.69803923, a: 1}
 --- !u!114 &5203174036076510605
 MonoBehaviour:
   m_ObjectHideFlags: 0

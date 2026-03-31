@@ -114,6 +114,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Names remain the default TMP_Text color; only this suffix is tinted.")]
         [field: SerializeField] public Color TooltipActionTextColor { get; private set; } = new (1f, 1f, 1f, 0.5f);
 
+
         public TooltipPositioningConfig TooltipConfig =>
             new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
 
