@@ -89,17 +89,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 }
 
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
-
-                if (lastMovementMessages.TryGetValue(playerStateFull.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
-                {
-                    if (lastMessage.sequence < playerStateFull.Sequence)
-                        lastMovementMessages[playerStateFull.SubjectId] = (playerStateFull.Sequence, movementMessage);
-                }
-                else
-                    lastMovementMessages[playerStateFull.SubjectId] = (playerStateFull.Sequence, movementMessage);
-
-                pendingResyncs.Remove(playerStateFull.SubjectId);
-
+                TryUpdateLastMovementAndCompleteResync(playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
                 Inbox(movementMessage, wallet);
             }
         }
@@ -172,6 +162,19 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 return true;
             }
+        }
+
+        private void TryUpdateLastMovementAndCompleteResync(uint subjectId, uint sequence, NetworkMovementMessage movementMessage)
+        {
+            if (lastMovementMessages.TryGetValue(subjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
+            {
+                if (lastMessage.sequence < sequence)
+                    lastMovementMessages[subjectId] = (sequence, movementMessage);
+            }
+            else
+                lastMovementMessages[subjectId] = (sequence, movementMessage);
+
+            pendingResyncs.Remove(subjectId);
         }
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
@@ -263,6 +266,8 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (delta.HasGlideState)
                 last.animState.GlideState = ToNetworkMovementGlideState(delta.GlideState);
+
+            // TODO: isInstant
 
             return last;
         }

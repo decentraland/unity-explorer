@@ -63,6 +63,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void SubscribeToIncomingMessages(CancellationToken ct)
         {
             UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
+                        SubscribeToTeleportsAsync(ct),
                         SubscribeToPlayerStateFullAsync(ct),
                         SubscribeToPlayerStateDeltaAsync(ct),
                         SubscribeToProfileAnnouncementsAsync(ct),

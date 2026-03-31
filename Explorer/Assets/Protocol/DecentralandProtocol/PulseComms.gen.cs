@@ -100,16 +100,17 @@ namespace Decentraland.Pulse {
             "dGF0ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJs",
             "CgxFbW90ZVN0b3BwZWQSEgoKc3ViamVjdF9pZBgBIAEoDRITCgtzZXJ2ZXJf",
             "dGljaxgCIAEoDRIzCgZyZWFzb24YAyABKA4yIy5kZWNlbnRyYWxhbmQucHVs",
-            "c2UuRW1vdGVTdG9wUmVhc29uIkEKD1RlbGVwb3J0UmVxdWVzdBIuCghwb3Np",
-            "dGlvbhgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMyJsChFU",
-            "ZWxlcG9ydFBlcmZvcm1lZBISCgpzdWJqZWN0X2lkGAEgASgNEhMKC3NlcnZl",
-            "cl90aWNrGAIgASgNEi4KCHBvc2l0aW9uGAMgASgLMhwuZGVjZW50cmFsYW5k",
-            "LmNvbW1vbi5WZWN0b3IzKmYKFFBsYXllckFuaW1hdGlvbkZsYWdzEggKBE5P",
-            "TkUQABIMCghHUk9VTkRFRBABEg0KCUxPTkdfSlVNUBACEg0KCUxPTkdfRkFM",
-            "TBAEEgsKB0ZBTExJTkcQCBILCgdTVFVOTkVEEBAqTgoKR2xpZGVTdGF0ZRIP",
-            "CgtQUk9QX0NMT1NFRBAAEhAKDE9QRU5JTkdfUFJPUBABEgsKB0dMSURJTkcQ",
-            "AhIQCgxDTE9TSU5HX1BST1AQAyovCg9FbW90ZVN0b3BSZWFzb24SDQoJQ09N",
-            "UExFVEVEEAASDQoJQ0FOQ0VMTEVEEAFiBnByb3RvMw=="));
+            "c2UuRW1vdGVTdG9wUmVhc29uIlcKD1RlbGVwb3J0UmVxdWVzdBIUCgxwYXJj",
+            "ZWxfaW5kZXgYASABKAUSLgoIcG9zaXRpb24YAiABKAsyHC5kZWNlbnRyYWxh",
+            "bmQuY29tbW9uLlZlY3RvcjMifgoRVGVsZXBvcnRQZXJmb3JtZWQSEgoKc3Vi",
+            "amVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGlj",
+            "axgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5Q",
+            "bGF5ZXJTdGF0ZSpmChRQbGF5ZXJBbmltYXRpb25GbGFncxIICgROT05FEAAS",
+            "DAoIR1JPVU5ERUQQARINCglMT05HX0pVTVAQAhINCglMT05HX0ZBTEwQBBIL",
+            "CgdGQUxMSU5HEAgSCwoHU1RVTk5FRBAQKk4KCkdsaWRlU3RhdGUSDwoLUFJP",
+            "UF9DTE9TRUQQABIQCgxPUEVOSU5HX1BST1AQARILCgdHTElESU5HEAISEAoM",
+            "Q0xPU0lOR19QUk9QEAMqLwoPRW1vdGVTdG9wUmVhc29uEg0KCUNPTVBMRVRF",
+            "RBAAEg0KCUNBTkNFTExFRBABYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -130,8 +131,8 @@ namespace Decentraland.Pulse {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStop), global::Decentraland.Pulse.EmoteStop.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStarted), global::Decentraland.Pulse.EmoteStarted.Parser, new[]{ "SubjectId", "ServerTick", "EmoteId", "PlayerState" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStopped), global::Decentraland.Pulse.EmoteStopped.Parser, new[]{ "SubjectId", "ServerTick", "Reason" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "Position" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportPerformed), global::Decentraland.Pulse.TeleportPerformed.Parser, new[]{ "SubjectId", "ServerTick", "Position" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "ParcelIndex", "Position" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportPerformed), global::Decentraland.Pulse.TeleportPerformed.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null)
           }));
     }
     #endregion
@@ -6355,6 +6356,7 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TeleportRequest(TeleportRequest other) : this() {
+      parcelIndex_ = other.parcelIndex_;
       position_ = other.position_ != null ? other.position_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -6365,8 +6367,20 @@ namespace Decentraland.Pulse {
       return new TeleportRequest(this);
     }
 
+    /// <summary>Field number for the "parcel_index" field.</summary>
+    public const int ParcelIndexFieldNumber = 1;
+    private int parcelIndex_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int ParcelIndex {
+      get { return parcelIndex_; }
+      set {
+        parcelIndex_ = value;
+      }
+    }
+
     /// <summary>Field number for the "position" field.</summary>
-    public const int PositionFieldNumber = 1;
+    public const int PositionFieldNumber = 2;
     private global::Decentraland.Common.Vector3 position_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -6392,6 +6406,7 @@ namespace Decentraland.Pulse {
       if (ReferenceEquals(other, this)) {
         return true;
       }
+      if (ParcelIndex != other.ParcelIndex) return false;
       if (!object.Equals(Position, other.Position)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -6400,6 +6415,7 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
+      if (ParcelIndex != 0) hash ^= ParcelIndex.GetHashCode();
       if (position_ != null) hash ^= Position.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -6419,8 +6435,12 @@ namespace Decentraland.Pulse {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
+      if (ParcelIndex != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(ParcelIndex);
+      }
       if (position_ != null) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(18);
         output.WriteMessage(Position);
       }
       if (_unknownFields != null) {
@@ -6433,8 +6453,12 @@ namespace Decentraland.Pulse {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (ParcelIndex != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(ParcelIndex);
+      }
       if (position_ != null) {
-        output.WriteRawTag(10);
+        output.WriteRawTag(18);
         output.WriteMessage(Position);
       }
       if (_unknownFields != null) {
@@ -6447,6 +6471,9 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
+      if (ParcelIndex != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(ParcelIndex);
+      }
       if (position_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
       }
@@ -6461,6 +6488,9 @@ namespace Decentraland.Pulse {
     public void MergeFrom(TeleportRequest other) {
       if (other == null) {
         return;
+      }
+      if (other.ParcelIndex != 0) {
+        ParcelIndex = other.ParcelIndex;
       }
       if (other.position_ != null) {
         if (position_ == null) {
@@ -6487,7 +6517,11 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
+          case 8: {
+            ParcelIndex = input.ReadInt32();
+            break;
+          }
+          case 18: {
             if (position_ == null) {
               Position = new global::Decentraland.Common.Vector3();
             }
@@ -6513,7 +6547,11 @@ namespace Decentraland.Pulse {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
+          case 8: {
+            ParcelIndex = input.ReadInt32();
+            break;
+          }
+          case 18: {
             if (position_ == null) {
               Position = new global::Decentraland.Common.Vector3();
             }
@@ -6566,8 +6604,9 @@ namespace Decentraland.Pulse {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TeleportPerformed(TeleportPerformed other) : this() {
       subjectId_ = other.subjectId_;
+      sequence_ = other.sequence_;
       serverTick_ = other.serverTick_;
-      position_ = other.position_ != null ? other.position_.Clone() : null;
+      state_ = other.state_ != null ? other.state_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -6589,8 +6628,20 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "sequence" field.</summary>
+    public const int SequenceFieldNumber = 2;
+    private uint sequence_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Sequence {
+      get { return sequence_; }
+      set {
+        sequence_ = value;
+      }
+    }
+
     /// <summary>Field number for the "server_tick" field.</summary>
-    public const int ServerTickFieldNumber = 2;
+    public const int ServerTickFieldNumber = 3;
     private uint serverTick_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -6601,15 +6652,15 @@ namespace Decentraland.Pulse {
       }
     }
 
-    /// <summary>Field number for the "position" field.</summary>
-    public const int PositionFieldNumber = 3;
-    private global::Decentraland.Common.Vector3 position_;
+    /// <summary>Field number for the "state" field.</summary>
+    public const int StateFieldNumber = 4;
+    private global::Decentraland.Pulse.PlayerState state_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 Position {
-      get { return position_; }
+    public global::Decentraland.Pulse.PlayerState State {
+      get { return state_; }
       set {
-        position_ = value;
+        state_ = value;
       }
     }
 
@@ -6629,8 +6680,9 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (SubjectId != other.SubjectId) return false;
+      if (Sequence != other.Sequence) return false;
       if (ServerTick != other.ServerTick) return false;
-      if (!object.Equals(Position, other.Position)) return false;
+      if (!object.Equals(State, other.State)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -6639,8 +6691,9 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (Sequence != 0) hash ^= Sequence.GetHashCode();
       if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
-      if (position_ != null) hash ^= Position.GetHashCode();
+      if (state_ != null) hash ^= State.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -6663,13 +6716,17 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteUInt32(SubjectId);
       }
-      if (ServerTick != 0) {
+      if (Sequence != 0) {
         output.WriteRawTag(16);
+        output.WriteUInt32(Sequence);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(24);
         output.WriteUInt32(ServerTick);
       }
-      if (position_ != null) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Position);
+      if (state_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(State);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -6685,13 +6742,17 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteUInt32(SubjectId);
       }
-      if (ServerTick != 0) {
+      if (Sequence != 0) {
         output.WriteRawTag(16);
+        output.WriteUInt32(Sequence);
+      }
+      if (ServerTick != 0) {
+        output.WriteRawTag(24);
         output.WriteUInt32(ServerTick);
       }
-      if (position_ != null) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Position);
+      if (state_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(State);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -6706,11 +6767,14 @@ namespace Decentraland.Pulse {
       if (SubjectId != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
       }
+      if (Sequence != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Sequence);
+      }
       if (ServerTick != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTick);
       }
-      if (position_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
+      if (state_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6727,14 +6791,17 @@ namespace Decentraland.Pulse {
       if (other.SubjectId != 0) {
         SubjectId = other.SubjectId;
       }
+      if (other.Sequence != 0) {
+        Sequence = other.Sequence;
+      }
       if (other.ServerTick != 0) {
         ServerTick = other.ServerTick;
       }
-      if (other.position_ != null) {
-        if (position_ == null) {
-          Position = new global::Decentraland.Common.Vector3();
+      if (other.state_ != null) {
+        if (state_ == null) {
+          State = new global::Decentraland.Pulse.PlayerState();
         }
-        Position.MergeFrom(other.Position);
+        State.MergeFrom(other.State);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -6760,14 +6827,18 @@ namespace Decentraland.Pulse {
             break;
           }
           case 16: {
+            Sequence = input.ReadUInt32();
+            break;
+          }
+          case 24: {
             ServerTick = input.ReadUInt32();
             break;
           }
-          case 26: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
+          case 34: {
+            if (state_ == null) {
+              State = new global::Decentraland.Pulse.PlayerState();
             }
-            input.ReadMessage(Position);
+            input.ReadMessage(State);
             break;
           }
         }
@@ -6794,14 +6865,18 @@ namespace Decentraland.Pulse {
             break;
           }
           case 16: {
+            Sequence = input.ReadUInt32();
+            break;
+          }
+          case 24: {
             ServerTick = input.ReadUInt32();
             break;
           }
-          case 26: {
-            if (position_ == null) {
-              Position = new global::Decentraland.Common.Vector3();
+          case 34: {
+            if (state_ == null) {
+              State = new global::Decentraland.Pulse.PlayerState();
             }
-            input.ReadMessage(Position);
+            input.ReadMessage(State);
             break;
           }
         }
