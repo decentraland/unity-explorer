@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
@@ -36,7 +37,7 @@ namespace DCL.UserInAppInitializationFlow
             this.editorPositionOverrideActive = editorPositionOverrideActive;
         }
 
-        public override UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
+        public override async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             // --position flag or Editor Start Position take highest priority over any world manifest spawn coordinate
             if (!appArgs.HasFlag(AppArgsFlags.POSITION) && !editorPositionOverrideActive)
@@ -45,10 +46,20 @@ namespace DCL.UserInAppInitializationFlow
                 // (e.g. worlds with a fixed or curated spawn point)
                 WorldManifest manifest = realmController.RealmData.WorldManifest;
                 if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                    return InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+                    return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+
+                // In local scene development, use the scene's base parcel so the player
+                // spawns at the scene-defined spawn point instead of the editor targetScene
+                if (realmController.RealmData.IsLocalSceneDevelopment)
+                {
+                    SceneDefinitions? sceneDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
+
+                    if (sceneDefinitions is { Value: { Count: > 0 } })
+                        return await InternalExecuteAsync(args, sceneDefinitions.Value.Value[0].metadata.scene.DecodedBase, ct);
+                }
             }
 
-            return InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+            return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
         }
     }
 }
