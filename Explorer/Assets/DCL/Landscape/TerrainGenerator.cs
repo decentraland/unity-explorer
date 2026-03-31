@@ -59,7 +59,7 @@ namespace DCL.Landscape
         public bool IsTerrainShown { get; private set; }
 
         public TerrainModel TerrainModel { get; private set; }
-        public Texture2D OccupancyMap { get; private set; }
+        public Texture2D? OccupancyMap { get; private set; }
         public int OccupancyFloor { get; private set; }
         public float MaxHeight { get; private set; }
 
@@ -161,11 +161,18 @@ namespace DCL.Landscape
                     OccupancyFloor = distanceFieldData.floor;
                     MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
 
-                    // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
-                    OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-
-                    OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-                    OccupancyMapSize = OccupancyMap.width; // width == height
+                    if (OccupancyMap != null)
+                    {
+                        // OccupancyMap.filterMode = FilterMode.Point; // DEBUG use for clear step-like pyramid terrain base height
+                        OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+                        OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                        OccupancyMapSize = OccupancyMap.width; // width == height
+                    }
+                    else
+                    {
+                        OccupancyMapData = GetEmptyNativeArray<byte>();
+                        OccupancyMapSize = 0;
+                    }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_OCCUPANCY_MAP);
 
@@ -222,11 +229,19 @@ namespace DCL.Landscape
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
         }
 
-        internal static Texture2D CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
+        internal static NativeArray<T> GetEmptyNativeArray<T>() where T : unmanaged =>
+            NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray(Span<T>.Empty, Allocator.None);
+
+        internal static Texture2D? CreateOccupancyMap(NativeHashSet<int2> ownedParcels, int2 minParcel,
             int2 maxParcel, int padding)
         {
             if (ownedParcels.IsEmpty)
-                return Texture2D.whiteTexture;
+            {
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE,
+                    "Owned parcel set is empty. Can't calculate occupancy map.");
+
+                return null;
+            }
 
             int absMax = cmax(abs(int4(minParcel, maxParcel)));
 
@@ -235,7 +250,7 @@ namespace DCL.Landscape
                 ReportHub.LogError(ReportCategory.LANDSCAPE,
                     $"Occupancy half-size {nameof(absMax)} is {absMax}, which is more than half of {nameof(TERRAIN_SIZE_LIMIT)} of {TERRAIN_SIZE_LIMIT}. Returning an all-occupied texture.");
 
-                return Texture2D.blackTexture;
+                return null;
             }
 
             int textureSize = ceilpow2((absMax * 2) + 2);
@@ -318,11 +333,12 @@ namespace DCL.Landscape
             return occupancyMap;
         }
 
-        internal static (int floor, int maxSteps) WriteInteriorChamferOnWhite(Texture2D texture, int2 minParcel, int2 maxParcel, int padding)
+        internal static (int floor, int maxSteps) WriteInteriorChamferOnWhite(Texture2D? texture, int2 minParcel, int2 maxParcel, int padding)
         {
-            NativeArray<byte> src = texture.GetRawTextureData<byte>();
-            if (!src.IsCreated) return (0, 0);
+            if (texture == null)
+                return (0, 0);
 
+            NativeArray<byte> src = texture.GetRawTextureData<byte>();
             int textureWidth = texture.width;
 
             if (!ispow2(textureWidth))

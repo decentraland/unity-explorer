@@ -86,9 +86,7 @@ namespace DCL.Landscape
 
             if (processReport != null) processReport.SetProgress(0.5f);
 
-            if (OccupancyMap != null &&
-                OccupancyMap != Texture2D.blackTexture &&
-                OccupancyMap != Texture2D.whiteTexture)
+            if (OccupancyMap != null)
                 Object.Destroy(OccupancyMap);
 
             OccupancyMap = TerrainGenerator.CreateOccupancyMap(ownedParcels, TerrainModel.MinParcel,
@@ -98,9 +96,17 @@ namespace DCL.Landscape
             OccupancyFloor = distanceFieldData.floor;
             MaxHeight = distanceFieldData.maxSteps * terrainGenData.stepHeight;
 
-            OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
-            OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
-            OccupancyMapSize = OccupancyMap.width; // width == height
+            if (OccupancyMap != null)
+            {
+                OccupancyMap.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+                OccupancyMapData = OccupancyMap.GetRawTextureData<byte>();
+                OccupancyMapSize = OccupancyMap.width; // width == height
+            }
+            else
+            {
+                OccupancyMapData = TerrainGenerator.GetEmptyNativeArray<byte>();
+                OccupancyMapSize = 0;
+            }
 
             Trees!.SetTerrainData(TerrainModel.MinParcel, TerrainModel.MaxParcel, OccupancyMapData,
                 OccupancyMapSize, OccupancyFloor, MaxHeight);
