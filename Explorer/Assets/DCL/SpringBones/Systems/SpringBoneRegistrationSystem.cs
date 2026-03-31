@@ -55,10 +55,7 @@ namespace DCL.SpringBones
             List<Transform> boneClones = ListPool<Transform>.Get();
 
             FastSpringBoneBuffer buffer = BuildSpringBoneBuffer(avatarShapeComponent.InstantiatedWearables,
-                avatarBase,
-                ref transformMatrixComponent,
-                boneClones,
-                null);
+                avatarBase, ref transformMatrixComponent, boneClones, null);
 
             World.Add(entity,
                 new SpringBoneRegistrationComponent
@@ -86,10 +83,7 @@ namespace DCL.SpringBones
             MoveToPendingRelease(registration.BoneClones, ref pendingRelease);
 
             registration.Buffer = BuildSpringBoneBuffer(avatarShapeComponent.InstantiatedWearables,
-                avatarBase,
-                ref transformMatrixComponent,
-                registration.BoneClones,
-                registration.Buffer);
+                avatarBase, ref transformMatrixComponent, registration.BoneClones, registration.Buffer);
         }
 
         [Query]
@@ -112,10 +106,6 @@ namespace DCL.SpringBones
         private void CleanupOnDispose(ref SpringBoneRegistrationComponent registration) =>
             CleanUpSpringBoneBuffer(ref registration);
 
-        /// <summary>
-        ///     Shared pipeline: clone spring bone chains, expand the BoneArray, build and register
-        ///     the simulation buffer. If <paramref name="oldBuffer"/> is non-null it is replaced and disposed.
-        /// </summary>
         private FastSpringBoneBuffer BuildSpringBoneBuffer(IList<CachedAttachment> wearables,
             AvatarBase avatarBase,
             ref AvatarTransformMatrixComponent transformMatrixComponent,
@@ -149,7 +139,6 @@ namespace DCL.SpringBones
             if (registration.Buffer == null) return;
 
             springBoneService.BufferCombiner.Register(null, registration.Buffer);
-
             registration.Buffer.Dispose();
             registration.Buffer = null;
         }

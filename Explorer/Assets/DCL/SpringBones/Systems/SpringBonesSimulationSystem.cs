@@ -7,9 +7,6 @@ using UniVRM10.FastSpringBones;
 
 namespace DCL.SpringBones
 {
-    /// <summary>
-    ///     Ticks the FastSpringBone simulation each frame.
-    /// </summary>
     [LogCategory(ReportCategory.AVATAR)]
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(SpringBoneRegistrationSystem))]

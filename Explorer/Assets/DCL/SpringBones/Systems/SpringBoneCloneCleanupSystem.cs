@@ -35,7 +35,7 @@ namespace DCL.SpringBones
         {
             if (pending.Pending.Count == 0) return;
 
-            foreach (Transform clone in pending.Pending) transformPool.Release(clone);
+            SpringBoneCloneHelper.ReleaseClones(pending.Pending, transformPool);
             pending.Pending.Clear();
         }
 
@@ -43,8 +43,8 @@ namespace DCL.SpringBones
         [All(typeof(DeleteEntityIntention))]
         private void ReleaseOnDelete(ref SpringBonePendingCloneRelease pending)
         {
-            ReleaseClones(ref pending);
-
+            SpringBoneCloneHelper.ReleaseClones(pending.Pending, transformPool);
+            pending.Pending.Clear();
             ListPool<Transform>.Release(pending.Pending);
         }
     }

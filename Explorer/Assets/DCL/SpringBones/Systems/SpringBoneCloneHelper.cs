@@ -7,18 +7,10 @@ using UnityEngine;
 
 namespace DCL.SpringBones
 {
-    /// <summary>
-    ///     Creates pooled clone transforms that mirror spring bone chains under the avatar skeleton.
-    ///     Originals stay untouched in the wearable hierarchy — clones are used for simulation and skinning.
-    /// </summary>
     public static class SpringBoneCloneHelper
     {
         private static readonly Dictionary<string, Transform> BONE_LOOKUP = new (StringComparer.Ordinal);
 
-        /// <summary>
-        ///     For each spring bone chain root, clones the entire chain under the corresponding avatar
-        ///     skeleton bone. Appends clone transforms to the provided list and populates the original-to-clone mapping.
-        /// </summary>
         public static void CloneSpringBoneChains(IList<CachedAttachment> wearables,
             Transform[] avatarSkeletonBones,
             IComponentPool<Transform> transformPool,
@@ -48,6 +40,12 @@ namespace DCL.SpringBones
             {
                 BONE_LOOKUP.Clear();
             }
+        }
+
+        public static void ReleaseClones(List<Transform> clones, IComponentPool<Transform> transformPool)
+        {
+            foreach (Transform clone in clones)
+                if (clone != null) transformPool.Release(clone);
         }
 
         private static void CloneChain(Transform originalRoot,
@@ -101,8 +99,7 @@ namespace DCL.SpringBones
             return clone;
         }
 
-        private static bool IsSpringBone(Transform t,
-            SpringBoneData[] springBones)
+        private static bool IsSpringBone(Transform t, SpringBoneData[] springBones)
         {
             foreach (SpringBoneData springBone in springBones)
                 if (springBone.Transform == t) return true;
