@@ -57,10 +57,7 @@ namespace DCL.VoiceChat
             if (state.Value == ProximityVoiceChatState.Blocked)
                 return;
 
-            // Speaking auto-stops on suppress, so we remember Hearing
-            preBlockedState = state.Value == ProximityVoiceChatState.Speaking
-                ? ProximityVoiceChatState.Hearing
-                : state.Value;
+            preBlockedState = state.Value;
 
             SetState(ProximityVoiceChatState.Blocked);
         }

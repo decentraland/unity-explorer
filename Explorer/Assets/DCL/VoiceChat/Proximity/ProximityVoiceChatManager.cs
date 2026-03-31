@@ -455,6 +455,9 @@ namespace DCL.VoiceChat
                         break;
 
                     case ProximityVoiceChatState.Speaking:
+                        if (suppressed)
+                            ResumeProximity();
+
                         if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
