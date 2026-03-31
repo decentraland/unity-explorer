@@ -87,6 +87,7 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(cameraSamplingData.Position, Is.EqualTo(camera!.transform.position));
             Assert.That(cameraSamplingData.IsDirty, Is.True);
+            teleportBroadcast!.DidNotReceive().BroadcastTeleport(Arg.Any<Vector3>());
         }
 
         [Test]
