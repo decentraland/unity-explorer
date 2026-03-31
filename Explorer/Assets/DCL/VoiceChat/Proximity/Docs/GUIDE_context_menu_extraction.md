@@ -288,3 +288,75 @@ ProcessOtherAvatarsInteractionSystem
 ```
 
 No new assemblies or asmdef references needed for context menu alone.
+
+---
+
+## 6. POST-EXTRACTION AUDIT (2026-03-31)
+
+Перенос выполнен коммитом `8288007ff` ("migrated context menu from social emotes").
+Ниже — результат покомпонентного сравнения ORIGINAL (PR) vs MY VERSION vs BASE (dev).
+
+### 6.1 Файлы перенесены корректно ✅
+
+| Файл | Статус |
+|------|--------|
+| `CursorComponent.cs` | Точная копия PR |
+| `UpdateCameraInputSystem.cs` | Точная копия PR |
+| `PointerLockIntention.cs` | Точная копия PR |
+| `UpdateCursorInputSystem.cs` | Все 5 изменений PR перенесены |
+| `IMVCManagerMenusAccessFacade.cs` | `isOpenedOnWorldAvatar` добавлен |
+| `MVCManagerMenusAccessFacade.cs` | `isOpenedOnWorldAvatar` добавлен, наши proximity deps сохранены |
+| `ProcessOtherAvatarsInteractionSystem.cs` | Намеренная переработка — social emotes убраны, правый клик + LockedWithUI + close-on-move сохранены |
+| `GlobalInteractionPlugin.cs` | Намеренно: proximity deps сохранены, mvcManager заменён на cameraEntityProxy |
+| `DynamicWorldContainer.cs` | Соответствует GlobalInteractionPlugin |
+| `CommunityInvitationContextMenuButtonHandler.cs` | Return type изменён корректно |
+
+### 6.2 Найденные баги 🐛
+
+#### BUG 1 (CRITICAL) — Мерцание тултипа при наведении на аватар
+
+**Файлы:** `HoverCanvasTooltip.uxml`, `HoverCanvasTooltipElement.cs`
+
+**Проблема:** Эти файлы были checkout-нуты из PR целиком, но **не нужны** для нашей фичи.
+Изменения PR vs dev:
+- UXML: убран `picking-mode="Ignore"` со ВСЕХ элементов тултипа
+- CS: `[UxmlElement] partial class` → `class` + `UxmlFactory`; `Image` → `VisualElement`
+
+Без `picking-mode="Ignore"` тултип перехватывает pointer events, создавая feedback loop:
+1. Frame N: тултипа нет → `IsPointerOverGameObject()` = false → аватар найден → тултип показан
+2. Frame N+1: тултип pickable → `IsPointerOverGameObject()` = true → `canHover = false` → тултип убран
+3. Repeat → мерцание каждый кадр
+
+**Фикс:** `git checkout dev -- <оба файла>`
+
+#### BUG 2 — Пропущена проверка LockedWithUI в ControlCinemachineVirtualCameraSystem
+
+**Файл:** `ControlCinemachineVirtualCameraSystem.cs` → `HandleOffset()`
+
+**Проблема:** Наш коммит убрал `|| cursorComponent.CursorState == CursorState.LockedWithUI`
+из guard clause, который есть и в dev, и в PR. Камера продолжает двигать offset плечо
+при открытом контекстном меню.
+
+**Фикс:** Добавить обратно условие:
+```csharp
+if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson)
+    || cursorComponent.CursorState == CursorState.LockedWithUI)
+    return;
+```
+
+#### BUG 3 — Дубликаты AddControl в GenericUserProfileContextMenuController
+
+**Файл:** `GenericUserProfileContextMenuController.cs`
+
+**Проблема:** `contextMenuJumpInButton` и `contextMenuBlockUserButton` добавлены в контекстное
+меню дважды. Также `contextMenuMentionButton` инициализирован с `true` вместо `false`.
+
+**Фикс:** Убрать дублирующие `.AddControl()`, поправить init аргумент.
+
+### 6.3 Намеренно не перенесённые изменения из PR
+
+Все social emotes: `SocialEmoteInteractionsManager`, `ShowAvatarHighlightIntent`,
+`OpenEmoteOutcomeContextMenu`, `OnOutcomePerformed`, `socialEmoteInteractionTooltip`,
+`IWeb3IdentityCache` (не нужен без distance-check), `Entity playerEntity` (не нужен без
+distance-check), `SocialEmoteOutcomesContextMenuSettings`, `SocialEmotesSettings`,
+`AvatarHighlightSystem`, `contextMenuSocialEmoteButton`.

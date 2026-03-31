@@ -3,13 +3,14 @@ using Utility.UIToolkit;
 
 namespace DCL.Interaction.HoverCanvas.UI
 {
-    public class HoverCanvasTooltipElement : VisualElement
+    [UxmlElement]
+    public partial class HoverCanvasTooltipElement : VisualElement
     {
         private Label hint;
 
         private bool initialized;
 
-        private VisualElement inputIcon;
+        private Image inputIcon;
         private Label keyName;
         private VisualElement keyRoot;
 
@@ -18,7 +19,7 @@ namespace DCL.Interaction.HoverCanvas.UI
             if (initialized)
                 return;
 
-            inputIcon = this.Q<VisualElement>("Icon");
+            inputIcon = this.Q<Image>("Icon");
             keyName = this.Q<Label>("KeyName");
             hint = this.Q<Label>("Hint");
             keyRoot = this.Q<VisualElement>("KeyRoot");
@@ -52,7 +53,5 @@ namespace DCL.Interaction.HoverCanvas.UI
             }
             else inputIcon.SetDisplayed(false);
         }
-
-        public new class UxmlFactory : UxmlFactory<HoverCanvasTooltipElement> { }
     }
 }
