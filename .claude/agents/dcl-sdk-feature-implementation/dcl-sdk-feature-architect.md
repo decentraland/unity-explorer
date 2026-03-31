@@ -1,5 +1,5 @@
 ---
-name: architect
+name: dcl-sdk-feature-architect
 description: Plan cross-repo SDK features, delegate to specialist sub-agents, manage dependencies, and verify cross-layer compatibility
 tools:
   - Read
