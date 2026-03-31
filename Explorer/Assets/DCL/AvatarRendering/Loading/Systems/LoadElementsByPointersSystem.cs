@@ -34,8 +34,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         private readonly IWebRequestController webRequestController;
         private readonly EntitiesAnalytics entitiesAnalytics;
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly StringBuilder bodyBuilder = new ();
+        protected readonly IDecentralandUrlsSource urlsSource;
 
         protected LoadElementsByPointersSystem(World world,
             IStreamableCache<TAsset, TIntention> cache,
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             foreach (TDTO entityDefinitionBase in dtoPooledList.Value)
             {
                 if (entityDefinitionBase.pointers.Length > 0 && abVersions.versions.TryGetValue(entityDefinitionBase.pointers[0], out var wearableVersions))
-                    entityDefinitionBase.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version,  wearableVersions.windows.buildDate);
+                    entityDefinitionBase.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest(wearableVersions.mac.version, wearableVersions.mac.buildDate, wearableVersions.windows.version, wearableVersions.windows.buildDate);
 
                 // Run the check just to inject content. If the registry had the entry, the manifest was already built
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, entityDefinitionBase, partitionComponent, ct);

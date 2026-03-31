@@ -32,7 +32,6 @@ namespace DCL.AvatarRendering.Emotes.Load
     public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention, EmoteDTO>
     {
         private readonly IEmoteStorage emoteStorage;
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -48,7 +47,6 @@ namespace DCL.AvatarRendering.Emotes.Load
             : base(world, cache, webRequestController, entitiesAnalytics, urlsSource)
         {
             this.emoteStorage = emoteStorage;
-            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 

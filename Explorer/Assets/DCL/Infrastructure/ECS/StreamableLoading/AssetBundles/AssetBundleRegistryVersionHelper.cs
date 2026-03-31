@@ -77,6 +77,13 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             foreach (var element in dtoPooledList.Value)
+            {
+                if (element.pointers.Length == 0)
+                {
+                    ReportHub.LogException(new Exception("Received an element with no pointers from the AB registry versions endpoint"), reportCategory);
+                    continue;
+                }
+
                 result.versions.Add(element.pointers[0], new AssetBundlesVersions.PlatformVersionInfo
                 {
                     mac = new AssetBundlesVersions.VersionInfo
@@ -88,6 +95,7 @@ namespace ECS.StreamableLoading.AssetBundles
                         version = element.versions.assets.windows.version, buildDate = element.versions.assets.windows.buildDate
                     }
                 });
+            }
 
             return result;
         }
