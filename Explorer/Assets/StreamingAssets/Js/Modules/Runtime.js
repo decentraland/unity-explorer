@@ -26,7 +26,7 @@ module.exports.getSceneInformation = function (message) {
     }
 }
 
-module.exports.getExplorerInformation = function (body) {
+module.exports.getExplorerInformation = async function (body) {
     const result = UnityRuntime.GetExplorerInformation()
     return {
         agent: result.agent,
