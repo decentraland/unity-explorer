@@ -168,7 +168,7 @@ namespace DCL.UI
             unmuteProximityButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearProximityButtonConfig.Text, contextMenuSettings.HearProximityButtonConfig.Sprite, new StringDelegate(OnUnmuteProximityClicked));
             contextMenuMuteProximityButton = new GenericContextMenuElement(muteProximityButtonControlSettings, false);
             contextMenuUnmuteProximityButton = new GenericContextMenuElement(unmuteProximityButtonControlSettings, false);
-            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, true);
+            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -178,14 +178,13 @@ namespace DCL.UI
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton);
 
+            contextMenu.AddControl(contextMenuMuteProximityButton)
+                       .AddControl(contextMenuUnmuteProximityButton);
+
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
 
             contextMenu.AddControl(contextMenuJumpInButton);
-            contextMenu.AddControl(contextMenuMuteProximityButton)
-                       .AddControl(contextMenuUnmuteProximityButton)
-                       .AddControl(contextMenuJumpInButton)
-                       .AddControl(contextMenuBlockUserButton);
 
             if (includeCommunities)
             {
@@ -193,11 +192,12 @@ namespace DCL.UI
                 invitationButton = invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
 
-            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                       .AddControl(contextMenuBlockUserButton);
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
                 contextMenu.AddControl(reportButtonControlSettings);
+
+            contextMenu.AddControl(contextMenuBlockUserButton);
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
