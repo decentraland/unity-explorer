@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape
 {
@@ -43,8 +44,11 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private void Cleanup(ref AvatarGhostComponent ghost, ref AvatarBase avatarBase)
         {
+            if (UnityObjectUtils.IsQuitting)
+                return;
+
             avatarBase.GhostGameObject.SetActive(false);
-            Object.Destroy(ghost.GhostMaterial);
+            UnityObjectUtils.SafeDestroy(ghost.GhostMaterial);
         }
     }
 }
