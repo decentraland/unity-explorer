@@ -79,14 +79,14 @@
       "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#feat/webgl_support",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "bd72c1ff3f3e2b869089699bc155e5adcdd74fa2"
+      "hash": "9b03eb8501c4d3d0f2f860f5946dcdb23ae11657"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
