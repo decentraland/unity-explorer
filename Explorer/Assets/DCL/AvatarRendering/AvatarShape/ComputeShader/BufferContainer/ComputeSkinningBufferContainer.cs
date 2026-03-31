@@ -40,11 +40,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public static ComputeSkinningBufferContainer New(int vertCount, int skinnedMeshRendererBoneCount)
         {
-            // ComputeBuffer does not allow zero-length construction; clamp to 1 so buffers are always valid.
-            // The compute shader receives the real vertCount via cs.SetInt and will dispatch zero work when it is 0.
-            vertCount = Mathf.Max(1, vertCount);
-            skinnedMeshRendererBoneCount = Mathf.Max(1, skinnedMeshRendererBoneCount);
-
             //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
             //set up the buffers depending on the platform
 
