@@ -9,6 +9,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILandscape landscape;
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IPlayerTeleportBroadcast teleportBroadcast;
 
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
@@ -42,7 +44,8 @@ namespace DCL.PluginSystem.Global
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILandscape landscape,
             IScenesCache scenesCache,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IPlayerTeleportBroadcast teleportBroadcast)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -51,6 +54,7 @@ namespace DCL.PluginSystem.Global
             this.landscape = landscape;
             this.scenesCache = scenesCache;
             this.assetsProvisioner = assetsProvisioner;
+            this.teleportBroadcast = teleportBroadcast;
         }
 
         public void Dispose()
@@ -86,7 +90,7 @@ namespace DCL.PluginSystem.Global
 
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
-            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CharacterVelocityDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);

@@ -6,6 +6,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Prioritization;
@@ -26,10 +27,12 @@ namespace DCL.CharacterMotion.Systems
         private const int COUNTDOWN_FRAMES = 20;
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IPlayerTeleportBroadcast teleportBroadcast;
 
-        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IPlayerTeleportBroadcast teleportBroadcast) : base(world)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.teleportBroadcast = teleportBroadcast;
         }
 
         protected override void Update(float t)
@@ -161,6 +164,8 @@ namespace DCL.CharacterMotion.Systems
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
+
+            teleportBroadcast.BroadcastTeleport(characterController.transform.position);
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));

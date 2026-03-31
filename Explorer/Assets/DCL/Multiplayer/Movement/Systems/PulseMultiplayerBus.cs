@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerBus : IDisposable
+    public partial class PulseMultiplayerBus : IPlayerTeleportBroadcast, IDisposable
     {
         internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
