@@ -18,13 +18,10 @@ namespace ECS.StreamableLoading.AssetBundles
         {
 #if UNITY_WEBGL
             "dcl/scene_ignore_webgl",
-            "dcl/universal render pipeline/lit_ignore_webgl",
             "dcl/toon_ignore_webgl",
 #else
             "dcl/scene_ignore_windows",
             "dcl/scene_ignore_mac",
-            "dcl/universal render pipeline/lit_ignore_windows",
-            "dcl/universal render pipeline/lit_ignore_mac",
             "dcl/toon_ignore_windows",
             "dcl/toon_ignore_mac",
 #endif

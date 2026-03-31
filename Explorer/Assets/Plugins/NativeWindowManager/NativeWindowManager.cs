@@ -165,6 +165,7 @@ namespace Plugins.NativeWindowManager
 
         private static void ApplyConstraints(bool enabled)
         {
+#if !UNITY_WEBGL
             if (disableWindowConstraints || Application.isEditor) return;
 
             if (!initialized)
@@ -174,12 +175,15 @@ namespace Plugins.NativeWindowManager
             }
 
             WindowConstraint_Set(enabled ? 1 : 0, MIN_ASPECT_RATIO, MAX_ASPECT_RATIO, MIN_WIDTH, MIN_HEIGHT);
+#endif
         }
 
+#if !UNITY_WEBGL
         [DllImport("WindowResizeConstraint")]
         private static extern void WindowConstraint_Init();
 
         [DllImport("WindowResizeConstraint")]
         private static extern void WindowConstraint_Set(int enabled, float minAspect, float maxAspect, int minWidth, int minHeight);
+#endif
     }
 }

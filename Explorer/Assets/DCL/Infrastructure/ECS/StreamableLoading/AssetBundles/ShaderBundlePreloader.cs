@@ -94,7 +94,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private static readonly string[] SHADER_BUNDLES =
         {
             "dcl/scene_ignore_webgl",
-            "dcl/universal render pipeline/lit_ignore_webgl",
             "dcl/toon_ignore_webgl",
         };
 
