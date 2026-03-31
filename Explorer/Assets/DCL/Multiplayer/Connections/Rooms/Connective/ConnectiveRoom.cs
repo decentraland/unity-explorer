@@ -100,6 +100,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public void Dispose()
         {
             room.ConnectionUpdated -= OnConnectionUpdated;
+            room.ResetRoomAsync(CancellationToken.None).Forget();
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
