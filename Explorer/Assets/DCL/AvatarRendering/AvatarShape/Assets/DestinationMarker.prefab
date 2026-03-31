@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d7599f5cccb0a9f4590df5536318ae5f, type: 2}
+    - target: {fileID: -4748361991329772099, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 5db243900521c3643ab954166b7ec348, type: 2}
     - target: {fileID: -3910990755373119420, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.2263
@@ -64,6 +68,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2881278892920110720, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: d7599f5cccb0a9f4590df5536318ae5f, type: 2}
     - target: {fileID: 8771091787928289351, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
       propertyPath: m_Name
       value: DestinationMarker
@@ -71,5 +79,26 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 312425904299399983, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4300024751230198601}
   m_SourcePrefab: {fileID: -4161369568681901532, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
+--- !u!1 &5359736345899209765 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 312425904299399983, guid: 762878a7bf3715b44ac918395f691db6, type: 3}
+  m_PrefabInstance: {fileID: 5635250509909053194}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4300024751230198601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5359736345899209765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81dc589d86f21784c8568883bd01920c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.DestinationMarkerView
+  rainbowSpeed: 2

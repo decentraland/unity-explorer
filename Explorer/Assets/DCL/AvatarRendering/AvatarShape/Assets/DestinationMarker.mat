@@ -22,7 +22,7 @@ Material:
     RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _Metallic _MetallicGlossMap
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -117,9 +117,9 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.7486658, g: 0, b: 1, a: 1}
-    - _Color: {r: 0.7486658, g: 0, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 2.9960785, b: 1.1070887, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 38.93715, b: 14.474017, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

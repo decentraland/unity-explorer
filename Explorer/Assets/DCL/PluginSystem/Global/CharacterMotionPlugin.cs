@@ -118,7 +118,7 @@ namespace DCL.PluginSystem.Global
                 new HandPointAtComponent(),
                 new TorsoIKComponent());
 
-            UpdatePointAndClickInputSystem.InjectToWorld(ref builder, settings.DestinationMarkerPrefab, settings.DestinationMarkerAnimatorController);
+            UpdatePointAndClickInputSystem.InjectToWorld(ref builder, settings.DestinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);

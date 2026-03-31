@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -34,32 +33,29 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(UpdateInputMovementSystem))]
     public partial class UpdatePointAndClickInputSystem : BaseUnityLoopSystem
     {
-        private const float MARKER_DURATION = 3f;
-
         private SingleInstanceEntity camera;
         private ICharacterControllerSettings cachedSettings;
         private InputAction sprintAction;
         private InputAction walkAction;
 
         private readonly GameObject markerPrefab;
-        private readonly RuntimeAnimatorController markerAnimatorController;
 
         // Stores the time of the previous left-click to detect double-clicks.
         private float lastClickTime = float.MinValue;
 
         private GameObject targetMarker;
-        private float markerTimer;
-        private bool markerShouldBeDestroyed;
+        private DestinationMarkerView targetMarkerView;
+        private bool markerShouldBeHidden;
 
-        internal UpdatePointAndClickInputSystem(World world, GameObject markerPrefab, RuntimeAnimatorController markerAnimatorController) : base(world)
+        internal UpdatePointAndClickInputSystem(World world, GameObject markerPrefab) : base(world)
         {
             this.markerPrefab = markerPrefab;
-            this.markerAnimatorController = markerAnimatorController;
         }
 
         protected override void OnDispose()
         {
-            DestroyMarker();
+            if (targetMarker != null)
+                Object.Destroy(targetMarker);
         }
 
         public override void Initialize()
@@ -72,11 +68,20 @@ namespace DCL.CharacterMotion.Systems
 
             sprintAction = DCLInput.Instance.Player.Sprint;
             walkAction = DCLInput.Instance.Player.Walk;
+
+            // Pre-instantiate the marker and keep it hidden until first use
+            targetMarker = markerPrefab != null
+                ? Object.Instantiate(markerPrefab)
+                : CreateFallbackMarker();
+
+            targetMarker.name = "PointAndClickMarker";
+            targetMarkerView = targetMarker.GetComponent<DestinationMarkerView>() ?? targetMarker.AddComponent<DestinationMarkerView>();
+            targetMarker.SetActive(false);
         }
 
         protected override void Update(float t)
         {
-            markerShouldBeDestroyed = false;
+            markerShouldBeHidden = false;
 
             ref readonly CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
 
@@ -120,58 +125,33 @@ namespace DCL.CharacterMotion.Systems
             if (hasDoubleClick)
                 ShowMarker(clickTarget, clickNormal);
 
-            // Tick down the marker lifetime independently of movement state
-            if (targetMarker != null)
-            {
-                markerTimer -= t;
-                if (markerTimer <= 0f)
-                    DestroyMarker();
-            }
-
             UpdateTargetQuery(World, hasDoubleClick, clickTarget, clickNormal);
             DriveMovementQuery(World, t, viewerForward, viewerRight);
 
-            if (markerShouldBeDestroyed)
-                DestroyMarker();
+            if (markerShouldBeHidden)
+                HideMarker();
         }
 
         private void ShowMarker(Vector3 position, Vector3 normal)
         {
-            DestroyMarker();
-
-            // Orient the marker so its local-up aligns with the surface normal
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, normal);
-
-            targetMarker = markerPrefab != null
-                ? Object.Instantiate(markerPrefab, position, rotation)
-                : CreateFallbackMarker(position, rotation);
-
-            targetMarker.name = "PointAndClickMarker";
-
-            if (markerAnimatorController != null)
-            {
-                var view = targetMarker.AddComponent<DestinationMarkerView>();
-                view.Initialize(markerAnimatorController);
-            }
-
-            markerTimer = MARKER_DURATION;
+            targetMarker.transform.SetPositionAndRotation(position, rotation);
+            targetMarker.SetActive(true);
+            targetMarkerView.ResetMarker();
         }
 
-        private static GameObject CreateFallbackMarker(Vector3 position, Quaternion rotation)
+        private void HideMarker()
+        {
+            targetMarker.SetActive(false);
+        }
+
+        private static GameObject CreateFallbackMarker()
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            go.transform.SetPositionAndRotation(position, rotation);
             go.transform.localScale = Vector3.one * 0.4f;
             Object.Destroy(go.GetComponent<Collider>());
             go.GetComponent<Renderer>().material.color = new Color(0f, 0.9f, 1f);
             return go;
-        }
-
-        private void DestroyMarker()
-        {
-            if (targetMarker == null) return;
-            Object.Destroy(targetMarker);
-            targetMarker = null;
         }
 
         /// <summary>
@@ -217,16 +197,15 @@ namespace DCL.CharacterMotion.Systems
             ref PointAndClickMovementComponent pcm,
             ref MovementInputComponent movementInput,
             in CharacterTransform characterTransform,
-            in JumpInputComponent jumpInput,
             in ICharacterControllerSettings settings)
         {
             // Cancel when the player takes manual control
             bool hasManualMovement = movementInput.Kind != MovementKind.IDLE
                                      || movementInput.Axes != Vector2.zero;
 
-            if (hasManualMovement || jumpInput.IsPressed)
+            if (hasManualMovement)
             {
-                markerShouldBeDestroyed = true;
+                markerShouldBeHidden = true;
                 World.Remove<PointAndClickMovementComponent>(entity);
                 return;
             }
@@ -241,7 +220,7 @@ namespace DCL.CharacterMotion.Systems
             {
                 movementInput.Axes = Vector2.zero;
                 movementInput.Kind = MovementKind.IDLE;
-                markerShouldBeDestroyed = true;
+                markerShouldBeHidden = true;
                 World.Remove<PointAndClickMovementComponent>(entity);
                 return;
             }
@@ -259,7 +238,7 @@ namespace DCL.CharacterMotion.Systems
                 {
                     movementInput.Axes = Vector2.zero;
                     movementInput.Kind = MovementKind.IDLE;
-                    markerShouldBeDestroyed = true;
+                    markerShouldBeHidden = true;
                     World.Remove<PointAndClickMovementComponent>(entity);
                     return;
                 }
