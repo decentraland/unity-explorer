@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace ECS.StreamableLoading
@@ -6,14 +7,12 @@ namespace ECS.StreamableLoading
     {
         public readonly Dictionary<string, PlatformVersionInfo> versions;
 
-        public static AssetBundlesVersions Create()
-        {
-            return new AssetBundlesVersions (true);
-        }
+        public static AssetBundlesVersions Create() =>
+            new (true);
 
-        private AssetBundlesVersions(bool paramLess)
+        private AssetBundlesVersions(bool _)
         {
-            versions = new Dictionary<string, PlatformVersionInfo>();
+            versions = new Dictionary<string, PlatformVersionInfo>(StringComparer.InvariantCultureIgnoreCase);
         }
 
         public struct PlatformVersionInfo

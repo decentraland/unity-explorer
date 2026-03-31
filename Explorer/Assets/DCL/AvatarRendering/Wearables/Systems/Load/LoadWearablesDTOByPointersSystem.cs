@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
 using ECS.Groups;
@@ -16,12 +17,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesDTOByPointersSystem : LoadElementsByPointersSystem<WearablesDTOList, GetWearableDTOByPointersIntention, WearableDTO>
     {
-        internal LoadWearablesDTOByPointersSystem(
+        private LoadWearablesDTOByPointersSystem(
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache,
-            EntitiesAnalytics entitiesAnalytics
-        ) : base(world, cache, webRequestController, entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            IDecentralandUrlsSource urlsSource
+        ) : base(world, cache, webRequestController, entitiesAnalytics, urlsSource)
         {
         }
 

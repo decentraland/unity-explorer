@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private static readonly ThreadSafeListPool<ABVersionsResponse> DTO_POOL = new (25, 50);
 
         public static async UniTask<AssetBundlesVersions> GetABRegistryVersionsByPointersAsync(
-            URN[] pointers,
+            IReadOnlyList<URN> pointers,
             IWebRequestController webRequestController,
             string assetBundleRegistryVersionURL,
             ReportData reportCategory,
@@ -27,19 +27,25 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             await UniTask.SwitchToMainThread();
 
+            var result = AssetBundlesVersions.Create();
+
+            // Early exit if we have no pointers to query so we avoid the 400 response
+            if (pointers.Count == 0)
+                return result;
+
             using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleRegistryVersionURL, out URLBuilder urlBuilder);
             using var sbScope = STRING_BUILDER_POOL.Get(out var bodyBuilder);
 
             bodyBuilder.Append("{\"pointers\":[");
 
-            for (int i = 0; i < pointers.Length; ++i)
+            for (int i = 0; i < pointers.Count; ++i)
             {
                 bodyBuilder.Append('\"');
 
                 bodyBuilder.Append(pointers[i].LowerCaseUrn());
                 bodyBuilder.Append('\"');
 
-                if (i != pointers.Length - 1)
+                if (i != pointers.Count - 1)
                     bodyBuilder.Append(",");
             }
 
@@ -47,8 +53,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             var url = urlBuilder.Build();
             using var dtoPooledList = DTO_POOL.AutoScope();
-
-            var result = AssetBundlesVersions.Create();
 
             try
             {

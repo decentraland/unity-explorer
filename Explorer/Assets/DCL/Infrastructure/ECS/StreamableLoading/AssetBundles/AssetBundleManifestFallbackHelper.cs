@@ -6,10 +6,8 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using Sentry;
 using System;
 using System.Threading;
-using UnityEngine;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace ECS.StreamableLoading.AssetBundles
