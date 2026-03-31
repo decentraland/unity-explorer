@@ -40,9 +40,9 @@ namespace DCL.VoiceChat
 
         public static bool IsInCallOrStarting(this VoiceChatStatus status) =>
             status is
-                VoiceChatStatus.VOICE_CHAT_STARTING_CALL or
+                // VoiceChatStatus.VOICE_CHAT_STARTING_CALL or
                 VoiceChatStatus.VOICE_CHAT_STARTED_CALL or
-                VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL or
+                // VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL or
                 VoiceChatStatus.VOICE_CHAT_IN_CALL;
     }
 }
