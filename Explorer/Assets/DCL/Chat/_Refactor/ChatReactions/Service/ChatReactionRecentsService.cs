@@ -157,14 +157,14 @@ namespace DCL.Chat.ChatReactions
             Profiler.BeginSample("ChatReactions.Recents.Load");
             usageEntries.Clear();
 
-            string saved = ReadSavedFavorites();
+            string? saved = ReadSavedFavorites();
 
             if (saved != null)
                 ParseSavedEntries(saved);
 
             Profiler.EndSample();
         }
-        private static string ReadSavedFavorites()
+        private static string? ReadSavedFavorites()
         {
             if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_FAVORITES))
                 return null;
