@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesDTOByPointersSystem : LoadElementsByPointersSystem<WearablesDTOList, GetWearableDTOByPointersIntention, WearableDTO>
     {
-        private LoadWearablesDTOByPointersSystem(
+        internal LoadWearablesDTOByPointersSystem(
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache,

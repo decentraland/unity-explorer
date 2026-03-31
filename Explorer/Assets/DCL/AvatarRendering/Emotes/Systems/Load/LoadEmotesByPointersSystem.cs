@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
-        private LoadEmotesByPointersSystem(
+        internal LoadEmotesByPointersSystem(
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention> cache,
