@@ -49,6 +49,8 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
+        private readonly bool pointAtFeatureEnabled;
+        private readonly bool headSyncFeatureEnabled;
 
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
@@ -76,6 +78,9 @@ namespace DCL.AvatarRendering.AvatarShape
 
             for (var i = 0; i < facialFeaturesTexturesByBodyShapeCopy.Length; i++)
                 facialFeaturesTexturesByBodyShapeCopy[i] = new FacialFeaturesTextures(new Dictionary<string, Dictionary<int, Texture>>());
+
+            pointAtFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
+            headSyncFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
         }
 
         protected override void OnDispose()
@@ -111,6 +116,15 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarTransform.ResetLocalTRS();
 
+            // Initialize breathing bridge NOW, while bones are still in rest pose.
+            // Once the AvatarBase is added to the entity and the Animator runs,
+            // bone rotations will reflect the idle animation, not the bind pose.
+            if (pointAtFeatureEnabled)
+                avatarBase.AdditiveBreathBridge.Initialize(
+                    avatarBase.RightArmAnchorPoint,
+                    avatarBase.RightForearmAnchorPoint,
+                    avatarBase.RightHandAnchorPoint);
+
             World.Add(entity, avatarBase, (IAvatarView)avatarBase);
         }
 
@@ -127,19 +141,30 @@ namespace DCL.AvatarRendering.AvatarShape
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
-            // Only enable the rig if head-sync is enabled
-            // The local player will ALWAYS re-enable the rig in InstantiateMainPlayerAvatar, so it's safe
-            avatarBase.RigBuilder.enabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
+            EnableRigsByFeatureFlags(avatarBase);
 
-            // Hands / Feet IK components are not added to remote entities
+            // Feet IK components are not added to remote entities
             // We still disable the rigs to ensure no cpu time is wasted
             // For the local player avatar we re-enable the rigs in InstantiateMainPlayerAvatar
-            avatarBase.HandsIKRig.enabled = false;
             avatarBase.FeetIKRig.enabled = false;
 
             World.Add(entity, avatarTransformMatrixComponent, skinningComponent);
 
             return true;
+        }
+
+        private void EnableRigsByFeatureFlags(AvatarBase avatarBase)
+        {
+            // Bridge initialization is done in EnsureAvatarBase (must happen before Animator runs
+            // so bind pose rotations are captured from rest pose, not animated pose).
+            // RigBuilder.enabled triggers Build() → binder.Create() which reads the NativeArrays,
+            // so Initialize() must have been called before this point.
+
+            avatarBase.RigBuilder.enabled = headSyncFeatureEnabled || pointAtFeatureEnabled;
+            avatarBase.HandsIKRig.enabled = pointAtFeatureEnabled;
+            avatarBase.TorsoIKRig.enabled = pointAtFeatureEnabled;
+            avatarBase.CachePoseRig.enabled = pointAtFeatureEnabled;
+            avatarBase.AdditiveBreathRig.enabled = pointAtFeatureEnabled;
         }
 
         [Query]
@@ -152,6 +177,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (avatarBase != null)
             {
                 // Re-enable rigs since by default we disable them when instantiating new avatars
+                EnableRigsByFeatureFlags(avatarBase);
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HandsIKRig.enabled = true;
                 avatarBase.FeetIKRig.enabled = true;
