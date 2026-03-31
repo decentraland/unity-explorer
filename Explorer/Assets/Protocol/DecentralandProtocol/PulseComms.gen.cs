@@ -32,7 +32,7 @@ namespace Decentraland.Pulse {
             "GAEgASgIEhIKBWVycm9yGAIgASgJSACIAQFCCAoGX2Vycm9yIi0KGlByb2Zp",
             "bGVWZXJzaW9uQW5ub3VuY2VtZW50Eg8KB3ZlcnNpb24YASABKAUiRQoeUGxh",
             "eWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2VkEhIKCnN1YmplY3RfaWQYASAB",
-            "KA0SDwoHdmVyc2lvbhgCIAEoBSL9AgoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
+            "KA0SDwoHdmVyc2lvbhgCIAEoBSK2AwoNQ2xpZW50TWVzc2FnZRI5CgloYW5k",
             "c2hha2UYASABKAsyJC5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVx",
             "dWVzdEgAEjUKBWlucHV0GAIgASgLMiQuZGVjZW50cmFsYW5kLnB1bHNlLlBs",
             "YXllclN0YXRlSW5wdXRIABIzCgZyZXN5bmMYAyABKAsyIS5kZWNlbnRyYWxh",
@@ -40,73 +40,76 @@ namespace Decentraland.Pulse {
             "ZW50GAQgASgLMi4uZGVjZW50cmFsYW5kLnB1bHNlLlByb2ZpbGVWZXJzaW9u",
             "QW5ub3VuY2VtZW50SAASNQoLZW1vdGVfc3RhcnQYBSABKAsyHi5kZWNlbnRy",
             "YWxhbmQucHVsc2UuRW1vdGVTdGFydEgAEjMKCmVtb3RlX3N0b3AYBiABKAsy",
-            "HS5kZWNlbnRyYWxhbmQucHVsc2UuRW1vdGVTdG9wSABCCQoHbWVzc2FnZSKp",
-            "BAoNU2VydmVyTWVzc2FnZRI6CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRy",
-            "YWxhbmQucHVsc2UuSGFuZHNoYWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3Rh",
-            "dGVfZnVsbBgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
-            "ZUZ1bGxIABJHChJwbGF5ZXJfc3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRy",
-            "YWxhbmQucHVsc2UuUGxheWVyU3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVy",
-            "X2pvaW5lZBgEIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2lu",
-            "ZWRIABI1CgtwbGF5ZXJfbGVmdBgFIAEoCzIeLmRlY2VudHJhbGFuZC5wdWxz",
-            "ZS5QbGF5ZXJMZWZ0SAASXgogcGxheWVyX3Byb2ZpbGVfdmVyc2lvbl9hbm5v",
-            "dW5jZWQYBiABKAsyMi5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyUHJvZmls",
-            "ZVZlcnNpb25zQW5ub3VuY2VkSAASOQoNZW1vdGVfc3RhcnRlZBgHIAEoCzIg",
-            "LmRlY2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0YXJ0ZWRIABI5Cg1lbW90ZV9z",
-            "dG9wcGVkGAggASgLMiAuZGVjZW50cmFsYW5kLnB1bHNlLkVtb3RlU3RvcHBl",
-            "ZEgAQgkKB21lc3NhZ2UiQgoQUGxheWVyU3RhdGVJbnB1dBIuCgVzdGF0ZRgB",
-            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSLuAgoLUGxh",
-            "eWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEi4KCHBvc2l0aW9uGAIg",
-            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEi4KCHZlbG9jaXR5",
-            "GAMgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzEhIKCnJvdGF0",
-            "aW9uX3kYBCABKAISFgoObW92ZW1lbnRfYmxlbmQYBSABKAISEwoLc2xpZGVf",
-            "YmxlbmQYBiABKAISFQoIaGVhZF95YXcYByABKAJIAIgBARIXCgpoZWFkX3Bp",
-            "dGNoGAggASgCSAGIAQESEwoLc3RhdGVfZmxhZ3MYCSABKA0SMwoLZ2xpZGVf",
-            "c3RhdGUYCiABKA4yHi5kZWNlbnRyYWxhbmQucHVsc2UuR2xpZGVTdGF0ZRIS",
-            "CgpqdW1wX2NvdW50GAsgASgFQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9waXRj",
-            "aCL1BgoVUGxheWVyU3RhdGVEZWx0YVRpZXIwEhIKCnN1YmplY3RfaWQYASAB",
-            "KA0SDwoHbmV3X3NlcRgCIAEoDRITCgtzZXJ2ZXJfdGljaxgDIAEoDRIZCgxw",
-            "YXJjZWxfaW5kZXgYBCABKAVIAIgBARIkCgpwb3NpdGlvbl94GAUgASgNQguK",
-            "tRgHFQAAgEEYCEgBiAEBEiQKCnBvc2l0aW9uX3kYBiABKA1CC4q1GAcVAABI",
-            "QxgNSAKIAQESJAoKcG9zaXRpb25fehgHIAEoDUILirUYBxUAAIBBGAhIA4gB",
-            "ARIpCgp2ZWxvY2l0eV94GAggASgNQhCKtRgMDQAASMIVAABIQhgISASIAQES",
-            "KQoKdmVsb2NpdHlfeRgJIAEoDUIQirUYDA0AAEjCFQAASEIYCEgFiAEBEikK",
-            "CnZlbG9jaXR5X3oYCiABKA1CEIq1GAwNAABIwhUAAEhCGAhIBogBARIkCgpy",
-            "b3RhdGlvbl95GAsgASgNQguKtRgHFQAAtEMYB0gHiAEBEigKDm1vdmVtZW50",
-            "X2JsZW5kGAwgASgNQguKtRgHFQAAQEAYBUgIiAEBEiUKC3NsaWRlX2JsZW5k",
-            "GA0gASgNQguKtRgHFQAAgD8YBEgJiAEBEiIKCGhlYWRfeWF3GA4gASgNQguK",
-            "tRgHFQAAtEMYB0gKiAEBEiQKCmhlYWRfcGl0Y2gYDyABKA1CC4q1GAcVAAA0",
-            "QxgGSAuIAQESGAoLc3RhdGVfZmxhZ3MYECABKA1IDIgBARI4CgtnbGlkZV9z",
-            "dGF0ZRgRIAEoDjIeLmRlY2VudHJhbGFuZC5wdWxzZS5HbGlkZVN0YXRlSA2I",
-            "AQESFwoKanVtcF9jb3VudBgSIAEoBUgOiAEBQg8KDV9wYXJjZWxfaW5kZXhC",
-            "DQoLX3Bvc2l0aW9uX3hCDQoLX3Bvc2l0aW9uX3lCDQoLX3Bvc2l0aW9uX3pC",
-            "DQoLX3ZlbG9jaXR5X3hCDQoLX3ZlbG9jaXR5X3lCDQoLX3ZlbG9jaXR5X3pC",
-            "DQoLX3JvdGF0aW9uX3lCEQoPX21vdmVtZW50X2JsZW5kQg4KDF9zbGlkZV9i",
-            "bGVuZEILCglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2hCDgoMX3N0YXRlX2Zs",
-            "YWdzQg4KDF9nbGlkZV9zdGF0ZUINCgtfanVtcF9jb3VudCJ8Cg9QbGF5ZXJT",
-            "dGF0ZUZ1bGwSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEo",
-            "DRITCgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2Vu",
-            "dHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJsCgxQbGF5ZXJKb2luZWQSDwoH",
-            "dXNlcl9pZBgBIAEoCRIXCg9wcm9maWxlX3ZlcnNpb24YAiABKAUSMgoFc3Rh",
-            "dGUYAyABKAsyIy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVGdWxs",
-            "IiAKClBsYXllckxlZnQSEgoKc3ViamVjdF9pZBgBIAEoDSI2Cg1SZXN5bmNS",
-            "ZXF1ZXN0EhIKCnN1YmplY3RfaWQYASABKA0SEQoJa25vd25fc2VxGAIgASgN",
-            "IkgKCkVtb3RlU3RhcnQSEAoIZW1vdGVfaWQYASABKAkSGAoLZHVyYXRpb25f",
-            "bXMYAiABKA1IAIgBAUIOCgxfZHVyYXRpb25fbXMiCwoJRW1vdGVTdG9wIoAB",
-            "CgxFbW90ZVN0YXJ0ZWQSEgoKc3ViamVjdF9pZBgBIAEoDRITCgtzZXJ2ZXJf",
-            "dGljaxgCIAEoDRIQCghlbW90ZV9pZBgDIAEoCRI1CgxwbGF5ZXJfc3RhdGUY",
-            "BCABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGUibAoMRW1v",
-            "dGVTdG9wcGVkEhIKCnN1YmplY3RfaWQYASABKA0SEwoLc2VydmVyX3RpY2sY",
-            "AiABKA0SMwoGcmVhc29uGAMgASgOMiMuZGVjZW50cmFsYW5kLnB1bHNlLkVt",
-            "b3RlU3RvcFJlYXNvbiJBCg9UZWxlcG9ydFJlcXVlc3QSLgoIcG9zaXRpb24Y",
-            "ASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMibAoRVGVsZXBv",
-            "cnRQZXJmb3JtZWQSEgoKc3ViamVjdF9pZBgBIAEoDRITCgtzZXJ2ZXJfdGlj",
-            "axgCIAEoDRIuCghwb3NpdGlvbhgDIAEoCzIcLmRlY2VudHJhbGFuZC5jb21t",
-            "b24uVmVjdG9yMypmChRQbGF5ZXJBbmltYXRpb25GbGFncxIICgROT05FEAAS",
-            "DAoIR1JPVU5ERUQQARINCglMT05HX0pVTVAQAhINCglMT05HX0ZBTEwQBBIL",
-            "CgdGQUxMSU5HEAgSCwoHU1RVTk5FRBAQKk4KCkdsaWRlU3RhdGUSDwoLUFJP",
-            "UF9DTE9TRUQQABIQCgxPUEVOSU5HX1BST1AQARILCgdHTElESU5HEAISEAoM",
-            "Q0xPU0lOR19QUk9QEAMqLwoPRW1vdGVTdG9wUmVhc29uEg0KCUNPTVBMRVRF",
-            "RBAAEg0KCUNBTkNFTExFRBABYgZwcm90bzM="));
+            "HS5kZWNlbnRyYWxhbmQucHVsc2UuRW1vdGVTdG9wSAASNwoIdGVsZXBvcnQY",
+            "ByABKAsyIy5kZWNlbnRyYWxhbmQucHVsc2UuVGVsZXBvcnRSZXF1ZXN0SABC",
+            "CQoHbWVzc2FnZSLmBAoNU2VydmVyTWVzc2FnZRI6CgloYW5kc2hha2UYASAB",
+            "KAsyJS5kZWNlbnRyYWxhbmQucHVsc2UuSGFuZHNoYWtlUmVzcG9uc2VIABJA",
+            "ChFwbGF5ZXJfc3RhdGVfZnVsbBgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxz",
+            "ZS5QbGF5ZXJTdGF0ZUZ1bGxIABJHChJwbGF5ZXJfc3RhdGVfZGVsdGEYAyAB",
+            "KAsyKS5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVEZWx0YVRpZXIw",
+            "SAASOQoNcGxheWVyX2pvaW5lZBgEIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxz",
+            "ZS5QbGF5ZXJKb2luZWRIABI1CgtwbGF5ZXJfbGVmdBgFIAEoCzIeLmRlY2Vu",
+            "dHJhbGFuZC5wdWxzZS5QbGF5ZXJMZWZ0SAASXgogcGxheWVyX3Byb2ZpbGVf",
+            "dmVyc2lvbl9hbm5vdW5jZWQYBiABKAsyMi5kZWNlbnRyYWxhbmQucHVsc2Uu",
+            "UGxheWVyUHJvZmlsZVZlcnNpb25zQW5ub3VuY2VkSAASOQoNZW1vdGVfc3Rh",
+            "cnRlZBgHIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0YXJ0ZWRI",
+            "ABI5Cg1lbW90ZV9zdG9wcGVkGAggASgLMiAuZGVjZW50cmFsYW5kLnB1bHNl",
+            "LkVtb3RlU3RvcHBlZEgAEjsKCnRlbGVwb3J0ZWQYCSABKAsyJS5kZWNlbnRy",
+            "YWxhbmQucHVsc2UuVGVsZXBvcnRQZXJmb3JtZWRIAEIJCgdtZXNzYWdlIkIK",
+            "EFBsYXllclN0YXRlSW5wdXQSLgoFc3RhdGUYASABKAsyHy5kZWNlbnRyYWxh",
+            "bmQucHVsc2UuUGxheWVyU3RhdGUi7gIKC1BsYXllclN0YXRlEhQKDHBhcmNl",
+            "bF9pbmRleBgBIAEoBRIuCghwb3NpdGlvbhgCIAEoCzIcLmRlY2VudHJhbGFu",
+            "ZC5jb21tb24uVmVjdG9yMxIuCgh2ZWxvY2l0eRgDIAEoCzIcLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uVmVjdG9yMxISCgpyb3RhdGlvbl95GAQgASgCEhYKDm1v",
+            "dmVtZW50X2JsZW5kGAUgASgCEhMKC3NsaWRlX2JsZW5kGAYgASgCEhUKCGhl",
+            "YWRfeWF3GAcgASgCSACIAQESFwoKaGVhZF9waXRjaBgIIAEoAkgBiAEBEhMK",
+            "C3N0YXRlX2ZsYWdzGAkgASgNEjMKC2dsaWRlX3N0YXRlGAogASgOMh4uZGVj",
+            "ZW50cmFsYW5kLnB1bHNlLkdsaWRlU3RhdGUSEgoKanVtcF9jb3VudBgLIAEo",
+            "BUILCglfaGVhZF95YXdCDQoLX2hlYWRfcGl0Y2giiwcKFVBsYXllclN0YXRl",
+            "RGVsdGFUaWVyMBISCgpzdWJqZWN0X2lkGAEgASgNEhQKDGJhc2VsaW5lX3Nl",
+            "cRgCIAEoDRIPCgduZXdfc2VxGAMgASgNEhMKC3NlcnZlcl90aWNrGAQgASgN",
+            "EhkKDHBhcmNlbF9pbmRleBgFIAEoBUgAiAEBEiQKCnBvc2l0aW9uX3gYBiAB",
+            "KA1CC4q1GAcVAACAQRgISAGIAQESJAoKcG9zaXRpb25feRgHIAEoDUILirUY",
+            "BxUAAEhDGA1IAogBARIkCgpwb3NpdGlvbl96GAggASgNQguKtRgHFQAAgEEY",
+            "CEgDiAEBEikKCnZlbG9jaXR5X3gYCSABKA1CEIq1GAwNAABIwhUAAEhCGAhI",
+            "BIgBARIpCgp2ZWxvY2l0eV95GAogASgNQhCKtRgMDQAASMIVAABIQhgISAWI",
+            "AQESKQoKdmVsb2NpdHlfehgLIAEoDUIQirUYDA0AAEjCFQAASEIYCEgGiAEB",
+            "EiQKCnJvdGF0aW9uX3kYDCABKA1CC4q1GAcVAAC0QxgHSAeIAQESKAoObW92",
+            "ZW1lbnRfYmxlbmQYDSABKA1CC4q1GAcVAABAQBgFSAiIAQESJQoLc2xpZGVf",
+            "YmxlbmQYDiABKA1CC4q1GAcVAACAPxgESAmIAQESIgoIaGVhZF95YXcYDyAB",
+            "KA1CC4q1GAcVAAC0QxgHSAqIAQESJAoKaGVhZF9waXRjaBgQIAEoDUILirUY",
+            "BxUAADRDGAZIC4gBARIYCgtzdGF0ZV9mbGFncxgRIAEoDUgMiAEBEjgKC2ds",
+            "aWRlX3N0YXRlGBIgASgOMh4uZGVjZW50cmFsYW5kLnB1bHNlLkdsaWRlU3Rh",
+            "dGVIDYgBARIXCgpqdW1wX2NvdW50GBMgASgFSA6IAQFCDwoNX3BhcmNlbF9p",
+            "bmRleEINCgtfcG9zaXRpb25feEINCgtfcG9zaXRpb25feUINCgtfcG9zaXRp",
+            "b25fekINCgtfdmVsb2NpdHlfeEINCgtfdmVsb2NpdHlfeUINCgtfdmVsb2Np",
+            "dHlfekINCgtfcm90YXRpb25feUIRCg9fbW92ZW1lbnRfYmxlbmRCDgoMX3Ns",
+            "aWRlX2JsZW5kQgsKCV9oZWFkX3lhd0INCgtfaGVhZF9waXRjaEIOCgxfc3Rh",
+            "dGVfZmxhZ3NCDgoMX2dsaWRlX3N0YXRlQg0KC19qdW1wX2NvdW50InwKD1Bs",
+            "YXllclN0YXRlRnVsbBISCgpzdWJqZWN0X2lkGAEgASgNEhAKCHNlcXVlbmNl",
+            "GAIgASgNEhMKC3NlcnZlcl90aWNrGAMgASgNEi4KBXN0YXRlGAQgASgLMh8u",
+            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlImwKDFBsYXllckpvaW5l",
+            "ZBIPCgd1c2VyX2lkGAEgASgJEhcKD3Byb2ZpbGVfdmVyc2lvbhgCIAEoBRIy",
+            "CgVzdGF0ZRgDIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0",
+            "ZUZ1bGwiIAoKUGxheWVyTGVmdBISCgpzdWJqZWN0X2lkGAEgASgNIjYKDVJl",
+            "c3luY1JlcXVlc3QSEgoKc3ViamVjdF9pZBgBIAEoDRIRCglrbm93bl9zZXEY",
+            "AiABKA0iSAoKRW1vdGVTdGFydBIQCghlbW90ZV9pZBgBIAEoCRIYCgtkdXJh",
+            "dGlvbl9tcxgCIAEoDUgAiAEBQg4KDF9kdXJhdGlvbl9tcyILCglFbW90ZVN0",
+            "b3AigAEKDEVtb3RlU3RhcnRlZBISCgpzdWJqZWN0X2lkGAEgASgNEhMKC3Nl",
+            "cnZlcl90aWNrGAIgASgNEhAKCGVtb3RlX2lkGAMgASgJEjUKDHBsYXllcl9z",
+            "dGF0ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJs",
+            "CgxFbW90ZVN0b3BwZWQSEgoKc3ViamVjdF9pZBgBIAEoDRITCgtzZXJ2ZXJf",
+            "dGljaxgCIAEoDRIzCgZyZWFzb24YAyABKA4yIy5kZWNlbnRyYWxhbmQucHVs",
+            "c2UuRW1vdGVTdG9wUmVhc29uIkEKD1RlbGVwb3J0UmVxdWVzdBIuCghwb3Np",
+            "dGlvbhgBIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMyJsChFU",
+            "ZWxlcG9ydFBlcmZvcm1lZBISCgpzdWJqZWN0X2lkGAEgASgNEhMKC3NlcnZl",
+            "cl90aWNrGAIgASgNEi4KCHBvc2l0aW9uGAMgASgLMhwuZGVjZW50cmFsYW5k",
+            "LmNvbW1vbi5WZWN0b3IzKmYKFFBsYXllckFuaW1hdGlvbkZsYWdzEggKBE5P",
+            "TkUQABIMCghHUk9VTkRFRBABEg0KCUxPTkdfSlVNUBACEg0KCUxPTkdfRkFM",
+            "TBAEEgsKB0ZBTExJTkcQCBILCgdTVFVOTkVEEBAqTgoKR2xpZGVTdGF0ZRIP",
+            "CgtQUk9QX0NMT1NFRBAAEhAKDE9QRU5JTkdfUFJPUBABEgsKB0dMSURJTkcQ",
+            "AhIQCgxDTE9TSU5HX1BST1AQAyovCg9FbW90ZVN0b3BSZWFzb24SDQoJQ09N",
+            "UExFVEVEEAASDQoJQ0FOQ0VMTEVEEAFiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -114,11 +117,11 @@ namespace Decentraland.Pulse {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.HandshakeResponse), global::Decentraland.Pulse.HandshakeResponse.Parser, new[]{ "Success", "Error" }, new[]{ "Error" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ProfileVersionAnnouncement), global::Decentraland.Pulse.ProfileVersionAnnouncement.Parser, new[]{ "Version" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerProfileVersionsAnnounced), global::Decentraland.Pulse.PlayerProfileVersionsAnnounced.Parser, new[]{ "SubjectId", "Version" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement", "EmoteStart", "EmoteStop" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced", "EmoteStarted", "EmoteStopped" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ClientMessage), global::Decentraland.Pulse.ClientMessage.Parser, new[]{ "Handshake", "Input", "Resync", "ProfileAnnouncement", "EmoteStart", "EmoteStop", "Teleport" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced", "EmoteStarted", "EmoteStopped", "Teleported" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateInput), global::Decentraland.Pulse.PlayerStateInput.Parser, new[]{ "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "NewSeq", "ServerTick", "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "BaselineSeq", "NewSeq", "ServerTick", "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "ProfileVersion", "State" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerLeft), global::Decentraland.Pulse.PlayerLeft.Parser, new[]{ "SubjectId" }, null, null, null, null),
@@ -1140,6 +1143,9 @@ namespace Decentraland.Pulse {
         case MessageOneofCase.EmoteStop:
           EmoteStop = other.EmoteStop.Clone();
           break;
+        case MessageOneofCase.Teleport:
+          Teleport = other.Teleport.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -1223,6 +1229,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "teleport" field.</summary>
+    public const int TeleportFieldNumber = 7;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.TeleportRequest Teleport {
+      get { return messageCase_ == MessageOneofCase.Teleport ? (global::Decentraland.Pulse.TeleportRequest) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.Teleport;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1233,6 +1251,7 @@ namespace Decentraland.Pulse {
       ProfileAnnouncement = 4,
       EmoteStart = 5,
       EmoteStop = 6,
+      Teleport = 7,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1269,6 +1288,7 @@ namespace Decentraland.Pulse {
       if (!object.Equals(ProfileAnnouncement, other.ProfileAnnouncement)) return false;
       if (!object.Equals(EmoteStart, other.EmoteStart)) return false;
       if (!object.Equals(EmoteStop, other.EmoteStop)) return false;
+      if (!object.Equals(Teleport, other.Teleport)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1283,6 +1303,7 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.ProfileAnnouncement) hash ^= ProfileAnnouncement.GetHashCode();
       if (messageCase_ == MessageOneofCase.EmoteStart) hash ^= EmoteStart.GetHashCode();
       if (messageCase_ == MessageOneofCase.EmoteStop) hash ^= EmoteStop.GetHashCode();
+      if (messageCase_ == MessageOneofCase.Teleport) hash ^= Teleport.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1326,6 +1347,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(50);
         output.WriteMessage(EmoteStop);
       }
+      if (messageCase_ == MessageOneofCase.Teleport) {
+        output.WriteRawTag(58);
+        output.WriteMessage(Teleport);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1360,6 +1385,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(50);
         output.WriteMessage(EmoteStop);
       }
+      if (messageCase_ == MessageOneofCase.Teleport) {
+        output.WriteRawTag(58);
+        output.WriteMessage(Teleport);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1387,6 +1416,9 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.EmoteStop) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStop);
+      }
+      if (messageCase_ == MessageOneofCase.Teleport) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Teleport);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1436,6 +1468,12 @@ namespace Decentraland.Pulse {
             EmoteStop = new global::Decentraland.Pulse.EmoteStop();
           }
           EmoteStop.MergeFrom(other.EmoteStop);
+          break;
+        case MessageOneofCase.Teleport:
+          if (Teleport == null) {
+            Teleport = new global::Decentraland.Pulse.TeleportRequest();
+          }
+          Teleport.MergeFrom(other.Teleport);
           break;
       }
 
@@ -1512,6 +1550,15 @@ namespace Decentraland.Pulse {
             EmoteStop = subBuilder;
             break;
           }
+          case 58: {
+            global::Decentraland.Pulse.TeleportRequest subBuilder = new global::Decentraland.Pulse.TeleportRequest();
+            if (messageCase_ == MessageOneofCase.Teleport) {
+              subBuilder.MergeFrom(Teleport);
+            }
+            input.ReadMessage(subBuilder);
+            Teleport = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1585,6 +1632,15 @@ namespace Decentraland.Pulse {
             EmoteStop = subBuilder;
             break;
           }
+          case 58: {
+            global::Decentraland.Pulse.TeleportRequest subBuilder = new global::Decentraland.Pulse.TeleportRequest();
+            if (messageCase_ == MessageOneofCase.Teleport) {
+              subBuilder.MergeFrom(Teleport);
+            }
+            input.ReadMessage(subBuilder);
+            Teleport = subBuilder;
+            break;
+          }
         }
       }
     }
@@ -1651,6 +1707,9 @@ namespace Decentraland.Pulse {
           break;
         case MessageOneofCase.EmoteStopped:
           EmoteStopped = other.EmoteStopped.Clone();
+          break;
+        case MessageOneofCase.Teleported:
+          Teleported = other.Teleported.Clone();
           break;
       }
 
@@ -1759,6 +1818,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "teleported" field.</summary>
+    public const int TeleportedFieldNumber = 9;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Pulse.TeleportPerformed Teleported {
+      get { return messageCase_ == MessageOneofCase.Teleported ? (global::Decentraland.Pulse.TeleportPerformed) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.Teleported;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -1771,6 +1842,7 @@ namespace Decentraland.Pulse {
       PlayerProfileVersionAnnounced = 6,
       EmoteStarted = 7,
       EmoteStopped = 8,
+      Teleported = 9,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1809,6 +1881,7 @@ namespace Decentraland.Pulse {
       if (!object.Equals(PlayerProfileVersionAnnounced, other.PlayerProfileVersionAnnounced)) return false;
       if (!object.Equals(EmoteStarted, other.EmoteStarted)) return false;
       if (!object.Equals(EmoteStopped, other.EmoteStopped)) return false;
+      if (!object.Equals(Teleported, other.Teleported)) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1825,6 +1898,7 @@ namespace Decentraland.Pulse {
       if (messageCase_ == MessageOneofCase.PlayerProfileVersionAnnounced) hash ^= PlayerProfileVersionAnnounced.GetHashCode();
       if (messageCase_ == MessageOneofCase.EmoteStarted) hash ^= EmoteStarted.GetHashCode();
       if (messageCase_ == MessageOneofCase.EmoteStopped) hash ^= EmoteStopped.GetHashCode();
+      if (messageCase_ == MessageOneofCase.Teleported) hash ^= Teleported.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -1876,6 +1950,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(66);
         output.WriteMessage(EmoteStopped);
       }
+      if (messageCase_ == MessageOneofCase.Teleported) {
+        output.WriteRawTag(74);
+        output.WriteMessage(Teleported);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1918,6 +1996,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(66);
         output.WriteMessage(EmoteStopped);
       }
+      if (messageCase_ == MessageOneofCase.Teleported) {
+        output.WriteRawTag(74);
+        output.WriteMessage(Teleported);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1951,6 +2033,9 @@ namespace Decentraland.Pulse {
       }
       if (messageCase_ == MessageOneofCase.EmoteStopped) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(EmoteStopped);
+      }
+      if (messageCase_ == MessageOneofCase.Teleported) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Teleported);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2012,6 +2097,12 @@ namespace Decentraland.Pulse {
             EmoteStopped = new global::Decentraland.Pulse.EmoteStopped();
           }
           EmoteStopped.MergeFrom(other.EmoteStopped);
+          break;
+        case MessageOneofCase.Teleported:
+          if (Teleported == null) {
+            Teleported = new global::Decentraland.Pulse.TeleportPerformed();
+          }
+          Teleported.MergeFrom(other.Teleported);
           break;
       }
 
@@ -2106,6 +2197,15 @@ namespace Decentraland.Pulse {
             EmoteStopped = subBuilder;
             break;
           }
+          case 74: {
+            global::Decentraland.Pulse.TeleportPerformed subBuilder = new global::Decentraland.Pulse.TeleportPerformed();
+            if (messageCase_ == MessageOneofCase.Teleported) {
+              subBuilder.MergeFrom(Teleported);
+            }
+            input.ReadMessage(subBuilder);
+            Teleported = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -2195,6 +2295,15 @@ namespace Decentraland.Pulse {
             }
             input.ReadMessage(subBuilder);
             EmoteStopped = subBuilder;
+            break;
+          }
+          case 74: {
+            global::Decentraland.Pulse.TeleportPerformed subBuilder = new global::Decentraland.Pulse.TeleportPerformed();
+            if (messageCase_ == MessageOneofCase.Teleported) {
+              subBuilder.MergeFrom(Teleported);
+            }
+            input.ReadMessage(subBuilder);
+            Teleported = subBuilder;
             break;
           }
         }
@@ -3070,6 +3179,7 @@ namespace Decentraland.Pulse {
     public PlayerStateDeltaTier0(PlayerStateDeltaTier0 other) : this() {
       _hasBits0 = other._hasBits0;
       subjectId_ = other.subjectId_;
+      baselineSeq_ = other.baselineSeq_;
       newSeq_ = other.newSeq_;
       serverTick_ = other.serverTick_;
       parcelIndex_ = other.parcelIndex_;
@@ -3108,8 +3218,25 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "baseline_seq" field.</summary>
+    public const int BaselineSeqFieldNumber = 2;
+    private uint baselineSeq_;
+    /// <summary>
+    /// Between two consecutive server simulation ticks, the subject may have sent multiple inputs, each incrementing Seq by 1. So
+    /// the delta's NewSeq will naturally jump by more than 1 compared to the previous delta — even with zero packet loss.
+    /// Without the "BaselineSeq" the client has no way to detect the package loss
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint BaselineSeq {
+      get { return baselineSeq_; }
+      set {
+        baselineSeq_ = value;
+      }
+    }
+
     /// <summary>Field number for the "new_seq" field.</summary>
-    public const int NewSeqFieldNumber = 2;
+    public const int NewSeqFieldNumber = 3;
     private uint newSeq_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3121,7 +3248,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "server_tick" field.</summary>
-    public const int ServerTickFieldNumber = 3;
+    public const int ServerTickFieldNumber = 4;
     private uint serverTick_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -3133,7 +3260,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "parcel_index" field.</summary>
-    public const int ParcelIndexFieldNumber = 4;
+    public const int ParcelIndexFieldNumber = 5;
     private readonly static int ParcelIndexDefaultValue = 0;
 
     private int parcelIndex_;
@@ -3163,7 +3290,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "position_x" field.</summary>
-    public const int PositionXFieldNumber = 5;
+    public const int PositionXFieldNumber = 6;
     private readonly static uint PositionXDefaultValue = 0;
 
     private uint positionX_;
@@ -3193,7 +3320,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "position_y" field.</summary>
-    public const int PositionYFieldNumber = 6;
+    public const int PositionYFieldNumber = 7;
     private readonly static uint PositionYDefaultValue = 0;
 
     private uint positionY_;
@@ -3223,7 +3350,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "position_z" field.</summary>
-    public const int PositionZFieldNumber = 7;
+    public const int PositionZFieldNumber = 8;
     private readonly static uint PositionZDefaultValue = 0;
 
     private uint positionZ_;
@@ -3253,7 +3380,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "velocity_x" field.</summary>
-    public const int VelocityXFieldNumber = 8;
+    public const int VelocityXFieldNumber = 9;
     private readonly static uint VelocityXDefaultValue = 0;
 
     private uint velocityX_;
@@ -3280,7 +3407,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "velocity_y" field.</summary>
-    public const int VelocityYFieldNumber = 9;
+    public const int VelocityYFieldNumber = 10;
     private readonly static uint VelocityYDefaultValue = 0;
 
     private uint velocityY_;
@@ -3307,7 +3434,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "velocity_z" field.</summary>
-    public const int VelocityZFieldNumber = 10;
+    public const int VelocityZFieldNumber = 11;
     private readonly static uint VelocityZDefaultValue = 0;
 
     private uint velocityZ_;
@@ -3334,7 +3461,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "rotation_y" field.</summary>
-    public const int RotationYFieldNumber = 11;
+    public const int RotationYFieldNumber = 12;
     private readonly static uint RotationYDefaultValue = 0;
 
     private uint rotationY_;
@@ -3361,7 +3488,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "movement_blend" field.</summary>
-    public const int MovementBlendFieldNumber = 12;
+    public const int MovementBlendFieldNumber = 13;
     private readonly static uint MovementBlendDefaultValue = 0;
 
     private uint movementBlend_;
@@ -3388,7 +3515,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "slide_blend" field.</summary>
-    public const int SlideBlendFieldNumber = 13;
+    public const int SlideBlendFieldNumber = 14;
     private readonly static uint SlideBlendDefaultValue = 0;
 
     private uint slideBlend_;
@@ -3415,7 +3542,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_yaw" field.</summary>
-    public const int HeadYawFieldNumber = 14;
+    public const int HeadYawFieldNumber = 15;
     private readonly static uint HeadYawDefaultValue = 0;
 
     private uint headYaw_;
@@ -3442,7 +3569,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "head_pitch" field.</summary>
-    public const int HeadPitchFieldNumber = 15;
+    public const int HeadPitchFieldNumber = 16;
     private readonly static uint HeadPitchDefaultValue = 0;
 
     private uint headPitch_;
@@ -3469,7 +3596,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "state_flags" field.</summary>
-    public const int StateFlagsFieldNumber = 16;
+    public const int StateFlagsFieldNumber = 17;
     private readonly static uint StateFlagsDefaultValue = 0;
 
     private uint stateFlags_;
@@ -3496,7 +3623,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "glide_state" field.</summary>
-    public const int GlideStateFieldNumber = 17;
+    public const int GlideStateFieldNumber = 18;
     private readonly static global::Decentraland.Pulse.GlideState GlideStateDefaultValue = global::Decentraland.Pulse.GlideState.PropClosed;
 
     private global::Decentraland.Pulse.GlideState glideState_;
@@ -3523,7 +3650,7 @@ namespace Decentraland.Pulse {
     }
 
     /// <summary>Field number for the "jump_count" field.</summary>
-    public const int JumpCountFieldNumber = 18;
+    public const int JumpCountFieldNumber = 19;
     private readonly static int JumpCountDefaultValue = 0;
 
     private int jumpCount_;
@@ -3565,6 +3692,7 @@ namespace Decentraland.Pulse {
         return true;
       }
       if (SubjectId != other.SubjectId) return false;
+      if (BaselineSeq != other.BaselineSeq) return false;
       if (NewSeq != other.NewSeq) return false;
       if (ServerTick != other.ServerTick) return false;
       if (ParcelIndex != other.ParcelIndex) return false;
@@ -3590,6 +3718,7 @@ namespace Decentraland.Pulse {
     public override int GetHashCode() {
       int hash = 1;
       if (SubjectId != 0) hash ^= SubjectId.GetHashCode();
+      if (BaselineSeq != 0) hash ^= BaselineSeq.GetHashCode();
       if (NewSeq != 0) hash ^= NewSeq.GetHashCode();
       if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
       if (HasParcelIndex) hash ^= ParcelIndex.GetHashCode();
@@ -3629,72 +3758,76 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteUInt32(SubjectId);
       }
-      if (NewSeq != 0) {
+      if (BaselineSeq != 0) {
         output.WriteRawTag(16);
+        output.WriteUInt32(BaselineSeq);
+      }
+      if (NewSeq != 0) {
+        output.WriteRawTag(24);
         output.WriteUInt32(NewSeq);
       }
       if (ServerTick != 0) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(32);
         output.WriteUInt32(ServerTick);
       }
       if (HasParcelIndex) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(40);
         output.WriteInt32(ParcelIndex);
       }
       if (HasPositionX) {
-        output.WriteRawTag(40);
+        output.WriteRawTag(48);
         output.WriteUInt32(PositionX);
       }
       if (HasPositionY) {
-        output.WriteRawTag(48);
+        output.WriteRawTag(56);
         output.WriteUInt32(PositionY);
       }
       if (HasPositionZ) {
-        output.WriteRawTag(56);
+        output.WriteRawTag(64);
         output.WriteUInt32(PositionZ);
       }
       if (HasVelocityX) {
-        output.WriteRawTag(64);
+        output.WriteRawTag(72);
         output.WriteUInt32(VelocityX);
       }
       if (HasVelocityY) {
-        output.WriteRawTag(72);
+        output.WriteRawTag(80);
         output.WriteUInt32(VelocityY);
       }
       if (HasVelocityZ) {
-        output.WriteRawTag(80);
+        output.WriteRawTag(88);
         output.WriteUInt32(VelocityZ);
       }
       if (HasRotationY) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(96);
         output.WriteUInt32(RotationY);
       }
       if (HasMovementBlend) {
-        output.WriteRawTag(96);
+        output.WriteRawTag(104);
         output.WriteUInt32(MovementBlend);
       }
       if (HasSlideBlend) {
-        output.WriteRawTag(104);
+        output.WriteRawTag(112);
         output.WriteUInt32(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(112);
+        output.WriteRawTag(120);
         output.WriteUInt32(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(120);
+        output.WriteRawTag(128, 1);
         output.WriteUInt32(HeadPitch);
       }
       if (HasStateFlags) {
-        output.WriteRawTag(128, 1);
+        output.WriteRawTag(136, 1);
         output.WriteUInt32(StateFlags);
       }
       if (HasGlideState) {
-        output.WriteRawTag(136, 1);
+        output.WriteRawTag(144, 1);
         output.WriteEnum((int) GlideState);
       }
       if (HasJumpCount) {
-        output.WriteRawTag(144, 1);
+        output.WriteRawTag(152, 1);
         output.WriteInt32(JumpCount);
       }
       if (_unknownFields != null) {
@@ -3711,72 +3844,76 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(8);
         output.WriteUInt32(SubjectId);
       }
-      if (NewSeq != 0) {
+      if (BaselineSeq != 0) {
         output.WriteRawTag(16);
+        output.WriteUInt32(BaselineSeq);
+      }
+      if (NewSeq != 0) {
+        output.WriteRawTag(24);
         output.WriteUInt32(NewSeq);
       }
       if (ServerTick != 0) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(32);
         output.WriteUInt32(ServerTick);
       }
       if (HasParcelIndex) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(40);
         output.WriteInt32(ParcelIndex);
       }
       if (HasPositionX) {
-        output.WriteRawTag(40);
+        output.WriteRawTag(48);
         output.WriteUInt32(PositionX);
       }
       if (HasPositionY) {
-        output.WriteRawTag(48);
+        output.WriteRawTag(56);
         output.WriteUInt32(PositionY);
       }
       if (HasPositionZ) {
-        output.WriteRawTag(56);
+        output.WriteRawTag(64);
         output.WriteUInt32(PositionZ);
       }
       if (HasVelocityX) {
-        output.WriteRawTag(64);
+        output.WriteRawTag(72);
         output.WriteUInt32(VelocityX);
       }
       if (HasVelocityY) {
-        output.WriteRawTag(72);
+        output.WriteRawTag(80);
         output.WriteUInt32(VelocityY);
       }
       if (HasVelocityZ) {
-        output.WriteRawTag(80);
+        output.WriteRawTag(88);
         output.WriteUInt32(VelocityZ);
       }
       if (HasRotationY) {
-        output.WriteRawTag(88);
+        output.WriteRawTag(96);
         output.WriteUInt32(RotationY);
       }
       if (HasMovementBlend) {
-        output.WriteRawTag(96);
+        output.WriteRawTag(104);
         output.WriteUInt32(MovementBlend);
       }
       if (HasSlideBlend) {
-        output.WriteRawTag(104);
+        output.WriteRawTag(112);
         output.WriteUInt32(SlideBlend);
       }
       if (HasHeadYaw) {
-        output.WriteRawTag(112);
+        output.WriteRawTag(120);
         output.WriteUInt32(HeadYaw);
       }
       if (HasHeadPitch) {
-        output.WriteRawTag(120);
+        output.WriteRawTag(128, 1);
         output.WriteUInt32(HeadPitch);
       }
       if (HasStateFlags) {
-        output.WriteRawTag(128, 1);
+        output.WriteRawTag(136, 1);
         output.WriteUInt32(StateFlags);
       }
       if (HasGlideState) {
-        output.WriteRawTag(136, 1);
+        output.WriteRawTag(144, 1);
         output.WriteEnum((int) GlideState);
       }
       if (HasJumpCount) {
-        output.WriteRawTag(144, 1);
+        output.WriteRawTag(152, 1);
         output.WriteInt32(JumpCount);
       }
       if (_unknownFields != null) {
@@ -3791,6 +3928,9 @@ namespace Decentraland.Pulse {
       int size = 0;
       if (SubjectId != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(SubjectId);
+      }
+      if (BaselineSeq != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(BaselineSeq);
       }
       if (NewSeq != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(NewSeq);
@@ -3832,7 +3972,7 @@ namespace Decentraland.Pulse {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(HeadYaw);
       }
       if (HasHeadPitch) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(HeadPitch);
+        size += 2 + pb::CodedOutputStream.ComputeUInt32Size(HeadPitch);
       }
       if (HasStateFlags) {
         size += 2 + pb::CodedOutputStream.ComputeUInt32Size(StateFlags);
@@ -3857,6 +3997,9 @@ namespace Decentraland.Pulse {
       }
       if (other.SubjectId != 0) {
         SubjectId = other.SubjectId;
+      }
+      if (other.BaselineSeq != 0) {
+        BaselineSeq = other.BaselineSeq;
       }
       if (other.NewSeq != 0) {
         NewSeq = other.NewSeq;
@@ -3933,70 +4076,74 @@ namespace Decentraland.Pulse {
             break;
           }
           case 16: {
-            NewSeq = input.ReadUInt32();
+            BaselineSeq = input.ReadUInt32();
             break;
           }
           case 24: {
-            ServerTick = input.ReadUInt32();
+            NewSeq = input.ReadUInt32();
             break;
           }
           case 32: {
-            ParcelIndex = input.ReadInt32();
+            ServerTick = input.ReadUInt32();
             break;
           }
           case 40: {
-            PositionX = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 48: {
-            PositionY = input.ReadUInt32();
+            PositionX = input.ReadUInt32();
             break;
           }
           case 56: {
-            PositionZ = input.ReadUInt32();
+            PositionY = input.ReadUInt32();
             break;
           }
           case 64: {
-            VelocityX = input.ReadUInt32();
+            PositionZ = input.ReadUInt32();
             break;
           }
           case 72: {
-            VelocityY = input.ReadUInt32();
+            VelocityX = input.ReadUInt32();
             break;
           }
           case 80: {
-            VelocityZ = input.ReadUInt32();
+            VelocityY = input.ReadUInt32();
             break;
           }
           case 88: {
-            RotationY = input.ReadUInt32();
+            VelocityZ = input.ReadUInt32();
             break;
           }
           case 96: {
-            MovementBlend = input.ReadUInt32();
+            RotationY = input.ReadUInt32();
             break;
           }
           case 104: {
-            SlideBlend = input.ReadUInt32();
+            MovementBlend = input.ReadUInt32();
             break;
           }
           case 112: {
-            HeadYaw = input.ReadUInt32();
+            SlideBlend = input.ReadUInt32();
             break;
           }
           case 120: {
-            HeadPitch = input.ReadUInt32();
+            HeadYaw = input.ReadUInt32();
             break;
           }
           case 128: {
-            StateFlags = input.ReadUInt32();
+            HeadPitch = input.ReadUInt32();
             break;
           }
           case 136: {
-            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            StateFlags = input.ReadUInt32();
             break;
           }
           case 144: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            break;
+          }
+          case 152: {
             JumpCount = input.ReadInt32();
             break;
           }
@@ -4024,70 +4171,74 @@ namespace Decentraland.Pulse {
             break;
           }
           case 16: {
-            NewSeq = input.ReadUInt32();
+            BaselineSeq = input.ReadUInt32();
             break;
           }
           case 24: {
-            ServerTick = input.ReadUInt32();
+            NewSeq = input.ReadUInt32();
             break;
           }
           case 32: {
-            ParcelIndex = input.ReadInt32();
+            ServerTick = input.ReadUInt32();
             break;
           }
           case 40: {
-            PositionX = input.ReadUInt32();
+            ParcelIndex = input.ReadInt32();
             break;
           }
           case 48: {
-            PositionY = input.ReadUInt32();
+            PositionX = input.ReadUInt32();
             break;
           }
           case 56: {
-            PositionZ = input.ReadUInt32();
+            PositionY = input.ReadUInt32();
             break;
           }
           case 64: {
-            VelocityX = input.ReadUInt32();
+            PositionZ = input.ReadUInt32();
             break;
           }
           case 72: {
-            VelocityY = input.ReadUInt32();
+            VelocityX = input.ReadUInt32();
             break;
           }
           case 80: {
-            VelocityZ = input.ReadUInt32();
+            VelocityY = input.ReadUInt32();
             break;
           }
           case 88: {
-            RotationY = input.ReadUInt32();
+            VelocityZ = input.ReadUInt32();
             break;
           }
           case 96: {
-            MovementBlend = input.ReadUInt32();
+            RotationY = input.ReadUInt32();
             break;
           }
           case 104: {
-            SlideBlend = input.ReadUInt32();
+            MovementBlend = input.ReadUInt32();
             break;
           }
           case 112: {
-            HeadYaw = input.ReadUInt32();
+            SlideBlend = input.ReadUInt32();
             break;
           }
           case 120: {
-            HeadPitch = input.ReadUInt32();
+            HeadYaw = input.ReadUInt32();
             break;
           }
           case 128: {
-            StateFlags = input.ReadUInt32();
+            HeadPitch = input.ReadUInt32();
             break;
           }
           case 136: {
-            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            StateFlags = input.ReadUInt32();
             break;
           }
           case 144: {
+            GlideState = (global::Decentraland.Pulse.GlideState) input.ReadEnum();
+            break;
+          }
+          case 152: {
             JumpCount = input.ReadInt32();
             break;
           }

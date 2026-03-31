@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask SubscribeToPlayerStateDeltaAsync(CancellationToken ct)
         {
-            await foreach (PlayerStateDeltaTier0 playerState in pulseService.SubscribeAsync<PlayerStateDeltaTier0>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
+            await foreach (PlayerStateDeltaTier0 delta in pulseService.SubscribeAsync<PlayerStateDeltaTier0>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
             {
                 if (isDisposed)
                 {
@@ -114,41 +114,41 @@ namespace DCL.Multiplayer.Connections.Pulse
                     break;
                 }
 
-                if (!peerIdCache.TryGetWallet(playerState.SubjectId, out string wallet))
+                if (!peerIdCache.TryGetWallet(delta.SubjectId, out string wallet))
                 {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerState.SubjectId}");
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {delta.SubjectId}");
                     continue;
                 }
 
-                if (!lastMovementMessages.TryGetValue(playerState.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
+                if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
                 {
-                    if (TryRequestResync(playerState.SubjectId, 0))
-                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {playerState.SubjectId}");
+                    if (TryRequestResync(delta.SubjectId, 0))
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {delta.SubjectId}");
 
                     continue;
                 }
 
-                if (playerState.NewSeq > lastMovement.sequence)
+                if (delta.NewSeq > lastMovement.sequence)
                 {
-                    if (playerState.NewSeq - lastMovement.sequence > 1)
+                    if (delta.BaselineSeq != lastMovement.sequence)
                     {
-                        if (TryRequestResync(playerState.SubjectId, lastMovement.sequence))
-                            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {playerState.SubjectId}. Received seq: {playerState.NewSeq}, prev seq: {lastMovement.sequence}");
+                        if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
+                            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Prev seq: {lastMovement.sequence}");
                     }
                     else
                     {
                         // Consecutive seq received, normal flow resumed — clear any stale pending resync
-                        pendingResyncs.Remove(playerState.SubjectId);
+                        pendingResyncs.Remove(delta.SubjectId);
                     }
                 }
                 else
                 {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {playerState.SubjectId}. Received seq: {playerState.NewSeq}, last seq: {lastMovement.sequence}");
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, last seq: {lastMovement.sequence}");
                     continue;
                 }
 
-                NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, playerState);
-                lastMovementMessages[playerState.SubjectId] = (playerState.NewSeq, movementMessage);
+                NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, delta);
+                lastMovementMessages[delta.SubjectId] = (delta.NewSeq, movementMessage);
 
                 Inbox(movementMessage, wallet);
             }

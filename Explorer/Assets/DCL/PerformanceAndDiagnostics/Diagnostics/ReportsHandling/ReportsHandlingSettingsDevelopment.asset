@@ -638,6 +638,8 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS_INTERNAL
       Severity: 1
+    - Category: MULTIPLAYER
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
