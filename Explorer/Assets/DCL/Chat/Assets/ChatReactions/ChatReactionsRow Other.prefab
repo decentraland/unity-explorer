@@ -10,7 +10,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5950623929047630798, guid: ffbb6ece8c614d4488d872c7b66e5912, type: 3}
       propertyPath: m_Name
-      value: ChatReactionsRow Variant
+      value: ChatReactionsRow Other
+      objectReference: {fileID: 0}
+    - target: {fileID: 6888347014498110261, guid: ffbb6ece8c614d4488d872c7b66e5912, type: 3}
+      propertyPath: m_Spacing
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6888347014498110261, guid: ffbb6ece8c614d4488d872c7b66e5912, type: 3}
       propertyPath: m_ChildAlignment

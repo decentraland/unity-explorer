@@ -12,6 +12,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatEmojiSelectorButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4052990917085068462, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
+      propertyPath: m_Color.a
+      value: 0.5019608
+      objectReference: {fileID: 0}
+    - target: {fileID: 4052990917085068462, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4052990917085068462, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4052990917085068462, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6093391142915211469, guid: 8a27f4f0ff40b6f44a78b18dbca5f3f1, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -183,6 +199,14 @@ PrefabInstance:
     - target: {fileID: 2986110115110872576, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 69.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3693646657073107079, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: baseRowY
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3693646657073107079, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: rowHeight
+      value: 27
       objectReference: {fileID: 0}
     - target: {fileID: 3693646657073107079, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: rowPrefab

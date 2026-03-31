@@ -2707,6 +2707,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatMessageReactionSelector
       objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -2.039999
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -3.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.020000458
+      objectReference: {fileID: 0}
+    - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.625
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

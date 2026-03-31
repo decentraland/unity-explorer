@@ -25,14 +25,13 @@ MonoBehaviour:
   <AppearDuration>k__BackingField: 0.15
   <DisappearDuration>k__BackingField: 0.1
   <CountIncrementBounceDuration>k__BackingField: 0.12
-  <ShortcutsBarOffset>k__BackingField: {x: -10, y: 40}
+  <ShortcutsBarOffset>k__BackingField: {x: 12, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
   <TooltipOffset>k__BackingField: {x: -20, y: 78}
   <TooltipArrowMinX>k__BackingField: -140
   <TooltipArrowMaxX>k__BackingField: 140
   <TooltipArrowXOffset>k__BackingField: 10
   <TooltipActionTextColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
-  <TooltipActionTextFont>k__BackingField: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   DebugRandomizeReactionCounts: 0
   TooltipMockLoadingEnabled: 1
   TooltipMockLoadingDelay: 1
