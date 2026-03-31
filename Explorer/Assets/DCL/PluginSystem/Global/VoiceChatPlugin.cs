@@ -65,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private ProximityVoiceChatButtonController? proximityButtonController;
         private NearbyVoiceWidgetController? nearbyVoiceWidgetController;
         private VoiceChatConfiguration? storedVoiceChatConfig;
+        private Action? activeSpeakersUpdatedHandler;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -106,6 +107,14 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             identityCache.OnIdentityChanged -= OnProximityIdentityAvailable;
+
+            if (activeSpeakersUpdatedHandler != null)
+            {
+                roomHub.IslandRoom().ActiveSpeakers.Updated -= activeSpeakersUpdatedHandler;
+                activeSpeakersUpdatedHandler = null;
+                proximityConfigHolder.SpeakingParticipants.Clear();
+            }
+
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -174,13 +183,14 @@ namespace DCL.PluginSystem.Global
             IRoom islandRoom = roomHub.IslandRoom();
 
             var activeSpeakers = islandRoom.ActiveSpeakers;
-            activeSpeakers.Updated += () =>
+            activeSpeakersUpdatedHandler = () =>
             {
                 proximityConfigHolder.SpeakingParticipants.Clear();
 
                 foreach (string identity in activeSpeakers)
                     proximityConfigHolder.SpeakingParticipants.Add(identity);
             };
+            activeSpeakers.Updated += activeSpeakersUpdatedHandler;
 
             storedVoiceChatConfig = voiceChatConfiguration;
             identityCache.OnIdentityChanged += OnProximityIdentityAvailable;
