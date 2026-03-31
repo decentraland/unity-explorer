@@ -161,7 +161,7 @@ namespace DCL.VoiceChat
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
-            if (status.IsInCallOrStarting())
+            if (status.IsInCall())
             {
                 suppressed = true;
                 tracker.MarkAllRemoving();
