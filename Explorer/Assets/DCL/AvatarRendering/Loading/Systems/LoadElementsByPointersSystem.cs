@@ -79,8 +79,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             await UniTask.SwitchToMainThread();
 
-            AssetBundlesVersions abVersions = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(wearablesToRequest, webRequestController, urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion), GetReportData(), ct);
-
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");
 
@@ -99,11 +97,15 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             bodyBuilder.Append("]}");
 
+            var jsonBody = GenericPostArguments.CreateJson(bodyBuilder.ToString());
+
+            AssetBundlesVersions abVersions = await AssetBundleRegistryVersionHelper.GetABRegistryVersionsByPointersAsync(jsonBody, webRequestController, urlsSource.Url(DecentralandUrl.AssetBundleRegistryVersion), GetReportData(), ct);
+
             using EntitiesAnalytics.RequestEnvelope analytics = entitiesAnalytics.Track(AnalyticsEvents.Endpoints.AVATAR_ATTACHMENT_RETRIEVED, endIndex - startIndex);
 
             using PoolExtensions.Scope<List<TDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportCategory())
+            await webRequestController.PostAsync(new CommonArguments(url), jsonBody, ct, GetReportCategory())
                                       .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             analytics.OnRequestFinished(dtoPooledList.Value.Count);

@@ -25,15 +25,10 @@ namespace ECS.StreamableLoading.AssetBundles
             ReportData reportCategory,
             CancellationToken ct)
         {
-            await UniTask.SwitchToMainThread();
-
-            var result = AssetBundlesVersions.Create();
-
             // Early exit if we have no pointers to query so we avoid the 400 response
             if (pointers.Count == 0)
-                return result;
+                return AssetBundlesVersions.Create();
 
-            using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleRegistryVersionURL, out URLBuilder urlBuilder);
             using var sbScope = STRING_BUILDER_POOL.Get(out var bodyBuilder);
 
             bodyBuilder.Append("{\"pointers\":[");
@@ -41,7 +36,6 @@ namespace ECS.StreamableLoading.AssetBundles
             for (int i = 0; i < pointers.Count; ++i)
             {
                 bodyBuilder.Append('\"');
-
                 bodyBuilder.Append(pointers[i].LowerCaseUrn());
                 bodyBuilder.Append('\"');
 
@@ -51,12 +45,28 @@ namespace ECS.StreamableLoading.AssetBundles
 
             bodyBuilder.Append("]}");
 
+            return await GetABRegistryVersionsByPointersAsync(GenericPostArguments.CreateJson(bodyBuilder.ToString()), webRequestController, assetBundleRegistryVersionURL, reportCategory, ct);
+        }
+
+        public static async UniTask<AssetBundlesVersions> GetABRegistryVersionsByPointersAsync(
+            GenericPostArguments jsonBody,
+            IWebRequestController webRequestController,
+            string assetBundleRegistryVersionURL,
+            ReportData reportCategory,
+            CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            var result = AssetBundlesVersions.Create();
+
+            using PooledObject<URLBuilder> scope = DecentralandUrlsUtils.BuildFromDomain(assetBundleRegistryVersionURL, out URLBuilder urlBuilder);
+
             var url = urlBuilder.Build();
             using var dtoPooledList = DTO_POOL.AutoScope();
 
             try
             {
-                await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, reportCategory)
+                await webRequestController.PostAsync(new CommonArguments(url), jsonBody, ct, reportCategory)
                     .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
             }
             catch (OperationCanceledException) { }
