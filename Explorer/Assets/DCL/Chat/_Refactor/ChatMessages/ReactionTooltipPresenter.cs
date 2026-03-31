@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Emoji;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -20,7 +21,9 @@ namespace DCL.Chat.ChatMessages
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly ChatReactionsMessageConfig messageConfig;
+        private readonly EmojiMapping emojiMapping;
         private readonly string ownWalletAddress;
+        private readonly string actionColorOpenTag;
         private readonly StringBuilder sb = new (256);
         private readonly List<string> unresolvedWallets = new (8);
         private readonly List<string> lastReactors = new (8);
@@ -36,6 +39,7 @@ namespace DCL.Chat.ChatMessages
             ProfileRepositoryWrapper profileRepository,
             ChatReactionsAtlasConfig atlasConfig,
             ChatReactionsMessageConfig messageConfig,
+            EmojiMapping emojiMapping,
             string ownWalletAddress)
         {
             this.view = view;
@@ -43,7 +47,9 @@ namespace DCL.Chat.ChatMessages
             this.profileRepository = profileRepository;
             this.atlasConfig = atlasConfig;
             this.messageConfig = messageConfig;
+            this.emojiMapping = emojiMapping;
             this.ownWalletAddress = ownWalletAddress;
+            actionColorOpenTag = $"<color=#{ColorUtility.ToHtmlStringRGBA(messageConfig.TooltipActionTextColor)}>";
 
             var positioner = new ReactionTooltipPositioner(
                 (RectTransform)view.transform,
@@ -165,7 +171,7 @@ namespace DCL.Chat.ChatMessages
             else
             {
                 unresolvedWallets.Clear();
-                string text = BuildText(lastReactors, mockUserCount, out bool allResolved);
+                string text = BuildText(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
                 view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
 
                 if (!allResolved)
@@ -208,7 +214,7 @@ namespace DCL.Chat.ChatMessages
             shownEmojiIndex == emojiIndex
             && string.Equals(shownMessageId, messageId, StringComparison.Ordinal);
 
-        private string BuildText(List<string> reactors, int mockUserCount, out bool allResolved)
+        private string BuildText(List<string> reactors, int mockUserCount, int emojiIndex, out bool allResolved)
         {
             sb.Clear();
             unresolvedWallets.Clear();
@@ -264,8 +270,31 @@ namespace DCL.Chat.ChatMessages
                 count++;
             }
 
-            sb.Append(" reacted");
+            AppendActionSuffix(emojiIndex);
             return sb.ToString();
+        }
+
+        private void AppendActionSuffix(int emojiIndex)
+        {
+            string? shortcode = TryGetEmojiShortcode(emojiIndex);
+
+            sb.Append(actionColorOpenTag);
+
+            if (shortcode != null)
+                sb.Append(" reacted with ").Append(shortcode);
+            else
+                sb.Append(" reacted");
+
+            sb.Append("</color>");
+        }
+
+        private string? TryGetEmojiShortcode(int emojiIndex)
+        {
+            uint unicode = atlasConfig.GetUnicodeFromTileIndex(emojiIndex);
+
+            if (unicode == 0) return null;
+
+            return emojiMapping.ValueMapping.GetValueOrDefault((int)unicode);
         }
 
         private bool TryResolveDisplayName(string wallet, out string displayName)
@@ -299,7 +328,7 @@ namespace DCL.Chat.ChatMessages
                 if (ct.IsCancellationRequested) return;
 
                 unresolvedWallets.Clear();
-                string text = BuildText(lastReactors, mockUserCount, out bool allResolved);
+                string text = BuildText(lastReactors, mockUserCount, shownEmojiIndex, out bool allResolved);
                 view.UpdateText(text);
 
                 if (!allResolved)
@@ -326,7 +355,7 @@ namespace DCL.Chat.ChatMessages
 
             if (ct.IsCancellationRequested) return;
 
-            string updatedText = BuildText(lastReactors, mockUserCount, out _);
+            string updatedText = BuildText(lastReactors, mockUserCount, shownEmojiIndex, out _);
             view.UpdateText(updatedText);
         }
     }

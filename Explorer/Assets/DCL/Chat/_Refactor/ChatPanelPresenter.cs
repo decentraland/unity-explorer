@@ -163,6 +163,7 @@ namespace DCL.Chat
                     profileRepositoryWrapper,
                     reactionsConfig.Atlas,
                     reactionsConfig.MessageReactions,
+                    emojiMapping,
                     ownWallet);
             }
 

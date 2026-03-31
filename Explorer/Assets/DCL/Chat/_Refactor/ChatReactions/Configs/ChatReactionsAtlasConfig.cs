@@ -39,6 +39,7 @@ namespace DCL.Chat.ChatReactions.Configs
         public int TotalTiles => Cols * Rows;
 
         private Dictionary<uint, int>? unicodeToTileIndex;
+        private Dictionary<int, uint>? tileIndexToUnicode;
 
         /// <summary>
         /// Maps a Unicode codepoint to an atlas tile index using the TMP sprite asset's glyph table.
@@ -48,15 +49,39 @@ namespace DCL.Chat.ChatReactions.Configs
         {
             if (SpriteAsset == null) return -1;
 
-            if (unicodeToTileIndex == null)
-            {
-                var chars = SpriteAsset.spriteCharacterTable;
-                unicodeToTileIndex = new Dictionary<uint, int>(chars.Count);
-                for (int i = 0; i < chars.Count; i++)
-                    unicodeToTileIndex[chars[i].unicode] = (int)chars[i].glyphIndex;
-            }
+            EnsureLookupTablesBuilt();
 
-            return unicodeToTileIndex.GetValueOrDefault(unicodeCodepoint, -1);
+            return unicodeToTileIndex!.GetValueOrDefault(unicodeCodepoint, -1);
+        }
+
+        /// <summary>
+        /// Reverse lookup: maps an atlas tile index back to its Unicode codepoint.
+        /// Returns 0 if the tile index is not found.
+        /// </summary>
+        public uint GetUnicodeFromTileIndex(int tileIndex)
+        {
+            if (SpriteAsset == null) return 0;
+
+            EnsureLookupTablesBuilt();
+
+            return tileIndexToUnicode!.GetValueOrDefault(tileIndex, 0u);
+        }
+
+        private void EnsureLookupTablesBuilt()
+        {
+            if (unicodeToTileIndex != null) return;
+
+            var chars = SpriteAsset.spriteCharacterTable;
+            unicodeToTileIndex = new Dictionary<uint, int>(chars.Count);
+            tileIndexToUnicode = new Dictionary<int, uint>(chars.Count);
+
+            for (int i = 0; i < chars.Count; i++)
+            {
+                uint unicode = chars[i].unicode;
+                int glyphIdx = (int)chars[i].glyphIndex;
+                unicodeToTileIndex[unicode] = glyphIdx;
+                tileIndexToUnicode[glyphIdx] = unicode;
+            }
         }
 
         /// <summary>

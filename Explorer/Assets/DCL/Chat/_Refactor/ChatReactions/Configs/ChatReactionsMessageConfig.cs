@@ -109,6 +109,11 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Use to fine-tune alignment if the arrow doesn't point at the pill center.")]
         [field: SerializeField] public float TooltipArrowXOffset { get; private set; } = 0f;
 
+        [field: Header("Tooltip Text")]
+        [field: Note("Color of the action suffix text (e.g. 'reacted with :fire:') in the reaction tooltip. " +
+                     "Names remain the default TMP_Text color; only this suffix is tinted.")]
+        [field: SerializeField] public Color TooltipActionTextColor { get; private set; } = new (1f, 1f, 1f, 0.5f);
+
         public TooltipPositioningConfig TooltipConfig =>
             new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
 
