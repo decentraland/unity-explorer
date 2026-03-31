@@ -32,6 +32,7 @@ namespace DCL.AvatarRendering.Emotes.Load
     public partial class LoadEmotesByPointersSystem : LoadElementsByPointersSystem<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention, EmoteDTO>
     {
         private readonly IEmoteStorage emoteStorage;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -44,9 +45,10 @@ namespace DCL.AvatarRendering.Emotes.Load
             URLSubdirectory customStreamingSubdirectory,
             EntitiesAnalytics entitiesAnalytics
         )
-            : base(world, cache, webRequestController, entitiesAnalytics, urlsSource)
+            : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
+            this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
 
@@ -171,7 +173,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesDTOByPointersFromRealmIntention(convertedPointers,
-                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))
+                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActiveElements))
                 ),
                 partitionComponent
             );

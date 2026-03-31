@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables
                 new NoCache<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>(false, false),
                 realmData, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
                 trimmedWearableStorage, builderContentURL);
-            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics, urlsSource);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics);
             BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 

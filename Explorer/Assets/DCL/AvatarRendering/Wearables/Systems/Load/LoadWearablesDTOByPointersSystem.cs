@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
 using ECS.Groups;
@@ -21,9 +20,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache,
-            EntitiesAnalytics entitiesAnalytics,
-            IDecentralandUrlsSource urlsSource
-        ) : base(world, cache, webRequestController, entitiesAnalytics, urlsSource)
+            EntitiesAnalytics entitiesAnalytics
+        ) : base(world, cache, webRequestController, entitiesAnalytics)
         {
         }
 

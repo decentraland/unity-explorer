@@ -59,6 +59,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.Profiles);
                 Url(DecentralandUrl.ProfilesMetadata);
                 Url(DecentralandUrl.EntitiesActive);
+                Url(DecentralandUrl.EntitiesActiveElements);
                 Url(DecentralandUrl.WorldEntitiesActive);
                 Url(DecentralandUrl.ArchipelagoStatus);
                 Url(DecentralandUrl.ArchipelagoHotScenes);
@@ -227,6 +228,8 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
+
+                DecentralandUrl.EntitiesActiveElements => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active",
 
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
