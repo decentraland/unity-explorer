@@ -393,6 +393,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <pointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
         <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
@@ -1101,6 +1102,13 @@ MonoBehaviour:
             m_EditorAssetChanged: 0
           <EnablePropPooling>k__BackingField: 0
           <TrailVelocityThreshold>k__BackingField: 1
+        <PointAtMarkerPrefab>k__BackingField:
+          m_AssetGUID: 6a252383173104e17acac54eb364afc4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
         <DestinationMarkerPrefab>k__BackingField: {fileID: 4002930384164097869, guid: 8b74e4206cd344b4c80b50f32f6c403a, type: 3}
         <DestinationMarkerAnimatorController>k__BackingField: {fileID: 9100000, guid: 5db243900521c3643ab954166b7ec348, type: 2}
     - rid: 6849204606292983808
