@@ -6,7 +6,6 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using BuildCompression = UnityEngine.BuildCompression;
 
@@ -126,8 +125,9 @@ namespace DCL.Rendering.Menus
                     string path = Path.Combine(basePath, subfolder);
                     if (!Directory.Exists(path)) continue;
 
-                    bool hasAllFiles = assetNames.All(a => File.Exists(Path.Combine(path, a)));
-                    if (hasAllFiles)
+                    // Only require the .shader file to locate the folder; .shadervariants may be absent
+                string shaderFile = Array.Find(assetNames, a => a.EndsWith(".shader"));
+                if (shaderFile != null && File.Exists(Path.Combine(path, shaderFile)))
                     {
                         shaderPath = path;
                         break;
@@ -143,6 +143,12 @@ namespace DCL.Rendering.Menus
                 foreach (string asset in assetNames)
                 {
                     string fullAssetPath = Path.Combine(shaderPath, asset).Replace('\\', '/');
+                    if (!File.Exists(fullAssetPath))
+                    {
+                        Debug.LogWarning($"Skipping missing asset (not in package): {fullAssetPath}");
+                        continue;
+                    }
+
                     var importer = AssetImporter.GetAtPath(fullAssetPath);
                     if (importer == null)
                     {
@@ -280,22 +286,13 @@ namespace DCL.Rendering.Menus
                 searchPaths.Add(Path.Combine(packagePath, $"Runtime/Shaders/{shaderBaseFolder}/{shaderSubfolder}/"));
             }
 
-            // Find the first valid path
+            // Find the first valid path — only require the .shader file to locate the folder
             foreach (string path in searchPaths)
             {
                 if (Directory.Exists(path))
                 {
-                    bool hasAllFiles = true;
-                    foreach (string asset in ASSET_NAMES)
-                    {
-                        if (!File.Exists(Path.Combine(path, asset)))
-                        {
-                            hasAllFiles = false;
-                            break;
-                        }
-                    }
-
-                    if (hasAllFiles)
+                    string shaderFile = Array.Find(ASSET_NAMES, a => a.EndsWith(".shader"));
+                    if (shaderFile != null && File.Exists(Path.Combine(path, shaderFile)))
                     {
                         shaderPath = path;
                         Debug.Log($"Found shaders at: {shaderPath}");
@@ -317,6 +314,12 @@ namespace DCL.Rendering.Menus
             foreach (string asset in ASSET_NAMES)
             {
                 string fullAssetPath = Path.Combine(shaderPath, asset);
+
+                if (!File.Exists(fullAssetPath))
+                {
+                    Debug.LogWarning($"Skipping missing asset (not in package): {fullAssetPath}");
+                    continue;
+                }
 
                 var importer = AssetImporter.GetAtPath(fullAssetPath);
 
@@ -483,35 +486,13 @@ namespace DCL.Rendering.Menus
         /// </summary>
         private static string GetPackagePath(string packageName)
         {
-            // Method 1: Try the Packages folder (for locally referenced packages)
-            string packagesPath = $"Packages/{packageName}";
-            if (Directory.Exists(packagesPath))
-            {
-                return packagesPath;
-            }
+            string localPath = $"Packages/{packageName}";
+            if (Directory.Exists(localPath))
+                return localPath;
 
-            // Method 2: Try using PackageManager to get the resolved path
-            var listRequest = Client.List(true);
-            while (!listRequest.IsCompleted) { }
-
-            if (listRequest.Status == StatusCode.Success)
-            {
-                foreach (var package in listRequest.Result)
-                {
-                    if (package.name == packageName)
-                    {
-                        Debug.Log($"Package '{packageName}' found at: {package.resolvedPath}");
-                        return package.resolvedPath;
-                    }
-                }
-            }
-
-            // Method 3: Try Library/PackageCache (for registry packages)
-            string[] packageCachePaths = Directory.GetDirectories("Library/PackageCache", $"{packageName}@*");
-            if (packageCachePaths.Length > 0)
-            {
-                return packageCachePaths[0];
-            }
+            string[] cached = Directory.GetDirectories("Library/PackageCache", $"{packageName}@*");
+            if (cached.Length > 0)
+                return cached[0];
 
             return null;
         }
