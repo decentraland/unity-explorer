@@ -5,9 +5,9 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Applies a damped spring force that pulls anchored particles toward their
-    /// avatar's current XZ position. Y is left free so particles float upward naturally.
-    /// Formula: F = (strength x displacement - damping x velocity) x lifetimeCurve.
+    /// Damped spring that pulls anchored particles toward their avatar's XZ position.
+    /// Y is left free so particles float upward naturally.
+    /// Damping coefficient: c = dampingRatio * 2 * sqrt(k).
     /// </summary>
     public sealed class AnchorSpringForce : IWorldParticleForce
     {
@@ -27,9 +27,9 @@ namespace DCL.Chat.ChatReactions
 
             Profiler.BeginSample("ChatReactions.World.AnchorSpring");
 
-            float damping = config.SpringDamping;
-            AnimationCurve? strengthOverLifetime = config.SpringOverLifetime;
-            bool hasCurve = strengthOverLifetime != null && strengthOverLifetime.length > 0;
+            float damping = config.SpringDampingRatio * 2f * Mathf.Sqrt(strength);
+            AnimationCurve curve = config.SpringOverLifetime;
+            bool hasCurve = curve != null && curve.length > 0;
 
             for (int i = 0; i < count; i++)
             {
@@ -40,8 +40,12 @@ namespace DCL.Chat.ChatReactions
                 Vector3 anchor = anchors.GetPosition(p.anchorIndex);
 
                 float t = p.lifetime > 0f ? p.age / p.lifetime : 0f;
-                float curveMultiplier = hasCurve ? strengthOverLifetime!.Evaluate(t) : 1f;
+                float curveMultiplier = hasCurve ? curve.Evaluate(t) : 1f;
                 float effectiveStrength = strength * curveMultiplier;
+
+                // Scaling damping by the same curve means effective damping ratio
+                // = configured × √curveMultiplier — old particles become slightly
+                // underdamped, letting them detach and drift rather than snap back.
                 float effectiveDamping = damping * curveMultiplier;
 
                 float dx = anchor.x - p.pos.x;

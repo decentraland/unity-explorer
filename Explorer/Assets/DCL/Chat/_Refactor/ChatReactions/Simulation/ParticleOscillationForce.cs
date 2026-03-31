@@ -5,8 +5,8 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Applies sinusoidal lateral oscillation (zig-zag) to particle velocities.
-    /// Each particle oscillates in a random horizontal direction based on its phase.
+    /// Sinusoidal lateral oscillation (zig-zag) applied to particle velocities.
+    /// Each particle's random phase determines its oscillation direction.
     /// </summary>
     public sealed class ParticleOscillationForce : IWorldParticleForce
     {

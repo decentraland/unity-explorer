@@ -41,16 +41,17 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [field: Header("Anchor Spring — avatar-following force")]
         [field: Note("Spring stiffness pulling anchored particles toward their avatar on XZ. " +
-                     "Higher = tighter follow. Zero disables the spring (particles float freely).")]
-        [field: Range(0f, 30f)]
+                     "Higher = tighter follow. Zero disables the spring (particles float freely). " +
+                     "Settling time ≈ 4 / (DampingRatio × √Strength).")]
+        [field: Range(0f, 200f)]
         [field: FormerlySerializedAs("<TetherStrength>k__BackingField")]
-        [field: SerializeField] public float SpringStrength { get; private set; } = 15f;
+        [field: SerializeField] public float SpringStrength { get; private set; } = 50f;
 
-        [field: Note("Damping on the spring (XZ only). Counteracts overshoot — " +
-                     "higher = smoother and more mellow. Critical damping ≈ 2 × √SpringStrength.")]
-        [field: Range(0f, 20f)]
-        [field: FormerlySerializedAs("<TetherDamping>k__BackingField")]
-        [field: SerializeField] public float SpringDamping { get; private set; } = 8f;
+        [field: Note("Damping ratio for the spring. 1.0 = critical (fastest approach, no oscillation). " +
+                     "<1.0 = underdamped (bouncy). >1.0 = overdamped (sluggish). " +
+                     "Actual damping is computed as: ratio × 2 × √SpringStrength.")]
+        [field: Range(0.1f, 2f)]
+        [field: SerializeField] public float SpringDampingRatio { get; private set; } = 1f;
 
         [field: Note("Multiplier on spring strength over normalised lifetime [0,1]. " +
                      "1 at birth → 0 at death makes young particles follow tightly " +

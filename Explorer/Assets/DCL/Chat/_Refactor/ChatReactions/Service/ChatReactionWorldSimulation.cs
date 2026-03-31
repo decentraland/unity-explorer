@@ -7,9 +7,8 @@ using UnityEngine.Profiling;
 namespace DCL.Chat.ChatReactions
 {
     /// <summary>
-    /// Orchestrates the world-space situational reaction particle pipeline:
-    /// Store → Forces (spring, oscillation) → Integrate → Compact → Cull → Render.
-    /// Owns spawning, streaming, and debug emission logic.
+    /// World-space reaction particle simulation.
+    /// Pipeline per tick: Forces -> Integrate -> Compact dead -> Cull visible -> Render.
     /// </summary>
     public sealed class ChatReactionWorldSimulation : IDisposable
     {
@@ -27,7 +26,7 @@ namespace DCL.Chat.ChatReactions
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly float maxSpawnDistanceSqr;
         private readonly int[] alivePerAnchor = new int[256];
-        private readonly List<IWorldParticleForce> forces;
+        private readonly IWorldParticleForce[] forces;
 
         private float streamAccumulator;
         private bool isStreaming;
@@ -69,7 +68,7 @@ namespace DCL.Chat.ChatReactions
             var sizeCurve = config.WorldLane.SizeOverLifetime;
             renderer = new ChatReactionsParticleRenderer(runtimeMaterial, sizeCurve?.length > 0 ? sizeCurve : null);
 
-            forces = new List<IWorldParticleForce>
+            forces = new IWorldParticleForce[]
             {
                 new AnchorSpringForce(anchorTable, config.WorldLane),
                 new ParticleOscillationForce(config.WorldLane),
@@ -88,7 +87,7 @@ namespace DCL.Chat.ChatReactions
             {
                 anchorTable.Refresh(avatarPosition);
 
-                for (int f = 0; f < forces.Count; f++)
+                for (int f = 0; f < forces.Length; f++)
                     forces[f].Apply(store.Buffer, store.Count, dt);
 
                 Profiler.BeginSample("ChatReactions.World.Integrate");
@@ -173,19 +172,7 @@ namespace DCL.Chat.ChatReactions
 
         public void TriggerAnchoredReactionLocalPlayer(Vector3 headPos, int emojiIndex, int count)
         {
-            byte anchor = anchorTable.Allocate(AvatarAnchorTable.LOCAL_PLAYER_ID, headPos);
-            var lane = config.WorldLane;
-            int maxPerAvatar = lane.MaxParticlesPerAvatar;
-            int n = Mathf.Max(1, count);
-
-            for (int i = 0; i < n; i++)
-            {
-                if (maxPerAvatar > 0 && alivePerAnchor[anchor] >= maxPerAvatar)
-                    break;
-
-                SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
-                alivePerAnchor[anchor]++;
-            }
+            TriggerAnchoredReaction(headPos, AvatarAnchorTable.LOCAL_PLAYER_ID, emojiIndex, count);
         }
 
         public void BeginStream(Func<Vector3?> positionGetter, int emojiIndex, string? walletId = null)
