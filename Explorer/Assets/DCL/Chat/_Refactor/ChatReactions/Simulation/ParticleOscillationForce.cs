@@ -1,3 +1,4 @@
+using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -7,13 +8,23 @@ namespace DCL.Chat.ChatReactions
     /// Applies sinusoidal lateral oscillation (zig-zag) to particle velocities.
     /// Each particle oscillates in a random horizontal direction based on its phase.
     /// </summary>
-    public static class ParticleOscillationForce
+    public sealed class ParticleOscillationForce : IWorldParticleForce
     {
-        public static void Apply(ChatReactionsParticle[] buffer, int count, float amplitude, float frequency, float dt)
+        private readonly ChatReactionsWorldLaneConfig config;
+
+        public ParticleOscillationForce(ChatReactionsWorldLaneConfig config)
         {
+            this.config = config;
+        }
+
+        public void Apply(ChatReactionsParticle[] buffer, int count, float dt)
+        {
+            float amplitude = config.ZigZagAmplitude;
             if (amplitude <= 0f) return;
 
             Profiler.BeginSample("ChatReactions.World.ZigZag");
+
+            float frequency = config.ZigZagFrequency;
 
             for (int i = 0; i < count; i++)
             {

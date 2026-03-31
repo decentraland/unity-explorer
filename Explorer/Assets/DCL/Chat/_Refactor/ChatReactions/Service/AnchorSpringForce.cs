@@ -1,3 +1,4 @@
+using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -8,21 +9,26 @@ namespace DCL.Chat.ChatReactions
     /// avatar's current XZ position. Y is left free so particles float upward naturally.
     /// Formula: F = (strength x displacement - damping x velocity) x lifetimeCurve.
     /// </summary>
-    public static class AnchorSpringForce
+    public sealed class AnchorSpringForce : IWorldParticleForce
     {
-        public static void Apply(
-            ChatReactionsParticle[] buffer,
-            int count,
-            AvatarAnchorTable anchors,
-            float strength,
-            float damping,
-            AnimationCurve? strengthOverLifetime,
-            float dt)
+        private readonly AvatarAnchorTable anchors;
+        private readonly ChatReactionsWorldLaneConfig config;
+
+        public AnchorSpringForce(AvatarAnchorTable anchors, ChatReactionsWorldLaneConfig config)
         {
+            this.anchors = anchors;
+            this.config = config;
+        }
+
+        public void Apply(ChatReactionsParticle[] buffer, int count, float dt)
+        {
+            float strength = config.SpringStrength;
             if (strength <= 0f) return;
 
             Profiler.BeginSample("ChatReactions.World.AnchorSpring");
 
+            float damping = config.SpringDamping;
+            AnimationCurve? strengthOverLifetime = config.SpringOverLifetime;
             bool hasCurve = strengthOverLifetime != null && strengthOverLifetime.length > 0;
 
             for (int i = 0; i < count; i++)

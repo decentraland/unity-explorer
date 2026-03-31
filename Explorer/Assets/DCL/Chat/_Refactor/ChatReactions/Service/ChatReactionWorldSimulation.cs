@@ -27,6 +27,7 @@ namespace DCL.Chat.ChatReactions
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly float maxSpawnDistanceSqr;
         private readonly int[] alivePerAnchor = new int[256];
+        private readonly List<IWorldParticleForce> forces;
 
         private float streamAccumulator;
         private bool isStreaming;
@@ -67,6 +68,12 @@ namespace DCL.Chat.ChatReactions
 
             var sizeCurve = config.WorldLane.SizeOverLifetime;
             renderer = new ChatReactionsParticleRenderer(runtimeMaterial, sizeCurve?.length > 0 ? sizeCurve : null);
+
+            forces = new List<IWorldParticleForce>
+            {
+                new AnchorSpringForce(anchorTable, config.WorldLane),
+                new ParticleOscillationForce(config.WorldLane),
+            };
         }
 
         public void Dispose()
@@ -81,19 +88,8 @@ namespace DCL.Chat.ChatReactions
             {
                 anchorTable.Refresh(avatarPosition);
 
-                AnchorSpringForce.Apply(store.Buffer,
-                    store.Count,
-                    anchorTable,
-                    config.WorldLane.SpringStrength, 
-                    config.WorldLane.SpringDamping,
-                    config.WorldLane.SpringOverLifetime,
-                    dt);
-
-                ParticleOscillationForce.Apply(store.Buffer,
-                    store.Count,
-                    config.WorldLane.ZigZagAmplitude,
-                    config.WorldLane.ZigZagFrequency,
-                    dt);
+                for (int f = 0; f < forces.Count; f++)
+                    forces[f].Apply(store.Buffer, store.Count, dt);
 
                 Profiler.BeginSample("ChatReactions.World.Integrate");
                 
