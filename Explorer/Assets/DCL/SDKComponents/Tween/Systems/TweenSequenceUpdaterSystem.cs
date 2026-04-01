@@ -30,9 +30,6 @@ namespace DCL.SDKComponents.Tween
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        // Per-frame cache set at the start of Update — not persistent state
-        private bool isCurrentScene;
-
         public TweenSequenceUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.tweenerPool = tweenerPool;
@@ -42,11 +39,11 @@ namespace DCL.SDKComponents.Tween
 
         protected override void Update(float t)
         {
-            isCurrentScene = sceneStateProvider.IsCurrent;
+            bool isCurrentScene = sceneStateProvider.IsCurrent;
             UpdatePBTweenQuery(World);
-            UpdateTweenTransformQuery(World);
-            UpdateTweenTextureQuery(World);
-            UpdateTweenSequenceStateQuery(World);
+            UpdateTweenTransformQuery(World, isCurrentScene);
+            UpdateTweenTextureQuery(World, isCurrentScene);
+            UpdateTweenSequenceStateQuery(World, isCurrentScene);
         }
 
         [Query]
@@ -58,14 +55,14 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(PBTweenSequence))]
-        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
+        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent, bool isCurrentScene)
         {
             TweenSDKComponentHelper.UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
 
         [Query]
         [None(typeof(PBTweenSequence))]
-        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, bool isCurrentScene)
         {
             TweenSDKComponentHelper.UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
@@ -76,7 +73,7 @@ namespace DCL.SDKComponents.Tween
         [Query]
         private void UpdateTweenSequenceState(Entity entity, in PBTween pbTween, in PBTweenSequence pbTweenSequence,
             ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform,
-            CRDTEntity sdkEntity, ref TransformComponent transformComponent)
+            CRDTEntity sdkEntity, ref TransformComponent transformComponent, bool isCurrentScene)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
@@ -100,11 +97,11 @@ namespace DCL.SDKComponents.Tween
                 }
 
                 SetupTweenSequence(ref sdkTweenSequenceComponent, in pbTween, in pbTweenSequence, transformComponent.Transform, material, hasTransformTweens);
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent, isCurrentScene);
             }
             else
             {
-                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, ref transformComponent);
+                UpdateTweenSequenceStateIfChanged(ref sdkTweenSequenceComponent, ref sdkTransform, sdkEntity, ref transformComponent, isCurrentScene);
             }
         }
 
@@ -137,19 +134,19 @@ namespace DCL.SDKComponents.Tween
             mode == PBTween.ModeOneofCase.MoveRotateScale;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, ref TransformComponent transformComponent)
+        private void UpdateTweenSequenceStateIfChanged(ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, ref TransformComponent transformComponent, bool isCurrentScene)
         {
             TweenStateStatus newState = TweenSDKComponentHelper.GetTweenerState(sdkTweenSequenceComponent.SequenceTweener);
             if (newState != sdkTweenSequenceComponent.TweenStateStatus)
             {
                 sdkTweenSequenceComponent.TweenStateStatus = newState;
-                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent);
+                UpdateTweenSequenceStateAndTransform(sdkEntity, sdkTweenSequenceComponent, ref sdkTransform, ref transformComponent, isCurrentScene);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 // Update transform while sequence is playing
                 if (sdkTweenSequenceComponent.HasTransformTweens)
-                    UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
+                    UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent, isCurrentScene);
             }
         }
 
@@ -168,16 +165,16 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateTweenSequenceStateAndTransform(CRDTEntity sdkEntity, SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform, ref TransformComponent transformComponent, bool isCurrentScene)
         {
             if (sdkTweenSequenceComponent.HasTransformTweens)
-                UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent);
+                UpdateSequenceTransform(sdkEntity, ref sdkTransform, ref transformComponent, isCurrentScene);
 
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenSequenceComponent.TweenStateStatus);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateSequenceTransform(CRDTEntity sdkEntity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent, bool isCurrentScene)
         {
             // Read back from Unity Transform (DOTween Sequence updates it directly)
             TweenSDKComponentHelper.SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isCurrentScene);
