@@ -9,9 +9,9 @@ namespace DCL.Chat.ChatReactions.Configs
 {
     /// <summary>
     /// Describes the emoji sprite atlas used by the situational reaction particle system.
-    /// At runtime this asset is the single source of truth: the controller reads Atlas,
-    /// TileSizePx, and FlipY from here and applies them to the material's shader properties
-    /// (_AtlasTex, _AtlasCols, _AtlasRows, _FlipY). Any values previously baked into the
+    /// At runtime this asset is the single source of truth: the controller reads Atlas
+    /// and TileSizePx from here and applies them to the material's shader properties
+    /// (_AtlasTex, _AtlasCols, _AtlasRows). Any values previously baked into the
     /// material will be overwritten on initialization.
     /// </summary>
     [CreateAssetMenu(fileName = "ChatReactionsAtlasConfig",
@@ -25,10 +25,6 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Cols and Rows are derived from atlas dimensions / tile size.")]
         [field: Range(8, 128)]
         [field: SerializeField] public int TileSizePx { get; private set; } = 32;
-
-        [field: Note("Flip atlas rows so row 0 is at the bottom. " +
-                     "Enable when the texture stores rows top-to-bottom (most PNG exports do).")]
-        [field: SerializeField] public bool FlipY { get; private set; } = true;
 
         [field: Header("Unicode Mapping")]
         [field: Note("TMP Sprite Asset used by the emoji panel. Maps Unicode codepoints to atlas tile indices. " +
@@ -140,8 +136,7 @@ namespace DCL.Chat.ChatReactions.Configs
             int col = tileIndex % Cols;
             int row = tileIndex / Cols;
 
-            if (FlipY)
-                row = Rows - 1 - row;
+            row = Rows - 1 - row;
 
             float w = 1f / Cols;
             float h = 1f / Rows;

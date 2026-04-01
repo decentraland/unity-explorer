@@ -23,14 +23,10 @@ namespace DCL.Chat.ChatReactions.Rendering
 
         private readonly Matrix4x4[] matrices = new Matrix4x4[BATCH_SIZE];
         private readonly Vector4[] posSize = new Vector4[BATCH_SIZE];
-        private readonly Vector4[] endSizeData = new Vector4[BATCH_SIZE];
-        private readonly Vector4[] emoji = new Vector4[BATCH_SIZE];
-        private readonly Vector4[] lifeT = new Vector4[BATCH_SIZE];
+        private readonly Vector4[] packed = new Vector4[BATCH_SIZE];
 
         private static readonly int PosSizeId = Shader.PropertyToID("_PosSize");
-        private static readonly int ExtraId = Shader.PropertyToID("_Extra");
-        private static readonly int EmojiId = Shader.PropertyToID("_Emoji");
-        private static readonly int LifeTId = Shader.PropertyToID("_LifeT");
+        private static readonly int PackedId = Shader.PropertyToID("_Packed");
         private static readonly int GlobalAlphaId = Shader.PropertyToID("_GlobalAlpha");
 
         private static readonly Bounds WORLD_BOUNDS = new (Vector3.zero, Vector3.one * 10000f);
@@ -150,9 +146,7 @@ namespace DCL.Chat.ChatReactions.Rendering
         private void WriteBatchSlot(int slot, Vector3 worldPos, float startSize, float endSize, int emojiIndex, float t)
         {
             posSize[slot] = new Vector4(worldPos.x, worldPos.y, worldPos.z, startSize);
-            endSizeData[slot] = new Vector4(endSize, 0f, 0f, 0f);
-            emoji[slot] = new Vector4(emojiIndex, 0f, 0f, 0f);
-            lifeT[slot] = new Vector4(t, 0f, 0f, 0f);
+            packed[slot] = new Vector4(endSize, emojiIndex, t, 0f);
         }
 
         private void Flush(int layer, int count, float globalAlpha)
@@ -160,9 +154,7 @@ namespace DCL.Chat.ChatReactions.Rendering
             Profiler.BeginSample("ChatReactions.Flush");
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
             mpb.SetVectorArray(PosSizeId, posSize);
-            mpb.SetVectorArray(ExtraId, endSizeData);
-            mpb.SetVectorArray(EmojiId, emoji);
-            mpb.SetVectorArray(LifeTId, lifeT);
+            mpb.SetVectorArray(PackedId, packed);
 
             var renderParams = new RenderParams(mat)
             {

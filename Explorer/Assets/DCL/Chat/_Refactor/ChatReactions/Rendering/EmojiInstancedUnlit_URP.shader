@@ -5,7 +5,6 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
         _AtlasTex   ("Emoji Atlas",   2D)            = "white" {}
         _AtlasCols  ("Atlas Columns", Float)         = 64
         _AtlasRows  ("Atlas Rows",    Float)         = 64
-        _FlipY      ("Flip Atlas Y",  Float)         = 1
         _GlobalAlpha ("Global Alpha", Range(0,1))   = 1
         _FadeIn    ("Fade In  (t01)", Range(0.01, 0.5))  = 0.10
         _FadeOut   ("Fade Out (t01)", Range(0.5,  0.99)) = 0.80
@@ -46,22 +45,17 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
 
             float _AtlasCols;
             float _AtlasRows;
-            float _FlipY;
             float _GlobalAlpha;
             float _FadeIn;
             float _FadeOut;
 
-            // ── Per-instance data (packed into 4 float4s per draw call) ────────
-            //   _PosSize : xyz = world pos,  w = startSize
-            //   _Extra   : x  = endSize
-            //   _Emoji   : x  = emojiIndex (float, cast to int in shader)
-            //   _LifeT   : x  = t01 (age / lifetime, 0..1)
+            // ── Per-instance data (packed into 2 float4s per draw call) ────────
+            //   _PosSize : xyz = world pos, w = startSize
+            //   _Packed  : x = endSize, y = emojiIndex, z = t01, w = <free>
             //   _GlobalAlpha pushed per-batch via MaterialPropertyBlock
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _PosSize)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Extra)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Emoji)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _LifeT)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Packed)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             // ── Structs ────────────────────────────────────────────────────────
@@ -89,10 +83,7 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
                 float tileH = 1.0 / rows;
 
                 float x = fmod(emojiIndex, cols);
-                float y = floor(emojiIndex / cols);
-
-                if (_FlipY > 0.5)
-                    y = (rows - 1.0) - y;
+                float y = (rows - 1.0) - floor(emojiIndex / cols);
 
                 return float2(x * tileW, y * tileH) + baseUV * float2(tileW, tileH);
             }
@@ -124,13 +115,14 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
                 UNITY_SETUP_INSTANCE_ID(IN);
 
                 float4 posSize = UNITY_ACCESS_INSTANCED_PROP(Props, _PosSize);
-                float4 extra   = UNITY_ACCESS_INSTANCED_PROP(Props, _Extra);
-                float4 emojiV  = UNITY_ACCESS_INSTANCED_PROP(Props, _Emoji);
-                float  t01     = saturate(UNITY_ACCESS_INSTANCED_PROP(Props, _LifeT).x);
+                float4 pk      = UNITY_ACCESS_INSTANCED_PROP(Props, _Packed);
+                float  endSize = pk.x;
+                float  emojiIdx = pk.y;
+                float  t01     = saturate(pk.z);
                 float  gAlpha  = _GlobalAlpha;
 
                 float3 centerWS = posSize.xyz;
-                float  size     = lerp(posSize.w, extra.x, EaseOut(t01));
+                float  size     = lerp(posSize.w, endSize, EaseOut(t01));
 
                 // Camera-aligned billboard axes from the view matrix
                 float3 right = UNITY_MATRIX_I_V._m00_m10_m20;   // camera right in world space
@@ -142,7 +134,7 @@ Shader "DCL/ChatReactions/EmojiInstancedUnlit_URP"
 
                 Varyings OUT;
                 OUT.positionCS = TransformWorldToHClip(posWS);
-                OUT.uv         = EmojiUV(IN.uv, emojiV.x);
+                OUT.uv         = EmojiUV(IN.uv, emojiIdx);
                 OUT.alpha      = gAlpha * FadeInOut(t01);
                 return OUT;
             }
