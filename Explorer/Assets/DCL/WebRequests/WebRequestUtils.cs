@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Globalization;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -108,7 +106,7 @@ namespace DCL.WebRequests
             }
         }
 
-        public static bool IsDNSLookupError(this UnityWebRequestException exception) =>
+        private static bool IsDNSLookupError(this UnityWebRequestException exception) =>
             exception.ResponseCode == 0 && exception.Message.Contains(CANNOT_CONNECT_ERROR);
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception)
@@ -117,7 +115,8 @@ namespace DCL.WebRequests
                 return false;
 
             return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
-                   && !exception.IsUnableToCompleteSSLConnection();
+                   && !exception.IsUnableToCompleteSSLConnection()
+                   && !exception.IsSSLCACertificateError();
         }
 
         private static bool IsIrrecoverableResponseCode(long responseCode)
@@ -149,13 +148,16 @@ namespace DCL.WebRequests
             }
         }
 
-        public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
+        private static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
             exception.Message.Contains("Unable to complete SSL connection");
+
+        private static bool IsSSLCACertificateError(this UnityWebRequestException exception) =>
+            exception.Message.Contains("SSL CA certificate error");
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
             exception is { Error: "Request timeout" };
 
-        public static bool IsAborted(this UnityWebRequestException exception) =>
+        private static bool IsAborted(this UnityWebRequestException exception) =>
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
 
         public static string GetResponseContentType(this UnityWebRequest unityWebRequest) =>
