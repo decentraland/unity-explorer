@@ -4,9 +4,10 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.PluginSystem.Global
 {
     /// <summary>
     /// Resolves avatar head positions from the ECS world using the same API
