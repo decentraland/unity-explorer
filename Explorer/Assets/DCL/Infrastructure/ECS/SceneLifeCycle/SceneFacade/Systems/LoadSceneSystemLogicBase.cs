@@ -100,8 +100,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             const string NAME = "main.crdt";
 
-            // CDN-first resolution is handled by SceneHashedContentWithCDN when available.
-            // TryGetContentUrl will return the CDN URL if HEAD-validated, otherwise the catalyst URL.
+            // CDN-first resolution is handled by URL overrides injected into SceneHashedContent when available.
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
