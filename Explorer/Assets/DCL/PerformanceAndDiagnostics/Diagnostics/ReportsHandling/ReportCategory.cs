@@ -334,6 +334,7 @@ namespace DCL.Diagnostics
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
         public const string VOICE_CHAT = nameof(VOICE_CHAT);
+        public const string PROXIMITY_VOICE_CHAT = nameof(PROXIMITY_VOICE_CHAT);
 
         public const string COMMUNITY_VOICE_CHAT = nameof(COMMUNITY_VOICE_CHAT);
 
