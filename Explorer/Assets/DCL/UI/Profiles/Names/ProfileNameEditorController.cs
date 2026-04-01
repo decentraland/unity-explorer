@@ -202,6 +202,7 @@ namespace DCL.UI.ProfileNames
                     // which would cause UpdateProfileAsync to see an identical "previous" snapshot
                     Profile newProfile = new ProfileBuilder().From(profile).Build();
                     newProfile.Name = config.nameInputField.Text;
+                    newProfile.ClaimedNameColor = null;
                     newProfile.HasClaimedName = false;
 
                     try
