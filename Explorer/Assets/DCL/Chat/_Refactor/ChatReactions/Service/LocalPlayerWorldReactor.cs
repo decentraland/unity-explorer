@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatReactions
     /// </summary>
     internal sealed class LocalPlayerWorldReactor
     {
-        private readonly ChatReactionWorldSimulation worldSimulation;
+        private readonly IWorldReactionSpawner worldSimulation;
         private readonly ChatReactionsWorldLaneConfig worldConfig;
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly Func<Vector3?>? cachedLocalHeadGetter;
@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions
         public bool WorldReactionsEnabled { get; set; } = true;
 
         public LocalPlayerWorldReactor(
-            ChatReactionWorldSimulation worldSimulation,
+            IWorldReactionSpawner worldSimulation,
             ChatReactionsWorldLaneConfig worldConfig,
             IAvatarReactionPosition? avatarPosition)
         {

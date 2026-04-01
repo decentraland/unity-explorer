@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatReactions
     /// World-space reaction particle simulation.
     /// Pipeline per tick: Forces -> Integrate -> Compact dead -> Cull visible -> Render.
     /// </summary>
-    public sealed class ChatReactionWorldSimulation : IDisposable
+    public sealed class ChatReactionWorldSimulation : IDisposable, IWorldReactionSpawner
     {
         private const float JITTER_XZ = 0.05f;
         private const float JITTER_Y  = 0.02f;
