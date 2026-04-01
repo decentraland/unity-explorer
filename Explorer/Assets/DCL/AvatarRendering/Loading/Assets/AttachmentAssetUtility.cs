@@ -1,7 +1,10 @@
-﻿using DCL.Optimization.Pools;
+﻿using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using GLTFast;
 using System;
 using System.Collections.Generic;
+using UniGLTF.SpringBoneJobs.Blittables;
+using UniGLTF.SpringBoneJobs.InputPorts;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -21,49 +24,57 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
         {
-            if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
-                cachedWearable.Instance.transform.SetParent(parent);
-            else
+            CachedAttachment wearable = InstantiateOrGetCached(attachmentsAssetsCache, originalAsset, parent, outlineCompatible);
+
+            ProcessWearableChildren(parent, wearable);
+
+            wearable.Instance.gameObject.layer = parent.gameObject.layer;
+            wearable.Instance.transform.ResetLocalTRS();
+            wearable.Instance.gameObject.SetActive(true);
+
+            return wearable;
+        }
+
+        private static CachedAttachment InstantiateOrGetCached(IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
+        {
+            // if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
+            // {
+            //     cachedWearable.Instance.transform.SetParent(parent);
+            //     return cachedWearable;
+            // }
+
+            var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
+
+            using PoolExtensions.Scope<List<MeshRenderer>> meshRenderers = instantiatedWearable.GetComponentsInChildrenIntoPooledList<MeshRenderer>(true);
+
+            // A wearable cannot have a MeshRenderer, only SkinnedMeshRenderer.
+            // We need to destroy it form the source wearable
+            foreach (var T in meshRenderers.Value) Object.DestroyImmediate(T.gameObject);
+
+            // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
+            RemoveBonesGameObjects(instantiatedWearable.transform);
+
+            var springBones = BuildSpringBoneData(instantiatedWearable);
+            return new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
+        }
+
+        private static void ProcessWearableChildren(Transform parent, CachedAttachment wearable)
+        {
+            using var children = wearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
+
+            foreach (var child in children.Value)
             {
-                var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
-
-                using PoolExtensions.Scope<List<MeshRenderer>> meshRenderers = instantiatedWearable.GetComponentsInChildrenIntoPooledList<MeshRenderer>(true);
-
-                //A wearable cannot have a MeshRenderer, only SkinnedMeshRenderer.
-                //We need to destroy it form the source wearable
-                for (var i = 0; i < meshRenderers.Value.Count; i++)
-                    Object.DestroyImmediate(meshRenderers.Value[i].gameObject);
-
-                // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
-                RemoveBonesGameObjects(instantiatedWearable.transform);
-
-                SpringBoneData[] springBones = CollectSpringBonesFromSMRs(instantiatedWearable);
-                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
-            }
-
-            cachedWearable.Instance.transform.ResetLocalTRS();
-            cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;
-
-            using PoolExtensions.Scope<List<Transform>> children = cachedWearable.Instance.GetComponentsInChildrenIntoPooledList<Transform>(true);
-
-            for (var index = 0; index < children.Value.Count; index++)
-            {
-                Transform child = children.Value[index];
                 child.gameObject.layer = parent.gameObject.layer;
 
-                //Wearables shouldnt have animators or animations since it will break the skinning
+                // Wearables shouldn't have animators or animations since it will break the skinning
                 Object.Destroy(child.GetComponent<Animator>());
                 Object.Destroy(child.GetComponent<Animation>());
             }
-
-            cachedWearable.Instance.gameObject.SetActive(true);
-            return cachedWearable;
         }
 
         private static void RemoveBonesGameObjects(Transform wearableRoot)
         {
-            using PoolExtensions.Scope<List<Renderer>> pooledList =
-                wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
+            using PoolExtensions.Scope<List<Renderer>> pooledList = wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
 
             if (pooledList.Value.Count == 0)
                 return;
@@ -92,52 +103,36 @@ namespace DCL.AvatarRendering.Loading.Assets
         }
 
         private static bool HasSpringBoneInHierarchy(Transform transform) =>
-            transform.GetComponentInChildren<SpringBoneJointComponent>() != null;
+            transform.GetComponentInChildren<SpringBoneJointComponent>();
 
-        /// <summary>
-        ///     Collects spring bone transforms from all SMRs in the wearable by checking for
-        ///     <see cref="SpringBoneJointComponent"/> on each bone. Iterates SMR bones to preserve
-        ///     BoneWeight index order. Chain roots are identified by <see cref="SpringBoneJointComponent.IsRoot"/>.
-        /// </summary>
-        private static SpringBoneData[] CollectSpringBonesFromSMRs(GameObject wearableRoot)
+        private static SpringBoneData[] BuildSpringBoneData(GameObject wearable)
         {
-            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> smrs =
-                wearableRoot.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true);
+            using var resultScope = ListPool<SpringBoneData>.Get(out var result);
 
-            if (smrs.Value.Count == 0)
-                return Array.Empty<SpringBoneData>();
+            var skeleton = wearable.GetComponentInChildren<SkinnedMeshRenderer>();
 
-            HashSet<Transform> seen = HashSetPool<Transform>.Get();
-            List<SpringBoneData> result = ListPool<SpringBoneData>.Get();
+            // Map each bone in the rig to its index in the bones array
+            using var boneIndexLookupScope = DictionaryPool<Transform, int>.Get(out var boneIndexLookup);
+            for (int boneIndex = 0; boneIndex < skeleton.bones.Length; boneIndex++)
+                boneIndexLookup.Add(skeleton.bones[boneIndex], boneIndex);
 
-            for (var i = 0; i < smrs.Value.Count; i++)
+            foreach (var bone in skeleton.bones)
             {
-                Transform[] bones = smrs.Value[i].bones;
+                SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
+                if (!jointAuthoring) continue;
 
-                for (var j = 0; j < bones.Length; j++)
-                {
-                    Transform t = bones[j];
-
-                    SpringBoneJointComponent component;
-
-                    if (t != null
-                        && (component = t.GetComponent<SpringBoneJointComponent>()) != null
-                        && seen.Add(t))
-                    {
-                        string parentName = component.IsRoot && t.parent != null ? t.parent.name : null;
-                        result.Add(new SpringBoneData(t, parentName,
-                            component.Stiffness, component.Drag, component.GravityDir,
-                            component.GravityPower, component.HitRadius, t.localRotation));
-                    }
-                }
+                result.Add(new SpringBoneData(bone,
+                    jointAuthoring.IsRoot,
+                    boneIndexLookup[bone.parent], // Store parent bone index to sync transforms later on
+                    jointAuthoring.Stiffness,
+                    jointAuthoring.Drag,
+                    jointAuthoring.GravityDir,
+                    jointAuthoring.GravityPower,
+                    jointAuthoring.HitRadius,
+                    bone.localRotation)); // Store initial rotation to reset reused transforms later on
             }
 
-            SpringBoneData[] output = result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
-
-            HashSetPool<Transform>.Release(seen);
-            ListPool<SpringBoneData>.Release(result);
-
-            return output;
+            return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
         }
     }
 }

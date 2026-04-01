@@ -50,9 +50,15 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShape;
         private readonly FacialFeaturesTextures[] facialFeaturesTexturesByBodyShapeCopy;
 
-        public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
+        public AvatarInstantiatorSystem(World world,
+            IPerformanceBudget instantiationFrameTimeBudget,
+            IPerformanceBudget memoryBudget,
+            IComponentPool<AvatarBase> avatarPoolRegistry,
+            IAvatarMaterialPoolHandler avatarMaterialPoolHandler,
+            IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IAttachmentsAssetsCache wearableAssetsCache,
+            CustomSkinning skinningStrategy,
+            FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IWearableStorage wearableStorage,
             AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob,
@@ -237,17 +243,18 @@ namespace DCL.AvatarRendering.AvatarShape
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
-            // Count spring bones so the skinning compute buffer is sized correctly.
-            // The SpringBoneRegistrationSystem will expand the BoneArray with clone transforms later this frame.
+            // Count spring bones so that the skinning buffers can be sized accordingly (base bones + spring bones)
             int springBoneCount = 0;
             foreach (CachedAttachment attachment in avatarShapeComponent.InstantiatedWearables) springBoneCount += attachment.SpringBones.Length;
+
+            int totalBoneCount = baseBoneArray.Count + springBoneCount;
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
                 computeShaderSkinningPool.Get(),
                 avatarMaterialPoolHandler,
                 avatarShapeComponent,
                 facialFeatureTextures,
-                baseBoneArray.Count + springBoneCount);
+                totalBoneCount);
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)

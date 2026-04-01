@@ -119,15 +119,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             return new BoneArray(inner, ComputeShaderConstants.BASE_BONE_COUNT);
         }
 
-        public void Append(List<Transform> extra, ReportData reportData)
+        public void Append(List<Transform> bones)
         {
-            if (extra.Count == 0) return;
+            if (bones.Count == 0) return;
 
-            int newCount = Count + extra.Count;
+            int newCount = Count + bones.Count;
 
             if (newCount > ComputeShaderConstants.MAX_BONE_COUNT)
             {
-                ReportHub.LogWarning(reportData, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {newCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
+                ReportHub.LogWarning(ReportCategory.AVATAR, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {newCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
                 newCount = ComputeShaderConstants.MAX_BONE_COUNT;
             }
 
@@ -137,7 +137,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             int extraCount = newCount - Count;
 
             for (int i = 0; i < extraCount; i++)
-                Inner[Count + i] = extra[i];
+                Inner[Count + i] = bones[i];
 
             Count = newCount;
         }

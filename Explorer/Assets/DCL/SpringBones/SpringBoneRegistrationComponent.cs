@@ -8,6 +8,6 @@ namespace DCL.SpringBones
     {
         public FastSpringBoneBuffer Buffer;
         public int AvatarVersion;
-        public List<Transform> BoneClones;
+        public List<(Transform wearableParent, Transform skeletonBone)> SyncPairs;
     }
 }
