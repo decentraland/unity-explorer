@@ -244,7 +244,19 @@ namespace DCL.PluginSystem.Global
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity), avatarBase => avatarBase.ResetState());
+            componentPoolsRegistry.AddGameObjectPool(
+                () =>
+                {
+                    AvatarBase instance = Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity);
+
+                    // FeetIKRig must be disabled before the pool reactivates the object.
+                    // HandleGet calls SetActive(true) which triggers RigBuilder.Build() —
+                    // if FeetIK is active during that build, it evaluates with uninitialized
+                    // targets, causing intermittent wrong leg angles.
+                    instance.FeetIKRig.enabled = false;
+                    return instance;
+                },
+                onRelease: avatarBase => avatarBase.ResetState());
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 
