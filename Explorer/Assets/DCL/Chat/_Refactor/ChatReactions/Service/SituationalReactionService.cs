@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatReactions
 {
-    public sealed class SituationalReactionService : ISituationalReactionService, IDisposable
+    public sealed class SituationalReactionService : ISituationalReactionTrigger, IRemoteReactionTarget, ISituationalReactionSimulation, IDisposable
     {
         private readonly ChatReactionsConfig config;
         private readonly ChatReactionUISimulation uiSimulation;

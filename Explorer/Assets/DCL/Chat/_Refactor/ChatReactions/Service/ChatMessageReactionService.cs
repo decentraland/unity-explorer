@@ -11,7 +11,7 @@ namespace DCL.Chat.ChatReactions
     /// Routes incoming reactions to the correct channel and exposes toggle logic for outgoing reactions.
     /// Sends the original messageId over the wire; the receiver resolves via direct dictionary lookup.
     /// </summary>
-    public sealed class ChatMessageReactionService : IDisposable
+    public sealed class ChatMessageReactionService : IRemoteReactionTarget, IDisposable
     {
         /// <summary>
         /// Fired when a reaction is added or removed and should be persisted.
@@ -160,7 +160,7 @@ namespace DCL.Chat.ChatReactions
         /// <summary>
         /// Handles an incoming remote message reaction routed by <see cref="ReactionRouter"/>.
         /// </summary>
-        internal void HandleRemoteReaction(ReactionReceivedArgs args)
+        public void HandleRemoteReaction(ReactionReceivedArgs args)
         {
             if (!TryResolveIncomingReaction(args.MessageId, out string localMessageId, out ChatChannel channel))
             {

@@ -11,12 +11,12 @@ namespace DCL.Chat.ChatReactions
     {
         private readonly IReactionMessageBus reactionBus;
         private readonly IRemoteReactionTarget situationalTarget;
-        private readonly ChatMessageReactionService messageTarget;
+        private readonly IRemoteReactionTarget messageTarget;
 
         public ReactionRouter(
             IReactionMessageBus reactionBus,
             IRemoteReactionTarget situationalTarget,
-            ChatMessageReactionService messageTarget)
+            IRemoteReactionTarget messageTarget)
         {
             this.reactionBus = reactionBus;
             this.situationalTarget = situationalTarget;
