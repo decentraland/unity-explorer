@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerBus : IDisposable
+    public partial class PulseMultiplayerBus : IPlayerTeleportBroadcast, IDisposable
     {
         internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
@@ -63,6 +63,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void SubscribeToIncomingMessages(CancellationToken ct)
         {
             UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
+                        SubscribeToTeleportsAsync(ct),
                         SubscribeToPlayerStateFullAsync(ct),
                         SubscribeToPlayerStateDeltaAsync(ct),
                         SubscribeToProfileAnnouncementsAsync(ct),

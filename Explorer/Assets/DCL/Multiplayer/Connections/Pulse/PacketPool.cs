@@ -30,6 +30,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ClientMessage.MessageOneofCase.ProfileAnnouncement] = CreatePool<PlayerStateInput>((packet, mes) => packet.Input = mes),
             [ClientMessage.MessageOneofCase.EmoteStart] = CreatePool<EmoteStart>((packet, mes) => packet.EmoteStart = mes),
             [ClientMessage.MessageOneofCase.EmoteStop] = CreatePool<EmoteStop>((packet, mes) => packet.EmoteStop = mes),
+            [ClientMessage.MessageOneofCase.Teleport] = CreatePool<TeleportRequest>((packet, mes) => packet.Teleport = mes),
         };
 
         public ClientMessage Get(ClientMessage.MessageOneofCase kind) =>
@@ -65,6 +66,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             [ServerMessage.MessageOneofCase.PlayerProfileVersionAnnounced] = CreatePool<PlayerProfileVersionsAnnounced>((packet, mes) => packet.PlayerProfileVersionAnnounced = mes),
             [ServerMessage.MessageOneofCase.EmoteStarted] = CreatePool<EmoteStarted>((packet, mes) => packet.EmoteStarted = mes),
             [ServerMessage.MessageOneofCase.EmoteStopped] = CreatePool<EmoteStopped>((packet, mes) => packet.EmoteStopped = mes),
+            [ServerMessage.MessageOneofCase.Teleported] = CreatePool<TeleportPerformed>((packet, mes) => packet.Teleported = mes),
         };
 
         public ServerMessage Get(ServerMessage.MessageOneofCase kind) =>

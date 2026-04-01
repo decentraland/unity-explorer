@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
@@ -22,13 +23,15 @@ namespace DCL.CharacterMotion.Tests
     public class TeleportCharacterSystemShould : UnitySystemTestBase<TeleportCharacterSystem>
     {
         private ISceneReadinessReportQueue? sceneReadinessReportQueue;
+        private IPlayerTeleportBroadcast? teleportBroadcast;
         private CharacterController characterController;
         private Camera? camera;
 
         [SetUp]
         public void Setup()
         {
-            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>());
+            teleportBroadcast = Substitute.For<IPlayerTeleportBroadcast>();
+            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>(), teleportBroadcast);
             characterController = new GameObject().AddComponent<CharacterController>();
             camera = new GameObject().AddComponent<Camera>();
 
@@ -52,6 +55,7 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False);
             Assert.That(characterController.transform.position, Is.EqualTo(Vector3.one * 100));
+            teleportBroadcast!.Received(1).BroadcastTeleport(Vector3.one * 100);
         }
 
         [Test]
@@ -83,6 +87,7 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(cameraSamplingData.Position, Is.EqualTo(camera!.transform.position));
             Assert.That(cameraSamplingData.IsDirty, Is.True);
+            teleportBroadcast!.DidNotReceive().BroadcastTeleport(Arg.Any<Vector3>());
         }
 
         [Test]
