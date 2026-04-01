@@ -3,6 +3,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -319,7 +320,8 @@ namespace DCL.Character.Tests
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent()
             );
 
             // Setup movement system dependencies
@@ -404,7 +406,8 @@ namespace DCL.Character.Tests
                     WearablesConstants.DefaultColors.GetRandomSkinColor())),
                 new AvatarShapeComponent(),
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent()
             );
 
             // Setup movement system
