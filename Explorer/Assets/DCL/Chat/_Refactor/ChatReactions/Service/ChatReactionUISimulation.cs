@@ -167,7 +167,7 @@ namespace DCL.Chat.ChatReactions
                 Vector2 velocity = ResolveSpawnVelocity(ui, out float phase);
                 Vector2 jitter = new Vector2(rng.NextFloat(-jitterH, jitterH), rng.NextFloat(-jitterV, jitterV));
 
-                uiStore.Add(new ChatReactionsUiParticle
+                if (!uiStore.TryAdd(new ChatReactionsUiParticle
                 {
                     screenPos = basePx + jitter,
                     screenVel = velocity,
@@ -178,7 +178,10 @@ namespace DCL.Chat.ChatReactions
                     emojiIndex = emojiIndex,
                     zigZagPhase = phase,
                     alive = 1,
-                });
+                }))
+                {
+                    return; // store full — drop remaining burst particles
+                }
             }
         }
 

@@ -22,9 +22,22 @@ namespace DCL.Chat.ChatReactions
         }
 
         /// <summary>
-        /// Appends a particle. When full, evicts via round-robin cursor.
+        /// Attempts to add a particle. Returns false if the store is at capacity.
         /// </summary>
-        public void Add(T particle)
+        public bool TryAdd(T particle)
+        {
+            if (count >= buffer.Length)
+                return false;
+
+            buffer[count++] = particle;
+            return true;
+        }
+
+        /// <summary>
+        /// Appends a particle. When full, evicts via round-robin cursor.
+        /// Prefer <see cref="TryAdd"/> when dropping is acceptable.
+        /// </summary>
+        public void ForceAdd(T particle)
         {
             if (count >= buffer.Length)
             {
@@ -56,6 +69,7 @@ namespace DCL.Chat.ChatReactions
             }
 
             count = writeIdx;
+            overwriteCursor = 0;
         }
     }
 }
