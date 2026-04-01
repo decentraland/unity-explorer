@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ChatReactionsWorldLaneConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsWorldLaneConfig
   <MaxParticles>k__BackingField: 1023
-  <LifetimeRange>k__BackingField: {x: 2.5, y: 3.5}
-  <SpeedRange>k__BackingField: {x: 0.6, y: 0.9}
+  <LifetimeRange>k__BackingField: {x: 1.92, y: 3.01}
+  <SpeedRange>k__BackingField: {x: 0.69, y: 1.12}
   <SizeRange>k__BackingField: {x: 0.16, y: 0.25}
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
@@ -48,8 +48,8 @@ MonoBehaviour:
   <MaxParticlesPerAvatar>k__BackingField: 15
   <StreamRatePerSecond>k__BackingField: 30
   <DebugRatePerSecond>k__BackingField: 3
-  <ZigZagAmplitude>k__BackingField: 0.5
-  <ZigZagFrequency>k__BackingField: 0.8
+  <ZigZagAmplitude>k__BackingField: 0.2
+  <ZigZagFrequency>k__BackingField: 0.5
   <RenderLayer>k__BackingField: 0
   <SizeOverLifetime>k__BackingField:
     serializedVersion: 2

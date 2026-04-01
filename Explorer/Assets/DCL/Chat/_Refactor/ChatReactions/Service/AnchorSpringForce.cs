@@ -7,6 +7,8 @@ namespace DCL.Chat.ChatReactions
     /// <summary>
     /// Damped spring that pulls anchored particles toward their avatar's XZ position.
     /// Y is left free so particles float upward naturally.
+    /// Damping is applied only to the radial velocity component (toward/away from the
+    /// anchor) so that tangential motion (zig-zag wobble) is not suppressed.
     /// Damping coefficient: c = dampingRatio * 2 * sqrt(k).
     /// </summary>
     public sealed class AnchorSpringForce : IWorldParticleForce
@@ -50,9 +52,29 @@ namespace DCL.Chat.ChatReactions
 
                 float dx = anchor.x - p.pos.x;
                 float dz = anchor.z - p.pos.z;
+                float distSqr = dx * dx + dz * dz;
 
-                p.vel.x += (dx * effectiveStrength - p.vel.x * effectiveDamping) * dt;
-                p.vel.z += (dz * effectiveStrength - p.vel.z * effectiveDamping) * dt;
+                float restoreX = dx * effectiveStrength * dt;
+                float restoreZ = dz * effectiveStrength * dt;
+
+                if (distSqr > 1e-8f)
+                {
+                    float invDist = MathConstants.FastRsqrt(distSqr);
+                    float nx = dx * invDist;
+                    float nz = dz * invDist;
+
+                    // Damp only the radial velocity component (toward/away from anchor)
+                    // so tangential motion (zig-zag, wobble) is preserved.
+                    float radialVel = p.vel.x * nx + p.vel.z * nz;
+                    float dampImpulse = radialVel * effectiveDamping * dt;
+                    p.vel.x += restoreX - nx * dampImpulse;
+                    p.vel.z += restoreZ - nz * dampImpulse;
+                }
+                else
+                {
+                    p.vel.x += restoreX;
+                    p.vel.z += restoreZ;
+                }
             }
 
             Profiler.EndSample();

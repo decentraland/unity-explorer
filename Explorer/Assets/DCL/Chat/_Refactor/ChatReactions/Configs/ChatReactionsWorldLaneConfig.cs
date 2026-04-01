@@ -81,10 +81,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public float DebugRatePerSecond { get; private set; } = 3f;
 
         [field: Header("Zig-Zag — lateral oscillation while floating")]
-        [field: Note("Peak lateral acceleration (units/sec²) for the sinusoidal zig-zag. " +
-                     "Each particle oscillates in a random horizontal direction. 0 = straight up.")]
-        [field: Range(0f, 2f)]
-        [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 0.15f;
+        [field: Note("Peak lateral displacement (world units) for the sinusoidal zig-zag. " +
+                     "Each particle oscillates in a random horizontal direction. 0 = straight up. " +
+                     "Applied as a visual position offset — independent of drag and spring.")]
+        [field: Range(0f, 0.5f)]
+        [field: SerializeField] public float ZigZagAmplitude { get; private set; } = 0.06f;
 
         [field: Note("Oscillation frequency (Hz). Lower = slow gentle sway, higher = rapid wobble.")]
         [field: Range(0.1f, 5f)]

@@ -71,7 +71,6 @@ namespace DCL.Chat.ChatReactions
             forces = new IWorldParticleForce[]
             {
                 new AnchorSpringForce(anchorTable, config.WorldLane),
-                new ParticleOscillationForce(config.WorldLane),
             };
         }
 
@@ -140,7 +139,10 @@ namespace DCL.Chat.ChatReactions
             if (config.DebugEnabled)
                 lastVisibleAnchorCount = anchorTable.CountVisible();
 
-            renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount, config.WorldLane.RenderLayer);
+            float zigZagAmp = config.WorldLane.ZigZagAmplitude;
+            float zigZagOmega = config.WorldLane.ZigZagFrequency * MathConstants.TWO_PI;
+            renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount,
+                config.WorldLane.RenderLayer, 1f, zigZagAmp, zigZagOmega);
             Profiler.EndSample();
         }
 
@@ -253,7 +255,7 @@ namespace DCL.Chat.ChatReactions
             }
         }
 
-        private void SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,
+        private bool SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,
             ChatReactionsWorldLaneConfig lane, byte anchorIndex = ChatReactionsParticle.ANCHOR_NONE)
         {
             float endSize = rng.NextFloat(lane.SizeRange.x, lane.SizeRange.y);
@@ -265,7 +267,7 @@ namespace DCL.Chat.ChatReactions
             Vector3 velocity = RandomUpwardVelocity(speed);
             float phase = rng.NextFloat(0f, MathConstants.TWO_PI);
 
-            store.Add(new ChatReactionsParticle
+            return store.TryAdd(new ChatReactionsParticle
             {
                 pos = spawnPos,
                 vel = velocity,

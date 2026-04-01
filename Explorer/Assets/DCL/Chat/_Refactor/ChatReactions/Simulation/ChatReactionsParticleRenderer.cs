@@ -52,10 +52,14 @@ namespace DCL.Chat.ChatReactions
         /// Draws only the world-space particles at the given indices.
         /// Used with <see cref="ParticleVisibilityCuller"/> for camera-culled rendering.
         /// </summary>
-        public void Draw(ChatReactionsParticle[] buffer, int[] visibleIndices, int visibleCount, int layer, float globalAlpha = 1f)
+        /// <param name="zigZagAmplitude">Peak lateral displacement (world units). Zero disables oscillation.</param>
+        /// <param name="zigZagOmega">Angular frequency (rad/s) for the sinusoidal wobble.</param>
+        public void Draw(ChatReactionsParticle[] buffer, int[] visibleIndices, int visibleCount, int layer,
+            float globalAlpha = 1f, float zigZagAmplitude = 0f, float zigZagOmega = 0f)
         {
             if (mat == null || visibleCount == 0) return;
 
+            bool hasZigZag = zigZagAmplitude > 0f;
             int batchCount = 0;
 
             for (int k = 0; k < visibleCount; k++)
@@ -63,7 +67,16 @@ namespace DCL.Chat.ChatReactions
                 ref readonly var p = ref buffer[visibleIndices[k]];
                 float t = LifetimeT(p.age, p.lifetime);
 
-                WriteBatchSlot(batchCount, p.pos,
+                Vector3 renderPos = p.pos;
+
+                if (hasZigZag)
+                {
+                    float offset = zigZagAmplitude * Mathf.Sin(p.age * zigZagOmega);
+                    renderPos.x += Mathf.Cos(p.zigZagPhase) * offset;
+                    renderPos.z += Mathf.Sin(p.zigZagPhase) * offset;
+                }
+
+                WriteBatchSlot(batchCount, renderPos,
                     ApplySizeCurve(p.startSize, t),
                     ApplySizeCurve(p.endSize, t),
                     p.emojiIndex, t);
