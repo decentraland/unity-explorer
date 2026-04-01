@@ -329,7 +329,16 @@ namespace DCL.PluginSystem.Global
 #if UNITY_EDITOR
             var reactionEventBus = new ChatReactionEventBus();
             pluginScope.Add(reactionEventBus);
-            situationalReactionService.SetEventBus(reactionEventBus);
+
+            situationalReactionService.ReactionSent += (emoji, count, ts) =>
+                reactionEventBus.NotifySent(new ReactionSentEvent(emoji, count, ts, ReactionType.Situational));
+
+            situationalReactionService.RemoteReactionProcessed += args =>
+                reactionEventBus.NotifyReceived(new ReactionReceivedEvent(
+                    args.WalletId, args.EmojiIndex, args.Count, args.Type, args.MessageId, args.IsRemoval));
+
+            situationalReactionService.NetworkFlushed += (unique, total, ts) =>
+                reactionEventBus.NotifyFlushed(new ReactionFlushedEvent(unique, total, ts));
 
             var debugGo = new UnityEngine.GameObject("[Debug] ChatReactions");
             reactionDebugView = debugGo.AddComponent<ChatReactionDebugView>();

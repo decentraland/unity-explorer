@@ -13,12 +13,6 @@ namespace DCL.Chat.ChatReactions
         private readonly RemoteReactionReceiver remoteReceiver;
         private readonly ReactionNetworkBroadcaster networkBroadcaster;
 
-#if UNITY_EDITOR
-        private IChatReactionEventBus? eventBus;
-
-        public void SetEventBus(IChatReactionEventBus bus) => eventBus = bus;
-#endif
-
         /// <summary>
         /// When false, no world-space reactions (particles above avatar heads) are spawned.
         /// Controlled by the In-World Chat Bubbles &amp; Reactions setting.
@@ -41,6 +35,23 @@ namespace DCL.Chat.ChatReactions
         /// </summary>
         public event Action<int>? UserReactedToSituation;
 
+        /// <summary>
+        /// Fired after a local situational reaction is triggered.
+        /// Parameters: emojiIndex, count, unscaledTimestamp.
+        /// </summary>
+        public event Action<int, int, float>? ReactionSent;
+
+        /// <summary>
+        /// Fired after an incoming remote reaction is processed and displayed.
+        /// </summary>
+        public event Action<ReactionReceivedArgs>? RemoteReactionProcessed;
+
+        /// <summary>
+        /// Fired when the network broadcaster flushes a debounced batch.
+        /// Parameters: uniqueEmojiCount, totalCount, unscaledTimestamp.
+        /// </summary>
+        public event Action<int, int, float>? NetworkFlushed;
+
         public SituationalReactionService(
             ChatReactionsConfig config,
             ChatReactionUISimulation uiSimulation,
@@ -58,18 +69,10 @@ namespace DCL.Chat.ChatReactions
                 () => config.MessageReactions.ReceiveStaggerInterval,
                 ProcessRemoteReaction);
 
-#if UNITY_EDITOR
-            Action<int, int, float>? flushCallback =
-                (uniqueCount, totalCount, timestamp) =>
-                    eventBus?.NotifyFlushed(new ReactionFlushedEvent(uniqueCount, totalCount, timestamp));
-#else
-            Action<int, int, float>? flushCallback = null;
-#endif
-
             networkBroadcaster = new ReactionNetworkBroadcaster(
                 reactionBus,
                 () => config.MessageReactions.NetworkDebounceSeconds,
-                flushCallback);
+                (unique, total, ts) => NetworkFlushed?.Invoke(unique, total, ts));
         }
 
         public void Dispose()
@@ -148,9 +151,7 @@ namespace DCL.Chat.ChatReactions
         {
             worldReactor.TriggerLocalBurst(emojiIndex);
             networkBroadcaster.Broadcast(emojiIndex);
-#if UNITY_EDITOR
-            eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
-#endif
+            ReactionSent?.Invoke(emojiIndex, count, Time.unscaledTime);
             UserReactedToSituation?.Invoke(emojiIndex);
         }
 
@@ -161,11 +162,7 @@ namespace DCL.Chat.ChatReactions
             if (ShowRemoteUIReactions)
                 uiSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);
 
-#if UNITY_EDITOR
-            eventBus?.NotifyReceived(new ReactionReceivedEvent(
-                args.WalletId, args.EmojiIndex, args.Count,
-                args.Type, args.MessageId, args.IsRemoval));
-#endif
+            RemoteReactionProcessed?.Invoke(args);
         }
     }
 }

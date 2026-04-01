@@ -14,7 +14,8 @@ namespace DCL.Chat.ChatReactions
         public const byte ANCHOR_NONE = ChatReactionsParticle.ANCHOR_NONE;
         public const string LOCAL_PLAYER_ID = "__local_player__";
 
-        private const int MAX_ANCHORS = ANCHOR_NONE; // 0..254 usable, 255 = none
+        /// <summary>Number of usable anchor slots (0..254). Slot 255 is reserved as ANCHOR_NONE sentinel.</summary>
+        public const int MAX_ANCHORS = ANCHOR_NONE; // 0..254 usable, 255 = none
 
         // Slot data — parallel arrays indexed by anchor byte.
         private readonly string?[] walletIds = new string?[MAX_ANCHORS];

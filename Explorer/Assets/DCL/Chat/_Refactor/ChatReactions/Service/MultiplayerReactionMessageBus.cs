@@ -177,13 +177,12 @@ namespace DCL.Chat.ChatReactions
                 }
 
                 int rawEmojiIndex = receivedMessage.Payload.EmojiIndex;
-                bool isRemoval = rawEmojiIndex < 0;
-                int emojiIndex = isRemoval ? ~rawEmojiIndex : rawEmojiIndex;
+                var (emojiIndex, isRemoval) = ReactionWireEncoding.Decode(rawEmojiIndex);
 
                 // Use raw value in dedup key so add/remove have distinct keys.
                 // Evict the opposite key so toggling (add→remove→add) isn't blocked.
                 string dedupKey = $"{receivedMessage.Payload.MessageId}:{rawEmojiIndex}";
-                string oppositeKey = $"{receivedMessage.Payload.MessageId}:{~rawEmojiIndex}";
+                string oppositeKey = $"{receivedMessage.Payload.MessageId}:{ReactionWireEncoding.Encode(emojiIndex, !isRemoval)}";
 
                 if (!chatReactionDedup.TryPass(walletId, dedupKey))
                 {

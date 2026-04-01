@@ -94,7 +94,7 @@ namespace DCL.Chat.ChatReactions
         private void SendReactionToNetwork(int emojiIndex, string messageId,
             ChatChannel.ChatChannelType channelType, ChatChannel.ChannelId channelId, bool isRemoval = false)
         {
-            int wireEmojiIndex = isRemoval ? ~emojiIndex : emojiIndex;
+            int wireEmojiIndex = ReactionWireEncoding.Encode(emojiIndex, isRemoval);
             var routing = new ReactionChannelRouting(channelType, channelId.Id);
             reactionBus.SendMessageReaction(wireEmojiIndex, messageId, routing);
         }

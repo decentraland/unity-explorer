@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatReactions
         private readonly AvatarAnchorTable anchorTable = new ();
         private readonly IAvatarReactionPosition? avatarPosition;
         private readonly float maxSpawnDistanceSqr;
-        private readonly int[] alivePerAnchor = new int[256];
+        private readonly int[] alivePerAnchor = new int[AvatarAnchorTable.MAX_ANCHORS + 1];
         private readonly IWorldParticleForce[] forces;
 
         private float streamAccumulator;
