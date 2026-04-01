@@ -230,29 +230,24 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (delta.HasSlideBlend)
                 lastAnimState.SlideBlendValue = delta.SlideBlendQuantized;
 
-            if (delta.HasHeadYaw)
-            {
-                last.headYawAndPitch.x = delta.HeadYawQuantized;
-                last.headIKYawEnabled = true;
-            }
-
-            if (delta.HasHeadPitch)
-            {
-                last.headYawAndPitch.y = delta.HeadPitchQuantized;
-                last.headIKPitchEnabled = true;
-            }
-
             uint flags = delta.StateFlags;
 
+            last.headIKYawEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadYaw);
+            last.headIKPitchEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadPitch);
+            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
             lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
             lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
             lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
             lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
 
+            if (delta.HasHeadYaw)
+                last.headYawAndPitch.x = delta.HeadYawQuantized;
+
+            if (delta.HasHeadPitch)
+                last.headYawAndPitch.y = delta.HeadPitchQuantized;
+
             if (delta.HasJumpCount)
                 lastAnimState.JumpCount = delta.JumpCount;
-
-            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
 
             if (movementBlendChanged)
             {
@@ -344,8 +339,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                 isInstant = isInstant,
                 isEmoting = isEmoting,
 
-                headIKYawEnabled = playerState.HasHeadYaw,
-                headIKPitchEnabled = playerState.HasHeadPitch,
+                headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
+                headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),
                 headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
             };
 
@@ -370,6 +365,12 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (message.isStunned)
                 flags |= (uint)PlayerAnimationFlags.Stunned;
+
+            if (message.headIKYawEnabled)
+                flags |= (uint)PlayerAnimationFlags.HeadYaw;
+
+            if (message.headIKPitchEnabled)
+                flags |= (uint)PlayerAnimationFlags.HeadPitch;
 
             return flags;
         }

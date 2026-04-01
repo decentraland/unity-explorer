@@ -105,12 +105,13 @@ namespace Decentraland.Pulse {
             "bmQuY29tbW9uLlZlY3RvcjMifgoRVGVsZXBvcnRQZXJmb3JtZWQSEgoKc3Vi",
             "amVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGlj",
             "axgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5Q",
-            "bGF5ZXJTdGF0ZSpmChRQbGF5ZXJBbmltYXRpb25GbGFncxIICgROT05FEAAS",
-            "DAoIR1JPVU5ERUQQARINCglMT05HX0pVTVAQAhINCglMT05HX0ZBTEwQBBIL",
-            "CgdGQUxMSU5HEAgSCwoHU1RVTk5FRBAQKk4KCkdsaWRlU3RhdGUSDwoLUFJP",
-            "UF9DTE9TRUQQABIQCgxPUEVOSU5HX1BST1AQARILCgdHTElESU5HEAISEAoM",
-            "Q0xPU0lOR19QUk9QEAMqLwoPRW1vdGVTdG9wUmVhc29uEg0KCUNPTVBMRVRF",
-            "RBAAEg0KCUNBTkNFTExFRBABYgZwcm90bzM="));
+            "bGF5ZXJTdGF0ZSqEAQoUUGxheWVyQW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAA",
+            "EgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJTE9OR19GQUxMEAQS",
+            "CwoHRkFMTElORxAIEgsKB1NUVU5ORUQQEBIMCghIRUFEX1lBVxAgEg4KCkhF",
+            "QURfUElUQ0gQQCpOCgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoM",
+            "T1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJPUBAD",
+            "Ki8KD0Vtb3RlU3RvcFJlYXNvbhINCglDT01QTEVURUQQABINCglDQU5DRUxM",
+            "RUQQAWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -146,6 +147,8 @@ namespace Decentraland.Pulse {
     [pbr::OriginalName("LONG_FALL")] LongFall = 4,
     [pbr::OriginalName("FALLING")] Falling = 8,
     [pbr::OriginalName("STUNNED")] Stunned = 16,
+    [pbr::OriginalName("HEAD_YAW")] HeadYaw = 32,
+    [pbr::OriginalName("HEAD_PITCH")] HeadPitch = 64,
   }
 
   public enum GlideState {
