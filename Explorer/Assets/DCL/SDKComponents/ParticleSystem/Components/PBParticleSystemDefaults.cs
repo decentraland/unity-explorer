@@ -31,6 +31,9 @@ namespace DCL.SDKComponents.ParticleSystem.Components
         public static PBParticleSystem.Types.BlendMode GetBlendMode(this PBParticleSystem self) =>
             self.HasBlendMode ? self.BlendMode : PBParticleSystem.Types.BlendMode.PsbAlpha;
 
+        public static bool GetBillboard(this PBParticleSystem self) =>
+            !self.HasBillboard || self.Billboard;
+
         public static PBParticleSystem.Types.SimulationSpace GetSimulationSpace(this PBParticleSystem self) =>
             self.HasSimulationSpace ? self.SimulationSpace : PBParticleSystem.Types.SimulationSpace.PssLocal;
 

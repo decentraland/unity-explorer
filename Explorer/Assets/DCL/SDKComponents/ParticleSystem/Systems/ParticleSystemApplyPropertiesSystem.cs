@@ -91,11 +91,25 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             if (particleSystemData.InitialSize != null)
                 mainModule.startSize = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialSize.Start, particleSystemData.InitialSize.End);
 
-            // Initial rotation: random between start and end (convert degrees to radians for Unity)
+            // Initial rotation: quaternion -> Euler, apply as 3D start rotation
             if (particleSystemData.InitialRotation != null)
-                mainModule.startRotation = new UnityEngine.ParticleSystem.MinMaxCurve(
-                    particleSystemData.InitialRotation.Start * Mathf.Deg2Rad,
-                    particleSystemData.InitialRotation.End * Mathf.Deg2Rad);
+            {
+                mainModule.startRotation3D = true;
+                var q = new UnityEngine.Quaternion(
+                    particleSystemData.InitialRotation.X,
+                    particleSystemData.InitialRotation.Y,
+                    particleSystemData.InitialRotation.Z,
+                    particleSystemData.InitialRotation.W);
+
+                // Zero quaternion (proto default) -> identity
+                if (q.x == 0f && q.y == 0f && q.z == 0f && q.w == 0f)
+                    q = UnityEngine.Quaternion.identity;
+
+                var euler = q.eulerAngles * Mathf.Deg2Rad;
+                mainModule.startRotationX = euler.x;
+                mainModule.startRotationY = euler.y;
+                mainModule.startRotationZ = euler.z;
+            }
 
             // Initial color: random between start and end
             if (particleSystemData.InitialColor != null)
@@ -214,11 +228,22 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             }
 
             rotationOverLifetimeModule.enabled = true;
-            rotationOverLifetimeModule.separateAxes = false;
-            // Degrees/sec → radians/sec
-            rotationOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(
-                particleSystemData.RotationOverTime.Start * Mathf.Deg2Rad,
-                particleSystemData.RotationOverTime.End * Mathf.Deg2Rad);
+            rotationOverLifetimeModule.separateAxes = true;
+
+            var q = new UnityEngine.Quaternion(
+                particleSystemData.RotationOverTime.X,
+                particleSystemData.RotationOverTime.Y,
+                particleSystemData.RotationOverTime.Z,
+                particleSystemData.RotationOverTime.W);
+
+            // Zero quaternion (proto default) -> identity
+            if (q.x == 0f && q.y == 0f && q.z == 0f && q.w == 0f)
+                q = UnityEngine.Quaternion.identity;
+
+            var euler = q.eulerAngles * Mathf.Deg2Rad;
+            rotationOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(euler.x);
+            rotationOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(euler.y);
+            rotationOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(euler.z);
         }
 
         private static void ApplyColorOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
@@ -315,6 +340,20 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 EnsureMaterial(ref component, blendMode);
                 component.LastAppliedBlendMode = blendMode;
                 component.BlendModeInitialized = true;
+            }
+
+            // Billboard rendering mode
+            // When billboard is OFF, Mesh render mode uses the prefab's default Quad mesh
+            bool billboard = particleSystemData.GetBillboard();
+            if (billboard)
+            {
+                particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+                particleRenderer.alignment = ParticleSystemRenderSpace.View;
+            }
+            else
+            {
+                particleRenderer.renderMode = ParticleSystemRenderMode.Mesh;
+                particleRenderer.alignment = ParticleSystemRenderSpace.Local;
             }
 
             particleRenderer.material = component.ParticleMaterial;

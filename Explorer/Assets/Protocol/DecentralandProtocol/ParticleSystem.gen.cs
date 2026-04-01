@@ -28,7 +28,7 @@ namespace DCL.ECSComponents {
             "LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJh",
             "bGFuZC9jb21tb24vY29sb3JzLnByb3RvGiBkZWNlbnRyYWxhbmQvY29tbW9u",
             "L2Zsb2F0cy5wcm90bxohZGVjZW50cmFsYW5kL2NvbW1vbi90ZXh0dXJlLnBy",
-            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i0BQKEFBC",
+            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i8BQKEFBC",
             "UGFydGljbGVTeXN0ZW0SEwoGYWN0aXZlGAEgASgISAGIAQESEQoEcmF0ZRgC",
             "IAEoAkgCiAEBEhoKDW1heF9wYXJ0aWNsZXMYAyABKA1IA4gBARIVCghsaWZl",
             "dGltZRgEIAEoAkgEiAEBEhQKB2dyYXZpdHkYBSABKAJIBYgBARI7ChBhZGRp",
@@ -36,9 +36,9 @@ namespace DCL.ECSComponents {
             "b3IzSAaIAQESOgoMaW5pdGlhbF9zaXplGAcgASgLMh8uZGVjZW50cmFsYW5k",
             "LmNvbW1vbi5GbG9hdFJhbmdlSAeIAQESPAoOc2l6ZV9vdmVyX3RpbWUYCCAB",
             "KAsyHy5kZWNlbnRyYWxhbmQuY29tbW9uLkZsb2F0UmFuZ2VICIgBARI+ChBp",
-            "bml0aWFsX3JvdGF0aW9uGAkgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5G",
-            "bG9hdFJhbmdlSAmIAQESQAoScm90YXRpb25fb3Zlcl90aW1lGAogASgLMh8u",
-            "ZGVjZW50cmFsYW5kLmNvbW1vbi5GbG9hdFJhbmdlSAqIAQESIgoVZmFjZV90",
+            "bml0aWFsX3JvdGF0aW9uGAkgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5R",
+            "dWF0ZXJuaW9uSAmIAQESQAoScm90YXRpb25fb3Zlcl90aW1lGAogASgLMh8u",
+            "ZGVjZW50cmFsYW5kLmNvbW1vbi5RdWF0ZXJuaW9uSAqIAQESIgoVZmFjZV90",
             "cmF2ZWxfZGlyZWN0aW9uGBwgASgISAuIAQESOwoNaW5pdGlhbF9jb2xvchgL",
             "IAEoCzIfLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3JSYW5nZUgMiAEBEj0K",
             "D2NvbG9yX292ZXJfdGltZRgMIAEoCzIfLmRlY2VudHJhbGFuZC5jb21tb24u",
@@ -46,53 +46,53 @@ namespace DCL.ECSComponents {
             "KAsyHy5kZWNlbnRyYWxhbmQuY29tbW9uLkZsb2F0UmFuZ2VIDogBARIyCgd0",
             "ZXh0dXJlGA4gASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5UZXh0dXJlSA+I",
             "AQESUAoKYmxlbmRfbW9kZRgPIAEoDjI3LmRlY2VudHJhbGFuZC5zZGsuY29t",
-            "cG9uZW50cy5QQlBhcnRpY2xlU3lzdGVtLkJsZW5kTW9kZUgQiAEBEl0KDHNw",
-            "cml0ZV9zaGVldBgRIAEoCzJCLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50",
-            "cy5QQlBhcnRpY2xlU3lzdGVtLlNwcml0ZVNoZWV0QW5pbWF0aW9uSBGIAQES",
-            "RAoFcG9pbnQYEiABKAsyMy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMu",
-            "UEJQYXJ0aWNsZVN5c3RlbS5Qb2ludEgAEkYKBnNwaGVyZRgTIAEoCzI0LmRl",
+            "cG9uZW50cy5QQlBhcnRpY2xlU3lzdGVtLkJsZW5kTW9kZUgQiAEBEhYKCWJp",
+            "bGxib2FyZBgQIAEoCEgRiAEBEl0KDHNwcml0ZV9zaGVldBgRIAEoCzJCLmRl",
             "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQlBhcnRpY2xlU3lzdGVtLlNw",
-            "aGVyZUgAEkIKBGNvbmUYFCABKAsyMi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBv",
-            "bmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5Db25lSAASQAoDYm94GBUgASgLMjEu",
-            "ZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0ZW0u",
-            "Qm94SAASEQoEbG9vcBgYIAEoCEgSiAEBEhQKB3ByZXdhcm0YGSABKAhIE4gB",
-            "ARJcChBzaW11bGF0aW9uX3NwYWNlGBsgASgOMj0uZGVjZW50cmFsYW5kLnNk",
-            "ay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0ZW0uU2ltdWxhdGlvblNwYWNl",
-            "SBSIAQESWAoObGltaXRfdmVsb2NpdHkYGiABKAsyOy5kZWNlbnRyYWxhbmQu",
-            "c2RrLmNvbXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5MaW1pdFZlbG9jaXR5",
-            "SBWIAQESWAoOcGxheWJhY2tfc3RhdGUYFiABKA4yOy5kZWNlbnRyYWxhbmQu",
-            "c2RrLmNvbXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRl",
-            "SBaIAQESQwoGYnVyc3RzGB0gAygLMjMuZGVjZW50cmFsYW5kLnNkay5jb21w",
-            "b25lbnRzLlBCUGFydGljbGVTeXN0ZW0uQnVyc3QabgoUU3ByaXRlU2hlZXRB",
-            "bmltYXRpb24SDwoHdGlsZXNfeBgBIAEoDRIPCgd0aWxlc195GAIgASgNEh4K",
-            "EWZyYW1lc19wZXJfc2Vjb25kGAMgASgCSACIAQFCFAoSX2ZyYW1lc19wZXJf",
-            "c2Vjb25kGj4KDUxpbWl0VmVsb2NpdHkSDQoFc3BlZWQYASABKAISEwoGZGFt",
-            "cGVuGAIgASgCSACIAQFCCQoHX2RhbXBlbhoHCgVQb2ludBooCgZTcGhlcmUS",
-            "EwoGcmFkaXVzGAEgASgCSACIAQFCCQoHX3JhZGl1cxpECgRDb25lEhIKBWFu",
-            "Z2xlGAEgASgCSACIAQESEwoGcmFkaXVzGAIgASgCSAGIAQFCCAoGX2FuZ2xl",
-            "QgkKB19yYWRpdXMaPwoDQm94Ei8KBHNpemUYASABKAsyHC5kZWNlbnRyYWxh",
-            "bmQuY29tbW9uLlZlY3RvcjNIAIgBAUIHCgVfc2l6ZRqSAQoFQnVyc3QSDAoE",
-            "dGltZRgBIAEoAhINCgVjb3VudBgCIAEoDRITCgZjeWNsZXMYAyABKAVIAIgB",
-            "ARIVCghpbnRlcnZhbBgEIAEoAkgBiAEBEhgKC3Byb2JhYmlsaXR5GAUgASgC",
-            "SAKIAQFCCQoHX2N5Y2xlc0ILCglfaW50ZXJ2YWxCDgoMX3Byb2JhYmlsaXR5",
-            "IjkKCUJsZW5kTW9kZRINCglQU0JfQUxQSEEQABILCgdQU0JfQUREEAESEAoM",
-            "UFNCX01VTFRJUExZEAIiPgoNUGxheWJhY2tTdGF0ZRIOCgpQU19QTEFZSU5H",
-            "EAASDQoJUFNfUEFVU0VEEAESDgoKUFNfU1RPUFBFRBACIi8KD1NpbXVsYXRp",
-            "b25TcGFjZRINCglQU1NfTE9DQUwQABINCglQU1NfV09STEQQAUIHCgVzaGFw",
-            "ZUIJCgdfYWN0aXZlQgcKBV9yYXRlQhAKDl9tYXhfcGFydGljbGVzQgsKCV9s",
-            "aWZldGltZUIKCghfZ3Jhdml0eUITChFfYWRkaXRpb25hbF9mb3JjZUIPCg1f",
-            "aW5pdGlhbF9zaXplQhEKD19zaXplX292ZXJfdGltZUITChFfaW5pdGlhbF9y",
-            "b3RhdGlvbkIVChNfcm90YXRpb25fb3Zlcl90aW1lQhgKFl9mYWNlX3RyYXZl",
-            "bF9kaXJlY3Rpb25CEAoOX2luaXRpYWxfY29sb3JCEgoQX2NvbG9yX292ZXJf",
-            "dGltZUIZChdfaW5pdGlhbF92ZWxvY2l0eV9zcGVlZEIKCghfdGV4dHVyZUIN",
-            "CgtfYmxlbmRfbW9kZUIPCg1fc3ByaXRlX3NoZWV0QgcKBV9sb29wQgoKCF9w",
-            "cmV3YXJtQhMKEV9zaW11bGF0aW9uX3NwYWNlQhEKD19saW1pdF92ZWxvY2l0",
-            "eUIRCg9fcGxheWJhY2tfc3RhdGVKBAgQEBFCFKoCEURDTC5FQ1NDb21wb25l",
-            "bnRzYgZwcm90bzM="));
+            "cml0ZVNoZWV0QW5pbWF0aW9uSBKIAQESRAoFcG9pbnQYEiABKAsyMy5kZWNl",
+            "bnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0aWNsZVN5c3RlbS5Qb2lu",
+            "dEgAEkYKBnNwaGVyZRgTIAEoCzI0LmRlY2VudHJhbGFuZC5zZGsuY29tcG9u",
+            "ZW50cy5QQlBhcnRpY2xlU3lzdGVtLlNwaGVyZUgAEkIKBGNvbmUYFCABKAsy",
+            "Mi5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0aWNsZVN5c3Rl",
+            "bS5Db25lSAASQAoDYm94GBUgASgLMjEuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLlBCUGFydGljbGVTeXN0ZW0uQm94SAASEQoEbG9vcBgYIAEoCEgT",
+            "iAEBEhQKB3ByZXdhcm0YGSABKAhIFIgBARJcChBzaW11bGF0aW9uX3NwYWNl",
+            "GBsgASgOMj0uZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGlj",
+            "bGVTeXN0ZW0uU2ltdWxhdGlvblNwYWNlSBWIAQESWAoObGltaXRfdmVsb2Np",
+            "dHkYGiABKAsyOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
+            "aWNsZVN5c3RlbS5MaW1pdFZlbG9jaXR5SBaIAQESWAoOcGxheWJhY2tfc3Rh",
+            "dGUYFiABKA4yOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
+            "aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBeIAQESQwoGYnVyc3RzGB0gAygL",
+            "MjMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0",
+            "ZW0uQnVyc3QabgoUU3ByaXRlU2hlZXRBbmltYXRpb24SDwoHdGlsZXNfeBgB",
+            "IAEoDRIPCgd0aWxlc195GAIgASgNEh4KEWZyYW1lc19wZXJfc2Vjb25kGAMg",
+            "ASgCSACIAQFCFAoSX2ZyYW1lc19wZXJfc2Vjb25kGj4KDUxpbWl0VmVsb2Np",
+            "dHkSDQoFc3BlZWQYASABKAISEwoGZGFtcGVuGAIgASgCSACIAQFCCQoHX2Rh",
+            "bXBlbhoHCgVQb2ludBooCgZTcGhlcmUSEwoGcmFkaXVzGAEgASgCSACIAQFC",
+            "CQoHX3JhZGl1cxpECgRDb25lEhIKBWFuZ2xlGAEgASgCSACIAQESEwoGcmFk",
+            "aXVzGAIgASgCSAGIAQFCCAoGX2FuZ2xlQgkKB19yYWRpdXMaPwoDQm94Ei8K",
+            "BHNpemUYASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjNIAIgB",
+            "AUIHCgVfc2l6ZRqSAQoFQnVyc3QSDAoEdGltZRgBIAEoAhINCgVjb3VudBgC",
+            "IAEoDRITCgZjeWNsZXMYAyABKAVIAIgBARIVCghpbnRlcnZhbBgEIAEoAkgB",
+            "iAEBEhgKC3Byb2JhYmlsaXR5GAUgASgCSAKIAQFCCQoHX2N5Y2xlc0ILCglf",
+            "aW50ZXJ2YWxCDgoMX3Byb2JhYmlsaXR5IjkKCUJsZW5kTW9kZRINCglQU0Jf",
+            "QUxQSEEQABILCgdQU0JfQUREEAESEAoMUFNCX01VTFRJUExZEAIiPgoNUGxh",
+            "eWJhY2tTdGF0ZRIOCgpQU19QTEFZSU5HEAASDQoJUFNfUEFVU0VEEAESDgoK",
+            "UFNfU1RPUFBFRBACIi8KD1NpbXVsYXRpb25TcGFjZRINCglQU1NfTE9DQUwQ",
+            "ABINCglQU1NfV09STEQQAUIHCgVzaGFwZUIJCgdfYWN0aXZlQgcKBV9yYXRl",
+            "QhAKDl9tYXhfcGFydGljbGVzQgsKCV9saWZldGltZUIKCghfZ3Jhdml0eUIT",
+            "ChFfYWRkaXRpb25hbF9mb3JjZUIPCg1faW5pdGlhbF9zaXplQhEKD19zaXpl",
+            "X292ZXJfdGltZUITChFfaW5pdGlhbF9yb3RhdGlvbkIVChNfcm90YXRpb25f",
+            "b3Zlcl90aW1lQhgKFl9mYWNlX3RyYXZlbF9kaXJlY3Rpb25CEAoOX2luaXRp",
+            "YWxfY29sb3JCEgoQX2NvbG9yX292ZXJfdGltZUIZChdfaW5pdGlhbF92ZWxv",
+            "Y2l0eV9zcGVlZEIKCghfdGV4dHVyZUINCgtfYmxlbmRfbW9kZUIMCgpfYmls",
+            "bGJvYXJkQg8KDV9zcHJpdGVfc2hlZXRCBwoFX2xvb3BCCgoIX3ByZXdhcm1C",
+            "EwoRX3NpbXVsYXRpb25fc3BhY2VCEQoPX2xpbWl0X3ZlbG9jaXR5QhEKD19w",
+            "bGF5YmFja19zdGF0ZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.FloatsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "Bursts" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "SpriteSheet", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "FramesPerSecond" }, new[]{ "FramesPerSecond" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "Bursts" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "FramesPerSecond" }, new[]{ "FramesPerSecond" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity), global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity.Parser, new[]{ "Speed", "Dampen" }, new[]{ "Dampen" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Point), global::DCL.ECSComponents.PBParticleSystem.Types.Point.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Sphere), global::DCL.ECSComponents.PBParticleSystem.Types.Sphere.Parser, new[]{ "Radius" }, new[]{ "Radius" }, null, null, null),
@@ -157,6 +157,7 @@ namespace DCL.ECSComponents {
       initialVelocitySpeed_ = other.initialVelocitySpeed_ != null ? other.initialVelocitySpeed_.Clone() : null;
       texture_ = other.texture_ != null ? other.texture_.Clone() : null;
       blendMode_ = other.blendMode_;
+      billboard_ = other.billboard_;
       spriteSheet_ = other.spriteSheet_ != null ? other.spriteSheet_.Clone() : null;
       loop_ = other.loop_;
       prewarm_ = other.prewarm_;
@@ -375,13 +376,13 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "initial_rotation" field.</summary>
     public const int InitialRotationFieldNumber = 9;
-    private global::Decentraland.Common.FloatRange initialRotation_;
+    private global::Decentraland.Common.Quaternion initialRotation_;
     /// <summary>
     /// --- Rotation ---
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.FloatRange InitialRotation {
+    public global::Decentraland.Common.Quaternion InitialRotation {
       get { return initialRotation_; }
       set {
         initialRotation_ = value;
@@ -390,13 +391,13 @@ namespace DCL.ECSComponents {
 
     /// <summary>Field number for the "rotation_over_time" field.</summary>
     public const int RotationOverTimeFieldNumber = 10;
-    private global::Decentraland.Common.FloatRange rotationOverTime_;
+    private global::Decentraland.Common.Quaternion rotationOverTime_;
     /// <summary>
-    /// default = {0, 0}. Angular velocity in degrees/sec, lerped over lifetime.
+    /// default = identity (0,0,0,1). Per-axis angular velocity as quaternion; converted to Euler XYZ.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.FloatRange RotationOverTime {
+    public global::Decentraland.Common.Quaternion RotationOverTime {
       get { return rotationOverTime_; }
       set {
         rotationOverTime_ = value;
@@ -412,9 +413,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool FaceTravelDirection {
-      get { if ((_hasBits0 & 1024) != 0) { return faceTravelDirection_; } else { return false; } }
+      get { if ((_hasBits0 & 2048) != 0) { return faceTravelDirection_; } else { return false; } }
       set {
-        _hasBits0 |= 1024;
+        _hasBits0 |= 2048;
         faceTravelDirection_ = value;
       }
     }
@@ -422,13 +423,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasFaceTravelDirection {
-      get { return (_hasBits0 & 1024) != 0; }
+      get { return (_hasBits0 & 2048) != 0; }
     }
     /// <summary>Clears the value of the "face_travel_direction" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearFaceTravelDirection() {
-      _hasBits0 &= ~1024;
+      _hasBits0 &= ~2048;
     }
 
     /// <summary>Field number for the "initial_color" field.</summary>
@@ -519,6 +520,34 @@ namespace DCL.ECSComponents {
       _hasBits0 &= ~32;
     }
 
+    /// <summary>Field number for the "billboard" field.</summary>
+    public const int BillboardFieldNumber = 16;
+    private bool billboard_;
+    /// <summary>
+    /// default = true
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Billboard {
+      get { if ((_hasBits0 & 64) != 0) { return billboard_; } else { return false; } }
+      set {
+        _hasBits0 |= 64;
+        billboard_ = value;
+      }
+    }
+    /// <summary>Gets whether the "billboard" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasBillboard {
+      get { return (_hasBits0 & 64) != 0; }
+    }
+    /// <summary>Clears the value of the "billboard" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearBillboard() {
+      _hasBits0 &= ~64;
+    }
+
     /// <summary>Field number for the "sprite_sheet" field.</summary>
     public const int SpriteSheetFieldNumber = 17;
     private global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation spriteSheet_;
@@ -591,9 +620,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool Loop {
-      get { if ((_hasBits0 & 128) != 0) { return loop_; } else { return false; } }
+      get { if ((_hasBits0 & 256) != 0) { return loop_; } else { return false; } }
       set {
-        _hasBits0 |= 128;
+        _hasBits0 |= 256;
         loop_ = value;
       }
     }
@@ -601,13 +630,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasLoop {
-      get { return (_hasBits0 & 128) != 0; }
+      get { return (_hasBits0 & 256) != 0; }
     }
     /// <summary>Clears the value of the "loop" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearLoop() {
-      _hasBits0 &= ~128;
+      _hasBits0 &= ~256;
     }
 
     /// <summary>Field number for the "prewarm" field.</summary>
@@ -619,9 +648,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool Prewarm {
-      get { if ((_hasBits0 & 256) != 0) { return prewarm_; } else { return false; } }
+      get { if ((_hasBits0 & 512) != 0) { return prewarm_; } else { return false; } }
       set {
-        _hasBits0 |= 256;
+        _hasBits0 |= 512;
         prewarm_ = value;
       }
     }
@@ -629,13 +658,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasPrewarm {
-      get { return (_hasBits0 & 256) != 0; }
+      get { return (_hasBits0 & 512) != 0; }
     }
     /// <summary>Clears the value of the "prewarm" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearPrewarm() {
-      _hasBits0 &= ~256;
+      _hasBits0 &= ~512;
     }
 
     /// <summary>Field number for the "simulation_space" field.</summary>
@@ -647,9 +676,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace SimulationSpace {
-      get { if ((_hasBits0 & 512) != 0) { return simulationSpace_; } else { return global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace.PssLocal; } }
+      get { if ((_hasBits0 & 1024) != 0) { return simulationSpace_; } else { return global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace.PssLocal; } }
       set {
-        _hasBits0 |= 512;
+        _hasBits0 |= 1024;
         simulationSpace_ = value;
       }
     }
@@ -657,13 +686,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasSimulationSpace {
-      get { return (_hasBits0 & 512) != 0; }
+      get { return (_hasBits0 & 1024) != 0; }
     }
     /// <summary>Clears the value of the "simulation_space" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearSimulationSpace() {
-      _hasBits0 &= ~512;
+      _hasBits0 &= ~1024;
     }
 
     /// <summary>Field number for the "limit_velocity" field.</summary>
@@ -690,9 +719,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState PlaybackState {
-      get { if ((_hasBits0 & 64) != 0) { return playbackState_; } else { return global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState.PsPlaying; } }
+      get { if ((_hasBits0 & 128) != 0) { return playbackState_; } else { return global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState.PsPlaying; } }
       set {
-        _hasBits0 |= 64;
+        _hasBits0 |= 128;
         playbackState_ = value;
       }
     }
@@ -700,13 +729,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasPlaybackState {
-      get { return (_hasBits0 & 64) != 0; }
+      get { return (_hasBits0 & 128) != 0; }
     }
     /// <summary>Clears the value of the "playback_state" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearPlaybackState() {
-      _hasBits0 &= ~64;
+      _hasBits0 &= ~128;
     }
 
     /// <summary>Field number for the "bursts" field.</summary>
@@ -777,6 +806,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(InitialVelocitySpeed, other.InitialVelocitySpeed)) return false;
       if (!object.Equals(Texture, other.Texture)) return false;
       if (BlendMode != other.BlendMode) return false;
+      if (Billboard != other.Billboard) return false;
       if (!object.Equals(SpriteSheet, other.SpriteSheet)) return false;
       if (!object.Equals(Point, other.Point)) return false;
       if (!object.Equals(Sphere, other.Sphere)) return false;
@@ -812,6 +842,7 @@ namespace DCL.ECSComponents {
       if (initialVelocitySpeed_ != null) hash ^= InitialVelocitySpeed.GetHashCode();
       if (texture_ != null) hash ^= Texture.GetHashCode();
       if (HasBlendMode) hash ^= BlendMode.GetHashCode();
+      if (HasBillboard) hash ^= Billboard.GetHashCode();
       if (spriteSheet_ != null) hash ^= SpriteSheet.GetHashCode();
       if (shapeCase_ == ShapeOneofCase.Point) hash ^= Point.GetHashCode();
       if (shapeCase_ == ShapeOneofCase.Sphere) hash ^= Sphere.GetHashCode();
@@ -901,6 +932,10 @@ namespace DCL.ECSComponents {
       if (HasBlendMode) {
         output.WriteRawTag(120);
         output.WriteEnum((int) BlendMode);
+      }
+      if (HasBillboard) {
+        output.WriteRawTag(128, 1);
+        output.WriteBool(Billboard);
       }
       if (spriteSheet_ != null) {
         output.WriteRawTag(138, 1);
@@ -1017,6 +1052,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(120);
         output.WriteEnum((int) BlendMode);
       }
+      if (HasBillboard) {
+        output.WriteRawTag(128, 1);
+        output.WriteBool(Billboard);
+      }
       if (spriteSheet_ != null) {
         output.WriteRawTag(138, 1);
         output.WriteMessage(SpriteSheet);
@@ -1120,6 +1159,9 @@ namespace DCL.ECSComponents {
       if (HasBlendMode) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) BlendMode);
       }
+      if (HasBillboard) {
+        size += 2 + 1;
+      }
       if (spriteSheet_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(SpriteSheet);
       }
@@ -1198,13 +1240,13 @@ namespace DCL.ECSComponents {
       }
       if (other.initialRotation_ != null) {
         if (initialRotation_ == null) {
-          InitialRotation = new global::Decentraland.Common.FloatRange();
+          InitialRotation = new global::Decentraland.Common.Quaternion();
         }
         InitialRotation.MergeFrom(other.InitialRotation);
       }
       if (other.rotationOverTime_ != null) {
         if (rotationOverTime_ == null) {
-          RotationOverTime = new global::Decentraland.Common.FloatRange();
+          RotationOverTime = new global::Decentraland.Common.Quaternion();
         }
         RotationOverTime.MergeFrom(other.RotationOverTime);
       }
@@ -1237,6 +1279,9 @@ namespace DCL.ECSComponents {
       }
       if (other.HasBlendMode) {
         BlendMode = other.BlendMode;
+      }
+      if (other.HasBillboard) {
+        Billboard = other.Billboard;
       }
       if (other.spriteSheet_ != null) {
         if (spriteSheet_ == null) {
@@ -1348,14 +1393,14 @@ namespace DCL.ECSComponents {
           }
           case 74: {
             if (initialRotation_ == null) {
-              InitialRotation = new global::Decentraland.Common.FloatRange();
+              InitialRotation = new global::Decentraland.Common.Quaternion();
             }
             input.ReadMessage(InitialRotation);
             break;
           }
           case 82: {
             if (rotationOverTime_ == null) {
-              RotationOverTime = new global::Decentraland.Common.FloatRange();
+              RotationOverTime = new global::Decentraland.Common.Quaternion();
             }
             input.ReadMessage(RotationOverTime);
             break;
@@ -1390,6 +1435,10 @@ namespace DCL.ECSComponents {
           }
           case 120: {
             BlendMode = (global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode) input.ReadEnum();
+            break;
+          }
+          case 128: {
+            Billboard = input.ReadBool();
             break;
           }
           case 138: {
@@ -1524,14 +1573,14 @@ namespace DCL.ECSComponents {
           }
           case 74: {
             if (initialRotation_ == null) {
-              InitialRotation = new global::Decentraland.Common.FloatRange();
+              InitialRotation = new global::Decentraland.Common.Quaternion();
             }
             input.ReadMessage(InitialRotation);
             break;
           }
           case 82: {
             if (rotationOverTime_ == null) {
-              RotationOverTime = new global::Decentraland.Common.FloatRange();
+              RotationOverTime = new global::Decentraland.Common.Quaternion();
             }
             input.ReadMessage(RotationOverTime);
             break;
@@ -1566,6 +1615,10 @@ namespace DCL.ECSComponents {
           }
           case 120: {
             BlendMode = (global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode) input.ReadEnum();
+            break;
+          }
+          case 128: {
+            Billboard = input.ReadBool();
             break;
           }
           case 138: {

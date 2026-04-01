@@ -277,6 +277,20 @@ namespace DCL.Tests
         }
 
         [Test]
+        public void ReturnTrueForBillboardWhenNotSet()
+        {
+            var pb = new PBParticleSystem();
+            Assert.IsTrue(pb.GetBillboard());
+        }
+
+        [Test]
+        public void ReturnFalseForBillboardWhenExplicitlyFalse()
+        {
+            var pb = new PBParticleSystem { Billboard = false };
+            Assert.IsFalse(pb.GetBillboard());
+        }
+
+        [Test]
         public void ReturnDefaultSphereRadiusWhenNotSet()
         {
             var sphere = new PBParticleSystem.Types.Sphere();
@@ -570,6 +584,67 @@ namespace DCL.Tests
             system.Update(0);
 
             Assert.AreEqual(0, testParticleSystem.emission.burstCount);
+        }
+
+        [Test]
+        public void ApplyBillboardModeByDefault()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            var renderer = testParticleSystem.GetComponent<ParticleSystemRenderer>();
+            Assert.AreEqual(ParticleSystemRenderMode.Billboard, renderer.renderMode);
+            Assert.AreEqual(ParticleSystemRenderSpace.View, renderer.alignment);
+        }
+
+        [Test]
+        public void ApplyMeshModeWhenBillboardFalse()
+        {
+            var pb = new PBParticleSystem { IsDirty = true, Billboard = false };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            var renderer = testParticleSystem.GetComponent<ParticleSystemRenderer>();
+            Assert.AreEqual(ParticleSystemRenderMode.Mesh, renderer.renderMode);
+            Assert.AreEqual(ParticleSystemRenderSpace.Local, renderer.alignment);
+        }
+
+        [Test]
+        public void ApplyQuaternionInitialRotationAs3DStartRotation()
+        {
+            var pb = new PBParticleSystem
+            {
+                IsDirty = true,
+                InitialRotation = new Decentraland.Common.Quaternion { X = 0, Y = 0.7071068f, Z = 0, W = 0.7071068f }
+            };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.IsTrue(testParticleSystem.main.startRotation3D);
+        }
+
+        [Test]
+        public void ApplyQuaternionRotationOverLifetimeWithSeparateAxes()
+        {
+            var pb = new PBParticleSystem
+            {
+                IsDirty = true,
+                RotationOverTime = new Decentraland.Common.Quaternion { X = 0, Y = 0, Z = 0, W = 1 }
+            };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.IsTrue(testParticleSystem.rotationOverLifetime.enabled);
+            Assert.IsTrue(testParticleSystem.rotationOverLifetime.separateAxes);
         }
     }
 
