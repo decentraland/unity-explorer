@@ -744,7 +744,14 @@ namespace Global.Dynamic
         private void InstantiateAltTester(IAppArgs appArgs)
         {
 #if ALTTESTER
-            var instance = Instantiate(altTesterPrefab);
+            // Temporary parent needed because AltTester's Awake method relies on the name being
+            // AltTesterPrefab (and not AltTesterPrefab(Clone))
+            var tempParent = new GameObject("AltTesterParent");
+            tempParent.SetActive(false);
+            var instance = Instantiate(altTesterPrefab, tempParent.transform);
+            instance.name = "AltTesterPrefab";
+            instance.transform.SetParent(null);
+            Destroy(tempParent);
 
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {

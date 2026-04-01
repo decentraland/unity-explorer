@@ -446,7 +446,9 @@ namespace DCL.Chat
             var deleteChatHistoryButton =
                 new ButtonContextMenuControlSettings(chatConfig.chatContextMenuSettings.DeleteChatHistoryText,
                     chatConfig.chatContextMenuSettings.DeleteChatHistorySprite,
-                    OnDeleteChatHistoryButtonClicked);
+                    OnDeleteChatHistoryButtonClicked,
+                    textColor: ContextMenuColors.DESTRUCTIVE_ACTION,
+                    iconColor: ContextMenuColors.DESTRUCTIVE_ACTION);
 
             var subMenuSettings = new SubMenuContextMenuButtonSettings(
                 chatConfig.chatContextMenuSettings.NotificationPingText,
@@ -486,7 +488,9 @@ namespace DCL.Chat
                 contextMenuInstance.AddControl(autoTranslateToggle);
             }
 
-            contextMenuInstance .AddControl(deleteChatHistoryButton);
+            contextMenuInstance
+                .AddControl(new SeparatorContextMenuControlSettings())
+                .AddControl(deleteChatHistoryButton);
         }
     }
 }
