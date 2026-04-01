@@ -116,60 +116,41 @@ namespace DCL.WebRequests
             if (exception.IsDNSLookupError())
                 return false;
 
-            return (exception.IsAborted() || IsIrrecoverableServerError(exception.ResponseCode) || IsIrrecoverableStructuralError(exception.ResponseCode))
+            return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
                    && !exception.IsUnableToCompleteSSLConnection();
         }
 
-        private static bool IsIrrecoverableStructuralError(long responseCode)
+        private static bool IsIrrecoverableResponseCode(long responseCode)
         {
             switch (responseCode)
             {
+                // Recoverable client errors
                 case 408: // Request Timeout
                 case 425: // Too Early
                 case 429: // Too Many Requests
-                    return false;
-                default:
-                    return true;
-            }
-        }
 
-        private static bool IsIrrecoverableServerError(long responseCode)
-        {
-            switch (responseCode)
-            {
-                case 501: // Not Implemented. Transient server bug/outage
-                case 505: // HTTP Version Not Supported
-                case 508: // Loop Detected
-                case 507: // Insufficient Storage.
-                case 511: // Network Authentication Required
-                    return true;
+                // Recoverable server errors
                 case 500: // Internal Server Error
-                case 502: // Bad Gateway. Reverse proxy/CDN got a bad response from upstream
-                case 503: // Service Unavailable. Overload, maintenance window
-                case 504: // Gateway Timeout. Upstream didn’t respond in time
+                case 502: // Bad Gateway — reverse proxy/CDN got a bad response from upstream
+                case 503: // Service Unavailable — overload, maintenance window
+                case 504: // Gateway Timeout — upstream didn’t respond in time
 
-                // CDN Specific Errors
-                case 521:
-                case 522:
-                case 523:
-                case 525:
-                case 526:
+                // Recoverable CDN-specific errors (transient)
+                case 521: // Web Server Is Down
+                case 522: // Connection Timed Out
+                case 523: // Origin Is Unreachable
+                case 524: // A Timeout Occurred — Cloudflare equivalent of 504
+                case 525: // SSL Handshake Failed
                     return false;
 
+                // Everything else is irrecoverable (4xx client errors, permanent 5xx like 501/505/507/508/511, etc.)
                 default:
                     return true;
             }
         }
 
-        public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception)
-        {
-            // fixes frequent editor exception
-#if UNITY_EDITOR
-            return exception.Message.Contains("Unable to complete SSL connection");
-#else
-            return false;
-#endif
-        }
+        public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
+            exception.Message.Contains("Unable to complete SSL connection");
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
             exception is { Error: "Request timeout" };
