@@ -8,6 +8,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 {
     public sealed class ENetTransport : ITransport
     {
+        private static bool isLibInitialized;
+
         private readonly ENetTransportOptions options;
         private readonly MessagePipe messagePipe;
         private readonly byte[] receiveBuffer;
@@ -66,13 +68,22 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             client?.Dispose();
             client = null;
             lifeCycleCts.SafeCancelAndDispose();
-            Library.Deinitialize();
+
+            if (isLibInitialized)
+            {
+                Library.Deinitialize();
+                isLibInitialized = false;
+            }
         }
 
         public UniTask ConnectAsync(string ip, int port, CancellationToken ct)
         {
-            if (!Library.Initialize())
-                throw new InvalidOperationException("ENet library failed to initialize.");
+            if (!isLibInitialized)
+            {
+                if (!Library.Initialize())
+                    throw new InvalidOperationException("ENet library failed to initialize.");
+                isLibInitialized = true;
+            }
 
             client = new Host();
             Address address = new Address();
