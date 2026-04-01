@@ -196,13 +196,14 @@ namespace DCL.Places
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
+
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
-            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends.PlaceInfo) ?? false;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends!.PlaceInfo) ?? false;
             cardView.Configure(
-                placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
+                placeInfo: placeInfoWithConnectedFriends!.PlaceInfo,
                 ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
                 userOwnsPlace: false,
                 thumbnailLoader: placesCardsThumbnailLoader!,

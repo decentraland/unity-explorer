@@ -27,7 +27,7 @@ namespace DCL.Places
         private List<Profile.CompactInfo> allFriends { get; } = new();
         private List<EventDTO> liveEvents { get; } = new();
 
-        public PlaceInfoWithConnectedFriends GetPlaceInfoById(string placeId) =>
+        public PlaceInfoWithConnectedFriends? GetPlaceInfoById(string placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)

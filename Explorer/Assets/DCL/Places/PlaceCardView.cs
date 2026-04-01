@@ -156,7 +156,7 @@ namespace DCL.Places
             lastPlaceTitle = placeInfo.title ?? string.Empty;
             placeNameText.text = lastPlaceTitle;
             placeDescriptionText.text = ownerName;
-            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            int onlineMembers = placeInfo.connected_addresses?.Length ?? placeInfo.user_count;
             onlineMembersText.text = $"{onlineMembers}";
             onlineMembersContainer.SetActive(onlineMembers > 0);
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
