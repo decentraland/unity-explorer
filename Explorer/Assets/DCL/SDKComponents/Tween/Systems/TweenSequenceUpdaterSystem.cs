@@ -55,14 +55,14 @@ namespace DCL.SDKComponents.Tween
 
         [Query]
         [None(typeof(PBTweenSequence))]
-        private void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent, bool isCurrentScene)
+        private void UpdateTweenTransform([Data] bool isCurrentScene, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             TweenSDKComponentHelper.UpdateTweenTransform(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, transformComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
 
         [Query]
         [None(typeof(PBTweenSequence))]
-        private void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, bool isCurrentScene)
+        private void UpdateTweenTexture([Data] bool isCurrentScene, CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             TweenSDKComponentHelper.UpdateTweenTexture(sdkEntity, in pbTween, ref sdkTweenComponent, ref materialComponent, tweenerPool, ecsToCRDTWriter, isCurrentScene);
         }
@@ -71,9 +71,9 @@ namespace DCL.SDKComponents.Tween
         /// Merged from former UpdatePBTweenSequence + UpdateTweenSequenceState queries to halve archetype traversal.
         /// </summary>
         [Query]
-        private void UpdateTweenSequenceState(Entity entity, in PBTween pbTween, in PBTweenSequence pbTweenSequence,
+        private void UpdateTweenSequenceState([Data] bool isCurrentScene, Entity entity, in PBTween pbTween, in PBTweenSequence pbTweenSequence,
             ref SDKTweenSequenceComponent sdkTweenSequenceComponent, ref SDKTransform sdkTransform,
-            CRDTEntity sdkEntity, ref TransformComponent transformComponent, bool isCurrentScene)
+            CRDTEntity sdkEntity, ref TransformComponent transformComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
