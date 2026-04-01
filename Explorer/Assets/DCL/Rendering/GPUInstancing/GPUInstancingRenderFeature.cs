@@ -19,7 +19,6 @@ namespace DCL.Rendering.GPUInstancing
 
         public void Initialize(GPUInstancingService service, IRealmData realmData)
         {
-            instancingService = service;
         }
 
 
@@ -29,7 +28,6 @@ namespace DCL.Rendering.GPUInstancing
 
         protected override void Dispose(bool _bDisposing)
         {
-            // TODO: dispose renderPass if needed;
         }
 
         [Serializable]
