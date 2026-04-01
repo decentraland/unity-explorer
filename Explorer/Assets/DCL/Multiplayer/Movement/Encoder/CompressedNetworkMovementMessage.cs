@@ -8,5 +8,6 @@ namespace DCL.Multiplayer.Movement
         public int temporalData;
         public long movementData;
         public int headSyncData;
+        public int pointAtData;
     }
 }
