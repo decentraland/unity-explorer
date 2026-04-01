@@ -1,3 +1,4 @@
+using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -44,5 +45,64 @@ namespace DCL.VoiceChat
 
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
+
+        [Tooltip("Specify group where proximity voice chat sources should put its output")]
+        public AudioMixerGroup ProximityChatAudioMixerGroup;
+
+        [Header("Proximity Spatial Audio")]
+        [Range(0f, 1f)]
+        public float ProximitySpatialBlend = 1f;
+
+        [Range(0f, 5f)]
+        public float ProximityDopplerLevel;
+
+        [Range(0f, 100f)]
+        public float ProximityMinDistance = 2f;
+
+        [Range(1f, 500f)]
+        public float ProximityMaxDistance = 16f;
+
+        [Range(0f, 360f)]
+        public float ProximitySpread;
+
+        public AudioRolloffMode ProximityRolloffMode = AudioRolloffMode.Custom;
+
+        public AnimationCurve ProximityCustomRolloffCurve = new (
+            new Keyframe(0f, 1f, 0f, 0f),
+            new Keyframe(3f, 1f, 0f, 0f),
+            new Keyframe(8f, 0.5f, -0.15f, -0.15f),
+            new Keyframe(14f, 0.03f, -0.04f, -0.02f),
+            new Keyframe(16f, 0f, -0.01f, 0f)
+        );
+
+        [Header("Proximity Spatialization (LivekitAudioSource overrides)")]
+        [Tooltip("ILD algorithm. HeadShadow = EqualPower + frequency-dependent LPF on far ear.")]
+        public ILDMode ProximityILDMode = ILDMode.HeadShadow;
+
+        [Tooltip("Enable interaural time delay (Woodworth spherical-head model).")]
+        public bool ProximityEnableITD;
+
+        [Tooltip("Enable pinna HRTF simulation (elevation-dependent notch filters).")]
+        public bool ProximityEnableHRTF;
+
+        public void ApplyProximitySettingsTo(AudioSource source)
+        {
+            source.spatialBlend = ProximitySpatialBlend;
+            source.dopplerLevel = ProximityDopplerLevel;
+            source.minDistance = ProximityMinDistance;
+            source.maxDistance = ProximityMaxDistance;
+            source.spread = ProximitySpread;
+            source.rolloffMode = ProximityRolloffMode;
+
+            if (ProximityRolloffMode == AudioRolloffMode.Custom)
+                source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
+        }
+
+        public void ApplySpatializationSettingsTo(LivekitAudioSource source)
+        {
+            source.ildMode = ProximityILDMode;
+            source.enableITD = ProximityEnableITD;
+            source.enableHRTF = ProximityEnableHRTF;
+        }
     }
 }
