@@ -198,12 +198,15 @@ namespace DCL.UI.ProfileNames
 
                 if (profile != null)
                 {
-                    profile.Name = config.nameInputField.Text;
-                    profile.HasClaimedName = false;
+                    // Create a copy to avoid mutating the cached profile directly,
+                    // which would cause UpdateProfileAsync to see an identical "previous" snapshot
+                    Profile newProfile = new ProfileBuilder().From(profile).Build();
+                    newProfile.Name = config.nameInputField.Text;
+                    newProfile.HasClaimedName = false;
 
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)
@@ -235,12 +238,15 @@ namespace DCL.UI.ProfileNames
 
                 if (profile != null)
                 {
-                    profile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
-                    profile.HasClaimedName = true;
+                    // Create a copy to avoid mutating the cached profile directly,
+                    // which would cause UpdateProfileAsync to see an identical "previous" snapshot
+                    Profile newProfile = new ProfileBuilder().From(profile).Build();
+                    newProfile.Name = config.claimedNameDropdown.options[config.claimedNameDropdown.value].text;
+                    newProfile.HasClaimedName = true;
 
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
                         NameChanged?.Invoke();
 
                         if (updatedProfile != null)
