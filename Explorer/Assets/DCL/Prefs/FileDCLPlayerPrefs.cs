@@ -19,6 +19,7 @@ namespace DCL.Prefs
         private readonly UnityDCLPlayerPrefs unityPrefs;
 
         private bool dataChanged;
+        private Task _writeTask = Task.CompletedTask;
 
         public static int PrefsInstanceNumber { get; private set; }
 
@@ -162,7 +163,7 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            Task.Run(WriteToDisk);
+            _writeTask = Task.Run(WriteToDisk);
         }
 
         public void SaveSync()
@@ -176,6 +177,9 @@ namespace DCL.Prefs
 
         public void Dispose()
         {
+            try { _writeTask.Wait(); }
+            catch (AggregateException) { }
+
             try { fileStream.Unlock(0, 0); }
             catch (IOException) { }
 
