@@ -34,9 +34,59 @@ jobs:
           fi
           echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-  comment-success:
+  check-build-ran:
     needs: pre-validation
-    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != ''
+    if: needs.pre-validation.outputs.pr-number != ''
+    runs-on: ubuntu-latest
+    outputs:
+      build-ran: ${{ steps.check.outputs.build-ran }}
+    steps:
+      - name: Check if build jobs actually ran
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          # Check if any build artifacts exist (they only exist when Build jobs ran)
+          ARTIFACT_COUNT=$(gh api "/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts" \
+            --jq '[.artifacts[] | select(.name | startswith("Decentraland_"))] | length')
+          echo "Build artifact count: $ARTIFACT_COUNT"
+          if [ "$ARTIFACT_COUNT" -gt 0 ]; then
+            echo "build-ran=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build-ran=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  comment-skipped:
+    needs: [pre-validation, check-build-ran]
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
+          comment-author: 'github-actions[bot]'
+
+      - name: Post skipped comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ needs.pre-validation.outputs.pr-number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |-
+            ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">
+
+            Build skipped — no changes detected under `Explorer/`.
+
+            [badge]: https://img.shields.io/badge/Build-Skipped-yellow?logo=github&style=for-the-badge
+
+  comment-success:
+    needs: [pre-validation, check-build-ran]
+    if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Get Artifact and Pull request info
@@ -218,8 +268,8 @@ jobs:
             }
 
   comment-failed:
-    needs: pre-validation
-    if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != ''
+    needs: [pre-validation, check-build-ran]
+    if: github.event.workflow_run.conclusion == 'failure' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Find Comment
