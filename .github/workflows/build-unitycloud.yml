@@ -246,13 +246,18 @@ jobs:
           echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
           echo "Final decision: should_build=$should_build"
 
-      - name: Skip build checks
+      - name: Skip build and test checks
         if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const sha = context.payload.pull_request.head.sha;
-            const checks = ['Build (macos)', 'Build (windows64)'];
+            const checks = [
+              'Build (macos)',
+              'Build (windows64)',
+              'Test (editmode)',
+              'Test (playmode)'
+            ];
             for (const check of checks) {
               await github.rest.repos.createCommitStatus({
                 owner: context.repo.owner,
