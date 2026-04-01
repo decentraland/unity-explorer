@@ -127,7 +127,30 @@ namespace DCL.Prefs
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
         }
 
+        private static void Cleanup()
+        {
+            if (dclPrefs == null)
+                return;
+
+            dclPrefs.SaveSync();
+            (dclPrefs as IDisposable)?.Dispose();
+            dclPrefs = null;
+        }
+
 #if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+        private static void RegisterPlayModeCleanup()
+        {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingPlayMode)
+                Cleanup();
+        }
+
         [MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
         private static void ClearDCLPlayerPrefs()
         {

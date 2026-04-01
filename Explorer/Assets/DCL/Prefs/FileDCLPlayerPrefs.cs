@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DCL.Prefs
 {
-    public class FileDCLPlayerPrefs : IDCLPrefs
+    public class FileDCLPlayerPrefs : IDCLPrefs, IDisposable
     {
         private const int CONCURRENT_CLIENTS = 16;
         private const string PREFS_FILENAME = "userdata_{0}.json";
@@ -172,6 +172,15 @@ namespace DCL.Prefs
             dataChanged = false;
 
             WriteToDisk();
+        }
+
+        public void Dispose()
+        {
+            try { fileStream.Unlock(0, 0); }
+            catch (IOException) { }
+
+            fileStream.Dispose();
+            PrefsInstanceNumber = -1;
         }
 
         private void WriteToDisk()
