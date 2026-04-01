@@ -2478,7 +2478,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: WALLET ADDRESS
+  m_text: User ID
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -2505,13 +2505,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 13
-  m_fontSizeBase: 13
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 8
   m_fontSizeMax: 16
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -2638,7 +2638,7 @@ GameObject:
   - component: {fileID: 8638659195552148163}
   - component: {fileID: 2781939940649077984}
   m_Layer: 5
-  m_Name: OfficialMark (1)
+  m_Name: OfficialMark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2808,7 +2808,7 @@ GameObject:
   - component: {fileID: 7613698358820122823}
   - component: {fileID: 2114416434986668839}
   m_Layer: 5
-  m_Name: Wallet Address
+  m_Name: UserID
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3115,6 +3115,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 766780602294446782, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_Name
+      value: CopiedNotification
+      objectReference: {fileID: 0}
     - target: {fileID: 2245722907251914224, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_SizeDelta.x
       value: 18
@@ -3131,9 +3135,13 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 16
       objectReference: {fileID: 0}
+    - target: {fileID: 2966939729984342902, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_Name
+      value: CopyButton
+      objectReference: {fileID: 0}
     - target: {fileID: 3052555730975240252, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 142
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 3052555730975240252, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_SizeDelta.y
@@ -3305,7 +3313,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5586862444216862296, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_Name
-      value: WalletAddressContainer
+      value: UserIDContainer
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419208300919453317, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_Name
+      value: Logo
+      objectReference: {fileID: 0}
+    - target: {fileID: 6839845796141747074, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_text
+      value: User ID copied!
+      objectReference: {fileID: 0}
+    - target: {fileID: 6839845796141747074, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_fontSize
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 6956488416157110236, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_Name
+      value: ID
+      objectReference: {fileID: 0}
+    - target: {fileID: 7172759973846273261, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_Name
+      value: Notification
       objectReference: {fileID: 0}
     - target: {fileID: 8295470120040063606, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_AnchoredPosition.x
