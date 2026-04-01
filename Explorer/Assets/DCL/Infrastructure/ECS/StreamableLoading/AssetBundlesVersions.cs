@@ -5,15 +5,13 @@ namespace ECS.StreamableLoading
 {
     public struct AssetBundlesVersions
     {
-        public readonly Dictionary<string, PlatformVersionInfo> versions;
+        public Dictionary<string, PlatformVersionInfo> versions { get; private set; }
 
         public static AssetBundlesVersions Create() =>
-            new (true);
-
-        private AssetBundlesVersions(bool _)
-        {
-            versions = new Dictionary<string, PlatformVersionInfo>(StringComparer.InvariantCultureIgnoreCase);
-        }
+            new ()
+            {
+                versions = new Dictionary<string, PlatformVersionInfo>(StringComparer.InvariantCultureIgnoreCase)
+            };
 
         public struct PlatformVersionInfo
         {
