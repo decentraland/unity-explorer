@@ -7,10 +7,9 @@ namespace DCL.Chat.ChatReactions
     public sealed class SituationalReactionService : ISituationalReactionService, IDisposable
     {
         private readonly ChatReactionsConfig config;
-        private readonly IAvatarReactionPosition? avatarPosition;
         private readonly ChatReactionUISimulation uiSimulation;
         private readonly ChatReactionWorldSimulation worldSimulation;
-        private readonly Func<Vector3?>? cachedLocalHeadGetter;
+        private readonly LocalPlayerWorldReactor worldReactor;
         private readonly RemoteReactionReceiver remoteReceiver;
         private readonly ReactionNetworkBroadcaster networkBroadcaster;
 
@@ -20,13 +19,15 @@ namespace DCL.Chat.ChatReactions
         public void SetEventBus(IChatReactionEventBus bus) => eventBus = bus;
 #endif
 
-        private const int STREAM_EMOJI_INDEX = -1;
-
         /// <summary>
         /// When false, no world-space reactions (particles above avatar heads) are spawned.
         /// Controlled by the In-World Chat Bubbles &amp; Reactions setting.
         /// </summary>
-        public bool WorldReactionsEnabled { get; set; } = true;
+        public bool WorldReactionsEnabled
+        {
+            get => worldReactor.WorldReactionsEnabled;
+            set => worldReactor.WorldReactionsEnabled = value;
+        }
 
         /// <summary>
         /// When false, incoming remote reactions are not shown in the UI lane.
@@ -50,10 +51,8 @@ namespace DCL.Chat.ChatReactions
             this.config = config;
             this.uiSimulation = uiSimulation;
             this.worldSimulation = worldSimulation;
-            this.avatarPosition = avatarPosition;
 
-            if (avatarPosition != null)
-                cachedLocalHeadGetter = avatarPosition.GetLocalPlayerHeadPosition;
+            worldReactor = new LocalPlayerWorldReactor(worldSimulation, config.WorldLane, avatarPosition);
 
             remoteReceiver = new RemoteReactionReceiver(
                 () => config.MessageReactions.ReceiveStaggerInterval,
@@ -76,7 +75,7 @@ namespace DCL.Chat.ChatReactions
         public void Dispose()
         {
             networkBroadcaster.Dispose();
-            worldSimulation.EndStream();
+            worldReactor.EndStream();
             uiSimulation.Dispose();
             worldSimulation.Dispose();
         }
@@ -130,34 +129,24 @@ namespace DCL.Chat.ChatReactions
         public void BeginUIStream(RectTransform sourceRect)
         {
             uiSimulation.BeginUIStream(sourceRect);
-
-            if (cachedLocalHeadGetter != null && WorldReactionsEnabled)
-                worldSimulation.BeginStream(cachedLocalHeadGetter, STREAM_EMOJI_INDEX, AvatarAnchorTable.LOCAL_PLAYER_ID);
+            worldReactor.BeginStream();
         }
 
         public void EndUIStream()
         {
             uiSimulation.EndUIStream();
-            worldSimulation.EndStream();
+            worldReactor.EndStream();
         }
 
         public void ToggleUIStream(RectTransform sourceRect)
         {
             uiSimulation.ToggleUIStream(sourceRect);
-
-            bool shouldStreamWorld = uiSimulation.IsStreaming && WorldReactionsEnabled;
-
-            if (cachedLocalHeadGetter == null) return;
-
-            if (shouldStreamWorld)
-                worldSimulation.BeginStream(cachedLocalHeadGetter, STREAM_EMOJI_INDEX, AvatarAnchorTable.LOCAL_PLAYER_ID);
-            else
-                worldSimulation.EndStream();
+            worldReactor.SyncStreamState(uiSimulation.IsStreaming);
         }
 
         private void AfterLocalTrigger(int emojiIndex, int count)
         {
-            TriggerLocalPlayerWorldReaction(emojiIndex);
+            worldReactor.TriggerLocalBurst(emojiIndex);
             networkBroadcaster.Broadcast(emojiIndex);
 #if UNITY_EDITOR
             eventBus?.NotifySent(new ReactionSentEvent(emojiIndex, count, Time.unscaledTime, ReactionType.Situational));
@@ -165,24 +154,9 @@ namespace DCL.Chat.ChatReactions
             UserReactedToSituation?.Invoke(emojiIndex);
         }
 
-        private void TriggerLocalPlayerWorldReaction(int emojiIndex)
-        {
-            if (!WorldReactionsEnabled) return;
-            if (avatarPosition == null) return;
-
-            Vector3? headPos = avatarPosition.GetLocalPlayerHeadPosition();
-            if (headPos.HasValue)
-                worldSimulation.TriggerAnchoredReactionLocalPlayer(headPos.Value, emojiIndex, config.WorldLane.BurstCount);
-        }
-
         private void ProcessRemoteReaction(ReactionReceivedArgs args)
         {
-            if (WorldReactionsEnabled && avatarPosition != null)
-            {
-                Vector3? headPos = avatarPosition.GetHeadPosition(args.WalletId);
-                if (headPos.HasValue)
-                    worldSimulation.TriggerAnchoredReaction(headPos.Value, args.WalletId, args.EmojiIndex, args.Count);
-            }
+            worldReactor.TriggerRemoteBurst(args.WalletId, args.EmojiIndex, args.Count);
 
             if (ShowRemoteUIReactions)
                 uiSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);
