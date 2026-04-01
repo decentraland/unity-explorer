@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Profiling;
 using Object = UnityEngine.Object;
+using DCL.Utility.Types;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -26,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             CreateMeshData(meshesData, gameObjects);
 
-            (int vertCount, int boneCount) = SetupCounters(meshesData);
+            (NonZeroInt vertCount, int boneCount) = SetupCounters(meshesData);
 
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);

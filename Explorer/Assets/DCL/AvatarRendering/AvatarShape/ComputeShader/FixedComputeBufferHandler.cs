@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DCL.Utility.Types;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -55,9 +56,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         int IEqualityComparer<Slice>.GetHashCode(Slice obj) =>
             HashCode.Combine(obj.StartIndex, obj.Length);
 
-        public Slice Rent(int length)
+        public Slice Rent(NonZeroInt lengthValue)
         {
-            if (length == 0) throw new ArgumentOutOfRangeException(nameof(length), "length must be greater than 0");
+            int length = lengthValue.Value;
 
             // Search the freeRegions list for the first region that's larger than or equal to N.
             // Update the start pointer of that region by N bytes (or remove the region from freeRegions if it's exactly N bytes).

@@ -238,7 +238,8 @@ namespace DCL.AvatarRendering.AvatarShape
                 foreach (var renderer in cachedAttachment.Renderers)
                     renderer.enabled = false;
 
-            skinningComponent.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount));
+            FixedComputeBufferHandler.Slice slice = vertOutBuffer.Rent(skinningComponent.VertCount);
+            skinningComponent.SetVertOutRegion(slice);
             avatarBase.gameObject.SetActive(true);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 

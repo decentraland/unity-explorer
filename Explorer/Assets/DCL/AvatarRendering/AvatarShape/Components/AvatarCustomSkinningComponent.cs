@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public FixedComputeBufferHandler.Slice VertsOutRegion;
 
-        public readonly int VertCount;
+        public readonly DCL.Utility.Types.NonZeroInt VertCount;
 
         internal readonly List<MaterialSetup> materials;
         private readonly Buffers buffers;
@@ -88,7 +88,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         /// </summary>
         public Bounds LocalBounds { get; private set; }
 
-        internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
+        internal AvatarCustomSkinningComponent(DCL.Utility.Types.NonZeroInt vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance, Bounds localBounds)
         {
             VertCount = vertCount;
             this.buffers = buffers;
@@ -126,7 +126,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
 
             bones.SetData(bonesResult, validIndex * ComputeShaderConstants.BONE_COUNT, 0 , ComputeShaderConstants.BONE_COUNT);
-            computeShaderInstance.Dispatch(buffers.kernel, (VertCount / 64) + 1, 1, 1);
+            computeShaderInstance.Dispatch(buffers.kernel, (VertCount.Value / 64) + 1, 1, 1);
             return Result.SuccessResult();
 
             //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
