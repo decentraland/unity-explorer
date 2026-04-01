@@ -9,29 +9,29 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
     {
         private readonly IAnalyticsController analytics;
         private readonly ChatMessageReactionService messageReactionService;
-        private readonly SituationalReactionService situationalReactionService;
+        private readonly SituationalReactionFacade situationalReactionFacade;
         private readonly ChatSettingsAsset chatSettingsAsset;
 
         public ChatReactionsAnalytics(
             IAnalyticsController analytics,
             ChatMessageReactionService messageReactionService,
-            SituationalReactionService situationalReactionService,
+            SituationalReactionFacade situationalReactionFacade,
             ChatSettingsAsset chatSettingsAsset)
         {
             this.analytics = analytics;
             this.messageReactionService = messageReactionService;
-            this.situationalReactionService = situationalReactionService;
+            this.situationalReactionFacade = situationalReactionFacade;
             this.chatSettingsAsset = chatSettingsAsset;
 
             messageReactionService.UserReactedToMessage += OnMessageReaction;
-            situationalReactionService.UserReactedToSituation += OnSituationalReaction;
+            situationalReactionFacade.UserReactedToSituation += OnSituationalReaction;
             chatSettingsAsset.ChatReactionsEnabledChanged += OnVisualizationToggled;
         }
 
         public void Dispose()
         {
             messageReactionService.UserReactedToMessage -= OnMessageReaction;
-            situationalReactionService.UserReactedToSituation -= OnSituationalReaction;
+            situationalReactionFacade.UserReactedToSituation -= OnSituationalReaction;
             chatSettingsAsset.ChatReactionsEnabledChanged -= OnVisualizationToggled;
         }
 

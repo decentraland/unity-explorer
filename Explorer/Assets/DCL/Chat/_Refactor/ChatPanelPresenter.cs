@@ -68,7 +68,8 @@ namespace DCL.Chat
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            SituationalReactionService situationalReactionService,
+            ISituationalReactionTrigger reactionTrigger,
+            ISituationalReactionSimulation reactionSimulation,
             ChatReactionsConfig reactionsConfig,
             ChatReactionDebugState reactionDebugState,
             SituationalReactionDebugController reactionDebugController,
@@ -141,7 +142,7 @@ namespace DCL.Chat
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 view.MessageReactionsSelector,
-                situationalReactionService,
+                reactionTrigger,
                 reactionsConfig.Atlas,
                 recentsService,
                 fixedDefaults,
@@ -209,7 +210,7 @@ namespace DCL.Chat
                 commandRegistry.GetChannelMembersCommand);
 
             var situationalReactionPresenter = new SituationalReactionPresenter(
-                situationalReactionService,
+                reactionSimulation,
                 reactionsConfig,
                 reactionDebugState,
                 reactionDebugController,

@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatReactions
     /// Bridges local UI reaction triggers to world-space particle spawns for the local player.
     /// Encapsulates avatar position lookup, stream management, and the enabled toggle.
     /// </summary>
-    internal sealed class LocalPlayerWorldReactor
+    public sealed class LocalPlayerWorldReactor
     {
         private readonly IWorldReactionSpawner worldSimulation;
         private readonly ChatReactionsWorldLaneConfig worldConfig;

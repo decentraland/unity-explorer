@@ -6,7 +6,7 @@ namespace DCL.Chat.ChatReactions
 {
     /// <summary>
     /// Owns debug stream controls and stats aggregation for the reaction simulations.
-    /// Separated from SituationalReactionService to keep production API focused.
+    /// Separated from the production reaction classes to keep their APIs focused.
     /// </summary>
     public sealed class SituationalReactionDebugController : IDisposable
     {
@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions
 
         /// <summary>
         /// Only cleans up debug-owned streams. The production stream (EndStream)
-        /// is owned and cleaned up by SituationalReactionService.Dispose().
+        /// is owned and cleaned up by SituationalReactionFacade.Dispose().
         /// </summary>
         public void Dispose()
         {

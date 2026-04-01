@@ -48,8 +48,8 @@ MonoBehaviour:
   <MaxParticlesPerAvatar>k__BackingField: 15
   <StreamRatePerSecond>k__BackingField: 30
   <DebugRatePerSecond>k__BackingField: 3
-  <ZigZagAmplitude>k__BackingField: 0.2
-  <ZigZagFrequency>k__BackingField: 0.5
+  <ZigZagAmplitude>k__BackingField: 0.1
+  <ZigZagFrequency>k__BackingField: 0.4
   <RenderLayer>k__BackingField: 0
   <SizeOverLifetime>k__BackingField:
     serializedVersion: 2

@@ -110,13 +110,6 @@ namespace DCL.PluginSystem.Global
         private CommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
         private ChatMessageReactionService? messageReactionService;
-        private ChatSettingsAsset? chatSettingsAsset;
-        private ChatSettingsAsset.ChatReactionsEnabledDelegate? onReactionsEnabledChanged;
-        private ChatSettingsAsset.ChatBubblesVisibilityDelegate? onBubblesVisibilityChanged;
-
-#if UNITY_EDITOR
-        private ChatReactionDebugView? reactionDebugView;
-#endif
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -207,24 +200,10 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            if (chatSettingsAsset != null)
-            {
-                if (onReactionsEnabledChanged != null)
-                    chatSettingsAsset.ChatReactionsEnabledChanged -= onReactionsEnabledChanged;
-
-                if (onBubblesVisibilityChanged != null)
-                    chatSettingsAsset.BubblesVisibilityChanged -= onBubblesVisibilityChanged;
-            }
-
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
             chatStorage?.Dispose();
-
-#if UNITY_EDITOR
-            reactionDebugView?.Dispose();
-            reactionDebugView = null;
-#endif
 
             pluginScope.Dispose();
             pluginCts.SafeCancelAndDispose();
@@ -246,104 +225,27 @@ namespace DCL.PluginSystem.Global
 
             var reactionsConfig = settings.ReactionsConfig;
 
-            string serverEnv = decentralandEnvironment switch
-            {
-                DecentralandEnvironment.Org => "prd",
-                DecentralandEnvironment.Today => "prd",
-                DecentralandEnvironment.Zone => "dev",
-                _ => "local",
-            };
-
-            string routingUser = $"message-router-{serverEnv}-0";
-
-            IReactionMessageBus reactionBus;
-
-            if (reactionsConfig.MockEnabled)
-            {
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Using MockReactionMessageBus (MockEnabled=true)");
-                reactionBus = new MockReactionMessageBus(
-                    entityParticipantTable,
-                    reactionsConfig);
-            }
-            else
-            {
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatPlugin] Using MultiplayerReactionMessageBus (routingUser={routingUser})");
-                reactionBus = new MultiplayerReactionMessageBus(
-                    messagePipesHub,
-                    userBlockingCacheProxy,
-                    web3IdentityCache,
-                    routingUser);
-            }
-
-            pluginScope.Add(reactionBus);
-
-            messageReactionService = new ChatMessageReactionService(reactionBus, chatHistory, web3IdentityCache);
-            pluginScope.Add(messageReactionService);
-
-            var uiSimulation = new ChatReactionUISimulation(reactionsConfig,
-                mainUIView.ChatMainView.SituationalReactionView.LaneRect);
-            var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig,
-                avatarReactionPosition);
-
-            var situationalReactionService = new SituationalReactionService(
+            var reactions = ChatReactionsFactory.Create(
                 reactionsConfig,
-                uiSimulation,
-                worldSimulation,
+                mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
-                reactionBus);
+                messagePipesHub,
+                entityParticipantTable,
+                userBlockingCacheProxy,
+                web3IdentityCache,
+                chatHistory,
+                decentralandEnvironment,
+                settings.ChatSettingsAsset,
+                pluginScope);
 
-            chatSettingsAsset = settings.ChatSettingsAsset;
+            messageReactionService = reactions.MessageReactionService;
 
-            situationalReactionService.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
-
-            onBubblesVisibilityChanged = visibility => situationalReactionService.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
-            chatSettingsAsset.BubblesVisibilityChanged += onBubblesVisibilityChanged;
-
-            pluginScope.Add(situationalReactionService);
-
-            var chatReactionsAnalytics = new ChatReactionsAnalytics(
-                analytics,
+            var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
                 messageReactionService,
-                situationalReactionService,
-                chatSettingsAsset);
-
+                reactions.Facade,
+                settings.ChatSettingsAsset);
+            
             pluginScope.Add(chatReactionsAnalytics);
-
-            var reactionDebugController = new SituationalReactionDebugController(
-                uiSimulation,
-                worldSimulation,
-                avatarReactionPosition);
-            pluginScope.Add(reactionDebugController);
-
-            var reactionRouter = new ReactionRouter(reactionBus, situationalReactionService, messageReactionService);
-            situationalReactionService.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
-
-            onReactionsEnabledChanged = enabled => situationalReactionService.ShowRemoteUIReactions = enabled;
-            chatSettingsAsset.ChatReactionsEnabledChanged += onReactionsEnabledChanged;
-
-            pluginScope.Add(reactionRouter);
-
-            var reactionDebugState = new ChatReactionDebugState();
-            pluginScope.Add(reactionDebugState);
-
-#if UNITY_EDITOR
-            var reactionEventBus = new ChatReactionEventBus();
-            pluginScope.Add(reactionEventBus);
-
-            situationalReactionService.ReactionSent += (emoji, count, ts) =>
-                reactionEventBus.NotifySent(new ReactionSentEvent(emoji, count, ts, ReactionType.Situational));
-
-            situationalReactionService.RemoteReactionProcessed += args =>
-                reactionEventBus.NotifyReceived(new ReactionReceivedEvent(
-                    args.WalletId, args.EmojiIndex, args.Count, args.Type, args.MessageId, args.IsRemoval));
-
-            situationalReactionService.NetworkFlushed += (unique, total, ts) =>
-                reactionEventBus.NotifyFlushed(new ReactionFlushedEvent(unique, total, ts));
-
-            var debugGo = new UnityEngine.GameObject("[Debug] ChatReactions");
-            reactionDebugView = debugGo.AddComponent<ChatReactionDebugView>();
-            reactionDebugView.Init(reactionsConfig, reactionEventBus);
-#endif
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
@@ -491,10 +393,11 @@ namespace DCL.PluginSystem.Global
                 translationSettings,
                 translationMemory,
                 translationCache,
-                situationalReactionService,
+                reactions.Trigger,
+                reactions.Simulation,
                 settings.ReactionsConfig,
-                reactionDebugState,
-                reactionDebugController,
+                reactions.DebugState,
+                reactions.DebugController,
                 settings.ChatSettingsAsset,
                 messageReactionService,
                 web3IdentityCache,
