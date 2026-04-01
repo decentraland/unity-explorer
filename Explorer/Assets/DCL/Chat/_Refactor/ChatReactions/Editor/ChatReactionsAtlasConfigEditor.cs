@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
 using UnityEditor;
 using UnityEngine;
 

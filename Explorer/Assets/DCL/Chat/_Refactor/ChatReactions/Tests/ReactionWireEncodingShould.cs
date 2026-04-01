@@ -1,3 +1,4 @@
+using DCL.Chat.ChatReactions.Networking;
 using NUnit.Framework;
 
 namespace DCL.Chat.ChatReactions.Tests

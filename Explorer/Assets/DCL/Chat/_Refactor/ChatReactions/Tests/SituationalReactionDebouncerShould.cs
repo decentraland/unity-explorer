@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Core;
 using NUnit.Framework;
 
 namespace DCL.Chat.ChatReactions.Tests

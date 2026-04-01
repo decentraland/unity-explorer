@@ -1,7 +1,7 @@
 using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
-using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Presenters;
 using DCL.VoiceChat;
 using DG.Tweening;
 

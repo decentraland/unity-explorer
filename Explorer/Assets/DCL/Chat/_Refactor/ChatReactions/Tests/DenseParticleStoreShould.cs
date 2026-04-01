@@ -1,4 +1,6 @@
-using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Simulation;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using NUnit.Framework;
 
 namespace DCL.Chat.ChatReactions.Tests

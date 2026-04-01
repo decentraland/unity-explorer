@@ -1,5 +1,5 @@
 using DCL.Chat;
-using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Views;
 using DCL.VoiceChat;
 using System;
 using MVC;

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using DCL.Chat.ChatReactions.Debug;
 using UnityEditor;
 using UnityEngine;
 

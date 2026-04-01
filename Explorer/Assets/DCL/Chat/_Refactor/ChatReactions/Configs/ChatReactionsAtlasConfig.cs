@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Core;
 using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
@@ -94,7 +95,7 @@ namespace DCL.Chat.ChatReactions.Configs
 #if UNITY_EDITOR
             if (SpriteAsset == null)
             {
-                Debug.LogWarning($"[{name}] SpriteAsset is null — no mappings to log.");
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES,$"[{name}] SpriteAsset is null — no mappings to log.");
                 return;
             }
 
@@ -111,7 +112,7 @@ namespace DCL.Chat.ChatReactions.Configs
                 sb.AppendLine($"  [{i}] U+{unicode:X4} ({emoji}) → tile {glyphIdx}");
             }
 
-            Debug.Log(sb.ToString());
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,sb.ToString());
 #endif
         }
 

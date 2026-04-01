@@ -1,6 +1,6 @@
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
-using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Views;
 using DCL.Chat.ChatViews;
 using DCL.Emoji;
 using DCL.VoiceChat;

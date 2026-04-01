@@ -1,5 +1,8 @@
 #if UNITY_EDITOR
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
+using DCL.Diagnostics;
 using UnityEditor;
 using UnityEngine;
 
@@ -132,13 +135,13 @@ namespace DCL.Chat.ChatReactions.Editor
             if (GUILayout.Button("Clear Recents"))
             {
                 service.ClearAll();
-                Debug.Log("[ChatReactions] Recents cleared.");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,"[ChatReactions] Recents cleared.");
             }
 
             if (service.IsDirty && GUILayout.Button("Flush to Disk"))
             {
                 service.FlushIfDirty();
-                Debug.Log("[ChatReactions] Recents flushed to disk.");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,"[ChatReactions] Recents flushed to disk.");
             }
 
             EditorGUILayout.EndHorizontal();

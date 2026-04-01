@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using DCL.Diagnostics;
 using DCL.Prefs;
 using UnityEditor;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace DCL.Chat.ChatReactions.Editor
         public static void ClearReactionRecents()
         {
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CHAT_REACTION_FAVORITES, save: true);
-            Debug.Log("[ChatReactions] Cleared reaction recents. Restart Play Mode for the change to take effect.");
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,"[ChatReactions] Cleared reaction recents. Restart Play Mode for the change to take effect.");
         }
 
         [MenuItem("Decentraland/Cache/Clear Reaction Recents", validate = true)]
@@ -22,7 +23,7 @@ namespace DCL.Chat.ChatReactions.Editor
         {
             if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.CHAT_REACTION_FAVORITES))
             {
-                Debug.Log("[ChatReactions] No saved reaction recents found in PlayerPrefs.");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,"[ChatReactions] No saved reaction recents found in PlayerPrefs.");
                 return;
             }
 
@@ -30,7 +31,7 @@ namespace DCL.Chat.ChatReactions.Editor
 
             if (string.IsNullOrEmpty(saved))
             {
-                Debug.Log("[ChatReactions] Reaction recents key exists but is empty.");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES,"[ChatReactions] Reaction recents key exists but is empty.");
                 return;
             }
 
@@ -55,7 +56,7 @@ namespace DCL.Chat.ChatReactions.Editor
                     sb.AppendLine($"  [{i}] atlasIndex={entry} (legacy format, count=1)");
             }
 
-            Debug.Log(sb.ToString());
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES,sb.ToString());
         }
     }
 }

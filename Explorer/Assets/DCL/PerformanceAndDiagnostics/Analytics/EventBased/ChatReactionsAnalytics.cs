@@ -1,4 +1,5 @@
-using DCL.Chat.ChatReactions;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Networking;
 using DCL.Settings.Settings;
 using Newtonsoft.Json.Linq;
 using System;

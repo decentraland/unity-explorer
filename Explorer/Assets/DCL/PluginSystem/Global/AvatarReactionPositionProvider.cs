@@ -16,7 +16,7 @@ namespace DCL.PluginSystem.Global
     /// </summary>
     public sealed class AvatarReactionPositionProvider : IAvatarReactionPosition
     {
-        private readonly World world;
+        private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly List<Vector3> nearbyPositionsCache = new (32);
@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
         public int LastNearbyCount => nearbyPositionsCache.Count;
 
         public AvatarReactionPositionProvider(
-            World world,
+            Arch.Core.World world,
             Entity playerEntity,
             IReadOnlyEntityParticipantTable entityParticipantTable)
         {
