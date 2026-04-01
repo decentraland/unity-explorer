@@ -16,6 +16,8 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -33,6 +35,7 @@ namespace DCL.Character.CharacterMotion.Systems
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ObjectProxy<FriendsCache> friendsCache;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
+        private readonly Dictionary<string, Sprite> latestThumbnailCache = new (StringComparer.InvariantCultureIgnoreCase);
 
         private SingleInstanceEntity camera;
 
@@ -112,9 +115,11 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!pointAt.IsPointing)
                 return;
 
-            Sprite sprite = profile.ProfilePicture?.Asset is { } spriteData
-                ? spriteData.Sprite
-                : ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
+            Sprite? sprite = profile.ProfilePicture?.Asset.Sprite;
+            if (sprite != null)
+                latestThumbnailCache[profile.UserId] = sprite;
+            else if (!latestThumbnailCache.TryGetValue(profile.UserId, out sprite))
+                sprite = ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
 
             marker.UpdateData(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
