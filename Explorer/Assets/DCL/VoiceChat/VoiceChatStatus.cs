@@ -37,5 +37,8 @@ namespace DCL.VoiceChat
                 VoiceChatStatus.DISCONNECTED or
                 VoiceChatStatus.VOICE_CHAT_BUSY or
                 VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR;
+
+        public static bool IsInCall(this VoiceChatStatus status) =>
+            status is VoiceChatStatus.VOICE_CHAT_IN_CALL;
     }
 }

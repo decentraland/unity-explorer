@@ -12,8 +12,13 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
+using DCL.VoiceChat.Proximity;
+using DCL.VoiceChat.Proximity.Systems;
+using DCL.VoiceChat.Proximity.UI;
 using DCL.WebRequests;
+using LiveKit.Rooms;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
 using UnityEngine;
@@ -39,6 +44,8 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
+        private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
+        private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -49,6 +56,8 @@ namespace DCL.PluginSystem.Global
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private ProximityVoiceChatManager? proximityVoiceChatManager;
+        private ProximityVoiceChatStateModel? proximityStateModel;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -89,7 +98,11 @@ namespace DCL.PluginSystem.Global
             RustAudioClient.DeInit();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            ProximityAudioDebugWidget.Setup(debugContainer, proximityConfigHolder);
+            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder);
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
@@ -135,6 +148,20 @@ namespace DCL.PluginSystem.Global
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
             pluginScope.Add(voiceChatDebugContainer);
+
+            // Proximity Voice Chat
+            proximityConfigHolder.Config = voiceChatConfiguration;
+
+            IRoom islandRoom = roomHub.IslandRoom();
+
+            proximityStateModel = new ProximityVoiceChatStateModel(ProximityVoiceChatState.SPEAKING);
+            pluginScope.Add(proximityStateModel);
+
+            proximityVoiceChatManager = new ProximityVoiceChatManager(
+                islandRoom, voiceChatConfiguration,
+                proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
+                proximityStateModel);
+            pluginScope.Add(proximityVoiceChatManager);
         }
 
         [Serializable]
