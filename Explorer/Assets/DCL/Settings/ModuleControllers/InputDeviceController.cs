@@ -95,6 +95,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetSelection(string[] devices)
         {
+            if (devices.Length == 0)
+                return;
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
                 string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
