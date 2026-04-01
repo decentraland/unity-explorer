@@ -23,16 +23,13 @@ namespace DCL.Chat.ChatReactions
         private readonly ChatReactionsSelectorPresenter situationalSelectorPresenter;
         private readonly ChatReactionsSelectorPresenter messageSelectorPresenter;
         private readonly ISituationalReactionTrigger reactionService;
-        private readonly ChatReactionsAtlasConfig atlasConfig;
-        private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
+        private readonly EmojiPanelReactionBridge emojiPanelBridge;
         private readonly ReactionPanelPositioner panelPositioner;
         private readonly RectTransform buttonRect;
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ChatReactionsSelectorView situationalSelectorView;
         private readonly ChatReactionRecentsService recentsService;
-
-        private bool emojiPanelOpenedByReactions;
         private ReactionMode currentMode = ReactionMode.Situational;
 
         // Message mode callbacks — valid only when currentMode == Message
@@ -54,8 +51,6 @@ namespace DCL.Chat.ChatReactions
             ChatSettingsAsset chatSettingsAsset)
         {
             this.reactionService = reactionService;
-            this.emojiPanelPresenter = emojiPanelPresenter;
-            this.atlasConfig = atlasConfig;
             this.chatSettingsAsset = chatSettingsAsset;
             this.situationalSelectorView = situationalSelectorView;
             this.recentsService = recentsService;
@@ -64,6 +59,11 @@ namespace DCL.Chat.ChatReactions
                 messageSelectorView.RectTransform,
                 emojiPanelView,
                 messageReactionsConfig);
+
+            emojiPanelBridge = new EmojiPanelReactionBridge(
+                emojiPanelPresenter, panelPositioner, atlasConfig);
+
+            emojiPanelBridge.EmojiSelected += OnEmojiPanelSelected;
 
             situationalSelectorPresenter = new ChatReactionsSelectorPresenter(
                 situationalSelectorView,
@@ -168,7 +168,7 @@ namespace DCL.Chat.ChatReactions
             if (IsInMessageMode)
                 HideBar();
             else
-                HideEmojiPanel();
+                emojiPanelBridge.Hide();
         }
 
         private void OnClickOutside()
@@ -178,7 +178,7 @@ namespace DCL.Chat.ChatReactions
 
         private void HideBar()
         {
-            HideEmojiPanel();
+            emojiPanelBridge.Hide();
             situationalSelectorPresenter.Hide();
             messageSelectorPresenter.Hide();
             clickDetectionHandler.Pause();
@@ -204,62 +204,21 @@ namespace DCL.Chat.ChatReactions
 
         private void OnAddClicked()
         {
-            if (emojiPanelOpenedByReactions)
-            {
-                HideEmojiPanel();
-                return;
-            }
-
-            ShowEmojiPanel();
-        }
-
-        private void ShowEmojiPanel()
-        {
-            if (IsInMessageMode)
-            {
+            if (IsInMessageMode && !emojiPanelBridge.IsOpen)
                 messageSelectorPresenter.Hide();
-                panelPositioner.PositionEmojiPanelForMessage();
-            }
-            else
-            {
-                RectTransform addBtn = situationalSelectorPresenter.View.AddButtonRect;
-                panelPositioner.PositionEmojiPanelForSituational(addBtn);
-            }
 
-            emojiPanelPresenter.EmojiSelected += OnEmojiPanelEmojiSelected;
-            emojiPanelPresenter.SetPanelVisibility(true);
-            emojiPanelOpenedByReactions = true;
+            emojiPanelBridge.Toggle(
+                situationalSelectorPresenter.View.AddButtonRect,
+                IsInMessageMode);
         }
 
-        private void HideEmojiPanel()
+        private void OnEmojiPanelSelected(int atlasIndex)
         {
-            if (!emojiPanelOpenedByReactions) return;
-
-            emojiPanelPresenter.EmojiSelected -= OnEmojiPanelEmojiSelected;
-            emojiPanelPresenter.SetPanelVisibility(false);
-            emojiPanelOpenedByReactions = false;
-        }
-
-        private void OnEmojiPanelEmojiSelected(string emojiUnicode)
-        {
-            if (!TryResolveEmojiAtlasIndex(emojiUnicode, out int atlasIndex)) return;
-
             DispatchReaction(atlasIndex);
             ActivePresenter.RecordUsage(atlasIndex);
 
             if (IsInMessageMode)
                 HideBar();
-        }
-
-        private bool TryResolveEmojiAtlasIndex(string emojiUnicode, out int atlasIndex)
-        {
-            atlasIndex = -1;
-
-            if (string.IsNullOrEmpty(emojiUnicode)) return false;
-            if (!EmojiCodepointHelper.TryGetSingleCodepoint(emojiUnicode, out uint codepoint)) return false;
-
-            atlasIndex = atlasConfig.GetTileIndexFromUnicode(codepoint);
-            return atlasIndex >= 0;
         }
 
         /// <summary>
@@ -314,7 +273,8 @@ namespace DCL.Chat.ChatReactions
         public void Dispose()
         {
             recentsService.FlushIfDirty();
-            HideEmojiPanel();
+            emojiPanelBridge.EmojiSelected -= OnEmojiPanelSelected;
+            emojiPanelBridge.Dispose();
             ClearMessageMode();
             clickDetectionHandler.OnClickOutside -= OnClickOutside;
             clickDetectionHandler.Dispose();
