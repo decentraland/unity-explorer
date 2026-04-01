@@ -1,7 +1,7 @@
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Rendering
 {
     internal static class ChatReactionMaterialFactory
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.UI
 {
     /// <summary>
     /// Tracks hold-to-emit streaming state and returns the number of burst ticks

@@ -2,9 +2,10 @@
 using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Networking;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     /// <summary>
     /// Editor-only runtime debug panel for chat reactions.

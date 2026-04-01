@@ -1,9 +1,10 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
 using DCL.Emoji;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     /// <summary>
     /// Bridges the full emoji picker panel with the reaction system.

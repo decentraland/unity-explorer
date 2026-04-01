@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Rendering;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// World-space reaction particle simulation.

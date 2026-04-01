@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation
 {
     internal static class MathConstants
     {

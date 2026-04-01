@@ -3,7 +3,7 @@ using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Views
 {
     public class ChatReactionsSelectorView : MonoBehaviour
     {

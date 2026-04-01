@@ -1,7 +1,7 @@
 using System;
 using DCL.Chat.History;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     public enum ReactionType
     {

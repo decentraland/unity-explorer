@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Views
 {
     public sealed class SituationalReactionView : MonoBehaviour
     {

@@ -4,7 +4,7 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     /// <summary>
     /// Bridges <see cref="IReactionMessageBus"/> and <see cref="ChatChannel"/> for message reactions.

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.UI
 {
     public struct ChatReactionsUiParticle : IAliveParticle
     {

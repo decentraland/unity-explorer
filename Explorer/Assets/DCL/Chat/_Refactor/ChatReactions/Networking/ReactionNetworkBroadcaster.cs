@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Core;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     /// <summary>
     /// Buffers outgoing situational reactions through a debounce window and flushes

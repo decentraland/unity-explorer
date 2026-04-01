@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     /// <summary>
     /// Owns debug stream controls and stats aggregation for the reaction simulations.

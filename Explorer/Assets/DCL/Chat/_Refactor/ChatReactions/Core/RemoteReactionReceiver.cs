@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Networking;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Buffers incoming remote reactions and drains them at a configurable stagger

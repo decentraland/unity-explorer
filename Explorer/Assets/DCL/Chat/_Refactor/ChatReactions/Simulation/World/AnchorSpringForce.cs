@@ -2,7 +2,7 @@ using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// Damped spring that pulls anchored particles toward their avatar's XZ position.

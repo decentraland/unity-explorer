@@ -16,7 +16,7 @@ using LiveKit.Proto;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     public sealed class MultiplayerReactionMessageBus : IReactionMessageBus
     {

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Debug;
 using DCL.Prefs;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Tracks emoji usage frequency and exposes the top N most-used emojis

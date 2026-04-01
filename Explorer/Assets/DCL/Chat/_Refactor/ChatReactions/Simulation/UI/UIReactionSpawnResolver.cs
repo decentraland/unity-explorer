@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.UI
 {
     /// <summary>
     /// Resolves screen-space spawn positions (pixels) from UI <see cref="RectTransform"/> elements

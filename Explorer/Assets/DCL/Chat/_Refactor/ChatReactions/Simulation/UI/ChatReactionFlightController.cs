@@ -1,7 +1,8 @@
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.UI
 {
     /// <summary>
     /// Stateless helper that computes balloon-style emoji particle trajectories.

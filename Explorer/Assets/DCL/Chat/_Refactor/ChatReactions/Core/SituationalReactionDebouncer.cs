@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Buffers situational reaction emoji clicks within a configurable time window,

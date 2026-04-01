@@ -1,7 +1,7 @@
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Rendering
 {
     /// <summary>
     /// Shared utility for applying atlas settings to a runtime material.

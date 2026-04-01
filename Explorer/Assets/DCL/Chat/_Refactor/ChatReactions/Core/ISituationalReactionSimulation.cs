@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Simulation lifecycle: tick, draw, and spawn rect configuration.

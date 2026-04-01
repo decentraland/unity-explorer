@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     /// <summary>
     /// Wire encoding for reaction add/remove over the network.

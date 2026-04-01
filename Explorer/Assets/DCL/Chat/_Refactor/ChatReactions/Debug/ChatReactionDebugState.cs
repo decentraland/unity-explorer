@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     /// <summary>
     /// Mutable runtime debug stats for the chat reactions system.

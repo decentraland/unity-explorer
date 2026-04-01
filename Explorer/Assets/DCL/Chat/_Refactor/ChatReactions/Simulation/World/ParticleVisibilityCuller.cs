@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// Produces a dense index list of particles visible to the camera.

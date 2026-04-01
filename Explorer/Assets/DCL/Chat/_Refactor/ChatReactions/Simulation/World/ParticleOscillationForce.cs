@@ -2,7 +2,7 @@ using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// Sinusoidal lateral oscillation (zig-zag) applied to particle velocities.

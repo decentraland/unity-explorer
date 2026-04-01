@@ -1,6 +1,9 @@
 using System;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Receives remote situational reactions from the network bus, buffers them

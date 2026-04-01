@@ -2,7 +2,7 @@ using DCL.Chat.ChatReactions.Configs;
 using DCL.Emoji;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     /// <summary>
     /// Centralizes all positioning logic for reaction UI panels:

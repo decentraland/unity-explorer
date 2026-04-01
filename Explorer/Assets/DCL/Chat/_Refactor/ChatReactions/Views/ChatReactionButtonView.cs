@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Views
 {
     /// <summary>
     /// View for the chat reaction button. The heart icon is set statically

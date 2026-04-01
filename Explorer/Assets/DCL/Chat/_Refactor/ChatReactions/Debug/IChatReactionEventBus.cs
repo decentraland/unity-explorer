@@ -1,7 +1,8 @@
 #if UNITY_EDITOR
 using System;
+using DCL.Chat.ChatReactions.Networking;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     public readonly struct ReactionSentEvent
     {

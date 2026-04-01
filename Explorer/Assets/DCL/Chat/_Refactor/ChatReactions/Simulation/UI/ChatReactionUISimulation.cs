@@ -1,9 +1,11 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Rendering;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.UI
 {
     /// <summary>
     /// Orchestrates the screen-space UI particle pipeline:

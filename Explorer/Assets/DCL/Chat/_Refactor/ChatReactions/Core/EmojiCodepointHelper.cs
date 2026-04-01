@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Extracts a single Unicode codepoint from an emoji string.

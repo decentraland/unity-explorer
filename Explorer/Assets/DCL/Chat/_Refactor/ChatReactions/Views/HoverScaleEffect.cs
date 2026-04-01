@@ -2,7 +2,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Views
 {
     /// <summary>
     /// Reusable hover scale animation. Attach to any UI element.

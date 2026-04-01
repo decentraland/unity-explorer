@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// Subset of world-space particle spawning used by <see cref="LocalPlayerWorldReactor"/>.

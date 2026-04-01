@@ -3,7 +3,7 @@ using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Views
 {
     /// <summary>
     /// Individual emoji item in the shortcuts bar. Displays an emoji from the atlas

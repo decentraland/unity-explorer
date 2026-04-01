@@ -1,8 +1,11 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Handles local user reaction triggers: UI bursts, defaults, streaming,

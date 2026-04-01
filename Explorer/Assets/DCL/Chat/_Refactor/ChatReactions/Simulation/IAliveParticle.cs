@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation
 {
     /// <summary>
     /// Constraint for particles used with <see cref="DenseParticleStore{T}"/>.

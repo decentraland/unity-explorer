@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Views;
 using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     /// <summary>
     /// Manages the shortcuts bar: 6 fixed default emojis, a divider, up to 3 recently

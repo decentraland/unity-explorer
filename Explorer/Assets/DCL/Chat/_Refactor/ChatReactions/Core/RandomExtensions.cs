@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     internal static class RandomExtensions
     {

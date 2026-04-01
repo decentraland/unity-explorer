@@ -1,5 +1,10 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Debug;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Rendering;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
@@ -12,7 +17,7 @@ using DCL.Web3.Identities;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Composition root for the entire chat reactions subsystem.

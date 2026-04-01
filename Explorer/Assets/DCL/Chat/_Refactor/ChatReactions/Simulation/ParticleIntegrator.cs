@@ -1,6 +1,8 @@
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation
 {
     /// <summary>
     /// Integrates velocity, applies acceleration and drag, advances age, and marks expired particles dead.

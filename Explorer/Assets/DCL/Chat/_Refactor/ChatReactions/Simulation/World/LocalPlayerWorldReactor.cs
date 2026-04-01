@@ -2,7 +2,7 @@ using System;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// Bridges local UI reaction triggers to world-space particle spawns for the local player.

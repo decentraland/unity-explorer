@@ -1,8 +1,10 @@
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Rendering
 {
     /// <summary>
     /// Drives <c>Graphics.RenderMeshInstanced</c> for GPU-instanced emoji particle rendering.

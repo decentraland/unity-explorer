@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Simulation.World
 {
     /// <summary>
     /// A force applied to world-space particles each simulation tick.

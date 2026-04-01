@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Networking;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Tables;
 using Utility;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     public sealed class MockReactionMessageBus : IReactionMessageBus
     {

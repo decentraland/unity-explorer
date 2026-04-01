@@ -1,6 +1,9 @@
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Simulation.UI;
+using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
     /// Drives the per-frame simulation lifecycle for all situational reaction subsystems:

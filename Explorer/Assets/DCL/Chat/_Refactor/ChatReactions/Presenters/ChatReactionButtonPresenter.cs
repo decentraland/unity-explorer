@@ -1,7 +1,8 @@
 using System;
+using DCL.Chat.ChatReactions.Views;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     /// <summary>
     /// Wires <see cref="ChatReactionButtonView"/> click to open/close the shortcuts bar.

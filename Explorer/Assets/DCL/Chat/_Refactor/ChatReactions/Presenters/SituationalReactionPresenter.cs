@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
 using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -9,7 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     public sealed class SituationalReactionPresenter : IDisposable
     {

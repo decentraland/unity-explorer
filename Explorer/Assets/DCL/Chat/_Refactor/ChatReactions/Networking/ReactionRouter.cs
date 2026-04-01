@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Networking
 {
     /// <summary>
     /// Central router for all incoming reactions from the network bus.

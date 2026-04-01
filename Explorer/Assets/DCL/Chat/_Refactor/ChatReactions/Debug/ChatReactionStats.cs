@@ -1,4 +1,4 @@
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     /// <summary>
     /// Readonly snapshot of live reaction simulation stats for debug display.

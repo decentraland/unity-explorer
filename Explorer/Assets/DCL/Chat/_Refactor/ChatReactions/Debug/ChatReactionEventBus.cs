@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Debug
 {
     public sealed class ChatReactionEventBus : IChatReactionEventBus
     {

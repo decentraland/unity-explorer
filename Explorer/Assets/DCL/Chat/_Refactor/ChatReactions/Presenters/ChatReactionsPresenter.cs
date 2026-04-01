@@ -1,12 +1,14 @@
 using System;
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Views;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.Prefs;
 using DCL.Settings.Settings;
 using UnityEngine;
 
-namespace DCL.Chat.ChatReactions
+namespace DCL.Chat.ChatReactions.Presenters
 {
     /// <summary>
     /// Top-level presenter that coordinates the reaction button, shortcuts bar,
