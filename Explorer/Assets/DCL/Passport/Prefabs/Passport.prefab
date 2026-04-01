@@ -12436,6 +12436,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -29.1
       objectReference: {fileID: 0}
+    - target: {fileID: 591266124270867420, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: CopyButton
+      objectReference: {fileID: 0}
     - target: {fileID: 942316798144216209, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -12479,6 +12483,10 @@ PrefabInstance:
     - target: {fileID: 1200094124927817594, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_Color.r
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1231193316143066027, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: CopyButton
       objectReference: {fileID: 0}
     - target: {fileID: 1231193316143066027, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_IsActive
@@ -12972,6 +12980,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5419108517034978510, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: Icon
+      objectReference: {fileID: 0}
     - target: {fileID: 5512917645196558544, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_SizeDelta.x
       value: 406
@@ -13044,6 +13056,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6390842482754924289, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: UserID
+      objectReference: {fileID: 0}
     - target: {fileID: 6606920335302356016, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_Name
       value: NotificationHolder
@@ -13055,6 +13071,10 @@ PrefabInstance:
     - target: {fileID: 6638924573395685858, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7002859699267032664, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: Icon
       objectReference: {fileID: 0}
     - target: {fileID: 7179468466848705602, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_Colors.m_NormalColor.a
@@ -13167,6 +13187,10 @@ PrefabInstance:
     - target: {fileID: 8159347287601221025, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_SizeDelta.y
       value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 8480904758322488965, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
+      propertyPath: m_Name
+      value: UserIDContainer
       objectReference: {fileID: 0}
     - target: {fileID: 8480904758322488965, guid: b705caef58a2b9941b467418b0b7abad, type: 3}
       propertyPath: m_IsActive
