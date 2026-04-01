@@ -95,6 +95,36 @@ namespace DCL.Events
                 skeletonLoading.HideLoading();
         }
 
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var i = 0; i < currentEventsIds.Count; i++)
+            {
+                LoopGridViewItem? item = eventsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var eventData = eventsStateService.GetEventDataById(currentEventsIds[i]);
+                if (eventData == null) continue;
+
+                EventCardView cardView = item.GetComponent<EventCardView>();
+                cardView.UpdateFriendsData(eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
+            }
+        }
+
+        public void RefreshVisibleCardsCommunityData()
+        {
+            for (var i = 0; i < currentEventsIds.Count; i++)
+            {
+                LoopGridViewItem? item = eventsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var eventData = eventsStateService.GetEventDataById(currentEventsIds[i]);
+                if (eventData == null) continue;
+
+                if (item.GetComponent<EventCardBigView>() is { } bigCard)
+                    bigCard.UpdateCommunityData(eventData.CommunityInfo, eventCardsThumbnailLoader!);
+            }
+        }
+
         private LoopGridViewItem SetupEventCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var eventData = eventsStateService.GetEventDataById(currentEventsIds[index]);
