@@ -182,9 +182,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = input.Kind,
             };
 
-            messageBus.Send(playerMovement.LastSentMessage);
-
             // TODO make branching properly based on the server mode
+            // messageBus.Send(playerMovement.LastSentMessage);
             pulseMultiplayerBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running

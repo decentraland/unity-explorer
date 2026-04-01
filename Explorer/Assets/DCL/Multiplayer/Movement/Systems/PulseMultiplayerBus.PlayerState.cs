@@ -267,6 +267,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (delta.HasGlideState)
                 last.animState.GlideState = ToNetworkMovementGlideState(delta.GlideState);
 
+            // Delta movements are always interpolated
+            last.isInstant = false;
+
             return last;
         }
 
