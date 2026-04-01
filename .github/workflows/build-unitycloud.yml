@@ -172,6 +172,7 @@ jobs:
         )
       )
     outputs:
+      should_build: ${{ steps.decide.outputs.should_build }}
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
       version: ${{ github.event.inputs.version || inputs.version || steps.get_version.outputs.full_version }}
@@ -200,45 +201,77 @@ jobs:
         run: |
           set -euo pipefail
 
+          should_build=false
+
           # Non-PR triggers that reached prebuild => build
           echo "[check non-PR] event_name='${{ github.event_name }}' != 'pull_request'"
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "[non-PR] TRUE -> should_build=true -> exiting 0"
-            exit 0
+            echo "[non-PR] TRUE -> should_build=true"
+            should_build=true
           fi
 
-          labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
-          echo "labels='$labels'"
+          if [ "$should_build" = "false" ]; then
+            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+            echo "labels='$labels'"
 
-          has_override=false
-          echo "[check override] searching for 'force-build|clean-build' in labels"
-          echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
+            has_override=false
+            echo "[check override] searching for 'force-build|clean-build' in labels"
+            echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
 
-          echo "has_override='$has_override'"
-          if [ "$has_override" = "true" ]; then
-            echo "[override] TRUE -> should_build=true -> exiting 0"
-            exit 0
+            echo "has_override='$has_override'"
+            if [ "$has_override" = "true" ]; then
+              echo "[override] TRUE -> should_build=true"
+              should_build=true
+            fi
           fi
 
-          # If still draft and no override => do not build
-          is_draft="${{ github.event.pull_request.draft }}"
-          echo "[check draft] is_draft='$is_draft'"
-          if [ "$is_draft" = "true" ]; then
-            echo "[draft] TRUE -> should_build=false -> exiting 1"
-            exit 1
+          if [ "$should_build" = "false" ]; then
+            # If still draft and no override => do not build
+            is_draft="${{ github.event.pull_request.draft }}"
+            echo "[check draft] is_draft='$is_draft'"
+            if [ "$is_draft" = "true" ]; then
+              echo "[draft] TRUE -> should_build=false"
+            else
+              explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
+              echo "[check explorer_changed] explorer_changed='$explorer_changed'"
+              if [ "$explorer_changed" = "true" ]; then
+                echo "[explorer_changed] TRUE -> should_build=true"
+                should_build=true
+              else
+                echo "[explorer_changed] FALSE -> should_build=false"
+              fi
+            fi
           fi
 
-          explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
-          echo "[check explorer_changed] explorer_changed='$explorer_changed'"
-          if [ "$explorer_changed" = "true" ]; then
-            echo "[explorer_changed] TRUE -> should_build=true -> exiting 0"
-            exit 0
-          fi
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+          echo "Final decision: should_build=$should_build"
 
-          echo "[explorer_changed] FALSE -> should_build=false -> exiting 1"
-          exit 1
+      - name: Skip build and test checks
+        if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            const checks = [
+              'Build (macos)',
+              'Build (windows64)',
+              'Test (editmode)',
+              'Test (playmode)'
+            ];
+            for (const check of checks) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: 'success',
+                context: check,
+                description: 'Skipped — no Explorer/ changes detected'
+              });
+            }
+            console.log(`Posted success statuses for: ${checks.join(', ')}`);
 
       - name: Get commit SHA
+        if: steps.decide.outputs.should_build == 'true'
         id: get_commit_sha
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -248,6 +281,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
+        if: steps.decide.outputs.should_build == 'true'
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
@@ -255,12 +289,13 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: ${{ github.event.inputs.version == '' && inputs.version == '' }}
+        if: steps.decide.outputs.should_build == 'true' && github.event.inputs.version == '' && inputs.version == ''
         uses: ./.github/actions/version
         with:
           commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
 
       - name: Get Sentry parameters
+        if: steps.decide.outputs.should_build == 'true'
         id: get_sentry
         run: |
           #!/bin/bash
@@ -281,6 +316,7 @@ jobs:
           fi
 
       - name: Set default values
+        if: steps.decide.outputs.should_build == 'true'
         id: set_defaults
         run: |
           # Clean build logic
@@ -320,6 +356,7 @@ jobs:
           echo "install_source=${install_source}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
+        if: steps.decide.outputs.should_build == 'true'
         id: get_options
         run: |
           #!/bin/bash
@@ -356,6 +393,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: prebuild
+    if: needs.prebuild.outputs.should_build == 'true'
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -705,3 +743,4 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel
+# Test change
