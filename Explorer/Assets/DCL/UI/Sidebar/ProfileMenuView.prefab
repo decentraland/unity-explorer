@@ -3327,6 +3327,10 @@ PrefabInstance:
       propertyPath: m_fontSize
       value: 14
       objectReference: {fileID: 0}
+    - target: {fileID: 6839845796141747074, guid: a52574ba41ef80648857589a956a79ca, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6956488416157110236, guid: a52574ba41ef80648857589a956a79ca, type: 3}
       propertyPath: m_Name
       value: ID
