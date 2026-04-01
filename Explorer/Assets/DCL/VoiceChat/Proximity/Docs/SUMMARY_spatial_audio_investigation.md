@@ -150,6 +150,13 @@ Pipeline реструктурирован из одного interleaved цикл
 - Обратная совместимость (Private/Community chat — стерео passthrough)
 - Tooltips с физическими описаниями и референсами на всех параметрах
 
+### Текущие дефолты в VoiceChatConfiguration (обновлено 2026-04-01)
+
+- `ProximityMaxDistance = 16` (ранее в документах было 50)
+- `ProximityRolloffMode = Custom` с `ProximityCustomRolloffCurve` (ранее Logarithmic)
+- `ProximityILDMode = HeadShadow`, `ProximityEnableITD = false`, `ProximityEnableHRTF = false`
+- `ProximityPanCalculator` — остаётся MonoBehaviour, не перенесён в ECS
+
 ### Опциональные следующие шаги
 
 1. **Итерация D (опционально):** Short FIR 64-tap (HRIR из MIT KEMAR, если параметрика недостаточно)

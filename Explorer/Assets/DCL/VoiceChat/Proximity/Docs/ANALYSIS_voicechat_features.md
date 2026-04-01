@@ -14,12 +14,21 @@
 - Audio Effect Zones (silence zones, reverb, echo, filter)
 - ECS-позиционирование AudioSource на голове аватара
 - Debug-виджет с runtime-слайдерами
+- Nametag speaking indicator (ProximityNametagsHandler)
+- Mute/Unmute + Push-to-Talk (ProximityVoiceChatStateModel + NearbyVoiceWidgetController)
+- Смена микрофона в рантайме (VoiceChatSettings.MicrophoneChanged)
+- Mute proximity при Private/Community call (Suppress/Resume)
+- macOS permissions guard (VoiceChatPermissions.GuardAsync)
+- Reconnection retry (ActivateWithRetryAsync)
+- Mute persistence (ProximityMuteService + REST API)
+- Lazy track publishing (ADR_lazy_track_publishing.md)
+- UI: sidebar button + nearby voice widget panel
 
 ---
 
 ## Фичи для переноса
 
-### 1. Индикатор говорящего в Nametags
+### 1. Индикатор говорящего в Nametags ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Высокий  
 **Сложность:** Низкая (~50 строк)  
@@ -33,17 +42,16 @@
 
 При этом в `VoiceChatPlugin` уже есть подписка на `islandRoom.ActiveSpeakers.Updated` (заполняет `proximityConfigHolder.SpeakingParticipants`). Данные есть — не пробрасываются в ECS.
 
-**Решение:**  
-Создать `ProximityNametagsHandler`, который:
+**Реализация:**  
+`ProximityNametagsHandler` создан:
 - Подписывается на `islandRoom.ActiveSpeakers.Updated`
 - Через `entityParticipantTable.TryGet()` находит entity аватара
-- Ставит `VoiceChatNametagComponent(isSpeaking: true/false)`
+- Ставит `VoiceChatNametagComponent(isSpeaking, isHushed: isMuted)`
+- Поддерживает `ActiveSpeakersDiffTracker` для отслеживания diff
+- Suppression при Private/Community call
+- Использует `HasPublishedAudioTrack` для определения кому показывать nametag
 
-Компонент `VoiceChatNametagComponent`, `NametagPlacementSystem`, `NametagElement` и CSS-анимация — полностью переиспользуемы, ноль изменений в UI.
-
-**Нюанс приоритета:** если одновременно активен Community VoiceChat и Proximity, оба пишут в один компонент. Варианты:
-- Proximity пишет только когда Community call не активен
-- OR-логика: говорит хоть где-то — показываем
+Компонент `VoiceChatNametagComponent`, `NametagPlacementSystem`, `NametagElement` и CSS-анимация — переиспользованы без изменений.
 
 **Ключевые файлы:**
 - `VoiceChat/VoiceChatNametagsHandler.cs` — образец
@@ -53,7 +61,7 @@
 
 ---
 
-### 2. Управление микрофоном (Mute/Unmute + PTT)
+### 2. Управление микрофоном (Mute/Unmute + PTT) ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Высокий  
 **Сложность:** Средняя  
@@ -68,132 +76,82 @@
 **Проблема:**  
 В Proximity микрофон публикуется в `ProximityVoiceChatManager.PublishLocalTrack()` и **всегда активен** — нет mute, нет PTT, нет toggle.
 
-**Решение:**  
-Добавить mute/unmute в `ProximityVoiceChatManager`:
-- Хранить ссылку на `MicrophoneRtcAudioSource`
-- `MuteMicrophone()` → `rtcAudioSource.Stop()`
-- `UnmuteMicrophone()` → `rtcAudioSource.Start()`
-- Экспонировать `ReactiveProperty<bool> IsMicrophoneEnabled`
-
-Для PTT — переиспользовать логику из `VoiceChatMicrophoneHandler` (hotkey binding + hold threshold). Вынести в общий класс или адаптировать.
-
-**Нюанс:** `VoiceChatMicrophoneHandler` привязан к `ICommunityCallOrchestrator` (метод `NotifyMicrophoneStateChange` шлёт mute на сервер Community). Для proximity серверный mute не нужен — достаточно локального `Stop()/Start()`.
+**Реализация:**  
+- `ProximityVoiceChatStateModel` с состояниями Hearing/Speaking управляет `rtcAudioSource.Stop()/Start()`
+- PTT через `NearbyVoiceWidgetController` + `DCLInput.VoiceChat.Talk` (T key)
+- Lazy track publishing: публикация при первом Speaking (см. `ADR_lazy_track_publishing.md`)
+- Серверный mute не нужен — локальный `Stop()/Start()` достаточен
 
 ---
 
-### 3. Смена микрофона в рантайме
+### 3. Смена микрофона в рантайме ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Средний  
 **Сложность:** Низкая (~15 строк)  
 **Зависимости:** нет
 
-**Текущее состояние в VoiceChat:**  
-`VoiceChatMicrophoneHandler` подписывается на `VoiceChatSettings.MicrophoneChanged` и вызывает `MicrophoneRtcAudioSource.SwitchMicrophone(newSelection)`.
-
-**Проблема:**  
-Proximity создаёт микрофон один раз в `PublishLocalTrack()`. При смене устройства в настройках — proximity продолжает использовать старый микрофон.
-
-**Решение:**  
-В `ProximityVoiceChatManager`:
-```csharp
-VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
-
-private void OnMicrophoneChanged(MicrophoneSelection selection)
-{
-    rtcAudioSource?.SwitchMicrophone(selection);
-}
-```
+**Реализация:**  
+В `ProximityVoiceChatManager` подписка на `VoiceChatSettings.MicrophoneChanged` → `rtcAudioSource?.SwitchMicrophone(selection)`.
 
 ---
 
-### 4. Mute proximity при Private/Community call
+### 4. Mute proximity при Private/Community call ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Средний  
 **Сложность:** Средняя  
 **Зависимости:** #2 (Mute/Unmute)
 
-**Текущее состояние в VoiceChat:**  
-`VoiceChatOrchestrator` координирует Private и Community — нельзя быть в двух звонках одновременно.
-
-**Проблема:**  
-Proximity всегда активен независимо от Community/Private. Если пользователь в Community call — proximity аудио продолжает транслироваться.
-
-**Решение:**  
-Подписаться на `voiceChatOrchestrator.CurrentCallStatus`:
-- `VOICE_CHAT_IN_CALL` → suppress proximity (mute микрофон + опционально mute playback)
-- `DISCONNECTED` / `ENDING_CALL` → resume proximity
-
-Вариант реализации:
-```csharp
-voiceChatOrchestratorState.CurrentCallStatus.Subscribe(status =>
-{
-    switch (status)
-    {
-        case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-            SuppressProximity();
-            break;
-        case VoiceChatStatus.DISCONNECTED:
-        case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-            ResumeProximity();
-            break;
-    }
-});
-```
+**Реализация:**  
+- `ProximityVoiceChatManager` подписан на `callStatus`
+- `VOICE_CHAT_IN_CALL` → `stateModel.Suppress()` → Blocked (запоминает pre-blocked state)
+- `DISCONNECTED` / `ENDING_CALL` → `stateModel.Resume()` → восстанавливает предыдущее состояние
+- `ProximityNametagsHandler` также подавляет nametags при активном звонке
 
 ---
 
-### 5. Звуковой фидбек Mute/Unmute
+### 5. Звуковой фидбек Mute/Unmute — НЕ РЕАЛИЗОВАНО
 
 **Приоритет:** Низкий  
 **Сложность:** Минимальная  
 **Зависимости:** #2 (Mute/Unmute)
 
-**Текущее состояние в VoiceChat:**  
-`MicrophoneAudioToggleHandler` проигрывает звуковые клипы при переключении микрофона — пользователь слышит тональный сигнал.
-
-**Решение:**  
-Переиспользовать `MicrophoneAudioToggleHandler` — он подписывается на `IsMicrophoneEnabled` ReactiveProperty. Когда у proximity появится ReactiveProperty из пункта #2, подключить тот же handler.
+**Текущее состояние:** Не перенесён. `MicrophoneAudioToggleHandler` можно подключить к `ProximityVoiceChatStateModel.State` при необходимости.
 
 ---
 
-### 6. macOS Microphone Permissions
+### 6. macOS Microphone Permissions ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Средний  
 **Сложность:** Низкая  
 **Зависимости:** нет
 
-**Текущее состояние в VoiceChat:**  
-`VoiceChatPermissions` — P/Invoke для `RequestMicrophonePermission()` / `CurrentMicrophonePermission()`. `GuardAsync` ждёт разрешения перед публикацией.
-
-**Проблема:**  
-`PublishLocalTrack()` создаёт `MicrophoneRtcAudioSource` без проверки permissions. На macOS — сбой или молчащий микрофон.
-
-**Решение:**  
-Добавить guard перед `MicrophoneRtcAudioSource.New()`:
-```csharp
-if (Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor)
-{
-    await VoiceChatPermissions.GuardAsync(ct);
-}
-```
+**Реализация:**  
+`VoiceChatPermissions.GuardAsync(ct)` вызывается перед `MicrophoneRtcAudioSource.New()` на macOS в `PublishLocalTrackAsync()`.
 
 ---
 
-### 7. Reconnection retry
+### 7. Reconnection retry ✅ РЕАЛИЗОВАНО
 
 **Приоритет:** Низкий  
 **Сложность:** Низкая-средняя  
 **Зависимости:** нет
 
-**Текущее состояние в VoiceChat:**  
-`VoiceChatReconnectionManager` — автоматические retry с `MaxReconnectionAttempts` и `ReconnectionDelayMs`.
+**Реализация:**  
+`ActivateWithRetryAsync` с `MaxReconnectionAttempts` (default 3) и `ReconnectionDelayMs` (default 2000ms). Также `STREAM_READY_MAX_ATTEMPTS = 5` с `STREAM_READY_DELAY_MS = 100ms` для ожидания готовности AudioStream.
+
+---
+
+### 8. Мьют заблокированных игроков (social block) — НЕ РЕАЛИЗОВАНО
+
+**Приоритет:** Средний  
+**Сложность:** Низкая-средняя  
+**Зависимости:** нет
 
 **Проблема:**  
-При `ConnectionUpdate.Disconnected` proximity вызывает `Deactivate()`. Reconnection зависит от Island Room — но на уровне proximity нет retry для publish.
+Игроки, заблокированные через Block User в контекстном меню профиля, продолжают быть слышны в proximity voice chat. `ProximityMuteService` обрабатывает только proximity-специфичный мьют — глобальный social block не учитывается.
 
 **Решение:**  
-- Retry публикации микрофона при ошибке (с delay и max attempts)
-- Логирование причин отключения через `VoiceChatDisconnectReasonHelper`
+При создании remote AudioSource (или при обновлении block-списка) проверять, заблокирован ли участник. Заблокированные игроки должны быть замьючены аналогично proximity mute.
 
 ---
 
@@ -214,12 +172,13 @@ if (Application.platform == RuntimePlatform.OSXPlayer || Application.platform ==
 
 ## Сводная таблица
 
-| # | Фича | Приоритет | Сложность | Зависимости | Итерация |
-|---|------|-----------|-----------|-------------|----------|
-| 1 | Nametag speaking indicator | Высокий | Низкая | — | 3 |
-| 2 | Mute/Unmute + PTT | Высокий | Средняя | — | 3 |
-| 3 | Смена микрофона в рантайме | Средний | Низкая | — | 3 |
-| 4 | Mute proximity при Community call | Средний | Средняя | #2 | 3 |
-| 5 | Звуковой фидбек mute/unmute | Низкий | Минимальная | #2 | 3 |
-| 6 | macOS permissions guard | Средний | Низкая | — | 3 |
-| 7 | Reconnection retry | Низкий | Низкая-средняя | — | 3 |
+| # | Фича | Приоритет | Сложность | Статус |
+|---|------|-----------|-----------|--------|
+| 1 | Nametag speaking indicator | Высокий | Низкая | ✅ Реализовано |
+| 2 | Mute/Unmute + PTT | Высокий | Средняя | ✅ Реализовано |
+| 3 | Смена микрофона в рантайме | Средний | Низкая | ✅ Реализовано |
+| 4 | Mute proximity при Community call | Средний | Средняя | ✅ Реализовано |
+| 5 | Звуковой фидбек mute/unmute | Низкий | Минимальная | ❌ Не реализовано |
+| 6 | macOS permissions guard | Средний | Низкая | ✅ Реализовано |
+| 7 | Reconnection retry | Низкий | Низкая-средняя | ✅ Реализовано |
+| 8 | Мьют заблокированных (social block) | Средний | Низкая-средняя | ❌ Не реализовано |

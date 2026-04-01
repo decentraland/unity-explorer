@@ -87,11 +87,20 @@
 | Файл | Роль |
 |------|------|
 | `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatManager.cs` | Менеджер proximity voice chat (publish + spatial audio через Island Room, пишет в shared dictionary) |
-| `Assets/DCL/VoiceChat/Proximity/ProximityAudioSourceComponent.cs` | ECS-компонент, хранит Transform аудиосурса |
+| `Assets/DCL/VoiceChat/Proximity/ProximityVoiceChatStateModel.cs` | State machine: Disconnected/Hearing/Speaking/Blocked |
+| `Assets/DCL/VoiceChat/Proximity/ProximityAudioSourceComponent.cs` | ECS-компонент, хранит AudioSource + Transform |
+| `Assets/DCL/VoiceChat/Proximity/ProximityLipSyncComponent.cs` | ECS-компонент для lip sync (renderer, pose index, amplitude) |
+| `Assets/DCL/VoiceChat/Proximity/ProximityPanCalculator.cs` | MonoBehaviour: вычисление azimuth + elevation для HRTF |
+| `Assets/DCL/VoiceChat/Proximity/ProximityNametagsHandler.cs` | Мост между ActiveSpeakers и VoiceChatNametagComponent |
+| `Assets/DCL/VoiceChat/Proximity/ProximityMuteService.cs` | Фасад для mute persistence (cache + REST API) |
+| `Assets/DCL/VoiceChat/Proximity/ProximityAudioDebugWidget.cs` | Debug-виджет с runtime-слайдерами |
 | `Assets/DCL/VoiceChat/Proximity/Systems/ProximityAudioPositionSystem.cs` | ECS-система: назначает компонент на entity, синхронизирует позиции, cleanup |
+| `Assets/DCL/VoiceChat/Proximity/Systems/ProximityLipSyncSystem.cs` | ECS-система: lip sync анимация по audio amplitude/frequency |
+| `Assets/DCL/VoiceChat/Proximity/MutePersistence/` | Cache, repository, DTOs для mute persistence |
+| `Assets/DCL/VoiceChat/Proximity/UI/` | Button controller, widget controller/view, panel controller, prefabs |
 
 > `ProximityVoiceChatTest.cs` удалён — заменён на `ProximityVoiceChatManager`.
-> `VoiceChatPlugin.cs` владеет `ConcurrentDictionary<string, Transform>` и передаёт его менеджеру (запись) и системе (чтение).
+> `VoiceChatPlugin.cs` владеет `ConcurrentDictionary<string, AudioSource>` и передаёт его менеджеру (запись) и системам (чтение).
 
 ---
 
@@ -105,7 +114,7 @@
 
 ## Открытые вопросы
 
-1. **Interaction с Private/Community:** что делать со spatial когда активен другой звонок? (mute / disconnect / coexist) → Итерация 3
+1. ~~**Interaction с Private/Community:** что делать со spatial когда активен другой звонок?~~ → Решено: `ProximityVoiceChatStateModel.Suppress()/Resume()` при активном Private/Community call
 2. **Нагрузка на Island Room:** сколько одновременных аудио-треков выдержит Island Room без деградации?
 3. **Permissions:** могут ли серверные permissions на Island Room измениться?
-4. ~~**3D audio настройки:** какие `minDistance`, `maxDistance`, `rolloffMode` оптимальны для Decentraland?~~ → Решено: `minDistance=2`, `maxDistance=50`, `Logarithmic` rolloff (может быть вынесено в `VoiceChatConfiguration`)
+4. ~~**3D audio настройки:** какие `minDistance`, `maxDistance`, `rolloffMode` оптимальны для Decentraland?~~ → Решено: `minDistance=2`, `maxDistance=16`, `Custom` rolloff с `ProximityCustomRolloffCurve` (вынесено в `VoiceChatConfiguration`)
