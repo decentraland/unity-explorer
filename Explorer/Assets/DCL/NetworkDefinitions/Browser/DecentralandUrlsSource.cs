@@ -229,6 +229,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
+                // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
                 DecentralandUrl.EntitiesActiveElements => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active",
 
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
