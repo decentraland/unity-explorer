@@ -1,4 +1,4 @@
-Shader "Soft Mask/TextMeshPro/Mobile/Bitmap" {
+Shader "Hidden/TextMeshPro/Mobile/Bitmap (SoftMaskable)" {
 
 Properties {
 	_MainTex		    ("Font Atlas", 2D) = "white" {}
@@ -20,8 +20,6 @@ Properties {
 
 	_CullMode           ("Cull Mode", Float) = 0
 	_ColorMask          ("Color Mask", Float) = 15
-
-	_SoftMask("Mask", 2D) = "white" {} // Soft Mask
 }
 
 SubShader {
@@ -43,7 +41,7 @@ SubShader {
 	ZTest [unity_GUIZTestMode]
 	ZWrite Off
 	Fog { Mode Off }
-	Blend SrcAlpha OneMinusSrcAlpha
+	Blend One OneMinusSrcAlpha
 	ColorMask[_ColorMask]
 
 	Pass {
@@ -55,14 +53,17 @@ SubShader {
 		#pragma multi_compile __ UNITY_UI_CLIP_RECT
 		#pragma multi_compile __ UNITY_UI_ALPHACLIP
 
-		// Soft Mask
-		#pragma multi_compile __ SOFTMASK_SIMPLE SOFTMASK_SLICED SOFTMASK_TILED
-
-
 
 		#include "UnityCG.cginc"
 		#include "UnityUI.cginc"
-		#include "Packages/com.olegknyazev.softmask/Assets/Shaders/Resources/SoftMask.cginc" // Soft Mask
+
+        // ==== SOFTMASKABLE START ====
+        #pragma shader_feature _ SOFTMASK_EDITOR
+        #pragma shader_feature_local_fragment _ SOFTMASKABLE
+        #if SOFTMASKABLE
+        #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
+        #endif
+        // ==== SOFTMASKABLE END ====
 
 		struct appdata_t
 		{
@@ -78,8 +79,11 @@ SubShader {
 			fixed4 color		: COLOR;
 			float2 texcoord0	: TEXCOORD0;
 			float4 mask			: TEXCOORD2;
-
-			SOFTMASK_COORDS(3) // Soft Mask
+			// ==== SOFTMASKABLE START ====
+			#if SOFTMASK_EDITOR
+			float4 worldPosition : TEXCOORD3;
+			#endif
+			// ==== SOFTMASKABLE END ====
 		};
 
 		sampler2D 	_MainTex;
@@ -121,15 +125,19 @@ SubShader {
 			const half2 maskSoftness = half2(max(_UIMaskSoftnessX, _MaskSoftnessX), max(_UIMaskSoftnessY, _MaskSoftnessY));
 			OUT.mask = float4(vert.xy * 2 - clampedRect.xy - clampedRect.zw, 0.25 / (0.25 * maskSoftness + pixelSize.xy));
 
-			// Soft Mask
-			v2f result_SoftMask = OUT;
-			SOFTMASK_CALCULATE_COORDS(result_SoftMask, v.vertex)
-			return result_SoftMask;
+			// ==== SOFTMASKABLE START ====
+			#if SOFTMASK_EDITOR
+			OUT.worldPosition = v.vertex;
+			#endif
+			// ==== SOFTMASKABLE END ====
+
+			return OUT;
 		}
 
 		fixed4 frag (v2f IN) : COLOR
 		{
 			fixed4 color = fixed4(IN.color.rgb, IN.color.a * tex2D(_MainTex, IN.texcoord0).a);
+			color.rgb *= color.a;
 
 			// Alternative implementation to UnityGet2DClipping with support for softness.
 			#if UNITY_UI_CLIP_RECT
@@ -137,14 +145,17 @@ SubShader {
 				color *= m.x * m.y;
 			#endif
 
+            // ==== SOFTMASKABLE START ====
+            #if SOFTMASKABLE
+            color *= SoftMask(IN.vertex, IN.worldPosition, color.a);
+            #endif
+            // ==== SOFTMASKABLE END ====
+
 			#if UNITY_UI_ALPHACLIP
 				clip(color.a - 0.001);
 			#endif
 
-			// Soft Mask
-			fixed4 result_SoftMask = color;
-			result_SoftMask.a *= SOFTMASK_GET_MASK(IN);
-			return result_SoftMask;
+			return color;
 		}
 		ENDCG
 	}
