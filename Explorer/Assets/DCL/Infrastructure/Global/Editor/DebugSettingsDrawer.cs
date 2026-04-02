@@ -157,10 +157,14 @@ namespace Global.Editor
             SerializedProperty endProperty = property.GetEndProperty();
 
             bool enterChildren = true;
+            bool isCustomGatekeeper = IsCustomGatekeeperMode(property);
 
             while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
             {
                 enterChildren = false;
+
+                if (iterator.name == "customGatekeeperUrl" && !isCustomGatekeeper)
+                    continue;
 
                 float propertyHeight = EditorGUI.GetPropertyHeight(iterator, true);
                 position.height = propertyHeight;
@@ -178,14 +182,25 @@ namespace Global.Editor
             SerializedProperty endProperty = property.GetEndProperty();
 
             bool enterChildren = true;
+            bool isCustomGatekeeper = IsCustomGatekeeperMode(property);
 
             while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
             {
                 enterChildren = false;
+
+                if (iterator.name == "customGatekeeperUrl" && !isCustomGatekeeper)
+                    continue;
+
                 height += EditorGUI.GetPropertyHeight(iterator, true) + EditorGUIUtility.standardVerticalSpacing;
             }
 
             return height;
+        }
+
+        private static bool IsCustomGatekeeperMode(SerializedProperty property)
+        {
+            SerializedProperty gatekeeperMode = property.FindPropertyRelative("gatekeeperMode");
+            return gatekeeperMode != null && gatekeeperMode.intValue == (int)GatekeeperMode.Custom;
         }
 
         private static string? FindCreatorHubPath()
