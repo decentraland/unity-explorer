@@ -1,9 +1,19 @@
 ﻿using LiveKit.Proto;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Global.Dynamic.DebugSettings
 {
+    public enum GatekeeperMode
+    {
+        Org = 0,
+        Zone = 3,
+        Today = 4,
+        Localhost = 1,
+        Custom = 2,
+    }
+
     [Serializable]
     public class DebugSettings
     {
@@ -33,8 +43,21 @@ namespace Global.Dynamic.DebugSettings
         private bool overrideConnectionQuality;
         [SerializeField]
         private ConnectionQuality connectionQuality;
+        [Space]
+        [Header("Comms Gatekeeper")]
+        [SerializeField]
+        private GatekeeperMode gatekeeperMode;
+        [SerializeField] [Tooltip("Full adapter URL used only when Gatekeeper Mode is set to Custom (e.g. http://localhost:3000/get-scene-adapter)")]
+        private string customGatekeeperUrl = "http://localhost:3000/get-scene-adapter";
+        [Space]
         [SerializeField]
         private string[] appParameters;
+
+        private const string GATEKEEPER_URL_ORG = "https://comms-gatekeeper.decentraland.org/get-scene-adapter";
+        private const string GATEKEEPER_URL_ZONE = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter";
+        private const string GATEKEEPER_URL_TODAY = "https://comms-gatekeeper.decentraland.today/get-scene-adapter";
+        private const string GATEKEEPER_URL_LOCALHOST = "http://localhost:3000/get-scene-adapter";
+        private const string GATEKEEPER_URL_FLAG = "gatekeeper-url";
 
         public static DebugSettings Release() =>
             new ()
@@ -51,6 +74,8 @@ namespace Global.Dynamic.DebugSettings
                 connectionQuality = ConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
+                gatekeeperMode = GatekeeperMode.Org,
+                customGatekeeperUrl = GATEKEEPER_URL_LOCALHOST,
                 appParameters = Array.Empty<string>(),
             };
 
@@ -67,6 +92,32 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-        public string[] AppParameters => appParameters;
+        public string[] AppParameters
+        {
+            get
+            {
+                if (!Application.isEditor)
+                    return RELEASE_SETTINGS.appParameters;
+
+                string? gatekeeperUrl = gatekeeperMode switch
+                {
+                    GatekeeperMode.Org => GATEKEEPER_URL_ORG,
+                    GatekeeperMode.Zone => GATEKEEPER_URL_ZONE,
+                    GatekeeperMode.Today => GATEKEEPER_URL_TODAY,
+                    GatekeeperMode.Localhost => GATEKEEPER_URL_LOCALHOST,
+                    GatekeeperMode.Custom => customGatekeeperUrl,
+                    _ => null,
+                };
+
+                if (string.IsNullOrEmpty(gatekeeperUrl))
+                    return appParameters;
+
+                var merged = new List<string>(appParameters.Length + 2);
+                merged.AddRange(appParameters);
+                merged.Add($"--{GATEKEEPER_URL_FLAG}");
+                merged.Add(gatekeeperUrl);
+                return merged.ToArray();
+            }
+        }
     }
 }
