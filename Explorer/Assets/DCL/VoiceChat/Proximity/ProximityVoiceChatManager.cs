@@ -109,10 +109,10 @@ namespace DCL.VoiceChat.Proximity
             => remoteListener.HandleTrackUnsubscribed(publication, participant);
 
         private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
-            => remoteListener.HandleLocalTrackPublished(publication, participant);
+            => remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
-            => remoteListener.HandleLocalTrackUnpublished(publication, participant);
+            => remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
 
         // --- Connection ---
 
@@ -291,7 +291,7 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.HEARING:
-                        if (remoteListener.IsSuppressed)
+                        if (remoteListener.isSuppressed)
                         {
                             remoteListener.UnmuteAll();
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
@@ -306,7 +306,7 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.SPEAKING:
-                        if (remoteListener.IsSuppressed)
+                        if (remoteListener.isSuppressed)
                         {
                             remoteListener.UnmuteAll();
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
