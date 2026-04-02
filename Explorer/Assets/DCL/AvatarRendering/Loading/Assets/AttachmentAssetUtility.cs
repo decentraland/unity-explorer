@@ -37,11 +37,11 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         private static CachedAttachment InstantiateOrGetCached(IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
         {
-            // if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
-            // {
-            //     cachedWearable.Instance.transform.SetParent(parent);
-            //     return cachedWearable;
-            // }
+            if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
+            {
+                cachedWearable.Instance.transform.SetParent(parent);
+                return cachedWearable;
+            }
 
             var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
 
