@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TriggerArea.Systems;
 using DCL.SDKEntityTriggerArea.Components;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -22,9 +21,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         private World globalWorld;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private IEntityCollidersSceneCache collidersSceneCache;
-        private ISceneStateProvider sceneStateProvider;
-        private IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
-        private IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
         private ISceneData sceneData;
         private PBTriggerAreaResult capturedResult;
         private Entity entity;
@@ -37,14 +33,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
             collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>();
-            sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneStateProvider.TickNumber.Returns(123u);
-
-            triggerAreaResultPool = Substitute.For<IComponentPool<PBTriggerAreaResult>>();
-            triggerAreaResultPool.Get().Returns(_ => new PBTriggerAreaResult());
-
-            triggerAreaResultTriggerPool = Substitute.For<IComponentPool<PBTriggerAreaResult.Types.Trigger>>();
-            triggerAreaResultTriggerPool.Get().Returns(_ => new PBTriggerAreaResult.Types.Trigger());
 
             sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
@@ -53,9 +41,6 @@ namespace DCL.SDKComponents.TriggerArea.Tests
                 world,
                 globalWorld,
                 ecsToCRDTWriter,
-                triggerAreaResultPool,
-                triggerAreaResultTriggerPool,
-                sceneStateProvider,
                 collidersSceneCache,
                 sceneData);
 
@@ -244,18 +229,22 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         }
 
         private void ClearCapturedResult() => capturedResult = null;
+
         private void SetupCRDTWriterCapture(bool firstCallOnly = true)
         {
             ecsToCRDTWriter
-               .AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>(Arg.Any<System.Action<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>>(), Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<(PBTriggerAreaResult, uint)>())
+               .AppendMessage<PBTriggerAreaResult, TriggerAreaHandlerSystem.ResultData>(
+                   Arg.Any<System.Action<PBTriggerAreaResult, TriggerAreaHandlerSystem.ResultData>>(),
+                   Arg.Any<CRDTEntity>(), Arg.Any<int>(),
+                   Arg.Any<TriggerAreaHandlerSystem.ResultData>())
                .Returns(ci =>
                {
-                   var prepare = ci.Arg<System.Action<PBTriggerAreaResult, (PBTriggerAreaResult, uint)>>();
+                   var prepare = ci.Arg<System.Action<PBTriggerAreaResult, TriggerAreaHandlerSystem.ResultData>>();
                    var res = new PBTriggerAreaResult();
 
                    if (firstCallOnly && capturedResult != null) return res;
 
-                   var data = ci.ArgAt<(PBTriggerAreaResult, uint)>(3);
+                   var data = ci.ArgAt<TriggerAreaHandlerSystem.ResultData>(3);
                    prepare(res, data);
                    capturedResult = res;
                    return res;
