@@ -264,41 +264,39 @@ namespace DCL.Chat.ChatMessages
                 ItemPrefabConfData? prefabConf = listView.ItemPrefabDataList[(int)prefabIndex];
 
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
-                ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
-                itemScript.Reset();
-                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
+                ChatEntryView? chatEntry = item.GetComponent<ChatEntryView>();
+                chatEntry.Reset();
+                chatEntry.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
                     !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
 
-                itemScript.OnTranslateRequested -= HandleTranslateRequest;
-                itemScript.OnRevertRequested -= HandleRevertRequest;
-                itemScript.OnTranslateRequested += HandleTranslateRequest;
-                itemScript.OnRevertRequested += HandleRevertRequest;
+                chatEntry.OnTranslateRequested -= HandleTranslateRequest;
+                chatEntry.OnRevertRequested -= HandleRevertRequest;
+                chatEntry.OnTranslateRequested += HandleTranslateRequest;
+                chatEntry.OnRevertRequested += HandleRevertRequest;
 
-                if (itemScript.messageReactionsView != null && reactionsAtlasConfig != null)
+                if (chatEntry.messageReactionsView != null && reactionsAtlasConfig != null)
                 {
-                    itemScript.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty,
-                        messageReactionsConfig!);
-                    itemScript.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
-                    itemScript.messageReactionsView.UpdateReactions(viewModel.Reactions);
+                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty, messageReactionsConfig!);
+                    chatEntry.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
+                    chatEntry.messageReactionsView.UpdateReactions(viewModel.Reactions);
+                    chatEntry.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
+                    chatEntry.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
+                    chatEntry.messageReactionsView.OnReactionHoverEnter -= HandleReactionHoverEnter;
+                    chatEntry.messageReactionsView.OnReactionHoverEnter += HandleReactionHoverEnter;
+                    chatEntry.messageReactionsView.OnReactionHoverExit -= HandleReactionHoverExit;
+                    chatEntry.messageReactionsView.OnReactionHoverExit += HandleReactionHoverExit;
 
-                    itemScript.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
-                    itemScript.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
-                    itemScript.messageReactionsView.OnReactionHoverEnter -= HandleReactionHoverEnter;
-                    itemScript.messageReactionsView.OnReactionHoverEnter += HandleReactionHoverEnter;
-                    itemScript.messageReactionsView.OnReactionHoverExit -= HandleReactionHoverExit;
-                    itemScript.messageReactionsView.OnReactionHoverExit += HandleReactionHoverExit;
-
-                    itemScript.RecalculateHeight();
+                    chatEntry.RecalculateHeight();
                 }
 
-                if (itemScript.messageBubbleElement.reactionButton != null)
+                if (chatEntry.messageBubbleElement.reactionButton != null)
                 {
-                    itemScript.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
-                    itemScript.messageBubbleElement.reactionButton.onClick.AddListener(() =>
-                        OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, itemScript));
+                    chatEntry.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
+                    chatEntry.messageBubbleElement.reactionButton.onClick.AddListener(() =>
+                        OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, chatEntry));
                 }
 
-                float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
+                float padding = viewModel.ShowDateDivider ? chatEntry.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
                 // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
@@ -313,20 +311,20 @@ namespace DCL.Chat.ChatMessages
 
                 bool reactionsDisabled = senderIsOffline || noOnlineRecipients;
 
-                itemScript.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
-                itemScript.messageBubbleElement.SetReactionButtonEnabled(!reactionsDisabled);
+                chatEntry.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
+                chatEntry.messageBubbleElement.SetReactionButtonEnabled(!reactionsDisabled);
 
-                if (itemScript.messageReactionsView != null)
-                    itemScript.messageReactionsView.SetInteractable(!reactionsDisabled);
+                if (chatEntry.messageReactionsView != null)
+                    chatEntry.messageReactionsView.SetInteractable(!reactionsDisabled);
 
                 if (viewModel.PendingToAnimate)
                 {
-                    itemScript.AnimateChatEntry();
+                    chatEntry.AnimateChatEntry();
                     viewModel.PendingToAnimate = false;
                 }
 
                 if (!chatMessage.IsSentByOwnUser)
-                    itemScript.ChatEntryClicked = OnProfileClicked;
+                    chatEntry.ChatEntryClicked = OnProfileClicked;
             }
 
             return item;

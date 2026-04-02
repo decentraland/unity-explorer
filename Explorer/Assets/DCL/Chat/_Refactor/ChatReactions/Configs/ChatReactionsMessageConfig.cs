@@ -134,7 +134,7 @@ namespace DCL.Chat.ChatReactions.Configs
         public bool TooltipMockUsersEnabled;
 
         [Note("Number of extra mock user names appended to each tooltip.")]
-        [Range(1, 20)]
+        [Range(0, 20)]
         public int TooltipMockUserCount = 5;
 
         [Note("Pool of display names used for mock users. Edit in Inspector to test different names/lengths.")]

@@ -50,7 +50,8 @@ namespace DCL.Chat.ChatReactions.Presenters
             EmojiPanelView emojiPanelView,
             EmojiPanelPresenter emojiPanelPresenter,
             ChatReactionsMessageConfig messageReactionsConfig,
-            ChatSettingsAsset chatSettingsAsset)
+            ChatSettingsAsset chatSettingsAsset,
+            RectTransform messageAreaRect)
         {
             this.reactionService = reactionService;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -59,6 +60,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
+                messageAreaRect,
                 emojiPanelView,
                 messageReactionsConfig);
 

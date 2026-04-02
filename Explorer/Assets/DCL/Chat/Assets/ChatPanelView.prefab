@@ -34,10 +34,10 @@ RectTransform:
   - {fileID: 7758317363342678473}
   m_Father: {fileID: 6735953101292753570}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
-  m_SizeDelta: {x: 340, y: 0.000012278557}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1950882433507492308
 CanvasRenderer:
@@ -411,8 +411,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
-    m_Left: 20
-    m_Right: 20
+    m_Left: 30
+    m_Right: 30
     m_Top: 15
     m_Bottom: 15
   m_ChildAlignment: 7
@@ -772,6 +772,7 @@ GameObject:
   - component: {fileID: 2575364923725548080}
   - component: {fileID: 2808477761040056964}
   - component: {fileID: 7129465526940589761}
+  - component: {fileID: 1462885384361507573}
   m_Layer: 5
   m_Name: ReactionTooltip
   m_TagString: Untagged
@@ -792,12 +793,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6735953101292753570}
-  m_Father: {fileID: 2708032679572216216}
+  m_Father: {fileID: 569955114333651742}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 360, y: 126}
+  m_SizeDelta: {x: 400, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2575364923725548080
 MonoBehaviour:
@@ -816,7 +817,7 @@ MonoBehaviour:
   loadingIndicator: {fileID: 5887724243849931355}
   canvasGroup: {fileID: 7129465526940589761}
   arrowTransform: {fileID: 7758317363342678473}
-  centeringReference: {fileID: 569955114333651742}
+  centeringReference: {fileID: 4055835279997597995}
 --- !u!223 &2808477761040056964
 Canvas:
   m_ObjectHideFlags: 0
@@ -852,6 +853,26 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1462885384361507573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3799893661282597987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 1
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &4264713917354945909
 GameObject:
   m_ObjectHideFlags: 0
@@ -1294,7 +1315,7 @@ GameObject:
   - component: {fileID: 3498715475671134396}
   - component: {fileID: 283765302030378880}
   m_Layer: 5
-  m_Name: '[Views] Messages and Input'
+  m_Name: MessagesAreaRect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1459,9 +1480,7 @@ RectTransform:
   m_Children:
   - {fileID: 5790092006429597145}
   - {fileID: 6829466494423526975}
-  - {fileID: 7080270104970431531}
   - {fileID: 22813334744390299}
-  - {fileID: 1796488976306829391}
   m_Father: {fileID: 569955114333651742}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1534,6 +1553,8 @@ RectTransform:
   - {fileID: 171733826304687897}
   - {fileID: 2708032679572216216}
   - {fileID: 4837618148869299418}
+  - {fileID: 1796488976306829391}
+  - {fileID: 7080270104970431531}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1570,6 +1591,7 @@ MonoBehaviour:
   <ChatReactionButton>k__BackingField: {fileID: 6539120710582331771}
   <ChatReactionsSelector>k__BackingField: {fileID: 7903621782038610178}
   <MessageReactionsSelector>k__BackingField: {fileID: 860680468803417219}
+  <MessageAreaRect>k__BackingField: {fileID: 4055835279997597995}
   <EmojiPanelView>k__BackingField: {fileID: 1182022665054273667}
   <ReactionTooltipView>k__BackingField: {fileID: 2575364923725548080}
   <JoinCommunityLiveStreamSubTitleButton>k__BackingField: {fileID: 8540153266423022452}
@@ -2481,7 +2503,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 2708032679572216216}
+    m_TransformParent: {fileID: 569955114333651742}
     m_Modifications:
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_Pivot.x
@@ -2545,7 +2567,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -23
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2652,6 +2674,18 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
@@ -2729,7 +2763,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.020000458
+      value: 0.020004272
       objectReference: {fileID: 0}
     - target: {fileID: 8201906163485573796, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -2738,14 +2772,17 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7516864061285478689, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1933944719516776317}
   m_SourcePrefab: {fileID: 100100000, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
 --- !u!114 &860680468803417219 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2214450073643537450, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
   m_PrefabInstance: {fileID: 1534195614671741097}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 9015022012907295112}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b18a24fb1a4408bb85997d0c8900536, type: 3}
@@ -2756,6 +2793,31 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
   m_PrefabInstance: {fileID: 1534195614671741097}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &9015022012907295112 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7516864061285478689, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
+  m_PrefabInstance: {fileID: 1534195614671741097}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1933944719516776317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9015022012907295112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 1
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1001 &2387421977631025713
 PrefabInstance:
   m_ObjectHideFlags: 0

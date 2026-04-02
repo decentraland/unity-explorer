@@ -7,6 +7,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
     /// <summary>
     /// Sinusoidal lateral oscillation (zig-zag) applied to particle velocities.
     /// Each particle's random phase determines its oscillation direction.
+    /// Designed to pair with a radial-only spring so the two forces stay independent.
     /// </summary>
     public sealed class ParticleOscillationForce : IWorldParticleForce
     {
@@ -24,17 +25,16 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
             Profiler.BeginSample("ChatReactions.World.ZigZag");
 
-            float frequency = config.ZigZagFrequency;
+            float omega = config.ZigZagFrequency * MathConstants.TWO_PI;
+            float scaledAmplitude = amplitude * dt;
 
             for (int i = 0; i < count; i++)
             {
                 ref var p = ref buffer[i];
 
-                float oscillation = Mathf.Sin(p.age * frequency * MathConstants.TWO_PI + p.zigZagPhase)
-                                  * amplitude;
-
-                p.vel.x += Mathf.Cos(p.zigZagPhase) * oscillation * dt;
-                p.vel.z += Mathf.Sin(p.zigZagPhase) * oscillation * dt;
+                float oscillation = Mathf.Sin(p.age * omega + p.zigZagPhase) * scaledAmplitude;
+                p.vel.x += Mathf.Cos(p.zigZagPhase) * oscillation;
+                p.vel.z += Mathf.Sin(p.zigZagPhase) * oscillation;
             }
 
             Profiler.EndSample();

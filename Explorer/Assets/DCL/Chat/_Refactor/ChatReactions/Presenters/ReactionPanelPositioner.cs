@@ -12,6 +12,7 @@ namespace DCL.Chat.ChatReactions.Presenters
     public sealed class ReactionPanelPositioner
     {
         private readonly RectTransform messageSelectorRect;
+        private readonly RectTransform messageAreaRect;
         private readonly EmojiPanelView emojiPanelView;
         private readonly RectTransform emojiPanelRect;
         private readonly Vector2 shortcutsBarOffset;
@@ -19,10 +20,12 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         public ReactionPanelPositioner(
             RectTransform messageSelectorRect,
+            RectTransform messageAreaRect,
             EmojiPanelView emojiPanelView,
             ChatReactionsMessageConfig messageConfig)
         {
             this.messageSelectorRect = messageSelectorRect;
+            this.messageAreaRect = messageAreaRect;
             this.emojiPanelView = emojiPanelView;
             emojiPanelRect = (RectTransform)emojiPanelView.transform;
             shortcutsBarOffset = messageConfig.ShortcutsBarOffset;
@@ -30,18 +33,23 @@ namespace DCL.Chat.ChatReactions.Presenters
         }
 
         /// <summary>
-        /// Positions the message shortcuts bar horizontally centered in its parent,
+        /// Positions the message shortcuts bar horizontally centered in the message area,
         /// vertically above the given anchor button.
+        /// Uses anchoredPosition so centering works regardless of the parent's pivot.
         /// </summary>
         public void PositionShortcutsBarAboveAnchor(RectTransform anchor)
         {
-            var selectorParent = (RectTransform)messageSelectorRect.parent;
-            Vector3 localPos = selectorParent.InverseTransformPoint(anchor.position);
+            var parent = (RectTransform)messageSelectorRect.parent;
+            Vector3 anchorLocalPos = parent.InverseTransformPoint(anchor.position);
+            Vector3 messageAreaLocalPos = parent.InverseTransformPoint(messageAreaRect.position);
 
-            messageSelectorRect.localPosition = new Vector3(
-                shortcutsBarOffset.x,
-                localPos.y + shortcutsBarOffset.y,
-                0f);
+            // Convert pivot-relative local positions to anchor-relative anchoredPosition
+            float anchorOffsetX = (messageSelectorRect.anchorMin.x - parent.pivot.x) * parent.rect.width;
+            float anchorOffsetY = (messageSelectorRect.anchorMin.y - parent.pivot.y) * parent.rect.height;
+
+            messageSelectorRect.anchoredPosition = new Vector2(
+                messageAreaLocalPos.x - anchorOffsetX + shortcutsBarOffset.x,
+                anchorLocalPos.y - anchorOffsetY + shortcutsBarOffset.y);
         }
 
         /// <summary>
