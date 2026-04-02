@@ -29,7 +29,7 @@ namespace DCL.VoiceChat
 
         internal PlaybackSourcesHub(AudioMixerGroup audioMixerGroup)
         {
-            this.streams = new ();
+            this.streams = new ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
             this.audioMixerGroup = audioMixerGroup;
             parent = new GameObject(nameof(PlaybackSourcesHub)).transform;
         }
@@ -46,7 +46,7 @@ namespace DCL.VoiceChat
             source.name = $"LivekitSource_{key.identity}";
             source.transform.SetParent(parent);
 
-            if (streams.TryAdd(key, (stream, source)) == false)
+            if (!streams.TryAdd(key, (stream, source)))
             {
                 ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot add stream key to dictionary, value is already assigned within the key: {key}");
                 DisposeSource(source);

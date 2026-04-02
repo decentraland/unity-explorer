@@ -22,7 +22,8 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(VoiceChatRoomManager);
 
-        private readonly VoiceChatTrackManager trackManager;
+        private readonly MicrophoneTrackPublisher microphonePublisher;
+        private readonly RemoteTrackListener remoteListener;
         private readonly VoiceChatReconnectionManager reconnectionManager;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
@@ -40,14 +41,16 @@ namespace DCL.VoiceChat
         public event Action? ConnectionLost;
 
         public VoiceChatRoomManager(
-            VoiceChatTrackManager trackManager,
+            MicrophoneTrackPublisher microphonePublisher,
+            RemoteTrackListener remoteListener,
             IRoomHub roomHub,
             IRoom voiceChatRoom,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatConfiguration configuration,
             VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager)
         {
-            this.trackManager = trackManager;
+            this.microphonePublisher = microphonePublisher;
+            this.remoteListener = remoteListener;
             this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -88,6 +91,9 @@ namespace DCL.VoiceChat
             localParticipantIsSpeakerSubscription.Dispose();
             callStatusSubscription.Dispose();
 
+            microphonePublisher.Dispose();
+            remoteListener.Dispose();
+
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
@@ -123,12 +129,12 @@ namespace DCL.VoiceChat
             if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
             {
                 voiceChatMicrophoneStateManager.OnRoomConnectionChangedMuted(true);
-                trackManager.PublishLocalTrackAsync(CancellationToken.None).Forget();
+                microphonePublisher.PublishAsync(CancellationToken.None).Forget();
             }
             else
             {
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
-                trackManager.UnpublishLocalTrack();
+                microphonePublisher.Unpublish();
             }
         }
 
@@ -219,7 +225,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OnTrackSubscribed(ITrack _, TrackPublication publication, Participant participant)
         {
             OnTrackSubscribedInternalAsync().Forget();
             return;
@@ -227,11 +233,11 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnTrackSubscribedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                trackManager.HandleTrackSubscribed(track, publication, participant);
+                remoteListener.HandleTrackSubscribed(publication, participant);
             }
         }
 
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant)
         {
             OnTrackUnsubscribedInternalAsync().Forget();
             return;
@@ -239,7 +245,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnTrackUnsubscribedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                trackManager.HandleTrackUnsubscribed(track, publication, participant);
+                remoteListener.HandleTrackUnsubscribed(publication, participant);
             }
         }
 
@@ -251,7 +257,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnLocalTrackPublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                trackManager.HandleLocalTrackPublished(publication, participant);
+                remoteListener.HandleLoopbackTrackPublished(publication, participant);
             }
         }
 
@@ -263,7 +269,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                trackManager.HandleLocalTrackUnpublished(publication, participant);
+                remoteListener.HandleLoopbackTrackUnpublished(publication, participant);
             }
         }
 
@@ -290,7 +296,7 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                trackManager.StartListeningToRemoteTracks();
+                remoteListener.StartListening();
 
                 ConnectionEstablished?.Invoke();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
@@ -302,7 +308,7 @@ namespace DCL.VoiceChat
                 if (canSpeak)
                 {
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                    trackManager.PublishLocalTrackAsync(CancellationToken.None).Forget();
+                    microphonePublisher.PublishAsync(CancellationToken.None).Forget();
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
@@ -314,8 +320,8 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cleaning up tracks and media");
 
-                trackManager.UnpublishLocalTrack();
-                trackManager.StopListeningToRemoteTracks();
+                microphonePublisher.Unpublish();
+                remoteListener.StopListeningAsync().Forget();
 
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
 

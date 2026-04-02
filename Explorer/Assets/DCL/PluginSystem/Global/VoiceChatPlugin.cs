@@ -49,7 +49,8 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatTrackManager? trackManager;
+        private MicrophoneTrackPublisher? microphonePublisher;
+        private RemoteTrackListener? remoteListener;
         private VoiceChatRoomManager? roomManager;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
@@ -122,10 +123,10 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
-            trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
-            pluginScope.Add(trackManager);
+            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
+            remoteListener = new RemoteTrackListener(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration);
 
-            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
+            roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
             pluginScope.Add(roomManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
@@ -146,7 +147,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
-            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, remoteListener);
             pluginScope.Add(voiceChatDebugContainer);
 
             // Proximity Voice Chat
