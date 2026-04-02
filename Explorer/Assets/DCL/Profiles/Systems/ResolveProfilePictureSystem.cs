@@ -27,7 +27,10 @@ namespace DCL.Profiles
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                // Guard: the Profile object may have been returned to the pool and reused for a different user
+                if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
+                    profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+
                 World.Destroy(entity);
             }
         }

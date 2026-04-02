@@ -65,6 +65,7 @@ namespace DCL.Character.CharacterMotion.Systems
             float3 cameraUp = cam.Camera.transform.up;
             Vector3 cameraPosition = cam.Camera.transform.position;
 
+            CleanupThumbnailCacheQuery(World);
             SpawnMarkerQuery(World);
             UpdateMarkerQuery(World, cameraForward, cameraUp, cameraPosition);
             FadeOutMarkerQuery(World);
@@ -154,6 +155,13 @@ namespace DCL.Character.CharacterMotion.Systems
 
             markerPool.Release(marker);
             World.Remove<PointAtMarkerHolder, PointAtMarkerFadingOut>(entity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CleanupThumbnailCache(in Profile profile)
+        {
+            latestThumbnailCache.Remove(profile.UserId);
         }
     }
 }
