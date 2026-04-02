@@ -85,15 +85,15 @@ This checks for coordinate conflicts and updates `dcl-workspace.json`.
 
 ### Step 4: Install SDK with new component
 
-**From a js-sdk-toolchain PR** (GitHub Bot package):
+**Default — from local js-sdk-toolchain build (local path linking):**
 ```bash
 cd scenes/<x>,<y>-<scene-name>
-npm install "https://sdk-team-cdn.decentraland.org/@dcl/js-sdk-toolchain/branch/<branch>/dcl-sdk-<version>.tgz"
+npm install ../../js-sdk-toolchain/packages/@dcl/sdk
 ```
 
-**From local js-sdk-toolchain build:**
+**Alternative — from a js-sdk-toolchain PR** (GitHub Bot package, only if explicitly requested):
 ```bash
-npm install ../../js-sdk-toolchain/packages/@dcl/sdk
+npm install "https://sdk-team-cdn.decentraland.org/@dcl/js-sdk-toolchain/branch/<branch>/dcl-sdk-<version>.tgz"
 ```
 
 ### Step 5: Clean up duplicated files
@@ -180,6 +180,24 @@ For detailed guidance on using the Decentraland SDK to build scenes — entities
 https://github.com/dcl-regenesislabs/opendcl/tree/main/skills
 
 These cover SDK7 scene patterns, ReactEcs UI, multiplayer/networking, smart wearables, NPC dialog systems, blockchain integration, and scene optimization. Use them as reference when implementing scene logic beyond basic component usage.
+
+## Completion Gate
+
+**Do not report success until `npm run build` passes with zero errors.** Always run before finishing:
+
+```bash
+cd ../sdk7-test-scenes/scenes/<x>,<y>-<scene-name>
+npm run build   # TypeScript compilation must succeed with no errors
+```
+
+If the build fails, diagnose and fix before reporting done. Do not hand off a scene that does not compile.
+
+## Git Rules
+
+**NEVER commit or push.** This agent is for local development only — the user decides when to commit and push.
+
+Allowed: `git checkout -b`, `git diff`, `git status`, `git log`, `git branch`
+Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
 
 ## Reference Scenes
 

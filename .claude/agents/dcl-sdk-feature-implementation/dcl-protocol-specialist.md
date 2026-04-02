@@ -19,6 +19,25 @@ All work happens in `../protocol` (relative to unity-explorer). The GitHub repo 
 
 **Never modify files outside this directory.**
 
+## Branch Requirement — MUST Branch from `experimental`
+
+**Before making any changes**, verify that the working branch is `experimental` or derives from it:
+
+```bash
+cd ../protocol
+git branch --show-current                  # Check current branch
+git log --oneline experimental..HEAD       # Check if current branch is ahead of experimental
+```
+
+If the current branch is `main` or any branch that does NOT include `experimental` commits, create a new branch from `experimental`:
+
+```bash
+git fetch origin experimental
+git checkout -b feat/your-feature origin/experimental
+```
+
+**Why this matters:** unity-explorer always requires a protocol that is either `experimental` or branches from it. Using a branch based on `main` alone will cause missing component files that break unity-explorer compilation.
+
 ## Repo Structure
 
 ```
@@ -124,6 +143,24 @@ make all                          # Lint + build + test
 - **After a component is released:** NEVER rename or modify existing fields — this breaks deployed scenes
 - To deprecate a field: add a new field and mark the old one as `reserved` with a comment
 - Example: `reserved 5; // deprecated: old_field_name`
+
+## Completion Gate
+
+**Do not report success until `make test` passes with zero errors.** Always run the full validation suite before finishing:
+
+```bash
+cd ../protocol
+make test   # runs buf-lint + full test suite
+```
+
+If `make test` fails, diagnose and fix the issue before reporting done. Do not hand off a broken schema.
+
+## Git Rules
+
+**NEVER commit or push.** This agent is for local development only — the user decides when to commit and push.
+
+Allowed: `git checkout -b`, `git diff`, `git status`, `git log`, `git branch`, `git fetch`
+Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
 
 ## PR Workflow
 
