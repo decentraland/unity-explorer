@@ -92,6 +92,11 @@ MonoBehaviour:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
       - rid: 5190442991532376251
+    - <GroupTitle>k__BackingField: Point At
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 53
+      <Modules>k__BackingField:
+      - rid: 808141507432022122
   <ChatSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: 
@@ -106,6 +111,27 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: 808141507432022122
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 53
+        <View>k__BackingField:
+          m_AssetGUID: f999deca82ccdc14ebae40250c8eb0c9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Marker Visibility
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Friends Only
+          - All
+          - None
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 15
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

@@ -73,6 +73,7 @@ namespace DCL.FeatureFlags
         public const string CHAT_REACTIONS_MESSAGE = "alfa-chat-reactions-message";
         public const string AVATAR_GHOSTS = "alfa-avatar-ghosts";
         public const string REPORT_USER = "alfa-report-user";
+        public const string POINT_AT = "alfa-point-at";
 
         public static class Endpoints
         {

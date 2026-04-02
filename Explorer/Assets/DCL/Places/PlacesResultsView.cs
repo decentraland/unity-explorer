@@ -163,16 +163,47 @@ namespace DCL.Places
             }
         }
 
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateFriendsData(placeData.ConnectedFriends, profileRepositoryWrapper);
+            }
+        }
+
+        public void RefreshVisibleCardsLiveEventData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateLiveEventData(placeData.PlaceInfo.live, placeData.LiveEvent);
+            }
+        }
+
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
+
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
-            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends.PlaceInfo) ?? false;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends!.PlaceInfo) ?? false;
             cardView.Configure(
-                placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
+                placeInfo: placeInfoWithConnectedFriends!.PlaceInfo,
                 ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
                 userOwnsPlace: false,
                 thumbnailLoader: placesCardsThumbnailLoader!,
