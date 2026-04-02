@@ -13,7 +13,7 @@
 | Publish mode | Lazy publish, state model стартует в Speaking | Speaking при старте = auto-publish. Lazy publish сохранён |
 | Mute service | Не переносим в PR 1 | Manager без mute кода, MuteService появится в PR 2 |
 | Plugin DI | Минимальные изменения | Не меняем сигнатуру конструктора VoiceChatPlugin |
-| ConfigHolder | Только `Config` поле | Без MouthTextureArray, без SpeakingParticipants |
+| ConfigHolder | Удаляем в фазе 6.1 | Заменяем на direct injection + SetConfiguration() |
 | Config fields | Только proximity audio | Без LipSync полей |
 | ActiveSpeakers | Нет в PR 1 | Подписка на ActiveSpeakers.Updated — в PR 2 с nametags |
 | Identity wait | Не ждём | Proximity инициализируется сразу в InitializeAsync |
@@ -158,17 +158,270 @@ VoiceChat/VoiceChatConfiguration.asset + .meta
 
 ## Микро 6: Архитектурное выравнивание с Private/Community VoiceChat
 
-По результатам архитектурного ревью — три изменения для консистентности с существующими паттернами.
+По результатам архитектурного ревью — ProximityVoiceChatManager (572 строк) является монолитом,
+совмещающим публикацию микрофона, подписку на удалённые треки, создание spatial audio источников,
+state-координацию и lifecycle. В существующей архитектуре (Private/Community) эти ответственности
+разделены между `MicrophoneTrackPublisher`, `RemoteTrackListener` + `PlaybackSourcesHub`,
+`VoiceChatRoomManager`, `VoiceChatMicrophoneHandler`.
 
-### 6a. DisconnectReason проверка при дисконнекте
+Четыре фазы рефакторинга, в порядке от простого к сложному:
+
+---
+
+### Фаза 6.1: Удаление ProximityConfigHolder
+
+**Проблема:** `ProximityConfigHolder` — обёртка с одним полем (`public VoiceChatConfiguration? Config`),
+существует из-за того что `InjectToWorld` вызывается ДО `InitializeAsync` (где загружается конфиг).
+Manager уже получает `VoiceChatConfiguration` напрямую — только ECS-система и debug widget зависят от holder.
+
+**Ключевая находка:** `InjectToWorld` **возвращает** ссылку на систему — подтверждено в
+`PropagateAvatarLocomotionOverridesSystem`, `AvatarAttachHandlerSystem`, `TrackPlayerPositionSystem` и др.
+
+**Файлы:**
+
+| Файл | Действие |
+|---|---|
+| `Proximity/ProximityConfigHolder.cs` + `.meta` | Удалить |
+| `Proximity/Systems/ProximityAudioPositionSystem.cs` | Модификация |
+| `Proximity/ProximityAudioDebugWidget.cs` | Модификация |
+| `PluginSystem/Global/VoiceChatPlugin.cs` | Модификация |
+
+**Шаги:**
+
+**6.1.1** `ProximityAudioPositionSystem.cs`:
+- Конструктор: `ProximityConfigHolder configHolder` → `VoiceChatConfiguration? configuration = null`
+- Поле: `private VoiceChatConfiguration? configuration;` (мутабельное, не readonly)
+- Добавить сеттер: `internal void SetConfiguration(VoiceChatConfiguration config) => configuration = config;`
+- `ApplySettings` (строка 115-118): `configHolder.Config!.ApplyProximitySettingsTo(...)` → `configuration?.ApplyProximitySettingsTo(...)`
+- **Безопасность:** между InjectToWorld и InitializeAsync нет proximity audio sources (Manager создаётся в InitializeAsync), ApplySettings просто no-op пока config == null. Закомментированный guard на строке 58 (`// if (configHolder.Config == null) return;`) подтверждает что автор это предусмотрел.
+
+**6.1.2** `ProximityAudioDebugWidget.cs`:
+- Сигнатура: `Setup(IDebugContainerBuilder, ProximityConfigHolder)` → `Setup(IDebugContainerBuilder, VoiceChatConfiguration)`
+- Убрать все `if (configHolder.Config != null)` guard'ы — конфиг гарантированно не-null при вызове
+- Вызов **переносится** из `InjectToWorld` в `InitializeAsync` (после загрузки конфига)
+
+**6.1.3** `VoiceChatPlugin.cs`:
+- Удалить поле `proximityConfigHolder` (строка 48)
+- Добавить поле: `private ProximityAudioPositionSystem? proximityAudioPositionSystem;`
+- `InjectToWorld` (строка 102-106):
+  - Убрать `ProximityAudioDebugWidget.Setup(...)` — перенос в InitializeAsync
+  - Сохранить ссылку: `proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);`
+- `InitializeAsync` (после строки 118):
+  - `proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);`
+  - `ProximityAudioDebugWidget.Setup(debugContainer, voiceChatConfiguration);`
+  - Удалить строку 154 (`proximityConfigHolder.Config = voiceChatConfiguration;`)
+
+**6.1.4** Удалить `ProximityConfigHolder.cs` + `.meta`
+
+---
+
+### Фаза 6.2: Разделение Manager на 2 класса
+
+**Проблема:** 572-строчный монолит с 4 группами ответственности и cross-cutting зависимостями.
+
+**Паттерн:** Повторяем `VoiceChatRoomManager` (оркестратор) + `RemoteTrackListener` (remote-треки).
+
+**Файлы:**
+
+| Файл | Действие |
+|---|---|
+| `Proximity/ProximityRemoteTrackListener.cs` + `.meta` | Создать (~180 строк) |
+| `Proximity/ProximityVoiceChatManager.cs` | Модификация (572 → ~250 строк) |
+
+#### Новый класс: `ProximityRemoteTrackListener : IDisposable`
+
+**Ответственность:** Весь lifecycle удалённых audio sources — подписка, создание spatial GameObject'ов,
+регистрация в shared dictionary для ECS bridge, mute/unmute при suppress/resume, loopback.
+
+**Конструктор:**
+```csharp
+internal ProximityRemoteTrackListener(
+    IRoom islandRoom,
+    VoiceChatConfiguration configuration,
+    ConcurrentDictionary<string, AudioSource> activeAudioSources)
+```
+
+**Перенос методов из Manager:**
+
+| Из Manager (строки) | В ProximityRemoteTrackListener | Видимость |
+|---|---|---|
+| `SubscribeToExistingRemoteTracks` (238-251) | `StartListening()` | internal |
+| `OnTrackSubscribed` (253-277) | `HandleTrackSubscribed(TrackPublication, Participant)` | internal |
+| `OnTrackUnsubscribed` (279-299) | `HandleTrackUnsubscribed(TrackPublication, Participant)` | internal |
+| `OnLocalTrackPublished` (301-331) | `HandleLocalTrackPublished(TrackPublication, Participant)` | internal |
+| `OnLocalTrackUnpublished` (333-356) | `HandleLocalTrackUnpublished(TrackPublication, Participant)` | internal |
+| `AddRemoteSource` (358-381) | `AddRemoteSource` | private |
+| `RemoveRemoteSource` (383-391) | `RemoveRemoteSource` | private |
+| `CreateSource` (393-410) | `CreateSource` | private |
+| `DestroySource` (412-419) | `DestroySource` | private static |
+| Часть `SuppressProximity` (486-490) | `MuteAll()` | internal |
+| `ResumeProximity` (495-509) | `UnmuteAll()` | internal |
+| Часть `Deactivate` (541-545) | `StopListening()` | internal |
+
+**Перенос полей:**
+- `remoteSources` (ConcurrentDictionary<StreamKey, LivekitAudioSource>)
+- `activeAudioSources` (ConcurrentDictionary<string, AudioSource>) — ссылка
+- `fallbackParent` (Transform) — создаётся в конструкторе listener'а
+- `loopbackSource` (LivekitAudioSource?)
+- `suppressed` (bool) — привязан к remote sources
+
+#### Рефакторинг ProximityVoiceChatManager (оркестратор)
+
+**Остаётся в Manager:**
+- Конструктор: создаёт `ProximityRemoteTrackListener`, подписывается на room events, делегирует
+- `Dispose`: dispose listener, отписка от событий
+- `OnConnectionUpdated`: без изменений логики
+- `ActivateWithRetryAsync`: вызывает `PublishLocalTrackAsync` + `remoteListener.StartListening()`
+- `PublishLocalTrackAsync`: без изменений (только local track)
+- `UnpublishLocalTrack`: без изменений
+- `OnCallStatusChanged`: без изменений
+- `OnProximityStateChanged`: `SuppressProximity` → `rtcAudioSource?.Stop()` + `remoteListener.MuteAll()`
+- `Deactivate`: `UnpublishLocalTrack()` + `remoteListener.StopListening()`
+- `OnMicrophoneChanged` / `SwitchMicrophoneInternal`: без изменений
+
+**Room event wiring (паттерн из VoiceChatRoomManager):**
+```csharp
+// Manager подписывается на room events и делегирует в listener:
+islandRoom.TrackSubscribed += (track, pub, p) => remoteListener.HandleTrackSubscribed(pub, p);
+islandRoom.TrackUnsubscribed += (track, pub, p) => remoteListener.HandleTrackUnsubscribed(pub, p);
+islandRoom.LocalTrackPublished += (pub, p) => remoteListener.HandleLocalTrackPublished(pub, p);
+islandRoom.LocalTrackUnpublished += (pub, p) => remoteListener.HandleLocalTrackUnpublished(pub, p);
+```
+
+**Cross-cutting зависимости (анализ):**
+
+| Поле | Группы | Решение |
+|---|---|---|
+| `islandRoom` | Все | Оба класса получают в конструкторе |
+| `configuration` | Local + Remote | Оба получают в конструкторе |
+| `rtcAudioSource` | Local + State | Остаётся в Manager |
+| `published` | Local + State | Остаётся в Manager |
+| `suppressed` | Remote + State | Перемещается в Listener, Manager вызывает `MuteAll()`/`UnmuteAll()` |
+| `remoteSources` | Remote + State + Lifecycle | Перемещается в Listener, Manager вызывает `StopListening()` |
+
+**Потокобезопасность:** `suppressed` читается/пишется только с main thread (все обработчики делают `await UniTask.SwitchToMainThread()` первым делом) — lock не нужен.
+
+---
+
+### Фаза 6.3: Выравнивание микрофона
+
+Три подшага. Выполняются на уже разделённом Manager'е (~250 строк).
+
+#### 6.3a. Owned/Weak паттерн для MicrophoneRtcAudioSource
+
+**Проблема:** Manager хранит `MicrophoneRtcAudioSource?` как raw nullable (строка 52).
+`MicrophoneTrackPublisher` (Core) оборачивает в `Owned<T>` и передаёт `Weak<T>` — паттерн lifetime safety.
+
+**Решение:** Извлечь `MicrophoneTrack` struct из `MicrophoneTrackPublisher` (строки 171-190) в shared файл.
+Обоснование: struct идентичен в обоих consumer'ах, извлечение предотвращает drift.
+
+**Файлы:**
+
+| Файл | Действие |
+|---|---|
+| `VoiceChat/Core/MicrophoneTrack.cs` + `.meta` | Создать (извлечь из MicrophoneTrackPublisher) |
+| `VoiceChat/Core/MicrophoneTrackPublisher.cs` | Модификация (использовать shared struct) |
+| `Proximity/ProximityVoiceChatManager.cs` | Модификация |
+
+**Shared struct:**
+```csharp
+// Assets/DCL/VoiceChat/Core/MicrophoneTrack.cs
+namespace DCL.VoiceChat
+{
+    internal readonly struct MicrophoneTrack : IDisposable
+    {
+        private readonly Owned<MicrophoneRtcAudioSource> source;
+        public ITrack Track { get; }
+        public Weak<MicrophoneRtcAudioSource> Source => source.Downgrade();
+
+        public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
+        {
+            Track = track;
+            this.source = source;
+        }
+
+        public void Dispose()
+        {
+            source.Dispose(out MicrophoneRtcAudioSource? inner);
+            inner?.Dispose();
+        }
+    }
+}
+```
+
+**Замены в ProximityVoiceChatManager:**
+- Поля `rtcAudioSource`, `localTrack`, `published` → одно поле `MicrophoneTrack? microphoneTrack`
+- `PublishLocalTrackAsync`: `microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(src))`
+- `UnpublishLocalTrack`: unpublish track, затем `microphoneTrack?.Dispose(); microphoneTrack = null;`
+- `published` проверки → `microphoneTrack.HasValue`
+- `rtcAudioSource?.Start()/Stop()` → доступ через `microphoneTrack?.Source.Resource` с `.Has` проверкой:
+  ```csharp
+  // Было:
+  rtcAudioSource?.Start();
+  // Стало:
+  if (microphoneTrack is { } mt) { var res = mt.Source.Resource; if (res.Has) res.Value.Start(); }
+  ```
+- `SwitchMicrophoneInternal` — аналогично через Weak
+
+**Замены в MicrophoneTrackPublisher:**
+- Убрать вложенный `MicrophoneTrack` struct (строки 171-190)
+- Использовать `DCL.VoiceChat.MicrophoneTrack` из shared файла
+
+#### 6.3b. Вынести общий VoiceChatTrackPublishHelper
+
+**Проблема:** ~85% дублирования между `MicrophoneTrackPublisher.PublishAsync` (строки 76-113)
+и `ProximityVoiceChatManager.PublishLocalTrackAsync` (строки 187-236):
+- Windows volume hack (`audioMixer.SetFloat("Microphone_Volume", 13)`)
+- macOS permission guard (`VoiceChatPermissions.GuardAsync`)
+- Microphone selection (`VoiceChatSettings.ReachableSelection()`)
+- `MicrophoneRtcAudioSource.New(...)` с идентичными параметрами
+- `TrackPublishOptions` (124000 bitrate, SourceMicrophone)
+
+**Файлы:**
+
+| Файл | Действие |
+|---|---|
+| `VoiceChat/Core/VoiceChatTrackPublishHelper.cs` + `.meta` | Создать |
+| `VoiceChat/Core/MicrophoneTrackPublisher.cs` | Модификация (использовать helper) |
+| `Proximity/ProximityVoiceChatManager.cs` | Модификация (использовать helper) |
+
+**Static helper:**
+```csharp
+namespace DCL.VoiceChat
+{
+    internal static class VoiceChatTrackPublishHelper
+    {
+        internal static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(
+            VoiceChatConfiguration configuration, CancellationToken ct)
+        {
+            // 1. Windows volume hack
+            // 2. macOS permissions
+            // 3. VoiceChatSettings.ReachableSelection()
+            // 4. MicrophoneRtcAudioSource.New(selection, mixer, playbackToSpeakers)
+            // Throws InvalidOperationException on failure
+        }
+
+        internal static TrackPublishOptions DefaultAudioPublishOptions() => new ()
+        {
+            AudioEncoding = new AudioEncoding { MaxBitrate = 124000 },
+            Source = TrackSource.SourceMicrophone,
+        };
+    }
+}
+```
+
+**Каждый publisher после рефакторинга:**
+- `MicrophoneTrackPublisher`: семафор, `handler.Assign(weak)`, track name = participant name, notification on failure
+- `ProximityVoiceChatManager`: `MicrophoneTrack` creation, track name = `proximity_{name}`, auto-start
+
+#### 6.3c. DisconnectReason проверка при дисконнекте
 
 **Файл:** `Proximity/ProximityVoiceChatManager.cs`
 
-**Что:** В `OnConnectionUpdated`, case `Disconnected` — добавить проверку `VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(reason)`. Если reason валидный (RoomDeleted, ServerShutdown, ClientInitiated и т.д.) — просто Deactivate без ретрая. Если невалидный (null, неизвестный) — текущее поведение (Deactivate, потенциальный ретрай при реконнекте).
+**Что:** В `OnConnectionUpdated`, case `Disconnected` (строки 139-142) — добавить проверку
+`VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(reason)` (паттерн из `VoiceChatRoomManager:336`).
 
-**Почему:** Private/Community VoiceChat (`VoiceChatRoomManager:334`) проверяет `DisconnectReason` перед решением о реконнекции. Proximity сейчас **всегда** просто делает Deactivate — не различает server-initiated disconnect (не нужен ретрай) от сетевого сбоя (нужен ретрай). Выравниваем поведение. `VoiceChatDisconnectReasonHelper` уже существует в проекте.
-
-**Текущий код (case Disconnected):**
+**Текущий код:**
 ```csharp
 case ConnectionUpdate.Disconnected:
     activationCts.SafeCancelAndDispose();
@@ -184,137 +437,65 @@ case ConnectionUpdate.Disconnected:
 
     if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT,
-            $"Valid disconnect reason ({disconnectReason}) — no reactivation needed");
+            $"Valid disconnect ({disconnectReason}) — no reactivation needed");
     else
         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT,
             $"Unexpected disconnect ({disconnectReason}) — will reactivate on next Connected event");
     break;
 ```
 
-> Примечание: Proximity не управляет реконнектом сам — Island Room переподключается автоматически и стреляет `Connected` заново. Поэтому для proximity проверка reason — это прежде всего **логгирование** и **готовность** к будущей логике (например, не реактивировать при `ClientInitiated`).
+> Примечание: Для proximity это прежде всего **логгирование** — Island Room переподключается автоматически.
+> Готовит к будущей логике (не реактивировать при `ClientInitiated`).
+
+#### 6.3d. VoiceChatMicrophoneHandler — НЕ интегрируем
+
+**Решение:** Оставить proximity mic management отдельным.
+**Обоснование:**
+- Proximity mic всегда включён в SPEAKING (auto-publish), нет toggle/PTT
+- `VoiceChatMicrophoneHandler` жёстко связан с `ICommunityCallOrchestrator` для mute-нотификаций (строки 28, 188-199)
+- Разная семантика: proximity driven by state machine, Private/Community driven by user input
+- Совмещение нарушит SRP
 
 ---
 
-### 6b. Owned/Weak паттерн для микрофонного трека
+### Фаза 6.4: Адаптация PlaybackSourcesHub (исследовательская)
 
-**Файл:** `Proximity/ProximityVoiceChatManager.cs`
+**Статус:** Решение принимаем после завершения фаз 6.1-6.3.
 
-**Что:** Заменить сырые ссылки `MicrophoneRtcAudioSource? rtcAudioSource` и `ITrack? localTrack` на структуру `MicrophoneTrack?` с `Owned<MicrophoneRtcAudioSource>` — аналогично `VoiceChatTrackManager.MicrophoneTrack`.
+**Идея:** `ProximityRemoteTrackListener` (созданный в 6.2) может переиспользовать `PlaybackSourcesHub`
+вместо собственного `ConcurrentDictionary<StreamKey, LivekitAudioSource>`.
 
-**Почему:** `VoiceChatTrackManager` (`VoiceChatTrackManager.cs:303-322`) использует `Owned<T>` для owner-ship и `Weak<T>` для non-owning доступа. Proximity сейчас держит raw reference — нет гарантии, что lifetime management корректен. Выравниваем с установленным паттерном.
+**Ключевая разница в source creation:**
+- Существующий `PlaybackSourcesHub`: `LivekitAudioSource.New(true)` + ChatAudioMixerGroup
+- Proximity: `LivekitAudioSource.New(explicitName: true, spatial: true)` + ProximityChatAudioMixerGroup + `ApplyProximitySettingsTo()` + `ApplySpatializationSettingsTo()` + `AddComponent<ProximityPanCalculator>()`
 
-**Изменения:**
-
-1. Добавить приватную структуру (аналогично `VoiceChatTrackManager`):
+**Предлагаемый подход — source factory delegate:**
 ```csharp
-private readonly struct MicrophoneTrack : IDisposable
-{
-    private readonly Owned<MicrophoneRtcAudioSource> source;
-
-    public ITrack Track { get; }
-    public Weak<MicrophoneRtcAudioSource> Source => source.Downgrade();
-
-    public MicrophoneTrack(ITrack track, Owned<MicrophoneRtcAudioSource> source)
-    {
-        Track = track;
-        this.source = source;
-    }
-
-    public void Dispose()
-    {
-        source.Dispose(out MicrophoneRtcAudioSource? inner);
-        inner?.Dispose();
-    }
-}
+// PlaybackSourcesHub.cs — добавить optional factory
+internal PlaybackSourcesHub(
+    AudioMixerGroup audioMixerGroup,
+    Func<StreamKey, Weak<AudioStream>, LivekitAudioSource>? sourceFactory = null)
 ```
+- Default factory (существующее поведение): `LivekitAudioSource.New(true)` + mixer group
+- Proximity factory: создаёт с `spatial: true`, применяет spatial settings, добавляет `ProximityPanCalculator`
+- Существующий `RemoteTrackListener` не затрагивается (использует default)
 
-2. Заменить поля:
-```csharp
-// Было:
-private MicrophoneRtcAudioSource? rtcAudioSource;
-private ITrack? localTrack;
+**Дополнительно для proximity:**
+- После `AddOrReplaceStream` — регистрация в `activeAudioSources` dict (для ECS bridge)
+- `MuteAll()`/`UnmuteAll()` — итерация по `hub.Streams`, установка `audioSource.mute`
 
-// Стало:
-private MicrophoneTrack? microphoneTrack;
-```
-
-3. Обновить `PublishLocalTrackAsync` — создавать `MicrophoneTrack` вместо raw assignment.
-4. Обновить `UnpublishLocalTrack` — вызывать `microphoneTrack?.Dispose()`.
-5. Обновить `OnProximityStateChanged` — доступ к rtcAudioSource через `microphoneTrack?.Source.Resource`:
-   - `rtcAudioSource?.Start()` → получить `Weak`, проверить `.Has`, вызвать `.Start()`
-   - `rtcAudioSource?.Stop()` → аналогично
-6. Обновить `SwitchMicrophoneInternal` — аналогично через Weak.
-
----
-
-### 6c. Вынести общий PublishMicrophoneTrackAsync
-
-**Файлы:**
-- `VoiceChat/VoiceChatTrackPublishHelper.cs` — новый static helper
-- `VoiceChat/VoiceChatTrackManager.cs` — использовать helper
-- `Proximity/ProximityVoiceChatManager.cs` — использовать helper
-
-**Что:** Извлечь ~85% общего кода publish в статический метод. Оставить в каждом менеджере только специфичную логику (track name, post-publish actions).
-
-**Почему:** `VoiceChatTrackManager.PublishLocalTrackAsync` (строки 90-163) и `ProximityVoiceChatManager.PublishLocalTrackAsync` (строки 187-236) содержат почти идентичный код: platform volume hack, macOS permissions, microphone selection, RtcAudioSource creation, encoding options, publish call.
-
-**Общий метод (static helper):**
-```csharp
-namespace DCL.VoiceChat
-{
-    public static class VoiceChatTrackPublishHelper
-    {
-        public static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(
-            VoiceChatConfiguration configuration,
-            CancellationToken ct)
-        {
-            // Platform volume hack (Windows)
-            if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
-                configuration.AudioMixerGroup.audioMixer.SetFloat(
-                    nameof(AudioMixerExposedParam.Microphone_Volume), 13);
-
-            // macOS permissions
-#if UNITY_STANDALONE_OSX
-            bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
-            if (!hasPermissions)
-                throw new InvalidOperationException("Microphone permissions not granted");
-#endif
-
-            // Microphone selection
-            Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
-            if (!reachable.Success)
-                throw new InvalidOperationException($"No microphone available: {reachable.ErrorMessage}");
-
-            // Create RTC source
-            Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                reachable.Value,
-                (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
-                configuration.microphonePlaybackToSpeakers);
-
-            if (!result.Success)
-                throw new InvalidOperationException($"Failed to create RTC audio source: {result.ErrorMessage}");
-
-            return result.Value;
-        }
-
-        public static TrackPublishOptions DefaultAudioPublishOptions() =>
-            new ()
-            {
-                AudioEncoding = new AudioEncoding { MaxBitrate = 124000 },
-                Source = TrackSource.SourceMicrophone,
-            };
-    }
-}
-```
-
-**Каждый менеджер после рефакторинга** вызывает helper и добавляет свою специфику:
-- `VoiceChatTrackManager`: semaphore guard, `microphoneHandler.Assign()`, `MicrophoneTrack` создание, track name без prefix
-- `ProximityVoiceChatManager`: `MicrophoneTrack` создание, track name с `proximity_` prefix, auto-start
+**Почему НЕ наследование:** `PlaybackSourcesHub` — `readonly struct`, нельзя наследовать.
+**Почему НЕ отдельная копия:** Ядро lifecycle логики (ConcurrentDictionary, create/dispose, Play/Stop/Reset) идентично — дублирование опасно.
 
 ---
 
 ## Верификация
 
+### После каждой фазы:
+1. Проект компилируется без ошибок в Unity
+2. Proximity voice chat работает: подключение к Island Room, публикация mic, 3D spatial audio
+
+### Полная верификация:
 1. Два клиента на одном острове
 2. Логи: `Initialized` → `Activated — publishing and listening with 3D spatial audio`
 3. Слышно удалённых игроков, звук позиционирован в 3D
@@ -322,3 +503,7 @@ namespace DCL.VoiceChat
 5. После звонка → `Resumed`, proximity восстановлен
 6. Debug виджет: слайдеры работают (spatial blend, distance, rolloff)
 7. Дисконнект от острова → `Deactivated`, cleanup
+
+### Тесты:
+- Поиск существующих: `grep -r "ProximityVoiceChatManager\|ProximityAudioPosition" --include="*Test*"`
+- Для новых классов (`ProximityRemoteTrackListener`, `VoiceChatTrackPublishHelper`) — unit-тесты по паттерну `UnitySystemTestBase<T>`
