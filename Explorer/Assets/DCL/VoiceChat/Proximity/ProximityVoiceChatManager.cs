@@ -34,6 +34,8 @@ namespace DCL.VoiceChat.Proximity
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
     {
+        private const string TAG = nameof(ProximityVoiceChatManager);
+
         private readonly VoiceChatConfiguration configuration;
 
         private readonly IRoom islandRoom;
@@ -109,7 +111,7 @@ namespace DCL.VoiceChat.Proximity
             if (fallbackParent != null)
                 fallbackParent.gameObject.SelfDestroy();
 
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Disposed");
+            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Disposed");
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)

@@ -41,6 +41,11 @@
 - `ProximityAudioDebugWidget` — runtime debug слайдеры
 - Audio Mixer update (ProximityChatAudioMixerGroup)
 
+**Архитектурное выравнивание (микро 6):**
+- `VoiceChatDisconnectReasonHelper` проверка в `OnConnectionUpdated` (как в RoomManager)
+- `Owned/Weak` паттерн для микрофонного трека (как в TrackManager)
+- `VoiceChatTrackPublishHelper` — общий static helper для publish логики (убирает ~85% дублирования между TrackManager и ProximityManager)
+
 **Что НЕ входит:** Mute service, Nametags, Sidebar UI, AudioEffect Zones, LipSync
 
 **Детальный план:** [PLAN_PR1_core_audio_tracks.md](PLAN_PR1_core_audio_tracks.md)

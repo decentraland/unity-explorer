@@ -228,7 +228,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public void HandleTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackSubscribed(ITrack _, TrackPublication publication, Participant participant)
         {
             try
             {
@@ -246,7 +246,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}"); }
         }
 
-        public void HandleTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant)
         {
             try
             {
