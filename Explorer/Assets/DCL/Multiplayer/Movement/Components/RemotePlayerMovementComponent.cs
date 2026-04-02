@@ -32,8 +32,10 @@ namespace DCL.Multiplayer.Movement
         public bool HeadIKYawEnabled;
         public bool HeadIKPitchEnabled;
         public float2 HeadIKYawAndPitch;
+        public bool IsPointingAt;
+        public float3 PointAtWorldHitPoint;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
@@ -50,6 +52,9 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = false;
             HeadIKPitchEnabled = false;
             HeadIKYawAndPitch = float2.zero;
+
+            IsPointingAt = false;
+            PointAtWorldHitPoint = float3.zero;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -83,6 +88,12 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = message.headIKYawEnabled;
             HeadIKPitchEnabled = message.headIKPitchEnabled;
             HeadIKYawAndPitch = message.headYawAndPitch;
+        }
+
+        public void UpdatePointAtIK(in NetworkMovementMessage message)
+        {
+            IsPointingAt = message.isPointingAt;
+            PointAtWorldHitPoint = message.pointAtWorldHitPoint;
         }
 
         public void Dispose()

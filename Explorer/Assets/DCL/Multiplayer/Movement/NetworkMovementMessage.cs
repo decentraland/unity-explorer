@@ -30,6 +30,9 @@ namespace DCL.Multiplayer.Movement
         public bool isInstant;
         public bool isEmoting;
 
+        public bool isPointingAt;
+        public Vector3 pointAtWorldHitPoint;
+
         public AnimationStates animState;
 
         public byte velocityTier;

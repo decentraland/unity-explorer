@@ -706,6 +706,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9201031944451585807, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 3278735700683769703, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
     - {fileID: 5190763689275770559, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
@@ -753,4 +757,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding: {x: 0, y: 0, z: 0, w: -20}
-  m_Softness: {x: 0, y: 50}
+  m_Softness: {x: 0, y: 0}
