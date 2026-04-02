@@ -29,6 +29,12 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(MicrophoneTrackPublisher);
 
+        private static readonly TrackPublishOptions PUBLISH_OPTIONS = new ()
+        {
+            AudioEncoding = new AudioEncoding { MaxBitrate = 124000 },
+            Source = TrackSource.SourceMicrophone,
+        };
+
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
@@ -93,18 +99,8 @@ namespace DCL.VoiceChat
             try
             {
                 MicrophoneRtcAudioSource rtcAudioSource = TryStartMicrophone();
-                ITrack track = CreateAudioTrack(rtcAudioSource);
-
-                var options = new TrackPublishOptions
-                {
-                    AudioEncoding = new AudioEncoding
-                    {
-                        MaxBitrate = 124000,
-                    },
-                    Source = TrackSource.SourceMicrophone,
-                };
-
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, options, ct);
+                ITrack track = CreateMicrophoneTrack(rtcAudioSource);
+                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, PUBLISH_OPTIONS, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track published successfully");
             }
@@ -152,7 +148,7 @@ namespace DCL.VoiceChat
             return result.Value;
         }
 
-        private ITrack CreateAudioTrack(MicrophoneRtcAudioSource rtcAudioSource)
+        private ITrack CreateMicrophoneTrack(MicrophoneRtcAudioSource rtcAudioSource)
         {
             ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
                 voiceChatRoom.Participants.LocalParticipant().Name,
