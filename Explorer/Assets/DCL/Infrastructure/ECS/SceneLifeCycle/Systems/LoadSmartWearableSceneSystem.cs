@@ -55,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (sceneContent == null)
             {
-                return new  StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(
+                return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(
                     ReportCategory.WEARABLE,
                     new Exception($"sceneContent of {wearable.GetName()} is null"));
             }
