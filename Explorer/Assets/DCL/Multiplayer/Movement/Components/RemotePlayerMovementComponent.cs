@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Movement
         public bool IsPointingAt;
         public float3 PointAtWorldHitPoint;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
