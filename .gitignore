@@ -65,13 +65,16 @@ Explorer/UserSettings
 .DS_Store
 .DS_Store?
 
-# LLMS
+# CURSOR
 **/.cursor/
 Explorer/.cursorignore
 .cursorignore
+
+#Claude
+.claude/settings.local.json
+.claude/worktrees/
 CLAUDE.md
 /Explorer/.claude
-.claude/settings.local.json
 
 # API Keys
 .env
