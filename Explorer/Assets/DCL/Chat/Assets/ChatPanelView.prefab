@@ -4364,6 +4364,14 @@ PrefabInstance:
       propertyPath: m_Alpha
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1309879856862503027, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_Padding.w
+      value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1309879856862503027, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_Softness.y
+      value: 30
+      objectReference: {fileID: 0}
     - target: {fileID: 1807510319441030586, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: m_Alpha
       value: 1
