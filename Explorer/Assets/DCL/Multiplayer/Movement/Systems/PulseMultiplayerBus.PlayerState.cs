@@ -113,7 +113,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
                 {
                     if (TryRequestResync(delta.SubjectId, 0))
-                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot merge delta player state from {delta.SubjectId}");
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Already waiting for a resync for {delta.SubjectId}");
 
                     continue;
                 }
