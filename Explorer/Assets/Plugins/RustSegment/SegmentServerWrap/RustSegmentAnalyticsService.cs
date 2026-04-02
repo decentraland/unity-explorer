@@ -62,7 +62,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
-            string path = Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            // Drop legacy version if exists
+            string legacyPath = Path.Combine(Application.persistentDataPath!, "analytics_queue.sqlite3");
+            if (File.Exists(legacyPath))
+            {
+                File.Delete(legacyPath);
+            }
+
+            string path = Path.Combine(Application.persistentDataPath!, "analytics_queue_v1.sqlite3");
             const int DEFAULT_LIMIT = 500;
             using var mQueuePath = new MarshaledString(path);
             using var mWriterKey = new MarshaledString(writerKey);
