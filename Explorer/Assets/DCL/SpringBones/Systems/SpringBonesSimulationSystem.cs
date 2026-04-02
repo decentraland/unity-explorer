@@ -5,7 +5,6 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using UniVRM10.FastSpringBones;
 
 namespace DCL.SpringBones
 {
@@ -15,9 +14,9 @@ namespace DCL.SpringBones
     [UpdateBefore(typeof(StartAvatarMatricesCalculationSystem))]
     public partial class SpringBonesSimulationSystem : BaseUnityLoopSystem
     {
-        private readonly FastSpringBoneService springBoneService;
+        private readonly SpringBoneService springBoneService;
 
-        public SpringBonesSimulationSystem(World world, FastSpringBoneService springBoneService) : base(world)
+        public SpringBonesSimulationSystem(World world, SpringBoneService springBoneService) : base(world)
         {
             this.springBoneService = springBoneService;
         }
@@ -25,15 +24,25 @@ namespace DCL.SpringBones
         protected override void Update(float t)
         {
             SyncParentBonesQuery(World);
-            springBoneService.ManualUpdate(t);
+            springBoneService.Simulate(t);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void SyncParentBones(ref SpringBoneRegistrationComponent registration)
         {
-            foreach (var (wearableParent, avatarParent) in registration.SyncPairs)
+            for (int i = 0; i < registration.SyncPairs.Count; i++)
+            {
+                var (wearableParent, avatarParent) = registration.SyncPairs[i];
                 wearableParent.SetPositionAndRotation(avatarParent.position, avatarParent.rotation);
+
+                // Feed parent world transform to the simulation job
+                if (i < registration.SlotIndices.Count)
+                {
+                    springBoneService.SetParentData(registration.SlotIndices[i],
+                        avatarParent.rotation, avatarParent.localToWorldMatrix);
+                }
+            }
         }
     }
 }

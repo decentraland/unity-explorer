@@ -1066,7 +1066,7 @@ namespace Global.Dynamic
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
                 new JumpIndicatorPlugin(assetsProvisioner),
-                new SpringBonesPlugin(assetsProvisioner),
+                new SpringBonesPlugin(),
             };
 
             if (donationsService.DonationFeatureEnabled)
