@@ -32,10 +32,12 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+
         private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
 
-        private CancellationTokenSource? trackPublishingCts;
         private MicrophoneTrack? microphoneTrack;
+        private CancellationTokenSource? trackPublishingCts;
+
         private bool isDisposed;
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
@@ -75,7 +77,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            //Raise volume if its Windows because for some reason Mac Volume is way higher than Windows.
+            // Raise volume if its Windows because for some reason Mac Volume is way higher than Windows.
             if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
 
@@ -90,34 +92,8 @@ namespace DCL.VoiceChat
 #endif
             try
             {
-                Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
-
-                if (reachable.Success == false)
-                {
-                    NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
-                    throw new Exception(reachable.ErrorMessage!);
-                }
-
-                Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                    reachable.Value,
-                    (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
-                    configuration.microphonePlaybackToSpeakers
-                );
-
-                if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
-
-                MicrophoneRtcAudioSource rtcAudioSource = result.Value;
-
-                if (microphoneHandler.IsMicrophoneEnabled.Value)
-                    rtcAudioSource.Start();
-
-                ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
-                    voiceChatRoom.Participants.LocalParticipant().Name,
-                    rtcAudioSource
-                );
-
-                microphoneTrack = new MicrophoneTrack(livekitMicrophoneTrack, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
-                microphoneHandler.Assign(microphoneTrack.Value.Source);
+                MicrophoneRtcAudioSource rtcAudioSource = TryStartMicrophone();
+                ITrack track = CreateAudioTrack(rtcAudioSource);
 
                 var options = new TrackPublishOptions
                 {
@@ -128,7 +104,7 @@ namespace DCL.VoiceChat
                     Source = TrackSource.SourceMicrophone,
                 };
 
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack.Value.Track, options, ct);
+                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, options, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track published successfully");
             }
@@ -150,6 +126,42 @@ namespace DCL.VoiceChat
                 }
                 catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to unpublish local track: {ex.Message}"); }
                 finally { CleanupLocalTrack(); }
+        }
+
+        private MicrophoneRtcAudioSource TryStartMicrophone()
+        {
+            Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
+
+            if (!reachable.Success)
+            {
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
+                throw new Exception(reachable.ErrorMessage!);
+            }
+
+            Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
+                reachable.Value,
+                (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
+                configuration.microphonePlaybackToSpeakers
+            );
+
+            if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
+
+            if (microphoneHandler.IsMicrophoneEnabled.Value)
+                result.Value.Start();
+
+            return result.Value;
+        }
+
+        private ITrack CreateAudioTrack(MicrophoneRtcAudioSource rtcAudioSource)
+        {
+            ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
+                voiceChatRoom.Participants.LocalParticipant().Name,
+                rtcAudioSource
+            );
+
+            microphoneTrack = new MicrophoneTrack(livekitMicrophoneTrack, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
+            microphoneHandler.Assign(microphoneTrack.Value.Source);
+            return microphoneTrack.Value.Track;
         }
 
         private void CleanupLocalTrack()
