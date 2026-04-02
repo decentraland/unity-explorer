@@ -3,7 +3,6 @@ using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Proximity.UI;
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
@@ -12,15 +11,12 @@ using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.Streaming;
-using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -28,36 +24,29 @@ using Utility;
 namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
-    /// Manages proximity voice chat with 3D spatial audio by publishing and subscribing
-    /// to audio tracks in the Island Room. Registers active audio sources in a shared dictionary
-    /// so <see cref="Systems.ProximityAudioPositionSystem"/> can assign and sync positions via ECS.
+    /// Orchestrates proximity voice chat: publishes/unpublishes the local microphone track,
+    /// coordinates state transitions (Hearing/Speaking/Suppressed/Disabled), and delegates
+    /// remote track management to <see cref="ProximityRemoteTrackListener"/>.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
     {
         private const string TAG = nameof(ProximityVoiceChatManager);
 
         private readonly VoiceChatConfiguration configuration;
-
         private readonly IRoom islandRoom;
-
-        private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
-        private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
-        private readonly Transform fallbackParent;
-
         private readonly ProximityVoiceChatStateModel stateModel;
+        private readonly ProximityRemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? proximityStateSubscription;
 
         private MicrophoneRtcAudioSource? rtcAudioSource;
         private ITrack? localTrack;
-        private LivekitAudioSource? loopbackSource;
 
         private CancellationTokenSource activationCts = new ();
 
         private bool published;
         private bool disposed;
-        private bool suppressed;
 
         public ProximityVoiceChatManager(
             IRoom islandRoom,
@@ -68,10 +57,9 @@ namespace DCL.VoiceChat.Proximity
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
-            this.activeAudioSources = activeAudioSources;
             this.stateModel = stateModel;
 
-            fallbackParent = new GameObject($"{nameof(ProximityVoiceChatManager)}_FallbackParent").transform;
+            remoteListener = new ProximityRemoteTrackListener(islandRoom, configuration, activeAudioSources);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -107,12 +95,26 @@ namespace DCL.VoiceChat.Proximity
             islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
-
-            if (fallbackParent != null)
-                fallbackParent.gameObject.SelfDestroy();
+            remoteListener.Dispose();
 
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Disposed");
         }
+
+        // --- Room event delegates ---
+
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+            => remoteListener.HandleTrackSubscribed(publication, participant);
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+            => remoteListener.HandleTrackUnsubscribed(publication, participant);
+
+        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+            => remoteListener.HandleLocalTrackPublished(publication, participant);
+
+        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+            => remoteListener.HandleLocalTrackUnpublished(publication, participant);
+
+        // --- Connection ---
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
@@ -144,6 +146,8 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
+        // --- Activation ---
+
         private async UniTask ActivateWithRetryAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
@@ -155,7 +159,7 @@ namespace DCL.VoiceChat.Proximity
                 try
                 {
                     await PublishLocalTrackAsync(ct);
-                    SubscribeToExistingRemoteTracks();
+                    remoteListener.StartListening();
 
                     ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
@@ -183,6 +187,8 @@ namespace DCL.VoiceChat.Proximity
                 }
             }
         }
+
+        // --- Local track ---
 
         private async UniTask PublishLocalTrackAsync(CancellationToken ct)
         {
@@ -235,188 +241,28 @@ namespace DCL.VoiceChat.Proximity
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track published to Island Room");
         }
 
-        private void SubscribeToExistingRemoteTracks()
+        private void UnpublishLocalTrack()
         {
-            foreach (KeyValuePair<string, Participant> entry in islandRoom.Participants.RemoteParticipantIdentities())
-            foreach ((string sid, TrackPublication pub) in entry.Value.Tracks)
+            if (localTrack != null && published)
             {
-                if (pub.Kind != TrackKind.KindAudio) continue;
-
-                var key = new StreamKey(entry.Key!, sid);
-                Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
-
-                if (stream.Resource.Has)
-                    AddRemoteSource(key, stream);
-            }
-        }
-
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
-        {
-            OnTrackSubscribedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnTrackSubscribedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-
-                if (publication.Kind != TrackKind.KindAudio) return;
-
                 try
                 {
-                    var key = new StreamKey(participant.Identity, publication.Sid);
-                    Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
-
-                    if (stream.Resource.Has)
-                        AddRemoteSource(key, stream);
+                    islandRoom.Participants.LocalParticipant().UnpublishTrack(localTrack, true);
+                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track unpublished");
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to handle track subscription: {ex.Message}");
+                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Error unpublishing: {ex.Message}");
                 }
             }
+
+            rtcAudioSource?.Dispose();
+            rtcAudioSource = null;
+            localTrack = null;
+            published = false;
         }
 
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
-        {
-            OnTrackUnsubscribedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnTrackUnsubscribedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-
-                if (publication.Kind != TrackKind.KindAudio) return;
-
-                try
-                {
-                    RemoveRemoteSource(new StreamKey(participant.Identity, publication.Sid));
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to handle track unsubscription: {ex.Message}");
-                }
-            }
-        }
-
-        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
-        {
-            OnLocalTrackPublishedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnLocalTrackPublishedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-
-                if (publication.Kind != TrackKind.KindAudio) return;
-                if (!configuration.EnableLocalTrackPlayback) return;
-
-                try
-                {
-                    var key = new StreamKey(participant.Identity, publication.Sid);
-                    Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
-
-                    if (stream.Resource.Has)
-                    {
-                        loopbackSource = CreateSource(key, stream, spatial: false);
-                        loopbackSource.transform.SetParent(fallbackParent);
-                        loopbackSource.Play();
-                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track loopback enabled (round-trip via server)");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to handle local track published: {ex.Message}");
-                }
-            }
-        }
-
-        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
-        {
-            OnLocalTrackUnpublishedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-
-                if (publication.Kind != TrackKind.KindAudio) return;
-                if (!configuration.EnableLocalTrackPlayback) return;
-
-                try
-                {
-                    DestroySource(loopbackSource);
-                    loopbackSource = null;
-                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track loopback removed");
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to handle local track unpublished: {ex.Message}");
-                }
-            }
-        }
-
-        private void AddRemoteSource(StreamKey key, Weak<AudioStream> stream)
-        {
-            if (remoteSources.TryRemove(key, out LivekitAudioSource? oldSource))
-                DestroySource(oldSource);
-
-            LivekitAudioSource source = CreateSource(key, stream, spatial: true);
-            source.transform.SetParent(fallbackParent);
-            source.Play();
-
-            if (!remoteSources.TryAdd(key, source))
-            {
-                ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, $"Cannot add proximity source, key already exists: {key}");
-                DestroySource(source);
-                return;
-            }
-
-            AudioSource audioSource = source.GetComponent<AudioSource>();
-            activeAudioSources[key.identity] = audioSource;
-
-            if (audioSource != null && suppressed)
-                audioSource.mute = true;
-
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"3D audio source added for {key.identity}{(suppressed ? " (muted — call active)" : "")}");
-        }
-
-        private void RemoveRemoteSource(StreamKey key)
-        {
-            if (!remoteSources.TryRemove(key, out LivekitAudioSource? source))
-                return;
-
-            activeAudioSources.TryRemove(key.identity, out _);
-            DestroySource(source);
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"Remote source removed for {key.identity}");
-        }
-
-        private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
-        {
-            LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, spatial: spatial);
-
-            AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
-            audioSource.outputAudioMixerGroup = configuration.ProximityChatAudioMixerGroup;
-
-            if (spatial)
-            {
-                configuration.ApplyProximitySettingsTo(audioSource);
-                configuration.ApplySpatializationSettingsTo(source);
-                source.gameObject.AddComponent<ProximityPanCalculator>();
-            }
-
-            source.Construct(stream);
-            source.name = $"ProximityAudio_{key.identity}";
-            return source;
-        }
-
-        private static void DestroySource(LivekitAudioSource? source)
-        {
-            if (source == null) return;
-
-            source.Stop();
-            source.Free();
-            source.gameObject.SelfDestroy();
-        }
+        // --- State ---
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
@@ -445,8 +291,11 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.HEARING:
-                        if (suppressed)
-                            ResumeProximity();
+                        if (remoteListener.IsSuppressed)
+                        {
+                            remoteListener.UnmuteAll();
+                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
+                        }
                         else if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
@@ -457,10 +306,12 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.SPEAKING:
-                        if (suppressed)
-                            ResumeProximity();
-
-                        if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        if (remoteListener.IsSuppressed)
+                        {
+                            remoteListener.UnmuteAll();
+                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
+                        }
+                        else if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
@@ -470,43 +321,15 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.SUPPRESSED:
-                        SuppressProximity();
+                        rtcAudioSource?.Stop();
+                        remoteListener.MuteAll();
+                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Suppressed — Private/Community call active");
                         break;
                 }
             }
         }
 
-        private void SuppressProximity()
-        {
-            if (suppressed) return;
-            suppressed = true;
-
-            rtcAudioSource?.Stop();
-
-            foreach (LivekitAudioSource source in remoteSources.Values)
-            {
-                AudioSource audioSource = source.GetComponent<AudioSource>();
-                if (audioSource != null) audioSource.mute = true;
-            }
-
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Suppressed — Private/Community call active");
-        }
-
-        private void ResumeProximity()
-        {
-            if (!suppressed) return;
-            suppressed = false;
-
-            foreach (KeyValuePair<StreamKey, LivekitAudioSource> entry in remoteSources)
-            {
-                AudioSource audioSource = entry.Value.GetComponent<AudioSource>();
-
-                if (audioSource != null)
-                    audioSource.mute = false;
-            }
-
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
-        }
+        // --- Microphone ---
 
         private void OnMicrophoneChanged(MicrophoneSelection newSelection)
         {
@@ -534,38 +357,13 @@ namespace DCL.VoiceChat.Proximity
                 ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to switch microphone: {result.ErrorMessage}");
         }
 
+        // --- Deactivation ---
+
         private void Deactivate()
         {
             UnpublishLocalTrack();
-
-            DestroySource(loopbackSource);
-            loopbackSource = null;
-
-            foreach (StreamKey key in remoteSources.Keys)
-                RemoveRemoteSource(key);
-
+            remoteListener.StopListening();
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Deactivated");
-        }
-
-        private void UnpublishLocalTrack()
-        {
-            if (localTrack != null && published)
-            {
-                try
-                {
-                    islandRoom.Participants.LocalParticipant().UnpublishTrack(localTrack, true);
-                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track unpublished");
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Error unpublishing: {ex.Message}");
-                }
-            }
-
-            rtcAudioSource?.Dispose();
-            rtcAudioSource = null;
-            localTrack = null;
-            published = false;
         }
     }
 }
