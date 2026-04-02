@@ -14,6 +14,9 @@ using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <summary>
+    /// Main-thread only. Not thread-safe.
+    /// </summary>
     public class LivekitPlayer : IDisposable
     {
         private static readonly IObjectPool<LivekitAudioSource> OBJECT_POOL = new ThreadSafeObjectPool<LivekitAudioSource>(
@@ -28,8 +31,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly IRoom room;
         private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream, StreamKey key)> audioSources = new ();
-        private readonly List<StreamKey> tempStreamKeys = new ();
-        private Weak<IVideoStream>? currentVideoStream;
+        private readonly List<StreamKey> streamKeysBuffer = new ();
+        private Weak<IVideoStream> currentVideoStream = Weak<IVideoStream>.Null;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
         private Vector3 audioPosition;
@@ -41,7 +44,7 @@ namespace DCL.SDKComponents.MediaStream
         private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
         private float lastAudioScanTime;
-        private bool videoTrackMuted;
+        private bool hasLiveAudio;
 
         private bool disposed;
 
@@ -53,12 +56,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public PlayerState State => playerState;
 
-        public bool IsVideoOpened => currentVideoStream != null && currentVideoStream.Value.Resource.Has;
+        public bool IsVideoOpened => currentVideoStream.Resource.Has;
 
-        public bool IsVideoTrackMuted => videoTrackMuted;
-
-        private bool isAudioOpened => audioSources.Count > 0
-            && audioSources.Exists(static a => a.stream.Resource.Has);
+        private bool isAudioOpened => hasLiveAudio;
 
         public LivekitPlayer(IRoom streamingRoom)
         {
@@ -70,7 +70,12 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
-            if (!IsVideoOpened)
+            if (IsVideoOpened)
+            {
+                // Video is alive — try to follow the active speaker (CurrentStream only)
+                TryFollowActiveSpeaker();
+            }
+            else
             {
                 // If a specific user stream died, fallback to current-stream (first available track)
                 if (playingAddress.Value.IsUserStream(out _))
@@ -78,16 +83,9 @@ namespace DCL.SDKComponents.MediaStream
                 else
                     ReopenVideoStream(playingAddress.Value);
             }
-            else
-            {
-                // Video is alive — try to follow the active speaker (CurrentStream only)
-                TryFollowActiveSpeaker();
-            }
 
-            videoTrackMuted = IsVideoOpened && CheckVideoTrackMuted();
-
-            // PBVideoPlayer entities don't have a PBAudioStream component, so EnsureAudioIsPlaying
-            // is never called from UpdateAudioStream for them. Handle audio discovery here.
+            // Video-only entities (PBVideoPlayer without PBAudioStream) have no separate
+            // audio system driving discovery, so handle it alongside video.
             EnsureAudioIsPlaying();
         }
 
@@ -113,6 +111,8 @@ namespace DCL.SDKComponents.MediaStream
                 }
             }
 
+            hasLiveAudio = audioSources.Count > 0;
+
             // When a stream died, rescan immediately to replace it.
             // Otherwise, throttle rescans to discover new participants without per-frame lock acquisition.
             if (!anyDied)
@@ -123,6 +123,7 @@ namespace DCL.SDKComponents.MediaStream
 
             lastAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
             OpenAllAudioStreams();
+            hasLiveAudio = audioSources.Count > 0;
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -143,6 +144,7 @@ namespace DCL.SDKComponents.MediaStream
             );
 
             OpenAllAudioStreams();
+            hasLiveAudio = audioSources.Count > 0;
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
@@ -169,9 +171,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenAllAudioStreams()
         {
-            CollectAllAudioTracks(tempStreamKeys);
+            CollectAllAudioTracks(streamKeysBuffer);
 
-            foreach (StreamKey key in tempStreamKeys)
+            foreach (StreamKey key in streamKeysBuffer)
             {
                 if (HasAudioSourceForKey(key))
                     continue;
@@ -194,26 +196,6 @@ namespace DCL.SDKComponents.MediaStream
         {
             foreach (var (_, _, existingKey) in audioSources)
                 if (existingKey.Equals(key)) return true;
-
-            return false;
-        }
-
-        private bool CheckVideoTrackMuted()
-        {
-            if (currentVideoIdentity == null) return false;
-
-            lock (room.Participants)
-            {
-                var participant = room.Participants.RemoteParticipant(currentVideoIdentity);
-
-                if (participant == null) return false;
-
-                foreach ((_, TrackPublication track) in participant.Tracks)
-                {
-                    if (track.Kind == TrackKind.KindVideo)
-                        return track.Muted;
-                }
-            }
 
             return false;
         }
@@ -433,9 +415,9 @@ namespace DCL.SDKComponents.MediaStream
         public void CloseCurrentStream()
         {
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
-            currentVideoStream = null;
+            currentVideoStream = Weak<IVideoStream>.Null;
             currentVideoIdentity = null;
-            videoTrackMuted = false;
+            hasLiveAudio = false;
             playerState = PlayerState.STOPPED;
             ReleaseAllAudioSources();
         }
@@ -445,8 +427,8 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.PLAYING)
                 return null;
 
-            return currentVideoStream != null && currentVideoStream.Value.Resource.Has
-                ? currentVideoStream.Value.Resource.Value.DecodeLastFrame()
+            return currentVideoStream.Resource.Has
+                ? currentVideoStream.Resource.Value.DecodeLastFrame()
                 : null;
         }
 
