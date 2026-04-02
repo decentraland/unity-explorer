@@ -59,16 +59,8 @@ namespace DCL.VoiceChat
 
                 foreach (KeyValuePair<string, Participant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
-                {
-                    if (value.Kind != TrackKind.KindAudio) continue;
-
-                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(remoteParticipantIdentity.Key!, sid));
-                    if (stream.Resource.Has)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(remoteParticipantIdentity.Key!, sid), stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity}");
-                    }
-                }
+                    if (TryAddStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity.Key}");
 
                 playbackSourcesHub.Play();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
@@ -95,65 +87,41 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public void HandleTrackSubscribed(TrackPublication publication, Participant participant)
+        public void HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio)
-                {
-                    Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
+                if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
-                    if (stream.Resource.Has)
-                    {
-                        playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
-                    }
-                }
+                if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}"); }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}"); }
         }
 
-        public void HandleTrackUnsubscribed(TrackPublication publication, Participant participant)
+        public void HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
             try
             {
-                if (publication.Kind == TrackKind.KindAudio)
-                {
-                    playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
-                }
-            }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}"); }
-        }
+                if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
-#region DEBUG METHODS
-        public void HandleLoopbackTrackPublished(TrackPublication publication, Participant participant)
-        {
-            try
-            {
-                if (!configuration.EnableLocalTrackPlayback || publication.Kind != TrackKind.KindAudio) return;
-
-                Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(new StreamKey(participant.Identity, publication.Sid));
-                if (stream.Resource.Has)
-                {
-                    playbackSourcesHub.AddOrReplaceStream(new StreamKey(participant.Identity, publication.Sid), stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
-                }
-            }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}"); }
-        }
-
-        public void HandleLoopbackTrackUnpublished(TrackPublication publication, Participant participant)
-        {
-            try
-            {
-                if (!configuration.EnableLocalTrackPlayback || publication.Kind != TrackKind.KindAudio) return;
-
+                if (publication.Kind != TrackKind.KindAudio) return;
                 playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : "(new remote)")}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}"); }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "(new remote)")}"); }
         }
-#endregion
+
+        private bool TryAddStream(TrackKind kind, StreamKey key)
+        {
+            if (kind != TrackKind.KindAudio) return false;
+
+            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
+
+            if (!stream.Resource.Has) return false;
+
+            playbackSourcesHub.AddOrReplaceStream(key, stream);
+            return true;
+        }
     }
 }

@@ -257,7 +257,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnLocalTrackPublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                remoteListener.HandleLoopbackTrackPublished(publication, participant);
+                remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
             }
         }
 
@@ -269,19 +269,15 @@ namespace DCL.VoiceChat
             async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
             {
                 await UniTask.SwitchToMainThread();
-                remoteListener.HandleLoopbackTrackUnpublished(publication, participant);
+                remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
             }
         }
 
-        private void OnReconnectionStarted()
-        {
+        private static void OnReconnectionStarted() =>
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection process started");
-        }
 
-        private void OnReconnectionSuccessful()
-        {
+        private static void OnReconnectionSuccessful() =>
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection successful");
-        }
 
         private void OnReconnectionFailed()
         {
