@@ -102,29 +102,16 @@ namespace DCL.Chat.ChatReactions.Editor
             }
 
             EditorGUI.indentLevel++;
-            Label("Tracked Emojis", service.TotalTrackedEmojis.ToString());
-            Label("Top Recents", service.Recents.Count.ToString());
+            Label("Recents", service.Recents.Count.ToString());
             Label("Dirty", service.IsDirty ? "[Yes]" : "[No]");
 
             if (service.Recents.Count > 0)
             {
                 EditorGUILayout.Space(2);
-                EditorGUILayout.LabelField("Shortcuts Bar (by usage)", EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField("Shortcuts Bar (most recent first)", EditorStyles.miniBoldLabel);
 
                 for (int i = 0; i < service.Recents.Count; i++)
                     EditorGUILayout.LabelField($"  [{i}] atlasIndex={service.Recents[i]}", EditorStyles.miniLabel);
-            }
-
-            if (service.TotalTrackedEmojis > 0)
-            {
-                EditorGUILayout.Space(2);
-                EditorGUILayout.LabelField("All Tracked (index : count)", EditorStyles.miniBoldLabel);
-
-                for (int i = 0; i < service.TotalTrackedEmojis; i++)
-                {
-                    var (atlasIndex, count) = service.GetUsageEntry(i);
-                    EditorGUILayout.LabelField($"  [{i}] atlasIndex={atlasIndex}  count={count}", EditorStyles.miniLabel);
-                }
             }
 
             EditorGUI.indentLevel--;

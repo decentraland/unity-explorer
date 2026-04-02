@@ -50,8 +50,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             EmojiPanelView emojiPanelView,
             EmojiPanelPresenter emojiPanelPresenter,
             ChatReactionsMessageConfig messageReactionsConfig,
-            ChatSettingsAsset chatSettingsAsset,
-            RectTransform messageAreaRect)
+            ChatSettingsAsset chatSettingsAsset)
         {
             this.reactionService = reactionService;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -60,7 +59,6 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
-                messageAreaRect,
                 emojiPanelView,
                 messageReactionsConfig);
 
@@ -167,7 +165,11 @@ namespace DCL.Chat.ChatReactions.Presenters
         private void OnSelectorReactionClicked(int atlasIndex)
         {
             DispatchReaction(atlasIndex);
-            ActivePresenter.RecordUsage(atlasIndex);
+
+            // NOTE: RecordUsage is intentionally NOT called here to keep the bar
+            // spatially stable — re-clicking an existing shortcut should not reshuffle
+            // the recents order. If we later want bar clicks to update recency,
+            // add: ActivePresenter.RecordUsage(atlasIndex);
 
             if (IsInMessageMode)
                 HideBar();

@@ -50,7 +50,7 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void TrackNonDefaultEmojiUsage()
+        public void TrackNonDefaultEmoji()
         {
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             service.RecordUsage(10);
@@ -59,33 +59,51 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void RankByUsageCountDescending()
+        public void PlaceMostRecentFirst()
         {
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
             service.RecordUsage(10);
             service.RecordUsage(20);
-            service.RecordUsage(20);
-            service.RecordUsage(30);
-            service.RecordUsage(30);
             service.RecordUsage(30);
 
-            Assert.That(service.Recents[0], Is.EqualTo(30)); // 3 uses
-            Assert.That(service.Recents[1], Is.EqualTo(20)); // 2 uses
-            Assert.That(service.Recents[2], Is.EqualTo(10)); // 1 use
+            Assert.That(service.Recents[0], Is.EqualTo(30)); // most recent
+            Assert.That(service.Recents[1], Is.EqualTo(20));
+            Assert.That(service.Recents[2], Is.EqualTo(10)); // oldest
         }
 
         [Test]
-        public void LimitRecentsToMaxRecent()
+        public void MoveToFrontOnReuse()
         {
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
             service.RecordUsage(10);
             service.RecordUsage(20);
             service.RecordUsage(30);
-            service.RecordUsage(40); // 4th — should be capped at MAX_RECENT (3)
+
+            // Re-use 10 — it should jump to front.
+            service.RecordUsage(10);
+
+            Assert.That(service.Recents[0], Is.EqualTo(10));
+            Assert.That(service.Recents[1], Is.EqualTo(30));
+            Assert.That(service.Recents[2], Is.EqualTo(20));
+            Assert.That(service.Recents.Count, Is.EqualTo(MAX_RECENT));
+        }
+
+        [Test]
+        public void DropOldestWhenCapacityExceeded()
+        {
+            var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
+
+            service.RecordUsage(10);
+            service.RecordUsage(20);
+            service.RecordUsage(30);
+            service.RecordUsage(40); // 10 should be evicted
 
             Assert.That(service.Recents.Count, Is.EqualTo(MAX_RECENT));
+            Assert.That(service.Recents[0], Is.EqualTo(40));
+            Assert.That(service.Recents[1], Is.EqualTo(30));
+            Assert.That(service.Recents[2], Is.EqualTo(20));
         }
 
         [Test]
@@ -107,14 +125,13 @@ namespace DCL.Chat.ChatReactions.Tests
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             service.RecordUsage(10);
             service.RecordUsage(20);
-            service.RecordUsage(20);
             service.FlushIfDirty();
 
-            // New instance should see the persisted data.
+            // New instance should see the persisted data in recency order.
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             Assert.That(service2.Recents.Count, Is.EqualTo(2));
-            Assert.That(service2.Recents[0], Is.EqualTo(20)); // 2 uses
-            Assert.That(service2.Recents[1], Is.EqualTo(10)); // 1 use
+            Assert.That(service2.Recents[0], Is.EqualTo(20)); // most recent
+            Assert.That(service2.Recents[1], Is.EqualTo(10));
         }
 
         [Test]
@@ -138,6 +155,20 @@ namespace DCL.Chat.ChatReactions.Tests
 
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             Assert.That(service2.Recents.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ParseLegacyFormatWithCounts()
+        {
+            // Simulate old format: "10:5;20:3" (index:count pairs)
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, "10:5;20:3");
+
+            var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
+
+            // Should pick up the indices (10, 20) and ignore the counts.
+            Assert.That(service.Recents.Count, Is.EqualTo(2));
+            Assert.That(service.Recents[0], Is.EqualTo(10));
+            Assert.That(service.Recents[1], Is.EqualTo(20));
         }
     }
 }
