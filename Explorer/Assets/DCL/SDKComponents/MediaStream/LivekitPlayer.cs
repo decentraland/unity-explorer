@@ -84,8 +84,9 @@ namespace DCL.SDKComponents.MediaStream
                     ReopenVideoStream(playingAddress.Value);
             }
 
-            // Video-only entities (PBVideoPlayer without PBAudioStream) have no separate
-            // audio system driving discovery, so handle it alongside video.
+            // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
+            // and UpdateVideoTexture (for PBVideoPlayer). Entities with only PBVideoPlayer never enter
+            // the audio query, so we drive audio discovery here to keep LiveKit rooms audible.
             EnsureAudioIsPlaying();
         }
 
