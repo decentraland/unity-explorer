@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -163,7 +164,8 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
             in CharacterEmoteComponent emoteComponent,
-            in CharacterPlatformComponent platformComponent)
+            in CharacterPlatformComponent platformComponent,
+            in HandPointAtComponent handPointAtComponent)
         {
             bool pitchEnabled = debugHeadIKIsEnabled &&
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
@@ -180,7 +182,9 @@ namespace DCL.CharacterMotion.Systems
             if (!headIK.IsEnabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
-            headIK.LookAt = cameraComponent.Camera.transform.forward;
+            headIK.LookAt = handPointAtComponent.IsPointing
+                ? handPointAtComponent.WorldHitPoint - avatarBase.HeadAnchorPoint.position
+                : cameraComponent.Camera.transform.forward;
 
             ApplyHeadLookAt.Execute(headIK.LookAt, avatarBase, dt, settings);
         }
