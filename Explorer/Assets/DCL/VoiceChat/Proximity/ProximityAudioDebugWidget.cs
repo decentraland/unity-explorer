@@ -11,26 +11,26 @@ namespace DCL.VoiceChat.Proximity
     /// </summary>
     public static class ProximityAudioDebugWidget
     {
-        public static void Setup(IDebugContainerBuilder debugBuilder, ProximityConfigHolder configHolder)
+        public static void Setup(IDebugContainerBuilder debugBuilder, VoiceChatConfiguration configuration)
         {
             var spatialBlendBinding = new ElementBinding<float>(1f,
-                evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpatialBlend = evt.newValue; });
+                evt => { configuration.ProximitySpatialBlend = evt.newValue; });
 
             var dopplerBinding = new ElementBinding<float>(0f,
-                evt => { if (configHolder.Config != null) configHolder.Config.ProximityDopplerLevel = evt.newValue; });
+                evt => { configuration.ProximityDopplerLevel = evt.newValue; });
 
             var minDistanceBinding = new ElementBinding<float>(2f,
-                evt => { if (configHolder.Config != null) configHolder.Config.ProximityMinDistance = evt.newValue; });
+                evt => { configuration.ProximityMinDistance = evt.newValue; });
 
             var maxDistanceBinding = new ElementBinding<float>(16f,
-                evt => { if (configHolder.Config != null) configHolder.Config.ProximityMaxDistance = evt.newValue; });
+                evt => { configuration.ProximityMaxDistance = evt.newValue; });
 
             var spreadBinding = new ElementBinding<float>(0f,
-                evt => { if (configHolder.Config != null) configHolder.Config.ProximitySpread = evt.newValue; });
+                evt => { configuration.ProximitySpread = evt.newValue; });
 
             var rolloffBinding = new EnumElementBinding<AudioRolloffMode>(
                 AudioRolloffMode.Custom,
-                onValueChange: mode => { if (configHolder.Config != null) configHolder.Config.ProximityRolloffMode = mode; });
+                onValueChange: mode => { configuration.ProximityRolloffMode = mode; });
 
             debugBuilder.TryAddWidget("Proximity Audio")
                        ?.AddFloatSliderField("Spatial Blend", spatialBlendBinding, 0f, 1f)

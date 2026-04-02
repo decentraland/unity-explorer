@@ -31,21 +31,21 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
-        private readonly ProximityConfigHolder configHolder;
         private readonly List<Entity> entitiesToCleanUp = new ();
 
+        private VoiceChatConfiguration? configuration;
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
 
         internal ProximityAudioPositionSystem(World world,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            ConcurrentDictionary<string, AudioSource> activeAudioSources,
-            ProximityConfigHolder configHolder) : base(world)
+            ConcurrentDictionary<string, AudioSource> activeAudioSources) : base(world)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.activeAudioSources = activeAudioSources;
-            this.configHolder = configHolder;
         }
+
+        internal void SetConfiguration(VoiceChatConfiguration config) => configuration = config;
 
         public override void Initialize()
         {
@@ -55,7 +55,6 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         protected override void Update(float t)
         {
-            // if (configHolder.Config == null) return;
             AssignPendingSources();
 
             ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
@@ -115,7 +114,7 @@ namespace DCL.VoiceChat.Proximity.Systems
         private void ApplySettings(ref ProximityAudioSourceComponent proximityAudio)
         {
             if (proximityAudio.AudioSource != null)
-                configHolder.Config!.ApplyProximitySettingsTo(proximityAudio.AudioSource);
+                configuration?.ApplyProximitySettingsTo(proximityAudio.AudioSource);
         }
 
         private void ProcessCleanUp()

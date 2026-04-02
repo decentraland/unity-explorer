@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, AudioSource> proximityAudioSources = new ();
-        private readonly ProximityConfigHolder proximityConfigHolder = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,6 +58,8 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private ProximityVoiceChatManager? proximityVoiceChatManager;
         private ProximityVoiceChatStateModel? proximityStateModel;
+        private ProximityAudioPositionSystem? proximityAudioPositionSystem;
+        private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -101,8 +102,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProximityAudioDebugWidget.Setup(debugContainer, proximityConfigHolder);
-            ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources, proximityConfigHolder);
+            proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
+            proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);
+            ProximityAudioDebugWidget.Setup(debugContainer, voiceChatConfiguration);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -115,7 +117,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
 
             VoiceChatPluginSettings pluginSettings = voiceChatPluginSettingsAsset.Value;
-            VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
+            voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
             pluginScope.Add(voiceChatHandler);
@@ -135,7 +137,6 @@ namespace DCL.PluginSystem.Global
                 entityParticipantTable,
                 world,
                 playerEntity);
-
             pluginScope.Add(nametagsHandler);
 
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
@@ -149,9 +150,6 @@ namespace DCL.PluginSystem.Global
 
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, remoteListener);
             pluginScope.Add(voiceChatDebugContainer);
-
-            // Proximity Voice Chat
-            proximityConfigHolder.Config = voiceChatConfiguration;
 
             IRoom islandRoom = roomHub.IslandRoom();
 
