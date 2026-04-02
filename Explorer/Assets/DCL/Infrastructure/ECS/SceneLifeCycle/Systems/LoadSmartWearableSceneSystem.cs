@@ -53,6 +53,20 @@ namespace ECS.SceneLifeCycle.Systems
             (ISceneContent? sceneContent, SceneMetadata? sceneMetadata) = await smartWearableCache.GetCachedSceneInfoAsync(wearable, ct);
             if (ct.IsCancellationRequested) return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>();
 
+            if (sceneContent == null)
+            {
+                return new  StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(
+                    ReportCategory.WEARABLE,
+                    new Exception($"sceneContent of {wearable.GetName()} is null"));
+            }
+
+            if (sceneMetadata == null)
+            {
+                return new StreamableLoadingResult<GetSmartWearableSceneIntention.Result>(
+                    ReportCategory.WEARABLE,
+                    new Exception($"sceneMetadata of {wearable.GetName()} is null"));
+            }
+
             AssetBundleManifestVersion manifestVersion = wearable.DTO.assetBundleManifestVersion!;
             SceneEntityDefinition sceneDefinition = new SceneEntityDefinition(wearable.DTO.id!, sceneMetadata, manifestVersion);
 
