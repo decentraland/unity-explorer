@@ -29,6 +29,9 @@ namespace DCL.SDKComponents.MediaStream
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
 
+        private const int MAX_LIVEKIT_VIDEO_WIDTH = 1920;
+        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 1080;
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         private static float lastOpenMediaTime;
         private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
@@ -213,10 +216,24 @@ namespace DCL.SDKComponents.MediaStream
             Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
-            if (!assignedTexture.Texture.HasEqualResolution(to: avText))
-                assignedTexture.Resize(avText.width, avText.height);
+            int targetWidth = avText.width;
+            int targetHeight = avText.height;
 
-            if (playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1)))
+            // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
+            if (livekitPlayer != null && (avText.width > MAX_LIVEKIT_VIDEO_WIDTH || avText.height > MAX_LIVEKIT_VIDEO_HEIGHT))
+            {
+                float scale = Mathf.Min((float)MAX_LIVEKIT_VIDEO_WIDTH / avText.width, (float)MAX_LIVEKIT_VIDEO_HEIGHT / avText.height);
+                targetWidth = Mathf.RoundToInt(avText.width * scale);
+                targetHeight = Mathf.RoundToInt(avText.height * scale);
+            }
+
+            if (assignedTexture.Texture.width != targetWidth || assignedTexture.Texture.height != targetHeight)
+                assignedTexture.Resize(targetWidth, targetHeight);
+
+            bool needsFlip = playerComponent.MediaPlayer.GetTexureScale.Equals(new Vector2(1, -1));
+            bool dimensionsCapped = targetWidth != avText.width || targetHeight != avText.height;
+
+            if (needsFlip)
             {
                 //Regular blit or blit with material are called based on the source color space, we blit with material only
                 //in case we are in linear and need to convert the colorspace as well as target assigned texture is always in gamma
@@ -225,8 +242,14 @@ namespace DCL.SDKComponents.MediaStream
                 else
                     Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
             }
+            else if (dimensionsCapped)
+            {
+                Graphics.Blit(avText, assignedTexture.Texture);
+            }
             else
+            {
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
+            }
 
             return;
 
