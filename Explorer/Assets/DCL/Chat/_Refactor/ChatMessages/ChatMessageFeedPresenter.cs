@@ -234,8 +234,9 @@ namespace DCL.Chat.ChatMessages
             ChatMessageViewModel newViewModel = InsertNewMessageViewModel(destinationChannel, addedMessage, index);
             bool needsSeparator = UpdateSeparatorAfterNewMessage(wasAtBottom, isSentByOwnUser, separatorIndexBeforeInsert);
 
-            if (wasAtBottom) reactionInteraction.Deactivate();
-            else reactionInteraction.HideTooltip();
+            if (wasAtBottom)
+                reactionInteraction.Deactivate();
+
 
             view.ReconstructScrollView(false);
             ScrollToBottomIfNeeded(needsSeparator);
