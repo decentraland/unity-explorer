@@ -82,7 +82,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
             catch (InvalidProtocolBufferException)
             {
-                // Non-protobuf data on the pipe (e.g. JSON from CommsApi data messaging) — not an error.
+                // CommsApi publishes raw scene data on the same IDataPipe. These are not protobuf
+                // packets, so parsing fails here. This is expected and not an error.
+                // TODO: migrate CommsApi to IMessagePipe to avoid sharing the raw data pipe.
             }
             catch (Exception e)
             {

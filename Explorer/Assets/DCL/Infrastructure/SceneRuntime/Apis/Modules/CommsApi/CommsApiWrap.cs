@@ -4,9 +4,12 @@ using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
+using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -17,7 +20,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
     public sealed class CommsApiWrap : JsApiWrapper
     {
         private const int MAX_MESSAGES_PER_SECOND = 10;
-        private const int MAX_MESSAGE_SIZE_BYTES = 16 * 1024;
+        private const int RATE_LIMIT_WINDOW_MS = 1000;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
         private const string EMPTY_ARRAY = "[]";
 
@@ -25,15 +28,15 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        private readonly IDataPipe dataPipe;
 
         private readonly StringBuilder stringBuilder;
         private readonly StringWriter stringWriter;
         private readonly JsonWriter writer;
 
-        private readonly object bufferLock = new ();
-        private readonly Dictionary<string, List<BufferedDataMessage>> topicBuffers = new ();
-        private readonly Dictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
-        private IDataPipe subscribedDataPipe;
+        private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
+        private readonly ConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
+        private byte[] publishBuffer = Array.Empty<byte>();
 
         private readonly struct BufferedDataMessage
         {
@@ -54,23 +57,16 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             stringBuilder = new StringBuilder();
             stringWriter = new StringWriter(stringBuilder);
             writer = new JsonTextWriter(stringWriter);
+
+            dataPipe = roomHub.StreamingRoom().DataPipe;
+            dataPipe.DataReceived += OnDataReceived;
         }
 
         public override void Dispose()
         {
-            if (subscribedDataPipe != null)
-            {
-                subscribedDataPipe.DataReceived -= OnDataReceived;
-                subscribedDataPipe = null;
-            }
-
-            lock (bufferLock)
-            {
-                topicBuffers.Clear();
-            }
-
+            dataPipe.DataReceived -= OnDataReceived;
+            topicBuffers.Clear();
             publishRateLimiters.Clear();
-
             stringBuilder.Clear();
             stringWriter.Dispose();
             writer.Close();
@@ -134,18 +130,23 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
 
         [UsedImplicitly]
-        public void PublishData(string topic, string data)
+        public void PublishData(string topic, ITypedArray<byte> data)
         {
             try
             {
-                if (string.IsNullOrEmpty(data) || data.Length > MAX_MESSAGE_SIZE_BYTES)
+                if (data == null || data.Length == 0 || data.Length > (ulong)IJsOperations.LIVEKIT_MAX_SIZE)
                     return;
 
                 if (!TryConsumeRateLimit(topic))
                     return;
 
-                byte[] bytes = Encoding.UTF8.GetBytes(data);
-                roomHub.StreamingRoom().DataPipe.PublishData(bytes, topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
+                int length = (int)data.Length;
+
+                if (publishBuffer.Length < length)
+                    publishBuffer = new byte[length];
+
+                data.Read(0, (ulong)length, publishBuffer, 0);
+                roomHub.StreamingRoom().DataPipe.PublishData(publishBuffer.AsSpan(0, length), topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
             }
             catch (Exception e)
             {
@@ -169,25 +170,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         [UsedImplicitly]
         public void SubscribeToTopic(string topic)
         {
-            try
-            {
-                lock (bufferLock)
-                {
-                    if (!topicBuffers.ContainsKey(topic))
-                        topicBuffers[topic] = new List<BufferedDataMessage>();
-                }
-
-                if (subscribedDataPipe != null)
-                    return;
-
-                var room = roomHub.StreamingRoom();
-                subscribedDataPipe = room.DataPipe;
-                subscribedDataPipe.DataReceived += OnDataReceived;
-            }
-            catch (Exception e)
-            {
-                sceneExceptionsHandler.OnEngineException(e);
-            }
+            topicBuffers.TryAdd(topic, new ConcurrentQueue<BufferedDataMessage>());
         }
 
         [UsedImplicitly]
@@ -195,33 +178,28 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             try
             {
-                lock (bufferLock)
+                if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue) || queue.IsEmpty)
+                    return EMPTY_ARRAY;
+
+                lock (this)
                 {
-                    if (!topicBuffers.TryGetValue(topic, out List<BufferedDataMessage> buffer) || buffer.Count == 0)
-                        return EMPTY_ARRAY;
+                    stringBuilder.Clear();
 
-                    lock (this)
+                    writer.WriteStartArray();
+
+                    while (queue.TryDequeue(out BufferedDataMessage msg))
                     {
-                        stringBuilder.Clear();
-
-                        writer.WriteStartArray();
-
-                        for (int i = 0; i < buffer.Count; i++)
-                        {
-                            writer.WriteStartObject();
-                            writer.WritePropertyName("sender");
-                            writer.WriteValue(buffer[i].SenderIdentity);
-                            writer.WritePropertyName("data");
-                            writer.WriteValue(buffer[i].Data);
-                            writer.WriteEndObject();
-                        }
-
-                        writer.WriteEndArray();
-
-                        buffer.Clear();
-
-                        return stringWriter.ToString();
+                        writer.WriteStartObject();
+                        writer.WritePropertyName("sender");
+                        writer.WriteValue(msg.SenderIdentity);
+                        writer.WritePropertyName("data");
+                        writer.WriteValue(msg.Data);
+                        writer.WriteEndObject();
                     }
+
+                    writer.WriteEndArray();
+
+                    return stringWriter.ToString();
                 }
             }
             catch (Exception e)
@@ -233,17 +211,14 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
         {
-            lock (bufferLock)
-            {
-                if (!topicBuffers.TryGetValue(topic, out List<BufferedDataMessage> buffer))
-                    return;
+            if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
+                return;
 
-                if (participant == null)
-                    return;
+            if (participant == null)
+                return;
 
-                string decoded = Encoding.UTF8.GetString(data);
-                buffer.Add(new BufferedDataMessage(participant.Identity, decoded));
-            }
+            string decoded = Encoding.UTF8.GetString(data);
+            queue.Enqueue(new BufferedDataMessage(participant.Identity, decoded));
         }
 
         private bool TryConsumeRateLimit(string topic)
@@ -256,9 +231,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 return true;
             }
 
-            int elapsed = unchecked(nowMs - limiter.windowStartMs);
+            int elapsed = nowMs - limiter.windowStartMs;
 
-            if (elapsed >= 1000 || elapsed < 0)
+            if (elapsed >= RATE_LIMIT_WINDOW_MS || elapsed < 0)
             {
                 publishRateLimiters[topic] = (1, nowMs);
                 return true;
