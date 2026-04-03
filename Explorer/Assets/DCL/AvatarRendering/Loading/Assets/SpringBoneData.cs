@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Loading.Assets
         public readonly float Drag;
         public readonly Vector3 GravityDir;
         public readonly float GravityPower;
-        public readonly float HitRadius;
+        public readonly float HitRadius; // For later use if we implement colliders
         public readonly Quaternion InitialLocalRotation;
 
         public SpringBoneData(Transform managedTransform,

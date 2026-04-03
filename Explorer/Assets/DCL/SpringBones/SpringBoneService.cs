@@ -1,95 +1,111 @@
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Jobs;
+using Object = UnityEngine.Object;
 
 namespace DCL.SpringBones
 {
+    /// <summary>
+    ///     Implements the spring bones simulation.
+    ///     <see cref="RegisterSpring"/> to register a spring to simulate.
+    ///     <see cref="UnregisterSpring"/> to stop simulating a spring.
+    ///     <see cref="Simulate"/> to tick the simulation.
+    /// </summary>
     public class SpringBoneService : IDisposable
     {
+        /// <summary>
+        ///     Absolute maximum number of bones in a single spring.
+        /// </summary>
         public const int MAX_JOINTS_PER_SPRING = 8;
-        const int INITIAL_SLOT_CAPACITY = 32;
 
-        readonly Transform dummyTransform;
+        /// <summary>
+        ///     Initial number of available slots. Each slot simulates one spring.
+        ///     Can grow, but it's never shrunk.
+        /// </summary>
+        private const int INITIAL_SLOT_CAPACITY = 32;
 
-        int slotCapacity;
-        Transform[] managedTransforms; // parallel to TAA, for main-thread access
-        TransformAccessArray taa;
-        NativeArray<SpringBoneTransformData> transforms;
-        NativeArray<float3> prevTails;
-        NativeArray<float3> currentTails;
-        NativeArray<float3> nextTails;
-        NativeArray<SpringBoneJointConfig> jointConfigs;
-        NativeArray<int> slotJointCounts;
-        NativeArray<SpringBoneParentData> parentData;
+        private int slotCapacity;
+
+        private NativeArray<int> slotCountMap; // Number of joints in each slot.
+        private NativeArray<BlittableTransform> blittableTransforms;
+        private NativeArray<float3> prevTails;
+        private NativeArray<float3> currentTails;
+        private NativeArray<float3> nextTails;
+        private NativeArray<BlittableJointConfig> jointConfigs;
+        private NativeArray<BlittableParentData> parentData;
+
+        private TransformAccessArray taa;
+        private Transform[] managedTransforms; // A copy of the TAA accessed from the main thread (see Simulate).
+        private readonly Transform dummyTransform;
 
         public SpringBoneService()
         {
-            var go = new GameObject("SpringBoneDummy") { hideFlags = HideFlags.HideAndDontSave };
-            dummyTransform = go.transform;
+            var dummyGo = new GameObject("SpringBoneDummy") { hideFlags = HideFlags.HideAndDontSave };
+            dummyTransform = dummyGo.transform;
 
             slotCapacity = INITIAL_SLOT_CAPACITY;
-            AllocateArrays();
+            AllocateBuffers();
         }
 
-        void AllocateArrays()
+        private void AllocateBuffers()
         {
-            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+            // Max joints given initial capacity, but can grow.
+            int maxJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
 
-            managedTransforms = new Transform[totalJoints];
-            for (int i = 0; i < totalJoints; i++) managedTransforms[i] = dummyTransform;
+            slotCountMap = new NativeArray<int>(slotCapacity, Allocator.Persistent);
+            blittableTransforms = new NativeArray<BlittableTransform>(maxJoints, Allocator.Persistent);
+            prevTails = new NativeArray<float3>(maxJoints, Allocator.Persistent);
+            currentTails = new NativeArray<float3>(maxJoints, Allocator.Persistent);
+            nextTails = new NativeArray<float3>(maxJoints, Allocator.Persistent);
+            jointConfigs = new NativeArray<BlittableJointConfig>(maxJoints, Allocator.Persistent);
+            parentData = new NativeArray<BlittableParentData>(slotCapacity, Allocator.Persistent);
 
-            transforms = new NativeArray<SpringBoneTransformData>(totalJoints, Allocator.Persistent);
-            prevTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
-            currentTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
-            nextTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
-            jointConfigs = new NativeArray<SpringBoneJointConfig>(totalJoints, Allocator.Persistent);
-            slotJointCounts = new NativeArray<int>(slotCapacity, Allocator.Persistent);
-            parentData = new NativeArray<SpringBoneParentData>(slotCapacity, Allocator.Persistent);
-
-            // Build TAA filled with dummies
-            var taaTransforms = new Transform[totalJoints];
-            for (int i = 0; i < totalJoints; i++) taaTransforms[i] = dummyTransform;
+            var taaTransforms = new Transform[maxJoints];
+            for (int i = 0; i < maxJoints; i++) taaTransforms[i] = dummyTransform;
             taa = new TransformAccessArray(taaTransforms);
+
+            managedTransforms = new Transform[maxJoints];
+            for (int i = 0; i < maxJoints; i++) managedTransforms[i] = dummyTransform;
         }
 
-        public int RegisterSpring(Transform[] jointTransforms, SpringBoneJointConfig[] configs, float3[] initialTailPositions)
+        public int RegisterSpring(List<Transform> jointTransforms, List<BlittableJointConfig> configs, List<float3> initialTailPositions)
         {
-            int jointCount = jointTransforms.Length;
+            int jointCount = jointTransforms.Count;
 
-            int slotIndex = FindEmptySlot();
-            if (slotIndex < 0)
+            int slot = FindEmptySlot();
+
+            slotCountMap[slot] = jointCount;
+            int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+
+            for (int i = 0; i < jointCount; i++)
             {
-                Grow();
-                slotIndex = FindEmptySlot();
-            }
-
-            slotJointCounts[slotIndex] = jointCount;
-            int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
-
-            for (int j = 0; j < jointCount; j++)
-            {
-                int idx = baseIndex + j;
-                taa[idx] = jointTransforms[j];
-                managedTransforms[idx] = jointTransforms[j];
-                jointConfigs[idx] = configs[j];
-                prevTails[idx] = initialTailPositions[j];
-                currentTails[idx] = initialTailPositions[j];
-                nextTails[idx] = initialTailPositions[j];
+                int j = baseIndex + i;
+                jointConfigs[j] = configs[i];
+                prevTails[j] = initialTailPositions[i];
+                currentTails[j] = initialTailPositions[i];
+                nextTails[j] = initialTailPositions[i];
+                taa[j] = jointTransforms[i];
+                managedTransforms[j] = jointTransforms[i];
             }
 
             // Fill remaining joints in slot with dummies
-            for (int j = jointCount; j < MAX_JOINTS_PER_SPRING; j++)
-                taa[baseIndex + j] = dummyTransform;
+            for (int i = jointCount; i < MAX_JOINTS_PER_SPRING; i++)
+            {
+                int j = baseIndex + i;
+                taa[j] = dummyTransform;
+                managedTransforms[j] = dummyTransform;
+            }
 
-            return slotIndex;
+            return slot;
         }
 
         public void UnregisterSpring(int slotIndex)
         {
-            slotJointCounts[slotIndex] = 0;
+            slotCountMap[slotIndex] = 0;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
 
             for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
@@ -99,9 +115,9 @@ namespace DCL.SpringBones
             }
         }
 
-        public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix)
+        public void UpdateParent(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix)
         {
-            parentData[slotIndex] = new SpringBoneParentData
+            parentData[slotIndex] = new BlittableParentData
             {
                 Rotation = rotation,
                 LocalToWorldMatrix = localToWorldMatrix,
@@ -112,119 +128,109 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
-            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+            RotateBuffers();
 
-            // 1. Pull transforms on main thread
-            for (int i = 0; i < totalJoints; i++)
-                transforms[i] = SpringBoneTransformData.FromTransform(managedTransforms[i]);
-
-            // 2. Flip tail buffers: prev ← current ← next ← prev
-            FlipBuffers();
-
-            // 3. Run simulation (still as a job for Burst)
-            new SpringBoneSimulationJob
+            var handle = new PullSpringBoneTransformsJob
             {
-                SlotJointCounts = slotJointCounts,
+                Transforms = blittableTransforms,
+            }.ScheduleReadOnly(taa, MAX_JOINTS_PER_SPRING);
+
+            handle = new SpringBoneSimulationJob
+            {
+                SlotCountMap = slotCountMap,
                 JointConfigs = jointConfigs,
                 ParentData = parentData,
-                Transforms = transforms,
+                Transforms = blittableTransforms,
                 PrevTails = prevTails,
                 CurrentTails = currentTails,
                 NextTails = nextTails,
                 DeltaTime = deltaTime,
-            }.Schedule(slotCapacity, 1).Complete();
+            }.Schedule(slotCapacity, 1, handle);
 
-            // 4. Push rotations back on main thread
+            handle.Complete();
+
+            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
             for (int i = 0; i < totalJoints; i++)
-                managedTransforms[i].rotation = transforms[i].Rotation;
+                managedTransforms[i].rotation = blittableTransforms[i].Rotation;
         }
 
-        void FlipBuffers()
-        {
-            // Rotate: prev ← current ← next ← prev
+        private void RotateBuffers() =>
+            // Rotates buffers so we avoid having to copy data between them
             (prevTails, currentTails, nextTails) = (currentTails, nextTails, prevTails);
+
+        private int FindEmptySlot()
+        {
+            for (int i = 0; i < slotCapacity; i++) if (slotCountMap[i] == 0) return i;
+            return Grow();
         }
 
-        int FindEmptySlot()
+        private int Grow()
         {
-            for (int i = 0; i < slotCapacity; i++)
-                if (slotJointCounts[i] == 0) return i;
-            return -1;
-        }
+            int oldSlotCapacity = slotCapacity;
+            slotCapacity = oldSlotCapacity * 2;
 
-        void Grow()
-        {
-            int newCapacity = slotCapacity * 2;
-            int oldTotalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
-            int newTotalJoints = newCapacity * MAX_JOINTS_PER_SPRING;
+            int oldTotalJoints = oldSlotCapacity * MAX_JOINTS_PER_SPRING;
+            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
 
-            // Allocate new arrays and copy old data
-            var newTransforms = new NativeArray<SpringBoneTransformData>(newTotalJoints, Allocator.Persistent);
-            var newPrevTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newCurrentTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newNextTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newJointConfigs = new NativeArray<SpringBoneJointConfig>(newTotalJoints, Allocator.Persistent);
-            var newSlotJointCounts = new NativeArray<int>(newCapacity, Allocator.Persistent);
-            var newParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
+            var oldSlotCountMap = slotCountMap;
+            var oldBlittableTransforms = blittableTransforms;
+            var oldPrevTails = prevTails;
+            var oldCurrentTails = currentTails;
+            var oldNextTails = nextTails;
+            var oldJointConfigs = jointConfigs;
+            var oldParentData = parentData;
 
-            NativeArray<SpringBoneTransformData>.Copy(transforms, newTransforms, oldTotalJoints);
-            NativeArray<float3>.Copy(prevTails, newPrevTails, oldTotalJoints);
-            NativeArray<float3>.Copy(currentTails, newCurrentTails, oldTotalJoints);
-            NativeArray<float3>.Copy(nextTails, newNextTails, oldTotalJoints);
-            NativeArray<SpringBoneJointConfig>.Copy(jointConfigs, newJointConfigs, oldTotalJoints);
-            NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, slotCapacity);
-            NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, slotCapacity);
+            slotCountMap = new NativeArray<int>(slotCapacity, Allocator.Persistent);
+            blittableTransforms = new NativeArray<BlittableTransform>(totalJoints, Allocator.Persistent);
+            prevTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
+            currentTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
+            nextTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
+            jointConfigs = new NativeArray<BlittableJointConfig>(totalJoints, Allocator.Persistent);
+            parentData = new NativeArray<BlittableParentData>(slotCapacity, Allocator.Persistent);
 
-            // Dispose old
-            transforms.Dispose();
-            prevTails.Dispose();
-            currentTails.Dispose();
-            nextTails.Dispose();
-            jointConfigs.Dispose();
-            slotJointCounts.Dispose();
-            parentData.Dispose();
+            NativeArray<int>.Copy(oldSlotCountMap, slotCountMap, oldSlotCapacity);
+            NativeArray<BlittableTransform>.Copy(oldBlittableTransforms, blittableTransforms, oldTotalJoints);
+            NativeArray<float3>.Copy(oldPrevTails, prevTails, oldTotalJoints);
+            NativeArray<float3>.Copy(oldCurrentTails, currentTails, oldTotalJoints);
+            NativeArray<float3>.Copy(oldNextTails, nextTails, oldTotalJoints);
+            NativeArray<BlittableJointConfig>.Copy(oldJointConfigs, jointConfigs, oldTotalJoints);
+            NativeArray<BlittableParentData>.Copy(oldParentData, parentData, oldSlotCapacity);
+
+            oldSlotCountMap.Dispose();
+            oldBlittableTransforms.Dispose();
+            oldPrevTails.Dispose();
+            oldCurrentTails.Dispose();
+            oldNextTails.Dispose();
+            oldJointConfigs.Dispose();
+            oldParentData.Dispose();
             taa.Dispose();
 
-            // Assign new
-            transforms = newTransforms;
-            prevTails = newPrevTails;
-            currentTails = newCurrentTails;
-            nextTails = newNextTails;
-            jointConfigs = newJointConfigs;
-            slotJointCounts = newSlotJointCounts;
-            parentData = newParentData;
-            slotCapacity = newCapacity;
-
-            // Rebuild TAA
-            var taaTransforms = new Transform[newTotalJoints];
-
-            for (int slot = 0; slot < newCapacity; slot++)
+            var taaTransforms = new Transform[totalJoints];
+            for (int slot = 0; slot < slotCapacity; slot++)
             {
-                int baseIdx = slot * MAX_JOINTS_PER_SPRING;
-
-                // We can't recover the original Transform references from the old TAA (it's disposed).
-                // For existing slots, the registration system will re-set TAA entries on next re-registration.
-                // For now, fill everything with dummies. Active slots will be corrected next frame.
-                for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
-                    taaTransforms[baseIdx + j] = dummyTransform;
+                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+                for (int i = 0; i < MAX_JOINTS_PER_SPRING; i++) taaTransforms[baseIndex + i] = dummyTransform;
             }
-
             taa = new TransformAccessArray(taaTransforms);
+
+            Array.Resize(ref managedTransforms, totalJoints);
+            for (int i = oldTotalJoints; i < totalJoints; i++) managedTransforms[i] = dummyTransform;
+
+            return oldSlotCapacity;
         }
 
         public void Dispose()
         {
-            if (transforms.IsCreated) transforms.Dispose();
+            if (slotCountMap.IsCreated) slotCountMap.Dispose();
+            if (blittableTransforms.IsCreated) blittableTransforms.Dispose();
             if (prevTails.IsCreated) prevTails.Dispose();
             if (currentTails.IsCreated) currentTails.Dispose();
             if (nextTails.IsCreated) nextTails.Dispose();
             if (jointConfigs.IsCreated) jointConfigs.Dispose();
-            if (slotJointCounts.IsCreated) slotJointCounts.Dispose();
             if (parentData.IsCreated) parentData.Dispose();
             if (taa.isCreated) taa.Dispose();
 
-            if (dummyTransform != null)
-                UnityEngine.Object.Destroy(dummyTransform.gameObject);
+            if (dummyTransform != null) Object.Destroy(dummyTransform.gameObject);
         }
     }
 }

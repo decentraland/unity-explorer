@@ -7,11 +7,10 @@ namespace DCL.SpringBones
     [BurstCompile]
     public struct PullSpringBoneTransformsJob : IJobParallelForTransform
     {
-        [WriteOnly] public NativeArray<SpringBoneTransformData> Transforms;
+        [WriteOnly] public NativeArray<BlittableTransform> Transforms;
 
-        public void Execute(int index, TransformAccess transform)
-        {
-            Transforms[index] = SpringBoneTransformData.FromTransformAccess(transform);
-        }
+        [BurstCompile]
+        public void Execute(int index, TransformAccess transform) =>
+            Transforms[index] = BlittableTransform.FromTransformAccess(transform);
     }
 }

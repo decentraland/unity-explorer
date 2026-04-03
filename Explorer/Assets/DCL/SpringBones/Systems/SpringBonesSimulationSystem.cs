@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using UnityEngine;
 
 namespace DCL.SpringBones
 {
@@ -24,24 +25,21 @@ namespace DCL.SpringBones
         protected override void Update(float t)
         {
             SyncParentBonesQuery(World);
+
             springBoneService.Simulate(t);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncParentBones(ref SpringBoneRegistrationComponent registration)
+        private void SyncParentBones(in SpringBoneRegistrationComponent registration)
         {
-            for (int i = 0; i < registration.SyncPairs.Count; i++)
+            for (int i = 0; i < registration.SyncedBones.Count; i++)
             {
-                var (wearableParent, avatarParent) = registration.SyncPairs[i];
+                (Transform wearableParent, Transform avatarParent) = registration.SyncedBones[i];
                 wearableParent.SetPositionAndRotation(avatarParent.position, avatarParent.rotation);
 
-                // Feed parent world transform to the simulation job
-                if (i < registration.SlotIndices.Count)
-                {
-                    springBoneService.SetParentData(registration.SlotIndices[i],
-                        avatarParent.rotation, avatarParent.localToWorldMatrix);
-                }
+                int slot = registration.Slots[i];
+                springBoneService.UpdateParent(slot, avatarParent.rotation, avatarParent.localToWorldMatrix);
             }
         }
     }
