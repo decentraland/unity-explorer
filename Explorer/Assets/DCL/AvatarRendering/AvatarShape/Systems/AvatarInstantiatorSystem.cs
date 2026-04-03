@@ -120,6 +120,10 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
 
+#if UNITY_WEBGL
+            if (!AreMeshesReady(ref avatarShapeComponent)) return false;
+#endif
+
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
 
             var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
@@ -168,6 +172,10 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
+
+#if UNITY_WEBGL
+            if (!AreMeshesReady(ref avatarShapeComponent)) return;
+#endif
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;
 
@@ -238,7 +246,12 @@ namespace DCL.AvatarRendering.AvatarShape
                 foreach (var renderer in cachedAttachment.Renderers)
                     renderer.enabled = false;
 
-            skinningComponent.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.VertCount));
+#if UNITY_WEBGL
+            if (skinningComponent.VertCount == 0)
+                Debug.LogWarning($"[AvatarSkinning] VertCount=0 for avatar '{avatarBase.gameObject.name}' — avatar will be invisible until wearables reload");
+#endif
+
+            skinningComponent.SetVertOutRegion(vertOutBuffer.Rent(Mathf.Max(1, skinningComponent.VertCount)));
             avatarBase.gameObject.SetActive(true);
             avatarBase.UpdateHeadWearableOffset(skinningComponent.LocalBounds, wearableIntention); // Update cached head wearable offset for nametag positioning
 
@@ -255,5 +268,20 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+
+#if UNITY_WEBGL
+        private bool AreMeshesReady(ref AvatarShapeComponent avatarShapeComponent)
+        {
+            Entity promiseEntity = avatarShapeComponent.WearablePromise.Entity;
+            if (promiseEntity == Entity.Null) return true;
+            if (!World.IsAlive(promiseEntity)) return true;
+            if (!World.TryGet(promiseEntity, out WearablesLoadResult peekResult)) return false;
+            if (!peekResult.Succeeded) return true;
+
+            // Defer until at least one wearable is present — avoids instantiating an invisible
+            // avatar when the promise resolves before the profile has loaded its wearables.
+            return peekResult.Asset.Wearables.Count > 0;
+        }
+#endif
     }
 }

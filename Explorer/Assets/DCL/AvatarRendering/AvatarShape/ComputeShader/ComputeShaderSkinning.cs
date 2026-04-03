@@ -99,7 +99,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             for (var i = 0; i < meshesData.Count; i++)
             {
-                vertCount += meshesData[i].Mesh.sharedMesh.vertexCount;
+                int meshVerts = meshesData[i].Mesh.sharedMesh.vertexCount;
+
+#if UNITY_WEBGL
+                if (meshVerts == 0)
+                    Debug.LogWarning($"[AvatarSkinning] Mesh '{meshesData[i].Mesh.sharedMesh.name}' on '{meshesData[i].Renderer.name}' has vertexCount=0 in SetupCounters");
+#endif
+
+                vertCount += meshVerts;
                 skinnedMeshRendererCount++;
             }
 

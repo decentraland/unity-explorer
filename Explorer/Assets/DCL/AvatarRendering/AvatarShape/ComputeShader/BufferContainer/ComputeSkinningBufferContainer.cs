@@ -43,10 +43,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
             //set up the buffers depending on the platform
 
+            // ComputeBuffer(0, stride) throws — clamp to 1 so we get an empty-but-valid buffer.
+            // VertCount is stored separately in AvatarCustomSkinningComponent; a 0 there means no rendering.
+            int safeVertCount = Mathf.Max(1, vertCount);
+            int safeBoneCount = Mathf.Max(1, skinnedMeshRendererBoneCount);
+
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
+            return new ComputeSkinningBufferContainerWrite(safeVertCount, safeBoneCount);
 #else
-            return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
+            return new ComputeSkinningBufferContainerSetData(safeVertCount, safeBoneCount);
 #endif
         }
 
