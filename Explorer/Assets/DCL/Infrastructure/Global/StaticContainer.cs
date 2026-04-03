@@ -312,11 +312,11 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin?[]
             {
-#if UNITY_WEBGL
-                new GltfContainerPluginWebGL(sharedDependencies.FrameTimeBudget, sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneReadinessReportQueue, container.LoadingStatus, container.GltfContainerAssetsCache),
-#else
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.LoadingStatus, container.GltfContainerAssetsCache
+#if !UNITY_WEBGL
+                    , launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, appArgs
 #endif
+                ),
 
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),

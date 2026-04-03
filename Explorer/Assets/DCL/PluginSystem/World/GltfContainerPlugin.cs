@@ -1,16 +1,9 @@
-// GLTFast forces usage of Task that is not compatible with WebGL
-// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-#if !UNITY_WEBGL
-
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.Utility;
-using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -21,12 +14,20 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
+using ECS.Unity.GltfNodeModifiers.Systems;
+using System.Threading;
+
+#if !UNITY_WEBGL
+// GLTFast forces usage of Task that is not compatible with WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+using DCL.PluginSystem.Global;
+using DCL.RealmNavigation;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
-using ECS.Unity.GltfNodeModifiers.Systems;
 using Global.AppArgs;
-using System.Threading;
+#endif
 
 namespace DCL.PluginSystem.World
 {
@@ -40,30 +41,41 @@ namespace DCL.PluginSystem.World
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly ILoadingStatus loadingStatus;
+
+#if !UNITY_WEBGL
         private readonly ILaunchMode launchMode;
         private readonly bool useRemoteAssetBundles;
         private readonly IWebRequestController webRequestController;
-        private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
+#endif
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,
+        public GltfContainerPlugin(
+            ECSWorldSingletonSharedDependencies globalDeps,
             CacheCleaner cacheCleaner,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
+            ILoadingStatus loadingStatus,
+            IGltfContainerAssetsCache assetsCache
+#if !UNITY_WEBGL
+            ,
             ILaunchMode launchMode,
             bool useRemoteAssetBundles,
             IWebRequestController webRequestController,
-            ILoadingStatus loadingStatus,
-            IGltfContainerAssetsCache assetsCache,
-            IAppArgs appArgs)
+            IAppArgs appArgs
+#endif
+        )
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.loadingStatus = loadingStatus;
+            this.assetsCache = (GltfContainerAssetsCache)assetsCache;
+
+#if !UNITY_WEBGL
             this.launchMode = launchMode;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.webRequestController = webRequestController;
-            this.loadingStatus = loadingStatus;
-            this.assetsCache = (GltfContainerAssetsCache)assetsCache;
             this.appArgs = appArgs;
+#endif
 
             cacheCleaner.Register(assetsCache);
         }
@@ -76,8 +88,10 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
+
+#if !UNITY_WEBGL
+            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
 
             LoadGLTFSystem.InjectToWorld(
                 ref builder,
@@ -87,6 +101,7 @@ namespace DCL.PluginSystem.World
                 false,
                 localSceneDevelopment,
                 new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
+#endif
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(
@@ -94,12 +109,20 @@ namespace DCL.PluginSystem.World
                 assetsCache,
                 new PrepareGltfAssetLoadingSystem.Options
                 {
+#if UNITY_WEBGL
+                    LocalSceneDevelopment = false,
+                    UseRemoveAssetBundles = true,
+                    PreviewingBuilderCollection = false
+#else
                     LocalSceneDevelopment = localSceneDevelopment,
                     UseRemoveAssetBundles = useRemoteAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
+#endif
                 });
 
+#if !UNITY_WEBGL
             CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+#endif
             CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
 
             // GLTF Node Modifier Systems
@@ -126,5 +149,3 @@ namespace DCL.PluginSystem.World
             UniTask.CompletedTask;
     }
 }
-
-#endif
