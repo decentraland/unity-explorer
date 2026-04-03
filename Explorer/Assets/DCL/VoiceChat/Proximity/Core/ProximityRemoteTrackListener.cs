@@ -1,14 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
-using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using System;
 using System.Collections.Concurrent;

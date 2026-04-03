@@ -58,7 +58,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private ProximityVoiceChatManager? proximityVoiceChatManager;
         private ProximityVoiceChatStateModel? proximityStateModel;
-        private ProximityPushToTalkHandler? proximityPushToTalkHandler;
         private ProximityAudioPositionSystem? proximityAudioPositionSystem;
         private VoiceChatConfiguration voiceChatConfiguration;
 
@@ -157,13 +156,12 @@ namespace DCL.PluginSystem.Global
             proximityStateModel = new ProximityVoiceChatStateModel(ProximityVoiceChatState.SPEAKING);
             pluginScope.Add(proximityStateModel);
 
-            proximityPushToTalkHandler = new ProximityPushToTalkHandler(proximityStateModel);
-            pluginScope.Add(proximityPushToTalkHandler);
+            voiceChatHandler.SetProximityStateModel(proximityStateModel);
 
             proximityVoiceChatManager = new ProximityVoiceChatManager(
                 islandRoom, voiceChatConfiguration,
                 proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                proximityStateModel);
+                proximityStateModel, voiceChatHandler);
             pluginScope.Add(proximityVoiceChatManager);
         }
 
