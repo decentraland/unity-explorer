@@ -39,12 +39,7 @@ namespace DCL.VoiceChat
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream.source);
 
-            LivekitAudioSource source = LivekitAudioSource.New(true);
-            source.Construct(stream);
-            AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
-            audioSource.outputAudioMixerGroup = audioMixerGroup;
-            source.name = $"LivekitSource_{key.identity}";
-            source.transform.SetParent(parent);
+            (AudioSource _, LivekitAudioSource source) = CreateSource(key, stream, audioMixerGroup, parent);
 
             if (!streams.TryAdd(key, (stream, source)))
             {
@@ -56,15 +51,7 @@ namespace DCL.VoiceChat
         internal void RemoveStream(StreamKey key)
         {
             if (streams.TryRemove(key, out (Weak<AudioStream> stream, LivekitAudioSource source) pair))
-                InternalAsync(pair.source).Forget();
-
-            return;
-
-            static async UniTaskVoid InternalAsync(LivekitAudioSource livekitAudioSource)
-            {
-                await UniTask.SwitchToMainThread();
-                DisposeSource(livekitAudioSource);
-            }
+                DisposeSource(pair.source);
         }
 
         internal void Reset()
@@ -91,6 +78,18 @@ namespace DCL.VoiceChat
                 foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in hub.streams.Values)
                     pair.source.Stop();
             });
+        }
+
+        internal static (AudioSource audioSource, LivekitAudioSource source) CreateSource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
+        {
+            LivekitAudioSource lkSource = LivekitAudioSource.New(true, spatial);
+            lkSource.Construct(stream);
+            AudioSource audioSource = lkSource.GetComponent<AudioSource>().EnsureNotNull();
+            audioSource.outputAudioMixerGroup = mixerGroup;
+            lkSource.name = $"LivekitSource_{key.identity}";
+            lkSource.transform.SetParent(parent);
+
+            return (audioSource, lkSource);
         }
 
         public static void DisposeSource(LivekitAudioSource livekitAudioSource)

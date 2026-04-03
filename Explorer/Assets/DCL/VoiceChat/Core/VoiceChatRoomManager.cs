@@ -225,53 +225,17 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnTrackSubscribed(ITrack _, TrackPublication publication, Participant participant)
-        {
-            OnTrackSubscribedInternalAsync().Forget();
-            return;
+        private void OnTrackSubscribed(ITrack _, TrackPublication publication, Participant participant) =>
+            remoteListener.HandleTrackSubscribed(publication, participant).Forget();
 
-            async UniTaskVoid OnTrackSubscribedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                remoteListener.HandleTrackSubscribed(publication, participant);
-            }
-        }
+        private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant) =>
+            remoteListener.HandleTrackUnsubscribed(publication, participant).Forget();
 
-        private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant)
-        {
-            OnTrackUnsubscribedInternalAsync().Forget();
-            return;
+        private void OnLocalTrackPublished(TrackPublication publication, Participant participant) =>
+            remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true).Forget();
 
-            async UniTaskVoid OnTrackUnsubscribedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                remoteListener.HandleTrackUnsubscribed(publication, participant);
-            }
-        }
-
-        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
-        {
-            OnLocalTrackPublishedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnLocalTrackPublishedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
-            }
-        }
-
-        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
-        {
-            OnLocalTrackUnpublishedInternalAsync().Forget();
-            return;
-
-            async UniTaskVoid OnLocalTrackUnpublishedInternalAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
-            }
-        }
+        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant) =>
+            remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true).Forget();
 
         private static void OnReconnectionStarted() =>
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection process started");
@@ -292,7 +256,7 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                remoteListener.StartListening();
+                remoteListener.StartListening().Forget();
 
                 ConnectionEstablished?.Invoke();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");

@@ -14,8 +14,6 @@ using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Proximity;
 using DCL.VoiceChat.Proximity.Systems;
-using DCL.VoiceChat.Proximity.UI;
-using DCL.WebRequests;
 using LiveKit.Rooms;
 using System;
 using System.Collections.Concurrent;

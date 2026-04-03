@@ -51,8 +51,11 @@ namespace DCL.VoiceChat
         public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output) =>
             voiceChatRoom.AudioStreams.ListInfo(output);
 
-        public void StartListening()
+        public async UniTaskVoid StartListening()
         {
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
             try
             {
                 playbackSourcesHub.Reset();
@@ -87,25 +90,31 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public void HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
+            if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
+
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
             try
             {
-                if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
-
                 if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}"); }
         }
 
-        public void HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
+            if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
+            if (publication.Kind != TrackKind.KindAudio) return;
+
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
             try
             {
-                if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
-
-                if (publication.Kind != TrackKind.KindAudio) return;
                 playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : "(new remote)")}");
             }
