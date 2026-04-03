@@ -65,15 +65,9 @@ namespace DCL.Chat.ChatMessages
             messageReactionService.ToggleReaction(messageId, emojiIndex);
         }
 
-        public void OnReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId, bool isOffline)
+        public void OnReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
         {
             if (tooltipPresenter == null) return;
-
-            if (isOffline)
-            {
-                tooltipPresenter.ShowOfflineTooltip(pillRect);
-                return;
-            }
 
             ReactionSet? reactions = getReactions(messageId);
             tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect, messageId);

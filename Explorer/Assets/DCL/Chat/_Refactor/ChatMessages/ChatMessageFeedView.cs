@@ -34,7 +34,6 @@ namespace DCL.Chat.ChatMessages
         private ChatReactionsAtlasConfig? reactionsAtlasConfig;
         private string? ownWalletAddress;
         private ChatReactionsMessageConfig? messageReactionsConfig;
-        private string? dmPartnerWallet;
 
         // View models are reused and set
         // by reference from the presenter
@@ -67,7 +66,7 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
         public event Action<string, int>? OnReactionPillClicked;
-        public event Action<int, RectTransform, string, bool>? OnReactionHoverEnter;
+        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
         public event Action<int>? OnReactionHoverExit;
 
         private Sequence? _fadeSequenceTween;
@@ -93,16 +92,6 @@ namespace DCL.Chat.ChatMessages
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
-        }
-
-        /// <summary>
-        /// For DM channels, set the other user's wallet so own-message reactions
-        /// can be disabled when the DM partner is offline.
-        /// Pass null for non-DM channels (nearby, community).
-        /// </summary>
-        public void SetDmPartnerWallet(string? wallet)
-        {
-            dmPartnerWallet = wallet;
         }
 
         public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress,
@@ -299,23 +288,10 @@ namespace DCL.Chat.ChatMessages
                 float padding = viewModel.ShowDateDivider ? chatEntry.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
-                // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
-                // for shown elements only
                 bool senderIsOffline = prefabIndex == ChatItemPrefabIndex.ChatEntry
                                       && !onlineParticipants.Contains(chatMessage.SenderWalletAddress);
 
-                // In DMs with offline partner, own message reactions won't reach them either
-                bool noOnlineRecipients = prefabIndex == ChatItemPrefabIndex.ChatEntryOwn
-                                          && dmPartnerWallet != null
-                                          && !onlineParticipants.Contains(dmPartnerWallet);
-
-                bool reactionsDisabled = senderIsOffline || noOnlineRecipients;
-
                 chatEntry.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
-                chatEntry.messageBubbleElement.SetReactionButtonEnabled(!reactionsDisabled);
-
-                if (chatEntry.messageReactionsView != null)
-                    chatEntry.messageReactionsView.SetInteractable(!reactionsDisabled);
 
                 if (viewModel.PendingToAnimate)
                 {
@@ -345,9 +321,9 @@ namespace DCL.Chat.ChatMessages
             OnReactionPillClicked?.Invoke(messageId, emojiIndex);
         }
 
-        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId, bool isOffline)
+        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
         {
-            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId, isOffline);
+            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
         }
 
         private void HandleReactionHoverExit(int emojiIndex)

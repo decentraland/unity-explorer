@@ -237,7 +237,6 @@ namespace DCL.Chat.ChatMessages
             if (wasAtBottom)
                 reactionInteraction.Deactivate();
 
-
             view.ReconstructScrollView(false);
             ScrollToBottomIfNeeded(needsSeparator);
 
@@ -453,11 +452,6 @@ namespace DCL.Chat.ChatMessages
                     Subscribe();
 
                     view.SetUserConnectivityProvider(currentChannelService.UserStateService.OnlineParticipants);
-
-                    view.SetDmPartnerWallet(
-                        currentChannelService.CurrentChannel?.ChannelType == ChatChannel.ChatChannelType.USER
-                            ? currentChannelService.CurrentChannelId.Id
-                            : null);
 
                     view.ReconstructScrollView(true);
                     ScrollToNewMessagesSeparator();

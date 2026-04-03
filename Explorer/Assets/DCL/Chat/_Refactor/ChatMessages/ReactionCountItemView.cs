@@ -34,11 +34,6 @@ namespace DCL.Chat.ChatMessages
             animDuration = hoverAnimDuration;
         }
 
-        public void SetInteractable(bool interactable)
-        {
-            button.interactable = interactable;
-        }
-
         private void Awake()
         {
             button.onClick.AddListener(() => OnClicked?.Invoke(emojiIndex));

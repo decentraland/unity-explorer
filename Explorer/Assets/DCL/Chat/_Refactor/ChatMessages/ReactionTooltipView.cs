@@ -6,8 +6,6 @@ namespace DCL.Chat.ChatMessages
 {
     public class ReactionTooltipView : MonoBehaviour
     {
-        private const string OFFLINE_MESSAGE = "Offline user — reactions unavailable.";
-
         [SerializeField] private TMP_Text namesText;
         [SerializeField] private RawImage emojiImage;
         [SerializeField] private GameObject loadingIndicator;
@@ -49,16 +47,6 @@ namespace DCL.Chat.ChatMessages
             namesText.gameObject.SetActive(true);
             emojiImage.gameObject.SetActive(true);
             namesText.text = text;
-        }
-
-        public void ShowOfflineMessage(RectTransform pillTransform)
-        {
-            loadingIndicator.SetActive(false);
-            emojiImage.gameObject.SetActive(false);
-            namesText.gameObject.SetActive(true);
-            namesText.text = OFFLINE_MESSAGE;
-            positioner?.PositionAbovePill(pillTransform);
-            SetVisible(true);
         }
 
         public void Hide()

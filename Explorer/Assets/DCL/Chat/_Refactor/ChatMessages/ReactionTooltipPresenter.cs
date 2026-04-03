@@ -96,28 +96,6 @@ namespace DCL.Chat.ChatMessages
             }
         }
 
-        public void ShowOfflineTooltip(RectTransform pillTransform)
-        {
-            delayCts.SafeCancelAndDispose();
-            delayCts = null;
-            asyncCts.SafeCancelAndDispose();
-            asyncCts = null;
-            shownMessageId = null;
-            shownEmojiIndex = -1;
-
-            float hoverDelay = messageConfig.TooltipHoverDelay;
-
-            if (hoverDelay > 0f)
-            {
-                delayCts = new CancellationTokenSource();
-                DelayedShowOfflineAsync(pillTransform, hoverDelay, delayCts.Token).Forget();
-            }
-            else
-            {
-                view.ShowOfflineMessage(pillTransform);
-            }
-        }
-
         public void Hide()
         {
             delayCts.SafeCancelAndDispose();
@@ -127,12 +105,6 @@ namespace DCL.Chat.ChatMessages
             shownMessageId = null;
             shownEmojiIndex = -1;
             view.Hide();
-        }
-
-        public void HideIfShowingMessage(string messageId)
-        {
-            if (string.Equals(shownMessageId, messageId, StringComparison.Ordinal))
-                Hide();
         }
 
         public void Dispose()
@@ -191,20 +163,6 @@ namespace DCL.Chat.ChatMessages
                 if (ct.IsCancellationRequested) return;
 
                 ShowTooltipImmediate(reactions, emojiIndex, pillTransform, messageId);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
-        }
-
-        private async UniTaskVoid DelayedShowOfflineAsync(RectTransform pillTransform, float delay, CancellationToken ct)
-        {
-            try
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: ct);
-
-                if (ct.IsCancellationRequested) return;
-
-                view.ShowOfflineMessage(pillTransform);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
