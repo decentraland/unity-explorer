@@ -29,7 +29,7 @@ namespace DCL.Character.CharacterMotion.Systems
     {
         private const float MAX_POINT_AT_DISTANCE_SQR = 100f * 100f; // Max distance to show the marker (100 units)
 
-        private static readonly QueryDescription THUMBNAIL_CACHE_QUERY = new QueryDescription().WithAll<PointAtThumbnailCache>();
+        private static readonly QueryDescription ThumbnailCacheQuery = new QueryDescription().WithAll<PointAtThumbnailCache>();
 
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -56,7 +56,7 @@ namespace DCL.Character.CharacterMotion.Systems
         public override void Initialize()
         {
             camera = World.CacheCamera();
-            thumbnailCacheEntity = new SingleInstanceEntity(in THUMBNAIL_CACHE_QUERY, World);
+            thumbnailCacheEntity = new SingleInstanceEntity(in ThumbnailCacheQuery, World);
         }
 
         protected override void Update(float t)

@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.Textures
     {
         private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 6;
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
-        private static readonly HashSet<long> RECOVERABLE_CODES = new () {
+        private static readonly HashSet<long> RecoverableCodes = new () {
             404
         };
 
@@ -77,7 +77,7 @@ namespace ECS.StreamableLoading.Textures
 
         private async UniTask<Texture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
-            var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS, forceRecoverableCodes: RECOVERABLE_CODES));
+            var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS, forceRecoverableCodes: RecoverableCodes));
 
             GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
             GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType, false);
