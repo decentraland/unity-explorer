@@ -30,6 +30,8 @@ namespace DCL.Profiles
                 // Guard: the Profile object may have been returned to the pool and reused for a different user
                 if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
                     profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                else
+                    result.Asset?.Dispose();
 
                 World.Destroy(entity);
             }

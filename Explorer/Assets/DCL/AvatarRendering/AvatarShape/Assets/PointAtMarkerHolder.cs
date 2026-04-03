@@ -11,11 +11,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         private static readonly int BACKGROUND_COLOR_ID = Shader.PropertyToID("_BackgroundColor");
         private static readonly int UV_RECT_ID = Shader.PropertyToID("_UVRect");
 
-        [field: SerializeField] public SpriteRenderer SpriteRenderer { get; private set; }
+        [field: SerializeField] public SpriteRenderer SpriteRenderer { get; private set; } = null!;
         [field: SerializeField] public SizeRangeData MinData { get; private set; }
         [field: SerializeField] public SizeRangeData MaxData { get; private set; }
         [SerializeField] private float fadeDuration = 0.3f;
-        [field: SerializeField] public Sprite ThumbnailDefault { get; private set; }
+        [field: SerializeField] public Sprite ThumbnailDefault { get; private set; } = null!;
 
         [Serializable]
         public struct SizeRangeData

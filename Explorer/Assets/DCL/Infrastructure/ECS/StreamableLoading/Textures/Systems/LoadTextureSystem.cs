@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.Textures
     {
         private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 6;
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
-        private readonly HashSet<long> RECOVERABLE_CODES = new () {
+        private static readonly HashSet<long> RECOVERABLE_CODES = new () {
             404
         };
 
