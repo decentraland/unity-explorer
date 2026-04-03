@@ -155,19 +155,6 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
 
         [UsedImplicitly]
-        public void UpdateMetadata(string metadata)
-        {
-            try
-            {
-                roomHub.StreamingRoom().UpdateLocalMetadata(metadata);
-            }
-            catch (Exception e)
-            {
-                sceneExceptionsHandler.OnEngineException(e);
-            }
-        }
-
-        [UsedImplicitly]
         public void SubscribeToTopic(string topic)
         {
             topicBuffers.TryAdd(topic, new ConcurrentQueue<BufferedDataMessage>());
