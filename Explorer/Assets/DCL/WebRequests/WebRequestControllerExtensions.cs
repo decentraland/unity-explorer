@@ -33,7 +33,7 @@ namespace DCL.WebRequests
             bool suppressErrors = false,
             DownloadHandler? downloadHandler = null,
             bool ignoreIrrecoverableErrors = false,
-            IStreamableLoadingProgressHandler progressHandler = null
+            IStreamableLoadingProgressHandler? progressHandler = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -219,7 +219,7 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             bool suppressErrors = false,
-            IStreamableLoadingProgressHandler progressHandler = null
+            IStreamableLoadingProgressHandler? progressHandler = null
             ) =>
             controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, progressHandler: progressHandler);
 

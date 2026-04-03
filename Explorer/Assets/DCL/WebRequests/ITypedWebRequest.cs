@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using Newtonsoft.Json;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -29,28 +29,24 @@ namespace DCL.WebRequests
                 return;
             }
 
+            using var headTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            headTimeoutCts.CancelAfter(500);
+            var contentLength = await FetchContentLengthAsync(typedWebRequest.UnityWebRequest.url, headTimeoutCts.Token);
+
+            progressHandler.SetContentLength(contentLength);
             UnityWebRequestAsyncOperation op = typedWebRequest.UnityWebRequest.SendWebRequest();
-            bool isLog = false;
+
             while (!op.isDone)
             {
                 if (token.IsCancellationRequested)
-                    return;
-
-                progressHandler.SetProgress(op.progress);
-
-
-                if (isLog == false && typedWebRequest.UnityWebRequest.GetResponseHeaders() != null)
                 {
-                    isLog = true;
+                    return;
                 }
 
-                /* TODO: This header wont exist in the response if we are using compression since the server is doing it on the fly.
-                 wait until back end provides a custom header with the asset's real size to finish this task.
-                */
-                string contentLengthHeader = typedWebRequest.UnityWebRequest.GetResponseHeader("Content-Length");
-
-                if (contentLengthHeader != null && long.TryParse(contentLengthHeader, out long contentLength))
-                    progressHandler.SetContentLength(contentLength);
+                if (contentLength != -1)
+                    progressHandler.SetProgress(op.webRequest.downloadedBytes / (float)contentLength);
+                else
+                    progressHandler.SetProgress(op.progress); // Unreliable for on-the-fly compressed responses, but best-effort fallback
 
                 await UniTask.Yield();
             }
@@ -59,8 +55,37 @@ namespace DCL.WebRequests
 
             UnityWebRequest request = typedWebRequest.UnityWebRequest;
 
-            if (request.result != UnityWebRequest.Result.Success) // This is really important, other systems react to this exception being triggered.
+            if (request.result != UnityWebRequest.Result.Success) // This is really important. Other systems react to this exception being triggered.
                 throw new UnityWebRequestException(request);
+        }
+
+        private static async UniTask<long> FetchContentLengthAsync(string url, CancellationToken ct)
+        {
+            const string DECOMPRESSED_CONTENT_LENGTH_HEADER = "x-decompressed-content-length";
+
+            if (url.StartsWith("file://"))
+                return -1;
+
+            using var headRequest = UnityWebRequest.Head(url);
+
+            try
+            {
+                await headRequest.SendWebRequest().WithCancellation(ct);
+
+                if (headRequest.result != UnityWebRequest.Result.Success)
+                    return -1;
+
+                string header = headRequest.GetResponseHeader(DECOMPRESSED_CONTENT_LENGTH_HEADER);
+
+                if (header != null && long.TryParse(header, out long contentLength))
+                    return contentLength;
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout expired — proceed without content length
+            }
+
+            return -1;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace DCL.WebRequests
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
             TWebRequestOp op,
-            IStreamableLoadingProgressHandler progressHandler = null
+            IStreamableLoadingProgressHandler? progressHandler = null
         )
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestArgs: struct

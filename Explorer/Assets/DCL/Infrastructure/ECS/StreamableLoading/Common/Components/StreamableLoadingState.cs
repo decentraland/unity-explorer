@@ -47,6 +47,8 @@ namespace ECS.StreamableLoading.Common.Components
             {
                 state.disposed = false;
                 state.Value = Status.NotStarted;
+                state.Progress = 0f;
+                state.ContentLength = 0;
             },
             actionOnRelease: state =>
             {

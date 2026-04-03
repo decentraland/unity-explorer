@@ -49,6 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
         private long completedBytes;
         private long totalBytesExpected;
         private int entitiesWithKnownSize;
+        private float maxReportedProgress;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
@@ -112,6 +113,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 List<Entity> toDelete = ListPool<Entity>.Get();
                 long inProgressWeightedBytes = 0;
+                float unknownInProgressWeightedProgress = 0f;
 
                 // iterate over entities
 
@@ -139,6 +141,8 @@ namespace ECS.SceneLifeCycle.Systems
                         // Accumulate in-progress weighted bytes
                         if (contentLengthCache!.TryGetValue(entityRef, out long cachedLength) && cachedLength > 0)
                             inProgressWeightedBytes += (long)(GetEntityProgress(entityRef, in gltfContainerComponent) * cachedLength);
+                        else
+                            unknownInProgressWeightedProgress += GetEntityProgress(entityRef, in gltfContainerComponent);
                     }
                     else
                     {
@@ -162,12 +166,13 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = ComputeProgress(inProgressWeightedBytes);
+                float progress = ComputeProgress(inProgressWeightedBytes, unknownInProgressWeightedProgress);
+                maxReportedProgress = Mathf.Max(maxReportedProgress, progress);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
                     AsyncLoadProcessReport report = reports.Value[i];
-                    report.SetProgress(progress);
+                    report.SetProgress(maxReportedProgress);
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);
@@ -191,6 +196,12 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (concluded)
                 {
+                    for (var i = 0; i < reports!.Value.Count; i++)
+                    {
+                        AsyncLoadProcessReport report = reports.Value[i];
+                        report.SetProgress(1);
+                    }
+
                     reports.Value.Dispose();
                     reports = null;
                     Conclude();
@@ -239,7 +250,7 @@ namespace ECS.SceneLifeCycle.Systems
             return loadingState.Progress;
         }
 
-        private float ComputeProgress(long inProgressWeightedBytes)
+        private float ComputeProgress(long inProgressWeightedBytes, float unknownInProgressWeightedProgress)
         {
             // Fallback: count-based progress when no byte data is available
             if (entitiesWithKnownSize <= 0 || totalBytesExpected <= 0)
@@ -250,8 +261,16 @@ namespace ECS.SceneLifeCycle.Systems
             int unknownCount = totalAssetsToResolve - entitiesWithKnownSize;
             long effectiveTotal = totalBytesExpected + avgSize * Math.Max(0, unknownCount);
 
+            // Account for completed unknown-size entities using the average estimate
+            int completedKnownCount = entitiesWithKnownSize - contentLengthCache!.Count;
+            int completedUnknownCount = Math.Max(0, assetsResolved - completedKnownCount);
+            long estimatedCompletedUnknownBytes = avgSize * completedUnknownCount;
+
+            // Account for in-progress unknown-size entities using their per-entity progress * average size
+            long estimatedUnknownInProgressBytes = (long)(unknownInProgressWeightedProgress * avgSize);
+
             return effectiveTotal > 0
-                ? Mathf.Clamp01((float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)
+                ? Mathf.Clamp01((float)(completedBytes + estimatedCompletedUnknownBytes + inProgressWeightedBytes + estimatedUnknownInProgressBytes) / effectiveTotal)
                 : 0f;
         }
 

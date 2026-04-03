@@ -11,22 +11,10 @@ namespace DCL.WebRequests
         /// </summary>
         public readonly string? DataProcessingError;
 
-        /// <summary>
-        ///     Bytes downloaded for this asset bundle request.
-        /// </summary>
-        public readonly ulong DownloadedBytes;
-
-        /// <summary>
-        ///     Content-Length from the response header. -1 if unavailable.
-        /// </summary>
-        public readonly long ContentLength;
-
-        public AssetBundleLoadingResult(AssetBundle? assetBundle, string? dataProcessingError, ulong downloadedBytes = 0, long contentLength = -1)
+        public AssetBundleLoadingResult(AssetBundle? assetBundle, string? dataProcessingError)
         {
             AssetBundle = assetBundle;
             DataProcessingError = dataProcessingError;
-            DownloadedBytes = downloadedBytes;
-            ContentLength = contentLength;
         }
     }
 }
