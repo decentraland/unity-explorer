@@ -58,8 +58,8 @@ namespace DCL.VoiceChat.Proximity
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
-            islandRoom.LocalTrackPublished += OnLocalTrackPublished;
-            islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
+            // islandRoom.LocalTrackPublished += OnLocalTrackPublished;
+            // islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             proximityStateSubscription = stateModel.State.Subscribe(OnProximityStateChanged);
@@ -83,8 +83,8 @@ namespace DCL.VoiceChat.Proximity
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
             islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
-            islandRoom.LocalTrackPublished -= OnLocalTrackPublished;
-            islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
+            // islandRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            // islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
             micPublisher.Dispose();
@@ -107,11 +107,11 @@ namespace DCL.VoiceChat.Proximity
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
             => remoteListener.HandleTrackUnsubscribed(publication, participant);
 
-        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
-
-        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
+        // private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+        //     => remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
+        //
+        // private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        //     => remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {

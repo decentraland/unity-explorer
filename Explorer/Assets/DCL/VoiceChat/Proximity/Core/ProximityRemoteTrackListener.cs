@@ -31,8 +31,6 @@ namespace DCL.VoiceChat.Proximity
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
 
-        private LivekitAudioSource? loopbackSource;
-
         internal bool IsSuppressed { get; private set; }
 
         internal ProximityRemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, ConcurrentDictionary<string, AudioSource> activeAudioSources)
@@ -52,13 +50,16 @@ namespace DCL.VoiceChat.Proximity
                 fallbackParent.gameObject.SelfDestroy();
         }
 
-        internal void StartListening()
+        internal async UniTaskVoid StartListening()
         {
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
             try
             {
                 foreach (KeyValuePair<string, Participant> entry in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication pub) in entry.Value.Tracks)
-                    if (TryAddRemoteSource(pub.Kind, new StreamKey(entry.Key!, sid)))
+                    if (TryAddStream(pub.Kind, new StreamKey(entry.Key!, sid)))
                         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Added existing remote track from {entry.Key}");
 
                 ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Remote track listening started");
@@ -70,81 +71,49 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        internal void StopListening()
+        internal async UniTaskVoid StopListening()
         {
-            PlaybackSourcesHub.DisposeSource(loopbackSource);
-            loopbackSource = null;
-
-            foreach (StreamKey key in remoteSources.Keys)
-                RemoveRemoteSource(key);
-        }
-
-        internal void HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
-        {
-            HandleAsync().Forget();
-            return;
-
-            async UniTaskVoid HandleAsync()
-            {
+            if (!PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToMainThread();
 
-                try
-                {
-                    if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
-
-                    var key = new StreamKey(participant.Identity, publication.Sid);
-
-                    if (isLocalLoopback)
-                    {
-                        if (TryAddLoopbackSource(publication.Kind, key))
-                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track loopback enabled (round-trip via server)");
-                    }
-                    else
-                    {
-                        if (TryAddRemoteSource(publication.Kind, key))
-                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT,
-                        $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "")}");
-                }
+            try
+            {
+                foreach (StreamKey key in remoteSources.Keys)
+                    RemoveRemoteSource(key);
             }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        internal void HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        internal async UniTaskVoid HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
-            HandleAsync().Forget();
-            return;
+            if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
-            async UniTaskVoid HandleAsync()
-            {
+            if (!PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToMainThread();
 
-                if (publication.Kind != TrackKind.KindAudio) return;
-
-                try
-                {
-                    if (isLocalLoopback)
-                    {
-                        if (!configuration.EnableLocalTrackPlayback) return;
-
-                        PlaybackSourcesHub.DisposeSource(loopbackSource);
-                        loopbackSource = null;
-                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track loopback removed");
-                    }
-                    else
-                    {
-                        RemoveRemoteSource(new StreamKey(participant.Identity, publication.Sid));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT,
-                        $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "")}");
-                }
+            try
+            {
+                if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
+                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}");
+                // ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track loopback enabled (round-trip via server)");
             }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}"); }
+        }
+
+        internal async UniTaskVoid HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        {
+            if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
+            if (publication.Kind != TrackKind.KindAudio) return;
+
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
+            try
+            {
+                RemoveRemoteSource(new StreamKey(participant.Identity, publication.Sid));
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : "(new remote)")}");
+            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "")}"); }
         }
 
         internal void MuteAll()
@@ -171,7 +140,7 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        private bool TryAddRemoteSource(TrackKind kind, StreamKey key)
+        private bool TryAddStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
 
@@ -182,24 +151,18 @@ namespace DCL.VoiceChat.Proximity
             return true;
         }
 
-        private bool TryAddLoopbackSource(TrackKind kind, StreamKey key)
-        {
-            if (kind != TrackKind.KindAudio) return false;
-
-            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
-            if (!stream.Resource.Has) return false;
-
-            loopbackSource = CreateSource(key, stream, spatial: false);
-            loopbackSource.Play();
-            return true;
-        }
-
         private void AddRemoteSource(StreamKey key, Weak<AudioStream> stream)
         {
             if (remoteSources.TryRemove(key, out LivekitAudioSource? oldSource))
                 PlaybackSourcesHub.DisposeSource(oldSource);
 
-            LivekitAudioSource source = CreateSource(key, stream, spatial: true);
+            (AudioSource audioSource, LivekitAudioSource source) =
+                PlaybackSourcesHub.CreateSource(key, stream, configuration.ProximityChatAudioMixerGroup, fallbackParent, true);
+
+            configuration.ApplyProximitySettingsTo(audioSource);
+            configuration.ApplySpatializationSettingsTo(source);
+            source.gameObject.AddComponent<ProximityPanCalculator>();
+
             source.Play();
 
             if (!remoteSources.TryAdd(key, source))
@@ -209,7 +172,6 @@ namespace DCL.VoiceChat.Proximity
                 return;
             }
 
-            AudioSource audioSource = source.GetComponent<AudioSource>();
             activeAudioSources[key.identity] = audioSource;
 
             if (audioSource != null && IsSuppressed)
@@ -218,30 +180,11 @@ namespace DCL.VoiceChat.Proximity
 
         private void RemoveRemoteSource(StreamKey key)
         {
-            if (!remoteSources.TryRemove(key, out LivekitAudioSource? source))
-                return;
-
-            activeAudioSources.TryRemove(key.identity, out _);
-            PlaybackSourcesHub.DisposeSource(source);
-        }
-
-        private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
-        {
-            LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, spatial: spatial);
-            source.Construct(stream);
-            AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
-            audioSource.outputAudioMixerGroup = configuration.ProximityChatAudioMixerGroup;
-            source.name = $"ProximityAudio_{key.identity}";
-            source.transform.SetParent(fallbackParent);
-
-            if (spatial)
+            if (remoteSources.TryRemove(key, out LivekitAudioSource? source))
             {
-                configuration.ApplyProximitySettingsTo(audioSource);
-                configuration.ApplySpatializationSettingsTo(source);
-                source.gameObject.AddComponent<ProximityPanCalculator>();
+                activeAudioSources.TryRemove(key.identity, out _);
+                PlaybackSourcesHub.DisposeSource(source);
             }
-
-            return source;
         }
     }
 }
