@@ -1,5 +1,6 @@
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Simulation.World;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void PullParticleTowardAnchorOnXZ()
         {
+            // Arrange
             SetSpringStrength(50f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
@@ -43,16 +45,18 @@ namespace DCL.Chat.ChatReactions.Tests
 
             float originalVelX = buffer[0].vel.x;
 
+            // Act
             var force = new AnchorSpringForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
-            // Velocity should have gained a negative X component (toward anchor)
+            // Assert — velocity should have gained a negative X component (toward anchor)
             Assert.That(buffer[0].vel.x, Is.LessThan(originalVelX));
         }
 
         [Test]
         public void LeaveYAxisFree()
         {
+            // Arrange
             SetSpringStrength(50f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
@@ -64,16 +68,18 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            // Act
             var force = new AnchorSpringForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
-            // Y velocity should be unchanged — spring only acts on XZ
+            // Assert — Y velocity should be unchanged since spring only acts on XZ
             Assert.That(buffer[0].vel.y, Is.EqualTo(2f).Within(1e-6f));
         }
 
         [Test]
         public void SkipUnanchoredParticles()
         {
+            // Arrange
             SetSpringStrength(50f);
 
             var buffer = new[]
@@ -84,15 +90,18 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: ChatReactionsParticle.ANCHOR_NONE),
             };
 
+            // Act
             var force = new AnchorSpringForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
+            // Assert
             Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
         }
 
         [Test]
         public void NoOpWhenStrengthIsZero()
         {
+            // Arrange
             SetSpringStrength(0f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
@@ -104,20 +113,24 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            // Act
             var force = new AnchorSpringForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
+            // Assert
             Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
         }
 
+        // Verifies that particles bound to a deactivated anchor are not affected by the spring.
         [Test]
         public void SkipInactiveAnchors()
         {
+            // Arrange
             SetSpringStrength(50f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
-            // Deactivate the anchor by refreshing with a provider that returns null
-            anchorTable.Refresh(new NullAvatarPosition());
+            // Deactivate the anchor by refreshing with a provider that returns null for all wallets
+            anchorTable.Refresh(Substitute.For<IAvatarReactionPosition>());
 
             var buffer = new[]
             {
@@ -127,9 +140,11 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            // Act
             var force = new AnchorSpringForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
+            // Assert
             Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
         }
 
@@ -160,13 +175,5 @@ namespace DCL.Chat.ChatReactions.Tests
                 anchorIndex = anchor,
             };
 
-        private class NullAvatarPosition : IAvatarReactionPosition
-        {
-            public Vector3? GetLocalPlayerHeadPosition() => null;
-            public Vector3? GetHeadPosition(string walletId) => null;
-            public System.Collections.Generic.List<Vector3> GetAllNearbyHeadPositions() => new ();
-            public int LastNearbyCount => 0;
-            public int GetNearbyAvatarCount() => 0;
-        }
     }
 }

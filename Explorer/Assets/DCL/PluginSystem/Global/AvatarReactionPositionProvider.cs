@@ -57,22 +57,6 @@ namespace DCL.PluginSystem.Global
             return result.Result.GetAdaptiveNametagPosition();
         }
 
-        public int GetNearbyAvatarCount()
-        {
-            int count = 0;
-
-            foreach (string walletId in entityParticipantTable.Wallets())
-            {
-                if (entityParticipantTable.TryGet(walletId, out var entry)
-                    && world.IsAlive(entry.Entity)
-                    && world.TryGet(entry.Entity, out AvatarBase avatarBase)
-                    && avatarBase != null)
-                    count++;
-            }
-
-            return count;
-        }
-
         public List<Vector3> GetAllNearbyHeadPositions()
         {
             Profiler.BeginSample("ChatReactions.GetNearbyHeads");

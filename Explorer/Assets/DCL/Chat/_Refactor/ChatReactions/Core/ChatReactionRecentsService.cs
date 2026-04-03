@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Debug;
 using DCL.Prefs;
@@ -10,7 +11,7 @@ namespace DCL.Chat.ChatReactions.Core
     /// Most-recently-used is first; oldest drops off when capacity is exceeded.
     /// Persists via <see cref="DCLPlayerPrefs"/> in the format <c>index;index;...</c>.
     /// </summary>
-    public sealed class ChatReactionRecentsService
+    public sealed class ChatReactionRecentsService : IDisposable
     {
         private const char ENTRY_SEPARATOR = ';';
 
@@ -34,6 +35,14 @@ namespace DCL.Chat.ChatReactions.Core
             this.maxRecent = maxRecent;
             Load();
             Current = this;
+        }
+
+        public void Dispose()
+        {
+            FlushIfDirty();
+
+            if (Current == this)
+                Current = null;
         }
 
         /// <summary>

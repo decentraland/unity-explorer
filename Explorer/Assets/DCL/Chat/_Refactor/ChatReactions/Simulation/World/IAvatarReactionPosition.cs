@@ -33,11 +33,5 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         /// Zero-cost — does not re-query the ECS world.
         /// </summary>
         int LastNearbyCount { get; }
-
-        /// <summary>
-        /// Returns the number of remote avatars currently in the scene.
-        /// Lightweight — counts entries without building a position list.
-        /// </summary>
-        int GetNearbyAvatarCount();
     }
 }

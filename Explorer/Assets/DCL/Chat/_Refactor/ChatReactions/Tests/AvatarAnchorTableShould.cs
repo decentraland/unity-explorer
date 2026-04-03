@@ -195,7 +195,6 @@ namespace DCL.Chat.ChatReactions.Tests
             public Vector3? GetLocalPlayerHeadPosition() => Vector3.zero;
             public List<Vector3> GetAllNearbyHeadPositions() => new ();
             public int LastNearbyCount => 0;
-            public int GetNearbyAvatarCount() => 0;
         }
 
         private class FixedPositionAvatarPosition : IAvatarReactionPosition
@@ -211,7 +210,6 @@ namespace DCL.Chat.ChatReactions.Tests
             public Vector3? GetLocalPlayerHeadPosition() => position;
             public List<Vector3> GetAllNearbyHeadPositions() => new ();
             public int LastNearbyCount => 0;
-            public int GetNearbyAvatarCount() => 0;
         }
     }
 }

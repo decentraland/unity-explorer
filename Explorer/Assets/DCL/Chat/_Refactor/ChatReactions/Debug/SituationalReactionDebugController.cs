@@ -79,7 +79,7 @@ namespace DCL.Chat.ChatReactions.Debug
                 worldSimulation.VisibleCount,
                 worldSimulation.VisibleAnchorCount,
                 worldSimulation.PoolCapacity,
-                avatarPosition?.GetNearbyAvatarCount() ?? 0,
+                avatarPosition?.LastNearbyCount ?? 0,
                 uiSimulation.IsStreaming,
                 worldSimulation.IsStreaming,
                 debugNearbyActive,
