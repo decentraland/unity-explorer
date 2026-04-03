@@ -13,11 +13,6 @@ module.exports.publishData = async function (message) {
     CommsApi.PublishData(message.topic, message.data);
 }
 
-// message: { metadata: string }
-module.exports.updateMetadata = async function (message) {
-    CommsApi.UpdateMetadata(message.metadata);
-}
-
 // message: { topic: string }
 module.exports.subscribeToTopic = async function (message) {
     CommsApi.SubscribeToTopic(message.topic);

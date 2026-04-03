@@ -203,7 +203,6 @@ Scenes can exchange messages with other participants in the LiveKit room through
 - `PublishData(topic, data)` — Sends a message to a topic. Rate-limited to **10 messages per second** per topic (`MAX_MESSAGES_PER_SECOND`), with a maximum payload of **16 KB** (`MAX_MESSAGE_SIZE_BYTES`).
 - `SubscribeToTopic(topic)` — Subscribes to a topic so incoming messages are buffered.
 - `ConsumeMessages(topic)` — Returns all buffered messages for a topic and clears the buffer.
-- `UpdateMetadata(metadata)` — Updates the local participant's metadata JSON string, which is broadcast to all other participants by LiveKit.
 
 Messages are buffered per topic in memory and consumed by the scene on demand. Rate limiting uses a sliding window that resets every second.
 
