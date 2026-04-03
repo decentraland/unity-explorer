@@ -52,33 +52,42 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void TriggerLocalBurstWithCorrectParameters()
         {
+            // Arrange
             SetupLocalHeadPosition(HEAD_POS);
             var reactor = CreateReactor();
 
+            // Act
             reactor.TriggerLocalBurst(EMOJI_INDEX);
 
+            // Assert
             spawner.Received(1).TriggerAnchoredReactionLocalPlayer(HEAD_POS, EMOJI_INDEX, worldConfig.BurstCount);
         }
 
         [Test]
         public void TriggerRemoteBurstWithCorrectParameters()
         {
+            // Arrange
             SetupRemoteHeadPosition("wallet_a", HEAD_POS);
             var reactor = CreateReactor();
 
+            // Act
             reactor.TriggerRemoteBurst("wallet_a", EMOJI_INDEX, 5);
 
+            // Assert
             spawner.Received(1).TriggerAnchoredReaction(HEAD_POS, "wallet_a", EMOJI_INDEX, 5);
         }
 
         [Test]
         public void BeginStreamWithCorrectParameters()
         {
+            // Arrange
             SetupLocalHeadPosition(HEAD_POS);
             var reactor = CreateReactor();
 
+            // Act
             reactor.BeginStream();
 
+            // Assert
             spawner.Received(1).BeginStream(
                 Arg.Any<Func<Vector3?>>(),
                 -1,
@@ -88,10 +97,13 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void EndStreamAlways()
         {
+            // Arrange
             var reactor = CreateReactorWithNullAvatar();
 
+            // Act
             reactor.EndStream();
 
+            // Assert
             spawner.Received(1).EndStream();
         }
 
@@ -100,11 +112,14 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void SyncStreamStateBeginWhenStreamingAndEnabled()
         {
+            // Arrange
             SetupLocalHeadPosition(HEAD_POS);
             var reactor = CreateReactor();
 
+            // Act
             reactor.SyncStreamState(true);
 
+            // Assert
             spawner.Received(1).BeginStream(
                 Arg.Any<Func<Vector3?>>(),
                 -1,
@@ -114,12 +129,15 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void SyncStreamStateEndWhenStreamingButDisabled()
         {
+            // Arrange
             SetupLocalHeadPosition(HEAD_POS);
             var reactor = CreateReactor();
             reactor.WorldReactionsEnabled = false;
 
+            // Act
             reactor.SyncStreamState(true);
 
+            // Assert
             spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.Received(1).EndStream();
         }
@@ -127,22 +145,29 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void SyncStreamStateEndWhenNotStreaming()
         {
+            // Arrange
             SetupLocalHeadPosition(HEAD_POS);
             var reactor = CreateReactor();
 
+            // Act
             reactor.SyncStreamState(false);
 
+            // Assert
             spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.Received(1).EndStream();
         }
 
+        // When no avatar position provider exists, sync should silently do nothing.
         [Test]
         public void SyncStreamStateNoOpWhenAvatarPositionIsNull()
         {
+            // Arrange
             var reactor = CreateReactorWithNullAvatar();
 
+            // Act
             reactor.SyncStreamState(true);
 
+            // Assert
             spawner.DidNotReceiveWithAnyArgs().BeginStream(default, default, default);
             spawner.DidNotReceiveWithAnyArgs().EndStream();
         }

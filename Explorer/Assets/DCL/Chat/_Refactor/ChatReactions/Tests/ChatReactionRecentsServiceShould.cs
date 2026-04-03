@@ -40,12 +40,18 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(service.Recents.Count, Is.EqualTo(0));
         }
 
+        // Emojis already in the fixed defaults row should not appear in the recents list.
         [Test]
         public void IgnoreFixedDefaults()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
+
+            // Act
             service.RecordUsage(0); // fixed default
             service.RecordUsage(1); // fixed default
+
+            // Assert
             Assert.That(service.Recents.Count, Is.EqualTo(0));
         }
 
@@ -61,12 +67,15 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void PlaceMostRecentFirst()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
+            // Act
             service.RecordUsage(10);
             service.RecordUsage(20);
             service.RecordUsage(30);
 
+            // Assert
             Assert.That(service.Recents[0], Is.EqualTo(30)); // most recent
             Assert.That(service.Recents[1], Is.EqualTo(20));
             Assert.That(service.Recents[2], Is.EqualTo(10)); // oldest
@@ -75,15 +84,17 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void MoveToFrontOnReuse()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
             service.RecordUsage(10);
             service.RecordUsage(20);
             service.RecordUsage(30);
 
-            // Re-use 10 — it should jump to front.
+            // Act — re-use 10, it should jump to front
             service.RecordUsage(10);
 
+            // Assert
             Assert.That(service.Recents[0], Is.EqualTo(10));
             Assert.That(service.Recents[1], Is.EqualTo(30));
             Assert.That(service.Recents[2], Is.EqualTo(20));
@@ -93,41 +104,51 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DropOldestWhenCapacityExceeded()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
             service.RecordUsage(10);
             service.RecordUsage(20);
             service.RecordUsage(30);
-            service.RecordUsage(40); // 10 should be evicted
 
+            // Act — 10 should be evicted
+            service.RecordUsage(40);
+
+            // Assert
             Assert.That(service.Recents.Count, Is.EqualTo(MAX_RECENT));
             Assert.That(service.Recents[0], Is.EqualTo(40));
             Assert.That(service.Recents[1], Is.EqualTo(30));
             Assert.That(service.Recents[2], Is.EqualTo(20));
         }
 
+        // A second instance created before flush should see nothing, verifying save is deferred.
         [Test]
         public void NotPersistUntilFlushed()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             service.RecordUsage(10);
             service.RecordUsage(20);
 
-            // Create a second instance — reads from prefs.
-            // If save was deferred, the second instance should NOT see the data.
+            // Act
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
+
+            // Assert
             Assert.That(service2.Recents.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void PersistAfterFlush()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             service.RecordUsage(10);
             service.RecordUsage(20);
+
+            // Act
             service.FlushIfDirty();
 
-            // New instance should see the persisted data in recency order.
+            // Assert — new instance should see the persisted data in recency order
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             Assert.That(service2.Recents.Count, Is.EqualTo(2));
             Assert.That(service2.Recents[0], Is.EqualTo(20)); // most recent
@@ -137,10 +158,13 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void FlushIsNoOpWhenClean()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
-            // No RecordUsage calls — nothing dirty.
-            service.FlushIfDirty(); // should not throw or write
 
+            // Act — no RecordUsage calls, nothing dirty
+            service.FlushIfDirty();
+
+            // Assert
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             Assert.That(service2.Recents.Count, Is.EqualTo(0));
         }
@@ -148,24 +172,30 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DoubleFlushIsNoOp()
         {
+            // Arrange
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             service.RecordUsage(10);
-            service.FlushIfDirty();
-            service.FlushIfDirty(); // second flush — should be no-op, no error
 
+            // Act
+            service.FlushIfDirty();
+            service.FlushIfDirty(); // second flush should be a no-op
+
+            // Assert
             var service2 = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
             Assert.That(service2.Recents.Count, Is.EqualTo(1));
         }
 
+        // The old prefs format stored "index:count" pairs; the service should extract indices only.
         [Test]
         public void ParseLegacyFormatWithCounts()
         {
-            // Simulate old format: "10:5;20:3" (index:count pairs)
+            // Arrange
             DCLPlayerPrefs.SetString(DCLPrefKeys.CHAT_REACTION_FAVORITES, "10:5;20:3");
 
+            // Act
             var service = new ChatReactionRecentsService(FIXED_DEFAULTS, MAX_RECENT);
 
-            // Should pick up the indices (10, 20) and ignore the counts.
+            // Assert
             Assert.That(service.Recents.Count, Is.EqualTo(2));
             Assert.That(service.Recents[0], Is.EqualTo(10));
             Assert.That(service.Recents[1], Is.EqualTo(20));

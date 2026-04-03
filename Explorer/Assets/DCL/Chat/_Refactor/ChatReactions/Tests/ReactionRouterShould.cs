@@ -31,10 +31,13 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DispatchSituationalReactionToCorrectTarget()
         {
+            // Arrange
             var args = MakeArgs(ReactionType.Situational);
 
+            // Act
             fakeBus.Fire(args);
 
+            // Assert
             Assert.That(situationalTarget.Received.Count, Is.EqualTo(1));
             Assert.That(messageTarget.Received.Count, Is.EqualTo(0));
         }
@@ -42,10 +45,13 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DispatchMessageReactionToCorrectTarget()
         {
+            // Arrange
             var args = MakeArgs(ReactionType.Message);
 
+            // Act
             fakeBus.Fire(args);
 
+            // Assert
             Assert.That(messageTarget.Received.Count, Is.EqualTo(1));
             Assert.That(situationalTarget.Received.Count, Is.EqualTo(0));
         }
@@ -53,30 +59,20 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void NotDispatchAfterDispose()
         {
+            // Arrange
             router.Dispose();
 
+            // Act
             fakeBus.Fire(MakeArgs(ReactionType.Situational));
             fakeBus.Fire(MakeArgs(ReactionType.Message));
 
+            // Assert
             Assert.That(situationalTarget.Received.Count, Is.EqualTo(0));
             Assert.That(messageTarget.Received.Count, Is.EqualTo(0));
         }
 
         private static ReactionReceivedArgs MakeArgs(ReactionType type) =>
             new ("0xTestWallet", 1, 1, type, "msg-001");
-
-        private sealed class FakeReactionBus : IReactionMessageBus
-        {
-            public event Action<ReactionReceivedArgs>? ReactionReceived;
-
-            public void Fire(ReactionReceivedArgs args) => ReactionReceived?.Invoke(args);
-
-            public void SendSituationalReaction(int emojiIndex, int count = 1, float overrideTimestamp = 0f) { }
-
-            public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing) { }
-
-            public void Dispose() { }
-        }
 
         private sealed class FakeRemoteReactionTarget : IRemoteReactionTarget
         {

@@ -11,19 +11,27 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void FillToCapacityWithTryAdd()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
+            // Act
             for (int i = 0; i < 64; i++)
                 Assert.That(store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = i }), Is.True);
 
+            // Assert
             Assert.That(store.Count, Is.EqualTo(64));
         }
 
         [Test]
         public void TryAddSucceedsWhenNotFull()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
+
+            // Act
             bool added = store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 0 });
+
+            // Assert
             Assert.That(added, Is.True);
             Assert.That(store.Count, Is.EqualTo(1));
         }
@@ -31,12 +39,16 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void TryAddFailsWhenFull()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
             for (int i = 0; i < 64; i++)
                 store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = i });
 
+            // Act
             bool added = store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 999 });
+
+            // Assert
             Assert.That(added, Is.False);
             Assert.That(store.Count, Is.EqualTo(64));
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(0)); // not overwritten
@@ -45,19 +57,25 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ForceAddOverwritesWhenFull()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
             for (int i = 0; i < 64; i++)
                 store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = i });
 
+            // Act
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 900 });
+
+            // Assert
             Assert.That(store.Count, Is.EqualTo(64));
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(900));
         }
 
+        // Verifies round-robin advances the overwrite cursor so consecutive overflows hit different slots.
         [Test]
         public void OverwriteRoundRobinWhenFull()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
             for (int i = 0; i < 64; i++)
@@ -65,6 +83,7 @@ namespace DCL.Chat.ChatReactions.Tests
 
             Assert.That(store.Count, Is.EqualTo(64));
 
+            // Act & Assert — sequential overflows should advance the cursor
             // First overflow → index 0
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 900 });
             Assert.That(store.Count, Is.EqualTo(64));
@@ -79,16 +98,18 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DistributeOverflowAcrossSlots()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
             for (int i = 0; i < 64; i++)
                 store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = i });
 
-            // Overflow 3 times — should hit indices 0, 1, 2 in order
+            // Act — Overflow 3 times — should hit indices 0, 1, 2 in order
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 100 });
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 101 });
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 102 });
 
+            // Assert
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(100));
             Assert.That(store.Buffer[1].emojiIndex, Is.EqualTo(101));
             Assert.That(store.Buffer[2].emojiIndex, Is.EqualTo(102));
@@ -101,21 +122,26 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void CompactDeadParticles()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
             store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 0 });
             store.TryAdd(new ChatReactionsParticle { alive = 0, emojiIndex = 1 }); // dead
             store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 2 });
 
+            // Act
             store.CompactDead();
 
+            // Assert
             Assert.That(store.Count, Is.EqualTo(2));
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(0));
             Assert.That(store.Buffer[1].emojiIndex, Is.EqualTo(2));
         }
 
+        // Verifies that CompactDead resets the overwrite cursor so subsequent overflows start from index 0.
         [Test]
         public void CompactDeadResetsOverwriteCursor()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
             // Fill to capacity
@@ -140,18 +166,23 @@ namespace DCL.Chat.ChatReactions.Tests
 
             Assert.That(store.Count, Is.EqualTo(64));
 
-            // Next overflow should hit index 0 (cursor was reset), not index 3
+            // Act — Next overflow should hit index 0 (cursor was reset), not index 3
             store.ForceAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 999 });
+
+            // Assert
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(999));
         }
 
         [Test]
         public void CompactDeadOnEmptyStoreIsNoOp()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
 
+            // Act
             store.CompactDead();
 
+            // Assert
             Assert.That(store.Count, Is.EqualTo(0));
             Assert.That(store.Capacity, Is.EqualTo(64));
         }
@@ -159,6 +190,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void AddAfterCompactFillsGapCorrectly()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsParticle>(64);
             store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 0 });
             store.TryAdd(new ChatReactionsParticle { alive = 0, emojiIndex = 1 }); // dead
@@ -169,10 +201,11 @@ namespace DCL.Chat.ChatReactions.Tests
             store.CompactDead();
             Assert.That(store.Count, Is.EqualTo(3));
 
-            // Add new particles — they should fill after the compacted survivors
+            // Act — Add new particles — they should fill after the compacted survivors
             store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 10 });
             store.TryAdd(new ChatReactionsParticle { alive = 1, emojiIndex = 11 });
 
+            // Assert
             Assert.That(store.Count, Is.EqualTo(5));
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(0));
             Assert.That(store.Buffer[1].emojiIndex, Is.EqualTo(2));
@@ -181,6 +214,7 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(store.Buffer[4].emojiIndex, Is.EqualTo(11));
         }
 
+        // Capacity below the minimum threshold is clamped up to the minimum (64).
         [Test]
         public void CapacityReturnsClampedValue()
         {
@@ -188,15 +222,19 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(store.Capacity, Is.EqualTo(64));
         }
 
+        // Verifies the store is generic and works with a different particle struct type.
         [Test]
         public void WorkWithUiParticles()
         {
+            // Arrange
             var store = new DenseParticleStore<ChatReactionsUiParticle>(64);
             store.TryAdd(new ChatReactionsUiParticle { alive = 1, emojiIndex = 5 });
             store.TryAdd(new ChatReactionsUiParticle { alive = 0 }); // dead
 
+            // Act
             store.CompactDead();
 
+            // Assert
             Assert.That(store.Count, Is.EqualTo(1));
             Assert.That(store.Buffer[0].emojiIndex, Is.EqualTo(5));
         }

@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [TearDown]
         public void TearDown()
         {
-            service.Dispose();
+            service?.Dispose();
             OfficialWalletsHelper.Reset();
             FeatureFlagsConfiguration.Reset();
         }
@@ -44,36 +44,39 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ResolveMessageAddedViaEvent()
         {
+            // Arrange
             ChatChannel channel = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
             ChatMessage msg = CreateMessage("walletA", 1000);
             channel.AddMessage(msg);
 
-            // ToggleReaction should succeed — message was registered via MessageAdded event
+            // Act — ToggleReaction should succeed because message was registered via MessageAdded event
             service.ToggleReaction(msg.MessageId, emojiIndex: 0);
 
+            // Assert
             ReactionSet? reactions = channel.GetReactions(msg.MessageId);
             Assert.That(reactions, Is.Not.Null);
             Assert.That(reactions!.HasReacted(0, ownWallet), Is.True);
         }
 
+        // FillChannel bypasses the MessageAdded event, so batch registration must be called explicitly.
         [Test]
         public void ResolveMessageRegisteredViaBatchRegistration()
         {
+            // Arrange
             var channelId = new ChatChannel.ChannelId("dm_user1");
             ChatChannel channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
 
-            // FillChannel does NOT fire MessageAdded — simulates history load
             var messages = new List<ChatMessage> { CreateMessage("walletA", 2000) };
             channel.FillChannel(messages);
-
-            // Explicit batch registration
             service.RegisterChannelMessages(channel);
 
+            // Act
             string messageId = messages[0].MessageId;
             service.ToggleReaction(messageId, emojiIndex: 1);
 
+            // Assert
             ReactionSet? reactions = channel.GetReactions(messageId);
             Assert.That(reactions, Is.Not.Null);
             Assert.That(reactions!.HasReacted(1, ownWallet), Is.True);
@@ -82,6 +85,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void PurgeOnlyTargetChannelOnClear()
         {
+            // Arrange
             ChatChannel nearby = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
@@ -94,16 +98,16 @@ namespace DCL.Chat.ChatReactions.Tests
             nearby.AddMessage(nearbyMsg);
             dm.AddMessage(dmMsg);
 
-            // Clear nearby — should purge nearby entries only
+            // Act
             chatHistory.ClearChannel(nearby.Id);
 
-            // DM message should still be resolvable
+            // Assert — DM message should still be resolvable
             service.ToggleReaction(dmMsg.MessageId, emojiIndex: 0);
             ReactionSet? dmReactions = dm.GetReactions(dmMsg.MessageId);
             Assert.That(dmReactions, Is.Not.Null);
             Assert.That(dmReactions!.HasReacted(0, ownWallet), Is.True);
 
-            // Nearby message should no longer be resolvable (no reaction added)
+            // Assert — nearby message should no longer be resolvable
             service.ToggleReaction(nearbyMsg.MessageId, emojiIndex: 0);
             ReactionSet? nearbyReactions = nearby.GetReactions(nearbyMsg.MessageId);
             Assert.That(nearbyReactions, Is.Null);
@@ -112,6 +116,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void PurgeOnlyTargetChannelOnRemove()
         {
+            // Arrange
             ChatChannel nearby = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
@@ -124,10 +129,10 @@ namespace DCL.Chat.ChatReactions.Tests
             nearby.AddMessage(nearbyMsg);
             dm.AddMessage(dmMsg);
 
-            // Remove DM channel — should purge DM entries only
+            // Act
             chatHistory.RemoveChannel(dm.Id);
 
-            // Nearby message should still be resolvable
+            // Assert — nearby message should still be resolvable
             service.ToggleReaction(nearbyMsg.MessageId, emojiIndex: 0);
             ReactionSet? nearbyReactions = nearby.GetReactions(nearbyMsg.MessageId);
             Assert.That(nearbyReactions, Is.Not.Null);
@@ -143,27 +148,29 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ToggleOffExistingReaction()
         {
+            // Arrange
             ChatChannel channel = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
             ChatMessage msg = CreateMessage("walletA", 1000);
             channel.AddMessage(msg);
 
-            // Add reaction
             service.ToggleReaction(msg.MessageId, emojiIndex: 2);
             Assert.That(channel.GetReactions(msg.MessageId)!.HasReacted(2, ownWallet), Is.True);
 
-            // Toggle again — should remove
+            // Act — toggle the same reaction again to remove it
             service.ToggleReaction(msg.MessageId, emojiIndex: 2);
-            ReactionSet? reactions = channel.GetReactions(msg.MessageId);
 
-            // ReactionSet is removed entirely when empty
+            // Assert — ReactionSet is removed entirely when empty
+            ReactionSet? reactions = channel.GetReactions(msg.MessageId);
             Assert.That(reactions, Is.Null);
         }
 
+        // Verifies that the service stops tracking new messages once disposed.
         [Test]
         public void NotRegisterNewMessagesAfterDispose()
         {
+            // Arrange
             service.Dispose();
 
             ChatChannel channel = chatHistory.AddOrGetChannel(
@@ -172,9 +179,10 @@ namespace DCL.Chat.ChatReactions.Tests
             ChatMessage msg = CreateMessage("walletA", 1000);
             channel.AddMessage(msg);
 
-            // Message was added after dispose — should not be resolvable
+            // Act
             service.ToggleReaction(msg.MessageId, emojiIndex: 0);
 
+            // Assert
             ReactionSet? reactions = channel.GetReactions(msg.MessageId);
             Assert.That(reactions, Is.Null);
         }
@@ -182,6 +190,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void HandleMultipleMessagesInSameChannel()
         {
+            // Arrange
             ChatChannel channel = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
@@ -193,11 +202,12 @@ namespace DCL.Chat.ChatReactions.Tests
             channel.AddMessage(msg2);
             channel.AddMessage(msg3);
 
-            // All three should be resolvable
+            // Act
             service.ToggleReaction(msg1.MessageId, emojiIndex: 0);
             service.ToggleReaction(msg2.MessageId, emojiIndex: 1);
             service.ToggleReaction(msg3.MessageId, emojiIndex: 2);
 
+            // Assert
             Assert.That(channel.GetReactions(msg1.MessageId)!.HasReacted(0, ownWallet), Is.True);
             Assert.That(channel.GetReactions(msg2.MessageId)!.HasReacted(1, ownWallet), Is.True);
             Assert.That(channel.GetReactions(msg3.MessageId)!.HasReacted(2, ownWallet), Is.True);
@@ -206,6 +216,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void FireReactionPersistenceRequestedOnToggle()
         {
+            // Arrange
             ChatChannel channel = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("nearby"), ChatChannel.ChatChannelType.NEARBY);
 
@@ -225,8 +236,10 @@ namespace DCL.Chat.ChatReactions.Tests
                 capturedIsRemoval = isRemoval;
             };
 
+            // Act
             service.ToggleReaction(msg.MessageId, emojiIndex: 3);
 
+            // Assert
             Assert.That(capturedChannelId, Is.Not.Null);
             Assert.That(capturedChannelId!.Value.Id, Is.EqualTo("nearby"));
             Assert.That(capturedMessageId, Is.EqualTo(msg.MessageId));
@@ -234,9 +247,11 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(capturedIsRemoval, Is.False);
         }
 
+        // Simulates re-opening a channel after it was cleared and its history reloaded.
         [Test]
         public void ReRegisterMessagesAfterClearAndReload()
         {
+            // Arrange
             ChatChannel channel = chatHistory.AddOrGetChannel(
                 new ChatChannel.ChannelId("dm_user1"), ChatChannel.ChatChannelType.USER);
 
@@ -244,17 +259,16 @@ namespace DCL.Chat.ChatReactions.Tests
             channel.AddMessage(msg);
             string messageId = msg.MessageId;
 
-            // Clear the channel
             chatHistory.ClearChannel(channel.Id);
 
-            // Re-add the same message (simulates re-opening channel and loading history)
             var reloaded = new List<ChatMessage> { CreateMessage("walletA", 1000) };
             channel.FillChannel(reloaded);
             service.RegisterChannelMessages(channel);
 
-            // Should be resolvable again
+            // Act
             service.ToggleReaction(messageId, emojiIndex: 0);
 
+            // Assert
             ReactionSet? reactions = channel.GetReactions(messageId);
             Assert.That(reactions, Is.Not.Null);
             Assert.That(reactions!.HasReacted(0, ownWallet), Is.True);
@@ -265,22 +279,6 @@ namespace DCL.Chat.ChatReactions.Tests
         private static ChatMessage CreateMessage(string walletAddress, double timestamp) =>
             new ("hello", "User", walletAddress, false, walletAddress, timestamp);
 
-        /// <summary>
-        /// Minimal fake that records calls. Avoids NSubstitute for value-type arg capture.
-        /// </summary>
-        private sealed class FakeReactionBus : IReactionMessageBus
-        {
-            public readonly List<(int EmojiIndex, string MessageId, ReactionChannelRouting Routing)> MessageSends = new ();
-
-            public event Action<ReactionReceivedArgs>? ReactionReceived;
-
-            public void SendSituationalReaction(int emojiIndex, int count = 1, float overrideTimestamp = 0f) { }
-
-            public void SendMessageReaction(int emojiIndex, string messageId, ReactionChannelRouting routing) =>
-                MessageSends.Add((emojiIndex, messageId, routing));
-
-            public void Dispose() { }
-        }
     }
 }
 

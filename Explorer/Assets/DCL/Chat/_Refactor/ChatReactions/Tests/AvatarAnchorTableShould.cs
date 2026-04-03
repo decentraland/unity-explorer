@@ -19,8 +19,10 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void AllocateSlotForNewWallet()
         {
+            // Act
             byte slot = table.Allocate("wallet_A", Vector3.one);
 
+            // Assert
             Assert.That(slot, Is.Not.EqualTo(AvatarAnchorTable.ANCHOR_NONE));
             Assert.That(table.IsActive(slot), Is.True);
         }
@@ -28,58 +30,66 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ReturnSameSlotForExistingWallet()
         {
+            // Arrange
             byte first = table.Allocate("wallet_A", Vector3.zero);
+
+            // Act
             byte second = table.Allocate("wallet_A", Vector3.one);
 
+            // Assert
             Assert.That(second, Is.EqualTo(first));
         }
 
         [Test]
         public void UpdatePositionOnReallocation()
         {
+            // Arrange
             var updatedPos = new Vector3(5, 10, 15);
             byte slot = table.Allocate("wallet_A", Vector3.zero);
+
+            // Act
             table.Allocate("wallet_A", updatedPos);
 
+            // Assert
             Assert.That(table.GetPosition(slot), Is.EqualTo(updatedPos));
         }
 
         [Test]
         public void AllocateDifferentSlotsForDifferentWallets()
         {
+            // Act
             byte a = table.Allocate("wallet_A", Vector3.zero);
             byte b = table.Allocate("wallet_B", Vector3.one);
 
+            // Assert
             Assert.That(a, Is.Not.EqualTo(b));
         }
 
+        // Verifies that a slot freed by Refresh is reclaimed by the next allocation.
         [Test]
         public void ReuseDeactivatedSlots()
         {
-            // Allocate 3 wallets → slots 0, 1, 2
+            // Arrange — allocate 3 wallets to slots 0, 1, 2
             table.Allocate("wallet_A", Vector3.zero);
             table.Allocate("wallet_B", Vector3.zero);
             table.Allocate("wallet_C", Vector3.zero);
 
-            // Deactivate wallet_B (slot 1) by having Refresh remove it
-            // We simulate this indirectly: allocate enough to fill, then rely on
-            // FindFirstInactiveSlot. Instead, test that after a Refresh that removes
-            // an avatar, the slot becomes reusable.
-
-            // Use Refresh with a provider that returns null for wallet_B
+            // Deactivate wallet_B (slot 1) via Refresh that returns null for it
             var provider = new SelectiveAvatarPosition("wallet_A", "wallet_C");
             table.Refresh(provider);
 
-            // wallet_B's slot should now be inactive
-            // Allocating a new wallet should reuse slot 1 (first inactive)
+            // Act — allocating a new wallet should reuse slot 1 (first inactive)
             byte newSlot = table.Allocate("wallet_D", Vector3.zero);
+
+            // Assert
             Assert.That(newSlot, Is.EqualTo(1));
         }
 
+        // Confirms the internal scan limit contracts when trailing slots become inactive.
         [Test]
         public void ShrinkScanLimitWhenTrailingSlotsDeactivate()
         {
-            // Allocate 3 wallets → slots 0, 1, 2 → scanLimit = 3
+            // Arrange — allocate 3 wallets to slots 0, 1, 2
             table.Allocate("wallet_A", Vector3.zero);
             table.Allocate("wallet_B", Vector3.zero);
             table.Allocate("wallet_C", Vector3.zero);
@@ -88,15 +98,18 @@ namespace DCL.Chat.ChatReactions.Tests
             var provider = new SelectiveAvatarPosition("wallet_A", "wallet_B");
             table.Refresh(provider);
 
-            // Now allocate wallet_D — should go to slot 2 (scanLimit shrunk, slot 2 is free)
+            // Act
             byte slot = table.Allocate("wallet_D", Vector3.zero);
+
+            // Assert — should go to slot 2 since scanLimit shrunk
             Assert.That(slot, Is.EqualTo(2));
         }
 
+        // Ensures the scan limit stays wide when a gap opens in the middle, not the tail.
         [Test]
         public void NotShrinkScanLimitWhenMiddleSlotDeactivates()
         {
-            // Allocate 3 wallets → slots 0, 1, 2 → scanLimit = 3
+            // Arrange — allocate 3 wallets to slots 0, 1, 2
             table.Allocate("wallet_A", Vector3.zero);
             table.Allocate("wallet_B", Vector3.zero);
             table.Allocate("wallet_C", Vector3.zero);
@@ -105,28 +118,29 @@ namespace DCL.Chat.ChatReactions.Tests
             var provider = new SelectiveAvatarPosition("wallet_B", "wallet_C");
             table.Refresh(provider);
 
-            // wallet_C at slot 2 should still be active
-            Assert.That(table.IsActive(2), Is.True);
-
-            // New allocation should reuse slot 0
+            // Act
             byte slot = table.Allocate("wallet_D", Vector3.zero);
+
+            // Assert — wallet_C at slot 2 is still active; new wallet reuses slot 0
+            Assert.That(table.IsActive(2), Is.True);
             Assert.That(slot, Is.EqualTo(0));
         }
 
         [Test]
         public void ShrinkScanLimitToZeroWhenAllDeactivate()
         {
+            // Arrange
             table.Allocate("wallet_A", Vector3.zero);
             table.Allocate("wallet_B", Vector3.zero);
 
-            // Deactivate all
+            // Act — deactivate all anchors
             var emptyProvider = new SelectiveAvatarPosition();
             table.Refresh(emptyProvider);
 
+            // Assert — both slots inactive, next allocation reuses slot 0
             Assert.That(table.IsActive(0), Is.False);
             Assert.That(table.IsActive(1), Is.False);
 
-            // Next allocation should start from slot 0 again
             byte slot = table.Allocate("wallet_C", Vector3.one);
             Assert.That(slot, Is.EqualTo(0));
         }
@@ -143,12 +157,15 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void RefreshPositionsFromProvider()
         {
+            // Arrange
             table.Allocate("wallet_A", Vector3.zero);
-
             var updatedPos = new Vector3(10, 20, 30);
             var provider = new FixedPositionAvatarPosition(updatedPos);
+
+            // Act
             table.Refresh(provider);
 
+            // Assert
             Assert.That(table.GetPosition(0), Is.EqualTo(updatedPos));
         }
 

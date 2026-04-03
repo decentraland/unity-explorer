@@ -20,26 +20,33 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DrainAllImmediatelyWhenStaggerDisabled()
         {
+            // Arrange
             receiver = new RemoteReactionReceiver(() => 0f, processed.Add);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
+
+            // Act
             receiver.Tick(0.016f);
 
+            // Assert
             Assert.That(processed.Count, Is.EqualTo(2));
             Assert.That(processed[0].EmojiIndex, Is.EqualTo(1));
             Assert.That(processed[1].EmojiIndex, Is.EqualTo(2));
         }
 
+        // Verifies the stagger timer allows only one drain per interval, spacing out processing across ticks.
         [Test]
         public void StaggerDrainOnePerInterval()
         {
+            // Arrange
             receiver = new RemoteReactionReceiver(() => 0.1f, processed.Add);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
             receiver.Enqueue(MakeArgs("wallet_c", emojiIndex: 3, count: 1));
 
+            // Act & Assert — stepped ticks to verify one-per-interval drain
             // First tick (0.05s): timer 0 - 0.05 = -0.05 <= 0 → drain #1, timer becomes 0.05
             receiver.Tick(0.05f);
             Assert.That(processed.Count, Is.EqualTo(1));
@@ -53,14 +60,18 @@ namespace DCL.Chat.ChatReactions.Tests
             Assert.That(processed.Count, Is.EqualTo(2));
         }
 
+        // Verifies that a high count is clamped to the max-expand limit, producing individual items.
         [Test]
         public void ClampCountToMaxExpand()
         {
+            // Arrange
             receiver = new RemoteReactionReceiver(() => 0f, processed.Add);
 
+            // Act
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 7, count: 50));
             receiver.Tick(0.016f);
 
+            // Assert
             Assert.That(processed.Count, Is.EqualTo(20));
 
             for (int i = 0; i < processed.Count; i++)
@@ -70,16 +81,21 @@ namespace DCL.Chat.ChatReactions.Tests
             }
         }
 
+        // Ensures the stagger timer resets to zero when the queue empties, so the next enqueue drains immediately.
         [Test]
         public void ResetStaggerTimerWhenQueueEmpties()
         {
+            // Arrange
             receiver = new RemoteReactionReceiver(() => 0.1f, processed.Add);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Tick(0.2f);
 
+            // Act
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
             receiver.Tick(0.001f);
+
+            // Assert
             Assert.That(processed.Count, Is.EqualTo(2));
         }
 
