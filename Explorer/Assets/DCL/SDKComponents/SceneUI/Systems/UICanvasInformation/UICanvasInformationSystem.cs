@@ -82,7 +82,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 #elif UNITY_WEBGL
             return 1f;
 #else
-            return Screen.mainWindowDisplayInfo.width / (float)Screen.width;
+            return Screen.width > 0 ? Screen.mainWindowDisplayInfo.width / (float)Screen.width : 1f;
 #endif
         }
 
