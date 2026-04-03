@@ -50,6 +50,8 @@ namespace DCL.Chat.History
             public Stream Content;
             public bool IsInitialized;
             public float LastMessageTime = float.MaxValue;
+            public Stream ReactionContent;
+            public float LastReactionTime = float.MaxValue;
         }
 
         private struct MessageToProcess
@@ -290,6 +292,9 @@ namespace DCL.Chat.History
 
                     if (channelFile.Content != null)
                         CloseChannelFile(channelFilePair.Key);
+
+                    if (channelFile.ReactionContent != null)
+                        CloseReactionFile(channelFilePair.Key);
                 }
 
                 channelFiles.Clear();
@@ -341,6 +346,9 @@ namespace DCL.Chat.History
             {
                 if(channelFilePair.Value.Content != null)
                     CloseChannelFile(channelFilePair.Key);
+
+                if(channelFilePair.Value.ReactionContent != null)
+                    CloseReactionFile(channelFilePair.Key);
             }
         }
 
@@ -541,6 +549,9 @@ namespace DCL.Chat.History
                     {
                         if(channelFilePair.Value.Content != null && Time.realtimeSinceStartup - channelFilePair.Value.LastMessageTime >= TIMEOUT)
                             CloseChannelFile(channelFilePair.Key);
+
+                        if(channelFilePair.Value.ReactionContent != null && Time.realtimeSinceStartup - channelFilePair.Value.LastReactionTime >= TIMEOUT)
+                            CloseReactionFile(channelFilePair.Key);
                     }
                 }
 
@@ -713,23 +724,77 @@ namespace DCL.Chat.History
         {
             try
             {
-                string reactionFilePath = GetReactionFilePath(reaction.ChannelId);
-                CreateUserFolderIfDoesNotExist();
+                ChannelFile channelFile = OpenReactionFileForWriting(reaction.ChannelId);
 
-                ReportHub.Log(reportData, $"[ReactionPersistence] Writing to file: {reactionFilePath}");
+                if (channelFile == null)
+                    return;
 
-                using (var fileStream = new FileStream(reactionFilePath, FileMode.Append))
-                using (Stream encryptingStream = chatEncryptor.CreateEncryptionStreamWriter(fileStream))
-                {
-                    chatSerializer.AppendReactionEntry(reaction.MessageId, reaction.EmojiIndex, reaction.WalletAddress, reaction.IsRemoval, encryptingStream);
-                }
+                channelFile.LastReactionTime = Time.realtimeSinceStartup;
+                chatSerializer.AppendReactionEntry(reaction.MessageId, reaction.EmojiIndex, reaction.WalletAddress, reaction.IsRemoval, channelFile.ReactionContent);
 
-                long fileSize = File.Exists(reactionFilePath) ? new FileInfo(reactionFilePath).Length : 0;
-                ReportHub.Log(reportData, $"[ReactionPersistence] Written. File size now: {fileSize} bytes");
+                ReportHub.Log(reportData, $"[ReactionPersistence] Reaction appended for channel {reaction.ChannelId.Id}");
             }
             catch (Exception e)
             {
                 ReportHub.LogError(reportData, $"[ReactionPersistence] Error appending reaction to file for channel {reaction.ChannelId.Id}. {e.Message} {e.StackTrace}");
+            }
+        }
+
+        private ChannelFile OpenReactionFileForWriting(ChatChannel.ChannelId channelId)
+        {
+            ReportHub.Log(reportData, $"Opening reaction file (writing) for " + channelId.Id);
+
+            ChannelFile channelFile = GetOrCreateChannelFile(channelId);
+
+            if (channelFile == null)
+                return null;
+
+            try
+            {
+                if (channelFile.ReactionContent == null)
+                {
+                    string reactionFilePath = GetReactionFilePath(channelId);
+                    CreateUserFolderIfDoesNotExist();
+                    channelFile.ReactionContent = chatEncryptor.CreateEncryptionStreamWriter(new FileStream(reactionFilePath, FileMode.Append));
+                }
+
+                ReportHub.Log(reportData, $"Reaction file opened (writing) for " + channelId.Id);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportData, $"Error opening reaction file for writing for Id: {channelId.Id}. {e.Message} {e.StackTrace}");
+
+                channelFile.ReactionContent?.Dispose();
+                channelFile.ReactionContent = null;
+            }
+
+            return channelFile;
+        }
+
+        private void CloseReactionFile(ChatChannel.ChannelId channelId)
+        {
+            ChannelFile channelFile;
+
+            lock (channelsLocker)
+            {
+                if (!channelFiles.TryGetValue(channelId, out channelFile) || channelFile.ReactionContent == null)
+                    return;
+            }
+
+            try
+            {
+                ReportHub.Log(reportData, $"Closing reaction file for Id {channelId.Id}");
+
+                channelFile.ReactionContent.Dispose();
+                channelFile.ReactionContent = null;
+
+                ReportHub.Log(reportData, $"Reaction file closed for " + channelId.Id);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportData, $"Error closing reaction file for Id: {channelId.Id}. {e.Message} {e.StackTrace}");
+
+                channelFile.ReactionContent = null;
             }
         }
 
@@ -847,6 +912,9 @@ namespace DCL.Chat.History
 
             if (File.Exists(reactionFilePath))
             {
+                if (channelFile?.ReactionContent != null)
+                    CloseReactionFile(clearedChannel.Id);
+
                 File.Create(reactionFilePath).Dispose();
                 ReportHub.Log(reportData, $"Reaction file cleared at {reactionFilePath}");
             }
@@ -860,9 +928,10 @@ namespace DCL.Chat.History
             lock (channelsLocker)
             {
                 if (channelFile.Content != null)
-                {
                     CloseChannelFile(removedChannel);
-                }
+
+                if (channelFile.ReactionContent != null)
+                    CloseReactionFile(removedChannel);
 
                 channelFiles.Remove(removedChannel);
             }
@@ -871,10 +940,13 @@ namespace DCL.Chat.History
             StoreConversationSettings();
 
             channelFile.LastMessageTime = float.MaxValue;
+            channelFile.LastReactionTime = float.MaxValue;
             channelFile.IsInitialized = false;
             channelFile.Path = null;
             channelFile.Content?.Dispose();
             channelFile.Content = null;
+            channelFile.ReactionContent?.Dispose();
+            channelFile.ReactionContent = null;
         }
     }
 }
