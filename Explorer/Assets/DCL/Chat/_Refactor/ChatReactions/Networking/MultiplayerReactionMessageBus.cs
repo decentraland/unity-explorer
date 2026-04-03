@@ -170,7 +170,14 @@ namespace DCL.Chat.ChatReactions.Networking
         {
             using (receivedMessage)
             {
-                string walletId = !string.IsNullOrEmpty(receivedMessage.Payload.Address)
+                // For community messages relayed through the message-router, FromWalletId
+                // is the relay's identity, not the original sender. Fall back to Payload.Address
+                // only in that case. For direct messages (nearby/DM), always use the trusted
+                // transport-level FromWalletId to prevent identity spoofing.
+                // NOTE: Add server-stamped ForwardedFrom to the ChatReaction protocol (like Chat
+                // has) so the relay writes the verified sender identity, not the client.
+                string walletId = receivedMessage.FromWalletId == routingUser
+                    && !string.IsNullOrEmpty(receivedMessage.Payload.Address)
                     ? receivedMessage.Payload.Address
                     : receivedMessage.FromWalletId;
 
