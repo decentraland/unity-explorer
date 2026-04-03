@@ -1,7 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.Utility;
 using ECS.Abstract;
@@ -20,8 +20,6 @@ using System.Threading;
 #if !UNITY_WEBGL
 // GLTFast forces usage of Task that is not compatible with WebGL
 // TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
-using DCL.PluginSystem.Global;
-using DCL.RealmNavigation;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
