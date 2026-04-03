@@ -213,9 +213,11 @@ namespace DCL.Chat.ChatReactions.Presenters
             if (IsInMessageMode && !emojiPanelBridge.IsOpen)
                 messageSelectorPresenter.Hide();
 
-            emojiPanelBridge.Toggle(
-                situationalSelectorPresenter.View.AddButtonRect,
-                IsInMessageMode);
+            RectTransform referenceRect = IsInMessageMode
+                ? (RectTransform)messageAnchor!
+                : situationalSelectorPresenter.View.AddButtonRect;
+
+            emojiPanelBridge.Toggle(referenceRect, IsInMessageMode);
         }
 
         private void OnEmojiPanelSelected(int atlasIndex)

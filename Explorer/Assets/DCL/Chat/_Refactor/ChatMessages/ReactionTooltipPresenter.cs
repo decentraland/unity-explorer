@@ -7,7 +7,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -17,15 +16,10 @@ namespace DCL.Chat.ChatMessages
     public class ReactionTooltipPresenter : IDisposable
     {
         private readonly ReactionTooltipView view;
-        private readonly IProfileCache profileCache;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly ChatReactionsMessageConfig messageConfig;
-        private readonly EmojiMapping emojiMapping;
-        private readonly string ownWalletAddress;
-        private readonly string actionColorOpenTag;
-        private readonly StringBuilder sb = new (256);
-        private readonly List<string> unresolvedWallets = new (8);
+        private readonly ReactionTooltipTextBuilder textBuilder;
         private readonly List<string> lastReactors = new (8);
 
         private CancellationTokenSource? asyncCts;
@@ -43,13 +37,11 @@ namespace DCL.Chat.ChatMessages
             string ownWalletAddress)
         {
             this.view = view;
-            this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.atlasConfig = atlasConfig;
             this.messageConfig = messageConfig;
-            this.emojiMapping = emojiMapping;
-            this.ownWalletAddress = ownWalletAddress;
-            actionColorOpenTag = $"<color=#{ColorUtility.ToHtmlStringRGBA(messageConfig.TooltipActionTextColor)}>";
+            this.textBuilder = new ReactionTooltipTextBuilder(
+                profileCache, atlasConfig, messageConfig, emojiMapping, ownWalletAddress);
 
             var positioner = new ReactionTooltipPositioner(
                 (RectTransform)view.transform,
@@ -142,8 +134,7 @@ namespace DCL.Chat.ChatMessages
             }
             else
             {
-                unresolvedWallets.Clear();
-                string text = BuildText(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
+                string text = textBuilder.Build(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
                 view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
 
                 if (!allResolved)
@@ -172,109 +163,6 @@ namespace DCL.Chat.ChatMessages
             shownEmojiIndex == emojiIndex
             && string.Equals(shownMessageId, messageId, StringComparison.Ordinal);
 
-        private string BuildText(List<string> reactors, int mockUserCount, int emojiIndex, out bool allResolved)
-        {
-            sb.Clear();
-            unresolvedWallets.Clear();
-            allResolved = true;
-
-            int count = 0;
-            string[] mockNames = messageConfig.TooltipMockUserNames;
-
-            if (mockNames.Length > 0)
-            {
-                for (int i = 0; i < mockUserCount; i++)
-                {
-                    if (count > 0)
-                        sb.Append(", ");
-
-                    sb.Append(mockNames[UnityEngine.Random.Range(0, mockNames.Length)]);
-                    count++;
-                }
-            }
-
-            bool ownIncluded = false;
-
-            for (int i = 0; i < reactors.Count; i++)
-            {
-                string wallet = reactors[i];
-                bool isOwn = string.Equals(wallet, ownWalletAddress, StringComparison.OrdinalIgnoreCase);
-                if (isOwn)
-                {
-                    ownIncluded = true;
-                    continue;
-                }
-
-                bool resolved = TryResolveDisplayName(wallet, out string displayName);
-                if (!resolved)
-                {
-                    allResolved = false;
-                    unresolvedWallets.Add(wallet);
-                }
-
-                if (count > 0)
-                    sb.Append(", ");
-
-                sb.Append(displayName);
-                count++;
-            }
-
-            if (ownIncluded)
-            {
-                if (count > 0)
-                    sb.Append(" and ");
-
-                sb.Append("you");
-                count++;
-            }
-
-            AppendActionSuffix(emojiIndex);
-            return sb.ToString();
-        }
-
-        private void AppendActionSuffix(int emojiIndex)
-        {
-            string? shortcode = TryGetEmojiShortcode(emojiIndex);
-
-            sb.Append(actionColorOpenTag);
-
-            if (shortcode != null)
-                sb.Append(" reacted with ").Append(shortcode);
-            else
-                sb.Append(" reacted");
-
-            sb.Append("</color>");
-        }
-
-        private string? TryGetEmojiShortcode(int emojiIndex)
-        {
-            uint unicode = atlasConfig.GetUnicodeFromTileIndex(emojiIndex);
-
-            if (unicode == 0) return null;
-
-            return emojiMapping.ValueMapping.GetValueOrDefault((int)unicode);
-        }
-
-        private bool TryResolveDisplayName(string wallet, out string displayName)
-        {
-            if (profileCache.TryGetCompact(wallet, out Profile.CompactInfo profile))
-            {
-                string name = profile.DisplayName;
-                if (!string.IsNullOrEmpty(name))
-                {
-                    displayName = name;
-                    return true;
-                }
-            }
-
-            // Fallback: truncated wallet
-            displayName = wallet.Length > 8
-                ? string.Concat(wallet[..6], "..", wallet[^4..])
-                : wallet;
-
-            return false;
-        }
-
         private async UniTaskVoid MockLoadThenShowAsync(int mockUserCount, CancellationToken ct)
         {
             try
@@ -285,8 +173,7 @@ namespace DCL.Chat.ChatMessages
 
                 if (ct.IsCancellationRequested) return;
 
-                unresolvedWallets.Clear();
-                string text = BuildText(lastReactors, mockUserCount, shownEmojiIndex, out bool allResolved);
+                string text = textBuilder.Build(lastReactors, mockUserCount, shownEmojiIndex, out bool allResolved);
                 view.UpdateText(text);
 
                 if (!allResolved)
@@ -305,15 +192,17 @@ namespace DCL.Chat.ChatMessages
 
         private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
         {
-            for (int i = 0; i < unresolvedWallets.Count; i++)
+            IReadOnlyList<string> unresolved = textBuilder.UnresolvedWallets;
+
+            for (int i = 0; i < unresolved.Count; i++)
             {
                 if (ct.IsCancellationRequested) return;
-                await profileRepository.GetProfileAsync(unresolvedWallets[i], ct);
+                await profileRepository.GetProfileAsync(unresolved[i], ct);
             }
 
             if (ct.IsCancellationRequested) return;
 
-            string updatedText = BuildText(lastReactors, mockUserCount, shownEmojiIndex, out _);
+            string updatedText = textBuilder.Build(lastReactors, mockUserCount, shownEmojiIndex, out _);
             view.UpdateText(updatedText);
         }
     }

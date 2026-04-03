@@ -31,7 +31,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
             Profiler.BeginSample("ChatReactions.World.ZigZag");
 
-            float omega = config.ZigZagFrequency * MathConstants.TWO_PI;
+            float omega = config.ZigZagFrequency * MathUtils.TWO_PI;
             float scaledAmplitude = amplitude * dt;
 
             for (int i = 0; i < count; i++)

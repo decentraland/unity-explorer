@@ -142,7 +142,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
                 lastVisibleAnchorCount = anchorTable.CountVisible();
 
             float zigZagAmp = config.WorldLane.ZigZagAmplitude;
-            float zigZagOmega = config.WorldLane.ZigZagFrequency * MathConstants.TWO_PI;
+            float zigZagOmega = config.WorldLane.ZigZagFrequency * MathUtils.TWO_PI;
             renderer.Draw(store.Buffer, culler.VisibleIndices, lastVisibleCount,
                 config.WorldLane.RenderLayer, 1f, zigZagAmp, zigZagOmega);
             Profiler.EndSample();
@@ -267,7 +267,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
             Vector3 spawnPos = ApplyPositionJitter(headPos);
             Vector3 velocity = RandomUpwardVelocity(speed);
-            float phase = rng.NextFloat(0f, MathConstants.TWO_PI);
+            float phase = rng.NextFloat(0f, MathUtils.TWO_PI);
 
             return store.TryAdd(new ChatReactionsParticle
             {

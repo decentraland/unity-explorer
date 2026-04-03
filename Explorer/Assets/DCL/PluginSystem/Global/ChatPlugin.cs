@@ -232,7 +232,6 @@ namespace DCL.PluginSystem.Global
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
                 messagePipesHub,
-                entityParticipantTable,
                 userBlockingCacheProxy,
                 web3IdentityCache,
                 chatHistory,

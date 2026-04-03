@@ -147,7 +147,7 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Stream UI Lane", StateText(config.StreamUILane));
             Label("Stream Local Player", StateText(config.StreamLocalPlayer));
             Label("Stream Remote Players", StateText(config.StreamRemotePlayers));
-            Label("Mock Enabled", StateText(config.MockEnabled));
+
 
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Message Reactions", EditorStyles.miniBoldLabel);

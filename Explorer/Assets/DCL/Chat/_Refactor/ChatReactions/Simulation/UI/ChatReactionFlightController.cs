@@ -34,7 +34,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         /// </summary>
         public Vector2 GetSteering2D(float age, float zigZagPhase)
         {
-            float zigZag = Mathf.Sin(age * config.ZigZagFrequency * MathConstants.TWO_PI + zigZagPhase)
+            float zigZag = Mathf.Sin(age * config.ZigZagFrequency * MathUtils.TWO_PI + zigZagPhase)
                          * config.ZigZagAmplitude;
 
             return new Vector2(zigZag, config.FloatUpAcceleration);
@@ -42,6 +42,6 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
 
         /// <summary>Returns a random phase in [0, 2π] for zig-zag offset.</summary>
         public float GetRandomPhase() =>
-            rng.NextFloat(0f, MathConstants.TWO_PI);
+            rng.NextFloat(0f, MathUtils.TWO_PI);
     }
 }

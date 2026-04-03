@@ -10,7 +10,6 @@ using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -57,7 +56,6 @@ namespace DCL.Chat.ChatReactions.Core
             RectTransform uiLaneRect,
             IAvatarReactionPosition avatarPosition,
             IMessagePipesHub messagePipesHub,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IWeb3IdentityCache web3IdentityCache,
             IChatHistory chatHistory,
@@ -67,8 +65,7 @@ namespace DCL.Chat.ChatReactions.Core
         {
             // --- Message bus ---
             IReactionMessageBus reactionBus = CreateReactionBus(
-                reactionsConfig, messagePipesHub, entityParticipantTable,
-                userBlockingCacheProxy, web3IdentityCache, environment);
+                messagePipesHub, userBlockingCacheProxy, web3IdentityCache, environment);
             scope.Add(reactionBus);
 
             // --- Message reactions ---
@@ -145,19 +142,11 @@ namespace DCL.Chat.ChatReactions.Core
         }
 
         private static IReactionMessageBus CreateReactionBus(
-            ChatReactionsConfig reactionsConfig,
             IMessagePipesHub messagePipesHub,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IWeb3IdentityCache web3IdentityCache,
             DecentralandEnvironment environment)
         {
-            if (reactionsConfig.MockEnabled)
-            {
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, "[ChatPlugin] Using MockReactionMessageBus (MockEnabled=true)");
-                return new MockReactionMessageBus(entityParticipantTable, reactionsConfig);
-            }
-
             string serverEnv = environment switch
             {
                 DecentralandEnvironment.Org => "prd",
