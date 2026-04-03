@@ -88,6 +88,8 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             Sprite spriteToUse = sprite == null || sprite.texture == null ? ThumbnailDefault : sprite;
             SpriteRenderer.sprite = spriteToUse;
 
+            if (spriteToUse == null) return;
+
             mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
             mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
             SpriteRenderer.SetPropertyBlock(mpb);

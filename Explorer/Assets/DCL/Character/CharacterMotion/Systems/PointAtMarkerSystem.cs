@@ -10,13 +10,11 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -31,13 +29,15 @@ namespace DCL.Character.CharacterMotion.Systems
     {
         private const float MAX_POINT_AT_DISTANCE_SQR = 100f * 100f; // Max distance to show the marker (100 units)
 
+        private static readonly QueryDescription THUMBNAIL_CACHE_QUERY = new QueryDescription().WithAll<PointAtThumbnailCache>();
+
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ObjectProxy<FriendsCache> friendsCache;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
-        private readonly Dictionary<string, Sprite> latestThumbnailCache = new (StringComparer.InvariantCultureIgnoreCase);
 
         private SingleInstanceEntity camera;
+        private SingleInstanceEntity thumbnailCacheEntity;
 
         private PointAtMarkerSystem(
             World world,
@@ -56,6 +56,7 @@ namespace DCL.Character.CharacterMotion.Systems
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            thumbnailCacheEntity = new SingleInstanceEntity(in THUMBNAIL_CACHE_QUERY, World);
         }
 
         protected override void Update(float t)
@@ -65,8 +66,10 @@ namespace DCL.Character.CharacterMotion.Systems
             float3 cameraUp = cam.Camera.transform.up;
             Vector3 cameraPosition = cam.Camera.transform.position;
 
-            CleanupThumbnailCacheQuery(World);
-            SpawnMarkerQuery(World);
+            Dictionary<string, Sprite> cache = World.Get<PointAtThumbnailCache>(thumbnailCacheEntity).Cache;
+
+            CleanupThumbnailCacheQuery(World, cache);
+            SpawnMarkerQuery(World, cache);
             UpdateMarkerQuery(World, cameraForward, cameraUp, cameraPosition);
             FadeOutMarkerQuery(World);
             ReleaseFadedMarkerQuery(World);
@@ -75,6 +78,7 @@ namespace DCL.Character.CharacterMotion.Systems
         [Query]
         [None(typeof(PointAtMarkerHolder), typeof(PointAtMarkerFadingOut), typeof(DeleteEntityIntention))]
         private void SpawnMarker(
+            [Data] Dictionary<string, Sprite> cache,
             in Entity entity,
             in HandPointAtComponent pointAt,
             in Profile profile,
@@ -100,10 +104,15 @@ namespace DCL.Character.CharacterMotion.Systems
                     AvatarAudioSettings.AvatarAudioClipType.PointAt);
 
             Sprite? sprite = profile.ProfilePicture?.Asset.Sprite;
-            if (sprite != null)
-                latestThumbnailCache[profile.UserId] = sprite;
-            else if (!latestThumbnailCache.TryGetValue(profile.UserId, out sprite))
+
+            if (sprite != null && sprite.texture != null)
+                cache[profile.UserId] = sprite;
+            else if (cache.TryGetValue(profile.UserId, out sprite)
+                     && (sprite == null || sprite.texture == null))
+            {
+                cache.Remove(profile.UserId);
                 sprite = null;
+            }
 
             marker.Initialize(sprite, profile.UserNameColor);
             marker.FadeIn();
@@ -160,9 +169,9 @@ namespace DCL.Character.CharacterMotion.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CleanupThumbnailCache(in Profile profile)
+        private void CleanupThumbnailCache([Data] Dictionary<string, Sprite> cache, in Profile profile)
         {
-            latestThumbnailCache.Remove(profile.UserId);
+            cache.Remove(profile.UserId);
         }
     }
 }
