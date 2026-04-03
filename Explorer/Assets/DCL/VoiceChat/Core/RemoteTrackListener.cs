@@ -65,7 +65,6 @@ namespace DCL.VoiceChat
                     if (TryAddStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity.Key}");
 
-                playbackSourcesHub.Play();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
             }
             catch (Exception ex)

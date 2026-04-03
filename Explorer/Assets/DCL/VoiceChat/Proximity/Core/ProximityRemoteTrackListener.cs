@@ -157,13 +157,11 @@ namespace DCL.VoiceChat.Proximity
                 PlaybackSourcesHub.DisposeSource(oldSource);
 
             (AudioSource audioSource, LivekitAudioSource source) =
-                PlaybackSourcesHub.CreateSource(key, stream, configuration.ProximityChatAudioMixerGroup, fallbackParent, true);
+                PlaybackSourcesHub.CreateAndPlaySource(key, stream, configuration.ProximityChatAudioMixerGroup, fallbackParent, true);
 
             configuration.ApplyProximitySettingsTo(audioSource);
             configuration.ApplySpatializationSettingsTo(source);
             source.gameObject.AddComponent<ProximityPanCalculator>();
-
-            source.Play();
 
             if (!remoteSources.TryAdd(key, source))
             {

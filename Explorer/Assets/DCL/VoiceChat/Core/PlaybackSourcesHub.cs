@@ -39,7 +39,7 @@ namespace DCL.VoiceChat
             if (streams.TryRemove(key, out var oldStream))
                 DisposeSource(oldStream.source);
 
-            (AudioSource _, LivekitAudioSource source) = CreateSource(key, stream, audioMixerGroup, parent);
+            (AudioSource _, LivekitAudioSource source) = CreateAndPlaySource(key, stream, audioMixerGroup, parent);
 
             if (!streams.TryAdd(key, (stream, source)))
             {
@@ -54,23 +54,6 @@ namespace DCL.VoiceChat
                 DisposeSource(pair.source);
         }
 
-        internal void Reset()
-        {
-            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);
-
-            foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
-            foreach (StreamKey streamKey in list) RemoveStream(streamKey);
-        }
-
-        internal void Play()
-        {
-            ExecuteOnMainThread(this, static hub =>
-            {
-                foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in hub.streams.Values)
-                    pair.source.Play();
-            });
-        }
-
         internal void Stop()
         {
             ExecuteOnMainThread(this, static hub =>
@@ -80,7 +63,16 @@ namespace DCL.VoiceChat
             });
         }
 
-        internal static (AudioSource audioSource, LivekitAudioSource source) CreateSource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
+        internal void Reset()
+        {
+            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);
+
+            foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
+            foreach (StreamKey streamKey in list) RemoveStream(streamKey);
+        }
+
+
+        internal static (AudioSource audioSource, LivekitAudioSource source) CreateAndPlaySource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
         {
             LivekitAudioSource lkSource = LivekitAudioSource.New(true, spatial);
             lkSource.Construct(stream);
@@ -88,6 +80,7 @@ namespace DCL.VoiceChat
             audioSource.outputAudioMixerGroup = mixerGroup;
             lkSource.name = $"LivekitSource_{key.identity}";
             lkSource.transform.SetParent(parent);
+            lkSource.Play();
 
             return (audioSource, lkSource);
         }

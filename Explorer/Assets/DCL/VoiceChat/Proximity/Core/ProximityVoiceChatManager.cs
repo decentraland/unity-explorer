@@ -102,10 +102,10 @@ namespace DCL.VoiceChat.Proximity
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackSubscribed(publication, participant);
+            => remoteListener.HandleTrackSubscribed(publication, participant).Forget();
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackUnsubscribed(publication, participant);
+            => remoteListener.HandleTrackUnsubscribed(publication, participant).Forget();
 
         // private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
         //     => remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
@@ -158,7 +158,7 @@ namespace DCL.VoiceChat.Proximity
                 try
                 {
                     await micPublisher.PublishAsync(false, ct);
-                    remoteListener.StartListening();
+                    remoteListener.StartListening().Forget();
 
                     ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
@@ -232,7 +232,7 @@ namespace DCL.VoiceChat.Proximity
         private void Deactivate()
         {
             micPublisher.Unpublish();
-            remoteListener.StopListening();
+            remoteListener.StopListening().Forget();
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Deactivated");
         }
     }
