@@ -134,6 +134,10 @@ namespace DCL.VoiceChat.Proximity
 
                     case ConnectionUpdate.Disconnected:
                         activationCts.SafeCancelAndDispose();
+
+                        if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
+                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
+
                         Deactivate();
                         break;
                 }
