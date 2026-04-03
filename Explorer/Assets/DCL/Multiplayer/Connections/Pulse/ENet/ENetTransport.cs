@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using ENet;
 using Google.Protobuf;
+using Pulse.Transport;
 using System;
 using System.Threading;
 using Utility;
@@ -108,13 +110,13 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public UniTask DisconnectAsync(ITransport.DisconnectReason reason, CancellationToken ct)
+        public UniTask DisconnectAsync(DisconnectReason reason, CancellationToken ct)
         {
             serverPeer?.Disconnect((uint)reason);
             return UniTask.CompletedTask;
         }
 
-        public void Send(IMessage message, ITransport.PacketMode mode)
+        public void Send(IMessage message, PacketMode mode)
         {
             ENetChannel channel = ToENetChannel(mode);
 
@@ -169,13 +171,13 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
                 case EventType.Disconnect:
                     serverPeer = null;
-                    messagePipe.OnDisconnected((ITransport.DisconnectReason)netEvent.Data);
+                    messagePipe.OnDisconnected((DisconnectReason)netEvent.Data);
                     lifeCycleCts.SafeCancelAndDispose();
                     break;
 
                 case EventType.Timeout:
                     serverPeer = null;
-                    messagePipe.OnDisconnected(ITransport.DisconnectReason.None);
+                    messagePipe.OnDisconnected(DisconnectReason.NONE);
                     lifeCycleCts.SafeCancelAndDispose();
                     break;
 
@@ -217,12 +219,12 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             peer.Send(channel.ChannelId, ref packet);
         }
 
-        private static ENetChannel ToENetChannel(ITransport.PacketMode mode)
+        private static ENetChannel ToENetChannel(PacketMode mode)
         {
             return mode switch
                    {
-                       ITransport.PacketMode.RELIABLE => ENetChannel.RELIABLE,
-                       ITransport.PacketMode.UNRELIABLE_SEQUENCED => ENetChannel.UNRELIABLE_SEQUENCED,
+                       PacketMode.RELIABLE => ENetChannel.RELIABLE,
+                       PacketMode.UNRELIABLE_SEQUENCED => ENetChannel.UNRELIABLE_SEQUENCED,
                        _ => ENetChannel.UNRELIABLE_UNSEQUENCED,
                    };
         }

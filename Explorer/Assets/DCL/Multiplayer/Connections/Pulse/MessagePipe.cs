@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Pulse.Transport;
 using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -11,7 +12,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         private readonly SimplePipeChannel<IncomingMessage> incomingChannel = new ();
         private readonly SimplePipeChannel<OutgoingMessage> outgoingChannel = new ();
-        private readonly SimplePipeChannel<ITransport.DisconnectReason> disconnectChannel = new ();
+        private readonly SimplePipeChannel<DisconnectReason> disconnectChannel = new ();
 
         public IUniTaskAsyncEnumerable<IncomingMessage> ReadIncomingMessagesAsync(CancellationToken ct) =>
             incomingChannel.ReadAllAsync(ct);
@@ -25,10 +26,10 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Send(OutgoingMessage message) =>
             outgoingChannel.TryWrite(message);
 
-        public void OnDisconnected(ITransport.DisconnectReason reason) =>
+        public void OnDisconnected(DisconnectReason reason) =>
             disconnectChannel.TryWrite(reason);
 
-        public IUniTaskAsyncEnumerable<ITransport.DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
+        public IUniTaskAsyncEnumerable<DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
             disconnectChannel.ReadAllAsync(ct);
 
         /// <summary>

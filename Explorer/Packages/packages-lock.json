@@ -7,13 +7,6 @@
       "dependencies": {},
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
-    "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
-    },
     "com.alttester.sdk": {
       "version": "2.3.0",
       "depth": 0,
@@ -106,6 +99,13 @@
       },
       "hash": "9365d4b0f148605d08c5944de3fec3ac76ee607c"
     },
+    "com.decentraland.pulse.transport": {
+      "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport.Shared",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "20d0f434e357a93f19df09abd0adee43c215f437"
+    },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
       "depth": 0,
@@ -177,6 +177,13 @@
       "source": "git",
       "dependencies": {},
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
+    },
+    "com.renderheads.avpro.video-ultra": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

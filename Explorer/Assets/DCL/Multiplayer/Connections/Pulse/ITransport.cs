@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Google.Protobuf;
+using Pulse.Transport;
 using System;
 using System.Threading;
 
@@ -18,13 +19,6 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         void Send(IMessage message, PacketMode mode);
 
-        public enum PacketMode
-        {
-            RELIABLE = 0,
-            UNRELIABLE_SEQUENCED = 1,
-            UNRELIABLE_UNSEQUENCED = 2,
-        }
-
         public enum TransportState
         {
             NONE,
@@ -32,17 +26,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             CONNECTED,
             DISCONNECTING,
             DISCONNECTED,
-        }
-
-        public enum DisconnectReason
-        {
-            None = 0,
-            Graceful = 1,           // clean shutdown / server stopping
-            AuthTimeout = 2,        // PENDING_AUTH deadline exceeded
-            AuthFailed = 3,         // handshake validation failed
-            DuplicateSession = 4,   // evicted by newer connection with same player_id
-            Kicked = 5,             // admin kick
-            ServerFull = 6,
         }
     }
 }

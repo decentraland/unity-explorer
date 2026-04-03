@@ -6,6 +6,7 @@ using DCL.Web3.Identities;
 using Decentraland.Pulse;
 using Google.Protobuf;
 using Newtonsoft.Json;
+using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -51,7 +52,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public async UniTask DisconnectAsync(CancellationToken ct)
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
-            await transport.DisconnectAsync(ITransport.DisconnectReason.Graceful, ct);
+            await transport.DisconnectAsync(DisconnectReason.GRACEFUL, ct);
         }
 
         /// <summary>
@@ -63,7 +64,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             connectionLifeCycleCts.SafeCancelAndDispose();
         }
 
-        public IUniTaskAsyncEnumerable<ITransport.DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
+        public IUniTaskAsyncEnumerable<DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
             pipe.ReadDisconnectsAsync(ct);
 
         private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
@@ -90,7 +91,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
             RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
 
-            var handshakePacket = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
+            var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
 
             Send(handshakePacket);

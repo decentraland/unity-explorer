@@ -2,6 +2,7 @@ using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Decentraland.Pulse;
+using Pulse.Transport;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -16,7 +17,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Propagate(Profile profile)
         {
-            var message = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);
+            var message = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.ProfileAnnouncement);
 
             message.Message.ProfileAnnouncement = new ProfileVersionAnnouncement
             {

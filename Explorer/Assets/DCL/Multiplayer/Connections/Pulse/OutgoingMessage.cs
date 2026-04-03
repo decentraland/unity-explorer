@@ -1,4 +1,5 @@
 ﻿using Decentraland.Pulse;
+using Pulse.Transport;
 using System;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -8,9 +9,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         private static readonly ClientMessagePool POOL = new ();
 
         public readonly ClientMessage Message;
-        public readonly ITransport.PacketMode PacketMode;
+        public readonly PacketMode PacketMode;
 
-        private OutgoingMessage(ClientMessage message, ITransport.PacketMode packetMode)
+        private OutgoingMessage(ClientMessage message, PacketMode packetMode)
         {
             Message = message;
             PacketMode = packetMode;
@@ -21,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             POOL.Release(Message);
         }
 
-        public static OutgoingMessage Create(ITransport.PacketMode packetMode, ClientMessage.MessageOneofCase kind) =>
+        public static OutgoingMessage Create(PacketMode packetMode, ClientMessage.MessageOneofCase kind) =>
             new (POOL.Get(kind), packetMode);
     }
 }

@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using Decentraland.Pulse;
+using Pulse.Transport;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -13,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         public void BroadcastTeleport(Vector3 worldPosition)
         {
-            OutgoingMessage outgoing = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
+            var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
             Vector2Int parcelIndex = worldPosition.ToParcel();
 

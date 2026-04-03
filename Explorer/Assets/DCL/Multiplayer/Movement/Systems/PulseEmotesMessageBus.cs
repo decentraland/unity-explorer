@@ -5,6 +5,7 @@ using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using Decentraland.Pulse;
+using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 return;
 
             var outgoing = OutgoingMessage.Create(
-                ITransport.PacketMode.RELIABLE,
+                PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStart);
 
             outgoing.Message.EmoteStart.EmoteId = urn;
@@ -45,7 +46,7 @@ namespace DCL.Multiplayer.Movement.Systems
         public void SendStop()
         {
             var outgoing = OutgoingMessage.Create(
-                ITransport.PacketMode.RELIABLE,
+                PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStop);
 
             pulseService.Send(outgoing);

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using Pulse.Transport;
 using System;
 using System.Threading;
 
@@ -11,7 +12,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask MonitorDisconnectsAsync(CancellationToken ct)
         {
-            await foreach (ITransport.DisconnectReason reason in pulseService.ReadDisconnectsAsync(ct))
+            await foreach (DisconnectReason reason in pulseService.ReadDisconnectsAsync(ct))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse transport disconnected: {reason}");
 
@@ -20,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 // The grace period for peers removal should be determined by the transport timeout itself
                 RemoveAllPeers();
 
-                if (reason is not (ITransport.DisconnectReason.None or ITransport.DisconnectReason.Graceful)) continue;
+                if (reason is not (DisconnectReason.NONE or DisconnectReason.GRACEFUL)) continue;
 
                 ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
 

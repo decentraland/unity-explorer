@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using Decentraland.Pulse;
+using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             // TODO Don't push any messages if connection is not active
             // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
 
-            var clientMessage = OutgoingMessage.Create(ITransport.PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
+            var clientMessage = OutgoingMessage.Create(PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
             WritePlayerStateInput(message, clientMessage.Message.Input);
 
             pulseService.Send(clientMessage);
@@ -149,7 +150,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 if (!pendingResyncs.Add(subjectId)) return false;
 
-                OutgoingMessage resyncMessage = OutgoingMessage.Create(ITransport.PacketMode.RELIABLE,
+                OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
                     ClientMessage.MessageOneofCase.Resync);
 
                 resyncMessage.Message.Resync = new ResyncRequest
