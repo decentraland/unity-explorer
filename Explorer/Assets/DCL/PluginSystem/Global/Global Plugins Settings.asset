@@ -67,7 +67,6 @@ MonoBehaviour:
   - rid: 1709771761983946845
   - rid: 7426570530121056350
   - rid: 5034765029205082208
-  - rid: 8347976593144021298
   references:
     version: 2
     RefIds:
@@ -394,6 +393,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <pointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
         <CameraReelGalleryMessages>k__BackingField: {fileID: 11400000, guid: 12a528a6e96c1445fa6cfb612027de92, type: 2}
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
@@ -1108,6 +1108,13 @@ MonoBehaviour:
             m_EditorAssetChanged: 0
           <EnablePropPooling>k__BackingField: 0
           <TrailVelocityThreshold>k__BackingField: 1
+        <PointAtMarkerPrefab>k__BackingField:
+          m_AssetGUID: 6a252383173104e17acac54eb364afc4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1245,15 +1252,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ChatEntryMenuPopupPrefab:
           m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-    - rid: 8347976593144021298
-      type: {class: SpringBonesPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <SpringBonesSimulationPrefab>k__BackingField:
-          m_AssetGUID: 1e00b5052d07c154b8701949fb1889a4
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

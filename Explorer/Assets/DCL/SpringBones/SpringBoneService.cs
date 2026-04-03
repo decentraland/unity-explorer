@@ -15,6 +15,7 @@ namespace DCL.SpringBones
         readonly Transform dummyTransform;
 
         int slotCapacity;
+        Transform[] managedTransforms; // parallel to TAA, for main-thread access
         TransformAccessArray taa;
         NativeArray<SpringBoneTransformData> transforms;
         NativeArray<float3> prevTails;
@@ -36,6 +37,9 @@ namespace DCL.SpringBones
         void AllocateArrays()
         {
             int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+
+            managedTransforms = new Transform[totalJoints];
+            for (int i = 0; i < totalJoints; i++) managedTransforms[i] = dummyTransform;
 
             transforms = new NativeArray<SpringBoneTransformData>(totalJoints, Allocator.Persistent);
             prevTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
@@ -69,6 +73,7 @@ namespace DCL.SpringBones
             {
                 int idx = baseIndex + j;
                 taa[idx] = jointTransforms[j];
+                managedTransforms[idx] = jointTransforms[j];
                 jointConfigs[idx] = configs[j];
                 prevTails[idx] = initialTailPositions[j];
                 currentTails[idx] = initialTailPositions[j];
@@ -88,7 +93,10 @@ namespace DCL.SpringBones
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
 
             for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
+            {
                 taa[baseIndex + j] = dummyTransform;
+                managedTransforms[baseIndex + j] = dummyTransform;
+            }
         }
 
         public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix)
@@ -104,18 +112,17 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
-            // 1. Pull current transforms from Unity
-            var pullHandle = new PullSpringBoneTransformsJob
-            {
-                Transforms = transforms,
-            }.Schedule(taa);
+            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+
+            // 1. Pull transforms on main thread
+            for (int i = 0; i < totalJoints; i++)
+                transforms[i] = SpringBoneTransformData.FromTransform(managedTransforms[i]);
 
             // 2. Flip tail buffers: prev ← current ← next ← prev
-            pullHandle.Complete();
             FlipBuffers();
 
-            // 3. Run simulation
-            var simHandle = new SpringBoneSimulationJob
+            // 3. Run simulation (still as a job for Burst)
+            new SpringBoneSimulationJob
             {
                 SlotJointCounts = slotJointCounts,
                 JointConfigs = jointConfigs,
@@ -125,13 +132,11 @@ namespace DCL.SpringBones
                 CurrentTails = currentTails,
                 NextTails = nextTails,
                 DeltaTime = deltaTime,
-            }.Schedule(slotCapacity, 1);
+            }.Schedule(slotCapacity, 1).Complete();
 
-            // 4. Push rotations back to Unity transforms
-            new PushSpringBoneTransformsJob
-            {
-                Transforms = transforms,
-            }.Schedule(taa, simHandle).Complete();
+            // 4. Push rotations back on main thread
+            for (int i = 0; i < totalJoints; i++)
+                managedTransforms[i].rotation = transforms[i].Rotation;
         }
 
         void FlipBuffers()

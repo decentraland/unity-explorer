@@ -65,11 +65,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1e00b5052d07c154b8701949fb1889a4
-    m_Address: Assets/DCL/SpringBones/SpringBonesSimulation.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 23318cb20f4dbe9429dd8be585ef75d6
     m_Address: CharacterPreviewContainer
     m_ReadOnly: 0

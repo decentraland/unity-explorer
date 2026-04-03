@@ -157,7 +157,7 @@ namespace DCL.SpringBones
                 if (tail != null)
                 {
                     float3 localPos = tail.localPosition;
-                    float3 scale = (float3)(Vector3)tail.lossyScale;
+                    float3 scale = tail.lossyScale;
                     float3 scaledPos = localPos * scale;
                     float len = math.length(scaledPos);
                     config.BoneAxis = len > 0.0001f ? scaledPos / len : new float3(0, 1, 0);
@@ -186,9 +186,9 @@ namespace DCL.SpringBones
 
             for (int j = 0; j < joints.Count; j++)
             {
-                float3 tailPos = (j + 1 < joints.Count)
-                    ? (float3)joints[j + 1].position
-                    : (float3)joints[j].position;
+                float3 tailPos = j + 1 < joints.Count
+                    ? joints[j + 1].position
+                    : joints[j].position;
                 tails.Add(tailPos);
             }
         }

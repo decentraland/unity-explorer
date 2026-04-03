@@ -33,5 +33,16 @@ namespace DCL.SpringBones
                 t.localScale,
                 t.localToWorldMatrix);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static SpringBoneTransformData FromTransform(UnityEngine.Transform t)
+        {
+            return new SpringBoneTransformData(
+                t.rotation,
+                t.localPosition,
+                t.localRotation,
+                t.localScale,
+                t.localToWorldMatrix);
+        }
     }
 }
