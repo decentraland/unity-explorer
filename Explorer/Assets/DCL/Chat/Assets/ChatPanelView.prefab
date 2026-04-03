@@ -1668,7 +1668,6 @@ MonoBehaviour:
   <ChatReactionButton>k__BackingField: {fileID: 6539120710582331771}
   <ChatReactionsSelector>k__BackingField: {fileID: 7903621782038610178}
   <MessageReactionsSelector>k__BackingField: {fileID: 860680468803417219}
-  <MessageAreaRect>k__BackingField: {fileID: 4055835279997597995}
   <EmojiPanelView>k__BackingField: {fileID: 1182022665054273667}
   <ReactionTooltipView>k__BackingField: {fileID: 2575364923725548080}
   <JoinCommunityLiveStreamSubTitleButton>k__BackingField: {fileID: 8540153266423022452}
@@ -2584,7 +2583,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_Pivot.y
@@ -2592,7 +2591,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2600,7 +2599,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMin.y
@@ -2640,7 +2639,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 983165691946653926, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -2752,15 +2751,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5073932039961026212, guid: b9913a295af504a40ae0376db4bbf820, type: 3}
       propertyPath: m_SizeDelta.x

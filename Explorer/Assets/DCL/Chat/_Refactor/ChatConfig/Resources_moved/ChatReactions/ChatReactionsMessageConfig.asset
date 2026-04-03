@@ -22,10 +22,10 @@ MonoBehaviour:
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
   <TooltipHoverDelay>k__BackingField: 0.4
-  <AppearDuration>k__BackingField: 0.15
+  <AppearDuration>k__BackingField: 0.122
   <DisappearDuration>k__BackingField: 0.1
   <CountIncrementBounceDuration>k__BackingField: 0.12
-  <ShortcutsBarOffset>k__BackingField: {x: 0, y: 40}
+  <ShortcutsBarOffset>k__BackingField: {x: -5, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
   <TooltipOffset>k__BackingField: {x: 0, y: 100}
   <TooltipArrowMinX>k__BackingField: -140
