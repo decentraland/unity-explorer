@@ -27,8 +27,14 @@ namespace DCL.Profiles
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
-                World.Destroy(entity);
+                try
+                {
+                    profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                }
+                finally
+                {
+                    World.Destroy(entity);
+                }
             }
         }
     }

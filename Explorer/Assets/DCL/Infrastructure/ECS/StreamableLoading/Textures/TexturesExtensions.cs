@@ -16,7 +16,9 @@ namespace ECS.StreamableLoading.Textures
             new (
                 result.Succeeded
                     ? new SpriteData(result.Asset!,
-                        result.Asset!.Asset.Match(video => fallback, tex2D => Sprite.Create(tex2D, new Rect(0, 0, result.Asset!.Asset.Width, result.Asset.Asset.Height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)))
+                        result.Asset!.Asset.Match(video => fallback, tex2D => tex2D != null
+                            ? Sprite.Create(tex2D, new Rect(0, 0, tex2D.width, tex2D.height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)
+                            : fallback))
                     : fallback);
 
         public static StreamableLoadingResult<SpriteData>.WithFallback ToFullRectSpriteData(this StreamableLoadingResult<AssetBundleData> result, SpriteData fallback, int pixelsPerUnit = 50)
