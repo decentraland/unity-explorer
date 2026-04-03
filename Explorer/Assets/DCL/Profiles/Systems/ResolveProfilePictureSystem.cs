@@ -30,7 +30,7 @@ namespace DCL.Profiles
             {
                 try { profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC); }
                 catch (Exception e) {
-                    ReportHub.LogError(new ReportData(ReportCategory.PROFILE), $"Error on setting full rect sprite data to profile picture: {e.Message}");
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE)); }
                 }
                 finally { World.Destroy(entity); }
             }
