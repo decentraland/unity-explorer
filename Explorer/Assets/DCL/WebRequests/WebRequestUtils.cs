@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Globalization;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -108,7 +106,7 @@ namespace DCL.WebRequests
             }
         }
 
-        public static bool IsDNSLookupError(this UnityWebRequestException exception) =>
+        private static bool IsDNSLookupError(this UnityWebRequestException exception) =>
             exception.ResponseCode == 0 && exception.Message.Contains(CANNOT_CONNECT_ERROR);
 
         public static bool IsIrrecoverableError(this UnityWebRequestException exception)
@@ -116,65 +114,50 @@ namespace DCL.WebRequests
             if (exception.IsDNSLookupError())
                 return false;
 
-            return (exception.IsAborted() || IsIrrecoverableServerError(exception.ResponseCode) || IsIrrecoverableStructuralError(exception.ResponseCode))
-                   && !exception.IsUnableToCompleteSSLConnection();
+            return (exception.IsAborted() || IsIrrecoverableResponseCode(exception.ResponseCode))
+                   && !exception.IsUnableToCompleteSSLConnection()
+                   && !exception.IsSSLCACertificateError();
         }
 
-        private static bool IsIrrecoverableStructuralError(long responseCode)
+        private static bool IsIrrecoverableResponseCode(long responseCode)
         {
             switch (responseCode)
             {
+                // Recoverable client errors
                 case 408: // Request Timeout
                 case 425: // Too Early
                 case 429: // Too Many Requests
-                    return false;
-                default:
-                    return true;
-            }
-        }
 
-        private static bool IsIrrecoverableServerError(long responseCode)
-        {
-            switch (responseCode)
-            {
-                case 501: // Not Implemented. Transient server bug/outage
-                case 505: // HTTP Version Not Supported
-                case 508: // Loop Detected
-                case 507: // Insufficient Storage.
-                case 511: // Network Authentication Required
-                    return true;
+                // Recoverable server errors
                 case 500: // Internal Server Error
-                case 502: // Bad Gateway. Reverse proxy/CDN got a bad response from upstream
-                case 503: // Service Unavailable. Overload, maintenance window
-                case 504: // Gateway Timeout. Upstream didn’t respond in time
+                case 502: // Bad Gateway — reverse proxy/CDN got a bad response from upstream
+                case 503: // Service Unavailable — overload, maintenance window
+                case 504: // Gateway Timeout — upstream didn’t respond in time
 
-                // CDN Specific Errors
-                case 521:
-                case 522:
-                case 523:
-                case 525:
-                case 526:
+                // Recoverable CDN-specific errors (transient)
+                case 521: // Web Server Is Down
+                case 522: // Connection Timed Out
+                case 523: // Origin Is Unreachable
+                case 524: // A Timeout Occurred — Cloudflare equivalent of 504
+                case 525: // SSL Handshake Failed
                     return false;
 
+                // Everything else is irrecoverable (4xx client errors, permanent 5xx like 501/505/507/508/511, etc.)
                 default:
                     return true;
             }
         }
 
-        public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception)
-        {
-            // fixes frequent editor exception
-#if UNITY_EDITOR
-            return exception.Message.Contains("Unable to complete SSL connection");
-#else
-            return false;
-#endif
-        }
+        private static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception) =>
+            exception.Message.Contains("Unable to complete SSL connection");
+
+        private static bool IsSSLCACertificateError(this UnityWebRequestException exception) =>
+            exception.Message.Contains("SSL CA certificate error");
 
         public static bool IsTimedOut(this UnityWebRequestException exception) =>
             exception is { Error: "Request timeout" };
 
-        public static bool IsAborted(this UnityWebRequestException exception) =>
+        private static bool IsAborted(this UnityWebRequestException exception) =>
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
 
         public static string GetResponseContentType(this UnityWebRequest unityWebRequest) =>
