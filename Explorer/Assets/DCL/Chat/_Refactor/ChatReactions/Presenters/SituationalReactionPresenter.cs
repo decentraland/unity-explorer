@@ -22,6 +22,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly RectTransform? debugButtonRect;
         private readonly CancellationTokenSource cts = new ();
 
+        private Camera? cachedMainCamera;
         private bool prevStreamUI;
         private bool prevStreamLocal;
         private bool prevStreamRemote;
@@ -59,6 +60,9 @@ namespace DCL.Chat.ChatReactions.Presenters
                 try
                 {
                     float dt = Time.unscaledDeltaTime;
+
+                    if (cachedMainCamera == null)
+                        cachedMainCamera = Camera.main;
 
                     Profiler.BeginSample("ChatReactions.Tick");
                     service.Tick(dt);
@@ -120,14 +124,8 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
         {
-            Profiler.BeginSample("ChatReactions.CameraCheck");
-            Camera mainCam = Camera.main;
-            if (cam != mainCam || mainCam == null)
-            {
-                Profiler.EndSample();
+            if (cam != cachedMainCamera || cachedMainCamera == null)
                 return;
-            }
-            Profiler.EndSample();
 
             Profiler.BeginSample("ChatReactions.Draw");
             service.Draw(cam);

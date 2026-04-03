@@ -88,6 +88,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         private void Open()
         {
+            emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
             emojiPanelPresenter.SetPanelVisibility(true);
             isOpen = true;
