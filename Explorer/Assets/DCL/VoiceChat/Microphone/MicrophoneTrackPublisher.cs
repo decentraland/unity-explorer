@@ -8,21 +8,21 @@ using LiveKit.Rooms.Tracks;
 using RichTypes;
 using System;
 using System.Threading;
-using Utility;
 using Utility.Multithreading;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
     ///     Manages local microphone track publishing lifecycle.
+    ///     Used for both community and proximity voice chat.
     /// </summary>
     public class MicrophoneTrackPublisher : IDisposable
     {
-        private const string TAG = nameof(MicrophoneTrackPublisher);
-
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly VoiceChatType voiceChatType;
+        private readonly string tag;
 
         private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
 
@@ -36,11 +36,14 @@ namespace DCL.VoiceChat
         public MicrophoneTrackPublisher(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
-            VoiceChatMicrophoneHandler microphoneHandler)
+            VoiceChatMicrophoneHandler microphoneHandler,
+            VoiceChatType voiceChatType)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
+            this.voiceChatType = voiceChatType;
+            tag = $"{nameof(MicrophoneTrackPublisher)}({voiceChatType})";
         }
 
         public void Dispose()
@@ -51,13 +54,13 @@ namespace DCL.VoiceChat
             Unpublish();
             semaphoreSlim.Dispose();
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Disposed");
         }
 
         /// <summary>
         ///     Publishes the local microphone track to the room.
         ///     Creates the <see cref="MicrophoneRtcAudioSource"/> via shared helper;
-        ///     conditionally starts it based on current mic-enabled state.
+        ///     conditionally starts it based on <paramref name="micAutoStart"/> and current mic-enabled state.
         /// </summary>
         public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
@@ -65,7 +68,7 @@ namespace DCL.VoiceChat
 
             if (microphoneTrack.HasValue)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track already published");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track already published");
                 return;
             }
 
@@ -81,17 +84,17 @@ namespace DCL.VoiceChat
                     voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
-                microphoneHandler.Assign(microphoneTrack.Value.Source, VoiceChatType.COMMUNITY);
+                microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
 
                 voiceChatRoom.Participants.LocalParticipant().PublishTrack(
                     track, VoiceChatTrackPublishHelper.DEFAULT_PUBLISH_OPTIONS, ct);
 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track published successfully");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track published successfully");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to publish local track: {ex.Message}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Failed to publish local track: {ex.Message}");
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification("No Available Microphone"));
                 CleanupLocalTrack();
                 throw;
@@ -104,15 +107,15 @@ namespace DCL.VoiceChat
                 try
                 {
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track unpublished");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track unpublished");
                 }
-                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to unpublish local track: {ex.Message}"); }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Failed to unpublish: {ex.Message}"); }
                 finally { CleanupLocalTrack(); }
         }
 
         private void CleanupLocalTrack()
         {
-            microphoneHandler.ClearSource(VoiceChatType.COMMUNITY);
+            microphoneHandler.ClearSource(voiceChatType);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
         }

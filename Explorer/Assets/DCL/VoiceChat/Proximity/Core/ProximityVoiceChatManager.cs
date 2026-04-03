@@ -18,7 +18,7 @@ namespace DCL.VoiceChat.Proximity
     /// <summary>
     ///     Orchestrates proximity voice chat: coordinates state transitions
     ///     (Hearing/Speaking/Suppressed/Disabled) and delegates microphone publishing
-    ///     to <see cref="ProximityMicrophoneTrackPublisher"/> and remote track management
+    ///     to <see cref="MicrophoneTrackPublisher"/> and remote track management
     ///     to <see cref="ProximityRemoteTrackListener"/>.
     ///     Mic control (PTT, device switching) is handled by <see cref="VoiceChatMicrophoneHandler"/>.
     /// </summary>
@@ -30,7 +30,7 @@ namespace DCL.VoiceChat.Proximity
         private readonly IRoom islandRoom;
         private readonly ProximityVoiceChatStateModel stateModel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly ProximityMicrophoneTrackPublisher micPublisher;
+        private readonly MicrophoneTrackPublisher micPublisher;
         private readonly ProximityRemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
@@ -53,7 +53,7 @@ namespace DCL.VoiceChat.Proximity
             this.stateModel = stateModel;
             this.microphoneHandler = microphoneHandler;
 
-            micPublisher = new ProximityMicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler);
+            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.PROXIMITY);
             remoteListener = new ProximityRemoteTrackListener(islandRoom, configuration, activeAudioSources);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
@@ -158,7 +158,7 @@ namespace DCL.VoiceChat.Proximity
 
                 try
                 {
-                    await micPublisher.PublishAsync(ct);
+                    await micPublisher.PublishAsync(false, ct);
                     remoteListener.StartListening();
 
                     ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
@@ -211,7 +211,7 @@ namespace DCL.VoiceChat.Proximity
                         if (remoteListener.IsSuppressed)
                         {
                             remoteListener.UnmuteAll();
-                            microphoneHandler.Assign(micPublisher.СurrentMicrophone, VoiceChatType.PROXIMITY);
+                            microphoneHandler.Assign(micPublisher.CurrentMicrophone, VoiceChatType.PROXIMITY);
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
                         }
                         else if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)

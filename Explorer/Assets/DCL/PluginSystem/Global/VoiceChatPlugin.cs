@@ -125,7 +125,7 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
-            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
+            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler, VoiceChatType.COMMUNITY);
             remoteListener = new RemoteTrackListener(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration);
 
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
