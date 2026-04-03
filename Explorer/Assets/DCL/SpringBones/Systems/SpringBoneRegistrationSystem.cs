@@ -121,6 +121,13 @@ namespace DCL.SpringBones
                         Transform wearableParent = springBone.ManagedTransform.parent;
                         Transform avatarParent = skeleton[springBone.AvatarSkeletonParentBoneIndex];
                         wearableParent.SetPositionAndRotation(avatarParent.position, avatarParent.rotation);
+
+                        Vector3 parentOfWearableLossyScale = wearableParent.parent != null ? wearableParent.parent.lossyScale : Vector3.one;
+                        Vector3 avatarLossyScale = avatarParent.lossyScale;
+                        wearableParent.localScale = new Vector3(
+                            avatarLossyScale.x / parentOfWearableLossyScale.x,
+                            avatarLossyScale.y / parentOfWearableLossyScale.y,
+                            avatarLossyScale.z / parentOfWearableLossyScale.z);
                         syncPairs.Add((wearableParent, avatarParent));
                     }
 
