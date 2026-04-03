@@ -39,27 +39,28 @@ namespace DCL.UserInAppInitializationFlow
 
         public override async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            // --position flag or Editor Start Position take highest priority over any world manifest spawn coordinate
-            if (!appArgs.HasFlag(AppArgsFlags.POSITION) && !editorPositionOverrideActive)
-            {
-                // If the WorldManifest defines an explicit spawn coordinate, use it
-                // (e.g. worlds with a fixed or curated spawn point)
-                WorldManifest manifest = realmController.RealmData.WorldManifest;
-                if (manifest is { IsEmpty: false, spawn_coordinate: { } spawn })
-                    return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+            Vector2Int spawnParcel = startParcel.ConsumeByTeleportOperation();
 
-                // In local scene development, use the scene's base parcel so the player
-                // spawns at the scene-defined spawn point instead of the editor targetScene
-                if (realmController.RealmData.IsLocalSceneDevelopment)
-                {
-                    SceneDefinitions? sceneDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
+            // In the editor, when previewing a local scene, ignore the editor start position override
+            // so the scene's own spawn point is used. Builds launched via Creator Hub are not affected.
+            bool editorOverride = editorPositionOverrideActive
+                                  && !(realmController.RealmData.IsLocalSceneDevelopment && Application.isEditor);
 
-                    if (sceneDefinitions is { Value: { Count: > 0 } })
-                        return await InternalExecuteAsync(args, sceneDefinitions.Value.Value[0].metadata.scene.DecodedBase, ct);
-                }
-            }
+            // --position flag or effective editor override → use default start parcel
+            bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
 
-            return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+            if (useDefault)
+                return await InternalExecuteAsync(args, spawnParcel, ct);
+
+            // World manifest spawn coordinate takes next priority
+            if (realmController.RealmData.WorldManifest is { IsEmpty: false, spawn_coordinate: { } spawn })
+                return await InternalExecuteAsync(args, new Vector2Int(spawn.x, spawn.y), ct);
+
+            // Local scene development: use the scene's base parcel as spawn point
+            return realmController.RealmData.IsLocalSceneDevelopment
+                   && await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct) is { Value: { Count: > 0 } } sceneDefinitions
+                ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct)
+                : await InternalExecuteAsync(args, spawnParcel, ct);
         }
     }
 }
