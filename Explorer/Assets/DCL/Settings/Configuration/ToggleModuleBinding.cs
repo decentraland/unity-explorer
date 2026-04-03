@@ -38,6 +38,7 @@ namespace DCL.Settings.Configuration
             SUN_SHADOWS_FEATURE,
             SCENE_SHADOWS_FEATURE,
             SCENE_LIGHTS_FEATURE,
+            FULLSCREEN_FEATURE,
             // add other features...
         }
 
@@ -61,7 +62,8 @@ namespace DCL.Settings.Configuration
             VolumeBus volumeBus,
             bool isTranslationChatEnabled,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -77,6 +79,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.SUN_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
                 ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
                 ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
+                ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };

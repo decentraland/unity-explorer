@@ -1,89 +1,119 @@
-using DCL.Quality.Runtime;
+using Cysharp.Threading.Tasks;
 using DCL.Settings.ModuleViews;
-using DCL.Settings.Utils;
+using Plugins.NativeWindowManager;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 namespace DCL.Settings.ModuleControllers
 {
-    public class ResolutionSettingsController : BaseQualitySettingsFeatureController
+    public class ResolutionSettingsController : SettingsFeatureController
     {
         private readonly SettingsDropdownModuleView view;
-        private readonly List<Resolution> possibleResolutions = new ();
+        private readonly List<Vector2Int> possibleResolutions = new ();
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, IQualitySettingsController qualitySettingsController) : base(qualitySettingsController)
+        public ResolutionSettingsController(SettingsDropdownModuleView view)
         {
             this.view = view;
 
-            LoadResolutionOptions();
-
-            int savedIndex = FindResolutionIndex(qualitySettingsController.ResolutionWidth, qualitySettingsController.ResolutionHeight, qualitySettingsController.ResolutionRefreshRate);
-
-            if (savedIndex >= 0)
-                view.DropdownView.Dropdown.value = savedIndex;
-            else
-            {
-                for (int index = 0; index < possibleResolutions.Count; index++)
-                {
-                    if (!ResolutionUtils.IsDefaultResolution(possibleResolutions[index]))
-                        continue;
-
-                    view.DropdownView.Dropdown.value = index;
-                    break;
-                }
-            }
+            RefreshResolutionOptions(NativeWindowManager.FullScreenEnabled);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetResolutionSettingsOnChange);
-            SetResolutionSettings(view.DropdownView.Dropdown.value);
+
+            NativeWindowManager.CurrentResolutionChanged += OnCurrentResolutionChanged;
+            NativeWindowManager.FullScreenChanged += OnFullScreenChanged;
+
+            view.SetInteractable(!Application.isEditor && NativeWindowManager.FullScreenEnabled);
+            OnCurrentResolutionChanged(NativeWindowManager.CurrentResolution);
+        }
+
+        private void OnFullScreenChanged(bool enabled)
+        {
+            SetViewInteractable(enabled);
+            RefreshResolutionOptions(enabled);
+        }
+
+        private void OnCurrentResolutionChanged(Vector2Int resolution)
+        {
+            if (!NativeWindowManager.FullScreenEnabled)
+            {
+                view.DropdownView.Dropdown.options[0].text = FormatResolutionDropdownOption(resolution, false);
+                view.DropdownView.Dropdown.RefreshShownValue();
+            }
         }
 
         private void SetResolutionSettingsOnChange(int index)
         {
-            SetResolutionSettings(index);
+            NativeWindowManager.FullScreenResolution = possibleResolutions[index];
         }
 
-        private void LoadResolutionOptions()
+        private void RefreshResolutionOptions(bool fullScreenEnabled)
         {
             view.DropdownView.Dropdown.options.Clear();
 
-            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
+            possibleResolutions.Clear();
 
-            for (int i = 0; i < possibleResolutions.Count; i++)
+            if (fullScreenEnabled)
             {
-                Resolution resolution = possibleResolutions[i];
-                view.DropdownView.Dropdown.options.Add(
-                    new TMP_Dropdown.OptionData
-                    {
-                        text = ResolutionUtils.FormatResolutionDropdownOption(resolution)
-                    }
-                );
+                possibleResolutions.AddRange(NativeWindowManager.AvailableResolutions);
+                var currentResolution = NativeWindowManager.FullScreenResolution;
+
+                var currentResolutionIndex = -1;
+
+                for (int i = 0; i < possibleResolutions.Count; i++)
+                {
+                    Vector2Int resolution = possibleResolutions[i];
+
+                    if (resolution == currentResolution)
+                        currentResolutionIndex = i;
+
+                    view.DropdownView.Dropdown.options.Add(
+                        new TMP_Dropdown.OptionData
+                        {
+                            text = FormatResolutionDropdownOption(resolution, true)
+                        }
+                    );
+                }
+
+                view.DropdownView.Dropdown.SetValueWithoutNotify(currentResolutionIndex);
             }
+            else
+            {
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = FormatResolutionDropdownOption(NativeWindowManager.CurrentResolution, false) });
+            }
+
+            view.DropdownView.Dropdown.RefreshShownValue();
         }
 
-        private void SetResolutionSettings(int index)
+        private static string FormatResolutionDropdownOption(Vector2Int resolution, bool includeAspectRatio)
         {
-            Resolution targetResolution = index < 0 || index >= possibleResolutions.Count ? WindowModeUtils.GetDefaultResolution(possibleResolutions) : possibleResolutions[index];
-            qualitySettingsController.SetResolution(targetResolution.width, targetResolution.height, targetResolution.refreshRateRatio);
-        }
+            int width = resolution.x;
+            int height = resolution.y;
 
-        private int FindResolutionIndex(int width, int height, RefreshRate refreshRate)
-        {
-            for (int i = 0; i < possibleResolutions.Count; i++)
+            int tempWidth = width;
+            int tempHeight = height;
+
+            while (height != 0)
             {
-                Resolution r = possibleResolutions[i];
-
-                if (r.width == width && r.height == height && r.refreshRateRatio.Equals(refreshRate))
-                    return i;
+                int rest = width % height;
+                width = height;
+                height = rest;
             }
 
-            return -1;
+            if (includeAspectRatio)
+            {
+                var aspectRationString = $"{tempWidth / width}:{tempHeight / width}";
+                return $"{resolution.x}x{resolution.y} ({aspectRationString})";
+            }
+
+            return $"{resolution.x}x{resolution.y}";
         }
 
         public override void Dispose()
         {
-            base.Dispose();
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetResolutionSettingsOnChange);
+            NativeWindowManager.CurrentResolutionChanged -= OnCurrentResolutionChanged;
+            NativeWindowManager.FullScreenChanged -= OnFullScreenChanged;
         }
     }
 }

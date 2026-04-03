@@ -47,6 +47,8 @@ namespace DCL.Settings.Configuration
             CHAT_TRANSLATE_FEATURE,
             MSAA_FEATURE,
             SHADOWS_QUALITY_FEATURE,
+            POINT_AT_MARKER_FEATURE,
+
             // add other features...
         }
 
@@ -70,7 +72,8 @@ namespace DCL.Settings.Configuration
             VolumeBus volumeBus,
             bool isTranslationChatEnabled,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
@@ -80,8 +83,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsPresetSettingsController(viewInstance, qualitySettingsController),
                 DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                 DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, qualitySettingsController),
-                DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance, qualitySettingsController),
+                DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
                 DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance, qualitySettingsController),
 
                 DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance,
@@ -107,6 +109,8 @@ namespace DCL.Settings.Configuration
                     eventBus),
                 DropdownFeatures.MSAA_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, MSAA_LEVELS, qualitySettingsController.SetMsaa, x => x.Msaa),
                 DropdownFeatures.SHADOWS_QUALITY_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),
+
+                DropdownFeatures.POINT_AT_MARKER_FEATURE => new PointAtMarkerVisibilityController(viewInstance, pointAtMarkerVisibilitySettings),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
