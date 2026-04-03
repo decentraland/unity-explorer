@@ -35,7 +35,7 @@ namespace DCL.VoiceChat.Proximity
 
         private LivekitAudioSource? loopbackSource;
 
-        internal bool isSuppressed { get; private set; }
+        internal bool IsSuppressed { get; private set; }
 
         internal ProximityRemoteTrackListener(
             IRoom islandRoom,
@@ -154,8 +154,8 @@ namespace DCL.VoiceChat.Proximity
 
         internal void MuteAll()
         {
-            if (isSuppressed) return;
-            isSuppressed = true;
+            if (IsSuppressed) return;
+            IsSuppressed = true;
 
             foreach (LivekitAudioSource source in remoteSources.Values)
             {
@@ -166,8 +166,8 @@ namespace DCL.VoiceChat.Proximity
 
         internal void UnmuteAll()
         {
-            if (!isSuppressed) return;
-            isSuppressed = false;
+            if (!IsSuppressed) return;
+            IsSuppressed = false;
 
             foreach (KeyValuePair<StreamKey, LivekitAudioSource> entry in remoteSources)
             {
@@ -219,7 +219,7 @@ namespace DCL.VoiceChat.Proximity
             AudioSource audioSource = source.GetComponent<AudioSource>();
             activeAudioSources[key.identity] = audioSource;
 
-            if (audioSource != null && isSuppressed)
+            if (audioSource != null && IsSuppressed)
                 audioSource.mute = true;
         }
 

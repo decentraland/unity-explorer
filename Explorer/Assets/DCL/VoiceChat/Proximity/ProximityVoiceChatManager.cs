@@ -1,20 +1,12 @@
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Diagnostics;
-using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat.Proximity.UI;
-#if UNITY_STANDALONE_OSX
-using DCL.VoiceChat.Permissions;
-#endif
-using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
-using LiveKit.Runtime.Scripts.Audio;
-using RichTypes;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -24,9 +16,10 @@ using Utility;
 namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
-    /// Orchestrates proximity voice chat: publishes/unpublishes the local microphone track,
-    /// coordinates state transitions (Hearing/Speaking/Suppressed/Disabled), and delegates
-    /// remote track management to <see cref="ProximityRemoteTrackListener"/>.
+    /// Orchestrates proximity voice chat: coordinates state transitions
+    /// (Hearing/Speaking/Suppressed/Disabled) and delegates microphone publishing
+    /// to <see cref="ProximityMicrophoneTrackPublisher"/> and remote track management
+    /// to <see cref="ProximityRemoteTrackListener"/>.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
     {
@@ -35,17 +28,14 @@ namespace DCL.VoiceChat.Proximity
         private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
         private readonly ProximityVoiceChatStateModel stateModel;
+        private readonly ProximityMicrophoneTrackPublisher micPublisher;
         private readonly ProximityRemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? proximityStateSubscription;
 
-        private MicrophoneRtcAudioSource? rtcAudioSource;
-        private ITrack? localTrack;
-
         private CancellationTokenSource activationCts = new ();
 
-        private bool published;
         private bool disposed;
 
         public ProximityVoiceChatManager(
@@ -59,6 +49,7 @@ namespace DCL.VoiceChat.Proximity
             this.configuration = configuration;
             this.stateModel = stateModel;
 
+            micPublisher = new ProximityMicrophoneTrackPublisher(islandRoom, configuration);
             remoteListener = new ProximityRemoteTrackListener(islandRoom, configuration, activeAudioSources);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
@@ -69,7 +60,6 @@ namespace DCL.VoiceChat.Proximity
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             proximityStateSubscription = stateModel.State.Subscribe(OnProximityStateChanged);
-            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
 
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
 
@@ -86,7 +76,6 @@ namespace DCL.VoiceChat.Proximity
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
             proximityStateSubscription?.Dispose();
-            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -95,12 +84,19 @@ namespace DCL.VoiceChat.Proximity
             islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
+            micPublisher.Dispose();
             remoteListener.Dispose();
 
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Disposed");
         }
 
-        // --- Room event delegates ---
+        private void OnCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status.IsInCall())
+                stateModel.Suppress();
+            else if (status.IsNotConnected())
+                stateModel.Resume();
+        }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
             => remoteListener.HandleTrackSubscribed(publication, participant);
@@ -113,8 +109,6 @@ namespace DCL.VoiceChat.Proximity
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
             => remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
-
-        // --- Connection ---
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
@@ -146,8 +140,6 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        // --- Activation ---
-
         private async UniTask ActivateWithRetryAsync(CancellationToken ct)
         {
             await UniTask.SwitchToMainThread(ct);
@@ -158,13 +150,13 @@ namespace DCL.VoiceChat.Proximity
 
                 try
                 {
-                    await PublishLocalTrackAsync(ct);
+                    await micPublisher.PublishAsync(ct);
                     remoteListener.StartListening();
 
                     ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
                     if (stateModel.State.Value != ProximityVoiceChatState.SPEAKING)
-                        rtcAudioSource?.Stop();
+                        micPublisher.StopMicrophone();
 
                     return;
                 }
@@ -188,90 +180,6 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        // --- Local track ---
-
-        private async UniTask PublishLocalTrackAsync(CancellationToken ct)
-        {
-            if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
-                configuration.AudioMixerGroup.audioMixer.SetFloat(nameof(AudioMixerExposedParam.Microphone_Volume), 13);
-
-#if UNITY_STANDALONE_OSX
-            bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
-
-            if (!hasPermissions)
-            {
-                ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, "Microphone permissions not granted, cannot publish local track");
-                return;
-            }
-#endif
-
-            Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
-
-            if (!reachable.Success)
-                throw new InvalidOperationException($"No microphone available: {reachable.ErrorMessage}");
-
-            Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
-                reachable.Value,
-                (configuration.AudioMixerGroup.audioMixer, nameof(AudioMixerExposedParam.Microphone_Volume)),
-                configuration.microphonePlaybackToSpeakers
-            );
-
-            if (!result.Success)
-                throw new InvalidOperationException($"Failed to create RTC audio source: {result.ErrorMessage}");
-
-            rtcAudioSource = result.Value;
-            rtcAudioSource.Start();
-
-            string participantName = islandRoom.Participants.LocalParticipant().Name;
-
-            localTrack = islandRoom.LocalTracks.CreateAudioTrack(
-                $"proximity_{participantName}",
-                rtcAudioSource
-            );
-
-            var options = new TrackPublishOptions
-            {
-                AudioEncoding = new AudioEncoding { MaxBitrate = 124000 },
-                Source = TrackSource.SourceMicrophone,
-            };
-
-            islandRoom.Participants.LocalParticipant().PublishTrack(localTrack, options, ct);
-            published = true;
-
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track published to Island Room");
-        }
-
-        private void UnpublishLocalTrack()
-        {
-            if (localTrack != null && published)
-            {
-                try
-                {
-                    islandRoom.Participants.LocalParticipant().UnpublishTrack(localTrack, true);
-                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Local track unpublished");
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"Error unpublishing: {ex.Message}");
-                }
-            }
-
-            rtcAudioSource?.Dispose();
-            rtcAudioSource = null;
-            localTrack = null;
-            published = false;
-        }
-
-        // --- State ---
-
-        private void OnCallStatusChanged(VoiceChatStatus status)
-        {
-            if (status.IsInCall())
-                stateModel.Suppress();
-            else if (status.IsNotConnected())
-                stateModel.Resume();
-        }
-
         private void OnProximityStateChanged(ProximityVoiceChatState newState)
         {
             OnProximityStateChangedInternalAsync(newState).Forget();
@@ -291,37 +199,37 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.HEARING:
-                        if (remoteListener.isSuppressed)
+                        if (remoteListener.IsSuppressed)
                         {
                             remoteListener.UnmuteAll();
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
                         }
-                        else if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        else if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
                         }
 
-                        rtcAudioSource?.Stop();
+                        micPublisher.StopMicrophone();
                         break;
 
                     case ProximityVoiceChatState.SPEAKING:
-                        if (remoteListener.isSuppressed)
+                        if (remoteListener.IsSuppressed)
                         {
                             remoteListener.UnmuteAll();
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
                         }
-                        else if (!published && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        else if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
                         }
 
-                        rtcAudioSource?.Start();
+                        micPublisher.StartMicrophone();
                         break;
 
                     case ProximityVoiceChatState.SUPPRESSED:
-                        rtcAudioSource?.Stop();
+                        micPublisher.StopMicrophone();
                         remoteListener.MuteAll();
                         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Suppressed — Private/Community call active");
                         break;
@@ -329,39 +237,9 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        // --- Microphone ---
-
-        private void OnMicrophoneChanged(MicrophoneSelection newSelection)
-        {
-            if (rtcAudioSource == null) return;
-
-            SwitchMicrophoneAsync(newSelection).Forget();
-            return;
-
-            async UniTaskVoid SwitchMicrophoneAsync(MicrophoneSelection selection)
-            {
-                if (!PlayerLoopHelper.IsMainThread)
-                    await UniTask.SwitchToMainThread();
-
-                SwitchMicrophoneInternal(selection);
-            }
-        }
-
-        private void SwitchMicrophoneInternal(MicrophoneSelection selection)
-        {
-            Result result = rtcAudioSource!.SwitchMicrophone(selection);
-
-            if (result.Success)
-                ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"Microphone switched to: {selection.name}");
-            else
-                ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, $"Failed to switch microphone: {result.ErrorMessage}");
-        }
-
-        // --- Deactivation ---
-
         private void Deactivate()
         {
-            UnpublishLocalTrack();
+            micPublisher.Unpublish();
             remoteListener.StopListening();
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Deactivated");
         }
