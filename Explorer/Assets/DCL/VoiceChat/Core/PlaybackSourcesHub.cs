@@ -93,7 +93,7 @@ namespace DCL.VoiceChat
             });
         }
 
-        private static void DisposeSource(LivekitAudioSource livekitAudioSource)
+        public static void DisposeSource(LivekitAudioSource livekitAudioSource)
         {
             livekitAudioSource.Stop();
             livekitAudioSource.Free();

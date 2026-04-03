@@ -25,7 +25,7 @@ namespace DCL.VoiceChat.Proximity
     {
         private const string TAG = nameof(ProximityRemoteTrackListener);
 
-        private readonly IRoom islandRoom;
+        private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly ConcurrentDictionary<string, AudioSource> activeAudioSources;
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
@@ -35,12 +35,9 @@ namespace DCL.VoiceChat.Proximity
 
         internal bool IsSuppressed { get; private set; }
 
-        internal ProximityRemoteTrackListener(
-            IRoom islandRoom,
-            VoiceChatConfiguration configuration,
-            ConcurrentDictionary<string, AudioSource> activeAudioSources)
+        internal ProximityRemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, ConcurrentDictionary<string, AudioSource> activeAudioSources)
         {
-            this.islandRoom = islandRoom;
+            this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.activeAudioSources = activeAudioSources;
 
@@ -59,7 +56,7 @@ namespace DCL.VoiceChat.Proximity
         {
             try
             {
-                foreach (KeyValuePair<string, Participant> entry in islandRoom.Participants.RemoteParticipantIdentities())
+                foreach (KeyValuePair<string, Participant> entry in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication pub) in entry.Value.Tracks)
                     if (TryAddRemoteSource(pub.Kind, new StreamKey(entry.Key!, sid)))
                         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Added existing remote track from {entry.Key}");
@@ -75,7 +72,7 @@ namespace DCL.VoiceChat.Proximity
 
         internal void StopListening()
         {
-            DestroySource(loopbackSource);
+            PlaybackSourcesHub.DisposeSource(loopbackSource);
             loopbackSource = null;
 
             foreach (StreamKey key in remoteSources.Keys)
@@ -93,7 +90,7 @@ namespace DCL.VoiceChat.Proximity
 
                 try
                 {
-                    if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return;
+                    if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
                     var key = new StreamKey(participant.Identity, publication.Sid);
 
@@ -133,7 +130,7 @@ namespace DCL.VoiceChat.Proximity
                     {
                         if (!configuration.EnableLocalTrackPlayback) return;
 
-                        DestroySource(loopbackSource);
+                        PlaybackSourcesHub.DisposeSource(loopbackSource);
                         loopbackSource = null;
                         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track loopback removed");
                     }
@@ -178,7 +175,7 @@ namespace DCL.VoiceChat.Proximity
         {
             if (kind != TrackKind.KindAudio) return false;
 
-            Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
+            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
             if (!stream.Resource.Has) return false;
 
             AddRemoteSource(key, stream);
@@ -189,11 +186,10 @@ namespace DCL.VoiceChat.Proximity
         {
             if (kind != TrackKind.KindAudio) return false;
 
-            Weak<AudioStream> stream = islandRoom.AudioStreams.ActiveStream(key);
+            Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
             if (!stream.Resource.Has) return false;
 
             loopbackSource = CreateSource(key, stream, spatial: false);
-            loopbackSource.transform.SetParent(fallbackParent);
             loopbackSource.Play();
             return true;
         }
@@ -201,16 +197,15 @@ namespace DCL.VoiceChat.Proximity
         private void AddRemoteSource(StreamKey key, Weak<AudioStream> stream)
         {
             if (remoteSources.TryRemove(key, out LivekitAudioSource? oldSource))
-                DestroySource(oldSource);
+                PlaybackSourcesHub.DisposeSource(oldSource);
 
             LivekitAudioSource source = CreateSource(key, stream, spatial: true);
-            source.transform.SetParent(fallbackParent);
             source.Play();
 
             if (!remoteSources.TryAdd(key, source))
             {
                 ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Cannot add source, key already exists: {key}");
-                DestroySource(source);
+                PlaybackSourcesHub.DisposeSource(source);
                 return;
             }
 
@@ -227,15 +222,17 @@ namespace DCL.VoiceChat.Proximity
                 return;
 
             activeAudioSources.TryRemove(key.identity, out _);
-            DestroySource(source);
+            PlaybackSourcesHub.DisposeSource(source);
         }
 
         private LivekitAudioSource CreateSource(StreamKey key, Weak<AudioStream> stream, bool spatial)
         {
             LivekitAudioSource source = LivekitAudioSource.New(explicitName: true, spatial: spatial);
-
+            source.Construct(stream);
             AudioSource audioSource = source.GetComponent<AudioSource>().EnsureNotNull();
             audioSource.outputAudioMixerGroup = configuration.ProximityChatAudioMixerGroup;
+            source.name = $"ProximityAudio_{key.identity}";
+            source.transform.SetParent(fallbackParent);
 
             if (spatial)
             {
@@ -244,18 +241,7 @@ namespace DCL.VoiceChat.Proximity
                 source.gameObject.AddComponent<ProximityPanCalculator>();
             }
 
-            source.Construct(stream);
-            source.name = $"ProximityAudio_{key.identity}";
             return source;
-        }
-
-        private static void DestroySource(LivekitAudioSource? source)
-        {
-            if (source == null) return;
-
-            source.Stop();
-            source.Free();
-            source.gameObject.SelfDestroy();
         }
     }
 }

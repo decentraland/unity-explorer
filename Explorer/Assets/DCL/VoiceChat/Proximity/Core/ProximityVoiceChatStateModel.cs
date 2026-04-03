@@ -1,10 +1,17 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
-using DCL.VoiceChat.Proximity.UI;
 using System;
 
 namespace DCL.VoiceChat.Proximity
 {
+    public enum ProximityVoiceChatState
+    {
+        DISABLED,
+        HEARING,
+        SPEAKING,
+        SUPPRESSED, // when you have another more priority voice chat - Proximity or Community
+    }
+
     public class ProximityVoiceChatStateModel : IDisposable
     {
         private readonly ReactiveProperty<ProximityVoiceChatState> state;
