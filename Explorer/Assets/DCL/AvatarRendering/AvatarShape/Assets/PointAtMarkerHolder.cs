@@ -103,11 +103,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 return;
 
             lastProfileId = profileId;
-            Sprite spriteToUse = sprite ?? ThumbnailDefault;
+            Sprite spriteToUse = sprite == null || sprite.texture == null ? ThumbnailDefault : sprite;
             SpriteRenderer.sprite = spriteToUse;
 
             mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
-            mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
+            // mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
             SpriteRenderer.SetPropertyBlock(mpb);
         }
 
