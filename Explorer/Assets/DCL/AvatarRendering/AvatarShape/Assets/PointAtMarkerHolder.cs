@@ -25,7 +25,6 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         }
 
         private MaterialPropertyBlock mpb;
-        private string lastProfileId;
         private CancellationTokenSource fadeCts;
 
         private Color originalColor;
@@ -84,7 +83,17 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             IsFadedOut = true;
         }
 
-        public void UpdateData(Sprite? sprite, Color backgroundColor, string profileId, float sqrDistance)
+        public void Initialize(Sprite? sprite, Color backgroundColor)
+        {
+            Sprite spriteToUse = sprite == null || sprite.texture == null ? ThumbnailDefault : sprite;
+            SpriteRenderer.sprite = spriteToUse;
+
+            mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
+            mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
+            SpriteRenderer.SetPropertyBlock(mpb);
+        }
+
+        public void UpdateData(float sqrDistance)
         {
             float distance = Mathf.Sqrt(sqrDistance);
             float size;
@@ -98,23 +107,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 size = Mathf.Lerp(MinData.Size, MaxData.Size, t);
             }
             transform.localScale = new Vector3(size, size, 1f);
-
-            if (lastProfileId == profileId)
-                return;
-
-            lastProfileId = profileId;
-            Sprite spriteToUse = sprite == null || sprite.texture == null ? ThumbnailDefault : sprite;
-            SpriteRenderer.sprite = spriteToUse;
-
-            mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
-            mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
-            SpriteRenderer.SetPropertyBlock(mpb);
         }
 
         public void ResetState()
         {
             IsFadedOut = false;
-            lastProfileId = null;
             SpriteRenderer.sprite = null;
             fadeCts?.SafeCancelAndDispose();
         }

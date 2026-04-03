@@ -84,6 +84,7 @@ namespace DCL.Character.CharacterMotion.Systems
             PointAtMarkerVisibilitySettings.VisibilitySetting visibilitySetting = pointAtMarkerVisibilitySettings.MarkerVisibilitySetting;
 
             if (!pointAt.IsPointing
+                || string.IsNullOrEmpty(profile.UserId)
                 || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.NONE && !isLocalPlayer)
                 || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
                 return;
@@ -98,6 +99,13 @@ namespace DCL.Character.CharacterMotion.Systems
                 avatarBase.AudioPlaybackController?.PlayAudioForType(
                     AvatarAudioSettings.AvatarAudioClipType.PointAt);
 
+            Sprite? sprite = profile.ProfilePicture?.Asset.Sprite;
+            if (sprite != null)
+                latestThumbnailCache[profile.UserId] = sprite;
+            else if (!latestThumbnailCache.TryGetValue(profile.UserId, out sprite))
+                sprite = null;
+
+            marker.Initialize(sprite, profile.UserNameColor);
             marker.FadeIn();
 
             World.Add(entity, marker);
@@ -110,19 +118,12 @@ namespace DCL.Character.CharacterMotion.Systems
             [Data] in float3 cameraUp,
             [Data] in Vector3 cameraPosition,
             in HandPointAtComponent pointAt,
-            in Profile profile,
             ref PointAtMarkerHolder marker)
         {
             if (!pointAt.IsPointing)
                 return;
 
-            Sprite? sprite = profile.ProfilePicture?.Asset.Sprite;
-            if (sprite != null)
-                latestThumbnailCache[profile.UserId] = sprite;
-            else if (!latestThumbnailCache.TryGetValue(profile.UserId, out sprite))
-                sprite = null;
-
-            marker.UpdateData(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
+            marker.UpdateData((pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
             marker.transform.LookAt(
                 pointAt.WorldHitPoint + (Vector3)cameraForward, cameraUp);
