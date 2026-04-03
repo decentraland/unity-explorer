@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.AssetBundles;
+﻿using DCL.Diagnostics;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 using Utility;
@@ -16,9 +17,16 @@ namespace ECS.StreamableLoading.Textures
             new (
                 result.Succeeded
                     ? new SpriteData(result.Asset!,
-                        result.Asset!.Asset.Match(video => fallback, tex2D => tex2D != null
-                            ? Sprite.Create(tex2D, new Rect(0, 0, tex2D.width, tex2D.height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false)
-                            : fallback))
+                        result.Asset!.Asset.Match(video => fallback, tex2D =>
+                        {
+                            if (tex2D == null)
+                            {
+                                ReportHub.LogError(new ReportData(ReportCategory.TEXTURES), "Resolved texture asset has a null Texture2D despite Succeeded == true; using fallback sprite.");
+                                return fallback;
+                            }
+
+                            return Sprite.Create(tex2D, new Rect(0, 0, tex2D.width, tex2D.height), VectorUtilities.OneHalf, pixelsPerUnit, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                        }))
                     : fallback);
 
         public static StreamableLoadingResult<SpriteData>.WithFallback ToFullRectSpriteData(this StreamableLoadingResult<AssetBundleData> result, SpriteData fallback, int pixelsPerUnit = 50)

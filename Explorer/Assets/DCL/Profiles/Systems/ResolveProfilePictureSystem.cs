@@ -7,6 +7,7 @@ using DCL.Profiles.Helpers;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.Profiles
@@ -27,14 +28,11 @@ namespace DCL.Profiles
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                try
-                {
-                    profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                try { profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC); }
+                catch (Exception e) {
+                    ReportHub.LogError(new ReportData(ReportCategory.PROFILE), $"Error on setting full rect sprite data to profile picture: {e.Message}");
                 }
-                finally
-                {
-                    World.Destroy(entity);
-                }
+                finally { World.Destroy(entity); }
             }
         }
     }
