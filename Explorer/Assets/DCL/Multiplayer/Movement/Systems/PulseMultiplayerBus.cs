@@ -1,13 +1,11 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
-using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using Decentraland.Pulse;
 using System;
-using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
@@ -26,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly PulseEmotesMessageBus emotesMessageBus;
         private readonly IWeb3IdentityCache identityCache;
 
-        private bool isDisposed;
+        private volatile bool isDisposed;
 
         public PulseMultiplayerBus(PulseMultiplayerService pulseService,
             PeerIdCache peerIdCache,
@@ -58,36 +56,34 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void Dispose()
         {
             isDisposed = true;
+            pulseService.UnregisterAllHandlers();
         }
 
-        public void SubscribeToIncomingMessages(CancellationToken ct)
+        public void SubscribeToIncomingMessages()
         {
-            UniTask.WhenAll(SubscribeToPlayerJoinedAsync(ct),
-                        SubscribeToTeleportsAsync(ct),
-                        SubscribeToPlayerStateFullAsync(ct),
-                        SubscribeToPlayerStateDeltaAsync(ct),
-                        SubscribeToProfileAnnouncementsAsync(ct),
-                        SubscribeToPlayerLeftAsync(ct),
-                        SubscribeToEmoteStartedAsync(ct),
-                        SubscribeToEmoteStoppedAsync(ct),
-                        MonitorDisconnectsAsync(ct))
-                   .SuppressToResultAsync(ReportCategory.MULTIPLAYER)
-                   .Forget();
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerJoined, HandlePlayerJoined);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerLeft, HandlePlayerLeft);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerStateFull, HandlePlayerStateFull);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerStateDelta, HandlePlayerStateDelta);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.PlayerProfileVersionAnnounced, HandleProfileAnnouncement);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.Teleported, HandleTeleport);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStarted, HandleEmoteStarted);
+            pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped, HandleEmoteStopped);
+
+            pulseService.RegisterDisconnectHandler(HandleDisconnect);
         }
 
         private void RemoveAllPeers()
         {
-            foreach (string wallet in peerIdCache.Wallets)
-                removeIntentions.Enqueue(wallet);
+            peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
 
-            peerIdCache.Clear();
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            movementInbox.TryEnqueue(fullMovementMessage, @for);
+            movementInbox.Enqueue(fullMovementMessage, @for);
         }
     }
 }

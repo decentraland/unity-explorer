@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Character;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
@@ -35,6 +36,7 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly ICharacterObject characterObject;
         private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
+        private readonly MovementInbox movementInbox;
 
         public MultiplayerProfilesSystem(
             World world,
@@ -46,7 +48,8 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             ILoadingStatus realFlowLoadingStatus,
-            IRealmData realmData
+            IRealmData realmData,
+            MovementInbox movementInbox
         ) : base(world)
         {
             this.remoteAnnouncements = remoteAnnouncements;
@@ -58,10 +61,13 @@ namespace DCL.Multiplayer.Profiles.Systems
             this.characterObject = characterObject;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.realmData = realmData;
+            this.movementInbox = movementInbox;
         }
 
         protected override void Update(float t)
         {
+            movementInbox.DrainToEntities();
+
             if (realFlowLoadingStatus.CurrentStage.Value is not LoadingStatus.LoadingStage.Completed)
                 return;
 

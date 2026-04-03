@@ -1,6 +1,7 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Tables;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement
@@ -9,6 +10,7 @@ namespace DCL.Multiplayer.Movement
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World globalWorld;
+        private readonly ConcurrentQueue<(string wallet, NetworkMovementMessage message)> incomingQueue = new ();
         private readonly Dictionary<string, NetworkMovementMessage> pendingMessages = new ();
 
         public MovementInbox(IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
@@ -17,17 +19,32 @@ namespace DCL.Multiplayer.Movement
             this.globalWorld = globalWorld;
         }
 
-        public void TryEnqueue(NetworkMovementMessage fullMovementMessage, string @for)
+        /// <summary>
+        ///     Enqueues a movement message for later processing. Thread-safe — called from the background drain thread.
+        /// </summary>
+        public void Enqueue(NetworkMovementMessage fullMovementMessage, string @for)
         {
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
 
-            if (!entityParticipantTable.TryGet(@for, out IReadOnlyEntityParticipantTable.Entry entry))
-            {
-                pendingMessages[@for] = fullMovementMessage;
-                return;
-            }
+            incomingQueue.Enqueue((@for, fullMovementMessage));
+        }
 
-            EnqueueToEntity(entry.Entity, fullMovementMessage);
+        /// <summary>
+        ///     Drains all queued movement messages and dispatches them to entities.
+        ///     Must be called from the main thread each frame.
+        /// </summary>
+        public void DrainToEntities()
+        {
+            while (incomingQueue.TryDequeue(out (string wallet, NetworkMovementMessage message) item))
+            {
+                if (!entityParticipantTable.TryGet(item.wallet, out IReadOnlyEntityParticipantTable.Entry entry))
+                {
+                    pendingMessages[item.wallet] = item.message;
+                    continue;
+                }
+
+                EnqueueToEntity(entry.Entity, item.message);
+            }
         }
 
         /// <summary>

@@ -1,63 +1,57 @@
 using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using Decentraland.Pulse;
-using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerBus
     {
-        private async UniTask SubscribeToEmoteStartedAsync(CancellationToken ct)
+        private void HandleEmoteStarted(IncomingMessage message)
         {
-            await foreach (EmoteStarted emoteStarted in pulseService.SubscribeAsync<EmoteStarted>(
-                               ServerMessage.MessageOneofCase.EmoteStarted, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote started while disposed");
-                    break;
-                }
-
-                if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out string walletId))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
-                    continue;
-                }
-
-                if (emoteStarted.PlayerState != null)
-                {
-                    NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isInstant: true, isEmoting: true);
-                    Inbox(movementMessage, walletId);
-                }
-
-                double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-                emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote started while disposed");
+                return;
             }
+
+            EmoteStarted emoteStarted = message.Message.EmoteStarted;
+
+            if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out string walletId))
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
+                return;
+            }
+
+            if (emoteStarted.PlayerState != null)
+            {
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isInstant: true, isEmoting: true);
+                Inbox(movementMessage, walletId);
+            }
+
+            double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+            emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
         }
 
-        private async UniTask SubscribeToEmoteStoppedAsync(CancellationToken ct)
+        private void HandleEmoteStopped(IncomingMessage message)
         {
-            await foreach (EmoteStopped emoteStopped in pulseService.SubscribeAsync<EmoteStopped>(
-                               ServerMessage.MessageOneofCase.EmoteStopped, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote stopped while disposed");
-                    break;
-                }
-
-                if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out string walletId))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
-                    continue;
-                }
-
-                // TODO: Handle emote stop for remote players (e.g. set StopEmote flag)
-                ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote stopped while disposed");
+                return;
             }
+
+            EmoteStopped emoteStopped = message.Message.EmoteStopped;
+
+            if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out string walletId))
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
+                return;
+            }
+
+            // TODO: Handle emote stop for remote players (e.g. set StopEmote flag)
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
         }
     }
 }

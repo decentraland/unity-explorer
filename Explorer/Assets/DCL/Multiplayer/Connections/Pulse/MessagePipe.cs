@@ -10,15 +10,11 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// </summary>
     public sealed class MessagePipe
     {
-        private readonly SimplePipeChannel<IncomingMessage> incomingChannel = new ();
+        private readonly SimplePipeChannel<MessagePipeEvent> eventChannel = new ();
         private readonly SimplePipeChannel<OutgoingMessage> outgoingChannel = new ();
-        private readonly SimplePipeChannel<DisconnectReason> disconnectChannel = new ();
 
-        public IUniTaskAsyncEnumerable<IncomingMessage> ReadIncomingMessagesAsync(CancellationToken ct) =>
-            incomingChannel.ReadAllAsync(ct);
-
-        public IUniTaskAsyncEnumerable<OutgoingMessage> ReadOutgoingMessagesAsync(CancellationToken ct) =>
-            outgoingChannel.ReadAllAsync(ct);
+        public IUniTaskAsyncEnumerable<MessagePipeEvent> ReadEventsAsync(CancellationToken ct) =>
+            eventChannel.ReadAllAsync(ct);
 
         public bool TryReadOutgoingMessage(out OutgoingMessage message) =>
             outgoingChannel.TryRead(out message);
@@ -27,10 +23,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             outgoingChannel.TryWrite(message);
 
         public void OnDisconnected(DisconnectReason reason) =>
-            disconnectChannel.TryWrite(reason);
-
-        public IUniTaskAsyncEnumerable<DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
-            disconnectChannel.ReadAllAsync(ct);
+            eventChannel.TryWrite(MessagePipeEvent.FromDisconnectEvent(reason));
 
         /// <summary>
         ///     Called on the Transport thread for every received packet.
@@ -39,7 +32,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void OnDataReceived(MessagePacket packet)
         {
             if (IncomingMessage.TryCreate(packet.FromPeer, packet.Data, out IncomingMessage incomingMessage))
-                incomingChannel.TryWrite(incomingMessage);
+                eventChannel.TryWrite(MessagePipeEvent.FromMessage(incomingMessage));
         }
     }
 }

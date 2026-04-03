@@ -6,8 +6,8 @@ using Google.Protobuf;
 namespace DCL.Multiplayer.Connections.Pulse
 {
     /// <summary>
-    ///     Incoming message is automatically disposed when the next message is consumed from the async enumerator.
-    ///     The underlying proto message should never be stored.
+    ///     The underlying proto message is returned to the pool on Dispose.
+    ///     It should never be stored beyond the scope of a single handler invocation.
     /// </summary>
     public readonly struct IncomingMessage : IDisposable
     {
@@ -56,23 +56,4 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
     }
 
-    public readonly struct IncomingMessage<T> : IDisposable
-    {
-        public readonly T Payload;
-        private readonly IncomingMessage source;
-
-        public IncomingMessage(IncomingMessage source, T payload)
-        {
-            this.source = source;
-            Payload = payload;
-        }
-
-        public void Dispose()
-        {
-            source.Dispose();
-        }
-
-        public static implicit operator T(IncomingMessage<T> message) =>
-            message.Payload;
-    }
 }

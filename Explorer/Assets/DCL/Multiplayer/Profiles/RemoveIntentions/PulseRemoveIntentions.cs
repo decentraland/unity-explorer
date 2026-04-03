@@ -10,11 +10,13 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
         private readonly MutexSync mutexSync = new ();
         private readonly HashSet<RemoveIntention> set = new ();
 
-        public void Enqueue(string walletId) =>
-            set.Add(new RemoveIntention(walletId, RoomSource.PULSE));
+        public void Enqueue(string walletId)
+        {
+            using (mutexSync.GetScope())
+                set.Add(new RemoveIntention(walletId, RoomSource.PULSE));
+        }
 
         public OwnedBunch<RemoveIntention> Bunch() =>
-            // TODO: no need mutex really
             new (mutexSync, set);
     }
 }

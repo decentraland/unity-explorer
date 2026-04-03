@@ -793,7 +793,8 @@ namespace Global.Dynamic
                     voiceChatRoom,
                     // TODO: properly branch profile announcements depending on server setup
                     pulseIncomingProfileAnnouncements,
-                    pulseRemoveIntentions
+                    pulseRemoveIntentions,
+                    movementInbox
                 ),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),

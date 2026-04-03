@@ -220,7 +220,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            movementInbox.TryEnqueue(fullMovementMessage, @for);
+            movementInbox.Enqueue(fullMovementMessage, @for);
         }
 
         /// <summary>

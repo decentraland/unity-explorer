@@ -1,5 +1,4 @@
 using CrdtEcsBridge.Components.Conversion;
-using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
@@ -7,8 +6,7 @@ using DCL.Multiplayer.Movement.Systems;
 using Decentraland.Pulse;
 using Pulse.Transport;
 using System;
-using System.Collections.Generic;
-using System.Threading;
+using System.Collections.Concurrent;
 using UnityEngine;
 using Utility;
 using GlideState = Decentraland.Pulse.GlideState;
@@ -17,12 +15,13 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly HashSet<uint> pendingResyncs = new ();
-        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
+        private readonly ConcurrentDictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
+        private readonly ConcurrentDictionary<uint, byte> pendingResyncs = new ();
 
         public void Send(NetworkMovementMessage message)
         {
-            // TODO Don't push any messages if connection is not active
+            if (isDisposed || !pulseService.IsAuthenticated) return;
+
             // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
 
             var clientMessage = OutgoingMessage.Create(PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
@@ -31,124 +30,119 @@ namespace DCL.Multiplayer.Connections.Pulse
             pulseService.Send(clientMessage);
         }
 
-        private async UniTask SubscribeToPlayerJoinedAsync(CancellationToken ct)
+        private void HandlePlayerJoined(IncomingMessage message)
         {
-            await foreach (PlayerJoined playerJoined in pulseService.SubscribeAsync<PlayerJoined>(ServerMessage.MessageOneofCase.PlayerJoined, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                string resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
-
-                incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
-
-                peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
-
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
-                lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
-
-                Inbox(movementMessage, resolvedWallet);
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                return;
             }
+
+            PlayerJoined playerJoined = message.Message.PlayerJoined;
+            string resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
+
+            incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
+
+            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
+
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
+            lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
+
+            Inbox(movementMessage, resolvedWallet);
         }
 
-        private async UniTask SubscribeToPlayerLeftAsync(CancellationToken ct)
+        private void HandlePlayerLeft(IncomingMessage message)
         {
-            await foreach (PlayerLeft playerLeft in pulseService.SubscribeAsync<PlayerLeft>(ServerMessage.MessageOneofCase.PlayerLeft, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out string wallet))
-                    removeIntentions.Enqueue(wallet);
-
-                peerIdCache.Remove(playerLeft.SubjectId);
-                lastMovementMessages.Remove(playerLeft.SubjectId);
-                pendingResyncs.Remove(playerLeft.SubjectId);
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                return;
             }
+
+            PlayerLeft playerLeft = message.Message.PlayerLeft;
+
+            if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out string wallet))
+                removeIntentions.Enqueue(wallet);
+
+            peerIdCache.Remove(playerLeft.SubjectId);
+            lastMovementMessages.TryRemove(playerLeft.SubjectId, out _);
+            pendingResyncs.TryRemove(playerLeft.SubjectId, out _);
         }
 
-        private async UniTask SubscribeToPlayerStateFullAsync(CancellationToken ct)
+        private void HandlePlayerStateFull(IncomingMessage message)
         {
-            await foreach (PlayerStateFull playerStateFull in pulseService.SubscribeAsync<PlayerStateFull>(ServerMessage.MessageOneofCase.PlayerStateFull, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
-
-                if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out string wallet))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
-                    continue;
-                }
-
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
-                TryUpdateLastMovementAndCompleteResync(playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
-                Inbox(movementMessage, wallet);
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                return;
             }
+
+            PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
+
+            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out string wallet))
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
+                return;
+            }
+
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
+            TryUpdateLastMovementAndCompleteResync(playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
+            Inbox(movementMessage, wallet);
         }
 
-        private async UniTask SubscribeToPlayerStateDeltaAsync(CancellationToken ct)
+        private void HandlePlayerStateDelta(IncomingMessage message)
         {
-            await foreach (PlayerStateDeltaTier0 delta in pulseService.SubscribeAsync<PlayerStateDeltaTier0>(ServerMessage.MessageOneofCase.PlayerStateDelta, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
-                    break;
-                }
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
+                return;
+            }
 
-                if (!peerIdCache.TryGetWallet(delta.SubjectId, out string wallet))
-                {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {delta.SubjectId}");
-                    continue;
-                }
+            PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-                if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
-                {
-                    if (TryRequestResync(delta.SubjectId, 0))
-                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Already waiting for a resync for {delta.SubjectId}");
+            if (!peerIdCache.TryGetWallet(delta.SubjectId, out string wallet))
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {delta.SubjectId}");
+                return;
+            }
 
-                    continue;
-                }
+            if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
+            {
+                if (TryRequestResync(delta.SubjectId, 0))
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Already waiting for a resync for {delta.SubjectId}");
 
-                if (delta.NewSeq > lastMovement.sequence)
+                return;
+            }
+
+            if (delta.NewSeq > lastMovement.sequence)
+            {
+                if (delta.BaselineSeq != lastMovement.sequence)
                 {
-                    if (delta.BaselineSeq != lastMovement.sequence)
-                    {
-                        if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
-                            ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Prev seq: {lastMovement.sequence}");
-                    }
-                    else
-                    {
-                        // Consecutive seq received, normal flow resumed — clear any stale pending resync
-                        pendingResyncs.Remove(delta.SubjectId);
-                    }
+                    if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Prev seq: {lastMovement.sequence}");
                 }
                 else
                 {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, last seq: {lastMovement.sequence}");
-                    continue;
+                    // Consecutive seq received, normal flow resumed — clear any stale pending resync
+                    pendingResyncs.TryRemove(delta.SubjectId, out _);
                 }
-
-                NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, delta);
-                lastMovementMessages[delta.SubjectId] = (delta.NewSeq, movementMessage);
-
-                Inbox(movementMessage, wallet);
             }
+            else
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, last seq: {lastMovement.sequence}");
+                return;
+            }
+
+            NetworkMovementMessage movementMessage = MergeIntoNetworkMovementMessage(lastMovement.message, delta);
+            lastMovementMessages[delta.SubjectId] = (delta.NewSeq, movementMessage);
+
+            Inbox(movementMessage, wallet);
 
             return;
 
             bool TryRequestResync(uint subjectId, uint knownSequence)
             {
-                if (!pendingResyncs.Add(subjectId)) return false;
+                if (!pendingResyncs.TryAdd(subjectId, 0)) return false;
 
                 OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
                     ClientMessage.MessageOneofCase.Resync);
@@ -175,7 +169,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             else
                 lastMovementMessages[subjectId] = (sequence, movementMessage);
 
-            pendingResyncs.Remove(subjectId);
+            pendingResyncs.TryRemove(subjectId, out _);
         }
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Utilities.Extensions;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -10,20 +9,25 @@ using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerService : IDisposable
+    public class PulseMultiplayerService : IDisposable
     {
         private const int MAX_CONNECT_ATTEMPTS = 3;
+        private const int RECONNECTION_DELAY_MS = 10000;
 
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly Dictionary<ServerMessage.MessageOneofCase, ISubscriber> subscribers = new ();
+        private readonly Dictionary<ServerMessage.MessageOneofCase, Action<IncomingMessage>> syncHandlers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
+
+        private Func<DisconnectReason, bool>? disconnectHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
+        private volatile bool isAuthenticated;
 
         public PulseMultiplayerService(
             ITransport transport,
@@ -35,10 +39,30 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.identityCache = identityCache;
         }
 
+        public bool IsAuthenticated => isAuthenticated;
+
         public void Dispose()
         {
+            isAuthenticated = false;
+            UnregisterAllHandlers();
             connectionLifeCycleCts.SafeCancelAndDispose();
             transport.Dispose();
+        }
+
+        public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler)
+        {
+            syncHandlers.Add(type, handler);
+        }
+
+        public void RegisterDisconnectHandler(Func<DisconnectReason, bool> handler)
+        {
+            disconnectHandler = handler;
+        }
+
+        public void UnregisterAllHandlers()
+        {
+            syncHandlers.Clear();
+            disconnectHandler = null;
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
@@ -59,13 +83,22 @@ namespace DCL.Multiplayer.Connections.Pulse
         ///     Cancels the current connection lifecycle (message routing, subscriptions).
         ///     Must be called before reconnecting after a transport-level disconnect.
         /// </summary>
-        public void ResetConnectionLifecycle()
+        private void ResetConnectionLifecycle()
         {
+            isAuthenticated = false;
             connectionLifeCycleCts.SafeCancelAndDispose();
         }
 
-        public IUniTaskAsyncEnumerable<DisconnectReason> ReadDisconnectsAsync(CancellationToken ct) =>
-            pipe.ReadDisconnectsAsync(ct);
+        public void Send(OutgoingMessage outgoingMessage)
+        {
+            if (transport.State != ITransport.TransportState.CONNECTED)
+            {
+                outgoingMessage.Dispose();
+                return;
+            }
+
+            pipe.Send(outgoingMessage);
+        }
 
         private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
         {
@@ -88,59 +121,82 @@ namespace DCL.Multiplayer.Connections.Pulse
             // TODO: get the address from IDecentralandUrlsSource (?)
             await transport.ConnectAsync("127.0.0.1", 7777, ct);
 
+            // Register handshake handler before starting the routing loop so it's visible immediately.
+            // Extract fields inside the handler — the underlying proto message is returned to pool after the handler returns.
+            var handshakeCompletion = new UniTaskCompletionSource<(bool success, string? error)>();
+
+            syncHandlers[ServerMessage.MessageOneofCase.Handshake] = message =>
+            {
+                syncHandlers.Remove(ServerMessage.MessageOneofCase.Handshake);
+                HandshakeResponse response = message.Message.Handshake;
+                handshakeCompletion.TrySetResult((response.Success, response.HasError ? response.Error : null));
+            };
+
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
-            RouteIncomingMessagesAsync(connectionLifeCycleCts.Token).Forget();
+            StartRouting(connectionLifeCycleCts.Token, ct);
 
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
 
             Send(handshakePacket);
 
-            await foreach (HandshakeResponse response in SubscribeAsync<HandshakeResponse>(ServerMessage.MessageOneofCase.Handshake, ct))
+            (bool success, string? error) = await handshakeCompletion.Task;
+
+            if (!success)
             {
-                if (!response.Success)
+                await DisconnectAsync(ct);
+                throw new PulseException(error ?? "Handshake failed");
+            }
+
+            isAuthenticated = true;
+        }
+
+        private void StartRouting(CancellationToken connectionCt, CancellationToken parentCt)
+        {
+            // RunOnThreadPool with configureAwait: false ensures all await continuations
+            // stay on the thread pool — matching the ENet transport pattern.
+            // UniTask.Delay is NOT used here because it schedules on the Unity player loop
+            // and would resume on the main thread; Task.Delay respects the null
+            // SynchronizationContext of thread pool threads.
+            UniTask.RunOnThreadPool(async () =>
+            {
+                try
                 {
-                    await DisconnectAsync(ct);
-                    throw new PulseException(response.HasError ? response.Error : "Handshake failed");
+                    await foreach (MessagePipeEvent evt in pipe.ReadEventsAsync(connectionCt))
+                    {
+                        if (evt.IsDisconnectEvent(out MessagePipeEvent.DisconnectEvent disconnectEvent))
+                        {
+                            bool shouldReconnect = disconnectHandler?.Invoke(disconnectEvent) ?? false;
+
+                            if (shouldReconnect && !parentCt.IsCancellationRequested)
+                            {
+                                ResetConnectionLifecycle();
+
+                                ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
+
+                                await Task.Delay(RECONNECTION_DELAY_MS, parentCt);
+
+                                try { await ConnectAsync(parentCt); }
+                                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+                            }
+
+                            break;
+                        }
+
+                        if (!evt.IsMessage(out IncomingMessage message)) continue;
+
+                        try
+                        {
+                            if (syncHandlers.TryGetValue(message.Message.MessageCase, out Action<IncomingMessage>? handler))
+                                handler(message);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+                        finally { evt.Dispose(); }
+                    }
                 }
-
-                // Wait for handshake once
-                break;
-            }
-        }
-
-        public IUniTaskAsyncEnumerable<IncomingMessage<T>> SubscribeAsync<T>(ServerMessage.MessageOneofCase type, CancellationToken ct)
-            where T: class, IMessage
-        {
-            var subscriber = new GenericSubscriber<T>(type);
-
-            subscribers.Add(type, subscriber);
-
-            return new AutoDisposeAsyncEnumerable<IncomingMessage<T>>(
-                subscriber.Channel.ReadAllAsync(ct),
-                () => subscribers.Remove(type)
-            );
-        }
-
-        public void Send(OutgoingMessage outgoingMessage)
-        {
-            if (transport.State != ITransport.TransportState.CONNECTED) return;
-            pipe.Send(outgoingMessage);
-        }
-
-        private async UniTaskVoid RouteIncomingMessagesAsync(CancellationToken ct)
-        {
-            try
-            {
-                await foreach (IncomingMessage message in pipe.ReadIncomingMessagesAsync(ct))
-                {
-                    if (!subscribers.TryGetValue(message.Message.MessageCase, out ISubscriber? subscriber)) continue;
-                    subscriber.TryNotify(message);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-            }
+                catch (OperationCanceledException) { }
+            }, configureAwait: false, cancellationToken: connectionCt)
+           .Forget();
         }
 
         private string BuildAuthChain()

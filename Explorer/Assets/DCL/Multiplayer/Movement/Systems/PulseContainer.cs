@@ -64,7 +64,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             pulseEmotesMessageBus = new PulseEmotesMessageBus(pulseMultiplayerService);
 
             pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, incomingProfiles, removeIntentions, pulseEmotesMessageBus, identityCache);
-            pulseMultiplayerBus.SubscribeToIncomingMessages(lifeCycleCts.Token);
+            pulseMultiplayerBus.SubscribeToIncomingMessages();
 
             pulseProfilePropagationBus = new PulseProfilePropagationBus(pulseMultiplayerService);
 

@@ -1,10 +1,8 @@
 using CrdtEcsBridge.Components.Conversion;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using Decentraland.Pulse;
 using Pulse.Transport;
-using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -31,27 +29,25 @@ namespace DCL.Multiplayer.Connections.Pulse
             pulseService.Send(outgoing);
         }
 
-        private async UniTask SubscribeToTeleportsAsync(CancellationToken ct)
+        private void HandleTeleport(IncomingMessage message)
         {
-            await foreach (TeleportPerformed teleport in pulseService.SubscribeAsync<TeleportPerformed>(
-                               ServerMessage.MessageOneofCase.Teleported, ct))
+            if (isDisposed)
             {
-                if (isDisposed)
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving teleport while disposed");
-                    break;
-                }
-
-                if (!peerIdCache.TryGetWallet(teleport.SubjectId, out string wallet))
-                {
-                    ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
-                    continue;
-                }
-
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.ServerTick, isInstant: true);
-                TryUpdateLastMovementAndCompleteResync(teleport.SubjectId, teleport.Sequence, movementMessage);
-                Inbox(movementMessage, wallet);
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving teleport while disposed");
+                return;
             }
+
+            TeleportPerformed teleport = message.Message.Teleported;
+
+            if (!peerIdCache.TryGetWallet(teleport.SubjectId, out string wallet))
+            {
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
+                return;
+            }
+
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.ServerTick, isInstant: true);
+            TryUpdateLastMovementAndCompleteResync(teleport.SubjectId, teleport.Sequence, movementMessage);
+            Inbox(movementMessage, wallet);
         }
     }
 }

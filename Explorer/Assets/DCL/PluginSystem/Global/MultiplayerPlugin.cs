@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly IActivatableConnectiveRoom voiceChatRoom;
         private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
+        private readonly MovementInbox movementInbox;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -95,7 +97,8 @@ namespace DCL.PluginSystem.Global
             ThroughputBufferBunch sceneThroughputBufferBunch,
             IActivatableConnectiveRoom voiceChatRoom,
             IRemoteAnnouncements remoteAnnouncements,
-            IRemoveIntentions removeIntentions)
+            IRemoveIntentions removeIntentions,
+            MovementInbox movementInbox)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatRoom = voiceChatRoom;
             this.remoteAnnouncements = remoteAnnouncements;
             this.removeIntentions = removeIntentions;
+            this.movementInbox = movementInbox;
         }
 
         public void Dispose()
@@ -161,7 +165,8 @@ namespace DCL.PluginSystem.Global
                 remoteMetadata,
                 characterObject,
                 realFlowLoadingStatus,
-                realmData
+                realmData,
+                movementInbox
             );
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
