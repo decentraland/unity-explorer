@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -22,8 +23,11 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<TextureData, GetTextureIntention>
     {
-        private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 3;
+        private const int AVATAR_TEXTURE_MAX_ATTEMPTS = 6;
         private const int AVATAR_TEXTURE_REQUEST_DELAY_MS = 5000;
+        private readonly HashSet<long> RECOVERABLE_CODES = new () {
+            404
+        };
 
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
@@ -73,10 +77,10 @@ namespace ECS.StreamableLoading.Textures
 
         private async UniTask<Texture2D?> TryResolveAvatarTextureAsync(URLAddress url, GetTextureIntention intention, CancellationToken ct)
         {
-            var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS));
+            var newCommonArgs = new CommonArguments(url, RetryPolicy.WithRetries(AVATAR_TEXTURE_MAX_ATTEMPTS, AVATAR_TEXTURE_REQUEST_DELAY_MS, forceRecoverableCodes: RECOVERABLE_CODES));
 
             GetTextureWebRequest.CreateTextureOp textureOp = GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode);
-            GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType);
+            GetTextureArguments textureArguments = new GetTextureArguments(intention.TextureType, false);
 
             var result = await webRequestController.GetTextureAsync(
                 newCommonArgs,
@@ -84,8 +88,7 @@ namespace ECS.StreamableLoading.Textures
                 textureOp,
                 ct,
                 GetReportData(),
-                suppressErrors: true,
-                ignoreIrrecoverableErrors: true
+                suppressErrors: true
             )!.SuppressAnyExceptionWithFallback(null);
 
             if (result != null) return result;
