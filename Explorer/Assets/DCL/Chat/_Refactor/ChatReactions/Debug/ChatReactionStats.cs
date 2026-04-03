@@ -12,6 +12,9 @@ namespace DCL.Chat.ChatReactions.Debug
         public readonly int WorldVisibleAnchors;
         public readonly int WorldPoolCapacity;
         public readonly int NearbyAvatarCount;
+        public readonly int DroppedThisFrame;
+        public readonly int CappedThisFrame;
+        public readonly int LocalAnchorAlive;
         public readonly bool IsUIStreaming;
         public readonly bool IsWorldStreaming;
         public readonly bool IsDebugNearbyActive;
@@ -25,6 +28,7 @@ namespace DCL.Chat.ChatReactions.Debug
             int uiAlive, int uiCapacity,
             int worldAlive, int worldVisible, int worldVisibleAnchors, int worldCapacity,
             int nearbyAvatars,
+            int dropped, int capped, int localAnchorAlive,
             bool uiStreaming, bool worldStreaming, bool debugNearby,
             int activeAnchors, int anchorScanLimit, int anchorSlotCapacity)
         {
@@ -35,6 +39,9 @@ namespace DCL.Chat.ChatReactions.Debug
             WorldVisibleAnchors = worldVisibleAnchors;
             WorldPoolCapacity = worldCapacity;
             NearbyAvatarCount = nearbyAvatars;
+            DroppedThisFrame = dropped;
+            CappedThisFrame = capped;
+            LocalAnchorAlive = localAnchorAlive;
             IsUIStreaming = uiStreaming;
             IsWorldStreaming = worldStreaming;
             IsDebugNearbyActive = debugNearby;

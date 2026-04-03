@@ -64,6 +64,9 @@ namespace DCL.Chat.ChatReactions.Editor
                 Label("Max Per Avatar", config.WorldLane.MaxParticlesPerAvatar == 0 ? "unlimited" : config.WorldLane.MaxParticlesPerAvatar.ToString());
                 Label("Max Spawn Distance", $"{config.WorldLane.MaxSpawnDistance} units");
             }
+            Label("Local Anchor Alive", stats.LocalAnchorAlive < 0 ? "no anchor" : stats.LocalAnchorAlive.ToString());
+            Label("Dropped (pool full)", stats.DroppedThisFrame.ToString());
+            Label("Capped (per-avatar)", stats.CappedThisFrame.ToString());
             Label("Streaming", StateText(stats.IsWorldStreaming));
             EditorGUI.indentLevel--;
 

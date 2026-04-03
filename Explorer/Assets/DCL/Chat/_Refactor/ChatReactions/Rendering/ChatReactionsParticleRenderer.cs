@@ -17,6 +17,11 @@ namespace DCL.Chat.ChatReactions.Rendering
         private const int BATCH_SIZE = 1023;
         private const int SIZE_LUT_RESOLUTION = 256;
 
+        // SetVectorArray uploads array.Length entries regardless of active count.
+        // Pre-allocated tiers let Flush pick the smallest array that fits,
+        // reducing GPU upload bandwidth for partially-filled batches.
+        private static readonly int[] TIER_SIZES = { 16, 64, 256, 512, BATCH_SIZE };
+
         private static Mesh? sharedQuad;
 
         private readonly Material mat;
@@ -26,6 +31,13 @@ namespace DCL.Chat.ChatReactions.Rendering
         private readonly Matrix4x4[] matrices = new Matrix4x4[BATCH_SIZE];
         private readonly Vector4[] posSize = new Vector4[BATCH_SIZE];
         private readonly Vector4[] packed = new Vector4[BATCH_SIZE];
+
+        private readonly Vector4[][] tieredPosSize;
+        private readonly Vector4[][] tieredPacked;
+
+        // MPB locks array length on first SetVectorArray call.
+        // Track the last tier to detect size changes that require mpb.Clear().
+        private int lastTierIndex = -1;
 
         private static readonly int PosSizeId = Shader.PropertyToID("_PosSize");
         private static readonly int PackedId = Shader.PropertyToID("_Packed");
@@ -42,6 +54,19 @@ namespace DCL.Chat.ChatReactions.Rendering
             mpb = new MaterialPropertyBlock();
             sharedQuad ??= CreateQuadMesh();
             this.sizeLut = MathUtils.BakeCurve(sizeOverLifetime, SIZE_LUT_RESOLUTION);
+
+            tieredPosSize = new Vector4[TIER_SIZES.Length][];
+            tieredPacked = new Vector4[TIER_SIZES.Length][];
+
+            for (int i = 0; i < TIER_SIZES.Length - 1; i++)
+            {
+                tieredPosSize[i] = new Vector4[TIER_SIZES[i]];
+                tieredPacked[i] = new Vector4[TIER_SIZES[i]];
+            }
+
+            // The last tier shares the working arrays — no copy needed for full batches.
+            tieredPosSize[TIER_SIZES.Length - 1] = posSize;
+            tieredPacked[TIER_SIZES.Length - 1] = packed;
 
             // RenderMeshInstanced uses identity matrices; the shader repositions vertices via _PosSize.
             for (int i = 0; i < BATCH_SIZE; i++)
@@ -163,11 +188,38 @@ namespace DCL.Chat.ChatReactions.Rendering
         }
 
         private void Flush(int layer, int count, float globalAlpha)
-        { 
+        {
             Profiler.BeginSample("ChatReactions.Flush");
+
+            // Pick the smallest tier that fits the active count.
+            int tierIndex = 0;
+
+            while (TIER_SIZES[tierIndex] < count)
+                tierIndex++;
+
+            Vector4[] uploadPosSize = tieredPosSize[tierIndex];
+            Vector4[] uploadPacked = tieredPacked[tierIndex];
+
+            // The last tier already points to the working arrays (posSize/packed),
+            // so only smaller tiers need a copy of the active region.
+            if (tierIndex < TIER_SIZES.Length - 1)
+            {
+                System.Array.Copy(posSize, 0, uploadPosSize, 0, count);
+                System.Array.Copy(packed, 0, uploadPacked, 0, count);
+            }
+
+            // MPB locks the array length on first SetVectorArray call for each property.
+            // Subsequent calls with a different-length array are silently truncated.
+            // Clear the MPB when the tier changes to reset the length lock.
+            if (tierIndex != lastTierIndex)
+            {
+                mpb.Clear();
+                lastTierIndex = tierIndex;
+            }
+
             mpb.SetFloat(GlobalAlphaId, globalAlpha);
-            mpb.SetVectorArray(PosSizeId, posSize);
-            mpb.SetVectorArray(PackedId, packed);
+            mpb.SetVectorArray(PosSizeId, uploadPosSize);
+            mpb.SetVectorArray(PackedId, uploadPacked);
 
             var renderParams = new RenderParams(mat)
             {

@@ -108,11 +108,14 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         /// </summary>
         public void UpdateVisibility(Camera cam, float maxDistanceSqr)
         {
+            Profiler.BeginSample("ChatReactions.World.AnchorVisibility");
+
             if (cam == null)
             {
                 for (int i = 0; i < slotScanLimit; i++)
                     visible[i] = active[i];
 
+                Profiler.EndSample();
                 return;
             }
 
@@ -134,6 +137,8 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
                 visible[i] = IsOnScreen(cam, camPos, positions[i], maxDistanceSqr);
             }
+
+            Profiler.EndSample();
         }
 
         internal static bool IsOnScreen(Camera cam, Vector3 camPos, Vector3 worldPos, float maxDistSqr)
@@ -147,6 +152,18 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
             Vector3 vp = cam.WorldToViewportPoint(worldPos);
             return vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f;
+        }
+
+        /// <summary>
+        /// Returns the alive count for a given wallet from the provided per-anchor counts.
+        /// Returns -1 if the wallet has no active anchor (useful for debug display).
+        /// </summary>
+        public int FindAliveForWallet(string walletId, int[] alivePerAnchor)
+        {
+            if (!walletToSlot.TryGetValue(walletId, out byte slot))
+                return -1;
+
+            return alivePerAnchor[slot];
         }
 
         private byte FindExistingAnchor(string walletId) =>

@@ -16,6 +16,12 @@ namespace DCL.Chat.ChatReactions.Simulation.World
     {
         private const float JITTER_XZ = 0.05f;
         private const float JITTER_Y  = 0.02f;
+        private const int MAX_DEBUG_NEARBY = 128;
+
+        // Pre-allocated wallet IDs for debug nearby anchors.
+        // Avoids string allocation in the hot path while giving each debug
+        // avatar a stable anchor so particles are spring-tethered and per-avatar capped.
+        private static readonly string[] DEBUG_NEARBY_WALLETS = InitDebugWallets();
 
         private readonly ChatReactionsConfig config;
         private readonly Material runtimeMaterial;
@@ -42,6 +48,8 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
         private int lastVisibleCount;
         private int lastVisibleAnchorCount;
+        private int droppedThisFrame;
+        private int cappedThisFrame;
 
         public int AliveCount => store.Count;
         public int PoolCapacity => store.Capacity;
@@ -52,6 +60,9 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         public int ActiveAnchorCount => anchorTable.ActiveSlotCount;
         public int AnchorScanLimit => anchorTable.SlotScanLimit;
         public int AnchorSlotCapacity => anchorTable.SlotCapacity;
+        public int DroppedThisFrame => droppedThisFrame;
+        public int CappedThisFrame => cappedThisFrame;
+        public int LocalAnchorAlive { get; private set; }
 
         public bool HasAliveParticles() => store.Count > 0;
 
@@ -84,6 +95,9 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
         public void Tick(float dt)
         {
+            droppedThisFrame = 0;
+            cappedThisFrame = 0;
+
             if (store.Count > 0)
             {
                 anchorTable.Refresh(avatarPosition);
@@ -108,8 +122,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
                 Profiler.EndSample();
             }
 
-            if (store.Count > 0)
-                RefreshAlivePerAnchor();
+            RefreshAlivePerAnchor();
 
             EmitStreamParticles(dt);
             EmitDebugNearbyParticles(dt);
@@ -154,7 +167,13 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             int n = Mathf.Max(1, count);
 
             for (int i = 0; i < n; i++)
-                SpawnSingleWorldParticle(headPos, emojiIndex, lane);
+            {
+                if (!SpawnSingleWorldParticle(headPos, emojiIndex, lane))
+                {
+                    droppedThisFrame++;
+                    break;
+                }
+            }
         }
 
         public void TriggerAnchoredReaction(Vector3 headPos, string walletId, int emojiIndex, int count)
@@ -167,9 +186,17 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             for (int i = 0; i < n; i++)
             {
                 if (maxPerAvatar > 0 && alivePerAnchor[anchor] >= maxPerAvatar)
+                {
+                    cappedThisFrame++;
                     break;
+                }
 
-                SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor);
+                if (!SpawnSingleWorldParticle(headPos, emojiIndex, lane, anchor))
+                {
+                    droppedThisFrame++;
+                    break;
+                }
+
                 alivePerAnchor[anchor]++;
             }
         }
@@ -244,6 +271,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
         private void RefreshAlivePerAnchor()
         {
+            Profiler.BeginSample("ChatReactions.World.AlivePerAnchor");
             Array.Clear(alivePerAnchor, 0, alivePerAnchor.Length);
             var buffer = store.Buffer;
             int count = store.Count;
@@ -255,6 +283,9 @@ namespace DCL.Chat.ChatReactions.Simulation.World
                 if (p.anchorIndex != ChatReactionsParticle.ANCHOR_NONE)
                     alivePerAnchor[p.anchorIndex]++;
             }
+
+            LocalAnchorAlive = anchorTable.FindAliveForWallet(AvatarAnchorTable.LOCAL_PLAYER_ID, alivePerAnchor);
+            Profiler.EndSample();
         }
 
         private bool SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,
@@ -300,12 +331,23 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         private void EmitDebugBurstAtAllPositions()
         {
             var positions = debugPositionsGetter!();
+            int count = Mathf.Min(positions.Count, MAX_DEBUG_NEARBY);
 
-            for (int i = 0; i < positions.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 int emoji = rng.Next(0, atlasTotalTiles);
-                TriggerWorldReaction(positions[i], emoji, 1);
+                TriggerAnchoredReaction(positions[i], DEBUG_NEARBY_WALLETS[i], emoji, config.WorldLane.BurstCount);
             }
+        }
+
+        private static string[] InitDebugWallets()
+        {
+            var wallets = new string[MAX_DEBUG_NEARBY];
+
+            for (int i = 0; i < MAX_DEBUG_NEARBY; i++)
+                wallets[i] = $"__debug_nearby_{i}__";
+
+            return wallets;
         }
 
         private Vector3 ApplyPositionJitter(Vector3 origin) =>
