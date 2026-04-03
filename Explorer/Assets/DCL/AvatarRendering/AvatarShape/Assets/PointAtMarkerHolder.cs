@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         [field: SerializeField] public SizeRangeData MinData { get; private set; }
         [field: SerializeField] public SizeRangeData MaxData { get; private set; }
         [SerializeField] private float fadeDuration = 0.3f;
+        [field: SerializeField] public Sprite ThumbnailDefault { get; private set; }
 
         [Serializable]
         public struct SizeRangeData
@@ -83,7 +84,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             IsFadedOut = true;
         }
 
-        public void UpdateData(Sprite sprite, Color backgroundColor, string profileId, float sqrDistance)
+        public void UpdateData(Sprite? sprite, Color backgroundColor, string profileId, float sqrDistance)
         {
             float distance = Mathf.Sqrt(sqrDistance);
             float size;
@@ -102,10 +103,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 return;
 
             lastProfileId = profileId;
-            SpriteRenderer.sprite = sprite;
+            Sprite spriteToUse = sprite ?? ThumbnailDefault;
+            SpriteRenderer.sprite = spriteToUse;
 
             mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
-            mpb.SetVector(UV_RECT_ID, ComputeUVRect(sprite));
+            mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
             SpriteRenderer.SetPropertyBlock(mpb);
         }
 

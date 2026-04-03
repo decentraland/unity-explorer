@@ -120,7 +120,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (sprite != null)
                 latestThumbnailCache[profile.UserId] = sprite;
             else if (!latestThumbnailCache.TryGetValue(profile.UserId, out sprite))
-                sprite = ProfileUtils.DEFAULT_PROFILE_PIC.Sprite;
+                sprite = null;
 
             marker.UpdateData(sprite, profile.UserNameColor, profile.UserId, (pointAt.WorldHitPoint - cameraPosition).sqrMagnitude);
             marker.transform.position = pointAt.WorldHitPoint;
