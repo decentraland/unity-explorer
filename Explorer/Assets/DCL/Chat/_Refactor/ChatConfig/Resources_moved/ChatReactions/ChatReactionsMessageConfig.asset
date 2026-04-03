@@ -27,7 +27,8 @@ MonoBehaviour:
   <CountIncrementBounceDuration>k__BackingField: 0.12
   <ShortcutsBarOffset>k__BackingField: {x: -5, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
-  <TooltipOffset>k__BackingField: {x: 0, y: 100}
+  <EmojiPanelMessageOffset>k__BackingField: {x: -170, y: -20}
+  <TooltipOffset>k__BackingField: {x: 0, y: 90}
   <TooltipArrowMinX>k__BackingField: -140
   <TooltipArrowMaxX>k__BackingField: 140
   <TooltipArrowXOffset>k__BackingField: 10

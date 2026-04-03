@@ -1,5 +1,4 @@
 using DCL.Chat.ChatReactions.Configs;
-using DCL.Emoji;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Presenters
@@ -12,21 +11,21 @@ namespace DCL.Chat.ChatReactions.Presenters
     public sealed class ReactionPanelPositioner
     {
         private readonly RectTransform messageSelectorRect;
-        private readonly EmojiPanelView emojiPanelView;
         private readonly RectTransform emojiPanelRect;
         private readonly Vector2 shortcutsBarOffset;
         private readonly Vector2 emojiPanelOffsetForSituational;
+        private readonly Vector2 emojiPanelOffsetForMessage;
 
         public ReactionPanelPositioner(
             RectTransform messageSelectorRect,
-            EmojiPanelView emojiPanelView,
+            RectTransform emojiPanelRect,
             ChatReactionsMessageConfig messageConfig)
         {
             this.messageSelectorRect = messageSelectorRect;
-            this.emojiPanelView = emojiPanelView;
-            emojiPanelRect = (RectTransform)emojiPanelView.transform;
+            this.emojiPanelRect = emojiPanelRect;
             shortcutsBarOffset = messageConfig.ShortcutsBarOffset;
             emojiPanelOffsetForSituational = messageConfig.EmojiPanelOffset;
+            emojiPanelOffsetForMessage = messageConfig.EmojiPanelMessageOffset;
         }
 
         /// <summary>
@@ -61,17 +60,22 @@ namespace DCL.Chat.ChatReactions.Presenters
         }
 
         /// <summary>
-        /// Positions the emoji panel centered horizontally at its default X,
-        /// with its Y aligned to the selector's bottom edge.
-        /// Computes the bottom edge from the selector's center pivot and scaled height,
-        /// so no manual pixel offset is needed.
+        /// Positions the emoji panel with its left edge aligned to the message
+        /// selector bar's left edge, using the same InverseTransformPoint pattern
+        /// as <see cref="PositionShortcutsBarAboveAnchor"/>.
+        /// Compensates for the panel's centered pivot by shifting right by half its width.
         /// </summary>
         public void PositionEmojiPanelForMessage()
         {
-            float selectorBottomWorldY = messageSelectorRect.position.y
-                - messageSelectorRect.rect.height * 0.5f * messageSelectorRect.lossyScale.y;
+            var panelParent = (RectTransform)emojiPanelRect.parent;
+            Vector3 localPos = panelParent.InverseTransformPoint(messageSelectorRect.position);
 
-            emojiPanelView.PositionCenteredAtWorldY(selectorBottomWorldY);
+            float halfWidth = emojiPanelRect.rect.width * 0.5f;
+
+            emojiPanelRect.localPosition = new Vector3(
+                localPos.x + halfWidth + emojiPanelOffsetForMessage.x,
+                localPos.y + emojiPanelOffsetForMessage.y,
+                0f);
         }
     }
 }

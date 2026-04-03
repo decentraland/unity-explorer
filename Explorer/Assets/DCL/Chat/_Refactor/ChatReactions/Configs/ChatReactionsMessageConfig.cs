@@ -94,6 +94,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("Offset applied to the + button position when opening the emoji panel from situational reactions.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 0f);
 
+        [field: Note("Offset applied when positioning the emoji panel in message mode. " +
+                     "X fine-tunes horizontal alignment relative to the selector's left edge, " +
+                     "Y adjusts the vertical gap below the selector bar.")]
+        [field: SerializeField] public Vector2 EmojiPanelMessageOffset { get; private set; } = new (0f, 0f);
+
         [field: Header("Tooltip Positioning")]
         [field: Note("Offset applied when positioning the tooltip above a reaction pill. " +
                      "X keeps the tooltip centered (typically 0), Y is the gap above the pill.")]

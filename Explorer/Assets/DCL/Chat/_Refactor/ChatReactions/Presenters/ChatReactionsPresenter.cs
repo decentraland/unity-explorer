@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
-                emojiPanelView,
+                (RectTransform)emojiPanelView.transform,
                 messageReactionsConfig);
 
             emojiPanelBridge = new EmojiPanelReactionBridge(
