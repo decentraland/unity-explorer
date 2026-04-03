@@ -122,6 +122,7 @@ namespace DCL.Chat.ChatMessages
                     lastReactors.Add(wallet);
             }
 
+#if UNITY_EDITOR
             int mockUserCount = messageConfig.TooltipMockUsersEnabled
                 ? messageConfig.TooltipMockUserCount
                 : 0;
@@ -131,17 +132,19 @@ namespace DCL.Chat.ChatMessages
                 view.ShowLoading(uvRect, atlasConfig.Atlas, pillTransform);
                 asyncCts = new CancellationTokenSource();
                 MockLoadThenShowAsync(mockUserCount, asyncCts.Token).Forget();
+                return;
             }
-            else
-            {
-                string text = textBuilder.Build(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
-                view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
+#else
+            const int mockUserCount = 0;
+#endif
 
-                if (!allResolved)
-                {
-                    asyncCts = new CancellationTokenSource();
-                    ResolveAndUpdateAsync(mockUserCount, asyncCts.Token).Forget();
-                }
+            string text = textBuilder.Build(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
+            view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
+
+            if (!allResolved)
+            {
+                asyncCts = new CancellationTokenSource();
+                ResolveAndUpdateAsync(mockUserCount, asyncCts.Token).Forget();
             }
         }
 
@@ -163,6 +166,7 @@ namespace DCL.Chat.ChatMessages
             shownEmojiIndex == emojiIndex
             && string.Equals(shownMessageId, messageId, StringComparison.Ordinal);
 
+#if UNITY_EDITOR
         private async UniTaskVoid MockLoadThenShowAsync(int mockUserCount, CancellationToken ct)
         {
             try
@@ -182,6 +186,7 @@ namespace DCL.Chat.ChatMessages
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
         }
+#endif
 
         private async UniTaskVoid ResolveAndUpdateAsync(int mockUserCount, CancellationToken ct)
         {

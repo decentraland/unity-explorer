@@ -33,7 +33,6 @@ MonoBehaviour:
   <TooltipArrowMaxX>k__BackingField: 140
   <TooltipArrowXOffset>k__BackingField: 10
   <TooltipActionTextColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
-  DebugRandomizeReactionCounts: 0
   TooltipMockLoadingEnabled: 1
   TooltipMockLoadingDelay: 0.5
   TooltipMockUsersEnabled: 1

@@ -3,7 +3,6 @@ using DCL.Chat.History;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace DCL.Chat.ChatMessages
 {
@@ -114,7 +113,7 @@ namespace DCL.Chat.ChatMessages
                              && reactions.HasReacted(emojiIndex, ownWalletAddress);
 
                 Rect uvRect = atlasConfig!.GetUVRect(emojiIndex);
-                int displayCount = messageConfig != null && messageConfig.DebugRandomizeReactionCounts ? Random.Range(1, 100) : count;
+                int displayCount = count;
                 item.SetData(emojiIndex, displayCount, isOwn, uvRect, atlasConfig.Atlas);
                 SubscribeItemEvents(item);
                 activeItems.Add(item);
