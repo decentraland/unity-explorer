@@ -43,6 +43,7 @@ namespace DCL.Chat.ChatReactions.Debug
         public void Dispose()
         {
             uiSimulation.EndDebugUIStream();
+            worldSimulation.EndStream();
             worldSimulation.EndDebugNearby();
         }
 

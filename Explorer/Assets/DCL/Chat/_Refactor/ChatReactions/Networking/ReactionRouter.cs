@@ -1,4 +1,5 @@
 using System;
+using DCL.Diagnostics;
 
 namespace DCL.Chat.ChatReactions.Networking
 {
@@ -39,6 +40,9 @@ namespace DCL.Chat.ChatReactions.Networking
                     break;
                 case ReactionType.Message:
                     messageTarget.HandleRemoteReaction(args);
+                    break;
+                default:
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[ReactionRouter] Unhandled ReactionType: {args.Type}");
                     break;
             }
         }

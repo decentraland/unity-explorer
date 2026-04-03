@@ -8,6 +8,12 @@ namespace DCL.Chat.ChatReactions.Simulation.World
     /// Sinusoidal lateral oscillation (zig-zag) applied to particle velocities.
     /// Each particle's random phase determines its oscillation direction.
     /// Designed to pair with a radial-only spring so the two forces stay independent.
+    ///
+    /// NOTE: Currently the zig-zag oscillation is applied as a render-time offset
+    /// inside ChatReactionsParticleRenderer rather than as a physics force here.
+    /// This class is kept as the intended long-term approach — oscillation should be
+    /// separated from rendering and applied as a proper force in the simulation tick,
+    /// so that culling positions reflect the actual visual wobble.
     /// </summary>
     public sealed class ParticleOscillationForce : IWorldParticleForce
     {

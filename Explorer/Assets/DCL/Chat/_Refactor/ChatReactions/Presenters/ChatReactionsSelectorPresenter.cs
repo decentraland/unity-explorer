@@ -87,10 +87,11 @@ namespace DCL.Chat.ChatReactions.Presenters
 
             for (int i = 0; i < defaultItems.Count; i++)
             {
-                defaultItems[i].OnClicked -= HandleReactionClicked;
+                if (defaultItems[i] == null)
+                    continue;
 
-                if (defaultItems[i] != null)
-                    itemPool.Release(defaultItems[i]);
+                defaultItems[i].OnClicked -= HandleReactionClicked;
+                itemPool.Release(defaultItems[i]);
             }
 
             defaultItems.Clear();
