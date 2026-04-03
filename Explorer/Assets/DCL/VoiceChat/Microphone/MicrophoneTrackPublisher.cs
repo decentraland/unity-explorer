@@ -27,11 +27,11 @@ namespace DCL.VoiceChat
         private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
 
         private MicrophoneTrack? microphoneTrack;
-        private CancellationTokenSource? trackPublishingCts;
-
-        private bool isDisposed;
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
+        internal bool isPublished => microphoneTrack.HasValue;
+
+        private bool isDisposed;
 
         public MicrophoneTrackPublisher(
             IRoom voiceChatRoom,
@@ -59,7 +59,7 @@ namespace DCL.VoiceChat
         ///     Creates the <see cref="MicrophoneRtcAudioSource"/> via shared helper;
         ///     conditionally starts it based on current mic-enabled state.
         /// </summary>
-        public async UniTaskVoid PublishAsync(CancellationToken ct)
+        public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
             using var _ = await semaphoreSlim.LockAsync();
 
@@ -74,15 +74,14 @@ namespace DCL.VoiceChat
                 MicrophoneRtcAudioSource rtcAudioSource =
                     await VoiceChatTrackPublishHelper.CreateMicrophoneSourceAsync(configuration, ct);
 
-                if (microphoneHandler.IsMicrophoneEnabled.Value)
+                if (micAutoStart && microphoneHandler.IsMicrophoneEnabled.Value)
                     rtcAudioSource.Start();
 
                 ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(
-                    voiceChatRoom.Participants.LocalParticipant().Name,
-                    rtcAudioSource);
+                    voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
-                microphoneHandler.Assign(microphoneTrack.Value.Source);
+                microphoneHandler.Assign(microphoneTrack.Value.Source, VoiceChatType.COMMUNITY);
 
                 voiceChatRoom.Participants.LocalParticipant().PublishTrack(
                     track, VoiceChatTrackPublishHelper.DEFAULT_PUBLISH_OPTIONS, ct);
@@ -113,11 +112,9 @@ namespace DCL.VoiceChat
 
         private void CleanupLocalTrack()
         {
+            microphoneHandler.ClearSource(VoiceChatType.COMMUNITY);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
-            trackPublishingCts?.SafeCancelAndDispose();
-            trackPublishingCts = null;
         }
-
     }
 }

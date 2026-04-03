@@ -211,7 +211,7 @@ namespace DCL.VoiceChat.Proximity
                         if (remoteListener.IsSuppressed)
                         {
                             remoteListener.UnmuteAll();
-                            microphoneHandler.AssignProximity(micPublisher.currentMicrophone);
+                            microphoneHandler.Assign(micPublisher.СurrentMicrophone, VoiceChatType.PROXIMITY);
                             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
                         }
                         else if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
@@ -222,7 +222,7 @@ namespace DCL.VoiceChat.Proximity
                         break;
 
                     case ProximityVoiceChatState.SUPPRESSED:
-                        microphoneHandler.ClearProximity();
+                        microphoneHandler.ClearSource(VoiceChatType.PROXIMITY);
                         remoteListener.MuteAll();
                         ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Suppressed — Private/Community call active");
                         break;

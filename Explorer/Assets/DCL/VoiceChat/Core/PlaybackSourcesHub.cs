@@ -70,8 +70,8 @@ namespace DCL.VoiceChat
         internal void Reset()
         {
             using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);
-            foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
 
+            foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
             foreach (StreamKey streamKey in list) RemoveStream(streamKey);
         }
 

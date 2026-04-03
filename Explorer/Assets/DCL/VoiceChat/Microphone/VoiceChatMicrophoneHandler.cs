@@ -110,22 +110,28 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void Assign(Weak<MicrophoneRtcAudioSource> newSource)
+        public void Assign(Weak<MicrophoneRtcAudioSource> newSource, VoiceChatType voiceChat)
         {
-            communitySource = newSource;
+            switch (voiceChat)
+            {
+                case VoiceChatType.COMMUNITY: communitySource = newSource; break;
+                case VoiceChatType.PROXIMITY: proximitySource = newSource; break;
+            }
         }
 
-        public void AssignProximity(Weak<MicrophoneRtcAudioSource> source)
+        public void ClearSource(VoiceChatType voiceChat)
         {
-            proximitySource = source;
-        }
-
-        public void ClearProximity()
-        {
-            if (proximitySource.Resource.Has)
-                proximitySource.Resource.Value.Stop();
-
-            proximitySource = Weak<MicrophoneRtcAudioSource>.Null;
+            switch (voiceChat)
+            {
+                case VoiceChatType.COMMUNITY:
+                    if (communitySource.Resource.Has) communitySource.Resource.Value.Stop();
+                    communitySource = Weak<MicrophoneRtcAudioSource>.Null;
+                    break;
+                case VoiceChatType.PROXIMITY:
+                    if (proximitySource.Resource.Has) proximitySource.Resource.Value.Stop();
+                    proximitySource = Weak<MicrophoneRtcAudioSource>.Null;
+                    break;
+            }
         }
 
         public void SetProximityStateModel(ProximityVoiceChatStateModel? model)

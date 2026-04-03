@@ -18,48 +18,60 @@ namespace DCL.VoiceChat.Proximity
     {
         private const string TAG = nameof(ProximityMicrophoneTrackPublisher);
 
-        private readonly IRoom islandRoom;
+        private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
+        private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
+
         private MicrophoneTrack? microphoneTrack;
 
+        internal Weak<MicrophoneRtcAudioSource> СurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
         internal bool isPublished => microphoneTrack.HasValue;
 
-        internal Weak<MicrophoneRtcAudioSource> currentMicrophone =>
-            microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
+        private bool isDisposed;
 
         internal ProximityMicrophoneTrackPublisher(
-            IRoom islandRoom,
+            IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
             VoiceChatMicrophoneHandler microphoneHandler)
         {
-            this.islandRoom = islandRoom;
+            this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
         }
 
         public void Dispose()
         {
+            if (isDisposed) return;
+            isDisposed = true;
+
             Unpublish();
+            semaphoreSlim.Dispose();
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
 
+        /// <summary>
+        ///     Publishes the local microphone track to the room.
+        ///     Creates the <see cref="MicrophoneRtcAudioSource"/> via shared helper;
+        ///     conditionally starts it based on current mic-enabled state.
+        /// </summary>
         internal async UniTask PublishAsync(CancellationToken ct)
         {
-            MicrophoneRtcAudioSource rtcSource =
+            MicrophoneRtcAudioSource rtcAudioSource =
                 await VoiceChatTrackPublishHelper.CreateMicrophoneSourceAsync(configuration, ct);
 
-            ITrack track = islandRoom.LocalTracks.CreateAudioTrack(
-                $"proximity_{islandRoom.Participants.LocalParticipant().Name}",
-                rtcSource);
+            ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(
+                voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
 
-            microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcSource));
-            microphoneHandler.AssignProximity(microphoneTrack.Value.Source);
+            microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
+            microphoneHandler.Assign(microphoneTrack.Value.Source, VoiceChatType.PROXIMITY);
 
-            islandRoom.Participants.LocalParticipant().PublishTrack(
+            voiceChatRoom.Participants.LocalParticipant().PublishTrack(
                 track, VoiceChatTrackPublishHelper.DEFAULT_PUBLISH_OPTIONS, ct);
 
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track published");
+            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track published successfully");
         }
 
         internal void Unpublish()
@@ -68,7 +80,7 @@ namespace DCL.VoiceChat.Proximity
 
             try
             {
-                islandRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
+                voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
                 ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Local track unpublished");
             }
             catch (Exception ex)
@@ -76,7 +88,7 @@ namespace DCL.VoiceChat.Proximity
                 ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Error unpublishing: {ex.Message}");
             }
 
-            microphoneHandler.ClearProximity();
+            microphoneHandler.ClearSource(VoiceChatType.PROXIMITY);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
         }
