@@ -26,7 +26,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(8, 128)]
         [field: SerializeField] public int TileSizePx { get; private set; } = 32;
 
-        [field: Header("Unicode Mapping")]
+        [field: Header("UNICODE MAPPING")]
         [field: Note("TMP Sprite Asset used by the emoji panel. Maps Unicode codepoints to atlas tile indices. " +
                      "Use context menu 'Log All Unicode → Tile Mappings' to inspect.")]
         [field: SerializeField] public TMP_SpriteAsset SpriteAsset { get; private set; }

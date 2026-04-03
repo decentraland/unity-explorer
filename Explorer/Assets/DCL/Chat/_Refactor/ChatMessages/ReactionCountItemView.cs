@@ -22,9 +22,9 @@ namespace DCL.Chat.ChatMessages
         private int emojiIndex;
         private bool hiding;
 
-        public event Action<int>? OnClicked;
-        public event Action<int, RectTransform>? OnHoverEnter;
-        public event Action<int>? OnHoverExit;
+        public event Action<int>? Clicked;
+        public event Action<int, RectTransform>? HoverEnter;
+        public event Action<int>? HoverExit;
 
         public int EmojiIndex => emojiIndex;
 
@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatMessages
 
         private void Awake()
         {
-            button.onClick.AddListener(() => OnClicked?.Invoke(emojiIndex));
+            button.onClick.AddListener(() => Clicked?.Invoke(emojiIndex));
         }
 
         public void SetData(int emojiIndex, int count, bool isOwnReaction, Rect uvRect, Texture atlas)
@@ -53,7 +53,7 @@ namespace DCL.Chat.ChatMessages
         public void OnPointerEnter(PointerEventData eventData)
         {
             contentContainer.DOScale(hoveredScale, animDuration).SetEase(Ease.OutQuad);
-            OnHoverEnter?.Invoke(emojiIndex, (RectTransform)transform);
+            HoverEnter?.Invoke(emojiIndex, (RectTransform)transform);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -61,7 +61,7 @@ namespace DCL.Chat.ChatMessages
             if (hiding) return;
 
             contentContainer.DOScale(Vector3.one, animDuration).SetEase(Ease.OutQuad);
-            OnHoverExit?.Invoke(emojiIndex);
+            HoverExit?.Invoke(emojiIndex);
         }
 
         public void Hide()

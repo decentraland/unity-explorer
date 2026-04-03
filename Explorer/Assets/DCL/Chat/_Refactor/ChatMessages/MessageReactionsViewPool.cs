@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatMessages
         private readonly Transform poolRoot;
         private readonly List<MessageReactionsView> available = new ();
 
-        public MessageReactionsViewPool(MessageReactionsView prefab, Transform poolRoot)
+        internal MessageReactionsViewPool(MessageReactionsView prefab, Transform poolRoot)
         {
             this.prefab = prefab;
             this.poolRoot = poolRoot;

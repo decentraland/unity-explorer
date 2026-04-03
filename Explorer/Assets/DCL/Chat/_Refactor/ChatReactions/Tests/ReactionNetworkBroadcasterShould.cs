@@ -52,15 +52,14 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void FlushRemainingOnDispose()
+        public void DiscardBufferedReactionsOnDispose()
         {
             var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 1f);
 
             broadcaster.Broadcast(3);
             broadcaster.Dispose();
 
-            Assert.That(fakeBus.SituationalSends.Count, Is.EqualTo(1));
-            Assert.That(fakeBus.SituationalSends[0].EmojiIndex, Is.EqualTo(3));
+            Assert.That(fakeBus.SituationalSends.Count, Is.EqualTo(0));
         }
 
         [Test]

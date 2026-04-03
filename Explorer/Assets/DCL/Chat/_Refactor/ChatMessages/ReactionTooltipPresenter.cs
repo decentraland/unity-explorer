@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatMessages
         private string? shownMessageId;
         private int shownEmojiIndex = -1;
 
-        public ReactionTooltipPresenter(
+        internal ReactionTooltipPresenter(
             ReactionTooltipView view,
             IProfileCache profileCache,
             ProfileRepositoryWrapper profileRepository,

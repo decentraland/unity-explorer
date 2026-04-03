@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         public RectTransform ButtonRect { get; }
 
-        public ChatReactionButtonPresenter(ChatReactionButtonView view)
+        internal ChatReactionButtonPresenter(ChatReactionButtonView view)
         {
             if (view == null) throw new ArgumentNullException(nameof(view));
 

@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatMessages
         private string? pendingReactionMessageId;
         private ChatEntryView? pendingReactionChatEntry;
 
-        public MessageReactionInteractionPresenter(
+        internal MessageReactionInteractionPresenter(
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
             ReactionTooltipPresenter? tooltipPresenter,

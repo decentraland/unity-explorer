@@ -1,3 +1,4 @@
+using DCL.Chat.ChatReactions.Simulation;
 using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
@@ -14,12 +15,13 @@ namespace DCL.Chat.ChatReactions.Rendering
     public sealed class ChatReactionsParticleRenderer
     {
         private const int BATCH_SIZE = 1023;
+        private const int SIZE_LUT_RESOLUTION = 256;
 
         private static Mesh? sharedQuad;
 
         private readonly Material mat;
         private readonly MaterialPropertyBlock mpb;
-        private readonly AnimationCurve? sizeOverLifetime;
+        private readonly float[]? sizeLut;
 
         private readonly Matrix4x4[] matrices = new Matrix4x4[BATCH_SIZE];
         private readonly Vector4[] posSize = new Vector4[BATCH_SIZE];
@@ -39,7 +41,7 @@ namespace DCL.Chat.ChatReactions.Rendering
             mat = material;
             mpb = new MaterialPropertyBlock();
             sharedQuad ??= CreateQuadMesh();
-            this.sizeOverLifetime = sizeOverLifetime;
+            this.sizeLut = MathUtils.BakeCurve(sizeOverLifetime, SIZE_LUT_RESOLUTION);
 
             // RenderMeshInstanced uses identity matrices; the shader repositions vertices via _PosSize.
             for (int i = 0; i < BATCH_SIZE; i++)
@@ -105,6 +107,12 @@ namespace DCL.Chat.ChatReactions.Rendering
             if (worldSizePerPixel <= 0f || cam.pixelHeight <= 0)
                 return;
 
+            // Precalculate screen-to-world basis vectors. Since depthFromCamera is constant
+            // for the entire batch, the mapping is linear: 3 native calls replace N.
+            Vector3 screenOrigin = cam.ScreenToWorldPoint(new Vector3(0f, 0f, depthFromCamera));
+            Vector3 worldPerPixelX = (cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, 0f, depthFromCamera)) - screenOrigin) / cam.pixelWidth;
+            Vector3 worldPerPixelY = (cam.ScreenToWorldPoint(new Vector3(0f, cam.pixelHeight, depthFromCamera)) - screenOrigin) / cam.pixelHeight;
+
             int batchCount = 0;
 
             for (int i = 0; i < count; i++)
@@ -112,7 +120,7 @@ namespace DCL.Chat.ChatReactions.Rendering
                 ref readonly var p = ref buffer[i];
                 float t = LifetimeT(p.age, p.lifetime);
 
-                Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(p.screenPos.x, p.screenPos.y, depthFromCamera));
+                Vector3 worldPos = screenOrigin + worldPerPixelX * p.screenPos.x + worldPerPixelY * p.screenPos.y;
 
                 WriteBatchSlot(batchCount, worldPos,
                     ApplySizeCurve(p.startSizePx, t) * worldSizePerPixel,
@@ -135,8 +143,13 @@ namespace DCL.Chat.ChatReactions.Rendering
         private static float LifetimeT(float age, float lifetime) =>
             lifetime > 0f ? Mathf.Clamp01(age / lifetime) : 0f;
 
-        private float ApplySizeCurve(float size, float t) =>
-            sizeOverLifetime != null ? size * sizeOverLifetime.Evaluate(t) : size;
+        private float ApplySizeCurve(float size, float t)
+        {
+            if (sizeLut == null) return size;
+
+            int lutIndex = Mathf.Min((int)(t * (SIZE_LUT_RESOLUTION - 1)), SIZE_LUT_RESOLUTION - 1);
+            return size * sizeLut[lutIndex];
+        }
 
         private static float WorldSizePerPixel(Camera cam, float depth) =>
             cam.orthographic

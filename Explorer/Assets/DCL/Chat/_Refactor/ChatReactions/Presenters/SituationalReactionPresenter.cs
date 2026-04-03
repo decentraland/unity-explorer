@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private bool prevStreamLocal;
         private bool prevStreamRemote;
 
-        public SituationalReactionPresenter(ISituationalReactionSimulation service,
+        internal SituationalReactionPresenter(ISituationalReactionSimulation service,
             ChatReactionsConfig config,
             ChatReactionDebugState debugState,
             SituationalReactionDebugController? debugController = null,

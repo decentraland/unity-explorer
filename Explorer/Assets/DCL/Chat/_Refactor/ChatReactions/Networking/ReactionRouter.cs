@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatReactions.Networking
         private readonly IRemoteReactionTarget situationalTarget;
         private readonly IRemoteReactionTarget messageTarget;
 
-        public ReactionRouter(
+        internal ReactionRouter(
             IReactionMessageBus reactionBus,
             IRemoteReactionTarget situationalTarget,
             IRemoteReactionTarget messageTarget)

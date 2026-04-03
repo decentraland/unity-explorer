@@ -7,7 +7,7 @@ namespace DCL.Chat.ChatReactions.Views
 {
     /// <summary>
     /// Individual emoji item in the shortcuts bar. Displays an emoji from the atlas
-    /// and fires <see cref="OnClicked"/> when tapped.
+    /// and fires <see cref="Clicked"/> when tapped.
     /// Hover animation is handled by a sibling <see cref="HoverScaleEffect"/> component.
     /// </summary>
     public sealed class ChatReactionItemView : MonoBehaviour
@@ -17,7 +17,7 @@ namespace DCL.Chat.ChatReactions.Views
 
         public int AtlasIndex { get; private set; }
 
-        public event Action<int>? OnClicked;
+        public event Action<int>? Clicked;
 
         private bool listenersAttached;
         private HoverScaleEffect? cachedHoverEffect;
@@ -44,7 +44,7 @@ namespace DCL.Chat.ChatReactions.Views
         {
             cachedHoverEffect ??= GetComponent<HoverScaleEffect>();
             cachedHoverEffect?.ResetScale();
-            OnClicked = null;
+            Clicked = null;
             AtlasIndex = -1;
         }
 
@@ -56,6 +56,6 @@ namespace DCL.Chat.ChatReactions.Views
             listenersAttached = false;
         }
 
-        private void HandleClicked() => OnClicked?.Invoke(AtlasIndex);
+        private void HandleClicked() => Clicked?.Invoke(AtlasIndex);
     }
 }

@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions.Debug
 
         private const int STREAM_EMOJI_INDEX = -1;
 
-        public SituationalReactionDebugController(
+        internal SituationalReactionDebugController(
             ChatReactionUISimulation uiSimulation,
             ChatReactionWorldSimulation worldSimulation,
             IAvatarReactionPosition? avatarPosition = null)

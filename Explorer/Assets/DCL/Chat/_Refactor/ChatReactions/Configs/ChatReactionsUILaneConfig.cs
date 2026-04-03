@@ -12,7 +12,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/UI Lane Config")]
     public class ChatReactionsUILaneConfig : ScriptableObject
     {
-        [field: Header("Pool")]
+        [field: Header("POOL")]
         [field: Note("INIT-ONLY — read once to allocate the particle ring-buffer. " +
                      "Changing at runtime has no effect.")]
         [field: Range(64, 1023)]
@@ -23,13 +23,13 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0, 1023)]
         [field: SerializeField] public int MaxVisibleParticles { get; private set; } = 50;
 
-        [field: Header("Placement")]
+        [field: Header("PLACEMENT")]
         [field: Note("How far in front of the camera (world units) the particle quads are rendered. " +
                      "Too close clips through UI; too far gets occluded by geometry.")]
         [field: Range(0.1f, 10f)]
         [field: SerializeField] public float DepthFromCamera { get; private set; } = 1.0f;
 
-        [field: Header("Physics (screen space — pixels, px/sec, px/sec²)")]
+        [field: Header("PHYSICS (SCREEN SPACE — PIXELS, PX/SEC, PX/SEC²)")]
         [field: Note("How long each particle lives (seconds). Randomised per particle between min and max.")]
         [field: MinMaxRange(0f, 5f)]
         [field: SerializeField] public Vector2 LifetimeRange { get; private set; } = new(1.0f, 1.8f);
@@ -51,7 +51,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Zero = floating-upward feel; negative Y = confetti falling down.")]
         [field: SerializeField] public Vector2 Gravity { get; private set; } = Vector2.zero;
 
-        [field: Header("Streaming (hold-to-emit)")]
+        [field: Header("STREAMING (HOLD-TO-EMIT)")]
         [field: Note("Emission ticks per second while holding the reaction button. Each tick spawns StreamBurst particles.")]
         [field: Range(0f, 30f)]
         [field: SerializeField] public float StreamRatePerSecond { get; private set; } = 8f;
@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(1, 10)]
         [field: SerializeField] public int StreamBurst { get; private set; } = 1;
 
-        [field: Header("Flight Path")]
+        [field: Header("FLIGHT PATH")]
         [field: Note("INIT-ONLY — switches motion modes. " +
                      "ON = balloon-style (kick + float + zig-zag). OFF = simple straight-up (uses SpeedRange). " +
                      "Toggling at runtime has no effect.")]

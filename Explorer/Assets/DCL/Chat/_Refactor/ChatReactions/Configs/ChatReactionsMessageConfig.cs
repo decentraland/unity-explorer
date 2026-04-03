@@ -3,22 +3,6 @@ using Utility;
 
 namespace DCL.Chat.ChatReactions.Configs
 {
-    public readonly struct TooltipPositioningConfig
-    {
-        public readonly Vector2 Offset;
-        public readonly float ArrowMinX;
-        public readonly float ArrowMaxX;
-        public readonly float ArrowXOffset;
-
-        public TooltipPositioningConfig(Vector2 offset, float arrowMinX, float arrowMaxX, float arrowXOffset)
-        {
-            Offset = offset;
-            ArrowMinX = arrowMinX;
-            ArrowMaxX = arrowMaxX;
-            ArrowXOffset = arrowXOffset;
-        }
-    }
-
     /// <summary>
     /// Settings for per-message emoji reactions shown inline in the chat feed
     /// (similar to Discord / Slack message reactions).
@@ -27,7 +11,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/Message Config")]
     public class ChatReactionsMessageConfig : ScriptableObject
     {
-        [field: Header("Picker")]
+        [field: Header("PICKER")]
         [field: Note("NOT YET WIRED UP — atlas tile indices for the reaction picker. " +
                      "Must match ReactionPickerIcons length.")]
         [field: SerializeField] public int[] AvailableEmojiIndices { get; private set; } = System.Array.Empty<int>();
@@ -35,7 +19,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("NOT YET WIRED UP — sprite icons for the reaction picker, one per emoji.")]
         [field: SerializeField] public Sprite[] ReactionPickerIcons { get; private set; } = System.Array.Empty<Sprite>();
 
-        [field: Header("Situational Shortcuts Bar")]
+        [field: Header("SITUATIONAL SHORTCUTS BAR")]
         [field: Note("Unicode codepoints of the fixed emojis in the shortcuts bar. " +
                      "Resolved to atlas tile indices at init via ChatReactionsAtlasConfig.")]
         [field: SerializeField] public uint[] FixedDefaultEmojiUnicodes { get; private set; } = System.Array.Empty<uint>();
@@ -44,7 +28,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(1, 10)]
         [field: SerializeField] public int MaxRecentEmojis { get; private set; } = 3;
 
-        [field: Header("Behaviour")]
+        [field: Header("BEHAVIOUR")]
         [field: Note("NOT YET WIRED UP — max distinct reaction types shown on a single message.")]
         [field: Range(1, 20)]
         [field: SerializeField] public int MaxReactionTypesPerMessage { get; private set; } = 6;
@@ -60,7 +44,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 0.5f)]
         [field: SerializeField] public float ReceiveStaggerInterval { get; private set; } = 0.08f;
 
-        [field: Header("Hover")]
+        [field: Header("HOVER")]
         [field: Note("Scale applied to reaction count pills on pointer hover.")]
         [field: SerializeField] public float HoverScale { get; private set; } = 1.2f;
 
@@ -73,7 +57,7 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 1f)]
         [field: SerializeField] public float TooltipHoverDelay { get; private set; } = 0.3f;
 
-        [field: Header("Animations")]
+        [field: Header("ANIMATIONS")]
         [field: Note("NOT YET WIRED UP — reaction bubble appear animation duration (seconds).")]
         [field: Range(0f, 1f)]
         [field: SerializeField] public float AppearDuration { get; private set; } = 0.15f;
@@ -86,11 +70,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0f, 1f)]
         [field: SerializeField] public float CountIncrementBounceDuration { get; private set; } = 0.12f;
 
-        [field: Header("Shortcuts Bar Positioning")]
+        [field: Header("SHORTCUTS BAR POSITIONING")]
         [field: Note("Offset applied when positioning the message shortcuts bar near a reaction button.")]
         [field: SerializeField] public Vector2 ShortcutsBarOffset { get; private set; } = new (0f, 40f);
 
-        [field: Header("Emoji Panel Positioning")]
+        [field: Header("EMOJI PANEL POSITIONING")]
         [field: Note("Offset applied to the + button position when opening the emoji panel from situational reactions.")]
         [field: SerializeField] public Vector2 EmojiPanelOffset { get; private set; } = new (0f, 0f);
 
@@ -99,7 +83,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Y adjusts the vertical gap below the selector bar.")]
         [field: SerializeField] public Vector2 EmojiPanelMessageOffset { get; private set; } = new (0f, 0f);
 
-        [field: Header("Tooltip Positioning")]
+        [field: Header("TOOLTIP POSITIONING")]
         [field: Note("Offset applied when positioning the tooltip above a reaction pill. " +
                      "X keeps the tooltip centered (typically 0), Y is the gap above the pill.")]
         [field: SerializeField] public Vector2 TooltipOffset { get; private set; } = new (0f, 12f);
@@ -114,7 +98,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Use to fine-tune alignment if the arrow doesn't point at the pill center.")]
         [field: SerializeField] public float TooltipArrowXOffset { get; private set; } = 0f;
 
-        [field: Header("Tooltip Text")]
+        [field: Header("TOOLTIP TEXT")]
         [field: Note("Color of the action suffix text (e.g. 'reacted with :fire:') in the reaction tooltip. " +
                      "Names remain the default TMP_Text color; only this suffix is tinted.")]
         [field: SerializeField] public Color TooltipActionTextColor { get; private set; } = new (1f, 1f, 1f, 0.5f);
@@ -123,11 +107,11 @@ namespace DCL.Chat.ChatReactions.Configs
         public TooltipPositioningConfig TooltipConfig =>
             new (TooltipOffset, TooltipArrowMinX, TooltipArrowMaxX, TooltipArrowXOffset);
 
-        [Header("Debug — Reactions")]
+        [Header("DEBUG — REACTIONS")]
         [Note("Replace reaction counts with random numbers (1-99) for layout testing.")]
         public bool DebugRandomizeReactionCounts;
 
-        [Header("Debug — Tooltip")]
+        [Header("DEBUG — TOOLTIP")]
         [Note("Simulate a loading delay before showing tooltip content.")]
         public bool TooltipMockLoadingEnabled;
 

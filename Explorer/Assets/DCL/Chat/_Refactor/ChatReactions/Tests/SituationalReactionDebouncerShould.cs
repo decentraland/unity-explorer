@@ -136,7 +136,7 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void FlushRemainingOnDispose()
+        public void ClearBufferWithoutFlushingOnDispose()
         {
             debounceSeconds = 10f;
             var debouncer = CreateDebouncer();
@@ -145,8 +145,8 @@ namespace DCL.Chat.ChatReactions.Tests
             debouncer.Add(4);
             debouncer.Dispose();
 
-            Assert.That(flushCount, Is.EqualTo(1));
-            Assert.That(lastFlushed![4], Is.EqualTo(2));
+            Assert.That(flushCount, Is.EqualTo(0));
+            Assert.That(lastFlushed, Is.Null);
         }
 
         [Test]

@@ -32,7 +32,7 @@ namespace DCL.Chat.ChatReactions.Networking
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> channelToMessageIds = new ();
 
-        public ChatMessageReactionService(
+        internal ChatMessageReactionService(
             IReactionMessageBus reactionBus,
             IChatHistory chatHistory,
             IWeb3IdentityCache identityCache)

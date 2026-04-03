@@ -33,9 +33,9 @@ namespace DCL.Chat.ChatMessages
 
         public float CurrentHeight { get; private set; }
 
-        public event Action<string, int>? OnReactionClicked;
-        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
-        public event Action<int>? OnReactionHoverExit;
+        public event Action<string, int>? ReactionClicked;
+        public event Action<int, RectTransform, string>? ReactionHoverEnter;
+        public event Action<int>? ReactionHoverExit;
 
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
             ChatReactionsMessageConfig messageConfig)
@@ -77,18 +77,18 @@ namespace DCL.Chat.ChatMessages
         private void OnItemClicked(int emojiIndex)
         {
             if (CurrentMessageId != null)
-                OnReactionClicked?.Invoke(CurrentMessageId, emojiIndex);
+                ReactionClicked?.Invoke(CurrentMessageId, emojiIndex);
         }
 
         private void OnItemHoverEnter(int emojiIndex, RectTransform pillRect)
         {
             if (CurrentMessageId != null)
-                OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId);
+                ReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId);
         }
 
         private void OnItemHoverExit(int emojiIndex)
         {
-            OnReactionHoverExit?.Invoke(emojiIndex);
+            ReactionHoverExit?.Invoke(emojiIndex);
         }
 
         private void PopulateItems(int totalCount, ReactionSet reactions)
@@ -123,19 +123,19 @@ namespace DCL.Chat.ChatMessages
 
         private void SubscribeItemEvents(ReactionCountItemView item)
         {
-            item.OnClicked -= OnItemClicked;
-            item.OnClicked += OnItemClicked;
-            item.OnHoverEnter -= OnItemHoverEnter;
-            item.OnHoverEnter += OnItemHoverEnter;
-            item.OnHoverExit -= OnItemHoverExit;
-            item.OnHoverExit += OnItemHoverExit;
+            item.Clicked -= OnItemClicked;
+            item.Clicked += OnItemClicked;
+            item.HoverEnter -= OnItemHoverEnter;
+            item.HoverEnter += OnItemHoverEnter;
+            item.HoverExit -= OnItemHoverExit;
+            item.HoverExit += OnItemHoverExit;
         }
 
         private void UnsubscribeItemEvents(ReactionCountItemView item)
         {
-            item.OnClicked -= OnItemClicked;
-            item.OnHoverEnter -= OnItemHoverEnter;
-            item.OnHoverExit -= OnItemHoverExit;
+            item.Clicked -= OnItemClicked;
+            item.HoverEnter -= OnItemHoverEnter;
+            item.HoverExit -= OnItemHoverExit;
         }
 
         private void LayoutRows()

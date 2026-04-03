@@ -13,7 +13,7 @@ namespace DCL.Chat.ChatReactions.Views
         [SerializeField] private Button addButton;
         [SerializeField] private GameObject divider;
 
-        [Header("Options")]
+        [Header("OPTIONS")]
         [SerializeField] private GameObject optionsArea;
         [SerializeField] private ToggleView showOthersToggle;
 
@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatReactions.Views
 
         public RectTransform RectTransform => (RectTransform)transform;
 
-        public event Action? OnAddClicked;
+        public event Action? AddClicked;
 
         public void Show() => gameObject.SetActive(true);
 
@@ -47,6 +47,6 @@ namespace DCL.Chat.ChatReactions.Views
             addButton.onClick.RemoveListener(HandleAddClicked);
         }
 
-        private void HandleAddClicked() => OnAddClicked?.Invoke();
+        private void HandleAddClicked() => AddClicked?.Invoke();
     }
 }

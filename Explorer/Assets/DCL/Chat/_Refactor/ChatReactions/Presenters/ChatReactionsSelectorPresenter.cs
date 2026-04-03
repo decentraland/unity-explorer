@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         public event Action<int>? ReactionClicked;
         public event Action? AddClicked;
 
-        public ChatReactionsSelectorPresenter(
+        internal ChatReactionsSelectorPresenter(
             ChatReactionsSelectorView view,
             ChatReactionRecentsService recentsService,
             ChatReactionsAtlasConfig atlasConfig,
@@ -52,7 +52,7 @@ namespace DCL.Chat.ChatReactions.Presenters
                 defaultCapacity: 12,
                 maxSize: 32);
 
-            view.OnAddClicked += OnAddClicked;
+            view.AddClicked += OnAddClicked;
 
             SpawnFixedDefaults();
 
@@ -81,7 +81,7 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         public void Dispose()
         {
-            view.OnAddClicked -= OnAddClicked;
+            view.AddClicked -= OnAddClicked;
 
             ReleaseRecentItems();
 
@@ -90,7 +90,7 @@ namespace DCL.Chat.ChatReactions.Presenters
                 if (defaultItems[i] == null)
                     continue;
 
-                defaultItems[i].OnClicked -= HandleReactionClicked;
+                defaultItems[i].Clicked -= HandleReactionClicked;
                 itemPool.Release(defaultItems[i]);
             }
 
@@ -104,7 +104,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             {
                 var item = itemPool.Get();
                 item.Initialize(fixedDefaults[i], atlasConfig);
-                item.OnClicked += HandleReactionClicked;
+                item.Clicked += HandleReactionClicked;
 
                 // Place before divider.
                 if (view.Divider != null)
@@ -132,7 +132,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             {
                 var item = itemPool.Get();
                 item.Initialize(recents[i], atlasConfig);
-                item.OnClicked += HandleReactionClicked;
+                item.Clicked += HandleReactionClicked;
                 item.transform.SetAsLastSibling();
                 recentItems.Add(item);
             }
@@ -145,7 +145,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         {
             for (int i = 0; i < recentItems.Count; i++)
             {
-                recentItems[i].OnClicked -= HandleReactionClicked;
+                recentItems[i].Clicked -= HandleReactionClicked;
 
                 if (recentItems[i] != null)
                     itemPool.Release(recentItems[i]);

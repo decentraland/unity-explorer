@@ -503,8 +503,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked += reactionInteraction.OnReactionButtonClicked;
             view.OnReactionPillClicked += reactionInteraction.OnReactionPillClicked;
-            view.OnReactionHoverEnter += reactionInteraction.OnReactionHoverEnter;
-            view.OnReactionHoverExit += reactionInteraction.OnReactionHoverExit;
+            view.ReactionHoverEnter += reactionInteraction.OnReactionHoverEnter;
+            view.ReactionHoverExit += reactionInteraction.OnReactionHoverExit;
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -531,8 +531,8 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked -= reactionInteraction.OnReactionButtonClicked;
             view.OnReactionPillClicked -= reactionInteraction.OnReactionPillClicked;
-            view.OnReactionHoverEnter -= reactionInteraction.OnReactionHoverEnter;
-            view.OnReactionHoverExit -= reactionInteraction.OnReactionHoverExit;
+            view.ReactionHoverEnter -= reactionInteraction.OnReactionHoverEnter;
+            view.ReactionHoverExit -= reactionInteraction.OnReactionHoverExit;
             reactionInteraction.Deactivate();
 
             scope.Dispose();

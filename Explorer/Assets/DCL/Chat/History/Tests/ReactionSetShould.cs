@@ -5,7 +5,7 @@ using System.Linq;
 namespace DCL.Chat.History.Tests
 {
     [TestFixture]
-    public class ReactionSetTests
+    public class ReactionSetShould
     {
         private ReactionSet reactionSet;
         private readonly List<(int EmojiIndex, int Count)> countsBuffer = new ();
@@ -17,13 +17,13 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void NewReactionSet_IsEmpty()
+        public void BeEmptyWhenNew()
         {
             Assert.IsTrue(reactionSet.IsEmpty);
         }
 
         [Test]
-        public void AddReaction_ReturnsTrue_WhenNew()
+        public void ReturnTrueWhenAddingNewReaction()
         {
             bool result = reactionSet.AddReaction(1, "wallet_a");
             Assert.IsTrue(result);
@@ -31,7 +31,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void AddReaction_ReturnsFalse_WhenDuplicate()
+        public void ReturnFalseWhenAddingDuplicateReaction()
         {
             reactionSet.AddReaction(1, "wallet_a");
             bool result = reactionSet.AddReaction(1, "wallet_a");
@@ -39,7 +39,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void AddReaction_DifferentEmojis_SameWallet()
+        public void AddDifferentEmojisSameWallet()
         {
             Assert.IsTrue(reactionSet.AddReaction(1, "wallet_a"));
             Assert.IsTrue(reactionSet.AddReaction(2, "wallet_a"));
@@ -51,7 +51,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void AddReaction_SameEmoji_DifferentWallets()
+        public void AddSameEmojiDifferentWallets()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(1, "wallet_b");
@@ -62,7 +62,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void RemoveReaction_ReturnsTrue_WhenExists()
+        public void ReturnTrueWhenRemovingExistingReaction()
         {
             reactionSet.AddReaction(1, "wallet_a");
             bool result = reactionSet.RemoveReaction(1, "wallet_a");
@@ -71,14 +71,14 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void RemoveReaction_ReturnsFalse_WhenNotExists()
+        public void ReturnFalseWhenRemovingNonExistentReaction()
         {
             bool result = reactionSet.RemoveReaction(1, "wallet_a");
             Assert.IsFalse(result);
         }
 
         [Test]
-        public void RemoveReaction_KeepsOtherWallets()
+        public void KeepOtherWalletsWhenRemovingReaction()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(1, "wallet_b");
@@ -90,7 +90,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void RemoveReaction_CleansUpEmptyEmoji()
+        public void CleanUpEmptyEmojiAfterRemoval()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.RemoveReaction(1, "wallet_a");
@@ -100,7 +100,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void HasReacted_ReturnsCorrectly()
+        public void ReturnCorrectHasReactedState()
         {
             reactionSet.AddReaction(1, "wallet_a");
 
@@ -110,7 +110,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void GetAggregateCounts_PreservesInsertionOrder()
+        public void PreserveInsertionOrderInAggregateCounts()
         {
             reactionSet.AddReaction(3, "wallet_a");
             reactionSet.AddReaction(1, "wallet_a");
@@ -124,7 +124,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void GetAggregateCounts_InsertionOrderSurvivesPartialRemoval()
+        public void SurvivePartialRemovalInInsertionOrder()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(1, "wallet_b");
@@ -139,13 +139,13 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void GetReactors_ReturnsNull_WhenEmojiNotPresent()
+        public void ReturnNullReactorsWhenEmojiNotPresent()
         {
             Assert.IsNull(reactionSet.GetReactors(99));
         }
 
         [Test]
-        public void GetReactors_ReturnsWallets()
+        public void ReturnWalletsFromGetReactors()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(1, "wallet_b");
@@ -158,7 +158,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void Clear_RemovesEverything()
+        public void RemoveEverythingOnClear()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(2, "wallet_b");
@@ -170,7 +170,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void Toggle_AddRemoveAdd_WorksCorrectly()
+        public void ToggleAddRemoveAddCorrectly()
         {
             reactionSet.AddReaction(1, "wallet_a");
             Assert.IsTrue(reactionSet.HasReacted(1, "wallet_a"));
@@ -183,7 +183,7 @@ namespace DCL.Chat.History.Tests
         }
 
         [Test]
-        public void RemovedEmoji_ReappearsAtEndOfInsertionOrder()
+        public void ReappearRemovedEmojiAtEndOfInsertionOrder()
         {
             reactionSet.AddReaction(1, "wallet_a");
             reactionSet.AddReaction(2, "wallet_a");

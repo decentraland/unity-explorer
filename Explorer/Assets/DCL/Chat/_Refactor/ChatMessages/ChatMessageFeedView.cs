@@ -65,8 +65,8 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
         public event Action<string, int>? OnReactionPillClicked;
-        public event Action<int, RectTransform, string>? OnReactionHoverEnter;
-        public event Action<int>? OnReactionHoverExit;
+        public event Action<int, RectTransform, string>? ReactionHoverEnter;
+        public event Action<int>? ReactionHoverExit;
 
         private Sequence? _fadeSequenceTween;
 
@@ -267,12 +267,12 @@ namespace DCL.Chat.ChatMessages
                     chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty, messageReactionsConfig!);
                     chatEntry.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
                     chatEntry.messageReactionsView.UpdateReactions(viewModel.Reactions);
-                    chatEntry.messageReactionsView.OnReactionClicked -= HandleReactionPillClicked;
-                    chatEntry.messageReactionsView.OnReactionClicked += HandleReactionPillClicked;
-                    chatEntry.messageReactionsView.OnReactionHoverEnter -= HandleReactionHoverEnter;
-                    chatEntry.messageReactionsView.OnReactionHoverEnter += HandleReactionHoverEnter;
-                    chatEntry.messageReactionsView.OnReactionHoverExit -= HandleReactionHoverExit;
-                    chatEntry.messageReactionsView.OnReactionHoverExit += HandleReactionHoverExit;
+                    chatEntry.messageReactionsView.ReactionClicked -= HandleReactionPillClicked;
+                    chatEntry.messageReactionsView.ReactionClicked += HandleReactionPillClicked;
+                    chatEntry.messageReactionsView.ReactionHoverEnter -= HandleReactionHoverEnter;
+                    chatEntry.messageReactionsView.ReactionHoverEnter += HandleReactionHoverEnter;
+                    chatEntry.messageReactionsView.ReactionHoverExit -= HandleReactionHoverExit;
+                    chatEntry.messageReactionsView.ReactionHoverExit += HandleReactionHoverExit;
 
                     chatEntry.RecalculateHeight();
                 }
@@ -322,12 +322,12 @@ namespace DCL.Chat.ChatMessages
 
         private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
         {
-            OnReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
+            ReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
         }
 
         private void HandleReactionHoverExit(int emojiIndex)
         {
-            OnReactionHoverExit?.Invoke(emojiIndex);
+            ReactionHoverExit?.Invoke(emojiIndex);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

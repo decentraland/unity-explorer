@@ -34,7 +34,7 @@ namespace DCL.Chat.ChatReactions.Networking
 
         public event Action<ReactionReceivedArgs>? ReactionReceived;
 
-        public MultiplayerReactionMessageBus(
+        internal MultiplayerReactionMessageBus(
             IMessagePipesHub messagePipesHub,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IWeb3IdentityCache identityCache,

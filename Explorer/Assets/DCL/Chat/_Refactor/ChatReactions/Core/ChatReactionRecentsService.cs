@@ -28,7 +28,7 @@ namespace DCL.Chat.ChatReactions.Core
 
         public bool IsDirty => dirty;
 
-        public ChatReactionRecentsService(int[] fixedDefaults, int maxRecent)
+        internal ChatReactionRecentsService(int[] fixedDefaults, int maxRecent)
         {
             this.fixedDefaults = fixedDefaults;
             this.maxRecent = maxRecent;

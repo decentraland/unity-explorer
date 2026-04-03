@@ -15,7 +15,7 @@ namespace DCL.Chat.ChatReactions.Debug
 
         public ChatReactionStats LastStats { get; private set; }
 
-        public ChatReactionDebugState()
+        internal ChatReactionDebugState()
         {
             Current = this;
         }

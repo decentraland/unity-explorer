@@ -42,7 +42,7 @@ namespace DCL.Chat.ChatReactions.Core
         /// </summary>
         internal ReactionNetworkBroadcaster NetworkBroadcaster => networkBroadcaster;
 
-        public SituationalReactionFacade(
+        internal SituationalReactionFacade(
             ChatReactionsConfig config,
             ChatReactionUISimulation uiSimulation,
             LocalPlayerWorldReactor worldReactor,

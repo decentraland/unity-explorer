@@ -12,7 +12,7 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/Chat Reactions Config")]
     public class ChatReactionsConfig : ScriptableObject
     {
-        [field: Header("Shared")]
+        [field: Header("SHARED")]
         [field: Note("INIT-ONLY — atlas descriptor. Texture and tile layout are applied to the material at init, " +
                      "overwriting any values baked into the material asset.")]
         [field: SerializeField] public ChatReactionsAtlasConfig Atlas { get; private set; }
@@ -21,12 +21,12 @@ namespace DCL.Chat.ChatReactions.Configs
                      "The source material is never mutated at runtime.")]
         [field: SerializeField] public Material EmojiMaterial { get; private set; }
 
-        [field: Header("Lanes")]
+        [field: Header("LANES")]
         [field: Note("Per-lane tuning ScriptableObjects. Click to expand each sub-config.")]
         [field: SerializeField] public ChatReactionsUILaneConfig UILane { get; private set; }
         [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; private set; }
 
-        [field: Header("Shared Spawn Settings")]
+        [field: Header("SHARED SPAWN SETTINGS")]
         [field: SerializeField] [field: Range(0.05f, 1f)]
         public float SpawnSizeMinRatio { get; private set; } = 0.2f;
 
@@ -36,10 +36,10 @@ namespace DCL.Chat.ChatReactions.Configs
         /// <summary>Safe tile count: at least 1, even if atlas is missing.</summary>
         public int SafeTotalTiles => Atlas != null ? Mathf.Max(1, Atlas.TotalTiles) : 1;
 
-        [field: Header("Message Reactions")]
+        [field: Header("MESSAGE REACTIONS")]
         [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; private set; }
 
-        [Header("Debug — Streaming")]
+        [Header("DEBUG — STREAMING")]
         [Note("Master toggle — enables debug toggles and live stats. Disable in production.")]
         public bool DebugEnabled;
 

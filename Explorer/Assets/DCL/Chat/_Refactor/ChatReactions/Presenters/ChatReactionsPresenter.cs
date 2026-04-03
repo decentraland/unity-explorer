@@ -39,7 +39,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private Action? messageDismissHandler;
         private Transform? messageAnchor;
 
-        public ChatReactionsPresenter(
+        internal ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView situationalSelectorView,
             ChatReactionsSelectorView messageSelectorView,
