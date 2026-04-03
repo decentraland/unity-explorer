@@ -29,8 +29,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
 
-        private const int MAX_LIVEKIT_VIDEO_WIDTH = 1920;
-        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 1080;
+        private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
+        private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         private static float lastOpenMediaTime;
