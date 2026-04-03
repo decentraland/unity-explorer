@@ -6,7 +6,6 @@ using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DCL.Translation;
 using UnityEngine;
@@ -289,7 +288,7 @@ namespace DCL.Chat.ChatMessages
                 item.Padding = padding;
 
                 bool senderIsOffline = prefabIndex == ChatItemPrefabIndex.ChatEntry
-                                      && !onlineParticipants.Contains(chatMessage.SenderWalletAddress);
+                                      && !IsParticipantOnline(chatMessage.SenderWalletAddress);
 
                 chatEntry.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
 
@@ -383,6 +382,15 @@ namespace DCL.Chat.ChatMessages
         public void StartButtonFocusFade(float targetAlpha, float duration, Ease easing)
         {
             chatScrollToBottomView.StartFocusFade(targetAlpha, duration, easing);
+        }
+
+        private bool IsParticipantOnline(string walletAddress)
+        {
+            foreach (string participant in onlineParticipants)
+                if (participant == walletAddress)
+                    return true;
+
+            return false;
         }
 
         private string GetPrefabName(ChatItemPrefabIndex index) =>

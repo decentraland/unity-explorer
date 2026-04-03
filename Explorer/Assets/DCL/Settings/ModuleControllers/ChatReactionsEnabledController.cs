@@ -35,7 +35,7 @@ namespace DCL.Settings.ModuleControllers
 
         public override void Dispose()
         {
-            view.ToggleView.Toggle.onValueChanged.RemoveAllListeners();
+            view.ToggleView.Toggle.onValueChanged.RemoveListener(SetReactionsEnabled);
             chatSettingsAsset.ChatReactionsEnabledChanged -= OnExternalSettingChanged;
         }
     }

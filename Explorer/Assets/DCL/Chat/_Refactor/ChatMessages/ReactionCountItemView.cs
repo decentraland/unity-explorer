@@ -75,6 +75,9 @@ namespace DCL.Chat.ChatMessages
 
         private void OnDestroy()
         {
+            if (contentContainer != null)
+                contentContainer.DOKill();
+
             button.onClick.RemoveAllListeners();
         }
     }

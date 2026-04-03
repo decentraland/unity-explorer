@@ -20,6 +20,10 @@ namespace DCL.Chat.ChatReactions.Networking
 {
     public sealed class MultiplayerReactionMessageBus : IReactionMessageBus
     {
+        // Sanity bound for emoji indices arriving from the network.
+        // The emoji panel has ~3,580 entries (358 pages × 10); 4096 is a safe power-of-two ceiling.
+        private const int MAX_VALID_EMOJI_INDEX = 4096;
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IWeb3IdentityCache identityCache;
@@ -141,13 +145,21 @@ namespace DCL.Chat.ChatReactions.Networking
                 if (!situationalDedup.TryPass(receivedMessage.FromWalletId, timestamp))
                     return;
 
+                int emojiIndex = receivedMessage.Payload.EmojiIndex;
+
+                if (emojiIndex < 0 || emojiIndex >= MAX_VALID_EMOJI_INDEX)
+                {
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Rejected situational reaction with out-of-range emoji index {emojiIndex} from={receivedMessage.FromWalletId}");
+                    return;
+                }
+
                 int count = Mathf.Max(1, receivedMessage.Payload.Count);
 
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received situational reaction: emoji={receivedMessage.Payload.EmojiIndex} count={count} from={receivedMessage.FromWalletId}");
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received situational reaction: emoji={emojiIndex} count={count} from={receivedMessage.FromWalletId}");
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     receivedMessage.FromWalletId,
-                    receivedMessage.Payload.EmojiIndex,
+                    emojiIndex,
                     count,
                     ReactionType.Situational,
                     string.Empty));
@@ -178,6 +190,12 @@ namespace DCL.Chat.ChatReactions.Networking
 
                 int rawEmojiIndex = receivedMessage.Payload.EmojiIndex;
                 var (emojiIndex, isRemoval) = ReactionWireEncoding.Decode(rawEmojiIndex);
+
+                if (emojiIndex < 0 || emojiIndex >= MAX_VALID_EMOJI_INDEX)
+                {
+                    ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Rejected chat reaction with out-of-range emoji index {emojiIndex} from={walletId}");
+                    return;
+                }
 
                 // Use raw value in dedup key so add/remove have distinct keys.
                 // Evict the opposite key so toggling (add→remove→add) isn't blocked.

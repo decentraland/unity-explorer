@@ -52,5 +52,11 @@ namespace DCL.Chat
             icon.transform.localScale = Vector3.one;
             icon.sprite = defaultSprite;
         }
+
+        private void OnDestroy()
+        {
+            if (icon != null)
+                icon.transform.DOKill();
+        }
     }
 }

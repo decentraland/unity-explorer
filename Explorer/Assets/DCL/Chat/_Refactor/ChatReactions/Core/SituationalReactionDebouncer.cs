@@ -54,8 +54,12 @@ namespace DCL.Chat.ChatReactions.Core
 
         public void Dispose()
         {
-            if (bufferedEmojis.Count > 0)
-                Flush();
+            // Intentionally do NOT flush on dispose.
+            // During teardown the network bus may already be disposed (scope uses FIFO order),
+            // so flushing here would silently drop reactions. Buffered reactions during
+            // shutdown are expendable — the user is leaving the context.
+            bufferedEmojis.Clear();
+            active = false;
         }
 
         private void Flush()
