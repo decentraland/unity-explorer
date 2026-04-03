@@ -122,6 +122,9 @@ namespace DCL.VoiceChat
 
         public void ClearProximity()
         {
+            if (proximitySource.Resource.Has)
+                proximitySource.Resource.Value.Stop();
+
             proximitySource = Weak<MicrophoneRtcAudioSource>.Null;
         }
 
