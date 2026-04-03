@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Utility;
 using Utility.Storage;
 
@@ -78,7 +79,24 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
 
-            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
+            UpdateLocalizedTextAsync().Forget();
+        }
+
+        private async UniTaskVoid UpdateLocalizedTextAsync()
+        {
+            AsyncOperationHandle<string> handle =
+                viewInstance.ProgressLabel.StringReference!.GetLocalizedStringAsync();
+
+            await handle;
+
+            if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
+            {
+                progressLocalizationString = handle.Result.EnsureNotNull();
+            }
+            else
+            {
+                ReportHub.LogError(ReportCategory.SCENE_LOADING,"SceneLoadingScreenController cannot load localized text");
+            }
         }
 
         protected override void OnBeforeViewShow()
@@ -212,6 +230,8 @@ namespace DCL.SceneLoadingScreens
 
         private void ShowTip(int index)
         {
+            if (tips.Tips.Count == 0) return;
+
             if (index < 0)
                 index = tips.Tips.Count - 1;
 
@@ -239,6 +259,8 @@ namespace DCL.SceneLoadingScreens
 
             async UniTaskVoid ShowTipWithFadeAsync(CancellationToken ct)
             {
+                if (tips.Tips.Count == 0) return;
+
                 if (index < 0)
                     index = tips.Tips.Count - 1;
 
