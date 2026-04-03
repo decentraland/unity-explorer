@@ -39,8 +39,6 @@ namespace DCL.UserInAppInitializationFlow
 
         public override async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            Vector2Int spawnParcel = startParcel.ConsumeByTeleportOperation();
-
             // In the editor, when previewing a local scene, ignore the editor start position override
             // so the scene's own spawn point is used. Builds launched via Creator Hub are not affected.
             bool editorOverride = editorPositionOverrideActive
@@ -50,7 +48,7 @@ namespace DCL.UserInAppInitializationFlow
             bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
 
             if (useDefault)
-                return await InternalExecuteAsync(args, spawnParcel, ct);
+                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
 
             // World manifest spawn coordinate takes next priority
             if (realmController.RealmData.WorldManifest is { IsEmpty: false, spawn_coordinate: { } spawn })
@@ -60,7 +58,7 @@ namespace DCL.UserInAppInitializationFlow
             return realmController.RealmData.IsLocalSceneDevelopment
                    && await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct) is { Value: { Count: > 0 } } sceneDefinitions
                 ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct)
-                : await InternalExecuteAsync(args, spawnParcel, ct);
+                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
         }
     }
 }
