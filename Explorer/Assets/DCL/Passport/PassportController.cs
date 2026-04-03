@@ -864,7 +864,7 @@ namespace DCL.Passport
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
                     // Dont show any interaction for our own user
-                    if (ownProfile?.UserId == inputData.UserId) return;
+                    if (ownProfile == null || ownProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isCallEnabled);
 
