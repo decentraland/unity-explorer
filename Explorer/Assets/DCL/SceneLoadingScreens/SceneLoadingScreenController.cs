@@ -85,7 +85,7 @@ namespace DCL.SceneLoadingScreens
         private async UniTaskVoid UpdateLocalizedTextAsync()
         {
             AsyncOperationHandle<string> handle =
-                viewInstance.ProgressLabel.StringReference!.GetLocalizedStringAsync();
+                viewInstance!.ProgressLabel.StringReference!.GetLocalizedStringAsync();
 
             await handle;
 
@@ -106,13 +106,13 @@ namespace DCL.SceneLoadingScreens
             tipsFadeCancellationToken = tipsFadeCancellationToken.SafeRestart();
             BlockUnwantedInputs();
             SetLoadProgress(0);
-            viewInstance.ClearTips();
+            viewInstance!.ClearTips();
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            viewInstance.RootCanvasGroup.alpha = 1f;
+            viewInstance!.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
 
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
@@ -120,7 +120,7 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
 
             // Fetch fresh localization string on loading screen show event
-            progressLocalizationString = viewInstance.ProgressLabel.StringReference!.GetLocalizedString()!.EnsureNotNull();
+            UpdateLocalizedTextAsync().Forget();
         }
 
         protected override void OnViewClose()

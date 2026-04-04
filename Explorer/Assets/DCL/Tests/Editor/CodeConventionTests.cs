@@ -117,7 +117,7 @@ namespace DCL.Tests
         }
 
         [Test]
-        public void VerifyShouldNotUseWaitForComplition()
+        public void VerifyShouldNotUseWaitForCompletion()
         {
             const string pattern = @"\.GetLocalizedString\(\)";
             ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
@@ -133,7 +133,7 @@ namespace DCL.Tests
             };
             ValidateNoForbiddenApiUsed(
                     pattern,
-                    "Guard File IO operations under #if !UNITY_WEBGL and update the test.",
+                    "Guard File IO operations under #if !UNITY_WEBGL and relaunch the test.",
                     ignorePaths,
                     TRUST_WEBGL_FILE_IO_SAFETY_FLAG
                     );

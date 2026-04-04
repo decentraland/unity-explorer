@@ -1,3 +1,4 @@
+//TRUST_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
 {
     public class LRUDiskCleanUp : IDiskCleanUp
     {
-        private static readonly EnumerationOptions options =  
+        private static readonly EnumerationOptions options =
             new EnumerationOptions
             {
                 IgnoreInaccessible = true,

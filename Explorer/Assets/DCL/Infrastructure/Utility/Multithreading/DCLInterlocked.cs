@@ -1,10 +1,13 @@
 // TRUST_WEBGL_THREAD_SAFETY_FLAG
 
+#if !UNITY_WEBGL
 using System;
 using System.Threading;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
+#endif
+
+using System.Runtime.CompilerServices;
 
 namespace Utility.Multithreading
 {
@@ -18,75 +21,59 @@ namespace Utility.Multithreading
     /// </summary>
     public sealed class DCLInterlocked
     {
-#if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long Read(ref long location)
         {
+#if UNITY_WEBGL
             return location;
-        }
 #else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static long Read(ref long location)
-        {
             return Interlocked.Read(ref location);
-        }
 #endif
+        }
 
-#if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Add(ref int location, int value)
         {
+#if UNITY_WEBGL
             location += value;
             return location;
-        }
 #else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Add(ref int location, int value)
-        {
             return Interlocked.Add(ref location, value);
-        }
 #endif
+        }
 
-#if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Increment(ref int location)
         {
+#if UNITY_WEBGL
             location = location + 1;
             return location;
-        }
 #else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Increment(ref int location) =>
-            Interlocked.Increment(ref location);
+            return Interlocked.Increment(ref location);
 #endif
+        }
 
-#if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong Increment(ref ulong location)
         {
-            location = location + 1;
+#if UNITY_WEBGL
+            location += 1;
             return location;
-        }
 #else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static long Increment(ref long location) =>
             Interlocked.Increment(ref location);
 #endif
+        }
 
-#if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Exchange(ref int location, int value)
         {
+#if UNITY_WEBGL
             int previous = location;
             location = value;
             return previous;
-        }
 #else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Exchange(ref int location, int value)
-        {
             return Interlocked.Exchange(ref location, value);
-        }
 #endif
+        }
     }
 }
