@@ -149,8 +149,26 @@ Match specificity to task fragility:
 - **Frequently-triggered skills**: <500 words preferred.
 - **On-demand skills** (`disable-model-invocation`): more generous, but still under 500 lines.
 - **Body word count target**: 1,500-2,000 words ideal, <5,000 words max.
-- Move heavy reference to separate files when SKILL.md approaches 300+ lines.
 - Scripts in `scripts/` are executed, not loaded — only output consumes tokens.
+
+### Progressive Disclosure Split
+
+Even skills under 300 lines benefit from splitting SKILL.md into a lean core + reference.md. The split reduces context consumption by ~46% on average with zero quality loss — Claude reads reference.md on demand only when it needs detailed code examples.
+
+**What stays in SKILL.md** (always loaded when skill triggers):
+- Workflow steps, decision tables, rules, API summaries
+- Minimal code snippets (2-5 lines) showing correct/wrong patterns
+- Checklists, quick-reference tables
+- Cross-references to other skills
+- A "## Detailed Reference" section linking to `[reference.md](reference.md)`
+
+**What moves to reference.md** (loaded only when Claude needs implementation details):
+- Full code examples (>10 lines) from the codebase
+- Complete class/system implementations showing patterns end-to-end
+- Deep-dive explanations of internal mechanisms
+- Test code examples
+
+**When to split:** Always consider splitting if the skill has code examples >10 lines. The question is not "is this skill too long?" but "does Claude need this code block to understand the workflow, or only when implementing?" If the latter, extract it.
 
 ## Description Optimization
 
@@ -270,11 +288,12 @@ What works for Opus may need more detail for Haiku. If a skill will be used acro
 **WRITE Phase:**
 - [ ] Name: lowercase, hyphens, max 64 chars, gerund form preferred
 - [ ] Frontmatter max 1024 chars, description in third person
-- [ ] Description: no workflow summary, includes "Use when..." + keywords
+- [ ] Description: no workflow summary, includes "Use when..." + keywords, under 250 chars
 - [ ] Body under 500 lines. Heavy reference in separate files.
 - [ ] Appropriate degree of freedom for the task type
 - [ ] Only context Claude doesn't already have
 - [ ] References one level deep, files >100 lines have TOC
+- [ ] Progressive disclosure split — code examples >10 lines moved to reference.md
 
 **VERIFY Phase:**
 - [ ] Run WITH skill (Claude B) — verify compliance on all scenarios
