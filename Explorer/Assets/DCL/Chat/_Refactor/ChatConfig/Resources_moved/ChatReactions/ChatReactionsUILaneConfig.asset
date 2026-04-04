@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: ChatReactionsUILaneConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.Configs.ChatReactionsUILaneConfig
   <MaxParticles>k__BackingField: 1023
+  <MaxVisibleParticles>k__BackingField: 0
   <DepthFromCamera>k__BackingField: 1
   <LifetimeRange>k__BackingField: {x: 2.5, y: 3.5}
   <SpeedRange>k__BackingField: {x: 200, y: 300}
   <SizeRange>k__BackingField: {x: 30, y: 40}
   <Drag>k__BackingField: 1.2
   <Gravity>k__BackingField: {x: 1, y: 1}
-  <StreamRatePerSecond>k__BackingField: 10
+  <StreamRatePerSecond>k__BackingField: 4
   <StreamBurst>k__BackingField: 1
   <UseFlightPath>k__BackingField: 1
   <KickSpeedRange>k__BackingField: {x: 110, y: 140}

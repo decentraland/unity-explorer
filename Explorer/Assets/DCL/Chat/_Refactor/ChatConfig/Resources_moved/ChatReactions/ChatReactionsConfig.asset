@@ -19,8 +19,7 @@ MonoBehaviour:
   <SpawnSizeMinRatio>k__BackingField: 0.2
   <SpawnSizeMaxRatio>k__BackingField: 0.5
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
-  MockEnabled: 0
   DebugEnabled: 1
-  StreamUILane: 0
-  StreamLocalPlayer: 0
-  StreamRemotePlayers: 0
+  StreamUILane: 1
+  StreamLocalPlayer: 1
+  StreamRemotePlayers: 1
