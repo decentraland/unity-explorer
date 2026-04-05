@@ -167,6 +167,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "NavigateTo",
+                    "type": "Button",
+                    "id": "e2c4d6f8-a0b2-4c6e-8f1a-3d5e7b9c1f3e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -629,6 +638,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "PointAt",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f3d5e7a9-b1c3-4d5f-9a2b-4e6f8b0d2f4a",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "multiTap(tapCount=2,tapTime=0.2,tapDelay=0.3)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "NavigateTo",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

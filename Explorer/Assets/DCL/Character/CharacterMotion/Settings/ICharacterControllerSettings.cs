@@ -111,9 +111,9 @@ namespace DCL.CharacterMotion.Settings
         float MaxExternalVelocity { get; set; }
 
         // Point-and-click navigation
-        float PointAndClickDoubleClickThreshold { get; }
         float PointAndClickArrivalDistance { get; }
         float PointAndClickStuckCheckInterval { get; }
         float PointAndClickStuckMinMovement { get; }
+        float PointAndClickMaxRaycastDistance { get; }
     }
 }

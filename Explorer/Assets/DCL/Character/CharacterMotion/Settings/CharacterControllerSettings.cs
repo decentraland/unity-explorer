@@ -128,9 +128,9 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float MaxExternalVelocity { get; set; } = 50f;
 
         [field: Header("Point-and-Click Navigation")]
-        [field: SerializeField] public float PointAndClickDoubleClickThreshold { get; private set; } = 0.3f;
         [field: SerializeField] public float PointAndClickArrivalDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float PointAndClickStuckCheckInterval { get; private set; } = 0.5f;
         [field: SerializeField] public float PointAndClickStuckMinMovement { get; private set; } = 0.3f;
+        [field: SerializeField] public float PointAndClickMaxRaycastDistance { get; private set; } = 50f;
     }
 }

@@ -185,3 +185,7 @@ MonoBehaviour:
   <ExternalEnvDrag>k__BackingField: 1.5
   <ExternalGroundFriction>k__BackingField: 4
   <MaxExternalVelocity>k__BackingField: 50
+  <PointAndClickArrivalDistance>k__BackingField: 0.5
+  <PointAndClickStuckCheckInterval>k__BackingField: 0.5
+  <PointAndClickStuckMinMovement>k__BackingField: 0.3
+  <PointAndClickMaxRaycastDistance>k__BackingField: 250

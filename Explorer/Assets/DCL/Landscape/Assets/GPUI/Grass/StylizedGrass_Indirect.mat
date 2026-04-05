@@ -14,12 +14,8 @@ Material:
   m_ValidKeywords:
   - _ADVANCED_LIGHTING
   - _FADING
-  - _GPU_GRASS_BATCHING
   - _SPECULARHIGHLIGHTS_OFF
-  m_InvalidKeywords:
-  - _ALPHATOCOVERAGE_ON
-  - _ENVIRONMENTREFLECTIONS_ON
-  - _FADINGON_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0

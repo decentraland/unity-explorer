@@ -456,12 +456,12 @@ namespace DCL.CharacterMotion.Settings
             set => impl.HeadIKRemotePlayersDistance = value;
         }
 
-        public float PointAndClickDoubleClickThreshold => impl.PointAndClickDoubleClickThreshold;
-
         public float PointAndClickArrivalDistance => impl.PointAndClickArrivalDistance;
 
         public float PointAndClickStuckCheckInterval => impl.PointAndClickStuckCheckInterval;
 
         public float PointAndClickStuckMinMovement => impl.PointAndClickStuckMinMovement;
+
+        public float PointAndClickMaxRaycastDistance => impl.PointAndClickMaxRaycastDistance;
     }
 }

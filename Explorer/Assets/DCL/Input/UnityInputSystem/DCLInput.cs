@@ -253,6 +253,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""NavigateTo"",
+                    ""type"": ""Button"",
+                    ""id"": ""e2c4d6f8-a0b2-4c6e-8f1a-3d5e7b9c1f3e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -715,6 +724,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""PointAt"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f3d5e7a9-b1c3-4d5f-9a2b-4e6f8b0d2f4a"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": ""multiTap(tapCount=2,tapTime=0.2,tapDelay=0.3)"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""NavigateTo"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3937,6 +3957,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
         m_Player_Any = m_Player.FindAction("Any", throwIfNotFound: true);
         m_Player_PointAt = m_Player.FindAction("PointAt", throwIfNotFound: true);
+        m_Player_NavigateTo = m_Player.FindAction("NavigateTo", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -4147,6 +4168,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionLeft;
     private readonly InputAction m_Player_Any;
     private readonly InputAction m_Player_PointAt;
+    private readonly InputAction m_Player_NavigateTo;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -4231,6 +4253,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @PointAt => m_Wrapper.m_Player_PointAt;
         /// <summary>
+        /// Provides access to the underlying input action "Player/NavigateTo".
+        /// </summary>
+        public InputAction @NavigateTo => m_Wrapper.m_Player_NavigateTo;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -4310,6 +4336,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @PointAt.started += instance.OnPointAt;
             @PointAt.performed += instance.OnPointAt;
             @PointAt.canceled += instance.OnPointAt;
+            @NavigateTo.started += instance.OnNavigateTo;
+            @NavigateTo.performed += instance.OnNavigateTo;
+            @NavigateTo.canceled += instance.OnNavigateTo;
         }
 
         /// <summary>
@@ -4375,6 +4404,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @PointAt.started -= instance.OnPointAt;
             @PointAt.performed -= instance.OnPointAt;
             @PointAt.canceled -= instance.OnPointAt;
+            @NavigateTo.started -= instance.OnNavigateTo;
+            @NavigateTo.performed -= instance.OnNavigateTo;
+            @NavigateTo.canceled -= instance.OnNavigateTo;
         }
 
         /// <summary>
@@ -6202,6 +6234,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPointAt(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "NavigateTo" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnNavigateTo(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Camera" which allows adding and removing callbacks.
