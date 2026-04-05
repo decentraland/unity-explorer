@@ -46,7 +46,8 @@ namespace DCL.Events
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private bool isSectionActivated;
-        private bool isFriendsAndCommunitiesLoaded;
+        private bool isFriendsLoaded;
+        private bool isCommunitiesLoaded;
         private readonly EventsByDayController eventsByDayController;
         private readonly EventsStateService eventsStateService;
 
@@ -108,7 +109,8 @@ namespace DCL.Events
             EventsClosed?.Invoke();
             eventsStateService.ClearAllFriends();
             eventsStateService.ClearMyCommunities();
-            isFriendsAndCommunitiesLoaded = false;
+            isFriendsLoaded = false;
+            isCommunitiesLoaded = false;
         }
 
         public void Animate(int triggerId) =>
@@ -128,15 +130,20 @@ namespace DCL.Events
             SectionOpen?.Invoke(section, fromDate ?? todayAtTheBeginningOfTheDay);
         }
 
-        public async UniTask RefreshFriendsAndCommunitiesDataAsync(CancellationToken ct)
+        public async UniTask RefreshFriendsDataAsync(CancellationToken ct)
         {
-            if (isFriendsAndCommunitiesLoaded)
+            if (isFriendsLoaded)
                 return;
 
             await GetAllFriendsAsync(ct);
-            await GetMyCommunitiesAsync(ct);
+        }
 
-            isFriendsAndCommunitiesLoaded = true;
+        public async UniTask RefreshCommunitiesDataAsync(CancellationToken ct)
+        {
+            if (isCommunitiesLoaded)
+                return;
+
+            await GetMyCommunitiesAsync(ct);
         }
 
         private async UniTask GetAllFriendsAsync(CancellationToken ct)
@@ -158,6 +165,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetAllFriends(result.Value.Friends.ToList());
+            isFriendsLoaded = true;
         }
 
         private async UniTask GetMyCommunitiesAsync(CancellationToken ct)
@@ -181,6 +189,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
+            isCommunitiesLoaded = true;
         }
 
         private void OnGoToTodayButtonClicked() =>

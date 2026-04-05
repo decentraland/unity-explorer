@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.5.0"
-segment = { git = "https://github.com/decentraland/segment", branch = "main", default-features = false, features = ["rustls-tls"] }
+segment = { git = "https://github.com/decentraland/segment", rev = "fbb7ed5cbb3f3ea8b4f2d02a41aa29a2b2a86e2b", default-features = false, features = ["rustls-tls"] }
 serde = "1.0.210"
 serde_json = "1.0.128"
 tokio = { version = "1.40.0", features = ["full", "parking_lot"] }
