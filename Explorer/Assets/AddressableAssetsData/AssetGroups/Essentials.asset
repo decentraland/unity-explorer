@@ -220,6 +220,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c2fa120406894778bdb7d4e45135d3b
     m_Address: SDKEntityTriggerArea
     m_ReadOnly: 0

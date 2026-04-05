@@ -1109,7 +1109,12 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
-        <DestinationMarkerPrefab>k__BackingField: {fileID: 4002930384164097869, guid: 8b74e4206cd344b4c80b50f32f6c403a, type: 3}
+        <DestinationMarkerPrefab>k__BackingField:
+          m_AssetGUID: 8b74e4206cd344b4c80b50f32f6c403a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

@@ -18,12 +18,14 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private Animator animator;
         private Renderer[] renderers;
+        private MaterialPropertyBlock propertyBlock;
         private float hue;
 
         private void Awake()
         {
             animator = GetComponentInChildren<Animator>();
             renderers = GetComponentsInChildren<Renderer>();
+            propertyBlock = new MaterialPropertyBlock();
         }
 
         public void ResetMarker()
@@ -44,8 +46,10 @@ namespace DCL.AvatarRendering.AvatarShape
             hue = (hue + Time.deltaTime * RainbowSpeed) % 1f;
             Color emission = Color.HSVToRGB(hue, 1f, 1f) * EmissionIntensity;
 
+            propertyBlock.SetColor(EMISSION_COLOR, emission);
+
             foreach (Renderer r in renderers)
-                r.material.SetColor(EMISSION_COLOR, emission);
+                r.SetPropertyBlock(propertyBlock);
         }
     }
 }

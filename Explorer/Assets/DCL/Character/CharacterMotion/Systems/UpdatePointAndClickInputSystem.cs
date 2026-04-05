@@ -9,11 +9,12 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
 using DCL.Input;
-using Utility.Arch;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility.Arch;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -42,10 +43,13 @@ namespace DCL.CharacterMotion.Systems
 
         private readonly GameObject markerPrefab;
 
+        // Per-frame temp collection for deferred structural changes (allowed by ECS rules).
+        // World.Remove cannot be called while a ref to any component on the same entity is in scope.
+        private readonly List<Entity> entitiesToCancelNavigation = new ();
+
         private InputAction navigateToAction;
         private GameObject targetMarker;
         private DestinationMarkerView targetMarkerView;
-        private bool markerShouldBeHidden;
 
         internal UpdatePointAndClickInputSystem(World world, GameObject markerPrefab) : base(world)
         {
@@ -86,7 +90,7 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            markerShouldBeHidden = false;
+            entitiesToCancelNavigation.Clear();
 
             ref readonly CameraComponent cameraComponent = ref camera.GetCameraComponent(World);
             bool hasDoubleClick = TryResolveDoubleClick(cameraComponent.Camera, cachedSettings.PointAndClickMaxRaycastDistance, out Vector3 clickTarget, out Vector3 clickNormal);
@@ -98,8 +102,15 @@ namespace DCL.CharacterMotion.Systems
             UpdateTargetQuery(World, hasDoubleClick, clickTarget, clickNormal);
             DriveMovementQuery(World, t, viewerForward, viewerRight);
 
-            if (markerShouldBeHidden)
+            // Deferred structural changes — World.Remove is called here, after all refs from
+            // DriveMovementQuery are out of scope, to avoid corrupting the Arch chunk iterator.
+            if (entitiesToCancelNavigation.Count > 0)
+            {
+                foreach (Entity entity in entitiesToCancelNavigation)
+                    World.Remove<PointAndClickMovementComponent>(entity);
+
                 HideMarker();
+            }
         }
 
         /// <summary>
@@ -211,8 +222,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (hasManualMovement)
             {
-                markerShouldBeHidden = true;
-                World.Remove<PointAndClickMovementComponent>(entity);
+                entitiesToCancelNavigation.Add(entity);
                 return;
             }
 
@@ -226,8 +236,7 @@ namespace DCL.CharacterMotion.Systems
             {
                 movementInput.Axes = Vector2.zero;
                 movementInput.Kind = MovementKind.IDLE;
-                markerShouldBeHidden = true;
-                World.Remove<PointAndClickMovementComponent>(entity);
+                entitiesToCancelNavigation.Add(entity);
                 return;
             }
 
@@ -244,8 +253,7 @@ namespace DCL.CharacterMotion.Systems
                 {
                     movementInput.Axes = Vector2.zero;
                     movementInput.Kind = MovementKind.IDLE;
-                    markerShouldBeHidden = true;
-                    World.Remove<PointAndClickMovementComponent>(entity);
+                    entitiesToCancelNavigation.Add(entity);
                     return;
                 }
 
