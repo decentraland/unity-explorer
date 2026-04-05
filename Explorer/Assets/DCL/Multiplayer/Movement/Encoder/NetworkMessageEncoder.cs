@@ -98,11 +98,29 @@ namespace DCL.Multiplayer.Movement
         // 18-21: eyes index     (4 bits, values 0-15)
         // 22-25: mouth index    (4 bits, values 0-15)
         // 26-31: unused
+        //
+        // IMPORTANT: facial expression bits start at bit 14, immediately after the two enabled-flags
+        // at bits 12-13.  HEAD_ROTATION_BITS is 6, so the two rotation fields occupy bits 0-11 and
+        // the two flags bits 12-13.  Any expansion of the head-sync payload that touches bits 14+
+        // will silently corrupt the expression indices.
+        // TODO: if headSyncData ever needs more bits, extract facial expression into its own field.
         private const int FACE_EXPRESSION_BITS = 4;
         private const int FACE_EXPRESSION_MASK = (1 << FACE_EXPRESSION_BITS) - 1;
         private const int EYEBROWS_START_BIT = 14;
         private const int EYES_START_BIT = 18;
         private const int MOUTH_START_BIT = 22;
+
+        // Compile-time guard: expression data must fit within a 32-bit int without overlap.
+        // If HEAD_ROTATION_BITS grows beyond 6 the layout above breaks.
+        static NetworkMessageEncoder()
+        {
+            const int expectedHeadRotationBits = 6;
+            Debug.Assert(
+                MessageEncodingSettings.HEAD_ROTATION_BITS == expectedHeadRotationBits,
+                $"headSyncData facial expression bit layout assumes HEAD_ROTATION_BITS == {expectedHeadRotationBits}. " +
+                $"Actual value is {MessageEncodingSettings.HEAD_ROTATION_BITS}. " +
+                "Update EYEBROWS_START_BIT / EYES_START_BIT / MOUTH_START_BIT accordingly.");
+        }
 
         private int CompressHeadSyncData(bool yawEnabled, bool pitchEnabled, Vector2 headLookAt,
             byte eyebrowsIndex, byte eyesIndex, byte mouthIndex)

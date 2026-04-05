@@ -1,42 +1,45 @@
 using Arch.Core;
-using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
+using DCL.Utilities;
 using Utility.Arch;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Listens to voice-chat speaking events from the LiveKit room and writes
-    ///     <see cref="AvatarMouthInputComponent.IsVoiceChatSpeaking"/> on the corresponding ECS
-    ///     entities so that <c>AvatarFacialExpressionSystem</c> can drive the mouth animation
-    ///     independently of the nametag system.
+    ///     Listens to voice-chat speaking events from the LiveKit room and enqueues
+    ///     speaking-state changes into <see cref="AvatarMouthInputQueue"/> so that
+    ///     <c>AvatarFacialExpressionSystem</c> can apply them to ECS on the next frame.
+    ///     Entity manipulation must happen inside ECS systems; this handler only buffers.
     /// </summary>
     public class VoiceChatMouthAnimationHandler : IDisposable
     {
         private readonly IRoom voiceChatRoom;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly World world;
         private readonly Entity playerEntity;
+        private readonly AvatarMouthInputQueue mouthInputQueue;
         private readonly IDisposable statusSubscription;
 
-        private HashSet<string> activeSpeakers = new ();
+        // Reused across calls to avoid per-event allocation (Fix #6).
+        private readonly HashSet<string> activeSpeakers = new();
+        private readonly HashSet<string> nextActiveSpeakers = new();
+
         private bool disposed;
 
         public VoiceChatMouthAnimationHandler(
             IRoom voiceChatRoom,
             IVoiceChatOrchestratorState voiceChatOrchestratorState,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            World world,
+            AvatarMouthInputQueue mouthInputQueue,
             Entity playerEntity)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.entityParticipantTable = entityParticipantTable;
-            this.world = world;
+            this.mouthInputQueue = mouthInputQueue;
             this.playerEntity = playerEntity;
 
             statusSubscription = voiceChatOrchestratorState.CurrentCallStatus.Subscribe(OnCallStatusChanged);
@@ -56,44 +59,33 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            var newActiveSpeakers = new HashSet<string>();
+            // Build the new active-speaker set without allocating a new HashSet (Fix #6).
+            nextActiveSpeakers.Clear();
 
             foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
-            {
-                newActiveSpeakers.Add(speakerId);
+                nextActiveSpeakers.Add(speakerId);
 
+            // Newly speaking: in next but not in current.
+            foreach (string speakerId in nextActiveSpeakers)
                 if (!activeSpeakers.Contains(speakerId))
-                    SetIsSpeaking(speakerId, true);
-            }
+                    EnqueueSpeaking(speakerId, true);
 
-            foreach (string oldSpeakerId in activeSpeakers)
-            {
-                if (!newActiveSpeakers.Contains(oldSpeakerId))
-                    SetIsSpeaking(oldSpeakerId, false);
-            }
+            // Stopped speaking: in current but not in next.
+            foreach (string speakerId in activeSpeakers)
+                if (!nextActiveSpeakers.Contains(speakerId))
+                    EnqueueSpeaking(speakerId, false);
 
-            activeSpeakers = newActiveSpeakers;
+            // Replace active set in-place.
+            activeSpeakers.Clear();
+            activeSpeakers.UnionWith(nextActiveSpeakers);
         }
 
-        private void SetIsSpeaking(string participantId, bool isSpeaking)
+        private void EnqueueSpeaking(string participantId, bool isSpeaking)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                SetMouthSpeaking(entry.Entity, isSpeaking);
+                mouthInputQueue.EnqueueSpeaking(entry.Entity, isSpeaking);
             else if (voiceChatRoom.Participants.LocalParticipant().Identity == participantId)
-                SetMouthSpeaking(playerEntity, isSpeaking);
-        }
-
-        private void SetMouthSpeaking(Entity entity, bool isSpeaking)
-        {
-            if (world.Has<AvatarMouthInputComponent>(entity))
-            {
-                ref var input = ref world.Get<AvatarMouthInputComponent>(entity);
-                input.IsVoiceChatSpeaking = isSpeaking;
-            }
-            else
-            {
-                world.Add(entity, new AvatarMouthInputComponent { IsVoiceChatSpeaking = isSpeaking });
-            }
+                mouthInputQueue.EnqueueSpeaking(playerEntity, isSpeaking);
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -102,7 +94,7 @@ namespace DCL.VoiceChat
 
             if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                SetMouthSpeaking(entry.Entity, false);
+                mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
                 activeSpeakers.Remove(participant.Identity);
             }
         }
@@ -112,20 +104,20 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    SetMouthSpeaking(playerEntity, false);
+                    mouthInputQueue.EnqueueSpeaking(playerEntity, false);
                     OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    SetMouthSpeaking(playerEntity, false);
+                    mouthInputQueue.EnqueueSpeaking(playerEntity, false);
                     activeSpeakers.Clear();
 
                     foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            SetMouthSpeaking(entry.Entity, false);
+                            mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
                     }
 
                     break;

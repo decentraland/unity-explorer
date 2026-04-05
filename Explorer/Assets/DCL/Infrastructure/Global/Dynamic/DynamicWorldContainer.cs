@@ -725,6 +725,10 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            // Shared queue for voice-chat and chat services to enqueue mouth-animation inputs
+            // without directly mutating ECS. AvatarFacialExpressionSystem drains it each frame.
+            var avatarMouthInputQueue = new DCL.AvatarRendering.AvatarShape.AvatarMouthInputQueue();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -788,7 +792,8 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy,
-                    includeBannedUsersFromScene),
+                    includeBannedUsersFromScene,
+                    avatarMouthInputQueue),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -849,6 +854,7 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
+                    avatarMouthInputQueue,
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
@@ -1095,6 +1101,7 @@ namespace Global.Dynamic
                         voiceChatContainer,
                         profileRepositoryWrapper,
                         entityParticipantTable,
+                        avatarMouthInputQueue,
                         globalWorld,
                         playerEntity,
                         communitiesDataProvider,

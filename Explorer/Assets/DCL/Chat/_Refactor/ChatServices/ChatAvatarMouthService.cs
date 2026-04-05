@@ -1,5 +1,5 @@
 using Arch.Core;
-using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.Chat.History;
 using DCL.Multiplayer.Profiles.Tables;
 using System;
@@ -7,27 +7,27 @@ using System;
 namespace DCL.Chat.ChatServices
 {
     /// <summary>
-    ///     Listens to incoming chat messages from <see cref="IChatHistory"/> and writes
-    ///     <see cref="AvatarMouthInputComponent.PendingMessage"/> on the corresponding ECS entities
-    ///     so that <c>AvatarFacialExpressionSystem</c> can drive mouth animation independently of
-    ///     the nametag / chat-bubble display system.
+    ///     Listens to incoming chat messages from <see cref="IChatHistory"/> and enqueues
+    ///     mouth-animation requests into <see cref="AvatarMouthInputQueue"/> so that
+    ///     <c>AvatarFacialExpressionSystem</c> can apply them to ECS on the next frame.
+    ///     Entity manipulation must happen inside ECS systems; this service only buffers.
     /// </summary>
     public class ChatAvatarMouthService : IDisposable
     {
         private readonly IChatHistory chatHistory;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly World world;
         private readonly Entity playerEntity;
+        private readonly AvatarMouthInputQueue mouthInputQueue;
 
         public ChatAvatarMouthService(
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            World world,
+            AvatarMouthInputQueue mouthInputQueue,
             Entity playerEntity)
         {
             this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
-            this.world = world;
+            this.mouthInputQueue = mouthInputQueue;
             this.playerEntity = playerEntity;
 
             chatHistory.MessageAdded += OnMessageAdded;
@@ -44,23 +44,9 @@ namespace DCL.Chat.ChatServices
                 return;
 
             if (addedMessage.IsSentByOwnUser)
-                SetPendingMessage(playerEntity, addedMessage.Message);
+                mouthInputQueue.EnqueueMessage(playerEntity, addedMessage.Message);
             else if (entityParticipantTable.TryGet(addedMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
-                SetPendingMessage(entry.Entity, addedMessage.Message);
-        }
-
-        private void SetPendingMessage(Entity entity, string message)
-        {
-            if (world.Has<AvatarMouthInputComponent>(entity))
-            {
-                ref var input = ref world.Get<AvatarMouthInputComponent>(entity);
-                input.PendingMessage = message;
-                input.MessageIsDirty = true;
-            }
-            else
-            {
-                world.Add(entity, new AvatarMouthInputComponent { PendingMessage = message, MessageIsDirty = true });
-            }
+                mouthInputQueue.EnqueueMessage(entry.Entity, addedMessage.Message);
         }
     }
 }

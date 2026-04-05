@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.AvatarShape;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -34,8 +35,9 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ImageControllerProvider  imageControllerProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly AvatarMouthInputQueue mouthInputQueue;
+        private readonly Arch.Core.World world;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
@@ -57,6 +59,7 @@ namespace DCL.PluginSystem.Global
             VoiceChatContainer voiceChatContainer,
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
+            AvatarMouthInputQueue mouthInputQueue,
             Arch.Core.World world,
             Entity playerEntity,
             CommunitiesDataProvider communityDataProvider,
@@ -69,6 +72,7 @@ namespace DCL.PluginSystem.Global
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
+            this.mouthInputQueue = mouthInputQueue;
             this.world = world;
             this.playerEntity = playerEntity;
             this.communityDataProvider = communityDataProvider;
@@ -129,7 +133,7 @@ namespace DCL.PluginSystem.Global
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatOrchestrator,
                 entityParticipantTable,
-                world,
+                mouthInputQueue,
                 playerEntity);
 
             pluginScope.Add(mouthAnimationHandler);

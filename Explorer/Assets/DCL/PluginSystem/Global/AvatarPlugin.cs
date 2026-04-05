@@ -107,6 +107,7 @@ namespace DCL.PluginSystem.Global
 
         private AvatarFaceExpressionDefinition[] faceExpressions = System.Array.Empty<AvatarFaceExpressionDefinition>();
         private readonly AvatarFaceDebugData avatarFaceDebugData = new ();
+        private readonly AvatarMouthInputQueue mouthInputQueue;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -122,7 +123,8 @@ namespace DCL.PluginSystem.Global
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            bool includeBannedUsersFromScene)
+            bool includeBannedUsersFromScene,
+            AvatarMouthInputQueue mouthInputQueue)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -138,6 +140,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             componentPoolsRegistry = poolsRegistry;
+            this.mouthInputQueue = mouthInputQueue;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
 
@@ -227,7 +230,7 @@ namespace DCL.PluginSystem.Global
                 AvatarGhostCleanupSystem.InjectToWorld(ref builder);
             AvatarCleanUpSystem.InjectToWorld(ref builder, vertOutBuffer, avatarMaterialPoolHandler, avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy, avatarTransformMatrixJobWrapper);
 
-            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPoseTextureArray, mouthPoseDuration, vowelMouthPoseDuration, avatarFaceDebugData);
+            AvatarFacialExpressionSystem.InjectToWorld(ref builder, eyebrowsTextureArray, eyeTextureArray, minBlinkInterval, maxBlinkInterval, blinkFrameDuration, mouthPoseTextureArray, mouthPoseDuration, vowelMouthPoseDuration, avatarFaceDebugData, mouthInputQueue);
             UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);

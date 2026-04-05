@@ -26,17 +26,34 @@ namespace DCL.AvatarRendering.AvatarShape
     {
         private const int SLOT_COUNT = 9;
 
+        /// <summary>
+        ///     Maps Input System action names ("Slot 1"–"Slot 9") to 1-based slot indices.
+        ///     Built once at class-load time; the mapping never changes across instances.
+        /// </summary>
+        private static readonly Dictionary<string, int> s_SlotByActionName;
+
+        static UpdateFaceExpressionInputSystem()
+        {
+            s_SlotByActionName = new Dictionary<string, int>(SLOT_COUNT);
+
+            for (var slot = 1; slot <= SLOT_COUNT; slot++)
+                s_SlotByActionName[$"Slot {slot}"] = slot;
+        }
+
         private readonly AvatarFaceExpressionDefinition[] expressions;
-        private readonly Dictionary<string, int> slotByActionName = new (SLOT_COUNT);
         private readonly DCLInput.FaceExpressionsActions faceExpressionsActions;
 
-        private int triggeredSlot = -1;
+        /// <summary>
+        ///     Input-callback bridge: set by <see cref="OnSlotPerformed"/> (fires on the Unity
+        ///     main thread from the Input System) and consumed in <see cref="Update"/>.
+        ///     This is intentionally NOT ECS state — it is a one-frame buffer for the input event.
+        /// </summary>
+        private int pendingSlot = -1;
 
         internal UpdateFaceExpressionInputSystem(World world, AvatarFaceExpressionDefinition[] expressions) : base(world)
         {
             this.expressions = expressions;
             faceExpressionsActions = DCLInput.Instance.FaceExpressions;
-
             RegisterSlotCallbacks(faceExpressionsActions.Get());
         }
 
@@ -54,12 +71,19 @@ namespace DCL.AvatarRendering.AvatarShape
             // network bridge component so PlayerMovementNetSendSystem picks them up.
             SyncAvatarExpressionToNetworkQuery(World);
 
-            if (triggeredSlot < 0)
+            if (pendingSlot < 0)
                 return;
 
-            int expressionIndex = ResolveExpressionIndex(triggeredSlot);
+            // Guard: no expression config loaded — discard the input rather than throw.
+            if (expressions.Length == 0)
+            {
+                pendingSlot = -1;
+                return;
+            }
+
+            int expressionIndex = ResolveExpressionIndex(pendingSlot);
             ApplyExpressionToPlayerQuery(World, expressionIndex);
-            triggeredSlot = -1;
+            pendingSlot = -1;
         }
 
         /// <summary>
@@ -118,7 +142,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private void OnSlotPerformed(InputAction.CallbackContext ctx)
         {
-            triggeredSlot = slotByActionName[ctx.action.name];
+            pendingSlot = s_SlotByActionName[ctx.action.name];
         }
 
         /// <summary>
@@ -138,13 +162,10 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             for (var slot = 1; slot <= SLOT_COUNT; slot++)
             {
-                string actionName = $"Slot {slot}";
-
                 try
                 {
-                    InputAction action = actionMap.FindAction(actionName);
+                    InputAction action = actionMap.FindAction($"Slot {slot}");
                     action.started += OnSlotPerformed;
-                    slotByActionName[actionName] = slot;
                 }
                 catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
             }

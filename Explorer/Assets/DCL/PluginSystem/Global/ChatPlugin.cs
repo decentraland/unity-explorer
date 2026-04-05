@@ -1,5 +1,6 @@
 using System;
 using Arch.Core;
+using DCL.AvatarRendering.AvatarShape;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly AvatarMouthInputQueue mouthInputQueue;
         private readonly MainUIView mainUIView;
         private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -115,6 +117,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
+            AvatarMouthInputQueue mouthInputQueue,
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
@@ -153,6 +156,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.mouthInputQueue = mouthInputQueue;
             this.roomHub = roomHub;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
@@ -371,7 +375,7 @@ namespace DCL.PluginSystem.Global
 
             pluginScope.Add(chatSharedAreaController);
             pluginScope.Add(chatWorldBubbleService);
-            pluginScope.Add(new ChatAvatarMouthService(chatHistory, entityParticipantTable, world, playerEntity));
+            pluginScope.Add(new ChatAvatarMouthService(chatHistory, entityParticipantTable, mouthInputQueue, playerEntity));
             pluginScope.Add(chatBusListenerService);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatSharedAreaController);

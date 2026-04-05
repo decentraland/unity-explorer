@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Loading.Assets;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -82,6 +83,11 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly float mouthPoseDuration;
         private readonly float vowelMouthPoseDuration;
         private readonly AvatarFaceDebugData? debugData;
+        private readonly AvatarMouthInputQueue? mouthInputQueue;
+
+        // Temporary per-frame lists for draining the mouth input queue — reused to avoid allocation.
+        private readonly List<(Entity entity, bool isSpeaking)> speakingBuffer = new();
+        private readonly List<(Entity entity, string message)> messageBuffer = new();
 
         internal AvatarFacialExpressionSystem(
             World world,
@@ -93,7 +99,8 @@ namespace DCL.AvatarRendering.AvatarShape
             Texture2DArray? mouthPoseTextureArray,
             float mouthPoseDuration,
             float vowelMouthPoseDuration,
-            AvatarFaceDebugData? debugData = null) : base(world)
+            AvatarFaceDebugData? debugData = null,
+            AvatarMouthInputQueue? mouthInputQueue = null) : base(world)
         {
             this.eyebrowsTextureArray = eyebrowsTextureArray;
             this.eyeTextureArray = eyeTextureArray;
@@ -104,10 +111,16 @@ namespace DCL.AvatarRendering.AvatarShape
             this.mouthPoseDuration = mouthPoseDuration;
             this.vowelMouthPoseDuration = vowelMouthPoseDuration;
             this.debugData = debugData;
+            this.mouthInputQueue = mouthInputQueue;
         }
 
         protected override void Update(float t)
         {
+            // Drain any pending voice-chat / chat mouth inputs queued by external services
+            // (VoiceChatMouthAnimationHandler, ChatAvatarMouthService) and apply them to ECS.
+            if (mouthInputQueue != null)
+                ApplyMouthInputQueue();
+
             // Setup pass — adds per-avatar face components to newly instantiated avatars.
             SetupExpressionComponentQuery(World);
 
@@ -141,6 +154,54 @@ namespace DCL.AvatarRendering.AvatarShape
             // mouth pose animation overrides mouth temporarily.
             if (mouthPoseTextureArray != null)
                 UpdateMouthAnimationQuery(World, t);
+        }
+
+        // ─── Mouth input queue drain ──────────────────────────────────────────
+
+        /// <summary>
+        ///     Drains <see cref="mouthInputQueue"/> and writes the changes to
+        ///     <see cref="AvatarMouthInputComponent"/> on the target entities.
+        ///     Must only be called from within the ECS update loop (main thread).
+        /// </summary>
+        private void ApplyMouthInputQueue()
+        {
+            mouthInputQueue!.DrainTo(speakingBuffer, messageBuffer);
+
+            foreach ((Entity entity, bool isSpeaking) in speakingBuffer)
+                ApplyMouthSpeaking(entity, isSpeaking);
+
+            foreach ((Entity entity, string message) in messageBuffer)
+                ApplyMouthMessage(entity, message);
+
+            speakingBuffer.Clear();
+            messageBuffer.Clear();
+        }
+
+        private void ApplyMouthSpeaking(Entity entity, bool isSpeaking)
+        {
+            if (!World.IsAlive(entity)) return;
+
+            if (World.Has<AvatarMouthInputComponent>(entity))
+            {
+                ref var input = ref World.Get<AvatarMouthInputComponent>(entity);
+                input.IsVoiceChatSpeaking = isSpeaking;
+            }
+            else
+                World.Add(entity, new AvatarMouthInputComponent { IsVoiceChatSpeaking = isSpeaking });
+        }
+
+        private void ApplyMouthMessage(Entity entity, string message)
+        {
+            if (!World.IsAlive(entity)) return;
+
+            if (World.Has<AvatarMouthInputComponent>(entity))
+            {
+                ref var input = ref World.Get<AvatarMouthInputComponent>(entity);
+                input.PendingMessage = message;
+                input.MessageIsDirty = true;
+            }
+            else
+                World.Add(entity, new AvatarMouthInputComponent { PendingMessage = message, MessageIsDirty = true });
         }
 
         // ─── Setup queries ────────────────────────────────────────────────────
@@ -242,14 +303,15 @@ namespace DCL.AvatarRendering.AvatarShape
         ///     base indices into the blink and mouth components so they restore correctly after
         ///     their temporary overrides finish.
         ///     Also handles re-initialisation of the eyebrows renderer after avatar re-instantiation.
+        ///     The <see cref="AvatarBlinkComponent"/> and <see cref="AvatarMouthAnimationComponent"/>
+        ///     are optional: when either renderer is absent they are never added, so the query must
+        ///     not gate on their presence — otherwise eyebrows are silently skipped too.
         /// </summary>
         [Query]
-        [All(typeof(AvatarBlinkComponent), typeof(AvatarMouthAnimationComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateFaceExpression(
+            in Entity entity,
             ref AvatarFaceExpressionComponent expression,
-            ref AvatarBlinkComponent blink,
-            ref AvatarMouthAnimationComponent mouth,
             ref AvatarShapeComponent avatarShape)
         {
             // Re-initialise eyebrows renderer if it was destroyed during avatar re-instantiation.
@@ -275,18 +337,28 @@ namespace DCL.AvatarRendering.AvatarShape
                 ApplyEyebrowsFrame(ref expression, expression.EyebrowsExpressionIndex);
 
             // Sync the resting eye state into the blink component so EndBlink restores it.
-            blink.EyesExpressionIndex = expression.EyesExpressionIndex;
+            // Only present when the avatar has a Mask_Eyes renderer.
+            if (World.Has<AvatarBlinkComponent>(entity))
+            {
+                ref var blink = ref World.Get<AvatarBlinkComponent>(entity);
+                blink.EyesExpressionIndex = expression.EyesExpressionIndex;
 
-            // If not currently blinking, apply the expression eye immediately.
-            if (!blink.IsBlinking)
-                ApplyEyeFrame(ref blink, expression.EyesExpressionIndex);
+                // If not currently blinking, apply the expression eye immediately.
+                if (!blink.IsBlinking)
+                    ApplyEyeFrame(ref blink, expression.EyesExpressionIndex);
+            }
 
             // Sync the resting mouth state into the mouth component so StopMouth restores it.
-            mouth.MouthExpressionIndex = expression.MouthExpressionIndex;
+            // Only present when the avatar has a Mask_Mouth renderer.
+            if (World.Has<AvatarMouthAnimationComponent>(entity))
+            {
+                ref var mouth = ref World.Get<AvatarMouthAnimationComponent>(entity);
+                mouth.MouthExpressionIndex = expression.MouthExpressionIndex;
 
-            // If not currently animating mouth poses, apply the expression mouth immediately.
-            if (mouth.AnimatingText == null)
-                ApplyMouthPose(ref mouth, expression.MouthExpressionIndex);
+                // If not currently animating mouth poses, apply the expression mouth immediately.
+                if (mouth.AnimatingText == null)
+                    ApplyMouthPose(ref mouth, expression.MouthExpressionIndex);
+            }
         }
 
         // ─── Blink ────────────────────────────────────────────────────────────
