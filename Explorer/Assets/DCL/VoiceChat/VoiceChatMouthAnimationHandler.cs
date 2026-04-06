@@ -1,12 +1,11 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using DCL.Utilities;
-using Utility.Arch;
 
 namespace DCL.VoiceChat
 {
@@ -15,6 +14,12 @@ namespace DCL.VoiceChat
     ///     speaking-state changes into <see cref="AvatarMouthInputQueue"/> so that
     ///     <c>AvatarFacialExpressionSystem</c> can apply them to ECS on the next frame.
     ///     Entity manipulation must happen inside ECS systems; this handler only buffers.
+    ///     <para>
+    ///         LiveKit callbacks (<c>ActiveSpeakers.Updated</c>, <c>UpdatesFromParticipant</c>,
+    ///         and the reactive-property observer for <c>CurrentCallStatus</c>) are not guaranteed
+    ///         to fire on the Unity main thread. All methods that touch <see cref="activeSpeakers"/>
+    ///         or <see cref="nextActiveSpeakers"/> must hold <see cref="speakerLock"/>.
+    ///     </para>
     /// </summary>
     public class VoiceChatMouthAnimationHandler : IDisposable
     {
@@ -24,7 +29,10 @@ namespace DCL.VoiceChat
         private readonly AvatarMouthInputQueue mouthInputQueue;
         private readonly IDisposable statusSubscription;
 
-        // Reused across calls to avoid per-event allocation (Fix #6).
+        // Guards activeSpeakers and nextActiveSpeakers against concurrent callback access.
+        private readonly object speakerLock = new();
+
+        // Reused across calls to avoid per-event allocation.
         private readonly HashSet<string> activeSpeakers = new();
         private readonly HashSet<string> nextActiveSpeakers = new();
 
@@ -59,25 +67,28 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            // Build the new active-speaker set without allocating a new HashSet (Fix #6).
-            nextActiveSpeakers.Clear();
+            lock (speakerLock)
+            {
+                // Build the new active-speaker set without allocating a new HashSet.
+                nextActiveSpeakers.Clear();
 
-            foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
-                nextActiveSpeakers.Add(speakerId);
+                foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
+                    nextActiveSpeakers.Add(speakerId);
 
-            // Newly speaking: in next but not in current.
-            foreach (string speakerId in nextActiveSpeakers)
-                if (!activeSpeakers.Contains(speakerId))
-                    EnqueueSpeaking(speakerId, true);
+                // Newly speaking: in next but not in current.
+                foreach (string speakerId in nextActiveSpeakers)
+                    if (!activeSpeakers.Contains(speakerId))
+                        EnqueueSpeaking(speakerId, true);
 
-            // Stopped speaking: in current but not in next.
-            foreach (string speakerId in activeSpeakers)
-                if (!nextActiveSpeakers.Contains(speakerId))
-                    EnqueueSpeaking(speakerId, false);
+                // Stopped speaking: in current but not in next.
+                foreach (string speakerId in activeSpeakers)
+                    if (!nextActiveSpeakers.Contains(speakerId))
+                        EnqueueSpeaking(speakerId, false);
 
-            // Replace active set in-place.
-            activeSpeakers.Clear();
-            activeSpeakers.UnionWith(nextActiveSpeakers);
+                // Replace active set in-place.
+                activeSpeakers.Clear();
+                activeSpeakers.UnionWith(nextActiveSpeakers);
+            }
         }
 
         private void EnqueueSpeaking(string participantId, bool isSpeaking)
@@ -92,10 +103,13 @@ namespace DCL.VoiceChat
         {
             if (update != UpdateFromParticipant.Disconnected) return;
 
-            if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
+            lock (speakerLock)
             {
-                mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
-                activeSpeakers.Remove(participant.Identity);
+                if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
+                {
+                    mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
+                    activeSpeakers.Remove(participant.Identity);
+                }
             }
         }
 
@@ -112,12 +126,16 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     mouthInputQueue.EnqueueSpeaking(playerEntity, false);
-                    activeSpeakers.Clear();
 
-                    foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                    lock (speakerLock)
                     {
-                        if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
+                        activeSpeakers.Clear();
+
+                        foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                        {
+                            if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                                mouthInputQueue.EnqueueSpeaking(entry.Entity, false);
+                        }
                     }
 
                     break;
