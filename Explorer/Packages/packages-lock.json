@@ -7,13 +7,6 @@
       "dependencies": {},
       "hash": "e368e96fa8145bfca6ad2947ca60c427d4a81d74"
     },
-    "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
-    },
     "com.alttester.sdk": {
       "version": "2.3.0",
       "depth": 0,
@@ -104,7 +97,7 @@
         "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes"
       },
-      "hash": "6f86f2a32250aac69b7866aff8a9d688243347fd"
+      "hash": "a04918a20ad9d13d6c4d5d1947c7900798de9601"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -177,6 +170,13 @@
       "source": "git",
       "dependencies": {},
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
+    },
+    "com.renderheads.avpro.video-ultra": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
