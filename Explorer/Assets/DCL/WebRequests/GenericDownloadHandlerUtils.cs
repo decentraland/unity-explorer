@@ -69,8 +69,9 @@ namespace DCL.WebRequests
             CancellationToken ct,
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null, false);
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) =>
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null, suppressErrors);
 
         /// <summary>
         ///     Adapts existing calls to the required-op flow

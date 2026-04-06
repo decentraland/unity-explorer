@@ -41,8 +41,7 @@ namespace DCL.SDKComponents.MediaStream
 
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
-
-            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5);
+            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5, false);
             //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
             if (!isReachable)
                 isReachable = await IsGetReachableAsync(url, ct);
