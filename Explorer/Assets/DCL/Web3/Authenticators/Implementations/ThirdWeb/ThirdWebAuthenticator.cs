@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
@@ -35,6 +36,12 @@ namespace DCL.Web3.Authenticators
 
         private readonly ThirdWebLoginService loginService;
         private readonly ThirdWebEthereumApi ethereumApi;
+
+        public event Action<string>? OTPSendSucceeded
+        {
+            add => loginService.OTPSendSucceeded += value;
+            remove => loginService.OTPSendSucceeded -= value;
+        }
 
         private IThirdwebWallet? activeWallet => loginService.ActiveWallet;
 

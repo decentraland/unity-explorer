@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 
 namespace DCL.Web3.Authenticators
@@ -9,6 +10,11 @@ namespace DCL.Web3.Authenticators
     /// </summary>
     public interface IOtpAuthenticator
     {
+        /// <summary>
+        ///     Raised when OTP code input should be displayed to the user.
+        ///     Always invoked on the main thread.
+        /// </summary>
+        public event Action<string>? OTPSendSucceeded;
         /// <summary>
         ///     Submit OTP code entered by user.
         ///     Throws <see cref="CodeVerificationException" /> if code is invalid/expired.

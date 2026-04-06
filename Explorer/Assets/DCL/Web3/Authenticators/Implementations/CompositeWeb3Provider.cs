@@ -30,6 +30,12 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
+        public event Action<string>? OTPSendSucceeded
+        {
+            add => thirdWebAuth.OTPSendSucceeded += value;
+            remove => thirdWebAuth.OTPSendSucceeded -= value;
+        }
+
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
