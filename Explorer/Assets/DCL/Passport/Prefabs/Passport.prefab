@@ -4492,11 +4492,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.SoftMask
   m_ShowMaskGraphic: 0
-  m_MaskingMode: 2
+  m_MaskingMode: 0
   m_AlphaHitTest: 0
   m_SoftnessRange:
     m_Min: 0
-    m_Max: 1
+    m_Max: 0.05
   m_DownSamplingRate: 1
   m_AntiAliasingThreshold: 0
   m_Alpha: -1
