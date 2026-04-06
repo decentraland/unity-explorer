@@ -12,9 +12,7 @@ namespace DCL.Chat.ChatReactions.Presenters
     {
         private readonly RectTransform messageSelectorRect;
         private readonly RectTransform emojiPanelRect;
-        private readonly Vector2 shortcutsBarOffset;
-        private readonly Vector2 emojiPanelOffsetForSituational;
-        private readonly Vector2 emojiPanelOffsetForMessage;
+        private readonly ChatReactionsMessageConfig config;
 
         public ReactionPanelPositioner(
             RectTransform messageSelectorRect,
@@ -23,9 +21,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         {
             this.messageSelectorRect = messageSelectorRect;
             this.emojiPanelRect = emojiPanelRect;
-            shortcutsBarOffset = messageConfig.ShortcutsBarOffset;
-            emojiPanelOffsetForSituational = messageConfig.EmojiPanelOffset;
-            emojiPanelOffsetForMessage = messageConfig.EmojiPanelMessageOffset;
+            config = messageConfig;
         }
 
         /// <summary>
@@ -33,14 +29,15 @@ namespace DCL.Chat.ChatReactions.Presenters
         /// with its left edge at the button (requires pivot X = 0 on the selector).
         /// Uses the same localPosition pattern as <see cref="PositionEmojiPanelForSituational"/>.
         /// </summary>
-        public void PositionShortcutsBarAboveAnchor(RectTransform anchor)
+        public void PositionShortcutsBarAboveAnchor(RectTransform anchor, bool isOwnMessage)
         {
             var parent = (RectTransform)messageSelectorRect.parent;
             Vector3 localPos = parent.InverseTransformPoint(anchor.position);
+            Vector2 offset = isOwnMessage ? config.ShortcutsBarOffsetOwnMessage : config.ShortcutsBarOffset;
 
             messageSelectorRect.localPosition = new Vector3(
-                localPos.x + shortcutsBarOffset.x,
-                localPos.y + shortcutsBarOffset.y,
+                localPos.x + offset.x,
+                localPos.y + offset.y,
                 0f);
         }
 
@@ -54,8 +51,8 @@ namespace DCL.Chat.ChatReactions.Presenters
             Vector3 localPos = panelParent.InverseTransformPoint(addButton.position);
 
             emojiPanelRect.localPosition = new Vector3(
-                localPos.x + emojiPanelOffsetForSituational.x,
-                localPos.y + emojiPanelOffsetForSituational.y,
+                localPos.x + config.EmojiPanelOffset.x,
+                localPos.y + config.EmojiPanelOffset.y,
                 0f);
         }
 
@@ -73,8 +70,8 @@ namespace DCL.Chat.ChatReactions.Presenters
             float halfWidth = emojiPanelRect.rect.width * 0.5f;
 
             emojiPanelRect.localPosition = new Vector3(
-                localPos.x + halfWidth + emojiPanelOffsetForMessage.x,
-                localPos.y + emojiPanelOffsetForMessage.y,
+                localPos.x + halfWidth + config.EmojiPanelMessageOffset.x,
+                localPos.y + config.EmojiPanelMessageOffset.y,
                 0f);
         }
     }

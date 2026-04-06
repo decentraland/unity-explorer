@@ -52,8 +52,12 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public float TooltipHoverDelay { get; private set; } = 0.3f;
 
         [field: Header("SHORTCUTS BAR POSITIONING")]
-        [field: Note("Offset applied when positioning the message shortcuts bar near a reaction button.")]
+        [field: Note("Offset applied when positioning the message shortcuts bar near a reaction button (other users' messages).")]
         [field: SerializeField] public Vector2 ShortcutsBarOffset { get; private set; } = new (0f, 40f);
+
+        [field: Note("Offset applied when positioning the message shortcuts bar near a reaction button (own messages). " +
+                     "Own messages use a different prefab layout, so the offset may differ.")]
+        [field: SerializeField] public Vector2 ShortcutsBarOffsetOwnMessage { get; private set; } = new (0f, 40f);
 
         [field: Header("EMOJI PANEL POSITIONING")]
         [field: Note("Offset applied to the + button position when opening the emoji panel from situational reactions.")]

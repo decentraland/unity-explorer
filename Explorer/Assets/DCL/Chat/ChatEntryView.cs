@@ -57,6 +57,8 @@ namespace DCL.Chat
         private ChatMessageViewModel currentViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
+        internal bool IsSentByOwnUser => currentViewModel?.Message.IsSentByOwnUser ?? false;
+
         private void Awake()
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);

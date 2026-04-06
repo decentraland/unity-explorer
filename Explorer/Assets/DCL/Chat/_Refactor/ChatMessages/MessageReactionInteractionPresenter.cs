@@ -47,6 +47,7 @@ namespace DCL.Chat.ChatMessages
             var anchor = (RectTransform)chatEntryView.messageBubbleElement.reactionButton!.transform;
             reactionsPresenter.ShowForMessage(
                 anchor,
+                chatEntryView.IsSentByOwnUser,
                 atlasIndex => messageReactionService.ToggleReaction(messageId, atlasIndex),
                 ClearPendingState);
         }
