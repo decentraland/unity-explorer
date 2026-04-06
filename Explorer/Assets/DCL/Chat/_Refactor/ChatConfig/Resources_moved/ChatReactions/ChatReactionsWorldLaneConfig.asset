@@ -45,7 +45,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   <BurstCount>k__BackingField: 1
-  <MaxParticlesPerAvatar>k__BackingField: 20
+  <MaxParticlesPerAvatar>k__BackingField: 15
   <StreamRatePerSecond>k__BackingField: 4
   <DebugRatePerSecond>k__BackingField: 3
   <ZigZagAmplitude>k__BackingField: 0.1
@@ -112,7 +112,3 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   <MaxSpawnDistance>k__BackingField: 25
-  <MockIntervalMin>k__BackingField: 0.5
-  <MockIntervalMax>k__BackingField: 0.5
-  <MockMinEmojisPerBurst>k__BackingField: 1
-  <MockMaxEmojisPerBurst>k__BackingField: 1

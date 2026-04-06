@@ -19,17 +19,21 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [field: Note("INIT-ONLY — GPU-instanced unlit material cloned at init. " +
                      "The source material is never mutated at runtime.")]
-        [field: SerializeField] public Material EmojiMaterial { get; private set; }
+        [field: SerializeField] public Material EmojiMaterial { get; internal set; }
 
         [field: Header("LANES")]
         [field: Note("Per-lane tuning ScriptableObjects. Click to expand each sub-config.")]
         [field: SerializeField] public ChatReactionsUILaneConfig UILane { get; private set; }
-        [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; private set; }
+        [field: SerializeField] public ChatReactionsWorldLaneConfig WorldLane { get; internal set; }
 
         [field: Header("SHARED SPAWN SETTINGS")]
+        [field: Note("Minimum spawn scale ratio. Particles start at this fraction of their final size " +
+                     "and grow to full. 0.2 = particles pop in at 20% size.")]
         [field: SerializeField] [field: Range(0.05f, 1f)]
         public float SpawnSizeMinRatio { get; private set; } = 0.2f;
 
+        [field: Note("Maximum spawn scale ratio. Particles start at a random ratio between min and max. " +
+                     "0.5 = up to 50% of final size at birth.")]
         [field: SerializeField] [field: Range(0.1f, 1f)]
         public float SpawnSizeMaxRatio { get; private set; } = 0.5f;
 
@@ -51,5 +55,42 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [Note("Continuously spawn random reactions above all nearby remote avatars.")]
         public bool StreamRemotePlayers;
+
+        [Header("DEBUG — STREAM COMMAND")]
+        [Note("Default reactions/s emitted locally by /streamreactions.")]
+        [Range(1f, 60f)]
+        public float StreamCommandEmitRate = 15f;
+
+        [Note("Default max reactions/s sent to network during streaming.")]
+        [Range(1f, 60f)]
+        public float StreamCommandSendBudget = 10f;
+
+        [Header("DEBUG — RECEIVE LIMITING")]
+        [Note("Max queued remote reactions. Newest dropped when exceeded. 0 = unlimited.")]
+        [Range(0, 500)]
+        public int MaxReceiveQueueDepth = 120;
+
+        [Note("Queue depth where dynamic stagger ramp begins. Must be less than MaxReceiveQueueDepth for the ramp to take effect.")]
+        [Range(0, 100)]
+        public int DynamicStaggerRampStart = 15;
+
+        [Note("Stagger floor at max queue depth. 0 = drain all instantly.")]
+        [Range(0f, 0.5f)]
+        public float MinStaggerInterval;
+
+        [Note("Max remote reactions/s shown in UI lane. World particles use per-avatar cap. 0 = unlimited.")]
+        [Range(0f, 200f)]
+        public float MaxRemoteUIReactionsPerSec = 120f;
+
+        [Header("DYNAMIC SCALING")]
+        [Note("Master toggle for pool-pressure-based per-avatar cap scaling. " +
+              "When disabled, static MaxParticlesPerAvatar is used unchanged.")]
+        public bool DynamicScalingEnabled = true;
+
+        [Note("Fraction of world pool capacity to distribute among active avatars. " +
+              "0.7 = 70% of 1023 = 716 particles shared equally. " +
+              "Remaining 30% acts as headroom for bursts and timing overlap.")]
+        [Range(0.3f, 0.95f)]
+        public float WorldPoolTargetUtilization = 0.7f;
     }
 }

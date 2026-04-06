@@ -86,6 +86,7 @@ namespace DCL.Chat.ChatReactions.Debug
                 uiSimulation.IsStreaming,
                 worldSimulation.IsStreaming,
                 debugNearbyActive,
+                worldSimulation.EffectiveMaxPerAvatar,
                 worldSimulation.ActiveAnchorCount,
                 worldSimulation.AnchorScanLimit,
                 worldSimulation.AnchorSlotCapacity);

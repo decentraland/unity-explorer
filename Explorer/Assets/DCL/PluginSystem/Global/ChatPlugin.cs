@@ -107,6 +107,9 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly CurrentChannelService? externalCurrentChannelService;
+        private readonly ObjectProxy<StreamReactionsEmitter>? streamReactionsEmitterProxy;
+        private readonly ObjectProxy<SituationalReactionDebugController>? debugControllerProxy;
+        private readonly ObjectProxy<ChatReactionsConfig>? reactionsConfigProxy;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
@@ -153,7 +156,10 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
-            CurrentChannelService? externalCurrentChannelService = null)
+            CurrentChannelService? externalCurrentChannelService = null,
+            ObjectProxy<StreamReactionsEmitter>? streamReactionsEmitterProxy = null,
+            ObjectProxy<SituationalReactionDebugController>? debugControllerProxy = null,
+            ObjectProxy<ChatReactionsConfig>? reactionsConfigProxy = null)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -195,6 +201,9 @@ namespace DCL.PluginSystem.Global
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
             this.externalCurrentChannelService = externalCurrentChannelService;
+            this.streamReactionsEmitterProxy = streamReactionsEmitterProxy;
+            this.debugControllerProxy = debugControllerProxy;
+            this.reactionsConfigProxy = reactionsConfigProxy;
 
             pluginCts = new CancellationTokenSource();
             eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
@@ -240,6 +249,9 @@ namespace DCL.PluginSystem.Global
                 pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
+            streamReactionsEmitterProxy?.SetObject(reactions.StreamEmitter);
+            debugControllerProxy?.SetObject(reactions.DebugController);
+            reactionsConfigProxy?.SetObject(settings.ReactionsConfig);
 
             var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
                 messageReactionService,

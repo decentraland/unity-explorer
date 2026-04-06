@@ -1,5 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
@@ -559,6 +562,10 @@ namespace Global.Dynamic
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
             var currentChannelService = new CurrentChannelService();
 
+            var streamReactionsEmitterProxy = new ObjectProxy<StreamReactionsEmitter>();
+            var debugControllerProxy = new ObjectProxy<SituationalReactionDebugController>();
+            var reactionsConfigProxy = new ObjectProxy<ChatReactionsConfig>();
+
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -573,6 +580,8 @@ namespace Global.Dynamic
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
+                new StreamReactionsChatCommand(streamReactionsEmitterProxy, reactionsConfigProxy),
+                new FakeReactionsChatCommand(debugControllerProxy, reactionsConfigProxy),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -876,7 +885,10 @@ namespace Global.Dynamic
                     messagePipesHub,
                     bootstrapContainer.Environment,
                     bootstrapContainer.Analytics.Controller,
-                    currentChannelService),
+                    currentChannelService,
+                    streamReactionsEmitterProxy,
+                    debugControllerProxy,
+                    reactionsConfigProxy),
                 new ExplorePanelPlugin(
                     eventBus,
                     featureFlags,

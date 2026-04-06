@@ -13,6 +13,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
     {
         public const byte ANCHOR_NONE = ChatReactionsParticle.ANCHOR_NONE;
         public const string LOCAL_PLAYER_ID = "__local_player__";
+        private const string DEBUG_WALLET_PREFIX = "__debug_nearby_";
 
         /// <summary>Number of usable anchor slots (0..254). Slot 255 is reserved as ANCHOR_NONE sentinel.</summary>
         public const int MAX_ANCHORS = ANCHOR_NONE; // 0..254 usable, 255 = none
@@ -210,10 +211,21 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
         // ── Refresh helpers ─────────────────────────────────────────
 
-        private Vector3? ResolveAvatarPosition(IAvatarReactionPosition avatarPosition, int slotIndex) =>
-            walletIds[slotIndex] == LOCAL_PLAYER_ID
-                ? avatarPosition.GetLocalPlayerHeadPosition()
-                : avatarPosition.GetHeadPosition(walletIds[slotIndex]!);
+        private Vector3? ResolveAvatarPosition(IAvatarReactionPosition avatarPosition, int slotIndex)
+        {
+            string? walletId = walletIds[slotIndex];
+
+            if (walletId == LOCAL_PLAYER_ID)
+                return avatarPosition.GetLocalPlayerHeadPosition();
+
+            // Debug nearby anchors keep their last-known position from Allocate().
+            // They don't exist in the avatar system, so GetHeadPosition would return null
+            // and cause the anchor to be deactivated every frame.
+            if (walletId != null && walletId.StartsWith(DEBUG_WALLET_PREFIX))
+                return positions[slotIndex];
+
+            return avatarPosition.GetHeadPosition(walletId!);
+        }
 
         private void DeactivateSlot(int slotIndex)
         {

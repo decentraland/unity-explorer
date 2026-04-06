@@ -18,6 +18,9 @@ namespace DCL.Chat.ChatReactions.Core
         private readonly LocalPlayerWorldReactor worldReactor;
         private readonly ReactionNetworkBroadcaster networkBroadcaster;
 
+        private TokenBucketRateLimiter? sendBudget;
+        private float sendBudgetRate;
+
         /// <summary>
         /// Fired when the local user triggers a situational reaction.
         /// Parameter: emojiIndex used.
@@ -55,6 +58,7 @@ namespace DCL.Chat.ChatReactions.Core
             networkBroadcaster = new ReactionNetworkBroadcaster(
                 reactionBus,
                 () => config.MessageReactions.NetworkDebounceSeconds,
+                () => config.MessageReactions.NetworkFlushThreshold,
                 (unique, total, ts) => NetworkFlushed?.Invoke(unique, total, ts));
         }
 
@@ -111,9 +115,29 @@ namespace DCL.Chat.ChatReactions.Core
         private void AfterLocalTrigger(int emojiIndex, int count)
         {
             worldReactor.TriggerLocalBurst(emojiIndex);
-            networkBroadcaster.Broadcast(emojiIndex);
+
+            if (sendBudget == null || sendBudget.TryConsume())
+                networkBroadcaster.Broadcast(emojiIndex);
+
             ReactionSent?.Invoke(emojiIndex, count, Time.unscaledTime);
             UserReactedToSituation?.Invoke(emojiIndex);
+        }
+
+        internal void EnableSendBudget(float tokensPerSec)
+        {
+            sendBudgetRate = tokensPerSec;
+            sendBudget = new TokenBucketRateLimiter(tokensPerSec);
+        }
+
+        internal void DisableSendBudget()
+        {
+            sendBudget = null;
+            sendBudgetRate = 0f;
+        }
+
+        internal void TickSendBudget(float dt)
+        {
+            sendBudget?.Refill(dt, sendBudgetRate);
         }
     }
 }

@@ -13,13 +13,19 @@ namespace DCL.Chat.ChatReactions.Core
         private readonly Dictionary<int, int> bufferedEmojis = new ();
         private readonly Action<Dictionary<int, int>> onFlush;
         private readonly Func<float> getDebounceSeconds;
+        private readonly Func<int> getFlushThreshold;
         private float timer;
+        private int bufferedCount;
         private bool active;
 
-        public SituationalReactionDebouncer(Action<Dictionary<int, int>> onFlush, Func<float> getDebounceSeconds)
+        public SituationalReactionDebouncer(
+            Action<Dictionary<int, int>> onFlush,
+            Func<float> getDebounceSeconds,
+            Func<int> getFlushThreshold)
         {
             this.onFlush = onFlush;
             this.getDebounceSeconds = getDebounceSeconds;
+            this.getFlushThreshold = getFlushThreshold;
         }
 
         public void Add(int emojiIndex)
@@ -29,9 +35,12 @@ namespace DCL.Chat.ChatReactions.Core
             else
                 bufferedEmojis[emojiIndex] = 1;
 
-            float debounce = getDebounceSeconds();
+            bufferedCount++;
 
-            if (debounce <= 0f)
+            float debounce = getDebounceSeconds();
+            int threshold = getFlushThreshold();
+
+            if (debounce <= 0f || (threshold > 0 && bufferedCount >= threshold))
             {
                 Flush();
                 return;
@@ -65,6 +74,7 @@ namespace DCL.Chat.ChatReactions.Core
         private void Flush()
         {
             active = false;
+            bufferedCount = 0;
 
             if (bufferedEmojis.Count == 0)
                 return;

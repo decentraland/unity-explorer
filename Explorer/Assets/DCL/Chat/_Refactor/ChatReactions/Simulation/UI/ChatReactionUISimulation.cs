@@ -60,7 +60,12 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         public void Dispose()
         {
             if (runtimeMaterial != null)
-                UnityEngine.Object.Destroy(runtimeMaterial);
+            {
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(runtimeMaterial);
+                else
+                    UnityEngine.Object.DestroyImmediate(runtimeMaterial);
+            }
         }
 
         public void Tick(float dt)

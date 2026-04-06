@@ -19,13 +19,14 @@ namespace DCL.Chat.ChatReactions.Networking
         public ReactionNetworkBroadcaster(
             IReactionMessageBus? reactionBus,
             Func<float> getDebounceSeconds,
+            Func<int> getFlushThreshold,
             Action<int, int, float>? onFlushed = null)
         {
             this.reactionBus = reactionBus;
             this.onFlushed = onFlushed;
 
             if (reactionBus != null)
-                debouncer = new SituationalReactionDebouncer(Flush, getDebounceSeconds);
+                debouncer = new SituationalReactionDebouncer(Flush, getDebounceSeconds, getFlushThreshold);
         }
 
         public void Broadcast(int emojiIndex)

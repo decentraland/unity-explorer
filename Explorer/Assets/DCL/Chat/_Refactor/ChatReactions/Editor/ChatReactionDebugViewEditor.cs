@@ -61,7 +61,23 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Visible", $"{stats.WorldVisibleCount}  (anchors: {stats.WorldVisibleAnchors})");
             if (config != null)
             {
-                Label("Max Per Avatar", config.WorldLane.MaxParticlesPerAvatar == 0 ? "unlimited" : config.WorldLane.MaxParticlesPerAvatar.ToString());
+                bool dynamicEnabled = config.DynamicScalingEnabled;
+                Label("Dynamic Scaling", StateText(dynamicEnabled));
+
+                if (dynamicEnabled)
+                    Label("Effective Max/Avatar", stats.EffectiveMaxPerAvatar > 0
+                        ? stats.EffectiveMaxPerAvatar.ToString()
+                        : "unlimited");
+                else
+                    Label("Max Per Avatar", config.WorldLane.MaxParticlesPerAvatar == 0
+                        ? "unlimited"
+                        : $"{config.WorldLane.MaxParticlesPerAvatar} (static)");
+
+                float utilPct = stats.WorldPoolCapacity > 0
+                    ? (float)stats.WorldAliveCount / stats.WorldPoolCapacity * 100f
+                    : 0f;
+                Label("Pool Utilization", $"{utilPct:F0}% ({stats.WorldAliveCount}/{stats.WorldPoolCapacity}) target: {config.WorldPoolTargetUtilization * 100f:F0}%");
+
                 Label("Max Spawn Distance", $"{config.WorldLane.MaxSpawnDistance} units");
             }
             Label("Local Anchor Alive", stats.LocalAnchorAlive < 0 ? "no anchor" : stats.LocalAnchorAlive.ToString());

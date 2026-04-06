@@ -45,11 +45,13 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         private float debugAccumulator;
         private bool debugActive;
         private Func<List<Vector3>>? debugPositionsGetter;
+        private Action<int, int>? debugNearbyUICallback;
 
         private int lastVisibleCount;
         private int lastVisibleAnchorCount;
         private int droppedThisFrame;
         private int cappedThisFrame;
+        private int lastEffectiveMaxPerAvatar;
 
         public int AliveCount => store.Count;
         public int PoolCapacity => store.Capacity;
@@ -62,6 +64,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         public int AnchorSlotCapacity => anchorTable.SlotCapacity;
         public int DroppedThisFrame => droppedThisFrame;
         public int CappedThisFrame => cappedThisFrame;
+        public int EffectiveMaxPerAvatar => lastEffectiveMaxPerAvatar;
         public int LocalAnchorAlive { get; private set; }
 
         public bool HasAliveParticles() => store.Count > 0;
@@ -90,7 +93,12 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         public void Dispose()
         {
             if (runtimeMaterial != null)
-                UnityEngine.Object.Destroy(runtimeMaterial);
+            {
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(runtimeMaterial);
+                else
+                    UnityEngine.Object.DestroyImmediate(runtimeMaterial);
+            }
         }
 
         public void Tick(float dt)
@@ -180,7 +188,8 @@ namespace DCL.Chat.ChatReactions.Simulation.World
         {
             byte anchor = anchorTable.Allocate(walletId, headPos);
             var lane = config.WorldLane;
-            int maxPerAvatar = lane.MaxParticlesPerAvatar;
+            int maxPerAvatar = ComputeEffectiveMaxPerAvatar(lane.MaxParticlesPerAvatar);
+            lastEffectiveMaxPerAvatar = maxPerAvatar;
             int n = Mathf.Max(1, count);
 
             for (int i = 0; i < n; i++)
@@ -237,6 +246,15 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             debugAccumulator = 0f;
         }
 
+        /// <summary>
+        /// When set, each debug nearby burst also triggers this callback (emojiIndex, burstCount)
+        /// to inject reactions into the UI lane. Only used by /fakereactions.
+        /// </summary>
+        public void SetDebugNearbyUICallback(Action<int, int>? callback)
+        {
+            debugNearbyUICallback = callback;
+        }
+
         private void EmitStreamParticles(float dt)
         {
             if (!isStreaming || streamPositionGetter == null) return;
@@ -288,6 +306,23 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             Profiler.EndSample();
         }
 
+        private int ComputeEffectiveMaxPerAvatar(int configuredMax)
+        {
+            if (!config.DynamicScalingEnabled)
+                return configuredMax;
+
+            int activeAnchors = anchorTable.ActiveSlotCount;
+            if (activeAnchors <= 0)
+                return configuredMax;
+
+            int poolBudget = (int)(store.Capacity * config.WorldPoolTargetUtilization);
+            int dynamicMax = poolBudget / activeAnchors;
+
+            return configuredMax > 0
+                ? Mathf.Min(configuredMax, dynamicMax)
+                : dynamicMax;
+        }
+
         private bool SpawnSingleWorldParticle(Vector3 headPos, int emojiIndex,
             ChatReactionsWorldLaneConfig lane, byte anchorIndex = ChatReactionsParticle.ANCHOR_NONE)
         {
@@ -337,6 +372,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             {
                 int emoji = rng.Next(0, atlasTotalTiles);
                 TriggerAnchoredReaction(positions[i], DEBUG_NEARBY_WALLETS[i], emoji, config.WorldLane.BurstCount);
+                debugNearbyUICallback?.Invoke(emoji, config.WorldLane.BurstCount);
             }
         }
 

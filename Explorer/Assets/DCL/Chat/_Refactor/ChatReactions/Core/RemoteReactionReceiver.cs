@@ -15,21 +15,38 @@ namespace DCL.Chat.ChatReactions.Core
 
         private readonly Queue<ReactionReceivedArgs> queue = new (MAX_EXPAND);
         private readonly Action<ReactionReceivedArgs> onProcessed;
-        private readonly Func<float> getStaggerInterval;
+        private readonly Func<float> getBaseStagger;
+        private readonly Func<int> getMaxQueueDepth;
+        private readonly Func<int> getRampStart;
+        private readonly Func<float> getMinStagger;
         private float staggerTimer;
 
-        public RemoteReactionReceiver(Func<float> getStaggerInterval, Action<ReactionReceivedArgs> onProcessed)
+        public int QueueCount => queue.Count;
+
+        public RemoteReactionReceiver(
+            Func<float> getBaseStagger,
+            Func<int> getMaxQueueDepth,
+            Func<int> getRampStart,
+            Func<float> getMinStagger,
+            Action<ReactionReceivedArgs> onProcessed)
         {
-            this.getStaggerInterval = getStaggerInterval;
+            this.getBaseStagger = getBaseStagger;
+            this.getMaxQueueDepth = getMaxQueueDepth;
+            this.getRampStart = getRampStart;
+            this.getMinStagger = getMinStagger;
             this.onProcessed = onProcessed;
         }
 
         public void Enqueue(ReactionReceivedArgs args)
         {
+            int maxDepth = getMaxQueueDepth();
             int count = Mathf.Clamp(args.Count, 1, MAX_EXPAND);
 
             for (int i = 0; i < count; i++)
             {
+                if (maxDepth > 0 && queue.Count >= maxDepth)
+                    break;
+
                 queue.Enqueue(new ReactionReceivedArgs(
                     args.WalletId, args.EmojiIndex, 1,
                     args.Type, args.MessageId, args.IsRemoval));
@@ -38,7 +55,7 @@ namespace DCL.Chat.ChatReactions.Core
 
         public void Tick(float dt)
         {
-            float staggerInterval = getStaggerInterval();
+            float staggerInterval = ComputeEffectiveStagger();
 
             if (staggerInterval <= 0f)
             {
@@ -61,6 +78,24 @@ namespace DCL.Chat.ChatReactions.Core
                 onProcessed(queue.Dequeue());
                 staggerTimer += staggerInterval;
             }
+        }
+
+        private float ComputeEffectiveStagger()
+        {
+            float baseStagger = getBaseStagger();
+            int maxDepth = getMaxQueueDepth();
+            int rampStart = getRampStart();
+
+            if (maxDepth <= 0 || queue.Count <= rampStart)
+                return baseStagger;
+
+            float minStagger = getMinStagger();
+
+            if (queue.Count >= maxDepth)
+                return minStagger;
+
+            float t = (float)(queue.Count - rampStart) / (maxDepth - rampStart);
+            return Mathf.Lerp(baseStagger, minStagger, t);
         }
     }
 }

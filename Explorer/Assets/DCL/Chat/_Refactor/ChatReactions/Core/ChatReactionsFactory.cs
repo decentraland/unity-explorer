@@ -33,6 +33,7 @@ namespace DCL.Chat.ChatReactions.Core
             public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
+            public readonly StreamReactionsEmitter StreamEmitter;
 
             internal Result(
                 ISituationalReactionTrigger trigger,
@@ -40,7 +41,8 @@ namespace DCL.Chat.ChatReactions.Core
                 SituationalReactionFacade facade,
                 ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
-                SituationalReactionDebugController debugController)
+                SituationalReactionDebugController debugController,
+                StreamReactionsEmitter streamEmitter)
             {
                 Trigger = trigger;
                 Simulation = simulation;
@@ -48,6 +50,7 @@ namespace DCL.Chat.ChatReactions.Core
                 MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
+                StreamEmitter = streamEmitter;
             }
         }
 
@@ -84,12 +87,20 @@ namespace DCL.Chat.ChatReactions.Core
             var facade = new SituationalReactionFacade(reactionsConfig, uiSimulation, worldReactor, reactionBus);
             scope.Add(facade);
 
+            var streamEmitter = new StreamReactionsEmitter(facade, reactionsConfig);
+            scope.Add(streamEmitter);
+
             var remoteTarget = new SituationalRemoteTarget(
                 () => reactionsConfig.MessageReactions.ReceiveStaggerInterval,
+                () => reactionsConfig.MaxReceiveQueueDepth,
+                () => reactionsConfig.DynamicStaggerRampStart,
+                () => reactionsConfig.MinStaggerInterval,
+                () => reactionsConfig.MaxRemoteUIReactionsPerSec,
                 worldReactor, uiSimulation);
 
             var simulationLoop = new SituationalSimulationLoop(
-                uiSimulation, worldSimulation, facade.NetworkBroadcaster, remoteTarget, worldReactor);
+                uiSimulation, worldSimulation, facade.NetworkBroadcaster, remoteTarget, worldReactor,
+                facade, streamEmitter);
 
             // --- Settings bindings ---
             simulationLoop.WorldReactionsEnabled =
@@ -118,6 +129,8 @@ namespace DCL.Chat.ChatReactions.Core
             var debugController = new SituationalReactionDebugController(uiSimulation, worldSimulation, avatarPosition);
             scope.Add(debugController);
 
+            worldSimulation.SetDebugNearbyUICallback((emoji, count) => uiSimulation.TriggerUIReaction(emoji, count));
+
 #if UNITY_EDITOR
             var reactionEventBus = new ChatReactionEventBus();
             scope.Add(reactionEventBus);
@@ -138,7 +151,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(facade, simulationLoop, facade, messageReactionService, debugState, debugController);
+            return new Result(facade, simulationLoop, facade, messageReactionService, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(

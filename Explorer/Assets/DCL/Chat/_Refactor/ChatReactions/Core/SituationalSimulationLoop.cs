@@ -16,6 +16,8 @@ namespace DCL.Chat.ChatReactions.Core
         private readonly ReactionNetworkBroadcaster networkBroadcaster;
         private readonly SituationalRemoteTarget remoteTarget;
         private readonly LocalPlayerWorldReactor worldReactor;
+        private readonly SituationalReactionFacade facade;
+        private readonly StreamReactionsEmitter streamEmitter;
 
         public bool WorldReactionsEnabled
         {
@@ -29,18 +31,24 @@ namespace DCL.Chat.ChatReactions.Core
             set => remoteTarget.ShowRemoteUIReactions = value;
         }
 
+        internal StreamReactionsEmitter StreamEmitter => streamEmitter;
+
         public SituationalSimulationLoop(
             ChatReactionUISimulation uiSimulation,
             ChatReactionWorldSimulation worldSimulation,
             ReactionNetworkBroadcaster networkBroadcaster,
             SituationalRemoteTarget remoteTarget,
-            LocalPlayerWorldReactor worldReactor)
+            LocalPlayerWorldReactor worldReactor,
+            SituationalReactionFacade facade,
+            StreamReactionsEmitter streamEmitter)
         {
             this.uiSimulation = uiSimulation;
             this.worldSimulation = worldSimulation;
             this.networkBroadcaster = networkBroadcaster;
             this.remoteTarget = remoteTarget;
             this.worldReactor = worldReactor;
+            this.facade = facade;
+            this.streamEmitter = streamEmitter;
         }
 
         public void SetDefaultUISpawnRect(RectTransform rect) =>
@@ -48,6 +56,8 @@ namespace DCL.Chat.ChatReactions.Core
 
         public void Tick(float dt)
         {
+            facade.TickSendBudget(dt);
+            streamEmitter.Tick(dt);
             networkBroadcaster.Tick(dt);
             remoteTarget.Tick(dt);
             uiSimulation.Tick(dt);

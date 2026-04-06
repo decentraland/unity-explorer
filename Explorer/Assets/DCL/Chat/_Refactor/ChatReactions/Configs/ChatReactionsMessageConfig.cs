@@ -11,14 +11,6 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/Message Config")]
     public class ChatReactionsMessageConfig : ScriptableObject
     {
-        [field: Header("PICKER")]
-        [field: Note("NOT YET WIRED UP — atlas tile indices for the reaction picker. " +
-                     "Must match ReactionPickerIcons length.")]
-        [field: SerializeField] public int[] AvailableEmojiIndices { get; private set; } = System.Array.Empty<int>();
-
-        [field: Note("NOT YET WIRED UP — sprite icons for the reaction picker, one per emoji.")]
-        [field: SerializeField] public Sprite[] ReactionPickerIcons { get; private set; } = System.Array.Empty<Sprite>();
-
         [field: Header("SITUATIONAL SHORTCUTS BAR")]
         [field: Note("Unicode codepoints of the fixed emojis in the shortcuts bar. " +
                      "Resolved to atlas tile indices at init via ChatReactionsAtlasConfig.")]
@@ -29,15 +21,17 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public int MaxRecentEmojis { get; private set; } = 3;
 
         [field: Header("BEHAVIOUR")]
-        [field: Note("NOT YET WIRED UP — max distinct reaction types shown on a single message.")]
-        [field: Range(1, 20)]
-        [field: SerializeField] public int MaxReactionTypesPerMessage { get; private set; } = 6;
-
         [field: Note("Debounce delay (seconds) before sending situational reactions to the network. " +
                      "Clicks within this window are deduplicated per emoji. " +
                      "0 = disabled (sends immediately). Enable only after deploying protocol with count field.")]
         [field: Range(0f, 2f)]
         [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0f;
+
+        [field: Note("Max buffered reactions before forcing a network flush, even if the debounce timer hasn't expired. " +
+                     "Prevents the buffer from growing unbounded during continuous streaming. " +
+                     "0 = disabled (only debounce timer triggers flush).")]
+        [field: Range(0, 50)]
+        [field: SerializeField] public int NetworkFlushThreshold { get; private set; } = 10;
 
         [field: Note("Minimum interval (seconds) between processing queued incoming situational reactions. " +
                      "Creates a visual cascade instead of all reactions appearing at once. 0 = disabled (process all immediately).")]
@@ -56,19 +50,6 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Prevents tooltip flickering when scrolling through messages. 0 = instant (no delay).")]
         [field: Range(0f, 1f)]
         [field: SerializeField] public float TooltipHoverDelay { get; private set; } = 0.3f;
-
-        [field: Header("ANIMATIONS")]
-        [field: Note("NOT YET WIRED UP — reaction bubble appear animation duration (seconds).")]
-        [field: Range(0f, 1f)]
-        [field: SerializeField] public float AppearDuration { get; private set; } = 0.15f;
-
-        [field: Note("NOT YET WIRED UP — reaction bubble disappear animation duration (seconds).")]
-        [field: Range(0f, 1f)]
-        [field: SerializeField] public float DisappearDuration { get; private set; } = 0.1f;
-
-        [field: Note("NOT YET WIRED UP — bounce/pop animation when a reaction count increments (seconds).")]
-        [field: Range(0f, 1f)]
-        [field: SerializeField] public float CountIncrementBounceDuration { get; private set; } = 0.12f;
 
         [field: Header("SHORTCUTS BAR POSITIONING")]
         [field: Note("Offset applied when positioning the message shortcuts bar near a reaction button.")]

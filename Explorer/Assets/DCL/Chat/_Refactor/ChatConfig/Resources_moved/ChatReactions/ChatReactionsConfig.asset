@@ -20,6 +20,14 @@ MonoBehaviour:
   <SpawnSizeMaxRatio>k__BackingField: 0.5
   <MessageReactions>k__BackingField: {fileID: 11400000, guid: 74f16d958ff95fb4c9dee3ee7a77682c, type: 2}
   DebugEnabled: 1
-  StreamUILane: 1
-  StreamLocalPlayer: 1
-  StreamRemotePlayers: 1
+  StreamUILane: 0
+  StreamLocalPlayer: 0
+  StreamRemotePlayers: 0
+  StreamCommandEmitRate: 15
+  StreamCommandSendBudget: 10
+  MaxReceiveQueueDepth: 120
+  DynamicStaggerRampStart: 15
+  MinStaggerInterval: 0
+  MaxRemoteUIReactionsPerSec: 10
+  DynamicScalingEnabled: 1
+  WorldPoolTargetUtilization: 0.7

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ChatReactionsUILaneConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.ChatReactions.Configs.ChatReactionsUILaneConfig
   <MaxParticles>k__BackingField: 1023
-  <MaxVisibleParticles>k__BackingField: 0
+  <MaxVisibleParticles>k__BackingField: 30
   <DepthFromCamera>k__BackingField: 1
   <LifetimeRange>k__BackingField: {x: 2.5, y: 3.5}
   <SpeedRange>k__BackingField: {x: 200, y: 300}
