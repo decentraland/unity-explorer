@@ -1,8 +1,9 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Optimization.ThreadSafePool;
 using ECS.TestSuite;
-using NUnit.Framework;
 using Newtonsoft.Json;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -101,9 +102,12 @@ namespace DCL.Profiles.Tests
             profile.Birthdate = new DateTime(1990, 1, 1);
             profile.Version = 7;
             profile.IsDirty = true;
-            profile.Links = new List<LinkJsonDto> { new () { title = "test", url = "https://test.com" } };
-            profile.blocked = new HashSet<string> { "0xblocked1" };
-            profile.interests = new List<string> { "gaming" };
+            profile.Links = ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
+            profile.Links.Add(new LinkJsonDto { title = "test", url = "https://test.com" });
+            profile.blocked = ThreadSafeCollectionPool<HashSet<string>, string>.SHARED.Get();
+            profile.blocked.Add("0xblocked1");
+            profile.interests = ThreadSafeCollectionPool<List<string>, string>.SHARED.Get();
+            profile.interests.Add("gaming");
 
             profile.Avatar = new Avatar();
             profile.Avatar.BodyShape = BodyShape.FEMALE;
