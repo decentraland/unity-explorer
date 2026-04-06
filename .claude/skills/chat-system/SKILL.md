@@ -1,6 +1,6 @@
 ---
 name: chat-system
-description: "Chat system architecture — MVP pattern, message bus decorator chain, commands, auto-translation, encrypted history, and input state machine. Use when adding chat commands, modifying message flow, working with chat services (history, translation), implementing message decorators, or extending chat UI states."
+description: "Chat system — MVP pattern, message bus decorators, commands, auto-translation, encrypted history, state machine. Use when adding chat commands, modifying message flow, or working with chat services."
 user-invocable: false
 ---
 
@@ -50,17 +50,7 @@ The chat system uses **MVP + State Machine + EventBus + Commands**:
 
 ## Message Bus Decorator Chain
 
-`IChatMessagesBus` is wrapped in decorators, each adding a concern. The chain is composed in `DynamicWorldContainer`:
-
-```csharp
-// DynamicWorldContainer.cs — decorator chain composition
-IChatMessagesBus coreChatMessageBus =
-    new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, ...)
-        .WithSelfResend(identityCache, chatMessageFactory)
-        .WithIgnoreSymbols()
-        .WithCommands(chatCommands, loadingStatus)
-        .WithDebugPanel(debugBuilder);
-```
+`IChatMessagesBus` is wrapped in decorators, each adding a concern. The chain is composed in `DynamicWorldContainer`.
 
 ### Decorator Responsibilities
 
@@ -74,7 +64,6 @@ IChatMessagesBus coreChatMessageBus =
 ### Interface
 
 ```csharp
-// IChatMessagesBus.cs
 public interface IChatMessagesBus : IDisposable
 {
     event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
@@ -91,7 +80,6 @@ Each decorator wraps `origin.Send()` and forwards `origin.MessageAdded` events, 
 ### Interface
 
 ```csharp
-// IChatCommand.cs
 public interface IChatCommand
 {
     string Command { get; }
@@ -120,17 +108,6 @@ public interface IChatCommand
 | `/killpx <urn>` | `KillPortableExperienceChatCommand` | Yes |
 | `/appargs` | `AppArgsChatCommand` | Yes |
 
-### Command Dispatch (inside `CommandsHandleChatMessageBus`)
-
-```csharp
-if (message[0] == '/') // User tried running a command
-{
-    HandleChatCommandAsync(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, message).Forget();
-    return;
-}
-this.origin.Send(channel, message, origin, timestamp); // Not a command — pass through
-```
-
 Commands are registered in `DynamicWorldContainer` as `IReadOnlyList<IChatCommand>` and looked up by name in a dictionary.
 
 ---
@@ -155,28 +132,6 @@ Minimized --> Focused (focus requested / minimize toggle)
 Hidden <-- (SharedSpaceManager hides chat when other panels open)
 Hidden --> Default (SharedSpaceManager restores chat)
 ```
-
-### State Example
-
-```csharp
-// FocusedChatState.cs
-public class FocusedChatState : ChatState, IState
-{
-    public void Enter()
-    {
-        mediator.SetupForFocusedState();
-        inputBlocker.Block();       // Block player movement input
-    }
-
-    public override void Exit() => inputBlocker.Unblock();
-
-    public override void OnClickOutside() => stateMachine.Enter<DefaultChatState>();
-    public override void OnCloseRequested() => stateMachine.Enter<MinimizedChatState>();
-    public override void OnToggleMembers() => stateMachine.Enter<MembersChatState>();
-}
-```
-
-### Base Class
 
 All states inherit `ChatState` which provides virtual no-op methods: `OnClickOutside`, `OnClickInside`, `OnCloseRequested`, `OnFocusRequested`, `OnMinimizeRequested`, `OnToggleMembers`, `OnPointerEnter`, `OnPointerExit`. States override only the transitions they handle.
 
@@ -231,25 +186,6 @@ Feature flag: `explorer-alfa-chat-history-local-storage`. Core classes in `Explo
     {Base64(AES(channelId))}              <-- encrypted CSV per conversation
 ```
 
-### Encryption
-
-```csharp
-// ChatHistoryEncryptor.cs
-public void SetNewEncryptionKey(string newEncryptionKey)
-{
-    byte[] hashedKey = shaEncryptor.ComputeHash(Encoding.UTF8.GetBytes(newEncryptionKey));
-    cryptoProvider.Key = hashedKey;
-    cryptoProvider.IV = hashedKey.AsSpan(0, 16).ToArray();
-    cryptoProvider.Mode = CipherMode.ECB;
-    cryptoProvider.Padding = PaddingMode.Zeros;
-}
-
-public string StringToFileName(string str)
-{
-    // AES-encrypt -> Base64 -> replace '/' with '_' for filesystem safety
-}
-```
-
 ### Key Behaviors
 
 - **Per-account isolation**: wallet address is the encryption key; folder name is `Base64(AES(address))`
@@ -257,6 +193,12 @@ public string StringToFileName(string str)
 - **Background processing**: message queue processed on a thread pool via `UniTask.RunOnThreadPool`
 - **Rehydration**: on first DM message, snapshots session messages, loads history from disk, replays session tail to avoid data loss
 - **Nearby excluded**: only `ChatChannelType.USER` conversations are persisted
+
+---
+
+## Detailed Reference
+
+For detailed code examples, see [reference.md](reference.md).
 
 ---
 
