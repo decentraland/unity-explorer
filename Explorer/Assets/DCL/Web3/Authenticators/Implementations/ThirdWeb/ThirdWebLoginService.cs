@@ -29,6 +29,7 @@ namespace DCL.Web3.Authenticators
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;
+        public event Action<string>? OTPSendSucceeded;
 
         public ThirdWebLoginService(ThirdwebClient client, IWeb3AccountFactory web3AccountFactory, int? identityExpirationDuration = null)
         {
@@ -162,8 +163,14 @@ namespace DCL.Web3.Authenticators
                 storageDirectoryPath: Path.Combine(Application.persistentDataPath, "Thirdweb", "EcosystemWallet"))
                                              .AsUniTask().AttachExternalCancellation(ct);
 
-            await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct);
+            try { await pendingWallet.SendOTP().AsUniTask().AttachExternalCancellation(ct); }
+            catch (Exception ex) when (ContainsInvalidEmailError(ex))
+            {
+                throw new InvalidEmailException(ex.Message, ex);
+            }
+
             ReportHub.Log(ReportCategory.AUTHENTICATION, "ThirdWeb login: OTP sent to email");
+            OTPSendSucceeded?.Invoke(email);
 
             // Wait for successful login via SubmitOtp
             loginCompletionSource = new UniTaskCompletionSource<bool>();
@@ -199,6 +206,22 @@ namespace DCL.Web3.Authenticators
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (InvalidOperationException e) when (e.Message.Contains("invalid or expired")) { throw new CodeVerificationException("Incorrect OTP code", e); }
+        }
+
+        private static bool ContainsInvalidEmailError(Exception ex)
+        {
+            const string INVALID_EMAIL_MESSAGE = "Invalid email.";
+            Exception? current = ex;
+
+            while (current != null)
+            {
+                if (current.Message == INVALID_EMAIL_MESSAGE)
+                    return true;
+
+                current = current.InnerException;
+            }
+
+            return false;
         }
 
         public async UniTask ResendOtpAsync(CancellationToken ct)
