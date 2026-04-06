@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Utilities.Extensions;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -28,15 +27,15 @@ namespace DCL.VoiceChat
         private readonly PlaybackSourcesHub playbackSourcesHub;
 
         private bool isDisposed;
+        internal bool isSuppressed { get; private set; }
 
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
 
-        public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration)
+        public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
-
-            playbackSourcesHub = new PlaybackSourcesHub(configuration.ChatAudioMixerGroup.EnsureNotNull());
+            this.playbackSourcesHub = playbackSourcesHub;
         }
 
         public void Dispose()
@@ -114,10 +113,24 @@ namespace DCL.VoiceChat
 
             try
             {
-                playbackSourcesHub.RemoveStream(new StreamKey(participant.Identity, publication.Sid));
+                playbackSourcesHub.TryRemoveStream(new StreamKey(participant.Identity, publication.Sid));
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : "(new remote)")}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "(new remote)")}"); }
+        }
+
+        internal void MuteAll()
+        {
+            if (isSuppressed) return;
+            isSuppressed = true;
+            playbackSourcesHub.SetMuteAll(true);
+        }
+
+        internal void UnmuteAll()
+        {
+            if (!isSuppressed) return;
+            isSuppressed = false;
+            playbackSourcesHub.SetMuteAll(false);
         }
 
         private bool TryAddStream(TrackKind kind, StreamKey key)
@@ -125,7 +138,6 @@ namespace DCL.VoiceChat
             if (kind != TrackKind.KindAudio) return false;
 
             Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
-
             if (!stream.Resource.Has) return false;
 
             playbackSourcesHub.AddOrReplaceStream(key, stream);

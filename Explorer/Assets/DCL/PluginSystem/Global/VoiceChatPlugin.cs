@@ -19,6 +19,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -124,7 +125,10 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(microphoneStateManager);
 
             microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler, VoiceChatType.COMMUNITY);
-            remoteListener = new RemoteTrackListener(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration);
+            remoteListener = new RemoteTrackListener(
+                roomHub.VoiceChatRoom().Room(),
+                voiceChatConfiguration,
+                new PlaybackSourcesHub("Community", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
 
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
             pluginScope.Add(roomManager);

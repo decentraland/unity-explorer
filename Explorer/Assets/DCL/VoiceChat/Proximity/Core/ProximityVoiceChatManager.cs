@@ -18,7 +18,7 @@ namespace DCL.VoiceChat.Proximity
     ///     Orchestrates proximity voice chat: coordinates state transitions
     ///     (Hearing/Speaking/Suppressed/Disabled) and delegates microphone publishing
     ///     to <see cref="MicrophoneTrackPublisher"/> and remote track management
-    ///     to <see cref="ProximityRemoteTrackListener"/>.
+    ///     to <see cref="RemoteTrackListener"/>.
     ///     Mic control (PTT, device switching) is handled by <see cref="VoiceChatMicrophoneHandler"/>.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable
@@ -30,7 +30,7 @@ namespace DCL.VoiceChat.Proximity
         private readonly ProximityVoiceChatStateModel stateModel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly MicrophoneTrackPublisher micPublisher;
-        private readonly ProximityRemoteTrackListener remoteListener;
+        private readonly RemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? proximityStateSubscription;
@@ -53,13 +53,25 @@ namespace DCL.VoiceChat.Proximity
             this.microphoneHandler = microphoneHandler;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.PROXIMITY);
-            remoteListener = new ProximityRemoteTrackListener(islandRoom, configuration, activeAudioSources);
+
+            var proximityHub = new PlaybackSourcesHub(
+                parentNameSuffix: "Proximity",
+                configuration.ProximityChatAudioMixerGroup,
+                spatial: true,
+                onSourceConfigured: (key, lkSource) =>
+                {
+                    configuration.ApplyProximitySettingsTo(lkSource.AudioSource);
+                    configuration.ApplySpatializationSettingsTo(lkSource);
+                    lkSource.gameObject.AddComponent<ProximityPanCalculator>();
+                    activeAudioSources[key.identity] = lkSource.AudioSource;
+                },
+                onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
+
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, proximityHub);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
-            // islandRoom.LocalTrackPublished += OnLocalTrackPublished;
-            // islandRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             proximityStateSubscription = stateModel.State.Subscribe(OnProximityStateChanged);
@@ -83,8 +95,6 @@ namespace DCL.VoiceChat.Proximity
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
             islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
-            // islandRoom.LocalTrackPublished -= OnLocalTrackPublished;
-            // islandRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             Deactivate();
             micPublisher.Dispose();
@@ -106,12 +116,6 @@ namespace DCL.VoiceChat.Proximity
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
             => remoteListener.HandleTrackUnsubscribed(publication, participant).Forget();
-
-        // private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
-        //     => remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true);
-        //
-        // private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
-        //     => remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true);
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
@@ -207,7 +211,7 @@ namespace DCL.VoiceChat.Proximity
 
                     case ProximityVoiceChatState.HEARING:
                     case ProximityVoiceChatState.SPEAKING:
-                        if (remoteListener.IsSuppressed)
+                        if (remoteListener.isSuppressed)
                         {
                             remoteListener.UnmuteAll();
                             microphoneHandler.Assign(micPublisher.CurrentMicrophone, VoiceChatType.PROXIMITY);
@@ -232,7 +236,7 @@ namespace DCL.VoiceChat.Proximity
         private void Deactivate()
         {
             micPublisher.Unpublish();
-            remoteListener.StopListening().Forget();
+            remoteListener.StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Deactivated");
         }
     }
