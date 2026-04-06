@@ -85,40 +85,20 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             mainModule.gravityModifier = particleSystemData.GetGravity();
 
             // Initial size: random between start and end
-            if (particleSystemData.InitialSize != null)
-                mainModule.startSize = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialSize.Start, particleSystemData.InitialSize.End);
+            mainModule.startSize = particleSystemData.GetInitialSize();
 
             // Initial rotation: quaternion -> Euler, apply as 3D start rotation
-            if (particleSystemData.InitialRotation != null)
-            {
-                mainModule.startRotation3D = true;
-                var q = new UnityEngine.Quaternion(
-                    particleSystemData.InitialRotation.X,
-                    particleSystemData.InitialRotation.Y,
-                    particleSystemData.InitialRotation.Z,
-                    particleSystemData.InitialRotation.W);
-
-                // Zero quaternion (proto default) -> identity
-                if (q.x == 0f && q.y == 0f && q.z == 0f && q.w == 0f)
-                    q = UnityEngine.Quaternion.identity;
-
-                var euler = q.eulerAngles * Mathf.Deg2Rad;
-                mainModule.startRotationX = euler.x;
-                mainModule.startRotationY = euler.y;
-                mainModule.startRotationZ = euler.z;
-            }
+            mainModule.startRotation3D = particleSystemData.InitialRotation != null;
+            Vector3 initialEulerRotation = particleSystemData.GetInitialRotation();
+            mainModule.startRotationX = initialEulerRotation.x;
+            mainModule.startRotationY = initialEulerRotation.y;
+            mainModule.startRotationZ = initialEulerRotation.z;
 
             // Initial color: random between start and end
-            if (particleSystemData.InitialColor != null)
-            {
-                var startColor = ToUnityColor(particleSystemData.InitialColor.Start);
-                var endColor = ToUnityColor(particleSystemData.InitialColor.End);
-                mainModule.startColor = new UnityEngine.ParticleSystem.MinMaxGradient(startColor, endColor);
-            }
+            mainModule.startColor = particleSystemData.GetInitialColor();
 
             // Initial speed: random between start and end
-            if (particleSystemData.InitialVelocitySpeed != null)
-                mainModule.startSpeed = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialVelocitySpeed.Start, particleSystemData.InitialVelocitySpeed.End);
+            mainModule.startSpeed = particleSystemData.GetInitialVelocitySpeed();
         }
 
         private static void ApplyEmission(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
@@ -159,19 +139,11 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         private static void ApplyShape(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
         {
             var shapeModule = particleSystem.shape;
-            shapeModule.enabled = true;
-
-            if (particleSystemData.ShapeCase == PBParticleSystem.ShapeOneofCase.None)
-            {
-                // Default: point emitter
-                shapeModule.shapeType = ParticleSystemShapeType.Sphere;
-                shapeModule.radius = 0f;
-                return;
-            }
 
             shapeModule.scale = Vector3.one;
             switch (particleSystemData.ShapeCase)
             {
+                case PBParticleSystem.ShapeOneofCase.None: // Default: point emitter
                 case PBParticleSystem.ShapeOneofCase.Point:
                     shapeModule.shapeType = ParticleSystemShapeType.Sphere;
                     shapeModule.radius = 0f;
@@ -228,20 +200,10 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             rotationOverLifetimeModule.enabled = true;
             rotationOverLifetimeModule.separateAxes = true;
 
-            var q = new UnityEngine.Quaternion(
-                particleSystemData.RotationOverTime.X,
-                particleSystemData.RotationOverTime.Y,
-                particleSystemData.RotationOverTime.Z,
-                particleSystemData.RotationOverTime.W);
-
-            // Zero quaternion (proto default) -> identity
-            if (q.x == 0f && q.y == 0f && q.z == 0f && q.w == 0f)
-                q = UnityEngine.Quaternion.identity;
-
-            var euler = q.eulerAngles * Mathf.Deg2Rad;
-            rotationOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(euler.x);
-            rotationOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(euler.y);
-            rotationOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(euler.z);
+            Vector3 rotationOverTimeEuler = particleSystemData.GetRotationOverTime();
+            rotationOverLifetimeModule.x = new UnityEngine.ParticleSystem.MinMaxCurve(rotationOverTimeEuler.x);
+            rotationOverLifetimeModule.y = new UnityEngine.ParticleSystem.MinMaxCurve(rotationOverTimeEuler.y);
+            rotationOverLifetimeModule.z = new UnityEngine.ParticleSystem.MinMaxCurve(rotationOverTimeEuler.z);
         }
 
         private static void ApplyColorOverLifetime(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
@@ -255,17 +217,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             }
 
             colorOverLifetimeModule.enabled = true;
-
-            component.CachedGradient ??= new Gradient();
-            component.CachedColorKeys ??= new GradientColorKey[2];
-            component.CachedAlphaKeys ??= new GradientAlphaKey[2];
-
-            component.CachedColorKeys[0] = new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.Start), 0f);
-            component.CachedColorKeys[1] = new GradientColorKey(ToUnityColor(particleSystemData.ColorOverTime.End), 1f);
-            component.CachedAlphaKeys[0] = new GradientAlphaKey(particleSystemData.ColorOverTime.Start.A, 0f);
-            component.CachedAlphaKeys[1] = new GradientAlphaKey(particleSystemData.ColorOverTime.End.A, 1f);
-
-            component.CachedGradient.SetKeys(component.CachedColorKeys, component.CachedAlphaKeys);
+            component.UpdateColorOverLifetimeCache(particleSystemData.ColorOverTime);
             colorOverLifetimeModule.color = new UnityEngine.ParticleSystem.MinMaxGradient(component.CachedGradient);
         }
 
@@ -340,7 +292,6 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 component.BlendModeInitialized = true;
             }
 
-            // Billboard rendering mode
             // When billboard is OFF, Mesh render mode uses the prefab's default Quad mesh
             bool billboard = particleSystemData.GetBillboard();
             if (billboard)
@@ -356,7 +307,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             particleRenderer.material = component.ParticleMaterial;
 
-            if (particleSystemData.Texture != null)
+            if (particleSystemData.Texture != null && !string.IsNullOrEmpty(particleSystemData.Texture.Src))
                 PrepareTexture(particleSystemData.Texture, ref component);
             else
                 component.CleanUpTexture(World);
@@ -402,8 +353,6 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
         private void PrepareTexture(global::Decentraland.Common.Texture protoTexture, ref ParticleSystemComponent component)
         {
-            if (string.IsNullOrEmpty(protoTexture.Src)) return;
-
             if (!protoTexture.TryGetTextureUrl(sceneData, out URLAddress url)) return;
             protoTexture.TryGetTextureFileHash(sceneData, out string fileHash);
 
@@ -457,8 +406,5 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             return new UnityEngine.ParticleSystem.MinMaxCurve(1f, cachedCurve);
         }
-
-        private static Color ToUnityColor(global::Decentraland.Common.Color4 protoColor) =>
-            new Color(protoColor.R, protoColor.G, protoColor.B, protoColor.A);
     }
 }

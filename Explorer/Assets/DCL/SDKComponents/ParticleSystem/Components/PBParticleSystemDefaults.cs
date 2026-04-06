@@ -1,7 +1,12 @@
+using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
+using ECS.Unity.ColorComponent;
+using UnityEngine;
 
 namespace DCL.SDKComponents.ParticleSystem.Components
 {
+    // Defaults according to protocol definition:
+    // https://github.com/decentraland/protocol/blob/bf007b91c1558bcf8fe53c0e14ae434303d0c646/proto/decentraland/sdk/components/particle_system.proto
     public static class PBParticleSystemDefaults
     {
         public static bool GetActive(this PBParticleSystem self) =>
@@ -18,6 +23,35 @@ namespace DCL.SDKComponents.ParticleSystem.Components
 
         public static float GetGravity(this PBParticleSystem self) =>
             self.HasGravity ? self.Gravity : 0f;
+
+        public static UnityEngine.ParticleSystem.MinMaxCurve GetInitialSize(this PBParticleSystem self) =>
+            self.InitialSize != null
+                ? new UnityEngine.ParticleSystem.MinMaxCurve(self.InitialSize.Start, self.InitialSize.End)
+                : new UnityEngine.ParticleSystem.MinMaxCurve(1);
+
+        public static Vector3 GetInitialRotation(this PBParticleSystem self)
+        {
+            if (self.InitialRotation == null)
+                return Vector3.zero;
+            return CalculateRotationRadiansEuler(self.InitialRotation.ToUnityQuaternion());
+        }
+
+        public static Vector3 GetRotationOverTime(this PBParticleSystem self)
+        {
+            if (self.RotationOverTime == null)
+                return Vector3.zero;
+            return CalculateRotationRadiansEuler(self.RotationOverTime.ToUnityQuaternion());
+        }
+
+        public static UnityEngine.ParticleSystem.MinMaxGradient GetInitialColor(this PBParticleSystem self) =>
+            self.InitialColor != null
+                ? new UnityEngine.ParticleSystem.MinMaxGradient(ColorExtensions.ToUnityColor(self.InitialColor.Start), ColorExtensions.ToUnityColor(self.InitialColor.End))
+                : new UnityEngine.ParticleSystem.MinMaxGradient(Color.white);
+
+        public static UnityEngine.ParticleSystem.MinMaxCurve GetInitialVelocitySpeed(this PBParticleSystem self) =>
+            self.InitialVelocitySpeed != null
+                ? new UnityEngine.ParticleSystem.MinMaxCurve(self.InitialVelocitySpeed.Start, self.InitialVelocitySpeed.End)
+                : new UnityEngine.ParticleSystem.MinMaxCurve(1);
 
         public static bool GetLoop(this PBParticleSystem self) =>
             !self.HasLoop || self.Loop;
@@ -71,5 +105,17 @@ namespace DCL.SDKComponents.ParticleSystem.Components
 
         public static float GetProbability(this PBParticleSystem.Types.Burst self) =>
             self.HasProbability ? self.Probability : 1f;
+
+        // --- Internal Utils ---
+
+        private static Vector3 CalculateRotationRadiansEuler(Quaternion quaternion)
+        {
+            // Zero quaternion -> identity
+            if (quaternion is {x: 0f, y: 0f, z: 0f, w: 0f })
+                quaternion = Quaternion.identity;
+
+            // Unity's ParticleSystem expects RADIANS
+            return quaternion.eulerAngles * Mathf.Deg2Rad;
+        }
     }
 }

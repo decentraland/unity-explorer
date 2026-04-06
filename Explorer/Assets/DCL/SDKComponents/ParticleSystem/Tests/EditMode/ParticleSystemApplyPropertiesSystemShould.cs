@@ -1,7 +1,5 @@
-using Arch.Core;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem;
-using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.ParticleSystem.Systems;
 using Decentraland.Common;
 using ECS.TestSuite;

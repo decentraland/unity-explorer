@@ -1,5 +1,7 @@
 using Arch.Core;
+using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
+using Decentraland.Common;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
@@ -17,11 +19,11 @@ namespace DCL.SDKComponents.ParticleSystem
         public Material ParticleMaterial;
 
         // Cached objects to avoid allocations on dirty updates
-        public Gradient CachedGradient;
-        public GradientColorKey[] CachedColorKeys;
-        public GradientAlphaKey[] CachedAlphaKeys;
-        public AnimationCurve CachedCurve;
-        public UnityEngine.ParticleSystem.Burst[] CachedBursts;
+        public Gradient? CachedGradient;
+        private GradientColorKey[]? cachedColorKeys;
+        private GradientAlphaKey[]? cachedAlphaKeys;
+        public AnimationCurve? CachedCurve;
+        public UnityEngine.ParticleSystem.Burst[]? CachedBursts;
 
         // Blend mode tracking to skip redundant material operations
         public PBParticleSystem.Types.BlendMode LastAppliedBlendMode;
@@ -32,6 +34,20 @@ namespace DCL.SDKComponents.ParticleSystem
             ParticleSystemInstance = instance;
             Renderer = instance.GetComponent<ParticleSystemRenderer>();
             HostGameObject = hostGameObject;
+        }
+
+        public void UpdateColorOverLifetimeCache(ColorRange colorOverLifetime)
+        {
+            CachedGradient ??= new Gradient();
+            cachedColorKeys ??= new GradientColorKey[2];
+            cachedAlphaKeys ??= new GradientAlphaKey[2];
+
+            cachedColorKeys[0] = new GradientColorKey(colorOverLifetime.Start.ToUnityColor(), 0f);
+            cachedColorKeys[1] = new GradientColorKey(colorOverLifetime.End.ToUnityColor(), 1f);
+            cachedAlphaKeys[0] = new GradientAlphaKey(colorOverLifetime.Start.A, 0f);
+            cachedAlphaKeys[1] = new GradientAlphaKey(colorOverLifetime.End.A, 1f);
+
+            CachedGradient.SetKeys(cachedColorKeys, cachedAlphaKeys);
         }
 
         public void CleanUpTexture(in World world)

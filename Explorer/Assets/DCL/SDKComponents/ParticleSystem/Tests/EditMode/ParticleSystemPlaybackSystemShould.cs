@@ -1,6 +1,5 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem;
-using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.ParticleSystem.Systems;
 using ECS.TestSuite;
 using NUnit.Framework;
