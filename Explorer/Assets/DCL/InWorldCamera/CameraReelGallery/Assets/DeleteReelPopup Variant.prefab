@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 915463053779396120}
   - component: {fileID: 6179825256254432817}
   - component: {fileID: 398104756988442309}
-  - component: {fileID: 4332063268691963306}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -137,18 +136,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &4332063268691963306
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4052080725082009483}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1128953935475844764
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -688,9 +675,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2111826732507363316}
-    - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 4041367970578769015}
     - targetCorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
       insertIndex: -1
@@ -701,18 +685,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5259426266971447885, guid: 8927010f4b0ec4e41898c84d134fa8af, type: 3}
   m_PrefabInstance: {fileID: 6526678345211942044}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2111826732507363316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1328094816485422801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &4041367970578769015
 MonoBehaviour:
   m_ObjectHideFlags: 0

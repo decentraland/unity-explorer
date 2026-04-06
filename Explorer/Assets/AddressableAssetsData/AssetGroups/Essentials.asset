@@ -165,6 +165,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a252383173104e17acac54eb364afc4
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
     m_ReadOnly: 0
