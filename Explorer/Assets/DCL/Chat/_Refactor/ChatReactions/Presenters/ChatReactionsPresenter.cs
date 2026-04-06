@@ -116,7 +116,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         /// <summary>
         /// Opens the message selector bar near a message's reaction button anchor.
         /// </summary>
-        public void ShowForMessage(RectTransform anchor, Action<int> onReaction, Action onDismiss)
+        public void ShowForMessage(RectTransform anchor, bool isOwnMessage, Action<int> onReaction, Action onDismiss)
         {
             HideBar();
 
@@ -128,7 +128,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             clickDetectionHandler.AddIgnoredTransform(anchor);
 
             messageSelectorPresenter.Show();
-            panelPositioner.PositionShortcutsBarAboveAnchor(anchor);
+            panelPositioner.PositionShortcutsBarAboveAnchor(anchor, isOwnMessage);
             clickDetectionHandler.Resume();
         }
 

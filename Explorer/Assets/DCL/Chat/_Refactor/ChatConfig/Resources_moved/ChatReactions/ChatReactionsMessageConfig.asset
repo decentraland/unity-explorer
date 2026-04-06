@@ -12,20 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a97ef075d8c414184d10c1056ad9ec, type: 3}
   m_Name: ChatReactionsMessageConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
-  <AvailableEmojiIndices>k__BackingField: 
-  <ReactionPickerIcons>k__BackingField: []
   <FixedDefaultEmojiUnicodes>k__BackingField: 642700004ff4010022f6010023f9010025f501002df60100
   <MaxRecentEmojis>k__BackingField: 3
-  <MaxReactionTypesPerMessage>k__BackingField: 6
   <NetworkDebounceSeconds>k__BackingField: 0.3
+  <NetworkFlushThreshold>k__BackingField: 10
   <ReceiveStaggerInterval>k__BackingField: 0.2
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
-  <TooltipHoverDelay>k__BackingField: 0.4
-  <AppearDuration>k__BackingField: 0.122
-  <DisappearDuration>k__BackingField: 0.1
-  <CountIncrementBounceDuration>k__BackingField: 0.12
-  <ShortcutsBarOffset>k__BackingField: {x: -5, y: 40}
+  <TooltipHoverDelay>k__BackingField: 0.213
+  <ShortcutsBarOffset>k__BackingField: {x: -28, y: 40}
+  <ShortcutsBarOffsetOwnMessage>k__BackingField: {x: -5, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
   <EmojiPanelMessageOffset>k__BackingField: {x: -170, y: -20}
   <TooltipOffset>k__BackingField: {x: 0, y: 90}
