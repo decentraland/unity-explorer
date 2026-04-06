@@ -86,7 +86,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
-            TryUpdateLastMovementAndCompleteResync(playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
+            TryUpdateLastMovementAndCompleteResync(playerStateFull.ServerTick, playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
             Inbox(movementMessage, wallet);
         }
 
@@ -102,34 +102,44 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (!peerIdCache.TryGetWallet(delta.SubjectId, out string wallet))
             {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {delta.SubjectId}");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
                 return;
             }
 
             if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
             {
-                if (TryRequestResync(delta.SubjectId, 0))
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Already waiting for a resync for {delta.SubjectId}");
+                if (!TryRequestResync(delta.SubjectId, 0))
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Already waiting for a resync for {delta.SubjectId}");
 
                 return;
             }
 
             if (delta.NewSeq > lastMovement.sequence)
             {
-                if (delta.BaselineSeq != lastMovement.sequence)
+                // Even if Resync requested, the normal delta still can arrive and "resume" the normal flow, and then the "Resync" request can be received;
+                // If compared via "!=" the diff based on the old "resync" request may trigger redundant resync
+                if (delta.BaselineSeq > lastMovement.sequence)
                 {
                     if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
-                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Prev seq: {lastMovement.sequence}");
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
+                }
+                else if (delta.BaselineSeq == lastMovement.sequence)
+                {
+                    // Consecutive seq received, normal flow resumed — clear any stale pending resync
+                    // It can be a consecutive delta, or a resync delta - both are valid as there is no order between 2 different channels
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Recovered after resync for {delta.SubjectId}. Received seq {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}");
+                    pendingResyncs.TryRemove(delta.SubjectId, out _);
                 }
                 else
                 {
-                    // Consecutive seq received, normal flow resumed — clear any stale pending resync
-                    pendingResyncs.TryRemove(delta.SubjectId, out _);
+                    // The old "Resync" delta received - ignore it
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Old Resync for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
+                    return;
                 }
             }
             else
             {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, last seq: {lastMovement.sequence}");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, Known seq: {lastMovement.sequence}");
                 return;
             }
 
@@ -159,7 +169,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        private void TryUpdateLastMovementAndCompleteResync(uint subjectId, uint sequence, NetworkMovementMessage movementMessage)
+        private void TryUpdateLastMovementAndCompleteResync(uint serverTick, uint subjectId, uint sequence, NetworkMovementMessage movementMessage)
         {
             if (lastMovementMessages.TryGetValue(subjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
             {
@@ -169,7 +179,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             else
                 lastMovementMessages[subjectId] = (sequence, movementMessage);
 
-            pendingResyncs.TryRemove(subjectId, out _);
+            if (pendingResyncs.TryRemove(subjectId, out _))
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
         }
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)
