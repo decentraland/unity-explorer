@@ -1,3 +1,4 @@
+using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Proximity
@@ -8,13 +9,13 @@ namespace DCL.VoiceChat.Proximity
     /// </summary>
     public struct ProximityAudioSourceComponent
     {
-        public AudioSource AudioSource;
+        public LivekitAudioSource LivekitAudioSource;
         public Transform Transform;
 
-        public ProximityAudioSourceComponent(AudioSource audioSource)
+        public ProximityAudioSourceComponent(LivekitAudioSource livekitAudioSource)
         {
-            AudioSource = audioSource;
-            Transform = audioSource.transform;
+            LivekitAudioSource = livekitAudioSource;
+            Transform = livekitAudioSource.transform;
         }
     }
 }

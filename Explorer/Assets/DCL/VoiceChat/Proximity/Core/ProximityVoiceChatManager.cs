@@ -4,6 +4,7 @@ using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
@@ -42,7 +43,7 @@ namespace DCL.VoiceChat.Proximity
         public ProximityVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            ConcurrentDictionary<string, AudioSource> activeAudioSources,
+            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             ProximityVoiceChatStateModel stateModel,
             VoiceChatMicrophoneHandler microphoneHandler)
@@ -62,8 +63,7 @@ namespace DCL.VoiceChat.Proximity
                 {
                     configuration.ApplyProximitySettingsTo(lkSource.AudioSource);
                     configuration.ApplySpatializationSettingsTo(lkSource);
-                    lkSource.gameObject.AddComponent<ProximityPanCalculator>();
-                    activeAudioSources[key.identity] = lkSource.AudioSource;
+                    activeAudioSources[key.identity] = lkSource;
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
