@@ -34,15 +34,14 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
         {
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
-
-            World.Remove<ParticleSystemComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
         [None(typeof(PBParticleSystem), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref ParticleSystemComponent component)
+        private void HandleComponentRemoval(Entity entity, ref ParticleSystemComponent component)
         {
             ReleaseParticleSystem(ref component);
+            World.Remove<ParticleSystemComponent>(entity);
         }
 
         [Query]
