@@ -160,7 +160,7 @@
             "define": "GPUI_PRO_PRESENT"
         },
         {
-            "name": "avprovideo",
+            "name": "com.renderheads.avpro.video-ultra",
             "expression": "",
             "define": "AV_PRO_PRESENT"
         }
