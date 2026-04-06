@@ -8,9 +8,10 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem;
+using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.ParticleSystem.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using Unity.Mathematics;
@@ -20,7 +21,7 @@ using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using Utility;
 
-namespace DCL.PluginSystem.World
+namespace DCL.SDKComponents.ParticleSystem.Systems
 {
     public class ParticleSystemPlugin : IDCLWorldPlugin<ParticleSystemPlugin.ParticleSystemPluginSettings>
     {
@@ -29,7 +30,7 @@ namespace DCL.PluginSystem.World
         private readonly CacheCleaner cacheCleaner;
         private readonly IDebugContainerBuilder debugBuilder;
 
-        private IComponentPool<ParticleSystem>? particleSystemPool;
+        private IComponentPool<UnityEngine.ParticleSystem>? particleSystemPool;
         private IObjectPool<Material>? particleMaterialPool;
         private ParticleSystemPluginSettings? pluginSettings;
         private ElementBinding<string>? particleCountBinding;
@@ -55,11 +56,10 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBParticleSystem>.InjectToWorld(ref builder);
 
-            var lifecycleSystem = ParticleSystemLifecycleSystem.InjectToWorld(
+            ParticleSystemLifecycleSystem.InjectToWorld(
                 ref builder,
                 sharedDependencies.SceneStateProvider,
-                particleSystemPool,
-                particleMaterialPool!);
+                particleSystemPool);
 
             ParticleSystemApplyPropertiesSystem.InjectToWorld(
                 ref builder,
@@ -72,13 +72,18 @@ namespace DCL.PluginSystem.World
 
             ParticleSystemBudgetSystem.InjectToWorld(ref builder, pluginSettings!, particleCountBinding!, particlesVisibilityBinding!);
 
-            finalizeWorldSystems.Add(lifecycleSystem);
+            var cleanUpSystem = ParticleSystemCleanupSystem.InjectToWorld(
+                ref builder,
+                particleSystemPool,
+                particleMaterialPool!);
+
+            finalizeWorldSystems.Add(cleanUpSystem);
         }
 
         public async UniTask InitializeAsync(ParticleSystemPluginSettings settings, CancellationToken ct)
         {
-            ParticleSystem prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.ParticleSystemPrefab, ct)).Value
-                .GetComponent<ParticleSystem>();
+            UnityEngine.ParticleSystem prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.ParticleSystemPrefab, ct)).Value
+                                                                                                                                  .GetComponent<UnityEngine.ParticleSystem>();
 
             particleSystemPool = poolsRegistry.AddGameObjectPool(
                 () => Object.Instantiate(prefab, Vector3.zero, quaternion.identity),
@@ -103,7 +108,7 @@ namespace DCL.PluginSystem.World
                 maxSize: 512);
         }
 
-        private static void OnPoolRelease(ParticleSystem particleSystem)
+        private static void OnPoolRelease(UnityEngine.ParticleSystem particleSystem)
         {
             particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             particleSystem.transform.SetParent(null);

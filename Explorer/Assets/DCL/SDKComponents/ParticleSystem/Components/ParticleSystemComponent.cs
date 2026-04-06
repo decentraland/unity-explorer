@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.ParticleSystem
         public GradientColorKey[] CachedColorKeys;
         public GradientAlphaKey[] CachedAlphaKeys;
         public AnimationCurve CachedCurve;
+        public UnityEngine.ParticleSystem.Burst[] CachedBursts;
 
         // Blend mode tracking to skip redundant material operations
         public PBParticleSystem.Types.BlendMode LastAppliedBlendMode;

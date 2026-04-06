@@ -1,20 +1,17 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle;
 using UnityEngine;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(ParticleSystemGroup))]
     [UpdateAfter(typeof(ParticleSystemApplyPropertiesSystem))]
-    [ThrottlingEnabled]
     [LogCategory(ReportCategory.PARTICLE_SYSTEM)]
     public partial class ParticleSystemPlaybackSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {

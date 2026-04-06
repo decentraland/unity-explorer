@@ -1,20 +1,16 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.PluginSystem.World;
 using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
-using ECS.Groups;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(ParticleSystemGroup))]
     [UpdateAfter(typeof(ParticleSystemPlaybackSystem))]
-    [ThrottlingEnabled]
     [LogCategory(ReportCategory.PARTICLE_SYSTEM)]
     public partial class ParticleSystemBudgetSystem : BaseUnityLoopSystem
     {

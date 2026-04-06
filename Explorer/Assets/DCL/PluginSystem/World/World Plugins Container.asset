@@ -221,7 +221,7 @@ MonoBehaviour:
         <FlipMaterial>k__BackingField: {fileID: 2100000, guid: d08e60223593f4abe8863c64316f3476, type: 2}
         VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 4938242198007709791
-      type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.SDKComponents.ParticleSystem.Systems, asm: DCL.Plugins}
       data:
         <ParticleSystemPrefab>k__BackingField:
           m_AssetGUID: cb23ae366d31146bf85b403f6149419b

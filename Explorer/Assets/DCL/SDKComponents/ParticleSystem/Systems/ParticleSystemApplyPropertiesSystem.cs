@@ -1,14 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -23,9 +21,8 @@ using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableL
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(ParticleSystemGroup))]
     [UpdateAfter(typeof(ParticleSystemLifecycleSystem))]
-    [ThrottlingEnabled]
     [LogCategory(ReportCategory.PARTICLE_SYSTEM)]
     public partial class ParticleSystemApplyPropertiesSystem : BaseUnityLoopSystem
     {
@@ -62,7 +59,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             var particleSystem = component.ParticleSystemInstance;
 
             ApplyMain(particleSystemData, particleSystem);
-            ApplyEmission(particleSystemData, particleSystem);
+            ApplyEmission(particleSystemData, particleSystem, ref component);
             ApplyShape(particleSystemData, particleSystem);
             ApplySizeOverLifetime(particleSystemData, particleSystem, ref component);
             ApplyRotationOverLifetime(particleSystemData, particleSystem);
@@ -124,7 +121,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 mainModule.startSpeed = new UnityEngine.ParticleSystem.MinMaxCurve(particleSystemData.InitialVelocitySpeed.Start, particleSystemData.InitialVelocitySpeed.End);
         }
 
-        private static void ApplyEmission(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem)
+        private static void ApplyEmission(PBParticleSystem particleSystemData, UnityEngine.ParticleSystem particleSystem, ref ParticleSystemComponent component)
         {
             var emissionModule = particleSystem.emission;
             emissionModule.enabled = particleSystemData.GetActive();
@@ -138,23 +135,24 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
                 return;
             }
 
-            var bursts = new UnityEngine.ParticleSystem.Burst[burstCount];
+            if (component.CachedBursts == null || component.CachedBursts.Length < burstCount)
+                component.CachedBursts = new UnityEngine.ParticleSystem.Burst[burstCount];
 
             for (int i = 0; i < burstCount; i++)
             {
                 var protoBurst = particleSystemData.Bursts[i];
                 short count = (short)protoBurst.Count;
-                bursts[i] = new UnityEngine.ParticleSystem.Burst(
+                component.CachedBursts[i] = new UnityEngine.ParticleSystem.Burst(
                     protoBurst.Time,
                     count,
                     count,
                     protoBurst.GetCycles(),
                     protoBurst.GetInterval()
                 );
-                bursts[i].probability = protoBurst.GetProbability();
+                component.CachedBursts[i].probability = protoBurst.GetProbability();
             }
 
-            emissionModule.SetBursts(bursts);
+            emissionModule.SetBursts(component.CachedBursts, burstCount);
             emissionModule.burstCount = burstCount;
         }
 
