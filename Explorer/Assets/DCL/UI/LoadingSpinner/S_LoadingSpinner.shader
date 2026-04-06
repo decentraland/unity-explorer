@@ -11,6 +11,9 @@ Shader "S_LoadingSpinner (SoftMaskable)"
         [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
         [KeywordEnum(Sharp, Rounded)]ENUM_173FCA8E617C4725B6502C6FBE756CEC("RoundedCorners", Float) = 1
+        
+        // Soft Mask determines that shader supports soft masking by presence of this property.
+        [PerRendererData] _SoftMask("Mask", 2D) = "white" {}
 
         [HideInInspector]_StencilComp("Stencil Comparison", Float) = 8
         [HideInInspector]_Stencil("Stencil ID", Float) = 0
