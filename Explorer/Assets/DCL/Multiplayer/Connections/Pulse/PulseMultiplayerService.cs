@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -16,12 +17,14 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public class PulseMultiplayerService : IDisposable
     {
+        private const int PORT = 7777;
         private const int MAX_CONNECT_ATTEMPTS = 3;
         private const int RECONNECTION_DELAY_MS = 10000;
 
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly Dictionary<ServerMessage.MessageOneofCase, Action<IncomingMessage>> syncHandlers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
 
@@ -32,11 +35,13 @@ namespace DCL.Multiplayer.Connections.Pulse
         public PulseMultiplayerService(
             ITransport transport,
             MessagePipe pipe,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            IDecentralandUrlsSource urlsSource)
         {
             this.transport = transport;
             this.pipe = pipe;
             this.identityCache = identityCache;
+            this.urlsSource = urlsSource;
         }
 
         public bool IsAuthenticated => isAuthenticated;
@@ -45,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             isAuthenticated = false;
             UnregisterAllHandlers();
-            connectionLifeCycleCts.SafeCancelAndDispose();
+            Disconnect();
             transport.Dispose();
         }
 
@@ -73,10 +78,10 @@ namespace DCL.Multiplayer.Connections.Pulse
             await ConnectWithRetriesAsync(ct);
         }
 
-        public async UniTask DisconnectAsync(CancellationToken ct)
+        public void Disconnect()
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
-            await transport.DisconnectAsync(DisconnectReason.GRACEFUL, ct);
+            transport.Disconnect(DisconnectReason.GRACEFUL);
         }
 
         /// <summary>
@@ -118,8 +123,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask ConnectInternalAsync(CancellationToken ct)
         {
-            // TODO: get the address from IDecentralandUrlsSource (?)
-            await transport.ConnectAsync("127.0.0.1", 7777, ct);
+            await transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT, ct);
 
             // Register handshake handler before starting the routing loop so it's visible immediately.
             // Extract fields inside the handler — the underlying proto message is returned to pool after the handler returns.
@@ -144,7 +148,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (!success)
             {
-                await DisconnectAsync(ct);
+                Disconnect();
                 throw new PulseException(error ?? "Handshake failed");
             }
 

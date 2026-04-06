@@ -4,13 +4,14 @@ using Google.Protobuf;
 using Pulse.Transport;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse.ENet
 {
     public sealed class ENetTransport : ITransport
     {
-        private static bool isLibInitialized;
+        private static volatile bool isLibInitialized;
 
         private readonly ENetTransportOptions options;
         private readonly MessagePipe messagePipe;
@@ -20,17 +21,6 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private Peer? serverPeer;
         private Host? client;
         private CancellationTokenSource? lifeCycleCts;
-
-        public ENetTransport(
-            ENetTransportOptions options,
-            MessagePipe messagePipe
-        )
-        {
-            this.options = options;
-            this.messagePipe = messagePipe;
-            receiveBuffer = new byte[options.BufferSize];
-            sendBuffer = new byte[options.BufferSize];
-        }
 
         public ITransport.TransportState State
         {
@@ -63,16 +53,33 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
+        public ENetTransport(
+            ENetTransportOptions options,
+            MessagePipe messagePipe
+        )
+        {
+            this.options = options;
+            this.messagePipe = messagePipe;
+            receiveBuffer = new byte[options.BufferSize];
+            sendBuffer = new byte[options.BufferSize];
+        }
+
         public void Dispose()
         {
             serverPeer = null;
-            client?.Flush();
-            client?.Dispose();
-            client = null;
+
             lifeCycleCts.SafeCancelAndDispose();
+
+            if (client == null) return;
+
+            // Protect ENet from calls from different threads
 
             if (isLibInitialized)
             {
+                // Wait for the last iteration to finish the spin
+                while (client != null)
+                    Thread.Sleep(10);
+
                 Library.Deinitialize();
                 isLibInitialized = false;
             }
@@ -84,11 +91,13 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             {
                 if (!Library.Initialize())
                     throw new InvalidOperationException("ENet library failed to initialize.");
+
                 isLibInitialized = true;
             }
 
             client = new Host();
-            Address address = new Address();
+
+            var address = new Address();
             address.SetHost(ip);
             address.Port = (ushort)port;
 
@@ -110,10 +119,9 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public UniTask DisconnectAsync(DisconnectReason reason, CancellationToken ct)
+        public void Disconnect(DisconnectReason reason)
         {
             serverPeer?.Disconnect((uint)reason);
-            return UniTask.CompletedTask;
         }
 
         public void Send(IMessage message, PacketMode mode)
@@ -131,25 +139,20 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    var polled = false;
+                    if (client == null) continue;
 
-                    while (!polled)
-                    {
-                        if (client.CheckEvents(out Event netEvent) <= 0)
-                        {
-                            if (client.Service(options.ServiceTimeoutMs, out netEvent) <= 0)
-                                break;
+                    // Service does socket I/O + returns one event. Short timeout so we never block outgoing flushes.
+                    if (client.Service(options.ServiceTimeoutMs, out Event netEvent) > 0)
+                        ReceiveIncomingMessage(in netEvent);
 
-                            polled = true;
-                        }
-
-                        ReceiveIncomingMessage(ref netEvent);
-                    }
+                    // Service only returns one event per call. If multiple packets arrived in that I/O pass,
+                    // the rest are queued internally. CheckEvents drains them without redundant socket I/O.
+                    while (client.CheckEvents(out netEvent) > 0)
+                        ReceiveIncomingMessage(in netEvent);
 
                     SendOutgoingMessages();
 
-                    // TODO: yield might be a problem but we need something otherwise we crash
-                    await UniTask.Yield(ct);
+                    await Task.Yield();
                 }
 
                 // Ensure any final outgoing packets are sent, such as disconnected notifications or any last moment data
@@ -159,7 +162,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }, configureAwait: false, cancellationToken: ct);
         }
 
-        private void ReceiveIncomingMessage(ref Event netEvent)
+        private void ReceiveIncomingMessage(in Event netEvent)
         {
             var peerId = new PeerId(netEvent.Peer.ID);
 

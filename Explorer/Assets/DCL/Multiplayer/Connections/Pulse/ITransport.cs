@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
-        UniTask DisconnectAsync(DisconnectReason reason, CancellationToken ct);
+        public void Disconnect(DisconnectReason reason);
 
         void Send(IMessage message, PacketMode mode);
 

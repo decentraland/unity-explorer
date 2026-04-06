@@ -106,6 +106,7 @@ namespace DCL.UserInAppInitializationFlow
                     characterContainer.CharacterObject,
                     characterContainer.Transform,
                     dynamicWorldParams.StartParcel,
+                    pulseMultiplayerService,
                     localSceneDevelopment),
             };
         }

@@ -151,6 +151,7 @@ namespace Global.Dynamic
         private readonly IChatHistory chatHistory;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
+        private readonly PulseContainer pulseContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
 
@@ -195,7 +196,8 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler)
+            BannedNotificationHandler bannedNotificationHandler,
+            PulseContainer pulseContainer)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -214,6 +216,7 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
+            this.pulseContainer = pulseContainer;
         }
 
         public override void Dispose()
@@ -224,6 +227,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            pulseContainer.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -311,6 +315,7 @@ namespace Global.Dynamic
                         identityCache,
                         movementInbox,
                         staticContainer.QualityContainer.LandscapeData,
+                        bootstrapContainer.DecentralandUrlsSource,
                         pulseIncomingProfileAnnouncements,
                         pulseRemoveIntentions,
                         ct
@@ -1352,7 +1357,8 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler
+                bannedNotificationHandler,
+                pulseContainer
             );
 
             // Init itself

@@ -8,6 +8,7 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Prefs;
 using DCL.RealmNavigation;
@@ -44,6 +45,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+        private readonly PulseMultiplayerService pulseMultiplayerService;
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
@@ -69,6 +71,7 @@ namespace DCL.UserInAppInitializationFlow
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
             StartParcel startParcel,
+            PulseMultiplayerService pulseMultiplayerService,
             bool isLocalSceneDevelopment)
         {
             this.initOps = initOps;
@@ -79,6 +82,7 @@ namespace DCL.UserInAppInitializationFlow
             this.characterObject = characterObject;
             this.startParcel = startParcel;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.pulseMultiplayerService = pulseMultiplayerService;
             this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
@@ -226,12 +230,14 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
+            pulseMultiplayerService.Disconnect();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
+            pulseMultiplayerService.Disconnect();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
