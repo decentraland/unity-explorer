@@ -122,13 +122,18 @@ namespace DCL.Multiplayer.Connections.Pulse
                 {
                     if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
                         ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
+
+                    // If Client should apply deltas optimistically remove this "return"
+                    // The corresponding changes on the server will be required
+                    return;
                 }
-                else if (delta.BaselineSeq == lastMovement.sequence)
+
+                if (delta.BaselineSeq == lastMovement.sequence)
                 {
                     // Consecutive seq received, normal flow resumed — clear any stale pending resync
                     // It can be a consecutive delta, or a resync delta - both are valid as there is no order between 2 different channels
-                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Recovered after resync for {delta.SubjectId}. Received seq {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}");
-                    pendingResyncs.TryRemove(delta.SubjectId, out _);
+                    if (pendingResyncs.TryRemove(delta.SubjectId, out _))
+                        ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Recovered after resync for {delta.SubjectId}. Received seq {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}");
                 }
                 else
                 {
