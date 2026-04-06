@@ -62,7 +62,6 @@ namespace DCL.VoiceChat.Proximity
                 onSourceConfigured: (key, lkSource) =>
                 {
                     configuration.ApplyProximitySettingsTo(lkSource.AudioSource);
-                    configuration.ApplySpatializationSettingsTo(lkSource);
                     activeAudioSources[key.identity] = lkSource;
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));

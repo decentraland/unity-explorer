@@ -49,7 +49,7 @@ namespace DCL.VoiceChat
         [Tooltip("Specify group where proximity voice chat sources should put its output")]
         public AudioMixerGroup ProximityChatAudioMixerGroup;
 
-        [Header("Proximity Spatial Audio")]
+        [Header("PROXIMITY")]
         [Range(0f, 1f)]
         public float ProximitySpatialBlend = 1f;
 
@@ -75,15 +75,6 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
-        [Header("Proximity Spatialization (LivekitAudioSource overrides)")]
-        [Tooltip("ILD algorithm. HeadShadow = EqualPower + frequency-dependent LPF on far ear.")]
-        public ILDMode ProximityILDMode = ILDMode.HeadShadow;
-
-        [Tooltip("Enable interaural time delay (Woodworth spherical-head model).")]
-        public bool ProximityEnableITD;
-
-        [Tooltip("Enable pinna HRTF simulation (elevation-dependent notch filters).")]
-        public bool ProximityEnableHRTF;
 
         public void ApplyProximitySettingsTo(AudioSource source)
         {
@@ -96,13 +87,6 @@ namespace DCL.VoiceChat
 
             if (ProximityRolloffMode == AudioRolloffMode.Custom)
                 source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
-        }
-
-        public void ApplySpatializationSettingsTo(LivekitAudioSource source)
-        {
-            source.ildMode = ProximityILDMode;
-            source.enableITD = ProximityEnableITD;
-            source.enableHRTF = ProximityEnableHRTF;
         }
     }
 }
