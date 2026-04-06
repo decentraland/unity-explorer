@@ -233,7 +233,8 @@ namespace DCL.Backpack.EmotesSection
                         view.RegularResults.SetActive(true);
                     }
 
-                    ct.ThrowIfCancellationRequested();
+                    if (ct.IsCancellationRequested)
+                        return;
 
                     SetGridElements(emotes);
 
