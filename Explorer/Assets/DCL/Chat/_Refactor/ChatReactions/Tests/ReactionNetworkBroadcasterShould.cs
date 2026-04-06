@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void SendImmediatelyWhenDebounceDisabled()
         {
             // Arrange
-            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0f);
+            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0f, () => 0);
 
             // Act
             broadcaster.Broadcast(5);
@@ -35,7 +35,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void BatchMultipleClicksWhenDebounceEnabled()
         {
             // Arrange
-            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0.5f);
+            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0.5f, () => 0);
 
             broadcaster.Broadcast(1);
             broadcaster.Broadcast(1);
@@ -62,7 +62,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void DiscardBufferedReactionsOnDispose()
         {
             // Arrange
-            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 1f);
+            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 1f, () => 0);
             broadcaster.Broadcast(3);
 
             // Act
@@ -76,7 +76,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void NotSendWhenBusIsNull()
         {
             // Arrange
-            var broadcaster = new ReactionNetworkBroadcaster(null, () => 0f);
+            var broadcaster = new ReactionNetworkBroadcaster(null, () => 0f, () => 0);
 
             // Act & Assert
             Assert.DoesNotThrow(() => broadcaster.Broadcast(1));
@@ -99,7 +99,7 @@ namespace DCL.Chat.ChatReactions.Tests
                 capturedTimestamp = timestamp;
             }
 
-            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0.5f, OnFlushed);
+            var broadcaster = new ReactionNetworkBroadcaster(fakeBus, () => 0.5f, () => 0, OnFlushed);
 
             // Act
             broadcaster.Broadcast(1);

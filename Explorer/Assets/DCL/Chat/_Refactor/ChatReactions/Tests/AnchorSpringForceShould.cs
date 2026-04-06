@@ -152,13 +152,7 @@ namespace DCL.Chat.ChatReactions.Tests
 
         private void SetSpringStrength(float strength)
         {
-            // Use SerializedObject to set the private backing field
-            // The config uses [field: SerializeField] which creates backing fields named
-            // <PropertyName>k__BackingField. Use reflection for test setup.
-            var so = new UnityEditor.SerializedObject(config);
-            var prop = so.FindProperty("<SpringStrength>k__BackingField");
-            prop.floatValue = strength;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            config.SpringStrength = strength;
         }
 
         private static ChatReactionsParticle MakeParticle(

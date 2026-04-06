@@ -20,7 +20,7 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         private SituationalReactionDebouncer CreateDebouncer() =>
-            new (CaptureFlush, () => debounceSeconds);
+            new (CaptureFlush, () => debounceSeconds, () => 0);
 
         private void CaptureFlush(Dictionary<int, int> emojis)
         {
