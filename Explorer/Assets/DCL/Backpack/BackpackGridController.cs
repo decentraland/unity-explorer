@@ -126,10 +126,12 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             backpackSortController.OnSmartWearablesOnlyChanged += OnSmartWearablesOnlyChanged;
+            RequestPage(1, true);
         }
 
         public void Deactivate()
         {
+            pageFetchCancellationToken.SafeCancelAndDispose();
             eventBus.FilterEvent -= OnFilterChanged;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
