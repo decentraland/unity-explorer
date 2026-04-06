@@ -1,7 +1,11 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem;
 using DCL.SDKComponents.ParticleSystem.Systems;
+using DCL.WebRequests;
 using Decentraland.Common;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -9,6 +13,8 @@ using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace DCL.ParticleSystem.Tests
 {
@@ -476,6 +482,81 @@ namespace DCL.ParticleSystem.Tests
         }
 
         [Test]
+        public void ApplyDefaultInitialSizeWhenNotSet()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            var startSize = testParticleSystem.main.startSize;
+            Assert.AreEqual(ParticleSystemCurveMode.Constant, startSize.mode);
+            Assert.AreEqual(1f, startSize.constant);
+        }
+
+        [Test]
+        public void ApplyDefaultInitialColorWhenNotSet()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            var startColor = testParticleSystem.main.startColor;
+            Assert.AreEqual(ParticleSystemGradientMode.Color, startColor.mode);
+            Assert.AreEqual(Color.white, startColor.color);
+        }
+
+        [Test]
+        public void ApplyDefaultInitialSpeedWhenNotSet()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            var startSpeed = testParticleSystem.main.startSpeed;
+            Assert.AreEqual(ParticleSystemCurveMode.Constant, startSpeed.mode);
+            Assert.AreEqual(1f, startSpeed.constant);
+        }
+
+        [Test]
+        public void DisableStartRotation3DWhenNoRotationSet()
+        {
+            var pb = new PBParticleSystem { IsDirty = true };
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.IsFalse(testParticleSystem.main.startRotation3D);
+        }
+
+        [Test]
+        public void ApplyInitialColorRange()
+        {
+            var pb = new PBParticleSystem
+            {
+                IsDirty = true,
+                InitialColor = new ColorRange
+                {
+                    Start = new Color4 { R = 1f, G = 0f, B = 0f, A = 1f },
+                    End = new Color4 { R = 0f, G = 0f, B = 1f, A = 1f }
+                }
+            };
+
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(pb, component);
+            system.Update(0);
+
+            Assert.AreEqual(ParticleSystemGradientMode.TwoColors, testParticleSystem.main.startColor.mode);
+        }
+
+        [Test]
         public void ApplyQuaternionRotationOverLifetimeWithSeparateAxes()
         {
             var pb = new PBParticleSystem
@@ -490,6 +571,51 @@ namespace DCL.ParticleSystem.Tests
 
             Assert.IsTrue(testParticleSystem.rotationOverLifetime.enabled);
             Assert.IsTrue(testParticleSystem.rotationOverLifetime.separateAxes);
+        }
+
+        [Test]
+        public void CleanUpTextureWhenDirtyUpdateHasEmptyTextureSrc()
+        {
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            var cancellationToken = component.TexturePromise.Value.LoadingIntention.CancellationTokenSource.Token;
+
+            // First update: has a texture loaded
+            var pb = new PBParticleSystem
+            {
+                IsDirty = true,
+                Texture = new Decentraland.Common.Texture { Src = "" }
+            };
+
+            Entity entity = world.Create(pb, component);
+            system.Update(0);
+
+            Assert.IsTrue(cancellationToken.IsCancellationRequested);
+            Assert.IsNull(world.Get<ParticleSystemComponent>(entity).TexturePromise);
+        }
+
+        [Test]
+        public void CleanUpTextureWhenDirtyUpdateHasNullTexture()
+        {
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            var cancellationToken = component.TexturePromise.Value.LoadingIntention.CancellationTokenSource.Token;
+
+            var pb = new PBParticleSystem { IsDirty = true };
+
+            Entity entity = world.Create(pb, component);
+            system.Update(0);
+
+            Assert.IsTrue(cancellationToken.IsCancellationRequested);
+            Assert.IsNull(world.Get<ParticleSystemComponent>(entity).TexturePromise);
         }
     }
 }

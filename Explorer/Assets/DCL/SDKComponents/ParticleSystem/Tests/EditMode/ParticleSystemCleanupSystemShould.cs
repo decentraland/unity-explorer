@@ -3,13 +3,18 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.ParticleSystem;
 using DCL.SDKComponents.ParticleSystem.Systems;
+using DCL.WebRequests;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.ParticleSystem.Tests
 {
@@ -125,6 +130,76 @@ namespace DCL.ParticleSystem.Tests
             system.Update(0);
 
             materialPool.Received(1).Release(Arg.Any<Material>());
+        }
+
+        [Test]
+        public void CancelTexturePromiseOnComponentRemoval()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            var cancellationToken = component.TexturePromise.Value.LoadingIntention.CancellationTokenSource.Token;
+
+            world.Create(component);
+            system.Update(0);
+
+            Assert.IsTrue(cancellationToken.IsCancellationRequested);
+        }
+
+        [Test]
+        public void CancelTexturePromiseOnEntityDestruction()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            var cancellationToken = component.TexturePromise.Value.LoadingIntention.CancellationTokenSource.Token;
+
+            world.Create(component, new DeleteEntityIntention());
+            system.Update(0);
+
+            Assert.IsTrue(cancellationToken.IsCancellationRequested);
+        }
+
+        [Test]
+        public void CancelTexturePromiseOnFinalize()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+            var cancellationToken = component.TexturePromise.Value.LoadingIntention.CancellationTokenSource.Token;
+
+            world.Create(component);
+            system.FinalizeComponents(default);
+
+            Assert.IsTrue(cancellationToken.IsCancellationRequested);
+        }
+
+        [Test]
+        public void NotFailWhenNoTexturePromisePresent()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            world.Create(component);
+
+            Assert.DoesNotThrow(() => system.Update(0));
+            pool.Received(1).Release(Arg.Any<UnityEngine.ParticleSystem>());
         }
     }
 }
