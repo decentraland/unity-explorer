@@ -1,6 +1,7 @@
-using Cysharp.Threading.Tasks;
 using Pulse.Transport;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Channels;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
@@ -10,20 +11,20 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// </summary>
     public sealed class MessagePipe
     {
-        private readonly SimplePipeChannel<MessagePipeEvent> eventChannel = new ();
-        private readonly SimplePipeChannel<OutgoingMessage> outgoingChannel = new ();
+        private readonly Channel<MessagePipeEvent> eventChannel = Channel.CreateUnbounded<MessagePipeEvent>();
+        private readonly Channel<OutgoingMessage> outgoingChannel = Channel.CreateUnbounded<OutgoingMessage>();
 
-        public IUniTaskAsyncEnumerable<MessagePipeEvent> ReadEventsAsync(CancellationToken ct) =>
-            eventChannel.ReadAllAsync(ct);
+        public IAsyncEnumerable<MessagePipeEvent> ReadEventsAsync(CancellationToken ct) =>
+            eventChannel.Reader.ReadAllAsync(ct);
 
         public bool TryReadOutgoingMessage(out OutgoingMessage message) =>
-            outgoingChannel.TryRead(out message);
+            outgoingChannel.Reader.TryRead(out message);
 
         public void Send(OutgoingMessage message) =>
-            outgoingChannel.TryWrite(message);
+            outgoingChannel.Writer.TryWrite(message);
 
         public void OnDisconnected(DisconnectReason reason) =>
-            eventChannel.TryWrite(MessagePipeEvent.FromDisconnectEvent(reason));
+            eventChannel.Writer.TryWrite(MessagePipeEvent.FromDisconnectEvent(reason));
 
         /// <summary>
         ///     Called on the Transport thread for every received packet.
@@ -32,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void OnDataReceived(MessagePacket packet)
         {
             if (IncomingMessage.TryCreate(packet.FromPeer, packet.Data, out IncomingMessage incomingMessage))
-                eventChannel.TryWrite(MessagePipeEvent.FromMessage(incomingMessage));
+                eventChannel.Writer.TryWrite(MessagePipeEvent.FromMessage(incomingMessage));
         }
     }
 }
