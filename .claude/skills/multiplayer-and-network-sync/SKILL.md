@@ -1,6 +1,6 @@
 ---
 name: multiplayer-and-network-sync
-description: "Multiplayer networking and player synchronization — LiveKit rooms, movement encoding, interpolation, profile sync, and entity-participant mapping. Use when working with RoomHub, ConnectiveRoom, movement systems (ParcelEncoder, FloatQuantizer, InterpolationSpline), EntityParticipantTable, remote player profiles, emote propagation, or scene/island room architecture."
+description: "Multiplayer networking -- LiveKit rooms, movement encoding, interpolation, profile sync, entity-participant mapping. Use when working with RoomHub, movement systems, EntityParticipantTable, or remote player sync."
 user-invocable: false
 ---
 
@@ -16,30 +16,7 @@ user-invocable: false
 
 `RoomHub` orchestrates four LiveKit rooms: **Island**, **Scene** (GateKeeper), **Chat**, and **VoiceChat**. Island + Scene are "local rooms" for entity synchronization; Chat + VoiceChat are independent.
 
-From `RoomHub.cs`:
-
-```csharp
-public class RoomHub : IRoomHub
-{
-    private readonly IConnectiveRoom archipelagoIslandRoom;
-    private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-    private readonly IConnectiveRoom chatRoom;
-    private readonly VoiceChatActivatableConnectiveRoom voiceChatRoom;
-
-    public async UniTask<bool> StartAsync()
-    {
-        // Starts Island + Scene + Chat in parallel; VoiceChat starts on demand
-        (bool, bool, bool) result = await UniTask.WhenAll(
-            archipelagoIslandRoom.StartIfNotAsync(),
-            gateKeeperSceneRoom.StartIfNotAsync(),
-            chatRoom.StartIfNotAsync());
-        return result is { Item1: true, Item2: true, Item3: true };
-    }
-
-    // Merges participants from Island + Scene (cached per frame)
-    public IReadOnlyCollection<string> AllLocalRoomsRemoteParticipantIdentities() { ... }
-}
-```
+`RoomHub.StartAsync()` starts Island + Scene + Chat in parallel; VoiceChat starts on demand. `AllLocalRoomsRemoteParticipantIdentities()` merges participants from Island + Scene (cached per frame).
 
 ### IConnectiveRoom Lifecycle
 
@@ -67,58 +44,25 @@ public class RoomHub : IRoomHub
 
 ## Movement Encoding & Transmission
 
-### NetworkMovementMessage
+### NetworkMovementMessage Fields
 
-The core message struct carrying position, velocity, rotation, animation state, head IK, and movement kind:
-
-```csharp
-public struct NetworkMovementMessage : IEquatable<NetworkMovementMessage>
-{
-    public float timestamp;
-    public Vector3 position;
-    public Vector3 velocity;
-    public float velocitySqrMagnitude;
-    public float rotationY;
-    public bool headIKYawEnabled, headIKPitchEnabled;
-    public Vector2 headYawAndPitch;
-    public MovementKind movementKind;
-    public AnimationStates animState;
-    public byte velocityTier;
-    public bool isSliding, isStunned, isInstant, isEmoting;
-}
-```
+`timestamp`, `position`, `velocity`, `velocitySqrMagnitude`, `rotationY`, `headIKYawEnabled`, `headIKPitchEnabled`, `headYawAndPitch`, `movementKind`, `animState`, `velocityTier`, `isSliding`, `isStunned`, `isInstant`, `isEmoting`.
 
 ### Encoding Pipeline
 
-- **`FloatQuantizer`** -- Fixed-size quantization via scaled integers. `Compress(value, min, max, bits)` maps a float to an integer with `bits` resolution. `Decompress` reverses.
-- **`ParcelEncoder`** -- Flattens 2D parcel coordinates `(x, y)` into a 1D index: `x - MinX + (y - MinY) * width`. Used for position encoding relative to the Genesis City grid.
-- **`TimestampEncoder`** -- Circular buffer encoding. Timestamps are compressed modulo `2^TIMESTAMP_BITS * TIMESTAMP_QUANTUM` with wraparound detection on decompression.
+- **`FloatQuantizer`** -- Fixed-size quantization via scaled integers. `Compress(value, min, max, bits)` / `Decompress`.
+- **`ParcelEncoder`** -- Flattens 2D parcel coordinates `(x, y)` into a 1D index relative to the Genesis City grid.
+- **`TimestampEncoder`** -- Circular buffer encoding with wraparound detection on decompression.
 
 ### Send Throttling
 
-`PlayerMovementNetSendSystem` caps at **10 messages/sec**. Adaptive send rate: drops to `MoveSendRate` on movement, doubles (up to `StandSendRate`) when idle. Immediate sends on grounded/jump state changes.
-
-```csharp
-// From PlayerMovementNetSendSystem.cs -- adaptive rate
-if (anythingChanged && sendRate > settings.MoveSendRate)
-    sendRate = settings.MoveSendRate;
-if (timeDiff > sendRate)
-{
-    if (!anythingChanged && sendRate < settings.StandSendRate)
-        sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
-    SendMessage(...);
-}
-```
-
-Messages are sent to both Island and Scene pipes via `MultiplayerMovementMessageBus.Send()`, supporting both compressed (`MovementCompressed`) and uncompressed (`Decentraland.Kernel.Comms.Rfc4.Movement`) schemas.
+`PlayerMovementNetSendSystem` caps at **10 messages/sec**. Adaptive send rate: drops to `MoveSendRate` on movement, doubles (up to `StandSendRate`) when idle. Immediate sends on grounded/jump state changes. Messages are sent to both Island and Scene pipes via `MultiplayerMovementMessageBus.Send()`, supporting both compressed and uncompressed schemas.
 
 ---
 
 ## Movement Interpolation
 
-### InterpolationSpline
-
-Seven interpolation types in `InterpolationSpline`:
+### InterpolationSpline Types
 
 | Type | Description |
 |------|-------------|
@@ -140,30 +84,7 @@ Runs in `PresentationSystemGroup`. Processes a priority queue of `NetworkMovemen
 4. **Extrapolation** -- when no messages arrive and speed > threshold, `ExtrapolationComponent` continues movement along last velocity for up to `TotalMoveDuration`
 5. **Blend** -- after extrapolation stops, blends back with speed-limited interpolation
 
-```csharp
-// ExtrapolationComponent -- simple velocity continuation
-public struct ExtrapolationComponent
-{
-    public NetworkMovementMessage Start;
-    public Vector3 Velocity;
-    public float Time, TotalMoveDuration;
-    public bool Enabled { get; private set; }
-
-    public void Restart(NetworkMovementMessage from, float moveDuration) { ... }
-    public void Stop() { Enabled = false; }
-}
-```
-
-### Catch-Up Mechanism
-
-When inbox has more messages than `CatchUpMessagesMin`, interpolation duration is shortened:
-
-```csharp
-float correctionTime = inboxMessages * Time.smoothDeltaTime;
-intComp.TotalDuration = Mathf.Max(
-    intComp.TotalDuration - correctionTime,
-    intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
-```
+**Catch-Up:** When inbox has more messages than `CatchUpMessagesMin`, interpolation duration is shortened proportionally to smooth DeltaTime.
 
 ---
 
@@ -171,113 +92,34 @@ intComp.TotalDuration = Mathf.Max(
 
 ### EntityParticipantTable
 
-Bidirectional mapping between wallet IDs and ECS entities, with room source tracking. NOT thread-safe -- only accessed from the main thread.
+Bidirectional mapping between wallet IDs and ECS entities, with room source tracking (`ISLAND`, `GATEKEEPER`, or both). NOT thread-safe -- only accessed from main thread.
 
-```csharp
-public class EntityParticipantTable : IEntityParticipantTable
-{
-    // walletId <-> Entity, with RoomSource (ISLAND, GATEKEEPER, or both)
-    public void Register(string walletId, Entity entity, RoomSource fromRoom);
-    public bool Release(string walletId, RoomSource fromRoom);  // returns true if fully disconnected
-    public void AddRoomSource(string walletId, RoomSource fromRoom);
-}
-```
+Key API: `Register(walletId, entity, fromRoom)`, `Release(walletId, fromRoom)` (returns true only when `ConnectedTo == RoomSource.NONE`), `AddRoomSource(walletId, fromRoom)`.
 
-`Release` only removes the entity when `ConnectedTo == RoomSource.NONE` (disconnected from all rooms). This allows a player visible via Island to remain alive when they leave the Scene room.
+`Release` only removes the entity when disconnected from all rooms. This allows a player visible via Island to remain alive when they leave the Scene room.
 
-### ThreadSafeRemoveIntentions
+### ThreadSafe Disconnect Buffering
 
-LiveKit participant callbacks fire off the main thread. `ThreadSafeRemoveIntentions` buffers disconnect events using `MutexSync`:
-
-```csharp
-public class ThreadSafeRemoveIntentions : IRemoveIntentions
-{
-    private readonly HashSet<RemoveIntention> list = new ();
-    private readonly MutexSync multithreadSync = new();
-
-    // Subscribed to LiveKit events (off main thread)
-    private void ParticipantsOnUpdatesFromParticipant(Participant participant,
-        UpdateFromParticipant update, RoomSource roomSource)
-    {
-        if (update is UpdateFromParticipant.Disconnected)
-            ThreadSafeAdd(new RemoveIntention(participant.Identity, roomSource));
-    }
-
-    // Main thread consumes via OwnedBunch
-    public OwnedBunch<RemoveIntention> Bunch() => new(multithreadSync, list);
-}
-```
-
-### OwnedBunch -- Thread-Safe Collection Access
-
-`OwnedBunch<T>` acquires a `MutexSync.Scope` on construction, exposes the collection for reading, and clears + releases the mutex on `Dispose()`:
-
-```csharp
-public readonly struct OwnedBunch<T> : IBunch<T> where T : struct
-{
-    public OwnedBunch(MutexSync ownership, HashSet<T> set)
-    {
-        this.ownership = ownership.GetScope();  // acquires lock
-        this.set = set;
-    }
-    public void Dispose() { set.Clear(); ownership.Dispose(); }  // clears + releases
-}
-```
-
-**Usage pattern:** `using var bunch = removeIntentions.Bunch(); foreach (var item in bunch.Collection()) { ... }`
+LiveKit participant callbacks fire off the main thread. `ThreadSafeRemoveIntentions` buffers disconnect events using `MutexSync`. Main thread consumes via `OwnedBunch<RemoveIntention>` which acquires the lock on construction, exposes the collection, and clears + releases on `Dispose()`.
 
 ### ProfileBroadcast
 
-Sends `AnnounceProfileVersion` to both Island and Scene pipes to notify remotes of profile updates. Async: fetches self-profile version before sending via `SendAndDisposeAsync` with `KindReliable`.
+Sends `AnnounceProfileVersion` to both Island and Scene pipes. Async: fetches self-profile version before sending via `SendAndDisposeAsync` with `KindReliable`.
 
 ---
 
 ## SDK Propagation Systems
 
-### PlayerTransformPropagationSystem (Global -> Scene)
+- **`PlayerTransformPropagationSystem`** (Global -> Scene) -- Copies `CharacterTransform` into the scene world's `SDKTransform` when transform has changed and player is assigned to scene.
+- **`WritePlayerTransformSystem`** (Scene -> CRDT) -- Converts `SDKTransform` to scene-relative coordinates and writes via `IECSToCRDTWriter`.
+- **`WritePlayerIdentityDataSystem`** (Scene -> CRDT) -- Writes `PBPlayerIdentityData` (address + isGuest) on dirty, with force-write on `Initialize()`. Uses static lambda to avoid closures.
+- **`PlayerProfileDataPropagationSystem`** (Global -> Scene) -- Copies `Profile` data to scene entities via `CharacterDataPropagationUtility` when profile or CRDT entity assignment is dirty.
 
-Runs in `PreRenderingSystemGroup` on the global world. Copies `CharacterTransform` into the scene world's `SDKTransform`:
+---
 
-```csharp
-[Query] [None(typeof(DeleteEntityIntention))]
-private void PropagateTransformToScene(in CharacterTransform characterTransform,
-    in PlayerCRDTEntity playerCRDTEntity)
-{
-    if (!characterTransform.Transform.hasChanged || !playerCRDTEntity.AssignedToScene) return;
-    if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
+## Detailed Reference
 
-    World sceneEcsWorld = playerCRDTEntity.SceneFacade!.EcsExecutor.World;
-    if (!sceneEcsWorld.TryGet<SDKTransform>(playerCRDTEntity.SceneWorldEntity, out SDKTransform? sdkTransform))
-        sceneEcsWorld.Add(playerCRDTEntity.SceneWorldEntity, sdkTransform = sdkTransformPool.Get());
-
-    sdkTransform!.Position.Value = characterTransform.Transform.position;
-    sdkTransform.Rotation.Value = characterTransform.Transform.rotation;
-    sdkTransform.IsDirty = true;
-}
-```
-
-### WritePlayerTransformSystem (Scene -> CRDT)
-
-Converts `SDKTransform` to scene-relative coordinates and writes via `IECSToCRDTWriter`:
-
-```csharp
-[Query] [None(typeof(DeleteEntityIntention))]
-private void UpdateSDKTransform(in PlayerSceneCRDTEntity playerCRDTEntity, ref SDKTransform sdkTransform)
-{
-    if (!sdkTransform.IsDirty) return;
-    if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
-    ExposedTransformUtils.Put(ecsToCRDTWriter, sdkTransform, playerCRDTEntity.CRDTEntity,
-        sceneData.Geometry.BaseParcelPosition, false);
-}
-```
-
-### WritePlayerIdentityDataSystem (Scene -> CRDT)
-
-Writes `PBPlayerIdentityData` (address + isGuest) on dirty, with force-write on `Initialize()`. Uses `ecsToCRDTWriter.PutMessage<PBPlayerIdentityData>` with a static lambda to avoid closures.
-
-### PlayerProfileDataPropagationSystem (Global -> Scene)
-
-Copies `Profile` data to scene entities via `CharacterDataPropagationUtility` when either the profile or the CRDT entity assignment is dirty.
+For detailed code examples, see [reference.md](reference.md).
 
 ---
 

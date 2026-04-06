@@ -90,13 +90,22 @@ namespace DCL.InWorldCamera.PhotoDetail
                 view.userNameTag.gameObject.SetActive(!profile.Value.HasClaimedName);
                 view.verifiedMark.SetActive(profile.Value.HasClaimedName);
                 view.officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(visiblePerson.userAddress));
+                SetInteractable(true);
                 await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Value.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
             {
                 view.userNameTag.gameObject.SetActive(false);
                 view.profilePictureView.SetDefaultThumbnail();
+                SetInteractable(false);
             }
+        }
+
+        private void SetInteractable(bool isInteractable)
+        {
+            view.userProfileButton.gameObject.SetActive(isInteractable);
+            view.expandWearableButton.gameObject.SetActive(isInteractable);
+            view.expandWearableButtonImage.gameObject.SetActive(isInteractable);
         }
 
         public void Release()

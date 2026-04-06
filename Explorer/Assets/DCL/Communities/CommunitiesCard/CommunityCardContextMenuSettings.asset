@@ -27,7 +27,7 @@ MonoBehaviour:
   <LeaveCommunityText>k__BackingField: Leave Community
   <DeleteCommunitySprite>k__BackingField: {fileID: 21300000, guid: ac4ebefc5fac7475ba19ac778feacfa8, type: 3}
   <DeleteCommunityText>k__BackingField: Delete Community
-  <DeleteCommunityTextColor>k__BackingField: {r: 1, g: 0, b: 0, a: 1}
+  <DeleteCommunityTextColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
   <CopyCommunityLinkSprite>k__BackingField: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
   <CopyCommunityLinkText>k__BackingField: Copy Link
   <CopyCommunityLinkSeparatorHeight>k__BackingField: 20
