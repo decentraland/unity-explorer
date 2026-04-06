@@ -3927,6 +3927,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -4488,7 +4489,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 385b7d1277b6c4007a84c065696e0f8c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.SoftMask
   m_ShowMaskGraphic: 0
   m_MaskingMode: 2
@@ -4511,7 +4512,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -5171,10 +5172,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 385b7d1277b6c4007a84c065696e0f8c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.SoftMask
   m_ShowMaskGraphic: 0
-  m_MaskingMode: 2
+  m_MaskingMode: 0
   m_AlphaHitTest: 0
   m_SoftnessRange:
     m_Min: 0
@@ -8654,16 +8655,16 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 9201031944451585807, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9201031944451585806, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9201031944451585806, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9201031944451585807, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -8692,8 +8693,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
