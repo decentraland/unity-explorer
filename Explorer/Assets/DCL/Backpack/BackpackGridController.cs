@@ -396,6 +396,8 @@ namespace DCL.Backpack
                     view.RegularResults.SetActive(true);
                 }
 
+                ct.ThrowIfCancellationRequested();
+
                 SetGridElements(currentPageWearables);
             }
             catch (OperationCanceledException) { }
