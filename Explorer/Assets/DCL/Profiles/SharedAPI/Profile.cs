@@ -165,10 +165,10 @@ namespace DCL.Profiles
 
         public void ClearLinks()
         {
-            if (Links == null)
-                Links = new List<LinkJsonDto>();
+            if (links == null)
+                links = ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
             else
-                Links.Clear();
+                links.Clear();
         }
 
         public bool IsSameProfile(Profile profile)
