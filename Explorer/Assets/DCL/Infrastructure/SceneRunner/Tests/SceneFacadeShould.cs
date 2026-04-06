@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿#if !UNITY_WEBGL
+
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT.Deserializer;
@@ -411,3 +413,4 @@ namespace SceneRunner.Tests
         }
     }
 }
+#endif

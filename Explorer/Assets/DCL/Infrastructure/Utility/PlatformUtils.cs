@@ -39,7 +39,7 @@ namespace DCL.Utility
                 case RuntimePlatform.LinuxEditor or RuntimePlatform.LinuxPlayer:
                     platformSuffix = "_linux"; break;
                 case RuntimePlatform.WebGLPlayer:
-                    platformSuffix = "_webgl"; break;
+                    platformSuffix = ""; break;
                 default:
                     platformSuffix = string.Empty; break;
             }

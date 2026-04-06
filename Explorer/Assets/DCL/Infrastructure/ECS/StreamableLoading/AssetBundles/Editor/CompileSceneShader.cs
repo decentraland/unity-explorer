@@ -1,10 +1,8 @@
-using DCL.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Build.Content;
 using UnityEditor.Build.Pipeline;
 using UnityEditor.PackageManager;
 using UnityEngine;
@@ -241,7 +239,7 @@ namespace DCL.Rendering.Menus
         {
             return EditorUserBuildSettings.activeBuildTarget switch
             {
-                BuildTarget.WebGL => ("_webgl", BuildTarget.WebGL),
+                BuildTarget.WebGL => ("", BuildTarget.WebGL),
                 BuildTarget.StandaloneWindows64 => ("_windows", BuildTarget.StandaloneWindows64),
                 BuildTarget.StandaloneOSX => ("_mac", BuildTarget.StandaloneOSX),
                 BuildTarget.StandaloneLinux64 => ("_linux", BuildTarget.StandaloneLinux64),
