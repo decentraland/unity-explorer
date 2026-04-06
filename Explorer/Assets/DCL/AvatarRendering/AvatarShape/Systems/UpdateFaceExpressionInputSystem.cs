@@ -47,6 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape
         ///     Input-callback bridge: set by <see cref="OnSlotPerformed"/> (fires on the Unity
         ///     main thread from the Input System) and consumed in <see cref="Update"/>.
         ///     This is intentionally NOT ECS state — it is a one-frame buffer for the input event.
+        ///     TODO: move to an ECS singleton component so this system holds no per-frame state.
         /// </summary>
         private int pendingSlot = -1;
 

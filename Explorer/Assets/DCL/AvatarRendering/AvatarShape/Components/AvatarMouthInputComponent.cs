@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     ///         clobbering each other's state.
     ///     </para>
     ///     <list type="bullet">
-    ///         <item><see cref="PendingMessage"/> / <see cref="MessageIsDirty"/> — set by <c>NametagPlacementSystem</c> when a chat bubble arrives.</item>
+    ///         <item><see cref="PendingMessage"/> / <see cref="MessageIsDirty"/> — set by <c>ChatAvatarMouthService</c> when a chat message arrives.</item>
     ///         <item><see cref="IsVoiceChatSpeaking"/> — set by <c>VoiceChatMouthAnimationHandler</c> when speaking state changes.</item>
     ///     </list>
     /// </summary>
