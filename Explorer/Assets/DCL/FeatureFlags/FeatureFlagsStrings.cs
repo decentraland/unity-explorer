@@ -69,8 +69,6 @@ namespace DCL.FeatureFlags
         public const string AVATAR_HIGHLIGHT = "alfa-avatar-highlight";
         public const string DOUBLE_JUMP = "alfa-double-jump";
         public const string GLIDING = "alfa-gliding";
-        public const string CHAT_REACTIONS_SITUATIONAL = "alfa-chat-reactions-situational";
-        public const string CHAT_REACTIONS_MESSAGE = "alfa-chat-reactions-message";
         public const string AVATAR_GHOSTS = "alfa-avatar-ghosts";
         public const string REPORT_USER = "alfa-report-user";
         public const string POINT_AT = "alfa-point-at";
@@ -122,8 +120,6 @@ namespace DCL.FeatureFlags
         SkyboxSettings,
         SkyboxSettingsVariant,
         ReportUser,
-        ChatReactionsSituational,
-        ChatReactionsMessage,
     }
 
     public static class FeatureFlagExtensions
@@ -170,8 +166,6 @@ namespace DCL.FeatureFlags
                 FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
                 FeatureFlag.SkyboxSettingsVariant  => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
                 FeatureFlag.ReportUser => FeatureFlagsStrings.REPORT_USER,
-                FeatureFlag.ChatReactionsSituational => FeatureFlagsStrings.CHAT_REACTIONS_SITUATIONAL,
-                FeatureFlag.ChatReactionsMessage => FeatureFlagsStrings.CHAT_REACTIONS_MESSAGE,
                 _ => string.Empty
             };
         }

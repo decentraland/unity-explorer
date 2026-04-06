@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
@@ -8,9 +7,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public class ChatBubblesVisibilityController : SettingsFeatureController
     {
-        private const string TITLE_WITH_REACTIONS = "In-World Chat Bubbles & Reactions";
-        private const string TITLE_WITHOUT_REACTIONS = "In-World Chat Bubbles";
-
         private readonly SettingsDropdownModuleView view;
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ISettingsModuleEventListener settingsEventListener;
@@ -20,14 +16,6 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.chatSettingsAsset = chatSettingsAsset;
             this.settingsEventListener = settingsEventListener;
-
-            // TODO: uncomment when backend feature flag is available
-            // bool situationalReactionsEnabled = FeatureFlagsConfiguration.Instance
-            //     .IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_SITUATIONAL);
-            //
-            // view.ModuleTitle.text = situationalReactionsEnabled
-            //     ? TITLE_WITH_REACTIONS
-            //     : TITLE_WITHOUT_REACTIONS;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
                 view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
