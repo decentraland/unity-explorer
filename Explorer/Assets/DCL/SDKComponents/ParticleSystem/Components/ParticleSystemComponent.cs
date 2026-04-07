@@ -2,6 +2,7 @@ using Arch.Core;
 using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
 using Decentraland.Common;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
@@ -56,7 +57,9 @@ namespace DCL.SDKComponents.ParticleSystem
 
             if (TexturePromise != null)
             {
-                TexturePromise.Value.ForgetLoading(world);
+                var promise = TexturePromise.Value;
+                promise.TryDereference(world);
+                promise.ForgetLoading(world);
                 TexturePromise = null;
             }
         }

@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NSubstitute;
@@ -200,6 +201,31 @@ namespace DCL.ParticleSystem.Tests
 
             Assert.DoesNotThrow(() => system.Update(0));
             pool.Received(1).Release(Arg.Any<UnityEngine.ParticleSystem>());
+        }
+
+        [Test]
+        public void DereferenceResolvedTextureOnCleanup()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            var intention = new GetTextureIntention("test-url", "test-hash",
+                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
+
+            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
+
+            // Simulate a resolved texture by adding a result to the promise entity
+            var texData = new TextureData(Texture2D.grayTexture);
+            texData.AddReference();
+            world.Add(component.TexturePromise.Value.Entity, new StreamableLoadingResult<TextureData>(texData));
+
+            Assert.AreEqual(1, texData.referenceCount);
+
+            world.Create(component);
+            system.Update(0);
+
+            Assert.AreEqual(0, texData.referenceCount);
         }
     }
 }
