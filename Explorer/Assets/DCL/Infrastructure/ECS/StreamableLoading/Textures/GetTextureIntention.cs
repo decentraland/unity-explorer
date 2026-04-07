@@ -50,9 +50,10 @@ namespace ECS.StreamableLoading.Textures
         public GetTextureIntention(string userId,
             TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
             string reportSource,
+            string? faceSnapshotUrl = null,
             int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
-            CommonArguments = new CommonLoadingArguments(string.Empty, attempts: attemptsCount);
+            CommonArguments = new CommonLoadingArguments(faceSnapshotUrl ?? string.Empty, attempts: attemptsCount);
             WrapMode = wrapMode;
             FilterMode = filterMode;
             TextureType = textureType;

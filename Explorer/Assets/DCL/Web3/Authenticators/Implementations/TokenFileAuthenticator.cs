@@ -72,6 +72,9 @@ namespace DCL.Web3.Authenticators
 
             string token = contentResult.Value.Trim();
 
+            if (!Guid.TryParse(token, out _))
+                throw new AutoLoginTokenInvalidException($"Token read from {TOKEN_PATH} is invalid. {token}");
+
             urlBuilder.Clear();
 
             urlBuilder.AppendDomain(URLDomain.FromString(authApiUrl))
