@@ -10,6 +10,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.FeatureFlags;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Web3;
@@ -26,12 +28,15 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
+        private const string VIEW_PROFILE_TOOLTIP = "View Profile";
         private const string OPTIONS_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
+        private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly bool useContextMenu;
 
         private HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
@@ -43,18 +48,29 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             IMVCManagerMenusAccessFacade menusAccessFacade,
+            IMVCManager mvcManager,
             ObjectProxy<Entity> cameraEntityProxy) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
+            this.mvcManager = mvcManager;
             this.cameraEntityProxy = cameraEntityProxy;
 
-            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
+            useContextMenu = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU);
 
-            dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
-            dclInput.Player.Movement.performed += OnPlayerMoved;
-            dclInput.Player.Jump.performed += OnPlayerMoved;
+            if (useContextMenu)
+            {
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
+                dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
+                dclInput.Player.Movement.performed += OnPlayerMoved;
+                dclInput.Player.Jump.performed += OnPlayerMoved;
+            }
+            else
+            {
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(VIEW_PROFILE_TOOLTIP, dclInput.Player.Pointer);
+                dclInput.Player.Pointer!.performed += OpenPassport;
+            }
         }
 
         protected override void Update(float t)
@@ -64,9 +80,17 @@ namespace DCL.Interaction.Systems
 
         protected override void OnDispose()
         {
-            dclInput.Player.RightPointer!.performed -= OpenOptionsContextMenu;
-            dclInput.Player.Movement.performed -= OnPlayerMoved;
-            dclInput.Player.Jump.performed -= OnPlayerMoved;
+            if (useContextMenu)
+            {
+                dclInput.Player.RightPointer!.performed -= OpenOptionsContextMenu;
+                dclInput.Player.Movement.performed -= OnPlayerMoved;
+                dclInput.Player.Jump.performed -= OnPlayerMoved;
+            }
+            else
+            {
+                dclInput.Player.Pointer!.performed -= OpenPassport;
+            }
+
             contextMenuTask.TrySetResult();
         }
 
@@ -96,6 +120,19 @@ namespace DCL.Interaction.Systems
             currentProfileHovered = profile;
             hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, true, true);
             hoverFeedbackComponent.Add(viewProfileTooltip);
+        }
+
+        private void OpenPassport(InputAction.CallbackContext context)
+        {
+            if (context.control!.IsPressed() || currentProfileHovered == null)
+                return;
+
+            string userId = currentProfileHovered.UserId;
+
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
         }
 
         private void OpenOptionsContextMenu(InputAction.CallbackContext context)
