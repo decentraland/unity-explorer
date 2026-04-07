@@ -70,7 +70,7 @@ namespace DCL.Notifications
             urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
                       .AppendParameter(limitParameter);
 
-            commonArguments = new CommonArguments(urlBuilder.Build());
+            commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             List<INotification> notifications =
@@ -89,50 +89,57 @@ namespace DCL.Notifications
         {
             do
             {
-                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
+                try
+                {
+                    await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
 
-                if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
-                    continue;
+                    if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
+                        continue;
 
-                urlBuilder.Clear();
+                    urlBuilder.Clear();
 
-                urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
-                          .AppendParameter(onlyUnreadParameter)
-                          .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
+                    urlBuilder.AppendDomain(URLDomain.FromString($"{urlsSource.Url(DecentralandUrl.Notifications)}/notifications"))
+                              .AppendParameter(onlyUnreadParameter)
+                              .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
 
-                commonArguments = new CommonArguments(urlBuilder.Build());
+                    commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
 
-                unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                    unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                // TODO remove allocation of List on serialization
-                List<INotification> notifications =
-                    await webRequestController.GetAsync(
-                                                   commonArguments,
-                                                   ct,
-                                                   ReportCategory.UI,
-                                                   signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
-                                                   headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+                    // TODO remove allocation of List on serialization
+                    List<INotification> notifications =
+                        await webRequestController.GetAsync(
+                                                       commonArguments,
+                                                       ct,
+                                                       ReportCategory.UI,
+                                                       signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
+                                                       headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                                  .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
-                if (notifications.Count == 0)
-                    continue;
+                    if (notifications.Count == 0)
+                        continue;
 
-                lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                    lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
+                    using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
+                    foreach (INotification notification in notifications)
+                        try
+                        {
+                            NotificationsBusController.Instance.AddNotification(notification);
+                            list.Add(notification.Id);
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, ReportCategory.UI);
+                        }
 
-                using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
-                foreach (INotification notification in notifications)
-                    try
-                    {
-                        NotificationsBusController.Instance.AddNotification(notification);
-                        list.Add(notification.Id);
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogException(e, ReportCategory.UI);
-                    }
-
-                await SetNotificationAsReadAsync(list, ct);
+                    await SetNotificationAsReadAsync(list, ct);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.UI);
+                }
             }
             while (ct.IsCancellationRequested == false);
         }
