@@ -70,14 +70,11 @@ namespace DCL.UI
             // Avoid multiple requests for the same thumbnail
             if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> thumbnailTask))
             {
-                // Waits for the shared download but doesn't let our cancellation token affect it.
-                // If the download succeeds, return the sprite.
-                // If it was canceled by the original requester and resolved with null, retry.
                 Sprite? result = await thumbnailTask.Task;
                 if (result != null || ct.IsCancellationRequested)
                     return result;
 
-                // The shared download was canceled by another consumer, but we're still active — check if it landed in cache, otherwise start a new download
+                // The shared download was canceled by another consumer, but we're still active — check cache, otherwise fall through to start a new download
                 sprite = GetCachedSprite(imageUrl);
                 if (sprite != null)
                     return sprite;
@@ -86,9 +83,17 @@ namespace DCL.UI
             UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
 
             if (currentSpriteTasks.TryAdd(imageUrl, spriteTaskCompletionSource))
+            {
                 DownloadSpriteAsync(imageUrl, useKtx, retryPolicy, spriteTaskCompletionSource, ct).Forget();
+                return await spriteTaskCompletionSource.Task;
+            }
 
-            return await spriteTaskCompletionSource.Task;
+            // Another consumer already registered a new download — await theirs instead of our local TCS that nobody would resolve
+            if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> retryTask))
+                return await retryTask.Task;
+
+            // Edge case: download registered and completed between TryAdd and TryGetValue
+            return GetCachedSprite(imageUrl);
         }
 
         public void AddOrReplaceCachedSprite(string? imageUrl, Sprite imageContent)
