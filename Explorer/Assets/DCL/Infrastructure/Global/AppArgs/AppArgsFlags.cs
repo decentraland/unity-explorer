@@ -93,6 +93,8 @@ namespace Global.AppArgs
 
         public const string REPORT_USER = "report-user";
 
+        public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

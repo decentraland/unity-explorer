@@ -57,7 +57,7 @@ namespace DCL.Interaction.Systems
             this.mvcManager = mvcManager;
             this.cameraEntityProxy = cameraEntityProxy;
 
-            useContextMenu = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU);
+            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_CONTEXT_MENU);
 
             if (useContextMenu)
             {
