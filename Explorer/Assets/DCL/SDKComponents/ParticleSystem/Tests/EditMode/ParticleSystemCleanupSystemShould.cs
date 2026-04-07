@@ -210,15 +210,10 @@ namespace DCL.ParticleSystem.Tests
             var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
             var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
 
-            var intention = new GetTextureIntention("test-url", "test-hash",
-                TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "test");
-
-            component.TexturePromise = TexturePromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
-
-            // Simulate a resolved texture by adding a result to the promise entity
+            // Simulate post-consume state: TexturePromise is null, SourceTextureData holds the resolved texture
             var texData = new TextureData(Texture2D.grayTexture);
             texData.AddReference();
-            world.Add(component.TexturePromise.Value.Entity, new StreamableLoadingResult<TextureData>(texData));
+            component.SourceTextureData = texData;
 
             Assert.AreEqual(1, texData.referenceCount);
 

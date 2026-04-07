@@ -390,6 +390,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             if (result.Asset == null) return;
 
+            component.SourceTextureData = result.Asset;
+
             if (component.ParticleMaterial != null)
                 component.ParticleMaterial.mainTexture = result.Asset;
         }
