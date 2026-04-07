@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -48,8 +47,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly List<Entity> entitiesToCancelNavigation = new ();
 
         private InputAction navigateToAction;
-        private GameObject targetMarker;
-        private DestinationMarkerView targetMarkerView;
+        private GameObject destinationMarker;
+        private DestinationMarkerView destinationMarkerView;
 
         internal UpdatePointAndClickInputSystem(World world, GameObject markerPrefab) : base(world)
         {
@@ -58,8 +57,8 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void OnDispose()
         {
-            if (targetMarker != null)
-                Object.Destroy(targetMarker);
+            if (destinationMarker != null)
+                Object.Destroy(destinationMarker);
         }
 
         public override void Initialize()
@@ -76,16 +75,16 @@ namespace DCL.CharacterMotion.Systems
 
             // Pre-instantiate the marker and keep it hidden until first use
             if (markerPrefab != null)
-                targetMarker = Object.Instantiate(markerPrefab);
+                destinationMarker = Object.Instantiate(markerPrefab);
             else
             {
                 ReportHub.LogError(ReportCategory.MOTION, $"{nameof(UpdatePointAndClickInputSystem)}: DestinationMarkerPrefab is not assigned in CharacterMotionSettings. Using a fallback sphere — assign the prefab to fix this.");
-                targetMarker = CreateFallbackMarker();
+                destinationMarker = CreateFallbackMarker();
             }
 
-            targetMarker.name = "PointAndClickMarker";
-            targetMarkerView = targetMarker.GetComponent<DestinationMarkerView>() ?? targetMarker.AddComponent<DestinationMarkerView>();
-            targetMarker.SetActive(false);
+            destinationMarker.name = "PointAndClickMarker";
+            destinationMarkerView = destinationMarker.GetComponent<DestinationMarkerView>() ?? destinationMarker.AddComponent<DestinationMarkerView>();
+            destinationMarker.SetActive(false);
         }
 
         protected override void Update(float t)
@@ -97,9 +96,10 @@ namespace DCL.CharacterMotion.Systems
             ComputeViewerBasis(cameraComponent.Camera.transform, out Vector3 viewerForward, out Vector3 viewerRight);
 
             if (hasDoubleClick)
+            {
                 ShowMarker(clickTarget, clickNormal);
-
-            UpdateTargetQuery(World, hasDoubleClick, clickTarget, clickNormal);
+                UpdateTargetQuery(World, clickTarget, clickNormal);
+            }
             DriveMovementQuery(World, t, viewerForward, viewerRight);
 
             // Deferred structural changes — World.Remove is called here, after all refs from
@@ -155,14 +155,14 @@ namespace DCL.CharacterMotion.Systems
         private void ShowMarker(Vector3 position, Vector3 normal)
         {
             Quaternion rotation = Quaternion.FromToRotation(Vector3.up, normal);
-            targetMarker.transform.SetPositionAndRotation(position, rotation);
-            targetMarker.SetActive(true);
-            targetMarkerView.ResetMarker();
+            destinationMarker.transform.SetPositionAndRotation(position, rotation);
+            destinationMarker.SetActive(true);
+            destinationMarkerView.ResetMarker();
         }
 
         private void HideMarker()
         {
-            targetMarker.SetActive(false);
+            destinationMarker.SetActive(false);
         }
 
         private static GameObject CreateFallbackMarker()
@@ -180,15 +180,11 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTarget(
-            [Data] bool hasDoubleClick,
             [Data] Vector3 clickTarget,
             [Data] Vector3 clickNormal,
             Entity entity,
             in PlayerComponent _)
         {
-            if (!hasDoubleClick)
-                return;
-
             var component = new PointAndClickMovementComponent
             {
                 TargetPosition = clickTarget,

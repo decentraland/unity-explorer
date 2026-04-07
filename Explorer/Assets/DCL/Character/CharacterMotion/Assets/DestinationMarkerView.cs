@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape
+namespace DCL.CharacterMotion
 {
     /// <summary>
     /// Drives the destination marker animation sequence:
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private void UpdateRainbow()
         {
-            hue = (hue + Time.deltaTime * RainbowSpeed) % 1f;
+            hue = (hue + UnityEngine.Time.deltaTime * RainbowSpeed) % 1f;
             Color emission = Color.HSVToRGB(hue, 1f, 1f) * EmissionIntensity;
 
             propertyBlock.SetColor(EMISSION_COLOR, emission);
