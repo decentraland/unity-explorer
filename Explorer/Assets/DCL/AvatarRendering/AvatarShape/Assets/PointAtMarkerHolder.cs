@@ -11,10 +11,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         private static readonly int BACKGROUND_COLOR_ID = Shader.PropertyToID("_BackgroundColor");
         private static readonly int UV_RECT_ID = Shader.PropertyToID("_UVRect");
 
-        [field: SerializeField] public SpriteRenderer SpriteRenderer { get; private set; }
+        [field: SerializeField] public SpriteRenderer SpriteRenderer { get; private set; } = null!;
         [field: SerializeField] public SizeRangeData MinData { get; private set; }
         [field: SerializeField] public SizeRangeData MaxData { get; private set; }
         [SerializeField] private float fadeDuration = 0.3f;
+        [field: SerializeField] public Sprite ThumbnailDefault { get; private set; } = null!;
 
         [Serializable]
         public struct SizeRangeData
@@ -24,7 +25,6 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
         }
 
         private MaterialPropertyBlock mpb;
-        private string lastProfileId;
         private CancellationTokenSource fadeCts;
 
         private Color originalColor;
@@ -83,7 +83,19 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
             IsFadedOut = true;
         }
 
-        public void UpdateData(Sprite sprite, Color backgroundColor, string profileId, float sqrDistance)
+        public void Initialize(Sprite? sprite, Color backgroundColor)
+        {
+            Sprite spriteToUse = sprite == null || sprite.texture == null ? ThumbnailDefault : sprite;
+            SpriteRenderer.sprite = spriteToUse;
+
+            if (spriteToUse == null) return;
+
+            mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
+            mpb.SetVector(UV_RECT_ID, ComputeUVRect(spriteToUse));
+            SpriteRenderer.SetPropertyBlock(mpb);
+        }
+
+        public void UpdateData(float sqrDistance)
         {
             float distance = Mathf.Sqrt(sqrDistance);
             float size;
@@ -97,22 +109,11 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 size = Mathf.Lerp(MinData.Size, MaxData.Size, t);
             }
             transform.localScale = new Vector3(size, size, 1f);
-
-            if (lastProfileId == profileId)
-                return;
-
-            lastProfileId = profileId;
-            SpriteRenderer.sprite = sprite;
-
-            mpb.SetColor(BACKGROUND_COLOR_ID, backgroundColor);
-            mpb.SetVector(UV_RECT_ID, ComputeUVRect(sprite));
-            SpriteRenderer.SetPropertyBlock(mpb);
         }
 
         public void ResetState()
         {
             IsFadedOut = false;
-            lastProfileId = null;
             SpriteRenderer.sprite = null;
             fadeCts?.SafeCancelAndDispose();
         }
