@@ -11,6 +11,40 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Textures.Tests
 {
     [TestFixture]
+    public class GetTextureIntentionShould
+    {
+        [Test]
+        public void NotBeEqualWhenSameUserIdButDifferentFaceSnapshotUrl()
+        {
+            var intentionA = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test", faceSnapshotUrl: "https://cdn.example.com/face_v1.png");
+            var intentionB = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test", faceSnapshotUrl: "https://cdn.example.com/face_v2.png");
+
+            Assert.IsFalse(intentionA.Equals(intentionB));
+            Assert.AreNotEqual(intentionA.GetHashCode(), intentionB.GetHashCode());
+        }
+
+        [Test]
+        public void BeEqualWhenSameUserIdWithoutFaceSnapshotUrl()
+        {
+            var intentionA = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test");
+            var intentionB = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test");
+
+            Assert.IsTrue(intentionA.Equals(intentionB));
+            Assert.AreEqual(intentionA.GetHashCode(), intentionB.GetHashCode());
+        }
+
+        [Test]
+        public void BeEqualWhenSameUserIdAndSameFaceSnapshotUrl()
+        {
+            var intentionA = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test", faceSnapshotUrl: "https://cdn.example.com/face.png");
+            var intentionB = new GetTextureIntention("user1", TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo, "Test", faceSnapshotUrl: "https://cdn.example.com/face.png");
+
+            Assert.IsTrue(intentionA.Equals(intentionB));
+            Assert.AreEqual(intentionA.GetHashCode(), intentionB.GetHashCode());
+        }
+    }
+
+    [TestFixture]
     public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, TextureData, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";

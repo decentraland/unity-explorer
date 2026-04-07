@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.NFTShapes
             if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
                 return new StreamableLoadingResult<NftTypeResult>(GetReportCategory(), new Exception("Image size is too big"));
 
-            return new StreamableLoadingResult<NftTypeResult>(new NftTypeResult(contentInfo.Type, URLAddress.FromString(convertUrl)));
+            return new StreamableLoadingResult<NftTypeResult>(new NftTypeResult(contentInfo.Type, URLAddress.FromString(imageUrl)));
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)

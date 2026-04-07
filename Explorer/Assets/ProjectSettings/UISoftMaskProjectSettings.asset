@@ -8,6 +8,16 @@ ShaderVariantCollection:
   m_PrefabAsset: {fileID: 0}
   m_Name: ShaderVariants
   m_Shaders:
+  - first: {fileID: 4800000, guid: 55469a28bf0d2b14db8e6452e462bd4c, type: 3}
+    second:
+      variants:
+      - keywords: SOFTMASKABLE
+        passType: 0
+  - first: {fileID: 4800000, guid: 537b3c029e4916749868ad462dca58c5, type: 3}
+    second:
+      variants:
+      - keywords: ENUM_173FCA8E617C4725B6502C6FBE756CEC_ROUNDED SOFTMASKABLE
+        passType: 0
   - first: {fileID: 4800000, guid: 2933b413a51fc4ff3a83c7ef4177ae84, type: 3}
     second:
       variants:
