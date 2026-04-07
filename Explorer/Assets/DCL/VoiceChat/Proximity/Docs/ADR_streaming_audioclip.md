@@ -113,9 +113,9 @@ public ILDMode ildMode;                     // None | EqualPower | HeadShadow
 // + ildStrength
 
 [Header("Head Shadow Filter")]
-public ShadowFilterOrder shadowFilterOrder; // OnePole6dB..FourPole24dB | Biquad12dB | MultiBand3
+public ShadowFilterOrder shadowFilterOrder; // OnePole6dB..FourPole24dB | Biquad12dB | MultiBand3 | DualShelf
 // + shadowCutoffHz, shadowStrength, biquadQ
-// + crossoverLowMid, crossoverMidHigh, lowBandDb, midBandDb, highBandDb (MultiBand3)
+// + crossoverLowMid, crossoverMidHigh, lowBandDb, midBandDb, highBandDb (MultiBand3 / DualShelf)
 
 [Header("ITD — Interaural Time Difference")]
 public bool enableITD;
@@ -163,8 +163,38 @@ interleaved data[]
 | FourPole24dB | 24 dB/oct | Агрессивный |
 | Biquad12dB | 12 dB/oct + Q | С настраиваемым резонансом |
 | MultiBand3 | 3-band | Точнее всего: per-band gain в dB по измеренной кривой |
+| DualShelf | 2× first-order shelf | Плавная S-кривая вместо лесенки MultiBand3, 2.3× быстрее |
 
 **MultiBand3** — 3-полосный кроссовер (LPF biquad + HPF biquad, mid = complementary). Gains интерполируются по `shadowAmount = |sin(az)| * strength * cos(el)`. Дефолты: low=-2 dB, mid=-10 dB, high=-20 dB — точно по измерениям (Blauert, 1997).
+
+**DualShelf** — два каскадных first-order high shelf + base gain. Декомпозиция MultiBand3 настроек:
+- Base gain = `10^(lowBandDb × shadowAmount / 20)` — общее ослабление
+- Shelf 1 @ `crossoverLowMid`: дополнительное `(midBandDb − lowBandDb)` dB — переход low→mid
+- Shelf 2 @ `crossoverMidHigh`: дополнительное `(highBandDb − midBandDb)` dB — переход mid→high
+
+Результат: те же целевые уровни (-2/-10/-20 dB при дефолтах), но с плавными S-curve переходами вместо ступенек кроссовера. Коэффициенты шелфов вычисляются через bilinear transform аналогового прототипа `H(s) = A·(s + ωc/√A) / (s + ωc·√A)`.
+
+### HeadShadow: сравнение производительности
+
+Per-sample FLOP на контралатеральном ухе (1 канал):
+
+| Режим | Формула | FLOP/sample | На буфер 1024 | Относительно |
+|-------|---------|-------------|---------------|--------------|
+| OnePole6dB | `s += α·(x−s)` | 3 | 3 072 | **1×** |
+| TwoPole12dB | 2× каскад one-pole | 6 | 6 144 | 2× |
+| ThreePole18dB | 3× каскад one-pole | 9 | 9 216 | 3× |
+| FourPole24dB | 4× каскад one-pole | 12 | 12 288 | 4× |
+| Biquad12dB | Direct Form II biquad | 9 | 9 216 | 3× |
+| MultiBand3 | 2 biquad + 3-band mix | 25 | 25 600 | **8.3×** |
+| **DualShelf** | **2 first-order shelf + gain** | **11** | **11 264** | **3.7×** |
+
+Для сравнения, остальные стадии pipeline на обоих каналах:
+- ILD: 2 FLOP/sample × 1024 = ~2 048
+- ITD: ~8 FLOP/sample × 1024 = ~8 192
+- HRTF (C2): 2 biquad × 2 ear × 1024 = ~36 864
+
+DualShelf: 2.3× дешевле MultiBand3 при том же state footprint (8 float) и smoother АЧХ.
+Biquad12dB: 9 FLOP/sample — дешевле, но простой LPF без per-band shaping.
 
 ---
 
@@ -260,8 +290,9 @@ Delay line 256 сэмплов, формула Woodworth, линейная инт
 
 ### Итерация B: Рефакторинг + HeadShadow
 - Композиция: `ILDMode` enum + `enableITD` bool + `enableHRTF` bool
-- HeadShadow: 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
+- HeadShadow: 7 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3, DualShelf)
 - MultiBand3: 3-полосный кроссовер с per-band gain по измеренной кривой
+- DualShelf: 2 first-order high shelf + base gain (11 FLOP, 2.3× быстрее MultiBand3)
 - Tooltips с физическими референсами на все параметры
 
 ### Итерация C: Pinna HRTF (C1 + C2)
@@ -287,7 +318,7 @@ Delay line 256 сэмплов, формула Woodworth, линейная инт
 
 | Файл | Изменения |
 |------|-----------|
-| `LivekitAudioSource.cs` | `ILDMode`/`ShadowFilterOrder` enum, `enableITD`/`enableHRTF`, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband HeadShadow, peaking EQ notch (primary + secondary) |
+| `LivekitAudioSource.cs` | `ILDMode`/`ShadowFilterOrder` enum, `enableITD`/`enableHRTF`, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband/dualshelf HeadShadow, peaking EQ notch (primary + secondary) |
 
 ### Unity project
 

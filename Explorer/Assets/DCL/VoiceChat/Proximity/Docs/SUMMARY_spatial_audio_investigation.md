@@ -96,6 +96,7 @@ public bool enableHRTF;
 - **FourPole24dB** — 24 dB/oct, агрессивный
 - **Biquad12dB** — 12 dB/oct с настраиваемым Q
 - **MultiBand3** — 3-полосный кроссовер с per-band gain по измеренной кривой
+- **DualShelf** — 2 first-order high shelf + base gain (11 FLOP, 2.3× быстрее MultiBand3, smoother АЧХ)
 
 MultiBand3 реализован через комплементарные LPF/HPF biquad (Butterworth Q=0.707). Gains интерполируются по `shadowAmount = |sin(az)| * strength * cos(el)`: от 0 dB (фронт) до сконфигурированных значений (90°). Дефолты: low=-2 dB, mid=-10 dB, high=-20 dB — точно по измерениям Blauert (1997).
 
@@ -117,7 +118,20 @@ MultiBand3 реализован через комплементарные LPF/HP
 
 Оба notch применяются к обоим ушам. Хелперы: `ComputePeakingEQ()` (static, формулы Bristow-Johnson), `ApplyBiquad()` (generic Direct Form II Transposed).
 
-### Этап 16: ProfilerMarkers + multi-pass рефакторинг
+### Этап 16: DualShelf — оптимизированный HeadShadow
+
+Анализ производительности HeadShadow показал что MultiBand3 (25 FLOP/sample) значительно дороже других режимов. Предложена оптимизация: заменить 3-band crossover (2 biquad + mixing) на два каскадных first-order high shelf + base gain.
+
+Декомпозиция MultiBand3 настроек (-2/-10/-20 dB):
+- Base gain: -2 dB (1 mul)
+- High shelf 1 @ crossoverLowMid: -8 dB доп. (mid+high)
+- High shelf 2 @ crossoverMidHigh: -10 dB доп. (только high)
+
+Результат: 11 FLOP/sample (2.3× дешевле MultiBand3), плавные S-curve переходы вместо ступенек кроссовера. Физически более реалистичная АЧХ. Реализован как отдельный режим `ShadowFilterOrder.DualShelf` для A/B сравнения с MultiBand3.
+
+Коэффициенты first-order high shelf: bilinear transform аналогового прототипа H(s) = A·(s + ωc/√A) / (s + ωc·√A). Per-sample: `y = b0·x + b1·xPrev − a1·yPrev` (3 mul + 2 add = 5 FLOP на shelf).
+
+### Этап 17: ProfilerMarkers + multi-pass рефакторинг
 
 Pipeline реструктурирован из одного interleaved цикла в **отдельные проходы** (multi-pass). Каждая стадия — свой цикл по `samplesPerChannel` с `ProfilerMarker.Auto()`:
 
@@ -138,7 +152,7 @@ Pipeline реструктурирован из одного interleaved цикл
 ### Что реализовано
 
 - **ILD EqualPower:** `sin(azimuth) * cos(elevation)` → equal-power pan law
-- **ILD HeadShadow:** 6 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3)
+- **ILD HeadShadow:** 7 режимов фильтрации (OnePole → FourPole, Biquad, MultiBand3, DualShelf)
 - **MultiBand3:** 3-полосный кроссовер, per-band gain по измеренной кривой head shadow
 - **ITD:** Delay line + Woodworth + linear interpolation
 - **HRTF C1:** Primary pinna notch (peaking EQ, elevation-dependent)
@@ -166,7 +180,7 @@ Pipeline реструктурирован из одного interleaved цикл
 ### Файлы
 
 **SDK (LiveKit fork), ветка `feat/mono-spatial-audio`:**
-- `LivekitAudioSource.cs` — ILDMode, ShadowFilterOrder, enableITD, enableHRTF, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband LPF, peaking EQ notch (C1+C2), ComputePeakingEQ, ApplyBiquad
+- `LivekitAudioSource.cs` — ILDMode, ShadowFilterOrder, enableITD, enableHRTF, multi-pass pipeline, ProfilerMarkers, delay line, cascade/biquad/multiband/dualshelf HeadShadow, peaking EQ notch (C1+C2), ComputePeakingEQ, ApplyBiquad
 
 **Unity project:**
 - `ProximityPanCalculator.cs` — azimuth + elevation из AudioListener
