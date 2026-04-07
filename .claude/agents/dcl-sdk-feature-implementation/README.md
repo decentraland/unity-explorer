@@ -83,12 +83,20 @@ A feature can involve any number of components — add a section per component. 
 
 ### Step 2 — Invoke the architect
 
-In a Claude Code session with your `unity-explorer` working directory open, use the `@` mention syntax to invoke the architect agent and pass the feature description:
+From your `unity-explorer` directory, start a **session-wide agent** using the `--agent` flag:
+
+```bash
+claude --agent dcl-sdk-feature-architect --permission-mode plan
+```
+
+This makes the architect's orchestration protocol the session's system prompt — pre-flight confirmation, plan review, and specialist delegation all run as designed. Using `@dcl-sdk-feature-architect` as an inline mention does **not** work for orchestrators: the parent session retains control and will ignore the agent's multi-phase workflow.
+
+Once inside the agent session, describe your feature:
 
 ```
-@dcl-sdk-feature-architect (agent) read @feature-description.md and create a plan
-to implement that DCL SDK feature. After we iterate the plan you will have to
-implement it using the specialist sub-agents you have for the different repos.
+Read @feature-description.md and create a plan to implement that DCL SDK feature.
+After we iterate the plan you will have to implement it using the specialist
+sub-agents you have for the different repos.
 ```
 
 The architect will:

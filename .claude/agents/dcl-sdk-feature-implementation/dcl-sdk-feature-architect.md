@@ -1,11 +1,6 @@
 ---
 name: dcl-sdk-feature-architect
 description: Plan cross-repo SDK features, delegate to specialist sub-agents, manage dependencies, and verify cross-layer compatibility
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
 skills:
   - sdk-component-implementation
   - github-workflow
