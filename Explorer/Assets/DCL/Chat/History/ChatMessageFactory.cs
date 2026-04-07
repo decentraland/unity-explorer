@@ -12,7 +12,7 @@ namespace DCL.Chat.History
     public class ChatMessageFactory
     {
         public const string LOADING_PROFILE_TEXT = "Loading Profile...";
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{1,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;

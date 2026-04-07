@@ -39,7 +39,7 @@ namespace DCL.UI.InputFieldFormatting
         private static readonly string WORLD_PATTERN =
             $@"(?<{WORLD_GROUP_NAME}>{LEAD}[A-Za-z0-9]+\.dcl\.eth{TRAIL})";
 
-        private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{3,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
+        private static readonly string USERNAME_PATTERN = $@"(?<{USERNAME_FULL_GROUP_NAME}>(?<=^|\s)@(?<{USERNAME_NAME_GROUP_NAME}>[A-Za-z0-9]{{1,15}}(?:#[A-Za-z0-9]{{4}})?)(?=\s|!|\?|\.|,|$))";
         private static readonly string RICH_TEXT_PATTERN = $@"(?<{RICHTEXT_GROUP_NAME}><(?!\/?(b|i)(>|\s))[^>]+>)";
 
         private static readonly Regex COMBINED_LINK_REGEX = new (
