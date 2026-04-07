@@ -23,6 +23,7 @@ using DCL.UI;
 using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using DCL.FeatureFlags;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
@@ -102,9 +103,11 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
-            proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);
-            ProximityAudioDebugWidget.Setup(debugContainer, voiceChatConfiguration);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.PROXIMITY_VOICE_CHAT))
+            {
+                proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
+                proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);
+            }
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -154,18 +157,23 @@ namespace DCL.PluginSystem.Global
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, remoteListener);
             pluginScope.Add(voiceChatDebugContainer);
 
-            IRoom islandRoom = roomHub.IslandRoom();
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.PROXIMITY_VOICE_CHAT))
+            {
+                IRoom islandRoom = roomHub.IslandRoom();
 
-            proximityStateModel = new ProximityVoiceChatStateModel(ProximityVoiceChatState.SPEAKING);
-            pluginScope.Add(proximityStateModel);
+                proximityStateModel = new ProximityVoiceChatStateModel(ProximityVoiceChatState.SPEAKING);
+                pluginScope.Add(proximityStateModel);
 
-            voiceChatHandler.SetProximityStateModel(proximityStateModel);
+                voiceChatHandler.SetProximityStateModel(proximityStateModel);
 
-            proximityVoiceChatManager = new ProximityVoiceChatManager(
-                islandRoom, voiceChatConfiguration,
-                proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                proximityStateModel, voiceChatHandler);
-            pluginScope.Add(proximityVoiceChatManager);
+                proximityVoiceChatManager = new ProximityVoiceChatManager(
+                    islandRoom, voiceChatConfiguration,
+                    proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
+                    proximityStateModel, voiceChatHandler);
+                pluginScope.Add(proximityVoiceChatManager);
+
+                ProximityAudioDebugWidget.Setup(debugContainer, voiceChatConfiguration);
+            }
         }
 
         [Serializable]
