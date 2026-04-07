@@ -61,8 +61,6 @@ namespace DCL.Chat.ChatServices
         private readonly IEventBus eventBus;
         private readonly CurrentChannelService currentChannelService;
 
-        private readonly HashSet<string> friendIds = new();
-
         /// <summary>
         ///     Contains the list of all participants in all private conversations as they share the same LiveKit room
         /// </summary>
@@ -72,8 +70,15 @@ namespace DCL.Chat.ChatServices
 
         public IReadOnlyCollection<string> OnlineParticipants { get; }
 
-        public PrivateConversationUserStateService(CurrentChannelService currentChannelService, IEventBus eventBus, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ObjectProxy<IFriendsService> friendsService,
-            ChatSettingsAsset settingsAsset, RPCChatPrivacyService rpcChatPrivacyService, IFriendsEventBus friendsEventBus, IRoom chatRoom)
+        public PrivateConversationUserStateService(
+            CurrentChannelService currentChannelService,
+            IEventBus eventBus,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ObjectProxy<IFriendsService> friendsService,
+            ChatSettingsAsset settingsAsset,
+            RPCChatPrivacyService rpcChatPrivacyService,
+            IFriendsEventBus friendsEventBus,
+            IRoom chatRoom)
         {
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
@@ -103,8 +108,7 @@ namespace DCL.Chat.ChatServices
             try
             {
                 await UniTask.WhenAll(
-                    rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token),
-                    InitializeFriendshipCacheAsync(cts.Token)
+                    rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token)
                 );
 
                 await UniTask.WaitUntil(() =>
@@ -147,65 +151,6 @@ namespace DCL.Chat.ChatServices
             friendsEventBus.OnOtherUserRemovedTheFriendship -= OnFriendRemoved;
             friendsEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= OnNewFriendAdded;
             friendsEventBus.OnYouRemovedFriend -= OnFriendRemoved;
-        }
-
-        private async UniTask InitializeFriendshipCacheAsync(CancellationToken ct)
-        {
-            // Implementation requires calling GetFriendsAsync in a loop until all pages are fetched
-            // (See the previous detailed answer for the full pagination logic)
-
-            // Example of updating the cache once friends are fetched:
-            var allFriends = await GetAllFriendsAsync(ct); // A helper method that handles pagination
-
-            lock (friendIds)
-            {
-                friendIds.Clear();
-                foreach (var friend in allFriends)
-                {
-                    friendIds.Add(friend.UserId);
-                }
-            }
-        }
-
-        private async UniTask<List<Profile.CompactInfo>> GetAllFriendsAsync(CancellationToken ct)
-        {
-            var allFriends = new List<Profile.CompactInfo>();
-            if (!friendsService.Configured) return allFriends;
-
-            int pageNum = 0;
-            const int pageSize = 100;
-
-            try
-            {
-                while (true)
-                {
-                    using var result =
-                        await friendsService.StrictObject.GetFriendsAsync(pageNum, pageSize, ct);
-
-                    if (ct.IsCancellationRequested) break;
-                    if (result.Friends.Count == 0) break;
-
-                    allFriends.AddRange(result.Friends);
-
-                    if (allFriends.Count >= result.TotalAmount)
-                        break;
-
-                    pageNum++;
-                }
-            }
-            // Gracefully handle cancellation on exit without logging it as an error.
-            catch (OperationCanceledException)
-            {
-                // This is expected when the application closes.
-            }
-            // Catch any other exception, which indicates a real problem.
-            catch (Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.FRIENDS, $"Failed to fetch all friends due to: {ex.Message}");
-            }
-
-
-            return allFriends;
         }
 
         private void OnPrivacySettingsSet(ChatPrivacySettings privacySettings)
@@ -256,6 +201,7 @@ namespace DCL.Chat.ChatServices
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
+                    case ConnectionUpdate.Reconnected:
                         onlineParticipants.Clear();
 
                         foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities())
@@ -288,8 +234,6 @@ namespace DCL.Chat.ChatServices
 
         private void OnFriendRemoved(string userId)
         {
-            lock (friendIds) { friendIds.Remove(userId); }
-
             if (!UserIsConnectedToRoom(userId)) return;
 
             CheckOnlineStatusAndNotify(userId);
@@ -297,8 +241,6 @@ namespace DCL.Chat.ChatServices
 
         private void OnNewFriendAdded(string userId)
         {
-            lock (friendIds) { friendIds.Add(userId); }
-
             CheckOnlineStatusAndNotify(userId);
         }
 
@@ -393,11 +335,6 @@ namespace DCL.Chat.ChatServices
         {
             cts.SafeCancelAndDispose();
             UnsubscribeFromEvents();
-
-            lock (friendIds)
-            {
-                friendIds.Clear();
-            }
 
             lock (onlineParticipants)
             {
