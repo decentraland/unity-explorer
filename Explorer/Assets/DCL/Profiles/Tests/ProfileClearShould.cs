@@ -1,9 +1,12 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Optimization.ThreadSafePool;
 using ECS.TestSuite;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.Profiles.Tests
@@ -21,22 +24,55 @@ namespace DCL.Profiles.Tests
         [Test]
         public void ResetAllFieldsWhenReturnedToPool()
         {
-            int initialInactive = Profile.POOL.CountInactive;
-
             var profile = Profile.Create();
             var clean = Profile.Create();
+            int countAfterCreates = Profile.POOL.CountInactive;
+
             PopulateAllFields(profile);
 
             profile.Dispose();
             var recycled = Profile.Create();
 
-            Assert.AreEqual(initialInactive, Profile.POOL.CountInactive);
+            // Dispose+Create = net zero change from countAfterCreates
+            Assert.AreEqual(countAfterCreates, Profile.POOL.CountInactive);
             Assert.IsTrue(clean.IsSameProfile(recycled));
+            Assert.IsNull(recycled.blocked);
+            Assert.IsNull(recycled.interests);
+            Assert.IsNull(recycled.Links);
 
             recycled.Dispose();
             clean.Dispose();
 
-            Assert.AreEqual(initialInactive + 2, Profile.POOL.CountInactive);
+            Assert.AreEqual(countAfterCreates + 2, Profile.POOL.CountInactive);
+        }
+
+        [Test]
+        public void DeserializeProfilesConcurrently()
+        {
+            const string JSON = @"{""avatars"":[{""name"":""test"",""userId"":""0x123"",
+                ""hasClaimedName"":false,""description"":"""",""tutorialStep"":0,
+                ""version"":1,""hasConnectedWeb3"":false,
+                ""blocked"":[""0xa"",""0xb""],""interests"":[""gaming"",""art""],
+                ""avatar"":{""bodyShape"":"""",""wearables"":[],""forceRender"":[],""emotes"":[],
+                    ""eyes"":{""color"":{""r"":0,""g"":0,""b"":0,""a"":1}},
+                    ""hair"":{""color"":{""r"":0,""g"":0,""b"":0,""a"":1}},
+                    ""skin"":{""color"":{""r"":0,""g"":0,""b"":0,""a"":1}}},
+                ""links"":[{""title"":""web"",""url"":""https://test.com""}]}]}";
+
+            var tasks = new Task[50];
+
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = Task.Run(() =>
+                {
+                    Profile? profile = JsonConvert.DeserializeObject<Profile>(JSON,
+                        RealmProfileRepository.SERIALIZER_SETTINGS);
+
+                    profile?.Dispose();
+                });
+            }
+
+            Assert.DoesNotThrow(() => Task.WaitAll(tasks));
         }
 
         private static void PopulateAllFields(Profile profile)
@@ -66,7 +102,12 @@ namespace DCL.Profiles.Tests
             profile.Birthdate = new DateTime(1990, 1, 1);
             profile.Version = 7;
             profile.IsDirty = true;
-            profile.Links = new List<LinkJsonDto> { new () { title = "test", url = "https://test.com" } };
+            profile.Links = ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
+            profile.Links.Add(new LinkJsonDto { title = "test", url = "https://test.com" });
+            profile.blocked = ThreadSafeCollectionPool<HashSet<string>, string>.SHARED.Get();
+            profile.blocked.Add("0xblocked1");
+            profile.interests = ThreadSafeCollectionPool<List<string>, string>.SHARED.Get();
+            profile.interests.Add("gaming");
 
             profile.Avatar = new Avatar();
             profile.Avatar.BodyShape = BodyShape.FEMALE;
