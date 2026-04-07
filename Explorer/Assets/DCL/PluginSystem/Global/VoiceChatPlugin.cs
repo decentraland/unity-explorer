@@ -107,6 +107,8 @@ namespace DCL.PluginSystem.Global
             {
                 proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
                 proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);
+
+                ProximityAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }
 
@@ -171,8 +173,6 @@ namespace DCL.PluginSystem.Global
                     proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
                     proximityStateModel, voiceChatHandler);
                 pluginScope.Add(proximityVoiceChatManager);
-
-                ProximityAudioDebugWidget.Setup(debugContainer, voiceChatConfiguration);
             }
         }
 

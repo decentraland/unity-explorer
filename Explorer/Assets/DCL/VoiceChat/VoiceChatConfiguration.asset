@@ -23,12 +23,6 @@ MonoBehaviour:
   microphonePlaybackToSpeakers: 0
   ChatAudioMixerGroup: {fileID: -2191859670193011288, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
   ProximityChatAudioMixerGroup: {fileID: 5332904453353020933, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
-  ProximitySpatialBlend: 1
-  ProximityDopplerLevel: 0
-  ProximityMinDistance: 0.8
-  ProximityMaxDistance: 13
-  ProximitySpread: 0
-  ProximityRolloffMode: 2
   ProximityCustomRolloffCurve:
     serializedVersion: 2
     m_Curve:
@@ -80,14 +74,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  MouthAtlasTexture: {fileID: 2800000, guid: 1644b87ef75df014680c83f770c5e64c, type: 3}
-  LipSyncPoseHoldDuration: 0.1
-  LipSyncIdlePoseIndex: 2
-  LipSyncMode: 0
-  LipSyncAmplitudeSensitivity: 3.5
-  LipSyncSmoothingFactor: 0.25
-  LipSyncSilenceThreshold: 0.12
-  LipSyncSpeechBandLowHz: 447
-  LipSyncSpeechBandHighHz: 4636
-  LipSyncBandSensitivity: 1
-  LipSyncSpectralPeakedness: 0.536
+  proximitySpatialize: 1
+  proximityIldStrength: 0.75
+  proximitySmoothPanning: 0

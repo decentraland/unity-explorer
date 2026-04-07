@@ -19,19 +19,15 @@ namespace DCL.VoiceChat
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {
-        private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
         private readonly AudioMixerGroup audioMixerGroup;
         private readonly bool spatial;
 
         private readonly Action<StreamKey, LivekitAudioSource>? onSourceConfigured;
         private readonly Action<StreamKey>? onSourceRemoved;
 
-        // Single-element array as mutable bool wrapper for readonly struct.
-        // When muted, newly added sources are immediately muted after configuration.
-        private readonly bool[] muteState;
-
         private readonly Transform parent;
 
+        private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams =>
             streams;
 
@@ -47,7 +43,6 @@ namespace DCL.VoiceChat
             this.spatial = spatial;
             this.onSourceConfigured = onSourceConfigured;
             this.onSourceRemoved = onSourceRemoved;
-            this.muteState = new bool[1];
             parent = new GameObject("VoiceChatSources_" + parentNameSuffix).transform;
         }
 
@@ -65,9 +60,6 @@ namespace DCL.VoiceChat
             }
 
             onSourceConfigured?.Invoke(key, source);
-
-            if (muteState[0])
-                source.AudioSource.mute = true;
         }
 
         internal void TryRemoveStream(StreamKey key)
@@ -81,8 +73,6 @@ namespace DCL.VoiceChat
 
         internal void SetMuteAll(bool mute)
         {
-            muteState[0] = mute;
-
             foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in streams.Values)
                 pair.source.AudioSource.mute = mute;
         }

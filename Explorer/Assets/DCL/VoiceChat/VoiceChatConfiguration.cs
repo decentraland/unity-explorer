@@ -58,13 +58,25 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
-        public void ApplyProximitySettingsTo(AudioSource source)
+        [Header("PROXIMITY - LiveKit Spatial")]
+        public bool proximitySpatialize = true;
+        [Range(0f, 1f)] public float proximityIldStrength = 0.75f;
+        public bool proximitySmoothPanning;
+
+        public void ApplyProximitySettings(AudioSource source)
         {
             source.dopplerLevel = 0;
             source.spread = 0;
 
             source.rolloffMode = AudioRolloffMode.Custom;
             source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
+        }
+
+        public void ApplyLivekitSpatialSettings(LivekitAudioSource source)
+        {
+            source.Spatialize = proximitySpatialize;
+            source.IldStrength = proximityIldStrength;
+            source.SmoothPanning = proximitySmoothPanning;
         }
     }
 }
