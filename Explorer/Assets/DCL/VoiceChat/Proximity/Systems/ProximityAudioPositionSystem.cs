@@ -33,6 +33,8 @@ namespace DCL.VoiceChat.Proximity.Systems
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
 
+        private readonly List<Entity> entitiesToCleanUp = new (4);
+
         private VoiceChatConfiguration? configuration;
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
@@ -56,24 +58,23 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         protected override void Update(float t)
         {
+            entitiesToCleanUp.Clear();
+
             AssignPendingSources();
 
-            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
-            isFirstPerson = cam.Mode == CameraMode.FirstPerson;
+            (Transform listenerTransform, Vector3 localHeadPos) = GetListenerAndHeadPositions();
+            SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, localHeadPos);
 
-            Vector3 localHeadPos = cam.Camera.transform.position;
-            if (!isFirstPerson && World.TryGet(playerEntity, out PlayerComponent playerComp))
-                localHeadPos = playerComp.CameraFocus.position;
-
-            SyncPositionsAndSpatialAnglesQuery(World, cam.Camera.transform, localHeadPos);
+            foreach (Entity entity in entitiesToCleanUp)
+                World.Remove<ProximityAudioSourceComponent>(entity);
         }
 
         private void AssignPendingSources()
         {
             foreach (KeyValuePair<string, LivekitAudioSource> kvp in activeAudioSources)
             {
-                if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry))
-                    continue;
+                if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
+                if (World.Has<DeleteEntityIntention>(entry.Entity)) continue;
 
                 if (World.Has<ProximityAudioSourceComponent>(entry.Entity))
                 {
@@ -83,9 +84,21 @@ namespace DCL.VoiceChat.Proximity.Systems
                 }
                 else
                 {
-                    World.Add(entry.Entity, new ProximityAudioSourceComponent(kvp.Value));
+                    World.Add(entry.Entity, new ProximityAudioSourceComponent(kvp.Value, kvp.Key));
                 }
             }
+        }
+
+        private (Transform listenerTransform, Vector3 localHeadPos) GetListenerAndHeadPositions()
+        {
+            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
+            isFirstPerson = cam.Mode == CameraMode.FirstPerson;
+
+            Vector3 localHeadPos = cam.Camera.transform.position;
+            if (!isFirstPerson && World.TryGet(playerEntity, out PlayerComponent playerComp))
+                localHeadPos = playerComp.CameraFocus.position;
+
+            return (cam.Camera.transform, localHeadPos);
         }
 
         [Query]
@@ -93,6 +106,12 @@ namespace DCL.VoiceChat.Proximity.Systems
         private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 localHeadPos,
             Entity entity, in CharacterTransform characterTransform, ref ProximityAudioSourceComponent proximityAudio)
         {
+            if (!activeAudioSources.ContainsKey(proximityAudio.ParticipantIdentity))
+            {
+                entitiesToCleanUp.Add(entity);
+                return;
+            }
+
             Vector3 remoteHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
                 ? avatarBase.HeadAnchorPoint.position
                 : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);

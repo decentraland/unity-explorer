@@ -11,11 +11,13 @@ namespace DCL.VoiceChat.Proximity
     {
         public LivekitAudioSource LivekitAudioSource;
         public Transform Transform;
+        public string ParticipantIdentity;
 
-        public ProximityAudioSourceComponent(LivekitAudioSource livekitAudioSource)
+        public ProximityAudioSourceComponent(LivekitAudioSource livekitAudioSource, string participantIdentity)
         {
             LivekitAudioSource = livekitAudioSource;
             Transform = livekitAudioSource.transform;
+            ParticipantIdentity = participantIdentity;
         }
     }
 }
