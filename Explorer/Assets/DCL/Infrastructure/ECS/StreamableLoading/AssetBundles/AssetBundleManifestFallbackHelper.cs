@@ -12,13 +12,53 @@ using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<Sce
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-    public class AssetBundleManifestFallbackHelper
+    public static class AssetBundleManifestFallbackHelper
     {
         public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
         {
             await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
 
             entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+        }
+
+        // Performs the manifest download without checking the manifest presence and without logging the exception.
+        // Use this only if you know that the manifest it's not defined in the entity
+        public static async UniTask CreateAssetBundleManifestFallbackAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
+        {
+            if (isLSD)
+            {
+                entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+                return;
+            }
+
+            await FetchAndCreateManifest(world, entityDefinition, partition, ct);
+
+            entityDefinition.assetBundleManifestVersion.InjectContent(entityDefinition.id, entityDefinition.content);
+        }
+
+        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
+        {
+            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
+        }
+
+        private static async UniTask FetchAndCreateManifest(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
+        {
+            //Needed to use the Time.realtimeSinceStartup on the intention creation
+            await UniTask.SwitchToMainThread();
+
+            var promise = AssetBundleManifestPromise.Create(world,
+                GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
+                partition);
+
+            StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
+
+            if (assetBundleManifest.Succeeded)
+                entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
+            else
+            {
+                assetBundleManifest.TryLogException();
+                entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
+            }
         }
 
         private static async UniTask CheckAssetBundleManifestFallbackInternalAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
@@ -33,32 +73,11 @@ namespace ECS.StreamableLoading.AssetBundles
             //Also used for the PX escape
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
-                //Needed to use the Time.realtimeSinceStartup on the intention creation
-                await UniTask.SwitchToMainThread();
-
                 Sentry.Unity.SentrySdk.AddBreadcrumb($"AB manifest version missing for entity: {entityDefinition.id}");
                 ReportHub.LogException(new Exception("AssetBundleManifestFallbackHelper: AB Manifest Fallback requested"), ReportCategory.ASSET_BUNDLES);
 
-                var promise = AssetBundleManifestPromise.Create(world,
-                    GetAssetBundleManifestIntention.Create(entityDefinition.id, new CommonLoadingArguments(entityDefinition.id)),
-                    partition);
-
-                StreamableLoadingResult<SceneAssetBundleManifest> assetBundleManifest = (await promise.ToUniTaskAsync(world, cancellationToken: ct)).Result.Value;
-
-                if (assetBundleManifest.Succeeded)
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(assetBundleManifest.Asset.GetVersion(), assetBundleManifest.Asset.GetBuildDate());
-                else
-                {
-                    assetBundleManifest.TryLogException();
-                    entityDefinition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed();
-                }
-
+                await FetchAndCreateManifest(world, entityDefinition, partition, ct);
             }
-        }
-
-        public static async UniTask CheckAssetBundleManifestFallbackAsync(World world, TrimmedEntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct, bool isLSD = false)
-        {
-            await CheckAssetBundleManifestFallbackInternalAsync(world, entityDefinition, partition, ct, isLSD);
         }
     }
 }

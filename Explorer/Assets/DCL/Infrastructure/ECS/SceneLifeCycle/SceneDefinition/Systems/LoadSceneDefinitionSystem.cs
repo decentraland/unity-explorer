@@ -42,9 +42,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
 
-            //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
-            //Could be removed once the asset bundle manifest registry has been battle tested
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+            //These are fetched from catalyst, meaning they never have a manifest
+            await AssetBundleManifestFallbackHelper.CreateAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
 
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);
