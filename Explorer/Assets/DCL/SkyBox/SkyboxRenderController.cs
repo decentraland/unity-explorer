@@ -1,4 +1,6 @@
 ﻿using DCL.Diagnostics;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Cysharp.Threading.Tasks;
@@ -7,6 +9,14 @@ using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
+    [Serializable]
+    public class LensFlareTimeEntry
+    {
+        [Range(0f, 1f)]
+        public float StartTime;
+        public LensFlareDataSRP FlareAsset = null!;
+    }
+
     private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
     private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
     private static readonly int NADIR_COLOR = Shader.PropertyToID("_NadirColor");
@@ -34,6 +44,12 @@ public class SkyboxRenderController : MonoBehaviour
     [SerializeField] private AnimationCurve sunRadiance;
     [SerializeField] private AnimationCurve sunRadianceIntensity;
     [SerializeField] private AnimationCurve moonMaskSize;
+
+    [Header("Lens Flare")]
+    [SerializeField] private AnimationCurve lensFlareIntensity;
+    [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new();
+    private LensFlareComponentSRP? lensFlare;
+    private LensFlareDataSRP? activeLensFlareData;
 
     [Header("Skybox Color")]
     [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp;
@@ -109,6 +125,8 @@ public class SkyboxRenderController : MonoBehaviour
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
             else
                 lightAnimator.AddClip(lightAnimation, lightAnimation.name);
+
+            InitializeLensFlare();
         }
 
         //setup indirect light
@@ -208,6 +226,51 @@ public class SkyboxRenderController : MonoBehaviour
 
         //change size of moon mask
         RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
+
+        UpdateLensFlare(timeOfDay);
+    }
+
+    private void InitializeLensFlare()
+    {
+        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>();
+
+        if (lensFlare == null)
+            lensFlare = directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+
+        lensFlareEntries.Sort(static (a, b) => a.StartTime.CompareTo(b.StartTime));
+    }
+
+    private void UpdateLensFlare(float timeOfDay)
+    {
+        if (lensFlare == null) return;
+
+        lensFlare.intensity = lensFlareIntensity.Evaluate(timeOfDay);
+
+        LensFlareDataSRP? newFlareData = GetActiveLensFlareData(timeOfDay);
+
+        if (newFlareData != null && newFlareData != activeLensFlareData)
+        {
+            activeLensFlareData = newFlareData;
+            lensFlare.lensFlareData = activeLensFlareData;
+        }
+    }
+
+    private LensFlareDataSRP? GetActiveLensFlareData(float timeOfDay)
+    {
+        if (lensFlareEntries.Count == 0)
+            return null;
+
+        // Find the last entry whose StartTime is <= current time
+        LensFlareDataSRP? result = null;
+
+        for (int i = 0; i < lensFlareEntries.Count; i++)
+        {
+            if (lensFlareEntries[i].StartTime <= timeOfDay)
+                result = lensFlareEntries[i].FlareAsset;
+        }
+
+        // If timeOfDay is before the first entry, wrap around to the last
+        return result ?? lensFlareEntries[lensFlareEntries.Count - 1].FlareAsset;
     }
 
     /// <summary>

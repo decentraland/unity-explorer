@@ -313,6 +313,107 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  lensFlareIntensity:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -30.643927
+      outSlope: -0.011131754
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.87341964
+    - serializedVersion: 3
+      time: 0.07228433
+      value: 1
+      inSlope: -0.0016260301
+      outSlope: -5.515159
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.65045905
+      outWeight: 0.92814463
+    - serializedVersion: 3
+      time: 0.14104483
+      value: 0.001775861
+      inSlope: -30.643927
+      outSlope: -0.1129889
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.2937337
+    - serializedVersion: 3
+      time: 0.2737869
+      value: -0.002902735
+      inSlope: 0.028415676
+      outSlope: 27.297707
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.24554658
+      outWeight: 0.05474931
+    - serializedVersion: 3
+      time: 0.35
+      value: 1
+      inSlope: 0.018088335
+      outSlope: 0.018088335
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.21829273
+    - serializedVersion: 3
+      time: 0.7
+      value: 1
+      inSlope: 0.028688136
+      outSlope: -6.5058103
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.21608421
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.7583955
+      value: 0
+      inSlope: -18.32635
+      outSlope: -0.029884126
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.10458256
+      outWeight: 0.3946291
+    - serializedVersion: 3
+      time: 0.8655086
+      value: 0
+      inSlope: -0.0425084
+      outSlope: 20.350815
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.53253335
+      outWeight: 0.13802639
+    - serializedVersion: 3
+      time: 0.93084544
+      value: 1
+      inSlope: 7.1777406
+      outSlope: 0.09106492
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.38990498
+    - serializedVersion: 3
+      time: 1.0040631
+      value: 1
+      inSlope: 0.014346845
+      outSlope: Infinity
+      tangentMode: 1
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  lensFlareEntries:
+  - StartTime: 0.8
+    FlareAsset: {fileID: 11400000, guid: 8dc200e90a01419438a27d0c15d0337a, type: 2}
+  - StartTime: 0.2
+    FlareAsset: {fileID: 11400000, guid: d0f179920b791ff479b5fed24e80b74b, type: 2}
   skyZenitColorRamp:
     serializedVersion: 2
     key0: {r: 0.25872707, g: 0.19663256, b: 0.50710505, a: 1}
