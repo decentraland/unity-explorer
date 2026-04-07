@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
+using DCL.Optimization.ThreadSafePool;
 using UnityEngine.Scripting;
 
 namespace DCL.Profiles
@@ -121,7 +121,7 @@ namespace DCL.Profiles
 
             if (root is { Type: JTokenType.Array })
             {
-                list ??= ListPool<LinkJsonDto>.Get();
+                list ??= ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
 
                 foreach (JToken? item in root.Children())
                     list.Add(DeserializeLink(item, new LinkJsonDto()));
@@ -196,7 +196,7 @@ namespace DCL.Profiles
 
             if (token is { Type: JTokenType.Array })
             {
-                list ??= CollectionPool<TCollection, T>.Get();
+                list ??= ThreadSafeCollectionPool<TCollection, T>.SHARED.Get();
 
                 foreach (JToken? item in token.Children())
                 {
