@@ -29,7 +29,10 @@ namespace DCL.Profiles
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
                 try { profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC); }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.PROFILE)); }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(ReportCategory.PROFILE, $"Error when processing texture promise for {promise.LoadingIntention.CommonArguments.URL} for profile {profile.UserId} error {e.Message}");
+                }
                 finally { World.Destroy(entity); }
             }
         }
