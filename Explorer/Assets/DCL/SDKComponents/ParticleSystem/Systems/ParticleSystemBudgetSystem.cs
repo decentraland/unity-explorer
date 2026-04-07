@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.ParticleSystem.Components;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.SDKComponents.ParticleSystem.Systems
 {
@@ -37,7 +38,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             float multiplier = totalParticles <= maxSceneParticles
                 ? 1f
-                : ((float)maxSceneParticles / totalParticles) - EMISION_MULTIPLIER_EXTRA_THRESHOLD;
+                : Mathf.Max(0f, ((float)maxSceneParticles / totalParticles) - EMISION_MULTIPLIER_EXTRA_THRESHOLD);
 
             ApplyBudgetQuery(World, multiplier);
 
