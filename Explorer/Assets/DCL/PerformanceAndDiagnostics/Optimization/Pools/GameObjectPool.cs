@@ -95,8 +95,12 @@ namespace DCL.Optimization.Pools
         private void HandleRelease(T component)
         {
             if (UnityObjectUtils.IsQuitting)
+            {
                 ReportHub.LogError(ReportCategory.ENGINE,
                     $"{nameof(HandleRelease)} called while the game is quitting. This should have been caught by {nameof(Release)} already.");
+                return;
+            }
+
 
             if (component == null)
             {
