@@ -27,7 +27,7 @@ namespace DCL.Places
         private List<Profile.CompactInfo> allFriends { get; } = new();
         private List<EventDTO> liveEvents { get; } = new();
 
-        public PlaceInfoWithConnectedFriends GetPlaceInfoById(string placeId) =>
+        public PlaceInfoWithConnectedFriends? GetPlaceInfoById(string placeId) =>
             CurrentPlaces.GetValueOrDefault(placeId);
 
         public void AddPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)
@@ -47,6 +47,34 @@ namespace DCL.Places
                 TryGetLiveEventByPlaceId(place.id, out EventDTO? liveEventAssociatedToPlace);
 
                 CurrentPlaces[place.id] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, liveEventAssociatedToPlace);
+            }
+        }
+
+        public void RefreshFriendsData()
+        {
+            var placeIds = new List<string>(CurrentPlaces.Keys);
+            foreach (string placeId in placeIds)
+            {
+                var existing = CurrentPlaces[placeId];
+                var place = existing.PlaceInfo;
+                List<Profile.CompactInfo> friendsConnectedToPlace = new();
+                if (place.connected_addresses != null)
+                    foreach (string addr in place.connected_addresses)
+                        if (TryGetFriendById(addr, out Profile.CompactInfo friend))
+                            friendsConnectedToPlace.Add(friend);
+
+                CurrentPlaces[placeId] = new PlaceInfoWithConnectedFriends(place, friendsConnectedToPlace, existing.LiveEvent);
+            }
+        }
+
+        public void RefreshLiveEventsData()
+        {
+            var placeIds = new List<string>(CurrentPlaces.Keys);
+            foreach (string placeId in placeIds)
+            {
+                var existing = CurrentPlaces[placeId];
+                TryGetLiveEventByPlaceId(placeId, out EventDTO? liveEvent);
+                CurrentPlaces[placeId] = new PlaceInfoWithConnectedFriends(existing.PlaceInfo, existing.ConnectedFriends, liveEvent);
             }
         }
 

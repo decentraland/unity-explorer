@@ -48,6 +48,7 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream;
 using DCL.SDKComponents.AvatarLocomotion;
+using DCL.SDKComponents.PhysicsImpulse.Systems;
 using DCL.SDKComponents.SkyboxTime;
 using DCL.Utility;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -294,7 +295,16 @@ namespace Global
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 container.MediaContainer.CreatePlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new SDKEntityTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider, componentsContainer.ComponentPoolsRegistry.AddComponentPool<PBTriggerAreaResult.Types.Trigger>()),
+                new SDKEntityTriggerAreaPlugin(
+                    globalWorld,
+                    container.MainPlayerAvatarBaseProxy,
+                    exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                    container.CharacterContainer.CharacterObject,
+                    componentsContainer.ComponentPoolsRegistry,
+                    container.assetsProvisioner,
+                    container.CacheCleaner,
+                    exposedGlobalDataContainer.ExposedCameraData,
+                    container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(),
@@ -311,6 +321,7 @@ namespace Global
 #endif
                 new PointerLockPlugin(globalWorld, exposedGlobalDataContainer.ExposedCameraData),
                 new AssetPreLoadPlugin(sharedDependencies, container.AssetPreLoadCache),
+                new SDKExternalPhysicsPlugin(globalWorld, playerEntity),
             };
 
             container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
@@ -322,11 +333,7 @@ namespace Global
                 promisesAnalyticsPlugin
             };
 
-            container.WorldManifestProvider = new WorldManifestProvider(
-                    assetsProvisioner,
-                    container.WebRequestsContainer.WebRequestController,
-                    staticSettings.ParsedParcels
-                );
+            container.WorldManifestProvider = new WorldManifestProvider(container.WebRequestsContainer.WebRequestController);
 
             return (container, true);
         }

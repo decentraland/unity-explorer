@@ -48,9 +48,9 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
-using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -72,7 +72,6 @@ namespace DCL.Passport
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
-
         private static readonly Vector2 CONTEXT_MENU_SUBMENU_OFFSET = new Vector2(0.0f, -26.0f);
 
         private readonly ICursor cursor;
@@ -151,8 +150,10 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private readonly BadgePreviewCameraView badge3DPreviewCamera;
         private readonly ImageControllerProvider imageControllerProvider;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action<string, bool>? PassportOpened;
@@ -420,11 +421,6 @@ namespace DCL.Passport
                             viewInstance.GiftSprite,
                             GiftUserClicked));
 
-            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
-                    viewInstance.BlockSprite,
-                    BlockUserClicked),
-                false));
-
             if (includeCommunities)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider,
@@ -435,6 +431,26 @@ namespace DCL.Passport
                     viewInstance.InviteToCommunityText,
                     viewInstance.InviteToCommunitySprite);
             }
+
+            contextMenu.AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left,
+                    -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right),
+                false));
+
+            Color redColor = ContextMenuColors.DESTRUCTIVE_ACTION;
+            contextMenu.AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText,
+                    viewInstance.BlockSprite,
+                    BlockUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor),
+                false));
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.ReportText,
+                    viewInstance.ReportOptionSprite,
+                    ReportUserClicked,
+                    iconColor: redColor,
+                    textColor: redColor));
         }
 
         private void OnStartCallButtonClicked()
@@ -528,6 +544,7 @@ namespace DCL.Passport
             characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Clear();
@@ -554,10 +571,13 @@ namespace DCL.Passport
                 Profile? profile = await selfProfile.ProfileAsync(ct);
                 if (profile != null)
                 {
-                    profile.ClaimedNameColor = colorPickerController.CurrentColor;
+                    // Create a copy to avoid mutating the cached profile in-place,
+                    // which would cause UpdateProfileAsync to see no changes (IdenticalProfileUpdateException)
+                    Profile newProfile = new ProfileBuilder().From(profile).Build();
+                    newProfile.ClaimedNameColor = colorPickerController.CurrentColor;
                     try
                     {
-                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
+                        Profile? updatedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
 
                         if (updatedProfile != null)
                             profileChangesBus.PushUpdate(updatedProfile);
@@ -587,6 +607,7 @@ namespace DCL.Passport
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
 
@@ -843,7 +864,7 @@ namespace DCL.Passport
                     Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
                     // Dont show any interaction for our own user
-                    if (ownProfile?.UserId == inputData.UserId) return;
+                    if (ownProfile == null || ownProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isCallEnabled);
 
@@ -933,6 +954,21 @@ namespace DCL.Passport
 
                 ShowFriendshipInteraction();
             }
+        }
+
+        private void ReportUserClicked()
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                viewInstance!.ReportSprite,
+                ReportCategory.PROFILE,
+                targetProfile!.UserId,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
         }
 
         private void ShowMutualFriends()

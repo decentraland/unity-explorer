@@ -96,7 +96,7 @@ PlayerSettings:
   bakeCollisionMeshes: 0
   forceSingleInstance: 0
   useFlipModelSwapchain: 1
-  resizableWindow: 0
+  resizableWindow: 1
   useMacAppStoreValidation: 0
   macAppStoreCategory: public.app-category.games
   gpuSkinning: 1
@@ -147,6 +147,7 @@ PlayerSettings:
   preloadedAssets:
   - {fileID: 11400000, guid: 24ddc9d8b47e3438abc8aca7466f34b7, type: 2}
   - {fileID: 11400000, guid: eb99c4c6693e9134e95646fb538654a7, type: 2}
+  - {fileID: 11400000, guid: 97cab6ceefd0a524bbfcc0638de8fa08, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -929,7 +930,7 @@ PlayerSettings:
     PS5: CT_FB
     QNX: CT_FB
     ReservedCFE: CT_FB
-    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE
+    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB;CDP_EXCLUDE_PROCESS_BROWSER;URP_COMPATIBILITY_MODE;TMP_PRESENT;ALTTESTER
     VisionOS: CT_FB
     WebGL: CT_FB
     Windows Store Apps: CT_FB

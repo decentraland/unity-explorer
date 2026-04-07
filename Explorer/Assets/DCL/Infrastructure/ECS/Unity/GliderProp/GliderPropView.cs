@@ -1,4 +1,5 @@
 ﻿using DCL.Audio.Avatar;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,8 +28,8 @@ namespace ECS.Unity.GliderProp
         [field: SerializeField] public Vector2 RotorRotationSpeedRange { get; private set; } = new (360, 360 * 4);
 
         [field: Header("Audio")] [field: SerializeField] public AvatarAudioSettings Settings { get; private set; }
-        [field: SerializeField] public AudioClip OpenGliderClip { get; private set; }
-        [field: SerializeField] public AudioClip CloseGliderClip { get; private set; }
+        [field: SerializeField] public AudioSource OpenGliderAudioSource { get; private set; }
+        [field: SerializeField] public AudioSource CloseGliderAudioSource { get; private set; }
         [field: SerializeField] public AudioSource IdleAudioSource { get; private set; }
         [field: SerializeField] public AudioSource MovingAudioSource { get; private set; }
         [field: SerializeField] [field: Range(0, 1)] public float IdleMaxVolume { get; private set; } = 1;
@@ -39,6 +40,7 @@ namespace ECS.Unity.GliderProp
         [field: SerializeField] private List<TrailRenderer> Trails { get; set; }
 
         public bool PlayOpenAndCloseSounds { get; set; } = true;
+        public GameObjectPool<OneShotAudioSource> OneShotAudioPool { get; set; }
 
         // Flags driven by animation events
         public bool OpenAnimationCompleted { get; private set; }
@@ -126,7 +128,8 @@ namespace ECS.Unity.GliderProp
         {
             if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
-            AudioSource.PlayClipAtPoint(OpenGliderClip, transform.position);        }
+            PlayOneShotDetached(OpenGliderAudioSource);
+        }
 
         private void OnOpenAnimationCompleted() =>
             OpenAnimationCompleted = true;
@@ -135,7 +138,15 @@ namespace ECS.Unity.GliderProp
         {
             if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
-            AudioSource.PlayClipAtPoint(CloseGliderClip, transform.position);
+            PlayOneShotDetached(CloseGliderAudioSource);
+        }
+
+        private void PlayOneShotDetached(AudioSource template)
+        {
+            if (template == null || template.clip == null || OneShotAudioPool == null) return;
+
+            OneShotAudioSource oneShot = OneShotAudioPool.Get();
+            oneShot.Play(template, transform.position, Settings.AudioPriority);
         }
 
         private void OnCloseAnimationCompleted() =>

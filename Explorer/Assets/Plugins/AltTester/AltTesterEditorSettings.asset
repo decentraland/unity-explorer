@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 073b5878cbef2364cb928faafba64ca5, type: 3}
+  m_Name: AltTesterEditorSettings
+  m_EditorClassIdentifier: AltTester.AltTesterUnitySDK.Editor::AltTester.AltTesterUnitySDK.Editor.AltEditorConfiguration
+  appendToName: 0
+  AdbPath: /usr/local/bin/adb
+  IProxyPath: /usr/local/bin/iproxy
+  XcrunPath: /usr/bin/xcrun
+  MyTests: []
+  Scenes:
+  - _toBeBuilt: 1
+    _path: Assets/Scenes/Main.unity
+    _buildIndex: 0
+  platform: 2
+  StandaloneTarget: 2
+  RanInEditor: 0
+  ScenePathDisplayed: 0
+  BuildLocationPath: /Users/mihakrajnc/Dev/Builds/alttester
+  createXMLReport: 0
+  xMLFilePath: 
+  AltServerPort: 13000
+  AltServerHost: 127.0.0.1
+  AppName: __default__
+  assemblyTestDisplayedIndex: 4
+  ResetConnectionData: 0
+  UID: 
+  UsingLocation: 0
+  HideGreenPopup: 0
+  KeepAUTSymbolDefined: 1
