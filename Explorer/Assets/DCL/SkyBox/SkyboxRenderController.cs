@@ -237,6 +237,8 @@ public class SkyboxRenderController : MonoBehaviour
         if (lensFlare == null)
             lensFlare = directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
 
+        lensFlare.useOcclusion = true;
+
         lensFlareEntries.Sort(static (a, b) => a.StartTime.CompareTo(b.StartTime));
     }
 
