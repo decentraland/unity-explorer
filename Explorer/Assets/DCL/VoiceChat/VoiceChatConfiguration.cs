@@ -50,23 +50,6 @@ namespace DCL.VoiceChat
         public AudioMixerGroup ProximityChatAudioMixerGroup;
 
         [Header("PROXIMITY")]
-        [Range(0f, 1f)]
-        public float ProximitySpatialBlend = 1f;
-
-        [Range(0f, 5f)]
-        public float ProximityDopplerLevel;
-
-        [Range(0f, 100f)]
-        public float ProximityMinDistance = 2f;
-
-        [Range(1f, 500f)]
-        public float ProximityMaxDistance = 16f;
-
-        [Range(0f, 360f)]
-        public float ProximitySpread;
-
-        public AudioRolloffMode ProximityRolloffMode = AudioRolloffMode.Custom;
-
         public AnimationCurve ProximityCustomRolloffCurve = new (
             new Keyframe(0f, 1f, 0f, 0f),
             new Keyframe(3f, 1f, 0f, 0f),
@@ -75,18 +58,13 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
-
         public void ApplyProximitySettingsTo(AudioSource source)
         {
-            source.spatialBlend = ProximitySpatialBlend;
-            source.dopplerLevel = ProximityDopplerLevel;
-            source.minDistance = ProximityMinDistance;
-            source.maxDistance = ProximityMaxDistance;
-            source.spread = ProximitySpread;
-            source.rolloffMode = ProximityRolloffMode;
+            source.dopplerLevel = 0;
+            source.spread = 0;
 
-            if (ProximityRolloffMode == AudioRolloffMode.Custom)
-                source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
+            source.rolloffMode = AudioRolloffMode.Custom;
+            source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
         }
     }
 }

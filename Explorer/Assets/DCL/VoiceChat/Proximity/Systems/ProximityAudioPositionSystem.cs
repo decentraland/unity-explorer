@@ -62,8 +62,8 @@ namespace DCL.VoiceChat.Proximity.Systems
 
             AssignPendingSources();
 
-            (Transform listenerTransform, Vector3 localHeadPos) = GetListenerAndHeadPositions();
-            SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, localHeadPos);
+            (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
+            SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
 
             foreach (Entity entity in entitiesToCleanUp)
                 World.Remove<ProximityAudioSourceComponent>(entity);
@@ -84,26 +84,26 @@ namespace DCL.VoiceChat.Proximity.Systems
                 }
                 else
                 {
-                    World.Add(entry.Entity, new ProximityAudioSourceComponent(kvp.Value, kvp.Key));
+                    World.Add(entry.Entity, new ProximityAudioSourceComponent(kvp.Key, kvp.Value));
                 }
             }
         }
 
-        private (Transform listenerTransform, Vector3 localHeadPos) GetListenerAndHeadPositions()
+        private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
         {
             ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
             isFirstPerson = cam.Mode == CameraMode.FirstPerson;
 
-            Vector3 localHeadPos = cam.Camera.transform.position;
+            Vector3 headPos = cam.Camera.transform.position;
             if (!isFirstPerson && World.TryGet(playerEntity, out PlayerComponent playerComp))
-                localHeadPos = playerComp.CameraFocus.position;
+                headPos = playerComp.CameraFocus.position;
 
-            return (cam.Camera.transform, localHeadPos);
+            return (cam.Camera.transform, headPos);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 localHeadPos,
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos,
             Entity entity, in CharacterTransform characterTransform, ref ProximityAudioSourceComponent proximityAudio)
         {
             if (!activeAudioSources.ContainsKey(proximityAudio.ParticipantIdentity))
@@ -112,12 +112,12 @@ namespace DCL.VoiceChat.Proximity.Systems
                 return;
             }
 
-            Vector3 remoteHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
+            Vector3 remoteAvatarHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
                 ? avatarBase.HeadAnchorPoint.position
                 : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
-            Vector3 sourcePos = isFirstPerson ? remoteHeadPos : listenerTransform.position + (remoteHeadPos - localHeadPos);
+            Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
             proximityAudio.Transform.position = sourcePos;
 
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);

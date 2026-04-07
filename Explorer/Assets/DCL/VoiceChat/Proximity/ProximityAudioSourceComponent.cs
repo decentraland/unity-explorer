@@ -9,15 +9,17 @@ namespace DCL.VoiceChat.Proximity
     /// </summary>
     public struct ProximityAudioSourceComponent
     {
+        public readonly string ParticipantIdentity;
+
         public LivekitAudioSource LivekitAudioSource;
         public Transform Transform;
-        public string ParticipantIdentity;
 
-        public ProximityAudioSourceComponent(LivekitAudioSource livekitAudioSource, string participantIdentity)
+        public ProximityAudioSourceComponent(string participantIdentity, LivekitAudioSource livekitAudioSource)
         {
-            LivekitAudioSource = livekitAudioSource;
-            Transform = livekitAudioSource.transform;
             ParticipantIdentity = participantIdentity;
+            LivekitAudioSource = livekitAudioSource;
+
+            Transform = livekitAudioSource.transform;
         }
     }
 }
