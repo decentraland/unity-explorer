@@ -214,13 +214,35 @@ namespace DCL.ParticleSystem.Tests
             var texData = new TextureData(Texture2D.grayTexture);
             texData.AddReference();
             component.SourceTextureData = texData;
+            component.ParticleMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            component.ParticleMaterial.mainTexture = Texture2D.grayTexture;
 
             Assert.AreEqual(1, texData.referenceCount);
 
-            world.Create(component);
+            Entity entity = world.Create(component);
             system.Update(0);
 
             Assert.AreEqual(0, texData.referenceCount);
+        }
+
+        [Test]
+        public void ClearMaterialMainTextureOnTextureCleanup()
+        {
+            var testGameObject = new GameObject("TestPS");
+            var testParticleSystem = testGameObject.AddComponent<UnityEngine.ParticleSystem>();
+            var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
+
+            component.ParticleMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            component.ParticleMaterial.mainTexture = Texture2D.grayTexture;
+
+            Assert.IsNotNull(component.ParticleMaterial.mainTexture);
+
+            Entity entity = world.Create(component);
+            system.Update(0);
+
+            // Material was released to pool, but verify the texture was cleared before release
+            // Re-check via the material we still hold a reference to
+            Assert.IsNull(component.ParticleMaterial.mainTexture);
         }
     }
 }

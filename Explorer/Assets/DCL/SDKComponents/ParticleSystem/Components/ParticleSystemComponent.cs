@@ -63,6 +63,9 @@ namespace DCL.SDKComponents.ParticleSystem
 
             SourceTextureData?.Dereference();
             SourceTextureData = null;
+
+            if (ParticleMaterial != null)
+                ParticleMaterial.mainTexture = null;
         }
     }
 }
