@@ -140,7 +140,7 @@ jobs:
         -CloudDir="$env:RUNNER_TEMP\BuildPatchTool\CloudDir_Windows" `
         -BuildVersion="${{ steps.get_release.outputs.version }}-win" `
         -AppLaunch="Decentraland.exe" `
-        -AppArgs=""
+        -AppArgs="--skip-version-check"
 
     - name: Upload macOS artifact
       if: steps.platforms.outputs.build_mac == 'True'
@@ -156,7 +156,7 @@ jobs:
         -CloudDir="$env:RUNNER_TEMP\BuildPatchTool\CloudDir_Mac" `
         -BuildVersion="${{ steps.get_release.outputs.version }}-mac" `
         -AppLaunch="Decentraland.app/Contents/MacOS/Explorer" `
-        -AppArgs="" `
+        -AppArgs="--skip-version-check" `
         -Platform="Mac"
 
     - name: Post-upload instructions

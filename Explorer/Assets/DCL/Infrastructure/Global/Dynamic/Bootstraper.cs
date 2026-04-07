@@ -171,6 +171,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
@@ -335,6 +336,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(

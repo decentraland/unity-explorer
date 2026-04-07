@@ -70,7 +70,10 @@ namespace DCL.Web3.Authenticators
             // Notify emitter that the file has been consumed
             File.Delete(TOKEN_PATH);
 
-            string token = contentResult.Value;
+            string token = contentResult.Value.Trim();
+
+            if (!Guid.TryParse(token, out _))
+                throw new AutoLoginTokenInvalidException($"Token read from {TOKEN_PATH} is invalid. {token}");
 
             urlBuilder.Clear();
 

@@ -56,7 +56,6 @@
 }
 
 .tooltipIcon {
-    --unity-image: var(--sprite-interaction__icon-mouse-left);
     align-self: auto;
     justify-content: flex-start;
     align-items: stretch;
