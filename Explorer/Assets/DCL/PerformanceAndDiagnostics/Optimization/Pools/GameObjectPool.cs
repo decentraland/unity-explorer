@@ -46,7 +46,7 @@ namespace DCL.Optimization.Pools
 
             if (element == null)
             {
-                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to release `null` reference of type {typeof(T).Name} to the pool");
+                ReportHub.LogException(new Exception($"Trying to release `null` reference of type {typeof(T).Name} to the pool"), ReportCategory.ENGINE);
                 return;
             }
 
@@ -69,8 +69,7 @@ namespace DCL.Optimization.Pools
                 component = gameObjectPool.Get();
 
                 if (component == null)
-                    ReportHub.LogError(ReportCategory.ENGINE,
-                        $"{typeof(T).Name} has been destroyed while in the pool.");
+                    ReportHub.LogException(new Exception($"{typeof(T).Name} has been destroyed while in the pool."), ReportCategory.ENGINE);
                 else
                     break;
             }
@@ -100,8 +99,10 @@ namespace DCL.Optimization.Pools
                     $"{nameof(HandleRelease)} called while the game is quitting. This should have been caught by {nameof(Release)} already.");
 
             if (component == null)
-                ReportHub.LogError(ReportCategory.ENGINE,
-                    $"{nameof(HandleRelease)} called with a null object. This should have been caught by {nameof(Release)} already.");
+            {
+                ReportHub.LogException(new Exception($"{nameof(HandleRelease)} called with a null component of type {typeof(T).Name}. This should have been caught by {nameof(Release)} already."), ReportCategory.ENGINE);
+                return;
+            }
 
             onRelease?.Invoke(component);
 

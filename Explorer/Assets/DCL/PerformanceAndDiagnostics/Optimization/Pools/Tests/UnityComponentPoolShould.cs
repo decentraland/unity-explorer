@@ -71,7 +71,7 @@ namespace DCL.Optimization.Pools.Tests
             Object.DestroyImmediate(pooled.gameObject);
 
             // Act: Get() must skip the destroyed entry (logging the error is expected) and return a live component
-            LogAssert.Expect(LogType.Error, "Transform has been destroyed while in the pool.");
+            LogAssert.Expect(LogType.Exception, "Exception: Transform has been destroyed while in the pool.");
             Transform result = gameObjectPool.Get();
 
             // Assert
