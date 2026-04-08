@@ -33,6 +33,8 @@ namespace ECS.SceneLifeCycle.Debug
         private bool isEnabled;
         private float timer;
         private int cycleCount;
+        private int _lastDisplayedCycle = -1;
+        private int _lastDisplayedTenths = -1;
 
         private RapidSceneReloadDebugSystem(World world, DebugWidgetBuilder debugWidgetBuilder) : base(world)
         {
