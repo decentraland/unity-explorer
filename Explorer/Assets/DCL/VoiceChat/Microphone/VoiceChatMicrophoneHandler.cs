@@ -22,14 +22,14 @@ namespace DCL.VoiceChat
         private float buttonPressStartTime;
         private bool hasIntentionToDisable;
 
-        private Weak<MicrophoneRtcAudioSource> communitySource = Weak<MicrophoneRtcAudioSource>.Null;
-        private Weak<MicrophoneRtcAudioSource> proximitySource = Weak<MicrophoneRtcAudioSource>.Null;
+        private Weak<MicrophoneRtcAudioSource> callSource = Weak<MicrophoneRtcAudioSource>.Null;
+        private Weak<MicrophoneRtcAudioSource> spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
         private ProximityVoiceChatStateModel? proximityStateModel;
 
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
-        private bool isCommunityActive => communitySource.Resource.Has;
-        private bool isProximityActive => !isCommunityActive && proximitySource.Resource.Has;
+        private bool isCallActive => callSource.Resource.Has;
+        private bool isSpatialActive => !isCallActive && spatialSource.Resource.Has;
 
         public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration, ICommunityCallOrchestrator orchestrator)
         {
@@ -62,7 +62,7 @@ namespace DCL.VoiceChat
         }
 
         private Option<MicrophoneRtcAudioSource> GetActiveSourceResource() =>
-            communitySource.Resource.Has ? communitySource.Resource : proximitySource.Resource;
+            callSource.Resource.Has ? callSource.Resource : spatialSource.Resource;
 
         private void OnTalkHotkeyPressed(InputAction.CallbackContext obj)
         {
@@ -98,7 +98,7 @@ namespace DCL.VoiceChat
                 bool newState = source.IsRecording;
                 isMicrophoneEnabledProperty.Value = newState;
 
-                if (isProximityActive)
+                if (isSpatialActive)
                 {
                     if (newState) proximityStateModel?.StartSpeaking();
                     else proximityStateModel?.StopSpeaking();
@@ -112,8 +112,13 @@ namespace DCL.VoiceChat
         {
             switch (voiceChat)
             {
-                case VoiceChatType.COMMUNITY: communitySource = newSource; break;
-                case VoiceChatType.PROXIMITY: proximitySource = newSource; break;
+                case VoiceChatType.COMMUNITY:
+                case VoiceChatType.PRIVATE:
+                    callSource = newSource;
+                    break;
+                case VoiceChatType.PROXIMITY:
+                    spatialSource = newSource;
+                    break;
             }
         }
 
@@ -122,12 +127,13 @@ namespace DCL.VoiceChat
             switch (voiceChat)
             {
                 case VoiceChatType.COMMUNITY:
-                    if (communitySource.Resource.Has) communitySource.Resource.Value.Stop();
-                    communitySource = Weak<MicrophoneRtcAudioSource>.Null;
+                case VoiceChatType.PRIVATE:
+                    if (callSource.Resource.Has) callSource.Resource.Value.Stop();
+                    callSource = Weak<MicrophoneRtcAudioSource>.Null;
                     break;
                 case VoiceChatType.PROXIMITY:
-                    if (proximitySource.Resource.Has) proximitySource.Resource.Value.Stop();
-                    proximitySource = Weak<MicrophoneRtcAudioSource>.Null;
+                    if (spatialSource.Resource.Has) spatialSource.Resource.Value.Stop();
+                    spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
                     break;
             }
         }
@@ -143,7 +149,7 @@ namespace DCL.VoiceChat
             if (resource.Has) resource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
 
-            if (isProximityActive)
+            if (isSpatialActive)
                 proximityStateModel?.StartSpeaking();
 
             NotifyMicrophoneStateChange(true);
@@ -173,7 +179,7 @@ namespace DCL.VoiceChat
                 if (weakMicrophoneSource .Has) weakMicrophoneSource .Value.Stop();
                 isMicrophoneEnabledProperty.Value = false;
 
-                if (isProximityActive)
+                if (isSpatialActive)
                     proximityStateModel?.StopSpeaking();
 
                 NotifyMicrophoneStateChange(false);
@@ -203,8 +209,8 @@ namespace DCL.VoiceChat
 
             void SwitchAllSources()
             {
-                TrySwitchMicrophone(communitySource, microphoneName);
-                TrySwitchMicrophone(proximitySource, microphoneName);
+                TrySwitchMicrophone(callSource, microphoneName);
+                TrySwitchMicrophone(spatialSource, microphoneName);
             }
         }
 
@@ -232,7 +238,7 @@ namespace DCL.VoiceChat
 
         private void NotifyMicrophoneStateChange(bool isEnabled)
         {
-            if (!isCommunityActive) return;
+            if (!isCallActive) return;
 
             if (orchestrator != null &&
                 orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
