@@ -26,11 +26,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly MediaFactory mediaFactory;
-        private readonly float audioFadeSpeed;
-        private readonly Material flipMaterial;
-
         private const int MAX_LIVEKIT_VIDEO_WIDTH = 2048;
         private const int MAX_LIVEKIT_VIDEO_HEIGHT = 2048;
+
+        private readonly float audioFadeSpeed;
+        private readonly Material flipMaterial;
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         private static float lastOpenMediaTime;

@@ -29,6 +29,10 @@ namespace DCL.SDKComponents.MediaStream
                 source?.gameObject.SetActive(false);
             });
 
+        private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
+        private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
+        private const string PRESENTATION_BOT_PREFIX = "presentation-bot:";
+
         private readonly IRoom room;
         private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream, StreamKey key)> audioSources = new ();
         private readonly List<StreamKey> streamKeysBuffer = new ();
@@ -36,16 +40,10 @@ namespace DCL.SDKComponents.MediaStream
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
         private Vector3 audioPosition;
-
-        private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
-        private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
-        private const string PRESENTATION_BOT_PREFIX = "presentation-bot:";
-
         private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
         private float lastAudioScanTime;
         private bool hasLiveAudio;
-
         private bool disposed;
 
         public bool MediaOpened =>
@@ -356,49 +354,6 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Finds the audio track paired to a specific video track from the same participant.
-        /// Available for future targeted audio scenarios.
-        /// </summary>
-        private Weak<AudioStream> FindPairedAudio(string identity, string videoSid)
-        {
-            lock (room.Participants)
-            {
-                var participant = room.Participants.RemoteParticipant(identity);
-
-                if (participant == null)
-                    return Weak<AudioStream>.Null;
-
-                TrackSource? targetAudioSource = null;
-
-                foreach ((string sid, TrackPublication track) in participant.Tracks)
-                {
-                    if (sid == videoSid)
-                    {
-                        targetAudioSource = track.Source switch
-                        {
-                            TrackSource.SourceCamera => TrackSource.SourceMicrophone,
-                            TrackSource.SourceScreenshare => TrackSource.SourceScreenshareAudio,
-                            _ => null,
-                        };
-
-                        break;
-                    }
-                }
-
-                if (targetAudioSource == null)
-                    return Weak<AudioStream>.Null;
-
-                foreach ((string sid, TrackPublication track) in participant.Tracks)
-                {
-                    if (track.Source == targetAudioSource)
-                        return room.AudioStreams.ActiveStream(new StreamKey(identity, sid));
-                }
-            }
-
-            return Weak<AudioStream>.Null;
         }
 
         private void ReleaseAllAudioSources()
