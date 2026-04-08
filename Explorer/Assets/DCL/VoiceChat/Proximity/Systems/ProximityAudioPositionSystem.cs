@@ -34,6 +34,7 @@ namespace DCL.VoiceChat.Proximity.Systems
         private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
 
         private readonly List<Entity> entitiesToCleanUp = new (4);
+        private readonly List<(Entity entity, string key, LivekitAudioSource source)> entitiesToAdd = new (4);
 
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
@@ -70,6 +71,9 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         private void AssignPendingSources()
         {
+            entitiesToAdd.Clear();
+
+            // Pass 1: update existing components via ref; collect entities that need a new component
             foreach (KeyValuePair<string, LivekitAudioSource> kvp in activeAudioSources)
             {
                 if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
@@ -83,9 +87,13 @@ namespace DCL.VoiceChat.Proximity.Systems
                 }
                 else
                 {
-                    World.Add(entry.Entity, new ProximityAudioSourceComponent(kvp.Key, kvp.Value));
+                    entitiesToAdd.Add((entry.Entity, kvp.Key, kvp.Value));
                 }
             }
+
+            // Pass 2: structural changes (World.Add) after all refs are released
+            foreach ((Entity entity, string key, LivekitAudioSource source) in entitiesToAdd)
+                World.Add(entity, new ProximityAudioSourceComponent(key, source));
         }
 
         private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()

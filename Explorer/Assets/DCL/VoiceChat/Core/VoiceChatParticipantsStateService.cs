@@ -160,13 +160,13 @@ namespace DCL.VoiceChat
 
                             ParticipantJoined?.Invoke(participant.Identity, state);
                             SetOnlineStatus(participant.Identity, true);
-                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant joined: {participant.Identity}");
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant joined");
                         }
 
                         break;
 
                     case UpdateFromParticipant.MetadataChanged:
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Metadata changed for {participant.Identity}: {participant.Metadata}");
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant metadata changed");
 
                         if (participant.Identity == LocalParticipantId)
                         {
@@ -186,7 +186,7 @@ namespace DCL.VoiceChat
                             ParticipantLeft?.Invoke(participant.Identity);
                             activeSpeakers.Remove(participant.Identity);
                             speakers.Remove(participant.Identity);
-                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant left: {participant.Identity}");
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant left");
                         }
 
                         break;

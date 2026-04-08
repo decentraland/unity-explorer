@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using LiveKit.Proto;
 
 namespace DCL.VoiceChat
@@ -5,6 +6,7 @@ namespace DCL.VoiceChat
     /// <summary>
     /// Static helper for determining if a disconnect reason is valid (expected) or invalid (unexpected).
     /// Used by voice chat services to determine whether reconnection attempts should be made.
+    /// Invalid reasons (returns false) trigger reconnection attempts.
     /// </summary>
     public static class VoiceChatDisconnectReasonHelper
     {
@@ -23,15 +25,21 @@ namespace DCL.VoiceChat
                        DisconnectReason.ClientInitiated => true,
                        DisconnectReason.JoinFailure => true,
                        DisconnectReason.UserRejected => true,
-                       DisconnectReason.SignalClose => true,
-                       DisconnectReason.ConnectionTimeout => true,
-                       DisconnectReason.StateMismatch => true,
-                       DisconnectReason.Migration => true,
-                       DisconnectReason.UnknownReason => true,
                        DisconnectReason.UserUnavailable => true,
                        DisconnectReason.SipTrunkFailure => true,
+                       DisconnectReason.Migration => true,
+                       DisconnectReason.SignalClose => LogAndReturn(disconnectReason.Value),
+                       DisconnectReason.ConnectionTimeout => LogAndReturn(disconnectReason.Value),
+                       DisconnectReason.StateMismatch => LogAndReturn(disconnectReason.Value),
+                       DisconnectReason.UnknownReason => LogAndReturn(disconnectReason.Value),
                        _ => false,
                    };
+        }
+
+        private static bool LogAndReturn(DisconnectReason reason)
+        {
+            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Ambiguous disconnect reason treated as valid: {reason}");
+            return true;
         }
     }
 }
