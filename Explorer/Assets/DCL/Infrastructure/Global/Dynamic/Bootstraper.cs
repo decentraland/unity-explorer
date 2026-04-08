@@ -336,6 +336,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(

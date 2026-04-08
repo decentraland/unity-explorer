@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Utilities.Extensions;
 using MVC;
 
 namespace DCL.Backpack.Gifting.Notifications
@@ -12,7 +13,7 @@ namespace DCL.Backpack.Gifting.Notifications
         public GiftNotificationOpenerController(IMVCManager mvcManager)
         {
             this.mvcManager = mvcManager;
-            
+
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(
                 NotificationType.TRANSFER_RECEIVED,
                 OnGiftNotificationClicked);
@@ -25,6 +26,7 @@ namespace DCL.Backpack.Gifting.Notifications
 
             mvcManager
                 .ShowAsync(GiftReceivedPopupController.IssueCommand(notification))
+                .SuppressToResultAsync()
                 .Forget();
         }
     }

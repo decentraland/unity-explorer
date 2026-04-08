@@ -28,9 +28,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
-            --base main \
-            --head $BRANCH_NAME \
-            --title "release: $RELEASE_DATE" \
-            --body ":rocket: Automated release PR" \
-            --label release,auto-pr
+          # Create PR if it doesn't already exist
+          if ! gh pr view "$BRANCH_NAME" --json number &>/dev/null; then
+            gh pr create \
+              --base main \
+              --head "$BRANCH_NAME" \
+              --title "release: $RELEASE_DATE" \
+              --body ":rocket: Automated release PR"
+          fi
+
+          # Always ensure labels are applied (handles 502 / retry scenarios)
+          gh pr edit "$BRANCH_NAME" --add-label "release,auto-pr"
