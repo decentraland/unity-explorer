@@ -8,7 +8,7 @@ module.exports.getActiveVideoStreams = async function () {
     return result;
 }
 
-// message: { topic: string, data: Uint8Array }
+// message: { topic: string, data: string }
 module.exports.publishData = async function (message) {
     CommsApi.PublishData(message.topic, message.data);
 }

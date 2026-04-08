@@ -81,9 +81,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
             catch (InvalidProtocolBufferException)
             {
-                // CommsApi publishes raw scene data on the same IDataPipe. These are not protobuf
-                // packets, so parsing fails here. This is expected and not an error.
-                // TODO: migrate CommsApi to IMessagePipe to avoid sharing the raw data pipe.
+                // External participants (e.g. cast2 webapp presentation bots) send raw JSON
+                // on the shared IDataPipe. These are not protobuf packets, so parsing fails.
+                // This is expected and not an error.
             }
             catch (Exception e)
             {
