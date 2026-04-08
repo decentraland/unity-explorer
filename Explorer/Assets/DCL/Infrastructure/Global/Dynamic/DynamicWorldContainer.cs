@@ -572,6 +572,7 @@ namespace Global.Dynamic
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
+                new SceneAdminsChatCommand(staticContainer.WebRequestsContainer.WebRequestController),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
 
