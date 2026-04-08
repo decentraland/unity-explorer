@@ -126,6 +126,7 @@ namespace SceneRunner.Tests
             }
 
             sceneFacades.Clear();
+            engineFactory.Dispose();
         }
 
         private V8EngineFactory engineFactory;
