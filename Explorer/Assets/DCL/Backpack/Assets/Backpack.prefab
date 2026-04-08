@@ -8177,6 +8177,7 @@ GameObject:
   - component: {fileID: 1184791199002812364}
   - component: {fileID: 9038506089370485185}
   - component: {fileID: 5477588281281671423}
+  - component: {fileID: 2952086246336155778}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -8258,6 +8259,14 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1.5
+--- !u!222 &2952086246336155778
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7606487768343442110}
+  m_CullTransparentMesh: 1
 --- !u!1 &7618900880184520857
 GameObject:
   m_ObjectHideFlags: 0
@@ -15669,7 +15678,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1904905778137936545, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 29.7
       objectReference: {fileID: 0}
     - target: {fileID: 1904905778137936545, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
       propertyPath: m_AnchoredPosition.x

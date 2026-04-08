@@ -40,6 +40,7 @@ jobs:
             If you find duplicates:
             - Add a comment on the new issue linking to the original issue(s)
             - Apply a "duplicate" label to the new issue
+            - Close the new issue as "not planned" using: gh issue close <number> --repo ${{ github.repository }} --reason "not planned"
             - Be polite and explain why it's a duplicate
             - Suggest the user follow the original issue for updates
             If it's NOT a duplicate:
@@ -47,4 +48,4 @@ jobs:
             - You may apply appropriate topic labels based on the issue content
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh label list:*),Bash(gh label create:*)"
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh label list:*),Bash(gh label create:*),Bash(gh issue close:*)"

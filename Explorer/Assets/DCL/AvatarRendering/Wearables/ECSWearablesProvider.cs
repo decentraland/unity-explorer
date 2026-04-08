@@ -85,7 +85,8 @@ namespace DCL.AvatarRendering.Wearables
 
             results ??= new List<ITrimmedWearable>();
 
-            var intention = new GetTrimmedWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            var intentionResults = new List<ITrimmedWearable>();
+            var intention = new GetTrimmedWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, intentionResults, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
@@ -101,9 +102,8 @@ namespace DCL.AvatarRendering.Wearables
             if (!wearablesPromise.Result.HasValue) return (results, 0);
             if (!wearablesPromise.Result!.Value.Succeeded) return (results, 0);
 
-            // Should be the same assigned in the intention as `results`
-            return (wearablesPromise.Result.Value.Asset.Wearables,
-                wearablesPromise.Result.Value.Asset.TotalAmount);
+            results.AddRange(wearablesPromise.Result.Value.Asset.Wearables);
+            return (results, wearablesPromise.Result.Value.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyCollection<IWearable>?> GetByPointersAsync(IReadOnlyCollection<URN> pointers,
