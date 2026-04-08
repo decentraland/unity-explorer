@@ -207,10 +207,6 @@ namespace DCL.VoiceChat.Proximity
                     case ProximityVoiceChatState.SUPPRESSED:
                         activationCts.SafeCancelAndDispose();
                         Deactivate();
-                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT,
-                            state == ProximityVoiceChatState.SUPPRESSED
-                                ? "Suppressed — Private/Community call active, fully deactivated"
-                                : "Disabled");
                         break;
 
                     case ProximityVoiceChatState.HEARING:
