@@ -102,8 +102,7 @@ namespace DCL.VoiceChat
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
                 microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
 
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(
-                    track, DEFAULT_PUBLISH_OPTIONS, ct);
+                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track published successfully");
             }
