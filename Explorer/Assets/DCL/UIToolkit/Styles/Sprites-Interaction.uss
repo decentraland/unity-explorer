@@ -3,6 +3,7 @@
     --sprite-interaction__icon-interactive: url('/Assets/Textures/UI/Interaction/icon-interactive.png');
     --sprite-interaction__icon-mouse-left: url('/Assets/Textures/UI/Interaction/icon-mouse-left.png');
     --sprite-interaction__icon-mouse-right: url('/Assets/Textures/UI/Interaction/icon-mouse-right.png');
+    --sprite-interaction__icon-mouse-wheel: url('/Assets/Textures/UI/Interaction/icon-mouse-wheel.png');
 }
 
 .sprite-interaction__icon-interactive {
@@ -13,13 +14,19 @@
 
 .sprite-interaction__icon-mouse-left {
     background-image: var(--sprite-interaction__icon-mouse-left);
-    width: 24.5px;
-    height: 24.5px;
+    width: 24px;
+    height: 24px;
 }
 
 .sprite-interaction__icon-mouse-right {
     background-image: var(--sprite-interaction__icon-mouse-right);
-    width: 32.5px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
+}
+
+.sprite-interaction__icon-mouse-wheel {
+    background-image: var(--sprite-interaction__icon-mouse-wheel);
+    width: 24px;
+    height: 24px;
 }
 

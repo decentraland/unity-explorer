@@ -20,7 +20,10 @@ Explorer/Assets/StreamingAssets/AssetBundles/**/*.meta -filter=lfs -diff=lfs -me
 # unity specifics
 #
 ##############################################################################
-*.mat binary
+
+# for proper text diffing
+*.mat text 
+
 *.anim binary
 *.unity binary
 *.prefab binary
