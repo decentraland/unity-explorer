@@ -25,6 +25,7 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private ViewAnimationElementBase? tooltipAnimation;
         [SerializeField] private GameObject hoverTooltip = null!;
         [SerializeField] private GameObject greenDotImage = null!;
+        [SerializeField] private SoundWaveAnimator? soundWaveAnimator;
 
         [Space]
         [SerializeField] private MetaStateSprites disconnectedSprites;
@@ -63,6 +64,18 @@ namespace DCL.VoiceChat.Proximity
             greenDotImage.SetActive(state is ProximityVoiceChatState.Hearing or ProximityVoiceChatState.Speaking);
             unselectedImage!.sprite = sprites.unselected;
             hoverStateImage!.sprite = sprites.hover;
+
+            if (soundWaveAnimator != null)
+                soundWaveAnimator.gameObject.SetActive(state == ProximityVoiceChatState.Speaking);
+        }
+
+        public void InitializeSoundWave(Func<float> amplitudeProvider)
+        {
+            if (soundWaveAnimator != null)
+            {
+                soundWaveAnimator.Initialize(amplitudeProvider);
+                soundWaveAnimator.gameObject.SetActive(false);
+            }
         }
 
         public void ShowDisabledTooltip()

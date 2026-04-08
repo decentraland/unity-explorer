@@ -41,6 +41,7 @@ namespace DCL.VoiceChat
             bool blocksVoice = scene != null &&
                                scene.SceneData.SceneEntityDefinition.metadata.featureToggles.ProximityVoiceChatEnabled;
 
+            blocksVoice = !blocksVoice;
             if (blocksVoice == currentSceneBlocksVoice)
                 return;
 

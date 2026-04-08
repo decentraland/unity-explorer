@@ -67,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private ProximityNametagsHandler? proximityNametagsHandler;
         private ProximityVoiceChatStateModel? proximityStateModel;
         private ProximityVoiceChatButtonController? proximityButtonController;
+        private MicAmplitudeProvider? micAmplitudeProvider;
         private NearbyVoiceWidgetController? nearbyVoiceWidgetController;
         private VoiceChatConfiguration? storedVoiceChatConfig;
         private Action? activeSpeakersUpdatedHandler;
@@ -234,16 +235,20 @@ namespace DCL.PluginSystem.Global
                 localIdentity, proximityMuteService, proximityStateModel);
             pluginScope.Add(proximityNametagsHandler);
 
+            micAmplitudeProvider = new MicAmplitudeProvider();
+            pluginScope.Add(micAmplitudeProvider);
+
             proximityVoiceChatManager = new ProximityVoiceChatManager(
                 roomHub.IslandRoom(), storedVoiceChatConfig!,
                 proximityAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                proximityMuteService, proximityStateModel);
+                proximityMuteService, proximityStateModel,
+                micAmplitudeProvider);
             pluginScope.Add(proximityVoiceChatManager);
 
             if (proximityVoiceChatButtonView != null)
             {
                 proximityButtonController = new ProximityVoiceChatButtonController(
-                    proximityVoiceChatButtonView, proximityStateModel);
+                    proximityVoiceChatButtonView, proximityStateModel, micAmplitudeProvider);
                 pluginScope.Add(proximityButtonController);
             }
 

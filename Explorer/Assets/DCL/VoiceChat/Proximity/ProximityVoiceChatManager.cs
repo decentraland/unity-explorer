@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat.Proximity;
 #if UNITY_STANDALONE_OSX
 using DCL.VoiceChat.Permissions;
 #endif
@@ -42,6 +43,7 @@ namespace DCL.VoiceChat
         private readonly ConcurrentDictionary<StreamKey, LivekitAudioSource> remoteSources = new ();
         private readonly Transform fallbackParent;
         private readonly ProximityVoiceChatStateModel stateModel;
+        private readonly MicAmplitudeProvider? micAmplitudeProvider;
         private readonly IDisposable callStatusSubscription;
         private IDisposable? proximityStateSubscription;
 
@@ -59,13 +61,15 @@ namespace DCL.VoiceChat
             ConcurrentDictionary<string, AudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             ProximityMuteService proximityMuteService,
-            ProximityVoiceChatStateModel stateModel)
+            ProximityVoiceChatStateModel stateModel,
+            MicAmplitudeProvider? micAmplitudeProvider = null)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.activeAudioSources = activeAudioSources;
             this.proximityMuteService = proximityMuteService;
             this.stateModel = stateModel;
+            this.micAmplitudeProvider = micAmplitudeProvider;
 
             fallbackParent = new GameObject($"{TAG}_FallbackParent").transform;
 
@@ -213,6 +217,7 @@ namespace DCL.VoiceChat
 
             rtcAudioSource = result.Value;
             rtcAudioSource.Start();
+            micAmplitudeProvider?.Bind(rtcAudioSource);
 
             string participantName = islandRoom.Participants.LocalParticipant().Name;
 
@@ -566,6 +571,7 @@ namespace DCL.VoiceChat
                 }
             }
 
+            micAmplitudeProvider?.Unbind();
             rtcAudioSource?.Dispose();
             rtcAudioSource = null;
             localTrack = null;

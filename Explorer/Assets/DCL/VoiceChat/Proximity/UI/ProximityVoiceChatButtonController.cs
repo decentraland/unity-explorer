@@ -10,13 +10,15 @@ namespace DCL.VoiceChat.Proximity
 
         public ProximityVoiceChatButtonController(
             ProximityVoiceChatButtonView view,
-            ProximityVoiceChatStateModel stateModel)
+            ProximityVoiceChatStateModel stateModel,
+            MicAmplitudeProvider micAmplitudeProvider)
         {
             this.view = view;
 
             view.SetState(stateModel.State.Value);
             view.IsBlocked = stateModel.State.Value == ProximityVoiceChatState.Blocked;
             view.CloseAreaButton.onClick.AddListener(view.HideDisabledTooltip);
+            view.InitializeSoundWave(() => micAmplitudeProvider.Amplitude);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
         }
 
