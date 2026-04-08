@@ -20,7 +20,6 @@ namespace DCL.Communities
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWeb3IdentityCache identityCache;
         private CancellationTokenSource subscriptionCts = new ();
-        private bool isListeningToUpdatesFromServer;
 
         public RPCCommunitiesService(
             IRPCSocialServices socialServiceRPC,
@@ -69,14 +68,7 @@ namespace DCL.Communities
 
         public async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            if (isListeningToUpdatesFromServer) return;
-
-            try
-            {
-                isListeningToUpdatesFromServer = true;
-                await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
-            }
-            finally { isListeningToUpdatesFromServer = false; }
+            await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
 
             return;
 
@@ -90,6 +82,8 @@ namespace DCL.Communities
                 {
                     try
                     {
+                        if (socialServiceRPC.IsDisconnecting) continue;
+
                         switch (response.Status)
                         {
                             case ConnectivityStatus.Offline:
