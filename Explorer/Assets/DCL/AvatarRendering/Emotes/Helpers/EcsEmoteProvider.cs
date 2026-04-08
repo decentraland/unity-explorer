@@ -65,7 +65,8 @@ namespace DCL.AvatarRendering.Emotes
 
             results ??= new List<ITrimmedEmote>();
 
-            var intention = new GetTrimmedEmotesByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            var intentionResults = new List<ITrimmedEmote>();
+            var intention = new GetTrimmedEmotesByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, intentionResults, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 
@@ -77,8 +78,8 @@ namespace DCL.AvatarRendering.Emotes
             if (!promise.Result.HasValue) return (results, 0);
             if (!promise.Result!.Value.Succeeded) return (results, 0);
 
-            return (promise.Result.Value.Asset.Emotes,
-                promise.Result.Value.Asset.TotalAmount);
+            results.AddRange(promise.Result.Value.Asset.Emotes);
+            return (results, promise.Result.Value.Asset.TotalAmount);
         }
 
         public async UniTask<IReadOnlyCollection<IEmote>?> GetByPointersAsync(
