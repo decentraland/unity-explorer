@@ -24,6 +24,8 @@ namespace DCL.Events
 
         private const string GET_LIVE_EVENTS_ERROR_MESSAGE = "There was an error loading live events. Please try again.";
         private const string GET_EVENTS_ERROR_MESSAGE = "There was an error loading events. Please try again.";
+        private const int MAX_DAYS = 5;
+        private const int DAYS_WITH_BANNER = 4;
 
         private readonly EventsCalendarView view;
         private readonly EventsController eventsController;
@@ -35,6 +37,7 @@ namespace DCL.Events
 
         private CancellationTokenSource? loadEventsCts;
         private CancellationTokenSource? eventCardOperationsCts;
+        private IReadOnlyList<EventDTO>? highlightedEventsCache;
 
         private static readonly ListObjectPool<List<EventDTO>> EVENTS_GROUPED_BY_DAY_POOL = new (defaultCapacity: 5);
 
@@ -100,7 +103,7 @@ namespace DCL.Events
                 return;
 
             loadEventsCts = loadEventsCts.SafeRestart();
-            CheckHighlightedBannerAsync(fromDate, loadEventsCts.Token).Forget();
+            OnSectionOpenedAsync(fromDate, loadEventsCts.Token).Forget();
         }
 
         private void OnSectionClosed() =>
@@ -162,13 +165,51 @@ namespace DCL.Events
             view.ClearHighlightedEvents();
         }
 
-        private async UniTask CheckHighlightedBannerAsync(DateTime fromDate, CancellationToken ct)
+        private async UniTask OnSectionOpenedAsync(DateTime fromDate, CancellationToken ct)
         {
             view.SetHighlightedCarousel(null);
-            view.SetupDaysSelector(fromDate, 5, triggerEvent: false, deactivateArrows: true);
+            view.SetupDaysSelector(fromDate, MAX_DAYS, triggerEvent: false, deactivateArrows: true);
             view.SetAsLoading(true);
 
-            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
+            eventsController.CurrentCalendarFromDate = fromDate;
+
+            // Resolve highlighted banner first to know how many days to load
+            await LoadHighlightedAndAdjustBannerAsync(fromDate, ct);
+            if (ct.IsCancellationRequested)
+                return;
+
+            int daysToLoad = highlightedEventsCache is { Count: > 0 } ? DAYS_WITH_BANNER : MAX_DAYS;
+
+            await UniTask.WhenAll(
+                LoadEventsAsync(fromDate, daysToLoad, ct),
+                LoadFriendsAndRefreshCardsAsync(ct),
+                LoadCommunitiesAndRefreshCardsAsync(ct)
+            );
+        }
+
+        private async UniTask LoadFriendsAndRefreshCardsAsync(CancellationToken ct)
+        {
+            await eventsController.RefreshFriendsDataAsync(ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            view.RefreshVisibleCardsFriendsData();
+        }
+
+        private async UniTask LoadCommunitiesAndRefreshCardsAsync(CancellationToken ct)
+        {
+            await eventsController.RefreshCommunitiesDataAsync(ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            view.RefreshVisibleCardsCommunityData();
+        }
+
+        private async UniTask LoadHighlightedAndAdjustBannerAsync(DateTime fromDate, CancellationToken ct)
+        {
+            highlightedEventsCache = null;
 
             Result<IReadOnlyList<EventDTO>> highlightedEventsResult = await eventsApiService.GetHighlightedEventsAsync(1, 10, true, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.EVENTS);
@@ -176,11 +217,10 @@ namespace DCL.Events
             if (ct.IsCancellationRequested)
                 return;
 
-            var showHighlightedBanner = false;
             if (highlightedEventsResult is { Success: true, Value: { Count: > 0 } })
             {
-                showHighlightedBanner = true;
-                eventsStateService.AddEvents(highlightedEventsResult.Value, clearCurrentEvents: true);
+                highlightedEventsCache = highlightedEventsResult.Value;
+                eventsStateService.AddEvents(highlightedEventsResult.Value);
 
                 List<string> placesIds = new ();
                 foreach (EventDTO eventInfo in highlightedEventsResult.Value)
@@ -189,15 +229,31 @@ namespace DCL.Events
                         placesIds.Add(eventInfo.place_id);
                 }
 
-                Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
-                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (placesIds.Count > 0)
+                {
+                    Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(placesIds, ct)
+                                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (placesResponse.Success)
-                    eventsStateService.AddPlaces(placesResponse.Value.Data, clearCurrentPlaces: true);
+                    if (placesResponse.Success)
+                        eventsStateService.AddPlaces(placesResponse.Value.Data);
+                }
             }
 
-            view.SetHighlightedCarousel(highlightedEventsResult.Value);
-            view.SetupDaysSelector(fromDate, showHighlightedBanner ? 4 : 5);
+            if (ct.IsCancellationRequested)
+                return;
+
+            bool showBanner = highlightedEventsCache is { Count: > 0 };
+            view.SetHighlightedCarousel(highlightedEventsCache);
+
+            if (showBanner)
+            {
+                view.ClearEventsForDay(DAYS_WITH_BANNER);
+                view.SetupDaysSelector(fromDate, DAYS_WITH_BANNER, triggerEvent: false);
+            }
+            else
+            {
+                view.SetupDaysSelector(fromDate, MAX_DAYS, triggerEvent: false);
+            }
         }
 
         private async UniTask LoadEventsAsync(DateTime fromDate, int numberOfDays, CancellationToken ct)

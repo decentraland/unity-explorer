@@ -404,7 +404,7 @@ namespace DCL.AuthenticationScreenFlow
                     spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
 
                     view.Hide(UIAnimationHashes.SLIDE);
-                    fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
                 }
             }
         }

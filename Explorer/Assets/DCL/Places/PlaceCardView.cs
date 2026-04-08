@@ -156,38 +156,15 @@ namespace DCL.Places
             lastPlaceTitle = placeInfo.title ?? string.Empty;
             placeNameText.text = lastPlaceTitle;
             placeDescriptionText.text = ownerName;
-            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            int onlineMembers = placeInfo.connected_addresses?.Length ?? placeInfo.user_count;
             onlineMembersText.text = $"{onlineMembers}";
             onlineMembersContainer.SetActive(onlineMembers > 0);
             likeRateText.text = $"{(placeInfo.like_rate_as_float ?? 0) * 100:F0}%";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
             featuredTag.SetActive(placeInfo.highlighted);
 
-            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
-            friendsConnected.root.SetActive(showFriendsConnected);
-            if (showFriendsConnected)
-            {
-                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
-                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
-
-                var friendsThumbnails = friendsConnected.thumbnails;
-                for (var i = 0; i < friendsThumbnails.Length; i++)
-                {
-                    bool friendExists = i < friends.Count;
-                    friendsThumbnails[i].root.SetActive(friendExists);
-                    if (!friendExists) continue;
-                    Profile.CompactInfo friendInfo = friends[i];
-                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
-                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
-                }
-            }
-
-            liveTagWithTooltip.gameObject.SetActive(placeInfo.live);
-            if (liveEvent != null)
-                liveTagWithTooltip.Configure(liveEvent.Value.name);
-
-            bool anyTagShowedInTheHeader = liveTagWithTooltip.gameObject.activeSelf || onlineMembersContainer.activeSelf || friendsConnected.root.activeSelf || featuredTag.activeSelf;
-            headerGradient.SetActive(anyTagShowedInTheHeader);
+            UpdateFriendsData(friends, profileRepositoryWrapper);
+            UpdateLiveEventData(placeInfo.live, liveEvent);
 
             deleteButton.gameObject.SetActive(userOwnsPlace);
 
@@ -206,6 +183,42 @@ namespace DCL.Places
             SetWorldAccessState(WorldAccessCheckResult.Allowed);
         }
 
+        public void UpdateFriendsData(List<Profile.CompactInfo>? friends, ProfileRepositoryWrapper? profileRepositoryWrapper)
+        {
+            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null;
+            friendsConnected.root.SetActive(showFriendsConnected);
+
+            if (showFriendsConnected)
+            {
+                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
+                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
+
+                var friendsThumbnails = friendsConnected.thumbnails;
+                for (var i = 0; i < friendsThumbnails.Length; i++)
+                {
+                    bool friendExists = i < friends.Count;
+                    friendsThumbnails[i].root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    Profile.CompactInfo friendInfo = friends[i];
+                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
+                }
+            }
+
+            RefreshHeaderGradient();
+        }
+
+        public void UpdateLiveEventData(bool isLive, EventDTO? liveEvent)
+        {
+            liveTagWithTooltip.gameObject.SetActive(isLive);
+            if (liveEvent != null)
+                liveTagWithTooltip.Configure(liveEvent.Value.name);
+
+            liveTagWithTooltip.SetHoverActive(liveEvent != null);
+
+            RefreshHeaderGradient();
+        }
+
         public void SetWorldAccessState(WorldAccessCheckResult accessState, WorldAccessType? accessType = null)
         {
             lastAccessState = accessState;
@@ -217,6 +230,12 @@ namespace DCL.Places
 
             jumpInButton.gameObject.SetActive(accessState is WorldAccessCheckResult.Allowed or WorldAccessCheckResult.CheckFailed);
             enterPasswordButton.gameObject.SetActive(accessState == WorldAccessCheckResult.PasswordRequired);
+        }
+
+        private void RefreshHeaderGradient()
+        {
+            bool anyTagShowedInTheHeader = liveTagWithTooltip.gameObject.activeSelf || onlineMembersContainer.activeSelf || friendsConnected.root.activeSelf || featuredTag.activeSelf;
+            headerGradient.SetActive(anyTagShowedInTheHeader);
         }
 
         private void RefreshPlaceTitleWithPadlock()

@@ -50,9 +50,10 @@ namespace ECS.StreamableLoading.Textures
         public GetTextureIntention(string userId,
             TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
             string reportSource,
+            string? faceSnapshotUrl = null,
             int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
-            CommonArguments = new CommonLoadingArguments(string.Empty, attempts: attemptsCount);
+            CommonArguments = new CommonLoadingArguments(faceSnapshotUrl ?? string.Empty, attempts: attemptsCount);
             WrapMode = wrapMode;
             FilterMode = filterMode;
             TextureType = textureType;
@@ -81,13 +82,14 @@ namespace ECS.StreamableLoading.Textures
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
             IsVideoTexture == other.IsVideoTexture &&
-            VideoPlayerEntity.Equals(other.VideoPlayerEntity);
+            VideoPlayerEntity.Equals(other.VideoPlayerEntity) &&
+            AvatarTextureUserId == other.AvatarTextureUserId;
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
         public readonly override int GetHashCode() =>
-            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
+            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity, AvatarTextureUserId);
 
         public readonly override string ToString() =>
             $"Get Texture by {ReportSource}, {(IsAvatarTexture ? "isAvatarTexture" : string.Empty)} : {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
@@ -112,6 +114,7 @@ namespace ECS.StreamableLoading.Textures
                 keyPayload.Put((int)asset.FilterMode);
                 keyPayload.Put(asset.IsVideoTexture);
                 keyPayload.Put(asset.VideoPlayerEntity.Id);
+                keyPayload.Put(asset.AvatarTextureUserId ?? string.Empty);
             }
         }
     }
