@@ -60,10 +60,12 @@ namespace DCL.SDKComponents.MediaStream
         private async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
         {
             UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(url);
-            isGetReachableRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
+            isGetReachableRequest.SendWebRequest();
 
             while (isGetReachableRequest.downloadedBytes == 0)
             {
+                ct.ThrowIfCancellationRequested();
+
                 if (!string.IsNullOrEmpty(isGetReachableRequest.error))
                     return false;
 
