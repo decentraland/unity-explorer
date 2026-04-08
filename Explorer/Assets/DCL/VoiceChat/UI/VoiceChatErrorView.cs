@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -37,7 +38,12 @@ namespace DCL.VoiceChat
                 await UniTask.Delay(HIDE_ERROR_PANEL_DELAY, cancellationToken: ct);
                 await PanelCanvasGroup.DOFade(0, 0.5f).ToUniTask(cancellationToken: ct);
             }
-            catch (Exception e) { PanelCanvasGroup.alpha = 0; }
+            catch (OperationCanceledException) { PanelCanvasGroup.alpha = 0; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Error panel disable flow failed: {e.Message}");
+                PanelCanvasGroup.alpha = 0;
+            }
             finally
             {
                 PanelCanvasGroup.interactable = false;

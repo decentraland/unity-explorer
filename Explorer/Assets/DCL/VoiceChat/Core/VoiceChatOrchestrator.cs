@@ -20,6 +20,7 @@ namespace DCL.VoiceChat
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
         private const string TAG = nameof(VoiceChatOrchestrator);
+        private const int HANG_UP_BEFORE_NEW_CALL_DELAY_MS = 1000;
 
         private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
@@ -152,7 +153,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid HangUpAndStartCallAsync()
             {
                 HangUp();
-                await UniTask.Delay(1000, cancellationToken: joinCallCts.Token);
+                await UniTask.Delay(HANG_UP_BEFORE_NEW_CALL_DELAY_MS, cancellationToken: joinCallCts.Token);
 
                 if (!joinCallCts.IsCancellationRequested)
                 {
@@ -192,6 +193,7 @@ namespace DCL.VoiceChat
                 channelChangedSource = new UniTaskCompletionSource();
                 pendingChannelTarget = targetChannelId;
 
+                // Re-check after subscribing: the channel may have changed between the first check and registering the completion source
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
                     channelChangedSource.TrySetResult();
 
@@ -357,7 +359,7 @@ namespace DCL.VoiceChat
             async UniTaskVoid HangUpAndJoinCallAsync()
             {
                 HangUp();
-                await UniTask.Delay(1000, cancellationToken: joinCallCts.Token);
+                await UniTask.Delay(HANG_UP_BEFORE_NEW_CALL_DELAY_MS, cancellationToken: joinCallCts.Token);
 
                 if (!joinCallCts.IsCancellationRequested)
                     communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
