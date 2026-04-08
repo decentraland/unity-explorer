@@ -135,7 +135,7 @@ namespace DCL.Notifications
 
                     await SetNotificationAsReadAsync(list, ct);
                 }
-                catch (OperationCanceledException) { throw; }
+                catch (OperationCanceledException) { return; }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, ReportCategory.UI);
