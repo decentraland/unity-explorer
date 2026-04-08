@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace DCL.Prefs
 {
     public static class DCLPrefKeys
@@ -8,6 +6,8 @@ namespace DCL.Prefs
 
         public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
         public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
+
+        public const string LAUNCH_COUNT = "LaunchCount";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
@@ -68,6 +68,8 @@ namespace DCL.Prefs
         public const string SETTINGS_FULLSCREEN = "Settings_Fullscreen";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
+
+        public const string SETTINGS_POINT_AT_MARKER_VISIBILITY = "Settings_PointAtMarkerVisibility";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
         public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";

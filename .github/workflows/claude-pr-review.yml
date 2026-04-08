@@ -221,6 +221,36 @@ jobs:
               description
             });
 
+      - name: Re-run failed enforce-approvals check
+        if: steps.check-type.outputs.is-auto-review == 'true' && always()
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha }}"
+          echo "Searching for failed enforce-approvals run for SHA $SHA..."
+
+          WORKFLOW_RUN_ID=$(gh run list \
+            --workflow="Enforce QA and DEV Approvals" \
+            --limit 100 \
+            --repo "${{ github.repository }}" \
+            --json databaseId,event,headSha,conclusion \
+            | jq -r --arg SHA "$SHA" '
+                .[] |
+                select(.event == "pull_request") |
+                select(.headSha == $SHA) |
+                select(.conclusion == "failure") |
+                .databaseId
+            ' | head -n 1)
+
+          if [ -z "$WORKFLOW_RUN_ID" ]; then
+            echo "No failed enforce-approvals run found for this commit."
+            exit 0
+          fi
+
+          echo "Re-running failed enforce-approvals workflow: $WORKFLOW_RUN_ID"
+          gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
+          echo "Re-run triggered successfully."
+
   review:
     if: |
       github.event.issue.pull_request != null &&

@@ -52,7 +52,8 @@ namespace DCL.Settings.Configuration
             VolumeBus volumeBus,
             bool isTranslationChatEnabled,
             IEventBus eventBus,
-            IAppArgs appParameters);
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
     }
 
     [Serializable]

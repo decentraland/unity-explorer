@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Prefs;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,8 @@ namespace Plugins.NativeWindowManager
     /// Handles switching between fullscreen and windowed mode,
     /// and changing resolutions.
     /// </summary>
+
+    [LogCategory(ReportCategory.ENGINE)]
     public static class NativeWindowManager
     {
         private const float WINDOWED_RESOLUTION_RESIZE_COEFFICIENT = .75f;
@@ -47,7 +50,7 @@ namespace Plugins.NativeWindowManager
             set
             {
                 if (Screen.fullScreenMode == FullScreenMode.Windowed)
-                    throw new NotSupportedException("Trying to set fullscreen resolution while in windowed mode.");
+                    ReportHub.LogWarning(ReportCategory.ENGINE, "Trying to set fullscreen resolution while in windowed mode.");
 
                 DCLPlayerPrefs.SetVector2Int(DCLPrefKeys.PS_RESOLUTION, value);
                 Screen.SetResolution(value.x, value.y, FullScreenMode.FullScreenWindow);

@@ -1,6 +1,6 @@
 ---
 name: code-standards
-description: "C# naming conventions, member ordering, formatting rules, memory/GC rules, test patterns, and PR standards. Use when writing, reviewing, or modifying non-trivial C# changes in this Unity project — applies to ECS systems, controllers, tests, utilities, and plugins."
+description: "C# naming conventions, member ordering, formatting rules, nullable reference types, memory/GC rules, test patterns, and PR standards. Use when writing, reviewing, or modifying non-trivial C# changes in this Unity project — applies to ECS systems, controllers, tests, utilities, and plugins."
 user-invocable: false
 ---
 
@@ -116,6 +116,22 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 - Lambdas: avoid unintentional variable captures; use `static` keyword on lambdas/local functions
 - Prefer `struct` over `class` where possible; use `ref`, `ref readonly`, `in` to avoid copying
 - Always call `Dispose()` or use `using`; manually dispose Unity objects implementing `IDisposable`
+
+## Nullable Reference Types
+
+The project is migrating to nullable reference types. ~80 of ~153 assemblies already enable it at the project level; the rest default to disabled.
+
+### Rules for New and Modified Files
+
+- **When modifying an existing file that lacks nullable annotations**, add proper nullable annotations as part of your change.
+- **Do not add `#nullable disable`** — use it only as a last-resort escape for generated code or third-party interop.
+
+### Annotation Rules
+
+- **Parameters that legitimately accept null** must be typed `T?` (e.g., `string? name`).
+- **Return types that may return null** must be typed `T?`.
+- **Fields and properties that can be null** must be typed `T?`.
+- **Never use the null-forgiving operator `!`** to silence warnings — fix the root cause instead. The only acceptable use is in test code where NSubstitute returns null proxies.
 
 ## Comments
 
