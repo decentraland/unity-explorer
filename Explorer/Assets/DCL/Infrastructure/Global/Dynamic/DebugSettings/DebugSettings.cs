@@ -1,6 +1,5 @@
 ﻿using LiveKit.Proto;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Global.Dynamic.DebugSettings
@@ -8,21 +7,15 @@ namespace Global.Dynamic.DebugSettings
     public enum GatekeeperMode
     {
         Org = 0,
-        Zone = 3,
-        Today = 4,
-        Localhost = 1,
-        Custom = 2,
+        Zone = 1,
+        Today = 2,
+        Localhost = 3,
+        Custom = 4,
     }
 
     [Serializable]
     public class DebugSettings
     {
-        private const string GATEKEEPER_URL_ORG = "https://comms-gatekeeper.decentraland.org/get-scene-adapter";
-        private const string GATEKEEPER_URL_ZONE = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter";
-        private const string GATEKEEPER_URL_TODAY = "https://comms-gatekeeper.decentraland.today/get-scene-adapter";
-        private const string GATEKEEPER_URL_LOCALHOST = "http://localhost:3000/get-scene-adapter";
-        private const string GATEKEEPER_URL_FLAG = "gatekeeper-url";
-
         private static readonly DebugSettings RELEASE_SETTINGS = Release();
 
         [SerializeField]
@@ -53,8 +46,8 @@ namespace Global.Dynamic.DebugSettings
         [Header("Comms Gatekeeper")]
         [SerializeField]
         private GatekeeperMode gatekeeperMode;
-        [SerializeField] [Tooltip("Full adapter URL used only when Gatekeeper Mode is set to Custom (e.g. http://localhost:3000/get-scene-adapter)")]
-        private string customGatekeeperUrl = "http://localhost:3000/get-scene-adapter";
+        [SerializeField] [Tooltip("Base gatekeeper URL used only when Gatekeeper Mode is set to Custom (e.g. http://localhost:3000)")]
+        private string customGatekeeperUrl = string.Empty;
         [Space]
         [SerializeField]
         private string[] appParameters;
@@ -75,7 +68,7 @@ namespace Global.Dynamic.DebugSettings
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
                 gatekeeperMode = GatekeeperMode.Org,
-                customGatekeeperUrl = GATEKEEPER_URL_LOCALHOST,
+                customGatekeeperUrl = string.Empty,
                 appParameters = Array.Empty<string>(),
             };
 
@@ -92,32 +85,8 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
         public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-        public string[] AppParameters
-        {
-            get
-            {
-                if (!Application.isEditor)
-                    return RELEASE_SETTINGS.appParameters;
-
-                string? gatekeeperUrl = gatekeeperMode switch
-                {
-                    GatekeeperMode.Org => GATEKEEPER_URL_ORG,
-                    GatekeeperMode.Zone => GATEKEEPER_URL_ZONE,
-                    GatekeeperMode.Today => GATEKEEPER_URL_TODAY,
-                    GatekeeperMode.Localhost => GATEKEEPER_URL_LOCALHOST,
-                    GatekeeperMode.Custom => customGatekeeperUrl,
-                    _ => null,
-                };
-
-                if (string.IsNullOrEmpty(gatekeeperUrl))
-                    return appParameters;
-
-                var merged = new List<string>(appParameters.Length + 2);
-                merged.AddRange(appParameters);
-                merged.Add($"--{GATEKEEPER_URL_FLAG}");
-                merged.Add(gatekeeperUrl);
-                return merged.ToArray();
-            }
-        }
+        public GatekeeperMode GatekeeperMode => Application.isEditor ? gatekeeperMode : RELEASE_SETTINGS.gatekeeperMode;
+        public string CustomGatekeeperUrl => Application.isEditor ? customGatekeeperUrl : RELEASE_SETTINGS.customGatekeeperUrl;
+        public string[] AppParameters => Application.isEditor ? appParameters : RELEASE_SETTINGS.appParameters;
     }
 }
