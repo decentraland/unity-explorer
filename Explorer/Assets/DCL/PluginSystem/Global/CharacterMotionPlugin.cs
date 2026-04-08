@@ -143,6 +143,7 @@ namespace DCL.PluginSystem.Global
             {
                 HandPointAtSystem.InjectToWorld(ref builder);
                 PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache, settings.PointAtMarkerVisibilitySettings);
+                builder.World.Create(PointAtThumbnailCache.Create());
                 PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
                 RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
                 TorsoIKSystem.InjectToWorld(ref builder, settings.ControllerSettings);
