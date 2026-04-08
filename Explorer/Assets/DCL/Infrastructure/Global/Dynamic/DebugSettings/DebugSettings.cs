@@ -18,6 +18,12 @@ namespace Global.Dynamic.DebugSettings
     [Serializable]
     public class DebugSettings
     {
+        private const string GATEKEEPER_URL_ORG = "https://comms-gatekeeper.decentraland.org/get-scene-adapter";
+        private const string GATEKEEPER_URL_ZONE = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter";
+        private const string GATEKEEPER_URL_TODAY = "https://comms-gatekeeper.decentraland.today/get-scene-adapter";
+        private const string GATEKEEPER_URL_LOCALHOST = "http://localhost:3000/get-scene-adapter";
+        private const string GATEKEEPER_URL_FLAG = "gatekeeper-url";
+
         private static readonly DebugSettings RELEASE_SETTINGS = Release();
 
         [SerializeField]
@@ -53,12 +59,6 @@ namespace Global.Dynamic.DebugSettings
         [Space]
         [SerializeField]
         private string[] appParameters;
-
-        private const string GATEKEEPER_URL_ORG = "https://comms-gatekeeper.decentraland.org/get-scene-adapter";
-        private const string GATEKEEPER_URL_ZONE = "https://comms-gatekeeper.decentraland.zone/get-scene-adapter";
-        private const string GATEKEEPER_URL_TODAY = "https://comms-gatekeeper.decentraland.today/get-scene-adapter";
-        private const string GATEKEEPER_URL_LOCALHOST = "http://localhost:3000/get-scene-adapter";
-        private const string GATEKEEPER_URL_FLAG = "gatekeeper-url";
 
         public static DebugSettings Release() =>
             new ()
