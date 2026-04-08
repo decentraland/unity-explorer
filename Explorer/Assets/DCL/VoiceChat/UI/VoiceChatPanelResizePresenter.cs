@@ -110,6 +110,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
+            voiceChatState.ParticipantsStateService.SpeakersUpdated -= OnSpeakersUpdated;
             panelSizeUpdateSubscription.Dispose();
             typeChangedSubscription.Dispose();
             panelStateChangedSubscription.Dispose();

@@ -91,6 +91,7 @@ namespace DCL.VoiceChat
             localParticipantIsSpeakerSubscription.Dispose();
             callStatusSubscription.Dispose();
 
+            reconnectionManager.Dispose();
             microphonePublisher.Dispose();
             remoteListener.Dispose();
 

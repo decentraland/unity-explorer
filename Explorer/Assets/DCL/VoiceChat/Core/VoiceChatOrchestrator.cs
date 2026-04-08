@@ -93,6 +93,8 @@ namespace DCL.VoiceChat
             sceneVoiceChatTrackerService.ActiveVoiceChatDetectedInScene -= OnActiveVoiceChatDetectedInScene;
             sceneVoiceChatTrackerService.ActiveVoiceChatStoppedInScene -= OnActiveVoiceChatStoppedInScene;
 
+            joinCallCts.SafeCancelAndDispose();
+
             channelChangedSource?.TrySetCanceled();
             channelChangedSource = null;
             pendingChannelTarget = null;
@@ -345,7 +347,7 @@ namespace DCL.VoiceChat
         {
             joinCallCts = joinCallCts.SafeRestart();
 
-            if (!VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
+            if (VoiceChatCallTypeValidator.IsNoActiveCall(currentVoiceChatType.Value))
                 communityVoiceChatCallStatusService.JoinCommunityVoiceChatAsync(communityId, joinCallCts.Token).Forget();
             else if (force)
                 HangUpAndJoinCallAsync().Forget();
