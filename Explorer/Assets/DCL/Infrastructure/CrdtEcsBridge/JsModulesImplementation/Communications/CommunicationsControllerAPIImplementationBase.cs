@@ -16,13 +16,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         // Must be aligned with SDK runtime 1st-byte values at:
         // https://github.com/decentraland/js-sdk-toolchain/blob/c8695cd9b94e87ad567520089969583d9d36637f/packages/@dcl/sdk/src/network/binary-message-bus.ts#L3-L7
-        enum CommsMessageType {
+        protected enum CommsMessageType {
           CRDT = 1,
           REQ_CRDT_STATE = 2,   // Special signal to receive CRDT State from a peer
           RES_CRDT_STATE = 3    // Special signal to send CRDT State to a peer
         }
 
-        protected readonly List<PoolableByteArray> eventsToProcess = new ();
+        private readonly List<PoolableByteArray> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
@@ -78,7 +78,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     if (firstByte == (int)CommsMessageType.CRDT)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
-                        int filteredLength = FilterCRDTMessage(poolable.Memory.Span, filtered);
+                        int filteredLength = FilterCRDTMessage(poolable.Memory.Span, filtered, isTrustedSource: true);
                         EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, recipient);
                         continue;
                     }
@@ -87,7 +87,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     if (firstByte == (int)CommsMessageType.RES_CRDT_STATE)
                     {
                         Span<byte> filtered = stackalloc byte[poolable.Memory.Span.Length];
-                        int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered);
+                        int filteredLength = FilterCRDTStateMessage(poolable.Memory.Span, filtered, isTrustedSource: true);
                         EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, filtered.Slice(0, filteredLength), assertiveness, recipient);
                         continue;
                     }
@@ -117,15 +117,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             }
         }
 
-        private static int FilterCRDTMessage(ReadOnlySpan<byte> message, Span<byte> output)
+        protected static int FilterCRDTMessage(ReadOnlySpan<byte> message, Span<byte> output, bool isTrustedSource)
         {
-            CRDTFilter.FilterSceneMessageBatch(message, output, out int totalWrite);
+            CRDTFilter.FilterSceneMessageBatch(message, output, isTrustedSource, out int totalWrite);
             return totalWrite;
         }
 
-        private static int FilterCRDTStateMessage(ReadOnlySpan<byte> message, Span<byte> output)
+        protected static int FilterCRDTStateMessage(ReadOnlySpan<byte> message, Span<byte> output, bool isTrustedSource)
         {
-            CRDTFilter.FilterCRDTState(message, output, out int totalWrite);
+            CRDTFilter.FilterCRDTState(message, output, isTrustedSource, out int totalWrite);
             return totalWrite;
         }
 
@@ -136,6 +136,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             message.CopyTo(encodedMessage[1..]);
 
             sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, assertivenes, cancellationTokenSource.Token, specialRecipient);
+        }
+
+        protected void Enqueue(PoolableByteArray item)
+        {
+            lock (eventsToProcess) { eventsToProcess.Add(item); }
         }
 
         protected abstract void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage decodedMessage);
