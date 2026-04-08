@@ -42,8 +42,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
 
-            //These are fetched from catalyst, meaning they never have a manifest
-            await AssetBundleManifestFallbackHelper.CreateAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+            //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception)
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment, skipException: true);
 
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);
