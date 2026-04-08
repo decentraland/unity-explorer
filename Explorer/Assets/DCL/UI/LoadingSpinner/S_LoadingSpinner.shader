@@ -1,4 +1,4 @@
-Shader "S_LoadingSpinner"
+Shader "S_LoadingSpinner (SoftMaskable)"
 {
     Properties
     {
@@ -11,6 +11,9 @@ Shader "S_LoadingSpinner"
         [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
         [KeywordEnum(Sharp, Rounded)]ENUM_173FCA8E617C4725B6502C6FBE756CEC("RoundedCorners", Float) = 1
+        
+        // Soft Mask determines that shader supports soft masking by presence of this property.
+        [PerRendererData] _SoftMask("Mask", 2D) = "white" {}
 
         [HideInInspector]_StencilComp("Stencil Comparison", Float) = 8
         [HideInInspector]_Stencil("Stencil ID", Float) = 0
@@ -65,6 +68,10 @@ Shader "S_LoadingSpinner"
         #pragma exclude_renderers d3d11_9x
         #pragma vertex vert
         #pragma fragment frag
+        // ==== SOFTMASKABLE START ====
+        #pragma shader_feature _ SOFTMASK_EDITOR
+        #pragma shader_feature_local_fragment _ SOFTMASKABLE
+        // ==== SOFTMASKABLE END ====
 
             // DotsInstancingOptions: <None>
             // HybridV1InjectedBuiltinProperties: <None>
@@ -125,6 +132,11 @@ Shader "S_LoadingSpinner"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+        // ==== SOFTMASKABLE START ====
+        #if SOFTMASKABLE
+        #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
+        #endif
+        // ==== SOFTMASKABLE END ====
 
             // --------------------------------------------------
             // Structs and Packing
@@ -803,7 +815,62 @@ output.uv0 = input.texCoord0;
 
     #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/Editor/2D/ShaderGraph/Includes/SpriteUnlitPass.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/SurfaceData2D.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
+
+// ==== SOFTMASKABLE START ====
+// Inlined SpriteUnlitPass with SoftMask support.
+// SpriteUnlitPass.hlsl cannot be used directly because the frag function it
+// defines needs to be extended with the SoftMask call.
+half4 _RendererColor;
+
+PackedVaryings vert(Attributes input)
+{
+    Varyings output = (Varyings)0;
+    UNITY_SETUP_INSTANCE_ID(input);
+    SetUpSpriteInstanceProperties();
+    input.positionOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
+    output = BuildVaryings(input);
+    output.color *= _RendererColor * unity_SpriteColor;
+    PackedVaryings packedOutput = PackVaryings(output);
+    return packedOutput;
+}
+
+half4 frag(PackedVaryings packedInput) : SV_TARGET
+{
+    Varyings unpacked = UnpackVaryings(packedInput);
+    UNITY_SETUP_INSTANCE_ID(unpacked);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(unpacked);
+
+    SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
+
+#ifdef UNIVERSAL_USELEGACYSPRITEBLOCKS
+    half4 color = surfaceDescription.SpriteColor;
+#else
+    half4 color = half4(surfaceDescription.BaseColor, surfaceDescription.Alpha);
+#endif
+
+    if (color.a == 0.0)
+        discard;
+
+#if ALPHA_CLIP_THRESHOLD
+    clip(color.a - surfaceDescription.AlphaClipThreshold);
+#endif
+
+#if !defined(HAVE_VFX_MODIFICATION) && !defined(_DISABLE_COLOR_TINT)
+    color *= unpacked.color;
+#endif
+
+    // ==== SOFTMASKABLE: apply soft mask alpha ====
+    #if SOFTMASKABLE
+    color.a *= SoftMask(unpacked.positionCS.xy, float4(0, 0, 0, 0), color.a);
+    #endif
+    // ==== SOFTMASKABLE END ====
+
+    return color;
+}
+// ==== SOFTMASKABLE END ====
 
     ENDHLSL
 }
@@ -844,6 +911,10 @@ Pass
     #pragma exclude_renderers d3d11_9x
     #pragma vertex vert
     #pragma fragment frag
+    // ==== SOFTMASKABLE START ====
+    #pragma shader_feature _ SOFTMASK_EDITOR
+    #pragma shader_feature_local_fragment _ SOFTMASKABLE
+    // ==== SOFTMASKABLE END ====
 
         // DotsInstancingOptions: <None>
         // HybridV1InjectedBuiltinProperties: <None>
@@ -904,6 +975,11 @@ Pass
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+    // ==== SOFTMASKABLE START ====
+    #if SOFTMASKABLE
+    #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
+    #endif
+    // ==== SOFTMASKABLE END ====
 
         // --------------------------------------------------
         // Structs and Packing
@@ -1582,7 +1658,62 @@ output.uv0 = input.texCoord0;
 
     #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/Editor/2D/ShaderGraph/Includes/SpriteUnlitPass.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/SurfaceData2D.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Debug/Debugging2D.hlsl"
+
+// ==== SOFTMASKABLE START ====
+// Inlined SpriteUnlitPass with SoftMask support.
+// SpriteUnlitPass.hlsl cannot be used directly because the frag function it
+// defines needs to be extended with the SoftMask call.
+half4 _RendererColor;
+
+PackedVaryings vert(Attributes input)
+{
+    Varyings output = (Varyings)0;
+    UNITY_SETUP_INSTANCE_ID(input);
+    SetUpSpriteInstanceProperties();
+    input.positionOS = UnityFlipSprite(input.positionOS, unity_SpriteProps.xy);
+    output = BuildVaryings(input);
+    output.color *= _RendererColor * unity_SpriteColor;
+    PackedVaryings packedOutput = PackVaryings(output);
+    return packedOutput;
+}
+
+half4 frag(PackedVaryings packedInput) : SV_TARGET
+{
+    Varyings unpacked = UnpackVaryings(packedInput);
+    UNITY_SETUP_INSTANCE_ID(unpacked);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(unpacked);
+
+    SurfaceDescription surfaceDescription = BuildSurfaceDescription(unpacked);
+
+#ifdef UNIVERSAL_USELEGACYSPRITEBLOCKS
+    half4 color = surfaceDescription.SpriteColor;
+#else
+    half4 color = half4(surfaceDescription.BaseColor, surfaceDescription.Alpha);
+#endif
+
+    if (color.a == 0.0)
+        discard;
+
+#if ALPHA_CLIP_THRESHOLD
+    clip(color.a - surfaceDescription.AlphaClipThreshold);
+#endif
+
+#if !defined(HAVE_VFX_MODIFICATION) && !defined(_DISABLE_COLOR_TINT)
+    color *= unpacked.color;
+#endif
+
+    // ==== SOFTMASKABLE: apply soft mask alpha ====
+    #if SOFTMASKABLE
+    color.a *= SoftMask(unpacked.positionCS.xy, float4(0, 0, 0, 0), color.a);
+    #endif
+    // ==== SOFTMASKABLE END ====
+
+    return color;
+}
+// ==== SOFTMASKABLE END ====
 
     ENDHLSL
 }

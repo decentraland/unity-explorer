@@ -58,6 +58,7 @@ namespace DCL.Settings
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly IAppArgs appParameters;
+        private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
@@ -82,7 +83,8 @@ namespace DCL.Settings
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -103,6 +105,7 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.appParameters = appParameters;
+            this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -219,7 +222,8 @@ namespace DCL.Settings
                                 assetsProvisioner,
                                 volumeBus,
                                 eventBus,
-                                appParameters);
+                                appParameters,
+                                pointAtMarkerVisibilitySettings);
 
                         if (controller != null)
                             controllers.Add(controller);

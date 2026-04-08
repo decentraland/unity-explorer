@@ -13,6 +13,7 @@ namespace MVC
         private readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
+        private readonly CancellationToken destructionToken;
         private readonly IPopupCloserView popupCloser;
         public IReadOnlyDictionary<Type, IController> Controllers => controllers;
 
@@ -26,6 +27,7 @@ namespace MVC
         {
             this.windowsStackManager = windowsStackManager;
             this.destructionCancellationTokenSource = destructionCancellationTokenSource;
+            destructionToken = destructionCancellationTokenSource.Token;
 
             controllers = new Dictionary<Type, IController>(200);
             popupCloser = popupCloserView;
@@ -93,8 +95,8 @@ namespace MVC
                 return;
 
             ct = ct.Equals(default(CancellationToken))
-                ? destructionCancellationTokenSource.Token
-                : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionCancellationTokenSource.Token).Token;
+                ? destructionToken
+                : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken).Token;
 
             try
             {

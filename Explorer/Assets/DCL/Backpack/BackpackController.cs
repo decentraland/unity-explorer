@@ -242,7 +242,6 @@ namespace DCL.Backpack
             var avatarShapeComponent = world.Get<AvatarShapeComponent>(playerEntity);
 
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-            backpackGridController.RequestPage(1, true);
             backpackCharacterPreviewController.Initialize(avatar, CharacterPreviewUtils.BACKPACK_PREVIEW_POSITION);
 
             while (!avatarShapeComponent.WearablePromise.IsConsumed)

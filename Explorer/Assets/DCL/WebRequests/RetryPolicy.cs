@@ -68,8 +68,8 @@ namespace DCL.WebRequests
         public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null) =>
             new (retriesCount, Strictness.ENFORCED, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
 
-        public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER) =>
-            new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier);
+        public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER, ISet<long>? forceRecoverableCodes = null) =>
+            new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier, forceRecoverableCodes);
 
         public override string ToString() =>
             $"MaxRetriesCount={maxRetriesCount}, Strictness={strictness}, MinDelayBetweenAttemptsMs={minDelayBetweenAttemptsMs}, BackoffMultiplier={backoffMultiplier}";

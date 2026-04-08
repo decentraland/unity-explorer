@@ -845,9 +845,10 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    ownProfile ??= await selfProfile.ProfileAsync(ct);
-                    // Don't show any interaction for our own user
-                    if (ownProfile?.UserId == inputData.UserId) return;
+                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
+                    // Dont show any interaction for our own user
+                    if (ownProfile == null || ownProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled);
 

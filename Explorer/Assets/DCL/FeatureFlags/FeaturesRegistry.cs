@@ -62,6 +62,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS] = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS),
                 [FeatureId.AVATAR_GHOSTS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_GHOSTS, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_GHOSTS)),
                 [FeatureId.REPORT_USER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.REPORT_USER, featureFlags.IsEnabled(FeatureFlagsStrings.REPORT_USER) || Application.isEditor),
+                [FeatureId.POINT_AT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -182,5 +183,12 @@ namespace DCL.FeatureFlags
         GLIDING = 51,
         AVATAR_GHOSTS = 52,
         REPORT_USER = 53,
+        CSV_VARIANT = 54,
+        STRING_VARIANT = 55,
+        WALLETS_VARIANT = 56,
+        ONBOARDING_ENABLED_VARIANT = 57,
+        ONBOARDING_GREETINGS_VARIANT = 58,
+        MARKETPLACE_CREDITS_WALLETS_VARIANT = 59,
+        POINT_AT = 60,
     }
 }

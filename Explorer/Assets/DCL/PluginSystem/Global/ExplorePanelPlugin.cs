@@ -480,7 +480,8 @@ namespace DCL.PluginSystem.Global
                 upscalingController,
                 assetsProvisioner,
                 eventBus,
-                appArgs);
+                appArgs,
+                settings.pointAtMarkerVisibilitySettings);
 
             await settingsController.InitializeAsync();
 
@@ -708,6 +709,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public ControlsSettingsAsset ControlsSettingsAsset { get; private set; } = null!;
             [field: SerializeField] public ChatSettingsAsset ChatSettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; } = null!;
+
+            [field: SerializeField]
+            public PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings { get; private set; }
 
             [field: Header("Camera Reel")]
             [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]

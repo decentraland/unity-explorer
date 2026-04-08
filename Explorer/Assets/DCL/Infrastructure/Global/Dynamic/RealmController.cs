@@ -30,7 +30,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
+using UnityEngine;
 using DCL.PrivateWorlds;
+using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
 
 namespace Global.Dynamic
@@ -72,6 +74,7 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
+        private IReadOnlyList<int2> localSceneParcels = Array.Empty<int2>();
 
         public IRealmData RealmData => realmData;
 
@@ -144,6 +147,7 @@ namespace Global.Dynamic
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
@@ -255,11 +259,13 @@ namespace Global.Dynamic
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
         {
-            if (staticLoadPositions.Count == 0) return null;
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+            if (positions.Count == 0)
+                return null;
 
             World world = GlobalWorld.EcsWorld;
 
-            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
+            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(positions.Count), positions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
@@ -277,7 +283,6 @@ namespace Global.Dynamic
             }
 
             return sceneDefinitions;
-
         }
 
         public void DisposeGlobalWorld()
@@ -343,6 +348,20 @@ namespace Global.Dynamic
                 (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
         }
 
+        private static List<int2> ParseLocalSceneParcels(List<string> parcels)
+        {
+            if (parcels.Count == 0)
+                return new List<int2>();
+
+            var parsed = new List<int2>(parcels.Count);
+
+            foreach (string parcelStr in parcels)
+                if (RealmHelper.TryParseParcelFromString(parcelStr, out Vector2Int parcel))
+                    parsed.Add(parcel.ToInt2());
+
+            return parsed;
+        }
+
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
             world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
@@ -350,10 +369,12 @@ namespace Global.Dynamic
 
         private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
         {
-            if (staticLoadPositions is { Count: > 0 })
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+
+            if (positions is { Count: > 0 })
             {
                 // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
+                world.Add(realmEntity, new StaticScenePointers(positions));
                 return true;
             }
 

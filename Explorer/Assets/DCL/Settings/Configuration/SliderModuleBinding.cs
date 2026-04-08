@@ -64,7 +64,8 @@ namespace DCL.Settings.Configuration
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
