@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
@@ -13,6 +11,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;

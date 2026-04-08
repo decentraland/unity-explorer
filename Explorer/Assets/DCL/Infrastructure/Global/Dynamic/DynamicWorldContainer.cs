@@ -985,7 +985,6 @@ namespace Global.Dynamic
                     webBrowser,
                     bootstrapContainer.CompositeWeb3Provider,
                     bootstrapContainer.DecentralandUrlsSource,
-                    screenModeController,
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),

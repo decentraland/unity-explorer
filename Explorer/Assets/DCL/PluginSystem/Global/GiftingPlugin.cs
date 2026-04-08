@@ -55,7 +55,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IScreenModeController screenModeController;
         private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
@@ -79,7 +78,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IScreenModeController screenModeController,
             ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -99,7 +97,6 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.screenModeController = screenModeController;
             this.imageControllerProvider = imageControllerProvider;
         }
 
