@@ -2,11 +2,6 @@
 name: dcl-test-scene-specialist
 description: Create and modify SDK7 test scenes in the sdk7-test-scenes repo to demonstrate and validate SDK components
 model: sonnet
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
 ---
 
 # Decentraland Test Scene Specialist

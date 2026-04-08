@@ -1,11 +1,6 @@
 ---
 name: dcl-explorer-specialist
 description: Implement SDK components in the Unity ECS runtime within the unity-explorer repo
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
 skills:
   - code-standards
   - ecs-system-and-component-design

@@ -2,11 +2,6 @@
 name: dcl-protocol-specialist
 description: Create and modify .proto files in the Decentraland protocol repo for SDK component definitions
 model: sonnet
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
 ---
 
 # Decentraland Protocol Specialist

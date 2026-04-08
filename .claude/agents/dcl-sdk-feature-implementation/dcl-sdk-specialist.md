@@ -2,11 +2,6 @@
 name: dcl-sdk-specialist
 description: Generate TypeScript SDK code, create helpers, wire exports, and write tests in the js-sdk-toolchain repo
 model: sonnet
-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
 ---
 
 # Decentraland SDK Specialist
@@ -94,7 +89,18 @@ make install && make build
 
 This regenerates all files in `generated/` and `generated/index.gen.ts` + `generated/global.gen.ts`.
 
-## Extended Helper Pattern
+## Two Types of SDK Helpers
+
+There are two categories of helpers you may need to implement:
+
+- **Component Definition Extended** — avoids boilerplate when configuring component properties from scene code. Examples: `Material`, `MeshRenderer`, `ParticleSystem`.
+- **Helper Systems** — systems running in the background without forcing creators to manually instantiate them. Examples: `raycastSystem`, `pointerEventsSystem`, `videoEventsSystem`.
+
+Check existing helpers in those directories as reference before implementing.
+
+---
+
+## Component Helper Pattern
 
 When a component has `oneof` variants or needs a nicer API, create an extended helper. Pattern from `ParticleSystem.ts`:
 
@@ -130,32 +136,72 @@ export function defineParticleSystemComponent(
 }
 ```
 
-## Export Wiring (4 files to update)
+### Component Helper — Export Wiring (4 files to update)
 
 When adding an extended component, update these files:
 
-### 1. `packages/@dcl/ecs/src/components/index.ts`
+#### 1. `packages/@dcl/ecs/src/components/index.ts`
+Add the `LwwComponentGetter` export of the extended definition:
 ```typescript
 import { defineParticleSystemComponent } from './extended/ParticleSystem'
 // In the components object:
 ParticleSystem: (engine: IEngine) => defineParticleSystemComponent(engine),
 ```
 
-### 2. `packages/@dcl/ecs/src/components/types.ts`
+#### 2. `packages/@dcl/ecs/src/components/types.ts`
+Reference the extended type:
 ```typescript
 export type { ParticleSystemComponentDefinitionExtended } from './extended/ParticleSystem'
 ```
 
-### 3. `packages/@dcl/ecs/src/index.ts`
+#### 3. `packages/@dcl/ecs/src/index.ts`
+Export the extended component definition:
 ```typescript
 export const ParticleSystem: ParticleSystemComponentDefinitionExtended = components.ParticleSystem(engine)
 ```
 
-### 4. `scripts/protocol-buffer-generation/generateIndex.ts`
-Add to `skipExposeGlobally` to prevent auto-generated global export from conflicting with your hand-written one:
+#### 4. `scripts/protocol-buffer-generation/generateIndex.ts`
+Add to `skipExposeGlobally` to prevent the auto-generated global export from conflicting with your hand-written one:
 ```typescript
 const skipExposeGlobally: string[] = ['Animator', 'MeshRenderer', 'MeshCollider', 'Material', 'Tween', 'ParticleSystem']
 ```
+
+---
+
+## System Helper Pattern
+
+For background systems that creators should never need to instantiate manually (event handlers, pointer callbacks, video events, etc.), create a system helper.
+
+### 1. Create the system helper file
+```
+packages/@dcl/ecs/src/systems/<SystemName>.ts
+```
+
+Look at existing helpers in that directory as reference (e.g. `videoEventsSystem.ts`, `pointerEventsSystem.ts`, `raycastSystem.ts`).
+
+### 2. Initialize the system helper (2 files to update)
+
+#### `packages/@dcl/ecs/src/runtime/initialization/index.ts`
+Register the system so it starts automatically when the engine initializes:
+```typescript
+import { createMySystem } from '../../systems/mySystem'
+// In the initialization function:
+createMySystem(engine)
+```
+
+#### `packages/@dcl/ecs/src/index.ts`
+Re-export the helper so scene code can reference it:
+```typescript
+export { mySystem } from './systems/mySystem'
+// Follow the same pattern as the other system re-exports already in this file
+```
+
+### 3. Write a test for the system helper
+Create a test file at a location matching the system's purpose:
+- Event-based systems: `test/ecs/events/<SystemName>.spec.ts`
+- Other systems: `test/ecs/<SystemName>.spec.ts`
+
+Look at `test/ecs/events/videoEventsSystem.spec.ts` for a reference test structure.
 
 ## GROWN_ONLY_COMPONENTS (GOVS)
 
@@ -165,7 +211,7 @@ For grow-only result components (not LWW), add the component name to:
 const GROWN_ONLY_COMPONENTS = ['PointerEventsResult', 'VideoEvent', 'AvatarEmoteCommand', 'AudioEvent', 'TriggerAreaResult', 'AssetLoadLoadingState']
 ```
 
-## Test Pattern
+## Component Serialization Test Pattern
 
 Create a test file at `test/ecs/components/<ComponentName>.spec.ts`:
 
@@ -217,9 +263,19 @@ Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
 
 - **`make update-snapshots`** — This is done manually later. Running it prematurely can corrupt test baselines.
 
-## Reference Components
+## Reference Implementations
 
 Study these for patterns:
-- **Extended (complex):** `ParticleSystem.ts`, `LightSource.ts`, `Material.ts`, `Tween.ts`
-- **Extended (simple):** `AudioSource.ts`, `Billboard.ts` (if exists)
-- **Generated only:** `TextShape.gen.ts`, `Billboard.gen.ts` — no extended helper needed for simple components
+
+**Component helpers (extended):**
+- Complex (`oneof` variants): `ParticleSystem.ts`, `LightSource.ts`, `Material.ts`, `Tween.ts`
+- Simpler wrappers: `AudioSource.ts`
+- Generated only (no extended needed): `TextShape.gen.ts`, `Billboard.gen.ts`
+
+**System helpers:**
+- `packages/@dcl/ecs/src/systems/videoEventsSystem.ts`
+- `packages/@dcl/ecs/src/systems/pointerEventsSystem.ts`
+- `packages/@dcl/ecs/src/systems/raycastSystem.ts`
+
+**System helper tests:**
+- `test/ecs/events/videoEventsSystem.spec.ts`
