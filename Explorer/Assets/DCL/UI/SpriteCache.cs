@@ -62,38 +62,37 @@ namespace DCL.UI
 
         public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, RetryPolicy? retryPolicy, CancellationToken ct)
         {
-            Sprite? sprite = GetCachedSprite(imageUrl);
-
-            if (sprite != null)
-                return sprite;
-
-            // Avoid multiple requests for the same thumbnail
-            if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> thumbnailTask))
+            while (!ct.IsCancellationRequested)
             {
-                Sprite? result = await thumbnailTask.Task;
-                if (result != null || ct.IsCancellationRequested)
-                    return result;
-
-                // The shared download was canceled by another consumer, but we're still active — check cache, otherwise fall through to start a new download
-                sprite = GetCachedSprite(imageUrl);
+                Sprite? sprite = GetCachedSprite(imageUrl);
                 if (sprite != null)
                     return sprite;
+
+                // Avoid multiple requests for the same thumbnail
+                if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> existingTask))
+                {
+                    Sprite? result = await existingTask.Task;
+                    if (result != null || ct.IsCancellationRequested)
+                        return result;
+
+                    // The shared download was canceled by another consumer, but we're still active.
+                    // Yield to let the final block in DownloadSpriteAsync clean up the entry from currentSpriteTasks before retrying.
+                    await UniTask.Yield(ct);
+                    continue;
+                }
+
+                UniTaskCompletionSource<Sprite?> tcs = new UniTaskCompletionSource<Sprite?>();
+                if (currentSpriteTasks.TryAdd(imageUrl, tcs))
+                {
+                    DownloadSpriteAsync(imageUrl, useKtx, retryPolicy, tcs, ct).Forget();
+                    return await tcs.Task;
+                }
+
+                // Another consumer registered between TryGetValue and TryAdd — yield and retry
+                await UniTask.Yield(ct);
             }
 
-            UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
-
-            if (currentSpriteTasks.TryAdd(imageUrl, spriteTaskCompletionSource))
-            {
-                DownloadSpriteAsync(imageUrl, useKtx, retryPolicy, spriteTaskCompletionSource, ct).Forget();
-                return await spriteTaskCompletionSource.Task;
-            }
-
-            // Another consumer already registered a new download — await theirs instead of our local TCS that nobody would resolve
-            if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> retryTask))
-                return await retryTask.Task;
-
-            // Edge case: download registered and completed between TryAdd and TryGetValue
-            return GetCachedSprite(imageUrl);
+            return null;
         }
 
         public void AddOrReplaceCachedSprite(string? imageUrl, Sprite imageContent)
