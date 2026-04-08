@@ -16,10 +16,9 @@ using Utility;
 namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
-    ///     Orchestrates proximity voice chat: coordinates state transitions
-    ///     (Hearing/Speaking/Suppressed/Disabled) and delegates microphone publishing
-    ///     to <see cref="MicrophoneTrackPublisher"/> and remote track management
-    ///     to <see cref="RemoteTrackListener"/>.
+    ///     Orchestrates proximity voice chat: coordinates state transitions (Hearing/Speaking/Suppressed/Disabled),
+    ///     delegates microphone publishing to <see cref="MicrophoneTrackPublisher"/>,
+    ///     delegates remote track management to <see cref="RemoteTrackListener"/>.
     ///     Mic control (PTT, device switching) is handled by <see cref="VoiceChatMicrophoneHandler"/>.
     /// </summary>
     public class ProximityVoiceChatManager : IDisposable

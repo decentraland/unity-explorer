@@ -74,9 +74,7 @@ namespace DCL.VoiceChat
 
         public void ApplyLivekitSpatialSettings(LivekitAudioSource source)
         {
-            source.Spatialize = proximitySpatialize;
-            source.IldStrength = proximityIldStrength;
-            source.SmoothPanning = proximitySmoothPanning;
+            source.SetSpatialSettings(proximitySpatialize, proximityIldStrength, proximitySmoothPanning);
         }
     }
 }
