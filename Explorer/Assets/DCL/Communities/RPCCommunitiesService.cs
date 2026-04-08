@@ -82,6 +82,8 @@ namespace DCL.Communities
                 {
                     try
                     {
+                        //If we are disconnecting from the social service rpc, avoid processing events
+                        //that would cause exception later down the flow
                         if (socialServiceRPC.IsDisconnecting) continue;
 
                         switch (response.Status)
