@@ -31,6 +31,7 @@ namespace DCL.Audio.Avatar
             FootstepSlide,
             AirJump,
             None,
+            PointAt,
         }
 
         /// <summary>

@@ -1,0 +1,40 @@
+using UnityEngine;
+
+namespace DCL.Character.CharacterMotion.Components
+{
+    public struct HandPointAtComponent
+    {
+        public bool IsPointing;
+        public Vector3 WorldHitPoint;
+        public bool IsDragging;
+
+        public float AnimationWeight;
+        public bool WasPressed;
+        public Vector2 PressOrigin;
+        public bool RotationCompleted;
+        public float RotationAnimationWeight;
+        public Vector3 PreviousLookDirection;
+        public bool ForceStop;
+        public bool StoppedEmote;
+
+        private float duration;
+
+        public void RefreshDuration(float newDuration)
+        {
+            duration = newDuration;
+        }
+
+        public void ForceStopAction()
+        {
+            RefreshDuration(0f);
+            ForceStop = true;
+        }
+
+        public void TickDuration(float deltaTime)
+        {
+            duration = Mathf.Clamp(duration - deltaTime, 0f, float.MaxValue);
+            if (duration <= 0)
+                IsPointing = false;
+        }
+    }
+}

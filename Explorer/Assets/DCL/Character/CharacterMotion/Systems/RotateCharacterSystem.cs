@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -45,6 +46,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterTransform transform,
             ref CharacterPlatformComponent platformComponent,
+            in HandPointAtComponent pointAtComponent,
             in StunComponent stunComponent)
         {
             Transform characterTransform = transform.Transform;
@@ -54,7 +56,12 @@ namespace DCL.CharacterMotion.Systems
             var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
 
             if (!stunComponent.IsStunned)
-                characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
+            {
+                float speed = pointAtComponent.IsPointing
+                    ? pointAtComponent.IsDragging ? settings.PointAtRotationSpeed * 2 : settings.PointAtRotationSpeed
+                    : settings.RotationSpeed;
+                characterTransform.rotation = Quaternion.Lerp(characterTransform.rotation, targetRotation, speed * dt);
+            }
 
             // If we are on a platform we save our local rotation
             PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward, scenesCache.CurrentScene.Value);

@@ -1,3 +1,4 @@
+using Coffee.UISoftMask;
 using DCL.CharacterPreview;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelGallery.Components;
@@ -7,7 +8,6 @@ using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using MVC;
-using SoftMasking;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -71,6 +71,9 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
+
+        [field: SerializeField]
+        public Image ViewportMaskGraphic { get; private set; }
 
         [field: SerializeField]
         public GameObject FriendInteractionContainer { get; private set; }
@@ -184,7 +187,9 @@ namespace DCL.Passport
 
             BadgeInfoModuleView.gameObject.SetActive(passportSection == PassportSection.BADGES);
 
-            ViewportSoftMask.enabled = passportSection != PassportSection.PHOTOS;
+            bool isNotPhotos = passportSection != PassportSection.PHOTOS;
+            ViewportSoftMask.enabled = isNotPhotos;
+            ViewportMaskGraphic.enabled = isNotPhotos;
 
             MainScroll.verticalNormalizedPosition = 1;
         }

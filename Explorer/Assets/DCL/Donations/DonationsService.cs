@@ -134,8 +134,8 @@ namespace DCL.Donations
 
         private async UniTask UpdateFromApisAsync(ISceneFacade? currentScene, CancellationToken ct)
         {
-            string? addressFromScene = currentScene?.SceneData.GetCreatorAddress();
-            string? addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct);
+            string addressFromScene = currentScene?.SceneData.GetCreatorAddress() ?? string.Empty;
+            string addressFromApis = await GetSceneCreatorAddressAsync(currentScene!, ct) ?? string.Empty;
 
             if (addressFromScene != addressFromApis)
             {

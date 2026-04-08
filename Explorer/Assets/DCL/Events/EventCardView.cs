@@ -169,32 +169,37 @@ namespace DCL.Events
             if (onlineMembersText != null) onlineMembersText.text = $"{onlineMembers}";
             if (onlineMembersContainer != null) onlineMembersContainer.SetActive(onlineMembers > 0 && eventInfo.live);
 
-            if (friendsConnected.root != null)
-            {
-                bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null && eventInfo.live;
-                friendsConnected.root.SetActive(showFriendsConnected);
-
-                if (showFriendsConnected)
-                {
-                    friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
-                    friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
-
-                    var friendsThumbnails = friendsConnected.thumbnails;
-
-                    for (var i = 0; i < friendsThumbnails.Length; i++)
-                    {
-                        bool friendExists = i < friends.Count;
-                        friendsThumbnails[i].root.SetActive(friendExists);
-                        if (!friendExists) continue;
-                        Profile.CompactInfo friendInfo = friends[i];
-                        friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
-                        friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
-                    }
-                }
-            }
+            UpdateFriendsData(friends, profileRepositoryWrapper);
 
             UpdateInterestedButtonState(currentEventInfo.Attending);
             UpdateVisuals();
+        }
+
+        public void UpdateFriendsData(List<Profile.CompactInfo>? friends, ProfileRepositoryWrapper? profileRepositoryWrapper)
+        {
+            if (friendsConnected.root == null)
+                return;
+
+            bool showFriendsConnected = friends is { Count: > 0 } && profileRepositoryWrapper != null && currentEventInfo.live;
+            friendsConnected.root.SetActive(showFriendsConnected);
+
+            if (showFriendsConnected)
+            {
+                friendsConnected.amountContainer.SetActive(friends!.Count > friendsConnected.thumbnails.Length);
+                friendsConnected.amountLabel.text = $"+{friends.Count - friendsConnected.thumbnails.Length}";
+
+                var friendsThumbnails = friendsConnected.thumbnails;
+
+                for (var i = 0; i < friendsThumbnails.Length; i++)
+                {
+                    bool friendExists = i < friends.Count;
+                    friendsThumbnails[i].root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    Profile.CompactInfo friendInfo = friends[i];
+                    friendsThumbnails[i].picture.Setup(profileRepositoryWrapper!, friendInfo);
+                    friendsThumbnails[i].tooltip.Configure(friendInfo.Name);
+                }
+            }
         }
 
         public void UpdateInterestedButtonState(bool isInterested)
