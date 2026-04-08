@@ -102,7 +102,7 @@ MonoBehaviour:
   m_RendererFeatureMap: 270ae2aeb8db5d66c3e240753303a5509fa81a58a654f02ac882f52d5260f026
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
-  postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
+  postProcessData: {fileID: 0}
   m_AssetVersion: 3
   m_PrepassLayerMask:
     serializedVersion: 2
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fec970849e34d64594738fe00927fa0, type: 3}
   m_Name: SkyboxToCubemapRendererFeature
   m_EditorClassIdentifier: SkyboxEnvironmentProbe::SkyboxToCubemapRendererFeature
-  m_Active: 1
+  m_Active: 0
   settings:
     skyBoxShader: {fileID: -6465566751694194690, guid: de77f9af132836c4785b35f15d16e564, type: 3}
     dimensions: 256
