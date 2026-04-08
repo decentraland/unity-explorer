@@ -26,7 +26,8 @@ namespace DCL.Profiles.Helpers
                     wrapMode: TextureWrapMode.Clamp,
                     filterMode: FilterMode.Bilinear,
                     textureType: TextureType.Albedo,
-                    reportSource: nameof(ProfileUtils)),
+                    reportSource: nameof(ProfileUtils),
+                    faceSnapshotUrl: profile.FaceSnapshotUrl.Value),
                 partitionComponent);
 
             world.Create(profile, promise);
