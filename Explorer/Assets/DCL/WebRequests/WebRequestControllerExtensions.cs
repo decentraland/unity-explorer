@@ -210,7 +210,7 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
-        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+        public static async UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetAssetBundleArguments args,
@@ -220,8 +220,43 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null,
             bool suppressErrors = false,
             IStreamableLoadingProgressHandler? progressHandler = null
-            ) =>
-            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, progressHandler: progressHandler);
+            )
+        {
+            if (progressHandler != null)
+            {
+                long contentLength = await controller.GetDecompressedContentLengthAsync(commonArguments.URL, ct);
+                progressHandler.SetContentLength(contentLength);
+            }
+
+            return await controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, progressHandler: progressHandler);
+        }
+
+        public static async UniTask<long> GetDecompressedContentLengthAsync(
+            this IWebRequestController controller,
+            URLAddress url,
+            CancellationToken ct,
+            int timeoutMs = 500)
+        {
+            if (url.Value.StartsWith("file://"))
+                return -1;
+
+            try
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(timeoutMs);
+
+                return await controller.HeadAsync<GetDecompressedContentLengthOp, long>(
+                    new CommonArguments(url, RetryPolicy.NONE),
+                    new GetDecompressedContentLengthOp(),
+                    default,
+                    cts.Token,
+                    ReportCategory.ASSET_BUNDLES);
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
+        }
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);
