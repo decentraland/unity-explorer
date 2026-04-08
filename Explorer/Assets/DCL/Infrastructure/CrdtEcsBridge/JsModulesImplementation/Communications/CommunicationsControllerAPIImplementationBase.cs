@@ -31,7 +31,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
+#if UNITY_INCLUDE_TESTS
         internal IReadOnlyList<PoolableByteArray> EventsToProcess => eventsToProcess;
+#endif
 
         protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
