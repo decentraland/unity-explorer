@@ -65,7 +65,7 @@ namespace SceneRuntime.Tests
         }
 
         [Test]
-        public void PublishDataWithMsgTypeStringPrefix()
+        public void PublishDataWithMsgTypeCommsDataPrefix()
         {
             //Arrange
             string topic = "my-topic";
