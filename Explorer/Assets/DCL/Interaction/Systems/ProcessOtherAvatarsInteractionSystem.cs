@@ -148,7 +148,12 @@ namespace DCL.Interaction.Systems
             wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
             if (wasCursorLockedWhenMenuOpened)
-                World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            {
+                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+                else
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            }
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
@@ -166,10 +171,10 @@ namespace DCL.Interaction.Systems
         private void OnContextMenuClosed()
         {
             if (wasCursorLockedWhenMenuOpened)
-            {
-                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
-                cursor.CursorState = CursorState.Locked;
-            }
+                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true));
+                else
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true));
         }
 
         private void OnPlayerMoved(InputAction.CallbackContext obj)
