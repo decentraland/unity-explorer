@@ -67,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsCache friendsCache;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly bool isConnectivityStatusEnabled;
+        private readonly bool includeUserBlocking;
 
         private UniTask[] subscriptions = new UniTask[3];
 
@@ -117,6 +118,7 @@ namespace DCL.PluginSystem.Global
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
             this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
+            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
 
             friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
 

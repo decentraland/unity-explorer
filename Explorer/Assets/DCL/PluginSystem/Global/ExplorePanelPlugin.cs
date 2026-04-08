@@ -344,7 +344,7 @@ namespace DCL.PluginSystem.Global
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER))
                 dclInput.Shortcuts.Places.performed += OnInputShortcutsPlacesPerformed;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))

@@ -95,7 +95,7 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             this.mvcManager = mvcManager;
             this.communitiesBrowserController = communitiesBrowserController;
-            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
+            this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.eventsApiService = eventsApiService;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;

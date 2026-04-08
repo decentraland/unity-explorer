@@ -104,7 +104,7 @@ namespace DCL.UI.Sidebar
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
-            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER_PLACES);
+            isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.eventsApiService = eventsApiService;
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
