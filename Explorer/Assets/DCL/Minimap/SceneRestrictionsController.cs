@@ -35,7 +35,6 @@ namespace DCL.Minimap
 
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
 
             foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
             {
@@ -48,6 +47,8 @@ namespace DCL.Minimap
 
                 restrictionsObject.SetActive(false);
             }
+
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()
