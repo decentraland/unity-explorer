@@ -6,7 +6,7 @@ using DCL.Multiplayer.Movement.Systems;
 using Decentraland.Pulse;
 using Pulse.Transport;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using GlideState = Decentraland.Pulse.GlideState;
@@ -15,8 +15,9 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly ConcurrentDictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
-        private readonly ConcurrentDictionary<uint, byte> pendingResyncs = new ();
+        // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
+        private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
+        private readonly Dictionary<uint, byte> pendingResyncs = new ();
 
         public void Send(NetworkMovementMessage message)
         {
@@ -65,8 +66,9 @@ namespace DCL.Multiplayer.Connections.Pulse
                 removeIntentions.Enqueue(wallet);
 
             peerIdCache.Remove(playerLeft.SubjectId);
-            lastMovementMessages.TryRemove(playerLeft.SubjectId, out _);
-            pendingResyncs.TryRemove(playerLeft.SubjectId, out _);
+            lastMovementMessages.Remove(playerLeft.SubjectId);
+            pendingResyncs.Remove(playerLeft.SubjectId);
+            emotingSubjects.Remove(playerLeft.SubjectId);
         }
 
         private void HandlePlayerStateFull(IncomingMessage message)
@@ -132,7 +134,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 {
                     // Consecutive seq received, normal flow resumed — clear any stale pending resync
                     // It can be a consecutive delta, or a resync delta - both are valid as there is no order between 2 different channels
-                    if (pendingResyncs.TryRemove(delta.SubjectId, out _))
+                    if (pendingResyncs.Remove(delta.SubjectId))
                         ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Recovered after resync for {delta.SubjectId}. Received seq {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}");
                 }
                 else
@@ -184,7 +186,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             else
                 lastMovementMessages[subjectId] = (sequence, movementMessage);
 
-            if (pendingResyncs.TryRemove(subjectId, out _))
+            if (pendingResyncs.Remove(subjectId))
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
         }
 
@@ -309,9 +311,9 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
-            ToNetworkMovementMessage(full.State, full.ServerTick, false);
+            ToNetworkMovementMessage(full.State, full.SubjectId, full.ServerTick, false);
 
-        private NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState, uint serverTick, bool isInstant, bool isEmoting = false)
+        private NetworkMovementMessage ToNetworkMovementMessage(PlayerState playerState, uint subjectId, uint serverTick, bool isInstant)
         {
             Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
 
@@ -348,7 +350,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
                 isInstant = isInstant,
-                isEmoting = isEmoting,
+                isEmoting = emotingSubjects.Contains(subjectId),
 
                 headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
                 headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),

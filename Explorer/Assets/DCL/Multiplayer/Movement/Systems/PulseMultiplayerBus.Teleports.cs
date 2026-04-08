@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 return;
             }
 
-            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.ServerTick, isInstant: true);
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(teleport.State, teleport.SubjectId, teleport.ServerTick, isInstant: true);
             TryUpdateLastMovementAndCompleteResync(teleport.ServerTick, teleport.SubjectId, teleport.Sequence, movementMessage);
             Inbox(movementMessage, wallet);
         }

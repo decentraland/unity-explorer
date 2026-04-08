@@ -3,11 +3,22 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using Decentraland.Pulse;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerBus
     {
+        /// <summary>
+        ///     Delta doesn't carry the "Emoting" state (and make it to do so seems strange in the authoritative server domain)
+        ///     Simple linear handling of EmoteStarted / EmoteStopped brings with it the following intricacies
+        ///     as Delta is received from the different unreliable channel and is not synced with the reliable one:
+        ///     - Delta (after emote has started) received before `EmoteStarted` - NO RISK - `EmoteStarted` carries a full snapshot or synchronization
+        ///     - Delta (after emote has finished) received before `EmoteStopped` - RISK - Delta will be resolved as `IsEmoting: true` leading to the slight drift while emoting until `EmoteStopped` has been received
+        ///     If during the test we notice a considerable drift, add one more flag to `PlayerAnimationFlags`
+        /// </summary>
+        private readonly HashSet<uint> emotingSubjects = new ();
+
         private void HandleEmoteStarted(IncomingMessage message)
         {
             if (isDisposed)
@@ -24,9 +35,11 @@ namespace DCL.Multiplayer.Connections.Pulse
                 return;
             }
 
+            emotingSubjects.Add(emoteStarted.SubjectId);
+
             if (emoteStarted.PlayerState != null)
             {
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.ServerTick, isInstant: true, isEmoting: true);
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
                 Inbox(movementMessage, walletId);
             }
 
@@ -50,7 +63,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                 return;
             }
 
-            // TODO: Handle emote stop for remote players (e.g. set StopEmote flag)
+            emotingSubjects.Remove(emoteStopped.SubjectId);
+
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
         }
     }

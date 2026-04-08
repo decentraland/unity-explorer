@@ -79,6 +79,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
+            emotingSubjects.Clear();
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
