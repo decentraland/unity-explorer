@@ -204,29 +204,22 @@ namespace DCL.VoiceChat.Proximity
                 switch (state)
                 {
                     case ProximityVoiceChatState.DISABLED:
+                    case ProximityVoiceChatState.SUPPRESSED:
                         activationCts.SafeCancelAndDispose();
                         Deactivate();
+                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT,
+                            state == ProximityVoiceChatState.SUPPRESSED
+                                ? "Suppressed — Private/Community call active, fully deactivated"
+                                : "Disabled");
                         break;
 
                     case ProximityVoiceChatState.HEARING:
                     case ProximityVoiceChatState.SPEAKING:
-                        if (remoteListener.isSuppressed)
-                        {
-                            remoteListener.UnmuteAll();
-                            microphoneHandler.Assign(micPublisher.CurrentMicrophone, VoiceChatType.PROXIMITY);
-                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Resumed — no active call");
-                        }
-                        else if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
                         }
-                        break;
-
-                    case ProximityVoiceChatState.SUPPRESSED:
-                        microphoneHandler.ClearSource(VoiceChatType.PROXIMITY);
-                        remoteListener.MuteAll();
-                        ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Suppressed — Private/Community call active");
                         break;
                 }
             }
