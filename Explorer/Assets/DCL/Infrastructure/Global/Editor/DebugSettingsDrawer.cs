@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Global.Editor
 {
@@ -200,7 +201,8 @@ namespace Global.Editor
         private static bool IsCustomGatekeeperMode(SerializedProperty property)
         {
             SerializedProperty gatekeeperMode = property.FindPropertyRelative("gatekeeperMode");
-            return gatekeeperMode != null && gatekeeperMode.intValue == (int)GatekeeperMode.Custom;
+            Assert.IsNotNull(gatekeeperMode, "Failed to find 'gatekeeperMode' property.");
+            return gatekeeperMode.intValue == (int)GatekeeperMode.Custom;
         }
 
         private static string? FindCreatorHubPath()
