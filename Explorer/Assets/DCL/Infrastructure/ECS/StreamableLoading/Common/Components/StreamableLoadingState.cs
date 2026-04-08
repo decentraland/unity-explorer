@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.Common.Components
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public class StreamableLoadingState : IStreamableLoadingProgressHandler, IStreamableLoadingProgress
+    public class StreamableLoadingState : IStreamableLoadingProgressHandler
     {
         public enum Status : byte
         {

@@ -1,14 +1,10 @@
 ﻿namespace DCL.WebRequests
 {
-    public interface IStreamableLoadingProgress
+    public interface IStreamableLoadingProgressHandler
     {
         float Progress { get; }
         long ContentLength { get; }
-    }
-
-    public interface IStreamableLoadingProgressHandler : IStreamableLoadingProgress
-    {
-        void SetProgress (float progress);
-        void SetContentLength (long length);
+        void SetProgress(float progress);
+        void SetContentLength(long length);
     }
 }

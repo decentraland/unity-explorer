@@ -44,8 +44,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
-        // Byte-weighted progress tracking
-        private Dictionary<Entity, long>? contentLengthCache;
+        // Byte-weighted progress tracking — LoadingState is co-located so dead entities retain their last-known state
+        private Dictionary<Entity, (long ContentLength, LoadingState State)>? entityLoadingData;
         private long completedBytes;
         private long totalBytesExpected;
         private int entitiesWithKnownSize;
@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
-            contentLengthCache = DictionaryPool<Entity, long>.Get();
+            entityLoadingData = DictionaryPool<Entity, (long, LoadingState)>.Get();
             startTime = Time.time;
         }
 
@@ -83,10 +83,10 @@ namespace ECS.SceneLifeCycle.Systems
                 entitiesUnderObservation = null;
             }
 
-            if (contentLengthCache != null)
+            if (entityLoadingData != null)
             {
-                DictionaryPool<Entity, long>.Release(contentLengthCache);
-                contentLengthCache = null;
+                DictionaryPool<Entity, (long, LoadingState)>.Release(entityLoadingData);
+                entityLoadingData = null;
             }
 
             sceneData.SceneLoadingConcluded = true;
@@ -113,60 +113,52 @@ namespace ECS.SceneLifeCycle.Systems
 
                 List<Entity> toDelete = ListPool<Entity>.Get();
                 long inProgressWeightedBytes = 0;
-                float unknownInProgressWeightedProgress = 0f;
-
-                // iterate over entities
 
                 foreach (Entity entityRef in entitiesUnderObservation!)
                 {
-                    // if entity has died
-                    // or entity no longer contains GltfContainerComponent
-                    // continue
                     if (!World.IsAlive(entityRef)
                         || !World.TryGet(entityRef, out GltfContainerComponent gltfContainerComponent))
                     {
+                        // Entity died — it either finished loading or was cancelled
                         toDelete.Add(entityRef);
                         continue;
                     }
 
-                    // Cache ContentLength from the promise's StreamableLoadingState while it's alive
-                    CacheContentLength(entityRef, in gltfContainerComponent);
+                    UpdateEntityData(entityRef, in gltfContainerComponent);
 
-                    // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
                     if (gltfContainerComponent.State == LoadingState.Loading)
                     {
-                        // if at least one entity is still loading, we are not done.
                         concluded = false;
 
-                        // Accumulate in-progress weighted bytes
-                        if (contentLengthCache!.TryGetValue(entityRef, out long cachedLength) && cachedLength > 0)
-                            inProgressWeightedBytes += (long)(GetEntityProgress(entityRef, in gltfContainerComponent) * cachedLength);
-                        else
-                            unknownInProgressWeightedProgress += GetEntityProgress(entityRef, in gltfContainerComponent);
+                        if (entityLoadingData!.TryGetValue(entityRef, out var data) && data.ContentLength > 0)
+                            inProgressWeightedBytes += (long)(GetEntityProgress(entityRef, in gltfContainerComponent) * data.ContentLength);
                     }
                     else
                     {
-                        // remove entity from list - it's loaded, we don't need to check it anymore
                         toDelete.Add(entityRef);
                     }
                 }
 
-                // Accumulate completed bytes from resolved entities
                 for (var i = 0; i < toDelete.Count; i++)
                 {
                     Entity entity = toDelete[i];
 
-                    if (contentLengthCache!.TryGetValue(entity, out long len))
+                    if (entityLoadingData!.TryGetValue(entity, out var data) && data.ContentLength > 0)
                     {
-                        if (len > 0)
-                            completedBytes += len;
-
-                        contentLengthCache.Remove(entity);
+                        completedBytes += data.ContentLength;
                     }
+                    else
+                    {
+                        // Entity had no known content-length; credit it with the average size estimate
+                        if (entitiesWithKnownSize > 0 && totalBytesExpected > 0)
+                            completedBytes += totalBytesExpected / entitiesWithKnownSize;
+                    }
+
+                    entityLoadingData!.Remove(entity);
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = ComputeProgress(inProgressWeightedBytes, unknownInProgressWeightedProgress);
+                float progress = ComputeProgress(inProgressWeightedBytes);
                 maxReportedProgress = Mathf.Max(maxReportedProgress, progress);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
@@ -220,7 +212,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
-        private void CacheContentLength(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
+        private void UpdateEntityData(Entity entityRef, in GltfContainerComponent gltfContainerComponent)
         {
             Entity promiseEntity = gltfContainerComponent.Promise.Entity;
 
@@ -228,14 +220,17 @@ namespace ECS.SceneLifeCycle.Systems
                 || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
                 return;
 
-            if (loadingState.ContentLength <= 0)
-                return;
+            bool alreadyTracked = entityLoadingData!.TryGetValue(entityRef, out var existing);
 
-            if (!contentLengthCache!.ContainsKey(entityRef))
+            if (!alreadyTracked && loadingState.ContentLength > 0)
             {
-                contentLengthCache[entityRef] = loadingState.ContentLength;
+                entityLoadingData[entityRef] = (loadingState.ContentLength, gltfContainerComponent.State);
                 totalBytesExpected += loadingState.ContentLength;
                 entitiesWithKnownSize++;
+            }
+            else if (alreadyTracked)
+            {
+                entityLoadingData[entityRef] = (existing.ContentLength, gltfContainerComponent.State);
             }
         }
 
@@ -250,7 +245,7 @@ namespace ECS.SceneLifeCycle.Systems
             return loadingState.Progress;
         }
 
-        private float ComputeProgress(long inProgressWeightedBytes, float unknownInProgressWeightedProgress)
+        private float ComputeProgress(long inProgressWeightedBytes)
         {
             // Fallback: count-based progress when no byte data is available
             if (entitiesWithKnownSize <= 0 || totalBytesExpected <= 0)
@@ -261,16 +256,8 @@ namespace ECS.SceneLifeCycle.Systems
             int unknownCount = totalAssetsToResolve - entitiesWithKnownSize;
             long effectiveTotal = totalBytesExpected + avgSize * Math.Max(0, unknownCount);
 
-            // Account for completed unknown-size entities using the average estimate
-            int completedKnownCount = entitiesWithKnownSize - contentLengthCache!.Count;
-            int completedUnknownCount = Math.Max(0, assetsResolved - completedKnownCount);
-            long estimatedCompletedUnknownBytes = avgSize * completedUnknownCount;
-
-            // Account for in-progress unknown-size entities using their per-entity progress * average size
-            long estimatedUnknownInProgressBytes = (long)(unknownInProgressWeightedProgress * avgSize);
-
             return effectiveTotal > 0
-                ? Mathf.Clamp01((float)(completedBytes + estimatedCompletedUnknownBytes + inProgressWeightedBytes + estimatedUnknownInProgressBytes) / effectiveTotal)
+                ? Mathf.Clamp01((float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)
                 : 0f;
         }
 

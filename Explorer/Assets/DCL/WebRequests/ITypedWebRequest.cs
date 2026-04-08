@@ -25,6 +25,8 @@ namespace DCL.WebRequests
         {
             if (progressHandler == null)
             {
+                // WithCancellation has a special overload for UnityWebRequestAsyncOperation
+                // that checks request.result and throws UnityWebRequestException on failure automatically.
                 await typedWebRequest.UnityWebRequest.SendWebRequest().WithCancellation(token);
                 return;
             }
@@ -53,6 +55,8 @@ namespace DCL.WebRequests
 
             progressHandler.SetProgress(1f);
 
+            // The manual polling loop above bypasses UniTask's automatic error handling,
+            // so we must check the result and throw explicitly here.
             UnityWebRequest request = typedWebRequest.UnityWebRequest;
 
             if (request.result != UnityWebRequest.Result.Success) // This is really important. Other systems react to this exception being triggered.
