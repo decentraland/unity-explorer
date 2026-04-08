@@ -8,8 +8,10 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using LiveKit.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
+using ECS.SceneLifeCycle;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
@@ -49,6 +51,8 @@ namespace DCL.PluginSystem.Global
         private readonly ProximityVoiceChatButtonView? proximityVoiceChatButtonView;
         private readonly NearbyVoiceWidgetView? nearbyVoiceWidgetView;
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -83,7 +87,9 @@ namespace DCL.PluginSystem.Global
             ProximityMuteService proximityMuteService,
             IWeb3IdentityCache identityCache,
             ProximityVoiceChatButtonView? proximityVoiceChatButtonView,
-            NearbyVoiceWidgetView? nearbyVoiceWidgetView)
+            NearbyVoiceWidgetView? nearbyVoiceWidgetView,
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -100,6 +106,8 @@ namespace DCL.PluginSystem.Global
             this.identityCache = identityCache;
             this.proximityVoiceChatButtonView = proximityVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
+            this.scenesCache = scenesCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -215,6 +223,10 @@ namespace DCL.PluginSystem.Global
 
             proximityStateModel = new ProximityVoiceChatStateModel();
             pluginScope.Add(proximityStateModel);
+
+            var sceneRestrictionWatcher = new ProximityVoiceSceneRestrictionWatcher(
+                scenesCache, sceneRestrictionBusController, proximityStateModel);
+            pluginScope.Add(sceneRestrictionWatcher);
 
             proximityNametagsHandler = new ProximityNametagsHandler(
                 roomHub.IslandRoom(), entityParticipantTable, world,

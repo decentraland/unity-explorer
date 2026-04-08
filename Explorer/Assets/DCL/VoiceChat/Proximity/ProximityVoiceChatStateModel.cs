@@ -1,14 +1,19 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.VoiceChat
 {
     public class ProximityVoiceChatStateModel : IDisposable
     {
+        public const string SUPPRESSION_CALL = "call";
+        public const string SUPPRESSION_SCENE = "scene";
+
         private const string TAG = nameof(ProximityVoiceChatStateModel);
 
         private readonly ReactiveProperty<ProximityVoiceChatState> state;
+        private readonly HashSet<string> suppressionReasons = new ();
 
         private ProximityVoiceChatState preBlockedState;
 
@@ -52,18 +57,30 @@ namespace DCL.VoiceChat
             SetState(ProximityVoiceChatState.Hearing);
         }
 
-        public void Suppress()
+        public void Suppress() => Suppress(SUPPRESSION_CALL);
+
+        public void Suppress(string reason)
         {
+            if (!suppressionReasons.Add(reason))
+                return;
+
             if (state.Value == ProximityVoiceChatState.Blocked)
                 return;
 
             preBlockedState = state.Value;
-
             SetState(ProximityVoiceChatState.Blocked);
         }
 
-        public void Resume()
+        public void Resume() => Resume(SUPPRESSION_CALL);
+
+        public void Resume(string reason)
         {
+            if (!suppressionReasons.Remove(reason))
+                return;
+
+            if (suppressionReasons.Count > 0)
+                return;
+
             if (state.Value != ProximityVoiceChatState.Blocked)
                 return;
 

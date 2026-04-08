@@ -419,9 +419,9 @@ namespace DCL.VoiceChat
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status.IsInCall())
-                stateModel.Suppress();
+                stateModel.Suppress(ProximityVoiceChatStateModel.SUPPRESSION_CALL);
             else if (status.IsNotConnected())
-                stateModel.Resume();
+                stateModel.Resume(ProximityVoiceChatStateModel.SUPPRESSION_CALL);
         }
 
         private void OnProximityStateChanged(ProximityVoiceChatState newState)

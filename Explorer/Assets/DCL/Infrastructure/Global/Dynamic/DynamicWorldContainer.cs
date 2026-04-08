@@ -1113,7 +1113,9 @@ namespace Global.Dynamic
                         proximityMuteService,
                         identityCache,
                         mainUIView.SidebarView.ProximityVoiceChatButton,
-                        mainUIView.SidebarView.NearbyVoiceWidget)
+                        mainUIView.SidebarView.NearbyVoiceWidget,
+                        staticContainer.ScenesCache,
+                        staticContainer.SceneRestrictionBusController)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
