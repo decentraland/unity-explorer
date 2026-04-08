@@ -1,16 +1,15 @@
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.Multiplayer.Connections.RoomHubs;
 using JetBrains.Annotations;
 using LiveKit.Proto;
-using LiveKit.Rooms.DataPipes;
-using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
-using Microsoft.ClearScript.JavaScript;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -21,14 +20,15 @@ namespace SceneRuntime.Apis.Modules.CommsApi
     {
         private const int MAX_MESSAGES_PER_SECOND = 10;
         private const int RATE_LIMIT_WINDOW_MS = 1000;
+        private const int MAX_TOPIC_LENGTH = 512;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
         private const string EMPTY_ARRAY = "[]";
 
-        private static readonly string[] EMPTY_DESTINATIONS = Array.Empty<string>();
-
         private readonly IRoomHub roomHub;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
-        private readonly IDataPipe dataPipe;
+        private readonly ISceneCommunicationPipe sceneCommunicationPipe;
+        private readonly string sceneId;
+        private readonly ISceneCommunicationPipe.SceneMessageHandler onDataReceivedCached;
 
         private readonly StringBuilder stringBuilder;
         private readonly StringWriter stringWriter;
@@ -36,40 +36,34 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
         private readonly ConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
-        private byte[] publishBuffer = Array.Empty<byte>();
 
-        private readonly struct BufferedDataMessage
-        {
-            public readonly string SenderIdentity;
-            public readonly string Data;
-
-            public BufferedDataMessage(string senderIdentity, string data)
-            {
-                SenderIdentity = senderIdentity;
-                Data = data;
-            }
-        }
-
-        public CommsApiWrap(IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(disposeCts)
+        public CommsApiWrap(
+            IRoomHub roomHub,
+            ISceneCommunicationPipe sceneCommunicationPipe,
+            ISceneData sceneData,
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.roomHub = roomHub;
+            this.sceneCommunicationPipe = sceneCommunicationPipe;
+            sceneId = sceneData.SceneEntityDefinition.id!;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             stringBuilder = new StringBuilder();
             stringWriter = new StringWriter(stringBuilder);
             writer = new JsonTextWriter(stringWriter);
 
-            dataPipe = roomHub.StreamingRoom().DataPipe;
-            dataPipe.DataReceived += OnDataReceived;
+            onDataReceivedCached = OnDataReceived;
+            sceneCommunicationPipe.AddSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
         }
 
         public override void Dispose()
         {
-            dataPipe.DataReceived -= OnDataReceived;
+            sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
             topicBuffers.Clear();
             publishRateLimiters.Clear();
             stringBuilder.Clear();
-            stringWriter.Dispose();
             writer.Close();
+            stringWriter.Dispose();
         }
 
         public string GetActiveVideoStreams()
@@ -129,24 +123,41 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             }
         }
 
+        /// <summary>
+        /// Publishes a JSON string to a topic on the scene's LiveKit room.
+        /// Wire format after MsgType byte: [topicLen 2 bytes LE][topic UTF-8][data UTF-8].
+        /// Called from JS via ClearScript. Rate-limited to <see cref="MAX_MESSAGES_PER_SECOND"/> per topic.
+        /// </summary>
         [UsedImplicitly]
-        public void PublishData(string topic, ITypedArray<byte> data)
+        public void PublishData(string topic, string data)
         {
             try
             {
-                if (data == null || data.Length == 0 || data.Length > (ulong)IJsOperations.LIVEKIT_MAX_SIZE)
+                if (string.IsNullOrEmpty(data))
                     return;
 
                 if (!TryConsumeRateLimit(topic))
                     return;
 
-                int length = (int)data.Length;
+                byte[] topicBytes = Encoding.UTF8.GetBytes(topic);
 
-                if (publishBuffer.Length < length)
-                    publishBuffer = new byte[length];
+                if (topicBytes.Length > MAX_TOPIC_LENGTH)
+                    return;
 
-                data.Read(0, (ulong)length, publishBuffer, 0);
-                roomHub.StreamingRoom().DataPipe.PublishData(publishBuffer.AsSpan(0, length), topic, EMPTY_DESTINATIONS, DataPacketKind.KindReliable);
+                byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+
+                // Wire format: [MsgType.CommsData 1 byte][topicLen 2 bytes LE][topic UTF-8][data UTF-8].
+                int payloadLength = 2 + topicBytes.Length + dataBytes.Length;
+                Span<byte> encoded = stackalloc byte[1 + payloadLength];
+                encoded[0] = (byte)ISceneCommunicationPipe.MsgType.CommsData;
+                BinaryPrimitives.WriteUInt16LittleEndian(encoded[1..], (ushort)topicBytes.Length);
+                topicBytes.AsSpan().CopyTo(encoded[3..]);
+                dataBytes.AsSpan().CopyTo(encoded[(3 + topicBytes.Length)..]);
+
+                sceneCommunicationPipe.SendMessage(
+                    encoded, sceneId,
+                    ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED,
+                    disposeCts.Token);
             }
             catch (Exception e)
             {
@@ -154,12 +165,20 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             }
         }
 
+        /// <summary>
+        /// Registers interest in a topic. Messages on this topic will be buffered for later consumption.
+        /// Called from JS via ClearScript.
+        /// </summary>
         [UsedImplicitly]
         public void SubscribeToTopic(string topic)
         {
             topicBuffers.TryAdd(topic, new ConcurrentQueue<BufferedDataMessage>());
         }
 
+        /// <summary>
+        /// Returns and drains all buffered messages for a topic as a JSON array.
+        /// Called from JS via ClearScript.
+        /// </summary>
         [UsedImplicitly]
         public string ConsumeMessages(string topic)
         {
@@ -196,16 +215,28 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             }
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
+        /// <summary>
+        /// Runs on the LiveKit callback thread (ORIGIN_THREAD), not the main thread.
+        /// Only thread-safe types (ConcurrentQueue, Encoding) are used here.
+        /// Decodes wire format: [topicLen 2 bytes LE][topic UTF-8][data UTF-8].
+        /// </summary>
+        private void OnDataReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
+            ReadOnlySpan<byte> span = message.Data;
+
+            if (span.Length < 2) return;
+
+            ushort topicLength = BinaryPrimitives.ReadUInt16LittleEndian(span);
+
+            if (span.Length < 2 + topicLength) return;
+
+            string topic = Encoding.UTF8.GetString(span.Slice(2, topicLength));
+
             if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
                 return;
 
-            if (participant == null)
-                return;
-
-            string decoded = Encoding.UTF8.GetString(data);
-            queue.Enqueue(new BufferedDataMessage(participant.Identity, decoded));
+            string data = Encoding.UTF8.GetString(span[(2 + topicLength)..]);
+            queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
         }
 
         private bool TryConsumeRateLimit(string topic)
@@ -231,6 +262,18 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             publishRateLimiters[topic] = (limiter.count + 1, limiter.windowStartMs);
             return true;
+        }
+
+        private readonly struct BufferedDataMessage
+        {
+            public readonly string SenderIdentity;
+            public readonly string Data;
+
+            public BufferedDataMessage(string senderIdentity, string data)
+            {
+                SenderIdentity = senderIdentity;
+                Data = data;
+            }
         }
     }
 }
