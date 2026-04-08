@@ -65,6 +65,7 @@ namespace DCL.Chat.ChatServices
         ///     Contains the list of all participants in all private conversations as they share the same LiveKit room
         /// </summary>
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<string> snapshotBuffer = new (PoolConstants.AVATARS_COUNT);
 
         private CancellationTokenSource cts = new ();
 
@@ -116,8 +117,11 @@ namespace DCL.Chat.ChatServices
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
-                foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp.Key)))
-                    onlineParticipants.Add(remoteParticipantIdentity);
+                lock (onlineParticipants)
+                {
+                    foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities().Where(rp => UserIsConsideredAsOnline(rp.Key)))
+                        onlineParticipants.Add(remoteParticipantIdentity);
+                }
             }
             catch (TimeoutException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, "Friend service and user blocking cache are not available. Ignore this if you are in LSD"); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
@@ -196,6 +200,8 @@ namespace DCL.Chat.ChatServices
 
         private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
         {
+            bool shouldNotify = false;
+
             lock (onlineParticipants)
             {
                 switch (connectionUpdate)
@@ -205,20 +211,23 @@ namespace DCL.Chat.ChatServices
                         onlineParticipants.Clear();
 
                         foreach ((string remoteParticipantIdentity, _) in chatRoom.Participants.RemoteParticipantIdentities())
-                        {
                             if (UserIsConsideredAsOnline(remoteParticipantIdentity))
                                 onlineParticipants.Add(remoteParticipantIdentity);
-                        }
 
-                        NotifyChannelUsersStateUpdated();
-
+                        shouldNotify = true;
                         break;
                     case ConnectionUpdate.Disconnected:
                         onlineParticipants.Clear();
-                        NotifyChannelUsersStateUpdated();
+                        shouldNotify = true;
                         break;
                 }
+
+                if (shouldNotify)
+                    CopyToSnapshotBuffer();
             }
+
+            if (shouldNotify)
+                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.EMPTY_CHANNEL_ID, ChatChannel.ChatChannelType.USER, snapshotBuffer));
         }
 
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
@@ -227,7 +236,10 @@ namespace DCL.Chat.ChatServices
             string userId = participant.Identity;
 
             if (update == UpdateFromParticipant.Disconnected)
-                onlineParticipants.Remove(userId);
+                lock (onlineParticipants)
+                {
+                    onlineParticipants.Remove(userId);
+                }
 
             CheckOnlineStatusAndNotify(userId);
         }
@@ -282,19 +294,17 @@ namespace DCL.Chat.ChatServices
         private bool UserIsConnectedToRoom(string userId) =>
             chatRoom.Participants.RemoteParticipant(userId) != null;
 
-        private void NotifyChannelUsersStateUpdated()
-        {
-            eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.EMPTY_CHANNEL_ID, ChatChannel.ChatChannelType.USER, OnlineParticipants));
-        }
-
         private void CheckOnlineStatusAndNotify(string userId)
         {
             bool consideredAsOnline = UserIsConsideredAsOnline(userId);
 
-            if (consideredAsOnline)
-                onlineParticipants.Add(userId);
-            else
-                onlineParticipants.Remove(userId);
+            lock (onlineParticipants)
+            {
+                if (consideredAsOnline)
+                    onlineParticipants.Add(userId);
+                else
+                    onlineParticipants.Remove(userId);
+            }
 
             NotifyUserStateUpdated(userId, consideredAsOnline);
         }
@@ -308,6 +318,25 @@ namespace DCL.Chat.ChatServices
 
             if (currentChannelService.CurrentChannelId.Id == userId)
                 eventBus.Publish(new ChatEvents.CurrentChannelStateUpdatedEvent());
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            lock (onlineParticipants)
+            {
+                foreach (string participant in onlineParticipants)
+                    destination.Add(participant);
+            }
+        }
+
+        private void CopyToSnapshotBuffer()
+        {
+            snapshotBuffer.Clear();
+
+            foreach (string participant in onlineParticipants)
+                snapshotBuffer.Add(participant);
         }
 
         void ICurrentChannelUserStateService.Deactivate()
