@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using UnityEngine;
 
 namespace DCL.VoiceChat.Proximity.Systems
 {
@@ -46,6 +47,13 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         protected override void Update(float t)
         {
+            bool changed = spatializeBinding.Value != configuration.proximitySpatialize
+                        || smoothPanningBinding.Value != configuration.proximitySmoothPanning
+                        || !Mathf.Approximately(ildBinding.Value, configuration.proximityIldStrength);
+
+            if (!changed)
+                return;
+
             spatializeBinding.Value = configuration.proximitySpatialize;
             smoothPanningBinding.Value = configuration.proximitySmoothPanning;
             ildBinding.Value = configuration.proximityIldStrength;

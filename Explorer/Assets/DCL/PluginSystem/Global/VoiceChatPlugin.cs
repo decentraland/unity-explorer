@@ -105,9 +105,7 @@ namespace DCL.PluginSystem.Global
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.PROXIMITY_VOICE_CHAT))
             {
-                proximityAudioPositionSystem = ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
-                proximityAudioPositionSystem!.SetConfiguration(voiceChatConfiguration);
-
+                ProximityAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, proximityAudioSources);
                 ProximityAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }

@@ -35,7 +35,6 @@ namespace DCL.VoiceChat.Proximity.Systems
 
         private readonly List<Entity> entitiesToCleanUp = new (4);
 
-        private VoiceChatConfiguration? configuration;
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
         private bool isFirstPerson;
@@ -47,8 +46,6 @@ namespace DCL.VoiceChat.Proximity.Systems
             this.entityParticipantTable = entityParticipantTable;
             this.activeAudioSources = activeAudioSources;
         }
-
-        internal void SetConfiguration(VoiceChatConfiguration config) => configuration = config;
 
         public override void Initialize()
         {
@@ -62,6 +59,8 @@ namespace DCL.VoiceChat.Proximity.Systems
 
             AssignPendingSources();
 
+            // The AudioListener is on the camera, but spatial gain should be relative to the player's head.
+            // In ThirdPerson these positions differ, so we track both to reproject remote sources before applying spatial audio.
             (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
             SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
 
@@ -135,13 +134,5 @@ namespace DCL.VoiceChat.Proximity.Systems
 
             return (azimuth, elevation);
         }
-
-        // [Query]
-        // [None(typeof(DeleteEntityIntention))]
-        // private void ApplySettings(ref ProximityAudioSourceComponent proximityAudio)
-        // {
-        //     if (proximityAudio.AudioSource != null)
-        //         configuration?.ApplyProximitySettingsTo(proximityAudio.AudioSource);
-        // }
     }
 }
