@@ -58,7 +58,14 @@ namespace ECS.SceneLifeCycle.Debug
             timer += t;
 
             float interval = Mathf.Max(0.1f, intervalBinding.Value);
-            statusBinding.Value = $"Cycle #{cycleCount} | Next: {Mathf.Max(0f, interval - timer):F1}s";
+            float remaining = Mathf.Max(0f, interval - timer);
+            int displayTenths = (int)(remaining * 10f);
+            if (cycleCount != _lastDisplayedCycle || displayTenths != _lastDisplayedTenths)
+            {
+                _lastDisplayedCycle = cycleCount;
+                _lastDisplayedTenths = displayTenths;
+                statusBinding.Value = $"Cycle #{cycleCount} | Next: {remaining:F1}s";
+            }
 
             if (timer < interval) return;
 
