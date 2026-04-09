@@ -190,23 +190,25 @@ namespace DCL.Chat.ChatServices
             if (friendshipStatus == FriendshipStatus.BLOCKED_BY)
                 return new UserState(false, ChatUserState.DISCONNECTED);
 
-            //If the user is connected we need to check our settings and then theirs.
-            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
-                return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
-
             // This is done because other clients don't connect to chat livekit room, so they are not found in the participant list.
             // If we are able to find them through either island or scene room, it means we cannot chat with them
             if (!isUserConnected && (roomHub.TryGetUser(userId, out _, out _) || roomHub.TryGetUser(lowerUserId, out _, out _)))
                 return new UserState(isUserConnected, ChatUserState.OTHER_CLIENT);
 
-            if (isUserConnected)
+            //If the user is connected we need to check our settings and then theirs.
+            if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
+                return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
+
+            // User should be online, but check if they disconnected while processing this data + ensure we have metadata
+            Participant? participant = chatRoom.Participants.RemoteParticipant(userId)
+                                       ?? chatRoom.Participants.RemoteParticipant(lowerUserId);
+
+            if (participant != null && !string.IsNullOrEmpty(participant.Metadata))
             {
-                Participant? participant = chatRoom.Participants.RemoteParticipant(userId) ?? chatRoom.Participants.RemoteParticipant(lowerUserId);
-
                 //If we allow ALL messages, we need to know their settings.
-                ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant!.Metadata);
+                ParticipantPrivacyMetadata userMetadata = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant.Metadata);
 
-                if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
+                if (userMetadata.private_messages_privacy != PRIVACY_SETTING_ALL)
                     return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
             }
 

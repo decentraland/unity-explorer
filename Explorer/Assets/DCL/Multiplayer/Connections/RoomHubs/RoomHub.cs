@@ -54,6 +54,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public bool TryGetUser(string wallet, out Participant? participant, out IRoom? room)
         {
+            // Ensure latest data
+            AllLocalRoomsRemoteParticipantIdentities();
+
             if (islandIdentities.TryGetValue(wallet, out participant))
             {
                 room = IslandRoom();
