@@ -1,6 +1,8 @@
 name: Upload Latest Build to Epic Store
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       platform:
@@ -25,7 +27,7 @@ jobs:
     - name: Set platform flags
       id: platforms
       run: |
-        $p = "${{ github.event.inputs.platform }}"
+        $p = "${{ github.event.inputs.platform || 'both' }}"
         echo "build_windows=$($p -eq 'windows' -or $p -eq 'both')" >> $env:GITHUB_OUTPUT
         echo "build_mac=$($p -eq 'mac' -or $p -eq 'both')" >> $env:GITHUB_OUTPUT
 
