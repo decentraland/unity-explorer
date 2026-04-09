@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System.Threading;
@@ -6,24 +7,21 @@ using System.Threading;
 namespace DCL.SDKComponents.MediaStream
 {
     /// <summary>
-    ///     Decorator that tracks media source type via analytics before resolving.
+    ///     Analytics decorator for <see cref="IUrlResolverService"/>.
     ///     Follows the project's decorator-based analytics pattern (see DecoratorBased/).
     /// </summary>
-    public class TrackedMediaUrlResolver
+    public class UrlResolverServiceAnalyticsDecorator : IUrlResolverService
     {
-        private readonly YouTubeUrlResolver youTubeResolver;
+        private readonly IUrlResolverService inner;
         private readonly IAnalyticsController analytics;
 
-        public TrackedMediaUrlResolver(YouTubeUrlResolver youTubeResolver, IAnalyticsController analytics)
+        public UrlResolverServiceAnalyticsDecorator(IUrlResolverService inner, IAnalyticsController analytics)
         {
-            this.youTubeResolver = youTubeResolver;
+            this.inner = inner;
             this.analytics = analytics;
         }
 
-        public UniTask<ResolvedYouTubeUrl?> ResolveYouTubeAsync(string url, CancellationToken ct) =>
-            youTubeResolver.ResolveAsync(url, ct);
-
-        public void TrackMediaSource(string url)
+        public UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct)
         {
             string host;
 
@@ -35,6 +33,8 @@ namespace DCL.SDKComponents.MediaStream
                 ["source_type"] = host,
                 ["url"] = url,
             });
+
+            return inner.ResolveAsync(url, reportData, ct);
         }
     }
 }

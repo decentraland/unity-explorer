@@ -1,9 +1,6 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.WebRequests;
 using System.Threading;
-using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -18,7 +15,6 @@ namespace DCL.SDKComponents.MediaStream
 
         internal Status status;
 
-        // TODO (Vit): add caching mechanism for resolved promises: <url, isReachable> (on some upper level)
         internal MediaAddress mediaAddress;
         internal MediaAddress originalAddress;
         internal bool isReachable;
@@ -29,8 +25,8 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsConsumed => status == Status.Consumed;
 
-        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
-            TrackedMediaUrlResolver mediaUrlResolver)
+        public async UniTask UrlReachabilityResolveAsync(MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
+            IUrlResolverService urlResolverService)
         {
             status = Status.Pending;
             isReachable = false;
@@ -49,107 +45,24 @@ namespace DCL.SDKComponents.MediaStream
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
 
-            // Track media source via analytics decorator
-            mediaUrlResolver.TrackMediaSource(url);
+            ResolvedMediaUrl resolved = await urlResolverService.ResolveAsync(url, reportData, ct);
 
-            // YouTube resolution: resolve to direct stream URL before reachability check
-            if (url.IsYouTubeUrl())
-            {
-                ResolvedYouTubeUrl? resolved = await mediaUrlResolver.ResolveYouTubeAsync(url, ct);
+            isReachable = resolved.IsReachable;
+            isLiveStream = resolved.IsLiveStream;
+            resolvedUrlExpiresAt = resolved.ExpiresAtRealtimeSinceStartup;
 
-                if (resolved.HasValue)
-                {
-                    url = resolved.Value.DirectUrl;
-                    this.mediaAddress = MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(url));
-                    this.isLiveStream = resolved.Value.IsLiveStream;
-                    this.resolvedUrlExpiresAt = resolved.Value.ExpiresAtRealtimeSinceStartup;
-
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Resolved YouTube URL to direct stream (live={isLiveStream})");
-                }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Failed to resolve YouTube URL: {url}");
-                    status = Status.Resolved;
-                    return;
-                }
-            }
-
-            // Google Drive resolution: simple URL rewrite, no external library needed
-            if (url.IsGoogleDriveUrl())
-            {
-                string directUrl = url.ResolveGoogleDriveDirectUrl();
-
-                if (directUrl != null)
-                {
-                    url = directUrl;
-                    this.mediaAddress = MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(url));
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[GoogleDrive] Resolved to direct URL");
-
-                    // Skip HEAD request for Google Drive — it causes exceptions in Unity's web request handler.
-                    // Go directly to GET-based reachability check.
-                    isReachable = await IsGetReachableAsync(url, ct);
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
-                    status = Status.Resolved;
-                    return;
-                }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[GoogleDrive] Could not extract file ID from URL: {url}");
-                    status = Status.Resolved;
-                    return;
-                }
-            }
-
-            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5, true);
-            //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
-            if (!isReachable)
-                isReachable = await IsGetReachableAsync(url, ct);
-
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
+            if (resolved.DirectUrl != url)
+                this.mediaAddress = MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(resolved.DirectUrl));
 
             status = Status.Resolved;
-        }
-
-        /*The following function is a temporary workardound for Issue #2485
-         *The streaming server was taking 3 minutes to fail with timeout in the IsHeadReachableAsync method, by adding a timeout it was getting stuck
-         *in the previous IsGetReachable async that was performing a get request, starting the stream and never ending
-         *There was no other way other then the new UnityWebRequest to start the request with the webrequestcontroller and interrupt it after a few bytes were received
-         * This will be soon replaced by the integration of HTTP2 library that will provide a clearer way to solve the problem
-         */
-        private async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
-        {
-            UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(url);
-
-            try
-            {
-                isGetReachableRequest.SendWebRequest();
-
-                while (isGetReachableRequest.downloadedBytes == 0)
-                {
-                    if (ct.IsCancellationRequested)
-                        return false;
-
-                    if (!string.IsNullOrEmpty(isGetReachableRequest.error))
-                        return false;
-
-                    await UniTask.Yield();
-                }
-
-                return true;
-            }
-            finally
-            {
-                isGetReachableRequest.Abort();
-                isGetReachableRequest.Dispose();
-            }
         }
 
         public bool IsReachableConsume(MediaAddress address)
         {
             status = Status.Consumed;
 
-            // Compare against the original address (pre-YouTube-resolution) since
-            // component.MediaAddress still holds the original YouTube URL
+            // Compare against the original address (pre-resolution) since
+            // component.MediaAddress still holds the original URL
             MediaAddress compareAddress = originalAddress.IsEmpty ? this.mediaAddress : originalAddress;
 
             if (compareAddress != address)

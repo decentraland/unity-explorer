@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
-        private readonly TrackedMediaUrlResolver mediaUrlResolver;
+        private readonly IUrlResolverService urlResolverService;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
@@ -62,7 +62,9 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
 
-            mediaUrlResolver = new TrackedMediaUrlResolver(new YouTubeUrlResolver(), analyticsController);
+            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
+                new UrlResolverService(webRequestController),
+                analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -196,7 +198,7 @@ namespace DCL.SDKComponents.MediaStream
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
             if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, mediaUrlResolver).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, urlResolverService).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 
