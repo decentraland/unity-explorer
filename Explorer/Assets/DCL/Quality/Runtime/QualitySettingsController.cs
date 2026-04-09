@@ -28,6 +28,7 @@ namespace DCL.Quality.Runtime
         public int SceneDistance { get; private set; }
         public float LandscapeDistance { get; private set; }
         public bool SunShadows { get; private set; }
+        public bool SunLensFlare { get; private set; }
         public bool SceneLights { get; private set; }
         public bool SceneLightShadows { get; private set; }
         public int MaxSceneLights { get; private set; }
@@ -97,6 +98,7 @@ namespace DCL.Quality.Runtime
             SceneDistance = preset.SceneDistance;
             LandscapeDistance = preset.LandscapeDistance;
             SunShadows = preset.SunShadows;
+            SunLensFlare = preset.SunLensFlare;
             SceneLights = preset.SceneLightsEnabled;
             SceneLightShadows = preset.SceneLightShadowsEnabled;
             MaxSceneLights = preset.MaxSceneLights;
@@ -121,6 +123,7 @@ namespace DCL.Quality.Runtime
             landscapeData.DetailDistance = LandscapeDistance;
 
             URPSettingsApplier.ApplySunShadows(SunShadows);
+            URPSettingsApplier.ApplySunLensFlare(SunLensFlare);
             URPSettingsApplier.ApplySceneLight(SceneLights);
             URPSettingsApplier.ApplyMaxObjectsPerLight(MaxSceneLights);
             URPSettingsApplier.ApplySceneLightsShadows(SceneLightShadows);
@@ -219,6 +222,15 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetSunLensFlare(bool enabled)
+        {
+            SunLensFlare = enabled;
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, enabled);
+            SwitchToCustom();
+            URPSettingsApplier.ApplySunLensFlare(enabled);
+            TrackQualitySettingsReport();
+        }
+
         public void SetSceneLights(bool enabled)
         {
             SceneLights = enabled;
@@ -287,6 +299,7 @@ namespace DCL.Quality.Runtime
             SceneDistance = saved.SceneDistance;
             LandscapeDistance = saved.LandscapeDistance;
             SunShadows = saved.SunShadows;
+            SunLensFlare = saved.SunLensFlare;
             SceneLights = saved.SceneLights;
             SceneLightShadows = saved.SceneLightShadows;
             MaxSceneLights = saved.MaxSceneLights;
@@ -323,6 +336,7 @@ namespace DCL.Quality.Runtime
                 if (SceneDistance != b.SceneDistance) properties["scene_distance"] = SceneDistance;
                 if (!Mathf.Approximately(LandscapeDistance, b.LandscapeDistance)) properties["landscape_distance"] = LandscapeDistance;
                 if (SunShadows != b.SunShadows) properties["sun_shadows"] = SunShadows;
+                if (SunLensFlare != b.SunLensFlare) properties["sun_lens_flare"] = SunLensFlare;
                 if (SceneLights != b.SceneLightsEnabled) properties["scene_lights"] = SceneLights;
                 if (SceneLightShadows != b.SceneLightShadowsEnabled) properties["scene_light_shadows"] = SceneLightShadows;
                 if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
