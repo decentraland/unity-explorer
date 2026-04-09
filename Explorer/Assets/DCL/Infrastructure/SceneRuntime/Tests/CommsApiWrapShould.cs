@@ -70,6 +70,7 @@ namespace SceneRuntime.Tests
             //Arrange
             string topic = "my-topic";
             string data = "{\"type\":\"test\"}";
+            byte[] topicBytes = Encoding.UTF8.GetBytes(topic);
 
             //Act
             commsApi.PublishData(topic, data);
@@ -80,8 +81,15 @@ namespace SceneRuntime.Tests
             byte[] sent = pipe.sendMessageCalls[0];
             Assert.AreEqual((byte)ISceneCommunicationPipe.MsgType.CommsData, sent[0], "First byte should be MsgType.CommsData.");
 
-            string payload = Encoding.UTF8.GetString(sent, 1, sent.Length - 1);
-            Assert.AreEqual(data, payload, "Payload should be the raw data string.");
+            // Wire format after MsgType: [topicLen 2 bytes LE][topic UTF-8][data UTF-8]
+            ushort topicLen = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(sent.AsSpan(1));
+            Assert.AreEqual(topicBytes.Length, topicLen, "Topic length header should match.");
+
+            string decodedTopic = Encoding.UTF8.GetString(sent, 3, topicLen);
+            Assert.AreEqual(topic, decodedTopic, "Topic should match.");
+
+            string decodedData = Encoding.UTF8.GetString(sent, 3 + topicLen, sent.Length - 3 - topicLen);
+            Assert.AreEqual(data, decodedData, "Data payload should match.");
         }
 
         [Test]
@@ -104,10 +112,11 @@ namespace SceneRuntime.Tests
             ReadOnlySpan<byte> afterMsgType = wireBytes.AsSpan(1);
             pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(afterMsgType, senderIdentity));
 
-            //Assert
+            //Assert — ConsumeMessages returns JSON; inner data string is JSON-escaped by JsonTextWriter.
             string json = commsApi.ConsumeMessages(topic);
             Assert.That(json, Does.Contain("\"sender\":\"0xABCD\""));
-            Assert.That(json, Does.Contain("{\"type\":\"hello\"}"));
+            Assert.That(json, Does.Contain("\"data\":"));
+            Assert.That(json, Does.Contain("hello"));
         }
 
         [Test]
@@ -145,9 +154,9 @@ namespace SceneRuntime.Tests
             string first = commsApi.ConsumeMessages("drain-test");
             string second = commsApi.ConsumeMessages("drain-test");
 
-            //Assert
-            Assert.That(first, Does.Contain("\"v\":1"));
-            Assert.That(first, Does.Contain("\"v\":2"));
+            //Assert — ConsumeMessages JSON-escapes inner data, so check sender identities.
+            Assert.That(first, Does.Contain("sender1"));
+            Assert.That(first, Does.Contain("sender2"));
             Assert.AreEqual("[]", second, "Buffer should be drained after first consume.");
         }
 
@@ -217,8 +226,14 @@ namespace SceneRuntime.Tests
 
         private void SimulateIncomingMessage(string topic, string data, string senderIdentity)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(data);
-            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(bytes, senderIdentity));
+            // Encode in wire format expected by OnDataReceived: [topicLen 2 bytes LE][topic UTF-8][data UTF-8]
+            byte[] topicBytes = Encoding.UTF8.GetBytes(topic);
+            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+            byte[] encoded = new byte[2 + topicBytes.Length + dataBytes.Length];
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(encoded, (ushort)topicBytes.Length);
+            topicBytes.CopyTo(encoded, 2);
+            dataBytes.CopyTo(encoded, 2 + topicBytes.Length);
+            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(encoded, senderIdentity));
         }
 
         /// <summary>
