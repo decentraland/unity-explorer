@@ -1114,6 +1114,7 @@ namespace Global.Dynamic
                         identityCache,
                         mainUIView.SidebarView.ProximityVoiceChatButton,
                         mainUIView.SidebarView.NearbyVoiceWidget,
+                        mainUIView.SidebarView.ProximityVoiceTip,
                         staticContainer.ScenesCache,
                         staticContainer.SceneRestrictionBusController)
                 );

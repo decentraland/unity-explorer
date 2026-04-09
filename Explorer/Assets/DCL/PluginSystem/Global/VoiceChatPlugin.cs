@@ -53,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProximityConfigHolder proximityConfigHolder = new ();
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly ProximityVoiceTipView? proximityVoiceTipView;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private ProximityVoiceChatButtonController? proximityButtonController;
         private MicAmplitudeProvider? micAmplitudeProvider;
         private NearbyVoiceWidgetController? nearbyVoiceWidgetController;
+        private ProximityVoiceTipController? proximityVoiceTipController;
         private VoiceChatConfiguration? storedVoiceChatConfig;
         private Action? activeSpeakersUpdatedHandler;
 
@@ -89,6 +91,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache identityCache,
             ProximityVoiceChatButtonView? proximityVoiceChatButtonView,
             NearbyVoiceWidgetView? nearbyVoiceWidgetView,
+            ProximityVoiceTipView? proximityVoiceTipView,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -107,6 +110,7 @@ namespace DCL.PluginSystem.Global
             this.identityCache = identityCache;
             this.proximityVoiceChatButtonView = proximityVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
+            this.proximityVoiceTipView = proximityVoiceTipView;
             this.scenesCache = scenesCache;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
 
@@ -259,6 +263,14 @@ namespace DCL.PluginSystem.Global
                     storedVoiceChatConfig!.ProximityChatAudioMixerGroup,
                     micAmplitudeProvider);
                 pluginScope.Add(nearbyVoiceWidgetController);
+            }
+
+            if (proximityVoiceTipView != null)
+            {
+                proximityVoiceTipController = new ProximityVoiceTipController(
+                    proximityVoiceTipView,
+                    () => proximityVoiceChatButtonView?.Button?.onClick.Invoke());
+                pluginScope.Add(proximityVoiceTipController);
             }
         }
 
