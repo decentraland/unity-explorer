@@ -111,3 +111,5 @@ MonoBehaviour:
   <MaxData>k__BackingField:
     Size: 0.5
     DistanceUnit: 80
+  fadeDuration: 0.3
+  <ThumbnailDefault>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
