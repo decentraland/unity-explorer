@@ -114,9 +114,7 @@ namespace DCL.Chat.ChatServices
 
             try
             {
-                await UniTask.WhenAll(
-                    rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token)
-                );
+                await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
 
                 await UniTask.WaitUntil(() =>
                     chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
