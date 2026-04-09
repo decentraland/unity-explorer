@@ -42,6 +42,15 @@ namespace DCL.Multiplayer.Connections.Pulse
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
                 TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage);
 
+                // A delta with the same sequence may have arrived first via the unreliable channel,
+                // storing isEmoting=false. EmoteStarted (reliable) is authoritative, so force-update the stored state.
+                if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out (uint sequence, NetworkMovementMessage message) stored)
+                    && !stored.message.isEmoting)
+                {
+                    stored.message.isEmoting = true;
+                    lastMovementMessages[emoteStarted.SubjectId] = stored;
+                }
+
                 // EmoteStarted is mutually exclusive with other messages so we don't receive two messages with the same Sequence
                 Inbox(movementMessage, walletId);
             }
