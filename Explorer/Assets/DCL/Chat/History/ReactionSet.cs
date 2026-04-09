@@ -9,6 +9,8 @@ namespace DCL.Chat.History
 
         public bool IsEmpty => insertionOrder.Count == 0;
 
+        public int DistinctEmojiCount => insertionOrder.Count;
+
         public bool AddReaction(int emojiIndex, string walletAddress)
         {
             if (!reactions.TryGetValue(emojiIndex, out HashSet<string>? wallets))

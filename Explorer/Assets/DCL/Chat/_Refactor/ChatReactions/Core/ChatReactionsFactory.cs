@@ -10,6 +10,8 @@ using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.NotificationsBus;
+using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -72,7 +74,14 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(reactionBus);
 
             // --- Message reactions ---
-            var messageReactionService = new ChatMessageReactionService(reactionBus, chatHistory, web3IdentityCache);
+            var messageReactionService = new ChatMessageReactionService(
+                reactionBus, chatHistory, web3IdentityCache,
+                reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage);
+
+            messageReactionService.ReactionLimitReached += max =>
+                NotificationsBusController.Instance.AddNotification(
+                    new DefaultSuccessNotification(string.Format(reactionsConfig.MessageReactions.ReactionLimitMessage, max)));
+
             scope.Add(messageReactionService);
 
             // --- Simulations ---

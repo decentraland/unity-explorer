@@ -21,6 +21,16 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public int MaxRecentEmojis { get; private set; } = 3;
 
         [field: Header("BEHAVIOUR")]
+        [field: Note("Maximum number of distinct emoji reactions allowed per chat message. " +
+                     "Once reached, a toast notification is shown and no new reactions can be added. " +
+                     "0 = unlimited.")]
+        [field: Range(0, 20)]
+        [field: SerializeField] public int MaxDistinctReactionsPerMessage { get; private set; } = 3;
+
+        [field: Note("Toast message shown when the reaction limit is reached. " +
+                     "Use {0} as a placeholder for the max count.")]
+        [field: SerializeField] public string ReactionLimitMessage { get; private set; } = "Reaction limit reached ({0} max per message)";
+
         [field: Note("Debounce delay (seconds) before sending situational reactions to the network. " +
                      "Clicks within this window are deduplicated per emoji. " +
                      "0 = disabled (sends immediately). Enable only after deploying protocol with count field.")]

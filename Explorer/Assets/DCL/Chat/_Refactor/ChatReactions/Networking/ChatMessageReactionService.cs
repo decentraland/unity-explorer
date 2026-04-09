@@ -25,9 +25,16 @@ namespace DCL.Chat.ChatReactions.Networking
         /// </summary>
         public event Action<int, bool>? UserReactedToMessage;
 
+        /// <summary>
+        /// Fired when the local user tries to add a new distinct emoji but the per-message limit has been reached.
+        /// Parameter: maxDistinctReactionsPerMessage.
+        /// </summary>
+        public event Action<int>? ReactionLimitReached;
+
         private readonly IReactionMessageBus reactionBus;
         private readonly IChatHistory chatHistory;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly int maxDistinctReactionsPerMessage;
 
         private readonly Dictionary<string, ChatChannel.ChannelId> messageIdToChannel = new ();
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> channelToMessageIds = new ();
@@ -35,11 +42,13 @@ namespace DCL.Chat.ChatReactions.Networking
         internal ChatMessageReactionService(
             IReactionMessageBus reactionBus,
             IChatHistory chatHistory,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            int maxDistinctReactionsPerMessage = 0)
         {
             this.reactionBus = reactionBus;
             this.chatHistory = chatHistory;
             this.identityCache = identityCache;
+            this.maxDistinctReactionsPerMessage = maxDistinctReactionsPerMessage;
 
             chatHistory.MessageAdded += OnMessageAdded;
             chatHistory.ChannelCleared += OnChannelCleared;
@@ -83,12 +92,27 @@ namespace DCL.Chat.ChatReactions.Networking
             }
             else
             {
+                if (IsNewEmojiAndLimitReached(reactions, emojiIndex))
+                {
+                    ReactionLimitReached?.Invoke(maxDistinctReactionsPerMessage);
+                    return;
+                }
+
                 bool othersReacted = reactions != null && reactions.GetReactors(emojiIndex) is { Count: > 0 };
                 channel.AddReaction(messageId, emojiIndex, ownWallet);
                 ReactionPersistenceRequested?.Invoke(channelId, messageId, emojiIndex, ownWallet, false);
                 SendReactionToNetwork(emojiIndex, messageId, channel.ChannelType, channelId);
                 UserReactedToMessage?.Invoke(emojiIndex, othersReacted);
             }
+        }
+
+        private bool IsNewEmojiAndLimitReached(ReactionSet? reactions, int emojiIndex)
+        {
+            if (maxDistinctReactionsPerMessage <= 0 || reactions == null)
+                return false;
+
+            bool isNewEmoji = reactions.GetReactors(emojiIndex) == null;
+            return isNewEmoji && reactions.DistinctEmojiCount >= maxDistinctReactionsPerMessage;
         }
 
         private void SendReactionToNetwork(int emojiIndex, string messageId,
