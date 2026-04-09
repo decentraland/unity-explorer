@@ -55,7 +55,7 @@ namespace DCL.Chat.Commands
                 sb.Append("Name: ").AppendLine(i.name);
                 sb.Append("Admin: ").AppendLine(i.admin);
                 sb.Append("Active: ").AppendLine(i.active);
-                sb.Append("CanBeRemoved: ").AppendLine(i.canBeRemoved);
+                sb.Append("CanBeRemoved: ").Append(i.canBeRemoved).AppendLine();
                 sb.AppendLine();
             }
 
