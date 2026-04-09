@@ -82,7 +82,7 @@ public class SkyboxRenderController : MonoBehaviour
     [Header("Transition Settings")]
     [SerializeField] private float transitionDuration;
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true)
     {
         if (skyboxMat)
         {
@@ -126,7 +126,7 @@ public class SkyboxRenderController : MonoBehaviour
             else
                 lightAnimator.AddClip(lightAnimation, lightAnimation.name);
 
-            InitializeLensFlare();
+            InitializeLensFlare(lensFlareEnabled);
         }
 
         //setup indirect light
@@ -230,14 +230,13 @@ public class SkyboxRenderController : MonoBehaviour
         UpdateLensFlare(timeOfDay);
     }
 
-    private void InitializeLensFlare()
+    private void InitializeLensFlare(bool lensFlareEnabled)
     {
-        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>();
-
-        if (lensFlare == null)
-            lensFlare = directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>()
+                    ?? directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
 
         lensFlare.useOcclusion = true;
+        lensFlare.enabled = lensFlareEnabled;
 
         lensFlareEntries.Sort(static (a, b) => a.StartTime.CompareTo(b.StartTime));
     }
@@ -250,10 +249,10 @@ public class SkyboxRenderController : MonoBehaviour
 
         LensFlareDataSRP? newFlareData = GetActiveLensFlareData(timeOfDay);
 
-        if (newFlareData != null && newFlareData != activeLensFlareData)
+        if (newFlareData != activeLensFlareData)
         {
             activeLensFlareData = newFlareData;
-            lensFlare.lensFlareData = activeLensFlareData;
+            lensFlare.lensFlareData = newFlareData;
         }
     }
 

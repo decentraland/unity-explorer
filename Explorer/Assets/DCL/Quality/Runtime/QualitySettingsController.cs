@@ -123,6 +123,7 @@ namespace DCL.Quality.Runtime
             landscapeData.DetailDistance = LandscapeDistance;
 
             URPSettingsApplier.ApplySunShadows(SunShadows);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, SunLensFlare);
             URPSettingsApplier.ApplySunLensFlare(SunLensFlare);
             URPSettingsApplier.ApplySceneLight(SceneLights);
             URPSettingsApplier.ApplyMaxObjectsPerLight(MaxSceneLights);
