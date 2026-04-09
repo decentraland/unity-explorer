@@ -40,6 +40,9 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (emoteStarted.PlayerState != null)
             {
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
+                TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage);
+
+                // EmoteStarted is mutually exclusive with other messages so we don't receive two messages with the same Sequence
                 Inbox(movementMessage, walletId);
             }
 
@@ -64,6 +67,13 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             emotingSubjects.Remove(emoteStopped.SubjectId);
+
+            // Update the stored state so it will be applied with the next delta
+            if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
+            {
+                lastMessage.message.isEmoting = false;
+                lastMovementMessages[emoteStopped.SubjectId] = (lastMessage.sequence, lastMessage.message);
+            }
 
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
         }
