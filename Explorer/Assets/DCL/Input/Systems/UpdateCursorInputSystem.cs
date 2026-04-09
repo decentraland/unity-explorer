@@ -105,7 +105,7 @@ namespace DCL.Input.Systems
         {
             hasHoverCollider = hoverStateComponent.HasCollider;
             isAtDistance = hoverStateComponent.IsAtDistance;
-            isHoveringAnInteractable = hasHoverCollider && isAtDistance;
+            isHoveringAnInteractable = hasHoverCollider && isAtDistance && hoverStateComponent.IsCursorInteraction;
         }
 
         [Query]
