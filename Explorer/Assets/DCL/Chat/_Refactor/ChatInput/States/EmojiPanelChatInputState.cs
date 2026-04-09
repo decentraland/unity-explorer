@@ -23,8 +23,10 @@ namespace DCL.Chat.ChatInput
 
             inputField = view.inputField;
 
-            clickDetectionHandler = new ChatClickDetectionHandler(emojiPanelView.transform);
-            clickDetectionHandler.OnClickOutside += Deactivate;
+            clickDetectionHandler = new ChatClickDetectionHandler(
+                emojiPanelView.transform,
+                emojiContainer.emojiPanelButton.transform);
+            clickDetectionHandler.OnClickOutside += HandleClickOutside;
             clickDetectionHandler.Pause();
         }
 
@@ -54,6 +56,11 @@ namespace DCL.Chat.ChatInput
             inputField.InsertTextAtCaretPosition(emoji);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            clickDetectionHandler.Dispose();
+        }
+
+        private void HandleClickOutside() => TryDeactivate();
     }
 }
