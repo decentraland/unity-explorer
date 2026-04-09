@@ -12,6 +12,8 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class YouTubeUrlResolver
     {
+        private static readonly string TAG = nameof(YouTubeUrlResolver);
+
         private const int TIMEOUT_MS = 10_000;
         private const int RETRY_BACKOFF_MS = 1_000;
 
@@ -28,11 +30,13 @@ namespace DCL.SDKComponents.MediaStream
 
         public async UniTask<ResolvedYouTubeUrl?> ResolveAsync(string youtubeUrl, CancellationToken ct)
         {
+            if (ct.IsCancellationRequested) return null;
+
             VideoId? videoId = VideoId.TryParse(youtubeUrl);
 
             if (videoId == null)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Could not parse video ID from URL: {youtubeUrl}");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] Could not parse video ID from URL: {youtubeUrl}");
                 return null;
             }
 
@@ -47,11 +51,13 @@ namespace DCL.SDKComponents.MediaStream
             ResolvedYouTubeUrl? result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
 
             // Single retry with backoff
-            if (result == null)
+            if (result == null && !ct.IsCancellationRequested)
             {
-                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] First attempt failed for {videoIdStr}, retrying after {RETRY_BACKOFF_MS}ms...");
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] First attempt failed for {videoIdStr}, retrying after {RETRY_BACKOFF_MS}ms...");
                 await UniTask.Delay(RETRY_BACKOFF_MS, cancellationToken: ct);
-                result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
+
+                if (!ct.IsCancellationRequested)
+                    result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
             }
 
             if (result != null)
@@ -71,7 +77,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 if (UnityEngine.Time.realtimeSinceStartup < cached.ExpiresAtRealtimeSinceStartup)
                 {
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Cache hit for {videoId}");
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Cache hit for {videoId}");
                     return true;
                 }
 
@@ -119,6 +125,8 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedYouTubeUrl?> TryResolveInternalAsync(VideoId videoId, bool urlHintsLive, CancellationToken ct)
         {
+            if (ct.IsCancellationRequested) return null;
+
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(TIMEOUT_MS);
             CancellationToken token = timeoutCts.Token;
@@ -135,7 +143,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (isLive)
                 {
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Detected live stream: {videoId}");
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Detected live stream: {videoId}");
                     return await ResolveLiveStreamAsync(videoId, token);
                 }
 
@@ -145,22 +153,21 @@ namespace DCL.SDKComponents.MediaStream
                 if (vodResult != null)
                     return vodResult;
 
-                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] VOD failed for {videoId}, trying live stream path...");
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] VOD failed for {videoId}, trying live stream path...");
                 return await ResolveLiveStreamAsync(videoId, token);
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                // External cancellation — propagate
-                throw;
             }
             catch (OperationCanceledException)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Timeout resolving {videoId}");
+                if (ct.IsCancellationRequested)
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Resolution cancelled for {videoId}");
+                else
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] Timeout resolving {videoId}");
+
                 return null;
             }
             catch (Exception ex)
             {
-                ReportHub.LogError(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Failed to resolve {videoId}: {ex.Message}");
+                ReportHub.LogError(ReportCategory.MEDIA_STREAM, $"[{TAG}] Failed to resolve {videoId}: {ex.Message}");
                 return null;
             }
         }
@@ -171,11 +178,11 @@ namespace DCL.SDKComponents.MediaStream
 
             if (string.IsNullOrEmpty(hlsUrl))
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] No HLS manifest found for live stream {videoId}");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] No HLS manifest found for live stream {videoId}");
                 return null;
             }
 
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] Resolved live stream {videoId} to HLS manifest");
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Resolved live stream {videoId} to HLS manifest");
 
             return new ResolvedYouTubeUrl(
                 hlsUrl,
@@ -195,12 +202,12 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (selectedStream == null)
                 {
-                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] No suitable stream found for {videoId}");
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] No suitable stream found for {videoId}");
                     return null;
                 }
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[YouTubeResolver] Resolved VOD {videoId}: {selectedStream.Container} " +
+                    $"[{TAG}] Resolved VOD {videoId}: {selectedStream.Container} " +
                     $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")}");
 
                 return new ResolvedYouTubeUrl(
@@ -209,10 +216,14 @@ namespace DCL.SDKComponents.MediaStream
                     UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
                 );
             }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] VOD resolution cancelled for {videoId}");
+                return null;
+            }
             catch (Exception ex)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] VOD resolution failed for {videoId}: {ex.Message}");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] VOD resolution failed for {videoId}: {ex.Message}");
                 return null;
             }
         }

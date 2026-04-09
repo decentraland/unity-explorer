@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System.Threading;
@@ -21,11 +20,8 @@ namespace DCL.SDKComponents.MediaStream
             this.analytics = analytics;
         }
 
-        public async UniTask<ResolvedYouTubeUrl?> ResolveYouTubeAsync(string url, CancellationToken ct)
-        {
-            TrackMediaSource(url);
-            return await youTubeResolver.ResolveAsync(url, ct);
-        }
+        public UniTask<ResolvedYouTubeUrl?> ResolveYouTubeAsync(string url, CancellationToken ct) =>
+            youTubeResolver.ResolveAsync(url, ct);
 
         public void TrackMediaSource(string url)
         {

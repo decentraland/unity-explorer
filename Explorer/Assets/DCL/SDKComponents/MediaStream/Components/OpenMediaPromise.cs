@@ -95,6 +95,8 @@ namespace DCL.SDKComponents.MediaStream
                 else
                 {
                     ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[GoogleDrive] Could not extract file ID from URL: {url}");
+                    status = Status.Resolved;
+                    return;
                 }
             }
 
@@ -117,20 +119,29 @@ namespace DCL.SDKComponents.MediaStream
         private async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
         {
             UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(url);
-            isGetReachableRequest.SendWebRequest();
 
-            while (isGetReachableRequest.downloadedBytes == 0)
+            try
             {
-                ct.ThrowIfCancellationRequested();
+                isGetReachableRequest.SendWebRequest();
 
-                if (!string.IsNullOrEmpty(isGetReachableRequest.error))
-                    return false;
+                while (isGetReachableRequest.downloadedBytes == 0)
+                {
+                    if (ct.IsCancellationRequested)
+                        return false;
 
-                await UniTask.Yield();
+                    if (!string.IsNullOrEmpty(isGetReachableRequest.error))
+                        return false;
+
+                    await UniTask.Yield();
+                }
+
+                return true;
             }
-
-            isGetReachableRequest.Abort();
-            return true;
+            finally
+            {
+                isGetReachableRequest.Abort();
+                isGetReachableRequest.Dispose();
+            }
         }
 
         public bool IsReachableConsume(MediaAddress address)

@@ -10,8 +10,9 @@ namespace DCL.SDKComponents.MediaStream
 
         [SuppressMessage("ReSharper", "StringIndexOfIsCultureSpecific.1")]
         public static bool IsGoogleDriveUrl(this string url) =>
-            url.IndexOf("drive.google.com/") >= 0 ||
-            url.IndexOf("docs.google.com/") >= 0;
+            url.IndexOf("drive.google.com/file/") >= 0 ||
+            url.IndexOf("drive.google.com/open?") >= 0 ||
+            url.IndexOf("drive.google.com/uc?") >= 0;
 
         /// <summary>
         ///     Rewrites a Google Drive sharing URL into a direct download URL that AVPro can stream.
