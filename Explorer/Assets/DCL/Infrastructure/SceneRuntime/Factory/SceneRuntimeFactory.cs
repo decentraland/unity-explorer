@@ -86,13 +86,10 @@ namespace SceneRuntime.Factory
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
-            {
                 await UniTask.SwitchToThreadPool();
 
-                // Provide basic Thread Pool synchronization context
-                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            }
-
+            // Provide basic Thread Pool synchronization context
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,

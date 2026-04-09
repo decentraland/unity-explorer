@@ -87,16 +87,6 @@ namespace SceneRuntime
         /// </remarks>
         public void Dispose()
         {
-            // Flush all incremental GC state before tearing down the isolate.
-            // Under rapid scene load/unload, V8's ephemeron_remembered_set_ can accumulate
-            // stale EphemeronHashTable pointers after heap compaction, causing a use-after-free
-            // crash in MarkCompactCollector::ClearWeakCollections. Running a GC here drains
-            // the incremental marking pipeline while the isolate is still in a clean state.
-            try { engine.CollectGarbage(false); }
-            catch (Exception) { /* engine may already be in an error state; proceed with dispose */ }
-
-            // Dispose C# host-object wrappers before the engine so the final V8 GC
-            // triggered by engine.Dispose() sees fewer live EphemeronHashTable entries.
             jsApiBunch.Dispose();
             engine.Dispose();
         }
