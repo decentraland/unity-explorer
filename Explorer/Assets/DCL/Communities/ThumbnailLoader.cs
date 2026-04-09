@@ -37,9 +37,10 @@ namespace DCL.Communities
                 if (!string.IsNullOrEmpty(thumbnailUrl))
                     loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, useKtx, ct: ct);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { return; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
-            finally { thumbnailView.IsLoading = false; }
+
+            thumbnailView.IsLoading = false;
 
             if (loadedSprite != null)
                 thumbnailView.SetImage(loadedSprite, true);
