@@ -116,7 +116,8 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "SCENE_ADMINS_TESTS"
     ],
     "versionDefines": [],
     "noEngineReferences": false

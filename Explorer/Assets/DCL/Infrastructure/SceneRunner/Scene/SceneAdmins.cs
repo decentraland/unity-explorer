@@ -10,6 +10,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utility.Types;
 
 namespace SceneRunner.Admins
 {
@@ -26,7 +27,7 @@ namespace SceneRunner.Admins
             Error
         }
 
-        public struct Response
+        public struct AdminInfo
         {
             public string id;
             public string name;
@@ -60,7 +61,7 @@ namespace SceneRunner.Admins
         private readonly ISceneData sceneData;
 
         private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
-        private readonly ConcurrentDictionary<string, Response> wallets = new ();
+        private readonly ConcurrentDictionary<string, AdminInfo> wallets = new ();
         private Status status = Status.Idle;
 
         public SceneAdmins(
@@ -120,12 +121,12 @@ namespace SceneRunner.Admins
                 string url = urls.Url(DecentralandUrl.SceneAdmins);
 
                 var list = await webRequestController.SignedFetchGetAsync(url, json, ct)
-                    .CreateFromJson<List<Response>>(WRJsonParser.Newtonsoft);
+                    .CreateFromJson<List<AdminInfo>>(WRJsonParser.Newtonsoft);
 
                 wallets.Clear();
-                foreach (Response r in list) 
+                foreach (AdminInfo r in list) 
                 {
-                    wallets[r.id] = r;
+                    wallets[r.admin] = r;
                 }
 
                 status = Status.Loaded;
@@ -157,6 +158,18 @@ namespace SceneRunner.Admins
                 return null;
             }
 #endif
+        }
+
+        public Result<IReadOnlyDictionary<string, AdminInfo>> CurrentAdmins()
+        {
+            if (status == Status.Loaded)
+            {
+                return Result<IReadOnlyDictionary<string, AdminInfo>>.SuccessResult(wallets);
+            }
+            else
+            {
+                return Result<IReadOnlyDictionary<string, AdminInfo>>.ErrorResult($"Cannot provide admins. Current status: {status}");
+            }
         }
     }
 }

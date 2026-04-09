@@ -197,6 +197,8 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
+            public readonly SceneAdmins SceneAdmins;
+
             /// <summary>
             ///     For Unit Tests only
             /// </summary>
@@ -209,7 +211,9 @@ namespace SceneRunner
                 ISimpleFetchApi simpleFetchApi,
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
-                ISceneRuntime runtime)
+                ISceneRuntime runtime,
+                SceneAdmins sceneAdmins
+                )
             {
                 EngineAPI = engineAPI;
                 RestrictedActionsAPI = restrictedActionsAPI;
@@ -220,6 +224,7 @@ namespace SceneRunner
                 SimpleFetchApi = simpleFetchApi;
                 SyncDeps = syncDeps;
                 Runtime = runtime;
+                SceneAdmins = sceneAdmins;
             }
 
             protected WithRuntimeAndJsAPIBase(
@@ -253,7 +258,9 @@ namespace SceneRunner
                         sceneAdmins
                     ),
                     syncDeps,
-                    sceneRuntime) { }
+                    sceneRuntime,
+                    sceneAdmins
+                    ) { }
 
             public void Dispose()
             {

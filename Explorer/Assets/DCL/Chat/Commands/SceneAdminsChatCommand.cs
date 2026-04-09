@@ -4,46 +4,62 @@ using System.Text;
 using System.Threading;
 using System.Collections.Generic;
 using DCL.WebRequests;
+using DCL.Utilities;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
+using SceneRunner.Admins;
+using DCL.Utility.Types;
 
 namespace DCL.Chat.Commands
 {
-    // TODO use SceneAdmins from the current Scene via ISceneCache
     public class SceneAdminsChatCommand : IChatCommand
     {
-        private readonly IWebRequestController webRequestController;
+        private readonly IScenesCache sceneCache;
 
         public string Command => "scene-admins";
 
         public string Description => $"<b>/{Command}</b>\n  Shows the list of admins of the scene";
 
-        public SceneAdminsChatCommand(IWebRequestController webRequestController)
+        public SceneAdminsChatCommand(IScenesCache sceneCache)
         {
-            this.webRequestController = webRequestController;
+            this.sceneCache = sceneCache;
         }
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            /*
-            var list = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                .CreateFromJson<List<Response>>(WRJsonParser.Newtonsoft);
-            
+            IReadonlyReactiveProperty<ISceneFacade?> currentSceneProp = sceneCache.CurrentScene;
+            ISceneFacade? currentScene = currentSceneProp.Value;
+
+            if (currentScene == null)
+            {
+                return "Current scene is not available. Please make sure you are on a scene";
+            }
+
+            SceneAdmins admins = currentScene.SceneAdmins;
+
+            Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> result = admins.CurrentAdmins();
+
+            if (result.Success == false)
+            {
+                return result.ErrorMessage;
+            }
+
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine("Scene admins:");
 
-            foreach (Response r in list)
+            foreach (var item in result.Value)
             {
-                sb.Append("Id: ").Append(r.id);
-                sb.Append("Name: ").Append(r.name);
-                sb.Append("Admin: ").Append(r.admin);
-                sb.Append("Active: ").Append(r.active);
-                sb.Append("CanBeRemoved: ").Append(r.canBeRemoved);
+                SceneAdmins.AdminInfo i = item.Value;
+                sb.Append("Id: ").AppendLine(i.id);
+                sb.Append("Name: ").AppendLine(i.name);
+                sb.Append("Admin: ").AppendLine(i.admin);
+                sb.Append("Active: ").AppendLine(i.active);
+                sb.Append("CanBeRemoved: ").AppendLine(i.canBeRemoved);
                 sb.AppendLine();
             }
 
             return sb.ToString();
-            */
-            return "";
         }
     }
 }
