@@ -54,13 +54,7 @@ namespace DCL.AuthenticationScreenFlow
             email = payload.email;
             loginCt = payload.ct;
 
-            view.Show(payload.email);
             AuthenticateAsync(payload.email, payload.ct).Forget();
-
-            // Listeners
-            view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
-            view.ResendCodeButton.onClick.AddListener(ResendOtp);
-            view.InputField.CodeEntered += OnOTPEntered;
         }
 
         public override void Exit()
@@ -77,6 +71,7 @@ namespace DCL.AuthenticationScreenFlow
                     SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
                     Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
                     CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
+                    InvalidEmailException ex => new SpanErrorInfo("Invalid email provided during authentication", ex),
                     Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
                 };
 
@@ -88,6 +83,7 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.RemoveAllListeners();
             view.ResendCodeButton.onClick.RemoveAllListeners();
             view.InputField.CodeEntered -= OnOTPEntered;
+            compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded;
 
             email = string.Empty;
             loginCt = CancellationToken.None;
@@ -99,6 +95,8 @@ namespace DCL.AuthenticationScreenFlow
             try
             {
                 controller.CurrentRequestID = string.Empty;
+
+                compositeWeb3Provider.OTPSendSucceeded += OnOTPSendSucceeded;
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
@@ -124,11 +122,29 @@ namespace DCL.AuthenticationScreenFlow
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
+            catch (InvalidEmailException e)
+            {
+                loginException = e;
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.INVALID_EMAIL);
+            }
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
             }
+            finally{ compositeWeb3Provider.OTPSendSucceeded -= OnOTPSendSucceeded; }
+        }
+
+        private void OnOTPSendSucceeded(string emailAddress)
+        {
+            viewInstance.LoginSelectionAuthView.Hide();
+
+            view.Show(emailAddress);
+
+            // Listeners
+            view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
+            view.ResendCodeButton.onClick.AddListener(ResendOtp);
+            view.InputField.CodeEntered += OnOTPEntered;
         }
 
         private void OnOTPEntered(string otp)

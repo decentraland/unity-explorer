@@ -1,4 +1,4 @@
-Shader "Custom/LavaFlow" 
+Shader "Custom/LavaFlow (SoftMaskable)" 
 {
     Properties 
     {
@@ -37,7 +37,8 @@ Shader "Custom/LavaFlow"
             #pragma vertex vertexShader
             #pragma fragment fragmentShader
 
-            #pragma multi_compile __ SOFTMASKABLE
+            #pragma shader_feature _ SOFTMASK_EDITOR
+            #pragma shader_feature_local _ SOFTMASKABLE
             
             #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
             
@@ -57,19 +58,21 @@ Shader "Custom/LavaFlow"
                 float4 color : COLOR; 
             };
 
-            struct interpolator 
+            struct interpolator
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+                float4 worldPosition : TEXCOORD1;
             };
 
-            interpolator vertexShader (mesh m) 
+            interpolator vertexShader (mesh m)
             {
                 interpolator o;
-                o.vertex = UnityObjectToClipPos(m.vertex); 
+                o.vertex = UnityObjectToClipPos(m.vertex);
                 o.uv = m.uv;
                 o.color = m.color;
+                o.worldPosition = m.vertex;
                 return o;
             }
 
@@ -132,7 +135,7 @@ Shader "Custom/LavaFlow"
                 float4 layer1 = lerp(_Color1, _Color2, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
                 float4 layer2 = lerp(_Color3, _Color4, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
                 float4 finalComp = lerp(layer1, layer2, smoothstep(.5, -.3, tuv.y));
-                finalComp.a = i.color.a * SoftMask(i.vertex.xy, float4(0, 0, 0, 0), finalComp.a);
+                finalComp.a = i.color.a * SoftMask(i.vertex, i.worldPosition, finalComp.a);
 
                 return finalComp;
             }

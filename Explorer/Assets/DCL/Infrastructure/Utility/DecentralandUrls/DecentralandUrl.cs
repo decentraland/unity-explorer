@@ -139,6 +139,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ReportUserForm = 84,
         BannedUsers = 85,
 
+        EntitiesActiveElements = 86,
+
         Pulse = 100,
     }
 }

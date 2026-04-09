@@ -47,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
         private IObjectPool<PointAtMarkerHolder> pointAtMarkerPool;
+        private GameObject destinationMarkerPrefab;
 
         public CharacterMotionPlugin(
             ICharacterObject characterObject,
@@ -83,6 +84,8 @@ namespace DCL.PluginSystem.Global
 
             PointAtMarkerHolder prefab = (await assetsProvisioner.ProvideMainAssetAsync(
                 settings.PointAtMarkerPrefab, ct: ct)).Value.GetComponent<PointAtMarkerHolder>();
+
+            destinationMarkerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.DestinationMarkerPrefab, ct)).Value;
 
             var poolRoot = componentPoolsRegistry.RootContainerTransform();
             var poolParent = new GameObject("POOL_CONTAINER_PointAtMarkers").transform;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
                 new HandPointAtComponent(),
                 new TorsoIKComponent());
 
+            UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast);
@@ -147,6 +151,7 @@ namespace DCL.PluginSystem.Global
             {
                 HandPointAtSystem.InjectToWorld(ref builder);
                 PointAtMarkerSystem.InjectToWorld(ref builder, pointAtMarkerPool, web3IdentityCache, friendsCache, settings.PointAtMarkerVisibilitySettings);
+                builder.World.Create(PointAtThumbnailCache.Create());
                 PointAtMarkerCleanUpSystem.InjectToWorld(ref builder, pointAtMarkerPool);
                 RemoteHandPointAtSystem.InjectToWorld(ref builder, settings.ControllerSettings);
                 TorsoIKSystem.InjectToWorld(ref builder, settings.ControllerSettings);
