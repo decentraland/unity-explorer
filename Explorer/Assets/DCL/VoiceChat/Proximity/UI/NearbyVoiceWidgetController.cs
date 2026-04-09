@@ -24,11 +24,15 @@ namespace DCL.VoiceChat.Proximity
         public NearbyVoiceWidgetController(
             NearbyVoiceWidgetView view,
             ProximityVoiceChatStateModel stateModel,
-            AudioMixerGroup? proximityMixerGroup)
+            AudioMixerGroup? proximityMixerGroup,
+            MicAmplitudeProvider? micAmplitudeProvider = null)
         {
             this.view = view;
             this.stateModel = stateModel;
             this.proximityMixerGroup = proximityMixerGroup;
+
+            if (micAmplitudeProvider != null)
+                view.InitializeAmplitude(() => micAmplitudeProvider.Amplitude);
 
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             SyncViewWithState(stateModel.State.Value);

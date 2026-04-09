@@ -1151,6 +1151,9 @@ MonoBehaviour:
   <HearText>k__BackingField: {fileID: 4740140118192889816}
   speakButtonImage: {fileID: 2187530246253384382}
   speakingColor: {r: 0.101960786, g: 0.7764706, b: 0.1764706, a: 1}
+  speakingColorBright: {r: 0, g: 1, b: 0.11981559, a: 1}
+  colorSensitivity: 45
+  colorSmoothing: 12
 --- !u!114 &1674241877427284860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1231,6 +1234,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1822,6 +1826,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0

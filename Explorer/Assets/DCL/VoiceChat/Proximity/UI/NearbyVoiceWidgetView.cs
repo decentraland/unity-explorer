@@ -22,10 +22,41 @@ namespace DCL.VoiceChat.Proximity
         [Header("Speak Button Color")]
         [SerializeField] private Image speakButtonImage = null!;
         [SerializeField] private Color speakingColor = new (0.075f, 0.82f, 0.125f, 1f);
+        [SerializeField] private Color speakingColorBright = new (0.15f, 1f, 0.25f, 1f);
+        [Tooltip("Multiplier for raw RMS amplitude")]
+        [Min(0.5f)]
+        [SerializeField] private float colorSensitivity = 8f;
+        [Tooltip("How fast color reacts to amplitude changes")]
+        [Min(1f)]
+        [SerializeField] private float colorSmoothing = 12f;
+
+        private System.Func<float>? amplitudeProvider;
+        private bool isSpeakingState;
+        private float smoothedIntensity;
+
+        public void InitializeAmplitude(System.Func<float> provider)
+        {
+            amplitudeProvider = provider;
+        }
 
         public void SetSpeaking(bool isSpeaking)
         {
-            speakButtonImage.color = isSpeaking ? speakingColor : Color.white;
+            isSpeakingState = isSpeaking;
+
+            if (!isSpeaking)
+            {
+                smoothedIntensity = 0f;
+                speakButtonImage.color = Color.white;
+            }
+        }
+
+        private void Update()
+        {
+            if (!isSpeakingState || amplitudeProvider == null) return;
+
+            float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
+            smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
+            speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
         }
     }
 }
