@@ -61,7 +61,7 @@ namespace SceneRunner.Admins
         private readonly ISceneData sceneData;
 
         private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
-        private readonly ConcurrentDictionary<string, AdminInfo> wallets = new ();
+        private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
         private Status status = Status.Idle;
 
         public SceneAdmins(
