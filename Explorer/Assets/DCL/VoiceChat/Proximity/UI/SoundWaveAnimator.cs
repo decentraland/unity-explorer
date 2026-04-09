@@ -4,9 +4,9 @@ using UnityEngine;
 namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
-    /// Drives three UI bars based on microphone amplitude.
-    /// Each bar lerps at a different speed, creating a "wave" effect.
-    /// Attack is fast, decay is slow — gives a natural voice-activity feel.
+    /// Replicates the nametag voice-chat wave animation for uGUI.
+    /// Three bars ping-pong between two height sets while speaking,
+    /// collapse to min height (dots) when silent.
     /// </summary>
     public class SoundWaveAnimator : MonoBehaviour
     {
@@ -14,96 +14,97 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private RectTransform barCenter = null!;
         [SerializeField] private RectTransform barRight = null!;
 
-        [Header("Amplitude")]
-        [Tooltip("Multiplier applied to raw mic RMS to normalize into 0..1 range")]
-        [Range(0.5f, 50f)]
-        [SerializeField] private float amplitudeSensitivity = 5f;
+        [Header("Heights")]
+        [Min(0f)]
+        [SerializeField] private float minHeight = 2f;
+        [Min(0f)]
+        [SerializeField] private float midHeight = 3.5f;
+        [Min(0f)]
+        [SerializeField] private float maxHeight = 10f;
 
-        [Tooltip("Normalized amplitude below this value is treated as silence")]
-        [Range(0f, 0.1f)]
-        [SerializeField] private float silenceThreshold = 0.01f;
+        [Header("Animation")]
+        [Tooltip("Transition duration in seconds (same as nametag 0.3s)")]
+        [Min(0.01f)]
+        [SerializeField] private float transitionDuration = 0.3f;
 
-        [Header("Smoothing")]
-        [Tooltip("Lerp speed when amplitude is rising (fast attack)")]
-        [Range(1f, 30f)]
-        [SerializeField] private float smoothingUp = 14f;
-
-        [Tooltip("Lerp speed when amplitude is falling (slow decay / tail)")]
-        [Range(1f, 30f)]
-        [SerializeField] private float smoothingDown = 4f;
-
-        [Header("Bar Heights")]
-        [SerializeField] private float barMinHeight = 1.8928f;
-        [SerializeField] private float barMaxHeight = 9.0283f;
-
-        [Header("Per-Bar Speed Multipliers")]
-        [Tooltip("Left bar — slowest, creates lag")]
-        [Range(0.1f, 5f)]
-        [SerializeField] private float barSpeedLeft = 0.7f;
-
-        [Tooltip("Center bar — fastest, leads the wave")]
-        [Range(0.1f, 5f)]
-        [SerializeField] private float barSpeedCenter = 1.0f;
-
-        [Tooltip("Right bar — medium")]
-        [Range(0.1f, 5f)]
-        [SerializeField] private float barSpeedRight = 0.85f;
+        [Header("Voice Detection")]
+        [Tooltip("Raw RMS amplitude above this value is treated as speaking")]
+        [Min(0f)]
+        [SerializeField] private float speakingThreshold = 0.01f;
 
         private Func<float>? amplitudeProvider;
-        private RectTransform[] bars = null!;
-        private float[] smoothedHeights = null!;
+        private float transitionProgress;
+        private bool altState;
+        private bool isSpeaking;
 
         public void Initialize(Func<float> amplitudeGetter)
         {
             amplitudeProvider = amplitudeGetter;
-            bars = new[] { barLeft, barCenter, barRight };
-            smoothedHeights = new float[] { barMinHeight, barMinHeight, barMinHeight };
         }
 
         private void Update()
         {
-            if (amplitudeProvider == null || bars.Length == 0)
-                return;
+            if (amplitudeProvider == null) return;
 
-            float raw = amplitudeProvider();
-            float normalized = Mathf.Clamp01(raw * amplitudeSensitivity);
+            isSpeaking = amplitudeProvider() > speakingThreshold;
 
-            if (normalized < silenceThreshold)
-                normalized = 0f;
+            // Advance transition progress
+            transitionProgress += Time.deltaTime / transitionDuration;
 
-            float targetHeight = Mathf.Lerp(barMinHeight, barMaxHeight, normalized);
-
-            ReadOnlySpan<float> barSpeeds = stackalloc float[]
+            if (transitionProgress >= 1f)
             {
-                barSpeedLeft,
-                barSpeedCenter,
-                barSpeedRight,
-            };
+                transitionProgress = 0f;
 
-            for (int i = 0; i < bars.Length; i++)
-            {
-                float globalSpeed = targetHeight > smoothedHeights[i]
-                    ? smoothingUp
-                    : smoothingDown;
-
-                float speed = globalSpeed * barSpeeds[i] * Time.deltaTime;
-                smoothedHeights[i] = Mathf.Lerp(smoothedHeights[i], targetHeight, speed);
-                bars[i].sizeDelta = new Vector2(bars[i].sizeDelta.x, smoothedHeights[i]);
+                if (isSpeaking)
+                    altState = !altState;
+                else
+                    altState = false;
             }
+
+            float t = Mathf.SmoothStep(0f, 1f, transitionProgress);
+
+            // Target heights depend on speaking + altState
+            float leftTarget, centerTarget, rightTarget;
+
+            if (!isSpeaking)
+            {
+                leftTarget = minHeight;
+                centerTarget = minHeight;
+                rightTarget = minHeight;
+            }
+            else if (!altState)
+            {
+                // State A: sides=mid, center=max (same as nametag default)
+                leftTarget = midHeight;
+                centerTarget = maxHeight;
+                rightTarget = midHeight;
+            }
+            else
+            {
+                // State B: sides=max, center=mid (same as nametag --alt)
+                leftTarget = maxHeight;
+                centerTarget = midHeight;
+                rightTarget = maxHeight;
+            }
+
+            // Lerp from current to target
+            SetBarHeight(barLeft, Mathf.Lerp(barLeft.sizeDelta.y, leftTarget, t));
+            SetBarHeight(barCenter, Mathf.Lerp(barCenter.sizeDelta.y, centerTarget, t));
+            SetBarHeight(barRight, Mathf.Lerp(barRight.sizeDelta.y, rightTarget, t));
+        }
+
+        private static void SetBarHeight(RectTransform bar, float height)
+        {
+            bar.sizeDelta = new Vector2(bar.sizeDelta.x, height);
         }
 
         private void OnDisable()
         {
-            ResetToMin();
-        }
-
-        private void ResetToMin()
-        {
-            for (int i = 0; i < bars.Length; i++)
-            {
-                smoothedHeights[i] = barMinHeight;
-                bars[i].sizeDelta = new Vector2(bars[i].sizeDelta.x, barMinHeight);
-            }
+            SetBarHeight(barLeft, minHeight);
+            SetBarHeight(barCenter, minHeight);
+            SetBarHeight(barRight, minHeight);
+            transitionProgress = 0f;
+            altState = false;
         }
     }
 }
