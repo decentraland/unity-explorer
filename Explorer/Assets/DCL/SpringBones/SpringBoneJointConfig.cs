@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 namespace DCL.SpringBones
 {
-    public struct BlittableJointConfig
+    public struct SpringBoneJointConfig
     {
         public float Stiffness;
         public float Drag;

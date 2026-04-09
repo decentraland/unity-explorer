@@ -7,10 +7,11 @@ namespace DCL.SpringBones
     [BurstCompile]
     public struct PushSpringBoneTransformsJob : IJobParallelForTransform
     {
-        [ReadOnly] public NativeArray<BlittableTransform> Transforms;
+        [ReadOnly] public NativeArray<SpringBoneTransformData> Transforms;
 
-        [BurstCompile]
-        public void Execute(int index, TransformAccess transform) =>
+        public void Execute(int index, TransformAccess transform)
+        {
             transform.rotation = Transforms[index].Rotation;
+        }
     }
 }

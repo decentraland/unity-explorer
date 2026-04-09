@@ -9,35 +9,37 @@ namespace DCL.SpringBones
     [BurstCompile]
     public struct SpringBoneSimulationJob : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<int> SlotCountMap;
-        [ReadOnly] public NativeArray<BlittableJointConfig> JointConfigs;
-        [ReadOnly] public NativeArray<BlittableParentData> ParentData;
+        [ReadOnly] public NativeArray<int> SlotJointCounts;
+        [ReadOnly] public NativeArray<SpringBoneJointConfig> JointConfigs;
+        [ReadOnly] public NativeArray<SpringBoneParentData> ParentData;
         [ReadOnly] public NativeArray<float3> PrevTails;
         [ReadOnly] public NativeArray<float3> CurrentTails;
         [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<float3> NextTails;
-        [NativeDisableParallelForRestriction] public NativeArray<BlittableTransform> Transforms;
+
+        // Transforms are read AND written (chain propagation)
+        [NativeDisableParallelForRestriction] public NativeArray<SpringBoneTransformData> Transforms;
 
         public float DeltaTime;
 
-        [BurstCompile]
-        public void Execute(int slot)
+        public void Execute(int slotIndex)
         {
-            int jointCount = SlotCountMap[slot];
+            int jointCount = SlotJointCounts[slotIndex];
             if (jointCount == 0) return;
 
-            int baseIndex = slot * SpringBoneService.MAX_JOINTS_PER_SPRING;
+            int baseIndex = slotIndex * SpringBoneService.MAX_JOINTS_PER_SPRING;
 
-            var parentRotation = ParentData[slot].Rotation;
-            var parentLocalToWorld = ParentData[slot].LocalToWorldMatrix;
+            // Chain root's parent comes from the main-thread sync
+            var parentRotation = ParentData[slotIndex].Rotation;
+            var parentLocalToWorld = ParentData[slotIndex].LocalToWorldMatrix;
 
-            for (int i = 0; i < jointCount; i++)
+            for (int j = 0; j < jointCount; j++)
             {
-                int j = baseIndex + i;
-                var config = JointConfigs[j];
+                int idx = baseIndex + j;
+                var config = JointConfigs[idx];
+                var head = Transforms[idx];
 
-                var head = Transforms[j];
-
-                head = RecomputeWorldTransform(head, parentRotation, parentLocalToWorld);
+                // Recompute head world transform from parent
+                head = UpdateParentMatrix(head, parentRotation, parentLocalToWorld);
 
                 // Verlet integration
                 float3 gravity = config.GravityDir * config.GravityPower * DeltaTime;
@@ -45,8 +47,8 @@ namespace DCL.SpringBones
                 float3 stiffnessForce = math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis)
                                       * config.Stiffness * DeltaTime;
 
-                float3 currentTail = CurrentTails[j];
-                float3 prevTail = PrevTails[j];
+                float3 currentTail = CurrentTails[idx];
+                float3 prevTail = PrevTails[idx];
 
                 float3 nextTail = currentTail
                                 + (currentTail - prevTail) * (1f - config.Drag)
@@ -55,13 +57,13 @@ namespace DCL.SpringBones
 
                 // Length constraint
                 float3 headToTail = nextTail - head.Position;
-                float length = math.length(headToTail);
+                float len = math.length(headToTail);
 
-                nextTail = length > 0.0001f
-                    ? head.Position + (headToTail / length * config.Length)
-                    : head.Position + (math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis) * config.Length);
+                nextTail = len > 0.0001f
+                    ? head.Position + (headToTail / len) * config.Length
+                    : head.Position + math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis) * config.Length;
 
-                NextTails[j] = nextTail;
+                NextTails[idx] = nextTail;
 
                 // Update head rotation from tail direction
                 quaternion currentRot = math.mul(parentRotation, config.LocalRotation);
@@ -69,9 +71,8 @@ namespace DCL.SpringBones
                 float3 targetDir = nextTail - head.Position;
 
                 quaternion newRotation = math.mul(FromToRotation(currentDir, targetDir), currentRot);
-                head = ApplyRotation(head, newRotation, parentRotation, parentLocalToWorld);
-
-                Transforms[j] = head;
+                head = UpdateRotation(head, newRotation, parentRotation, parentLocalToWorld);
+                Transforms[idx] = head;
 
                 // This joint becomes parent for the next
                 parentRotation = head.Rotation;
@@ -80,25 +81,35 @@ namespace DCL.SpringBones
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static BlittableTransform RecomputeWorldTransform(in BlittableTransform head, quaternion parentRotation, float4x4 parentLocalToWorld)
+        static SpringBoneTransformData UpdateParentMatrix(SpringBoneTransformData head, quaternion parentRotation, float4x4 parentLocalToWorld)
         {
-            quaternion rotation = math.mul(parentRotation, head.LocalRotation);
-            float4x4 ltw = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, head.LocalRotation, head.LocalScale));
+            quaternion newRotation = math.mul(parentRotation, head.LocalRotation);
+            float4x4 newLocalToWorld = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, head.LocalRotation, head.LocalScale));
 
-            return new BlittableTransform(rotation, head.LocalPosition, head.LocalRotation, head.LocalScale, ltw);
+            return new SpringBoneTransformData(
+                newRotation,
+                head.LocalPosition,
+                head.LocalRotation,
+                head.LocalScale,
+                newLocalToWorld);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static BlittableTransform ApplyRotation(in BlittableTransform head, quaternion newWorldRotation, quaternion parentRotation, float4x4 parentLocalToWorld)
+        static SpringBoneTransformData UpdateRotation(SpringBoneTransformData head, quaternion newWorldRotation, quaternion parentRotation, float4x4 parentLocalToWorld)
         {
-            quaternion localRotation = math.normalize(math.mul(math.inverse(parentRotation), newWorldRotation));
-            float4x4 ltw = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, localRotation, head.LocalScale));
+            quaternion newLocalRotation = math.normalize(math.mul(math.inverse(parentRotation), newWorldRotation));
+            float4x4 newLocalToWorld = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, newLocalRotation, head.LocalScale));
 
-            return new BlittableTransform(newWorldRotation, head.LocalPosition, localRotation, head.LocalScale, ltw);
+            return new SpringBoneTransformData(
+                newWorldRotation,
+                head.LocalPosition,
+                newLocalRotation,
+                head.LocalScale,
+                newLocalToWorld);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static quaternion FromToRotation(in float3 from, in float3 to)
+        static quaternion FromToRotation(in float3 from, in float3 to)
         {
             float fromLenSq = math.lengthsq(from);
             float toLenSq = math.lengthsq(to);
