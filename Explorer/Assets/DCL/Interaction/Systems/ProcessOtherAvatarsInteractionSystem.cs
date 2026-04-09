@@ -38,12 +38,12 @@ namespace DCL.Interaction.Systems
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly bool useContextMenu;
 
-        private HoverFeedbackComponent.Tooltip viewProfileTooltip;
+        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
+        private readonly CancellationTokenSource disposeCts = new ();
+
         private Profile? currentProfileHovered;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
-        private bool wasCursorLockedWhenMenuOpened;
-
         internal ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
@@ -57,7 +57,7 @@ namespace DCL.Interaction.Systems
             this.mvcManager = mvcManager;
             this.cameraEntityProxy = cameraEntityProxy;
 
-            useContextMenu = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU);
+            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_CONTEXT_MENU);
 
             if (useContextMenu)
             {
@@ -92,6 +92,8 @@ namespace DCL.Interaction.Systems
             }
 
             contextMenuTask.TrySetResult();
+            disposeCts.Cancel();
+            disposeCts.Dispose();
         }
 
         [Query]
@@ -145,10 +147,15 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            wasCursorLockedWhenMenuOpened = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+            bool wasCursorLocked = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
 
-            if (wasCursorLockedWhenMenuOpened)
-                World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            if (wasCursorLocked)
+            {
+                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+                else
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            }
 
             contextMenuTask.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
@@ -156,19 +163,21 @@ namespace DCL.Interaction.Systems
                 new Web3Address(userId),
                 currentPositionHovered!.Value,
                 new Vector2(50, 0),
-                CancellationToken.None,
+                disposeCts.Token,
                 contextMenuTask.Task,
                 anchorPoint: MenuAnchorPoint.CENTER_RIGHT,
                 isOpenedOnWorldAvatar: true,
-                onHide: OnContextMenuClosed);
+                onHide: OnContextMenuClosed).Forget();
         }
 
         private void OnContextMenuClosed()
         {
-            if (wasCursorLockedWhenMenuOpened)
+            if (World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.LockedWithUI)
             {
-                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
-                cursor.CursorState = CursorState.Locked;
+                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true));
+                else
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true));
             }
         }
 
