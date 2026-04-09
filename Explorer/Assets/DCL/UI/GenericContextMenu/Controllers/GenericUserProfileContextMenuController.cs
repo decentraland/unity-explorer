@@ -92,7 +92,6 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly GenericContextMenuElement contextGiftButton;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly GenericContextMenuElement contextMenuMentionButton;
 
         private CancellationTokenSource cancellationTokenSource = new();
