@@ -1115,6 +1115,7 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.ProximityVoiceChatButton,
                         mainUIView.SidebarView.NearbyVoiceWidget,
                         mainUIView.SidebarView.ProximityVoiceTip,
+                        staticContainer.LoadingStatus,
                         staticContainer.ScenesCache,
                         staticContainer.SceneRestrictionBusController)
                 );

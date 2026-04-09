@@ -21,6 +21,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using DCL.RealmNavigation;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly ProximityVoiceTipView? proximityVoiceTipView;
+        private readonly ILoadingStatus loadingStatus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -92,6 +94,7 @@ namespace DCL.PluginSystem.Global
             ProximityVoiceChatButtonView? proximityVoiceChatButtonView,
             NearbyVoiceWidgetView? nearbyVoiceWidgetView,
             ProximityVoiceTipView? proximityVoiceTipView,
+            ILoadingStatus loadingStatus,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionBusController)
         {
@@ -111,6 +114,7 @@ namespace DCL.PluginSystem.Global
             this.proximityVoiceChatButtonView = proximityVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
             this.proximityVoiceTipView = proximityVoiceTipView;
+            this.loadingStatus = loadingStatus;
             this.scenesCache = scenesCache;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
 
@@ -269,7 +273,8 @@ namespace DCL.PluginSystem.Global
             {
                 proximityVoiceTipController = new ProximityVoiceTipController(
                     proximityVoiceTipView,
-                    () => proximityVoiceChatButtonView?.Button?.onClick.Invoke());
+                    () => proximityVoiceChatButtonView?.Button?.onClick.Invoke(),
+                    loadingStatus);
                 pluginScope.Add(proximityVoiceTipController);
             }
         }
