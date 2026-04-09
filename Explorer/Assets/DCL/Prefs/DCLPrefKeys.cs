@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace DCL.Prefs
 {
     public static class DCLPrefKeys
@@ -8,6 +6,8 @@ namespace DCL.Prefs
 
         public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
         public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
+
+        public const string LAUNCH_COUNT = "LaunchCount";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
