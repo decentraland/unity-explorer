@@ -152,6 +152,7 @@ namespace DCL.Notifications.NotificationsMenu
                         unreadNotifications++;
 
                 UpdateUnreadNotificationRender();
+                viewInstance.SetLoading(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -159,10 +160,6 @@ namespace DCL.Notifications.NotificationsMenu
                 needsInitialRequest = true;
                 ReportHub.LogException(e, ReportCategory.UI);
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_NOTIFICATIONS_ERROR_MESSAGE));
-            }
-            finally
-            {
-                viewInstance.SetLoading(false);
             }
         }
 
