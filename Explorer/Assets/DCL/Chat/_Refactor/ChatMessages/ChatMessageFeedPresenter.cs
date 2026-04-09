@@ -104,7 +104,7 @@ namespace DCL.Chat.ChatMessages
                 reactionsPresenter,
                 messageReactionService,
                 tooltipPresenter,
-                msgId => currentChannelService.CurrentChannel?.GetReactions(msgId),
+                currentChannelService,
                 limitToastView,
                 limitToastMessage);
 

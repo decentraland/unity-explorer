@@ -8,6 +8,7 @@ using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Presenters;
 using DCL.Chat.ChatServices;
+using DCL.Input;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
@@ -71,7 +72,7 @@ namespace DCL.Chat
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
             ITranslationCache translationCache,
-            ISituationalReactionTrigger reactionTrigger,
+            SituationalReactionFacade reactionFacade,
             ISituationalReactionSimulation reactionSimulation,
             ChatReactionsConfig reactionsConfig,
             ChatReactionDebugState reactionDebugState,
@@ -79,7 +80,8 @@ namespace DCL.Chat
             ChatSettingsAsset chatSettingsAsset,
             ChatMessageReactionService messageReactionService,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
@@ -134,7 +136,8 @@ namespace DCL.Chat
                 emojiContainer.emojiPanelConfiguration,
                 emojiMapping,
                 emojiContainer.emojiSectionViewPrefab,
-                emojiContainer.emojiButtonPrefab);
+                emojiContainer.emojiButtonPrefab,
+                inputBlock);
 
             int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
                 reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
@@ -145,14 +148,15 @@ namespace DCL.Chat
                 view.ChatReactionButton,
                 view.ChatReactionsSelector,
                 view.MessageReactionsSelector,
-                reactionTrigger,
+                reactionFacade,
                 reactionsConfig.Atlas,
                 recentsService,
                 fixedDefaults,
                 view.EmojiPanelView,
                 emojiPanelPresenter,
                 reactionsConfig.MessageReactions,
-                chatSettingsAsset);
+                chatSettingsAsset,
+                eventBus);
 
             string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
             view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,

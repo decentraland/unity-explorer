@@ -330,7 +330,9 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform);
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    chatPanelView.ChatReactionButton.transform,
+                    chatPanelView.EmojiPanelView.transform);
 
             pluginScope.Add(chatClickDetectionHandler);
 
@@ -406,7 +408,7 @@ namespace DCL.PluginSystem.Global
                 translationSettings,
                 translationMemory,
                 translationCache,
-                reactions.Trigger,
+                reactions.Facade,
                 reactions.Simulation,
                 settings.ReactionsConfig,
                 reactions.DebugState,
@@ -414,7 +416,8 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 messageReactionService,
                 web3IdentityCache,
-                profileCache
+                profileCache,
+                inputBlock
             );
 
             pluginScope.Add(chatPanelPresenter);

@@ -44,6 +44,7 @@ namespace DCL.Chat.ChatStates
             fsm.OnStateChanged += PropagateStateChange;
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.BlurRequestedEvent>(HandleBlurRequestedEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
 
@@ -83,6 +84,11 @@ namespace DCL.Chat.ChatStates
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
             fsm.CurrentState!.OnFocusRequested();
+        }
+
+        private void HandleBlurRequestedEvent(ChatEvents.BlurRequestedEvent evt)
+        {
+            fsm.CurrentState!.OnBlurRequested();
         }
 
         private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)

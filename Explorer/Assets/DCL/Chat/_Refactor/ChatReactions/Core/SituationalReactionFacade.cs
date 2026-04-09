@@ -11,7 +11,7 @@ namespace DCL.Chat.ChatReactions.Core
     /// Handles local user reaction triggers: UI bursts, defaults, streaming,
     /// and the corresponding world-space + network broadcasting side-effects.
     /// </summary>
-    public sealed class SituationalReactionFacade : ISituationalReactionTrigger, IDisposable
+    public sealed class SituationalReactionFacade : IDisposable
     {
         private readonly ChatReactionsConfig config;
         private readonly ChatReactionUISimulation uiSimulation;

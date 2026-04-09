@@ -2,7 +2,6 @@ using System;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
-using DCL.Chat.ChatReactions.Rendering;
 using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using DCL.Chat.History;
@@ -27,26 +26,23 @@ namespace DCL.Chat.ChatReactions.Core
     {
         public readonly struct Result
         {
-            public readonly ISituationalReactionTrigger Trigger;
-            public readonly ISituationalReactionSimulation Simulation;
             public readonly SituationalReactionFacade Facade;
+            public readonly ISituationalReactionSimulation Simulation;
             public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
             public readonly StreamReactionsEmitter StreamEmitter;
 
             internal Result(
-                ISituationalReactionTrigger trigger,
-                ISituationalReactionSimulation simulation,
                 SituationalReactionFacade facade,
+                ISituationalReactionSimulation simulation,
                 ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
                 SituationalReactionDebugController debugController,
                 StreamReactionsEmitter streamEmitter)
             {
-                Trigger = trigger;
-                Simulation = simulation;
                 Facade = facade;
+                Simulation = simulation;
                 MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
@@ -153,7 +149,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(facade, simulationLoop, facade, messageReactionService, debugState, debugController, streamEmitter);
+            return new Result(facade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(

@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
@@ -7,6 +8,7 @@ using DCL.Emoji;
 using DCL.Prefs;
 using DCL.Settings.Settings;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Presenters
 {
@@ -24,7 +26,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly ChatReactionButtonPresenter buttonPresenter;
         private readonly ChatReactionsSelectorPresenter situationalSelectorPresenter;
         private readonly ChatReactionsSelectorPresenter messageSelectorPresenter;
-        private readonly ISituationalReactionTrigger reactionService;
+        private readonly SituationalReactionFacade reactionService;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
         private readonly EmojiPanelReactionBridge emojiPanelBridge;
         private readonly ReactionPanelPositioner panelPositioner;
@@ -32,6 +34,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ChatReactionsSelectorView situationalSelectorView;
         private readonly ChatReactionRecentsService recentsService;
+        private readonly IEventBus eventBus;
         private ReactionMode currentMode = ReactionMode.Situational;
 
         // Message mode callbacks — valid only when currentMode == Message
@@ -43,17 +46,19 @@ namespace DCL.Chat.ChatReactions.Presenters
             ChatReactionButtonView buttonView,
             ChatReactionsSelectorView situationalSelectorView,
             ChatReactionsSelectorView messageSelectorView,
-            ISituationalReactionTrigger reactionService,
+            SituationalReactionFacade reactionService,
             ChatReactionsAtlasConfig atlasConfig,
             ChatReactionRecentsService recentsService,
             int[] fixedDefaults,
             EmojiPanelView emojiPanelView,
             EmojiPanelPresenter emojiPanelPresenter,
             ChatReactionsMessageConfig messageReactionsConfig,
-            ChatSettingsAsset chatSettingsAsset)
+            ChatSettingsAsset chatSettingsAsset,
+            IEventBus eventBus)
         {
             this.reactionService = reactionService;
             this.chatSettingsAsset = chatSettingsAsset;
+            this.eventBus = eventBus;
             this.situationalSelectorView = situationalSelectorView;
             this.recentsService = recentsService;
 
@@ -108,6 +113,8 @@ namespace DCL.Chat.ChatReactions.Presenters
             }
         }
 
+        public bool IsReactionPopupActive => situationalSelectorPresenter.IsVisible || emojiPanelBridge.IsOpen;
+
         private bool IsInMessageMode => currentMode == ReactionMode.Message;
 
         private ChatReactionsSelectorPresenter ActivePresenter =>
@@ -148,6 +155,8 @@ namespace DCL.Chat.ChatReactions.Presenters
                 HideBar();
                 return;
             }
+
+            eventBus.Publish(new ChatEvents.BlurRequestedEvent());
 
             if (situationalSelectorPresenter.IsVisible)
             {
