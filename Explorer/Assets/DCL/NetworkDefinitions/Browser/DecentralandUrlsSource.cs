@@ -59,6 +59,7 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.Profiles);
                 Url(DecentralandUrl.ProfilesMetadata);
                 Url(DecentralandUrl.EntitiesActive);
+                Url(DecentralandUrl.EntitiesActiveElements);
                 Url(DecentralandUrl.WorldEntitiesActive);
                 Url(DecentralandUrl.ArchipelagoStatus);
                 Url(DecentralandUrl.ArchipelagoHotScenes);
@@ -218,6 +219,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ManaUsdRateApiUrl => "https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
+                DecentralandUrl.ReportUserForm => $"https://decentraland.{ENV}/report/players?player_address={{0}}&reported_address={{1}}",
+                DecentralandUrl.BannedUsers => $"https://comms-gatekeeper.decentraland.{ENV}/users/{{0}}/bans",
 
                 DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
@@ -225,6 +228,9 @@ namespace DCL.Browser.DecentralandUrls
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
+
+                // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
+                DecentralandUrl.EntitiesActiveElements => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active",
 
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),

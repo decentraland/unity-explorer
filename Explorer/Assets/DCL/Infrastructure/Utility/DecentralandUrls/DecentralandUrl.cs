@@ -135,5 +135,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         WorldPermissions = 82,
         WorldComms = 83,
+
+        ReportUserForm = 84,
+        BannedUsers = 85,
+
+        EntitiesActiveElements = 86,
     }
 }

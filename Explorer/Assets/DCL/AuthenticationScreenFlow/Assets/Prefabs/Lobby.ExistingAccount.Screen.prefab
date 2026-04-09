@@ -1080,6 +1080,7 @@ GameObject:
   - component: {fileID: 507792000685911311}
   - component: {fileID: 5571176412117901524}
   - component: {fileID: 4080444307416535096}
+  - component: {fileID: 7778157394142849921}
   m_Layer: 0
   m_Name: JumpIntoWorld
   m_TagString: Untagged
@@ -1228,6 +1229,19 @@ MonoBehaviour:
   <ButtonAnimator>k__BackingField: {fileID: 5571176412117901524}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 0}
+--- !u!114 &7778157394142849921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7689646548246359426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ea1b65aaa149fa438425d71fd8122ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AltTester.AltTesterUnitySDK::AltTester.AltTesterUnitySDK.AltId
+  altID: 646623d5-3519-49df-93ed-ab668d7917db
 --- !u!1 &9012452384836578987
 GameObject:
   m_ObjectHideFlags: 0

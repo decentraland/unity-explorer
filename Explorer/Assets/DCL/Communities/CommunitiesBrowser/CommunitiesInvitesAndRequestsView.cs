@@ -30,6 +30,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<ICommunityMemberData>? OpenUserChatRequested;
         public event Action<ICommunityMemberData>? CallUserRequested;
         public event Action<ICommunityMemberData>? BlockUserRequested;
+        public event Action<ICommunityMemberData>? ReportUserRequested;
         public event Action<string, ICommunityMemberData, InviteRequestIntention>? ManageRequestReceivedRequested;
 
         [Header("Invites & Requests Section")]
@@ -414,6 +415,8 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsReceivedGroupView.CallUserRequested += OnCallUser;
             requestsReceivedGroupView.BlockUserRequested -= OnBlockUser;
             requestsReceivedGroupView.BlockUserRequested += OnBlockUser;
+            requestsReceivedGroupView.ReportUserRequested -= OnReportUser;
+            requestsReceivedGroupView.ReportUserRequested += OnReportUser;
             requestsReceivedGroupView.RequestReceivedManageButtonClicked -= OnManageRequestReceived;
             requestsReceivedGroupView.RequestReceivedManageButtonClicked += OnManageRequestReceived;
 
@@ -483,6 +486,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnBlockUser(ICommunityMemberData profile) =>
             BlockUserRequested?.Invoke(profile);
+
+        private void OnReportUser(ICommunityMemberData profile) =>
+            ReportUserRequested?.Invoke(profile);
 
         private void OnManageRequestReceived(string communityId, ICommunityMemberData profile, InviteRequestIntention intention) =>
             ManageRequestReceivedRequested?.Invoke(communityId, profile, intention);

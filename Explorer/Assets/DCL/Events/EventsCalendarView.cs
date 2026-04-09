@@ -195,6 +195,95 @@ namespace DCL.Events
                 eventList.eventsLoopList.SetListItemCount(0, false);
         }
 
+        public void ClearEventsForDay(int eventsListIndex)
+        {
+            if (!currentEventsIds.Remove(eventsListIndex))
+                return;
+
+            eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(0, false);
+        }
+
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
+            {
+                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                    continue;
+
+                LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
+
+                for (var i = 0; i < eventIds.Count; i++)
+                {
+                    LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                    if (item == null) continue;
+
+                    string eventId = eventIds[i];
+                    if (string.IsNullOrEmpty(eventId)) continue;
+
+                    var eventData = eventsStateService.GetEventDataById(eventId);
+                    if (eventData == null) continue;
+
+                    EventCardView cardView = item.GetComponent<EventCardView>();
+                    cardView.UpdateFriendsData(eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
+                }
+            }
+        }
+
+        public void RefreshVisibleCardsCommunityData()
+        {
+            for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
+            {
+                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                    continue;
+
+                LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
+                var needsFullRebuild = false;
+
+                for (var i = 0; i < eventIds.Count; i++)
+                {
+                    LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                    if (item == null) continue;
+
+                    string eventId = eventIds[i];
+                    if (string.IsNullOrEmpty(eventId)) continue;
+
+                    var eventData = eventsStateService.GetEventDataById(eventId);
+                    if (eventData == null) continue;
+
+                    int currentPrefabIndex = GetCurrentPrefabIndex(item);
+                    int newPrefabIndex = GetCardPrefabIndex(eventData);
+
+                    if (currentPrefabIndex != newPrefabIndex)
+                    {
+                        needsFullRebuild = true;
+                        break;
+                    }
+                }
+
+                if (needsFullRebuild)
+                {
+                    loopList.RefreshAllShownItem();
+                }
+                else
+                {
+                    for (var i = 0; i < eventIds.Count; i++)
+                    {
+                        LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                        if (item == null) continue;
+
+                        string eventId = eventIds[i];
+                        if (string.IsNullOrEmpty(eventId)) continue;
+
+                        var eventData = eventsStateService.GetEventDataById(eventId);
+                        if (eventData == null) continue;
+
+                        if (item.GetComponent<EventCardBigView>() is { } bigCard)
+                            bigCard.UpdateCommunityData(eventData.CommunityInfo, eventCardsThumbnailLoader!);
+                    }
+                }
+            }
+        }
+
         public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
             currentEventsIds.Remove(eventsListIndex);
@@ -253,6 +342,11 @@ namespace DCL.Events
             eventData != null ?
                 eventData.EventInfo.highlighted || eventData.EventInfo.live || eventData.EventInfo.attending || eventData.CommunityInfo != null ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX :
                 EVENT_CARD_EMPTY_PREFAB_INDEX;
+
+        private static int GetCurrentPrefabIndex(LoopListViewItem2 item) =>
+            item.GetComponent<EventCardBigView>() != null ? EVENT_CARD_BIG_PREFAB_INDEX :
+            item.GetComponent<EventCardSmallView>() != null ? EVENT_CARD_SMALL_PREFAB_INDEX :
+            EVENT_CARD_EMPTY_PREFAB_INDEX;
 
         private void FillWithEmptyCards(IReadOnlyList<EventDTO> events, int eventsListIndex)
         {

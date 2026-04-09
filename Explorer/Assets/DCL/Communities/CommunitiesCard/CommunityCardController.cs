@@ -395,7 +395,9 @@ namespace DCL.Communities.CommunitiesCard
                 sharedSpaceManager,
                 chatEventBus,
                 web3IdentityCache,
-                selfProfile);
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,

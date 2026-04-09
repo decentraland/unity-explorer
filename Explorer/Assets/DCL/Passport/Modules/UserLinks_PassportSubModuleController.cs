@@ -234,18 +234,20 @@ namespace DCL.Passport.Modules
             async UniTaskVoid SaveLinksAsync(CancellationToken ct)
             {
                 SetLinksSectionAsSavingStatus(true);
-                currentProfile.ClearLinks();
+                //create a copy to avoid mutating the cached profile in-place, otherwise the deploy would not see changes in the profile
+                Profile profileCopy = new ProfileBuilder().From(currentProfile).Build();
+                profileCopy.ClearLinks();
 
                 foreach (var link in instantiatedLinksForEdition)
                 {
-                    currentProfile.Links!.Add(new LinkJsonDto
+                    profileCopy.Links!.Add(new LinkJsonDto
                     {
                         title = link.Title.text,
                         url = link.Url,
                     });
                 }
 
-                try { await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct); }
+                try { await passportProfileInfoController.UpdateProfileAsync(profileCopy, ct); }
                 catch (OperationCanceledException) { }
                 catch (Exception e)
                 {
