@@ -267,7 +267,7 @@ namespace DCL.Chat.ChatMessages
             RemoveNewMessagesSeparator();
 
             viewModels.Insert(index, vm);
-            vm.Reactions = currentChannelService.CurrentChannel?.GetReactions(vm.Message.MessageId);
+            vm.Reactions = currentChannelService.CurrentChannel.GetReactions(vm.Message.MessageId);
 
             if (viewModelsMap != null)
                 viewModelsMap[vm.Message.MessageId] = vm;
@@ -522,8 +522,7 @@ namespace DCL.Chat.ChatMessages
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
 
-            if (currentChannelService.CurrentChannel != null)
-                currentChannelService.CurrentChannel.ReactionChanged += OnReactionChanged;
+            currentChannelService.CurrentChannel.ReactionChanged += OnReactionChanged;
         }
 
         private void Unsubscribe()
@@ -543,8 +542,7 @@ namespace DCL.Chat.ChatMessages
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
 
-            if (currentChannelService.CurrentChannel != null)
-                currentChannelService.CurrentChannel.ReactionChanged -= OnReactionChanged;
+            currentChannelService.CurrentChannel.ReactionChanged -= OnReactionChanged;
         }
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
@@ -564,7 +562,7 @@ namespace DCL.Chat.ChatMessages
             var viewModel = FindViewModelById(messageId);
             if (viewModel == null) return;
 
-            viewModel.Reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            viewModel.Reactions = currentChannelService.CurrentChannel.GetReactions(messageId);
             reactionInteraction.HideTooltip();
             view.ReconstructScrollView(false);
         }

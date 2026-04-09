@@ -88,7 +88,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (tooltipPresenter == null) return;
 
-            ReactionSet? reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
+            ReactionSet? reactions = currentChannelService.CurrentChannel.GetReactions(messageId);
             tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect, messageId);
         }
 
