@@ -21,6 +21,7 @@
         "GUID:702f733b4deb246808c6ce84d93b5c9c",
         "GUID:7175400a68914a45acecc9fb068de3b8",
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:c3c8a0d951b56754899239b750f0cc54",
         "GUID:e0eedfa2deb9406daf86fd8368728e39"
     ],
     "includePlatforms": [
@@ -36,7 +37,8 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "SCENE_ADMINS_TESTS"
     ],
     "versionDefines": [],
     "noEngineReferences": false
