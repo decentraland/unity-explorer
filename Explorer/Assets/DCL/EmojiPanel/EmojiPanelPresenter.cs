@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -33,14 +34,15 @@ namespace DCL.Emoji
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             EmojiMapping emojiMapping,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab)
+            EmojiButton emojiButtonPrefab,
+            IInputBlock? inputBlock = null)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiMapping = emojiMapping;
-            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
+            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab, inputBlock);
             emojiSearchController.SearchTextChanged += OnSearchTextChanged;
             emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
 
@@ -79,6 +81,9 @@ namespace DCL.Emoji
 
         public void SetPanelVisibility(bool isVisible)
         {
+            if (!isVisible && view.SearchPanelView.inputField.isFocused)
+                view.SearchPanelView.inputField.DeactivateInputField();
+
             view.SetVisible(isVisible);
             PanelVisibilityChanged?.Invoke(isVisible);
         }

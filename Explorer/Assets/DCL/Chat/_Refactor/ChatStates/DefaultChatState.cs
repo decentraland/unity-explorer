@@ -31,6 +31,9 @@ namespace DCL.Chat.ChatStates
         public override void OnPointerExit() =>
             uiMediator.SetPanelsFocus(isFocused: false, animate: true);
 
+        public override void OnBlurRequested() =>
+            uiMediator.SetPanelsFocus(isFocused: false, animate: true);
+
         public override void OnClickInside() =>
             chatStateMachine.Enter<FocusedChatState>();
 

@@ -183,6 +183,14 @@ namespace DCL.Chat
         public struct FocusRequestedEvent { }
 
         /// <summary>
+        ///     Event:          BlurRequestedEvent
+        ///     Triggered By:   ChatReactionsPresenter
+        ///     When:           The user clicks the reaction button, signaling intent to leave typing.
+        ///     Subscribers:    ChatStateMachine: Transitions the UI to the DefaultChatState.
+        /// </summary>
+        public struct BlurRequestedEvent { }
+
+        /// <summary>
         ///     Event:          CloseChatEvent
         ///     Triggered By:   ChatTitlebarPresenter
         ///     When:           The user clicks the 'X' button in the chat's title bar.

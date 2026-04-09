@@ -408,7 +408,7 @@ namespace DCL.PluginSystem.Global
                 translationSettings,
                 translationMemory,
                 translationCache,
-                reactions.Trigger,
+                reactions.Facade,
                 reactions.Simulation,
                 settings.ReactionsConfig,
                 reactions.DebugState,
@@ -416,7 +416,8 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 messageReactionService,
                 web3IdentityCache,
-                profileCache
+                profileCache,
+                inputBlock
             );
 
             pluginScope.Add(chatPanelPresenter);
