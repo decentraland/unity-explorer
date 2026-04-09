@@ -130,9 +130,10 @@ namespace SceneRunner.Admins
 
                 status = Status.Loaded;
             }
-            catch
+            catch (Exception e)
             {
                 status = Status.Error;
+                ReportHub.LogException(e, ReportCategory.SCENE_ADMINS);
             }
 #endif
         }
