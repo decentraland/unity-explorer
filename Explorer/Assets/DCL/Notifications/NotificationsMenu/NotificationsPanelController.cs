@@ -29,6 +29,7 @@ namespace DCL.Notifications.NotificationsMenu
         private const int DEFAULT_NOTIFICATION_INDEX = 0;
         private const int FRIENDS_NOTIFICATION_INDEX = 1;
         private const int GIFT_NOTIFICATION_INDEX = 2;
+        private const string GET_NOTIFICATIONS_ERROR_MESSAGE = "There was an error loading notifications. Please try again.";
 
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
@@ -53,6 +54,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private UniTaskCompletionSource? closeViewTask;
         private int unreadNotifications;
+        private bool needsInitialRequest = true;
 
         public NotificationsPanelController(
             ViewFactoryMethod viewFactory,
@@ -79,7 +81,13 @@ namespace DCL.Notifications.NotificationsMenu
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             viewInstance.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            if (web3IdentityCache.Identity is { IsExpired: false })
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            if (needsInitialRequest && web3IdentityCache.Identity is { IsExpired: false })
                 InitialNotificationRequestAsync(lifeCycleCts.Token).SuppressCancellationThrow().Forget();
         }
 
@@ -119,27 +127,43 @@ namespace DCL.Notifications.NotificationsMenu
         }
 
         private void OnIdentityChanged() =>
-            InitialNotificationRequestAsync(lifeCycleCts.Token).SuppressCancellationThrow().Forget();
+            needsInitialRequest = true;
 
         private async UniTask InitialNotificationRequestAsync(CancellationToken ct)
         {
+            needsInitialRequest = false;
             unreadNotifications = 0;
             notifications.Clear();
             viewInstance!.LoopList.SetListItemCount(notifications.Count, false);
+            viewInstance.SetLoading(true);
 
-            List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
-            requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
+            try
+            {
+                List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
+                requestNotifications.RemoveAll(notification => NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type));
 
-            foreach (INotification requestNotification in requestNotifications)
-                notifications.Add(requestNotification);
+                foreach (INotification requestNotification in requestNotifications)
+                    notifications.Add(requestNotification);
 
-            viewInstance.LoopList.SetListItemCount(notifications.Count, false);
+                viewInstance.LoopList.SetListItemCount(notifications.Count, false);
 
-            foreach (var notification in requestNotifications)
-                if (notification.Read == false)
-                    unreadNotifications++;
+                foreach (var notification in requestNotifications)
+                    if (notification.Read == false)
+                        unreadNotifications++;
 
-            UpdateUnreadNotificationRender();
+                UpdateUnreadNotificationRender();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                needsInitialRequest = true;
+                ReportHub.LogException(e, ReportCategory.UI);
+                NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_NOTIFICATIONS_ERROR_MESSAGE));
+            }
+            finally
+            {
+                viewInstance.SetLoading(false);
+            }
         }
 
         private void UpdateUnreadNotificationRender()
