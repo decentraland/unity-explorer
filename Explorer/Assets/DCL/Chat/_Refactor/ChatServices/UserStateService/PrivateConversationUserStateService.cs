@@ -195,6 +195,10 @@ namespace DCL.Chat.ChatServices
             if (!isUserConnected && (roomHub.TryGetUser(userId, out _, out _) || roomHub.TryGetUser(lowerUserId, out _, out _)))
                 return new UserState(isUserConnected, ChatUserState.OTHER_CLIENT);
 
+            // If the user is not reachable by any means, they are simply offline
+            if (!isUserConnected)
+                return new UserState(false, ChatUserState.DISCONNECTED);
+
             //If the user is connected we need to check our settings and then theirs.
             if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
