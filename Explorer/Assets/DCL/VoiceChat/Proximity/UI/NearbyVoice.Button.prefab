@@ -234,10 +234,12 @@ MonoBehaviour:
   barCenter: {fileID: 2191418136491472976}
   barRight: {fileID: 2153679925950332305}
   minHeight: 2
-  midHeight: 4.5
+  midHeight: 4
   maxHeight: 10
-  transitionDuration: 0.3
-  speakingThreshold: 0.01
+  waveDuration: 0.3
+  attackDuration: 0.15
+  decayDuration: 0.3
+  speakingThreshold: 0.001
 --- !u!1 &3425816795021787574
 GameObject:
   m_ObjectHideFlags: 0
