@@ -38,7 +38,7 @@ metaforge explorer logs tail --filter "<relevant text>"
 metaforge explorer test <this-PR-number>
 -->
 
-**Steps**:
+**Steps (standard run)**:
 ```bash
 metaforge explorer run XXXX  # ← replace with this PR number
 ```
