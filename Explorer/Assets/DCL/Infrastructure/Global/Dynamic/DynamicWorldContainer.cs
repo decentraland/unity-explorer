@@ -121,18 +121,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Backpack.Gifting.Services;
-using DCL.Backpack.Gifting.Services.PendingTransfers;
-using DCL.Backpack.Gifting.Services.SnapshotEquipped;
-using DCL.NotificationsBus;
-using DCL.PluginSystem.SmartWearables;
-using DCL.Optimization.AdaptivePerformance.Systems;
-using DCL.PluginSystem.World;
-using DCL.SDKComponents.AvatarLocomotion;
-using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
-using DCL.PrivateWorlds;
-using DCL.Translation;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -454,15 +443,14 @@ namespace Global.Dynamic
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
-            // IRoomHub roomHub = new RoomHub(
-            //     localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-            //     gateKeeperSceneRoom,
-            //     chatRoom,
-            //     voiceChatRoom
-            // );
-
-            // TODO: branch server mode
-            IRoomHub roomHub = new NullRoomHub();
+            // LiveKit and Pulse can coexist - there is no harm
+            // We can control the messages flow selectively
+            IRoomHub roomHub = new RoomHub(
+                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                gateKeeperSceneRoom,
+                chatRoom,
+                voiceChatRoom
+            );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
