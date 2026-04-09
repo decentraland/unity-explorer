@@ -1,6 +1,7 @@
 using System;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Presenters;
+using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly ChatMessageReactionService messageReactionService;
         private readonly ReactionTooltipPresenter? tooltipPresenter;
-        private readonly Func<string, ReactionSet?> getReactions;
+        private readonly CurrentChannelService currentChannelService;
 
         private string? pendingReactionMessageId;
         private ChatEntryView? pendingReactionChatEntry;
@@ -25,12 +26,12 @@ namespace DCL.Chat.ChatMessages
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
             ReactionTooltipPresenter? tooltipPresenter,
-            Func<string, ReactionSet?> getReactions)
+            CurrentChannelService currentChannelService)
         {
             this.reactionsPresenter = reactionsPresenter;
             this.messageReactionService = messageReactionService;
             this.tooltipPresenter = tooltipPresenter;
-            this.getReactions = getReactions;
+            this.currentChannelService = currentChannelService;
         }
 
         public void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
@@ -48,8 +49,14 @@ namespace DCL.Chat.ChatMessages
             reactionsPresenter.ShowForMessage(
                 anchor,
                 chatEntryView.IsSentByOwnUser,
-                atlasIndex => messageReactionService.ToggleReaction(messageId, atlasIndex),
+                OnMessageReactionSelected,
                 ClearPendingState);
+        }
+
+        private void OnMessageReactionSelected(int atlasIndex)
+        {
+            if (pendingReactionMessageId != null)
+                messageReactionService.ToggleReaction(pendingReactionMessageId, atlasIndex);
         }
 
         private void ActivatePendingReaction(string messageId, ChatEntryView chatEntryView)
@@ -70,7 +77,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (tooltipPresenter == null) return;
 
-            ReactionSet? reactions = getReactions(messageId);
+            ReactionSet? reactions = currentChannelService.CurrentChannel?.GetReactions(messageId);
             tooltipPresenter.ShowForReaction(reactions, emojiIndex, pillRect, messageId);
         }
 
