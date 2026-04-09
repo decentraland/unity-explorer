@@ -46,7 +46,7 @@ metaforge explorer run XXXX  # ← replace with this PR number
 **Expected result**:
 <!-- What should the reviewer see/verify? -->
 
-**Steps**:
+**Steps (fresh account)**:
 ```bash
 metaforge account create --clear
 metaforge explorer run XXXX  # ← replace with this PR number
