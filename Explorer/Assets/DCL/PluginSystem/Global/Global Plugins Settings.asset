@@ -1073,12 +1073,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        ParsedParcels:
-          m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1115,6 +1109,12 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 11400000, guid: 9049db00bfb254bb786af9004420da39, type: 2}
+        <DestinationMarkerPrefab>k__BackingField:
+          m_AssetGUID: 8b74e4206cd344b4c80b50f32f6c403a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

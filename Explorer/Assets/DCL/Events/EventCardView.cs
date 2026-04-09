@@ -72,6 +72,7 @@ namespace DCL.Events
         private EventDTO currentEventInfo;
         private PlacesData.PlaceInfo? currentPlaceInfo;
         private GenericContextMenu? contextMenu;
+        private string? lastLoadedThumbnailUrl;
 
         protected CancellationTokenSource? loadingThumbnailCts;
         private CancellationTokenSource? openContextMenuCts;
@@ -125,6 +126,7 @@ namespace DCL.Events
         {
             loadingThumbnailCts.SafeCancelAndDispose();
             openContextMenuCts.SafeCancelAndDispose();
+            lastLoadedThumbnailUrl = null;
         }
 
         private void OnDestroy()
@@ -247,6 +249,10 @@ namespace DCL.Events
             if (eventThumbnail == null)
                 return;
 
+            if (eventInfo.image == lastLoadedThumbnailUrl)
+                return;
+
+            lastLoadedThumbnailUrl = eventInfo.image;
             loadingThumbnailCts = loadingThumbnailCts.SafeRestart();
             thumbnailLoader.LoadCommunityThumbnailFromUrlAsync(
                 eventInfo.image,
