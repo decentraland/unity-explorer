@@ -3,6 +3,8 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Settings.Settings;
@@ -33,6 +35,7 @@ namespace DCL.Chat.ChatServices
             PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
             PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
             DISCONNECTED, //The other user is either offline or has blocked the own user.
+            OTHER_CLIENT, //The other user is either offline or has blocked the own user.
         }
 
         public readonly struct UserState
@@ -57,6 +60,7 @@ namespace DCL.Chat.ChatServices
         private readonly RPCChatPrivacyService rpcChatPrivacyService;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly IRoom chatRoom;
+        private readonly IRoomHub roomHub;
 
         private readonly IEventBus eventBus;
         private readonly CurrentChannelService currentChannelService;
@@ -79,7 +83,7 @@ namespace DCL.Chat.ChatServices
             ChatSettingsAsset settingsAsset,
             RPCChatPrivacyService rpcChatPrivacyService,
             IFriendsEventBus friendsEventBus,
-            IRoom chatRoom)
+            IRoomHub roomHub)
         {
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
@@ -88,7 +92,9 @@ namespace DCL.Chat.ChatServices
             this.settingsAsset = settingsAsset;
             this.rpcChatPrivacyService = rpcChatPrivacyService;
             this.friendsEventBus = friendsEventBus;
-            this.chatRoom = chatRoom;
+            this.chatRoom = roomHub.ChatRoom();
+            this.roomHub = roomHub;
+
             OnlineParticipants = new ReadOnlyHashSet<string>(onlineParticipants);
         }
 
@@ -169,6 +175,8 @@ namespace DCL.Chat.ChatServices
 
         public async UniTask<UserState> GetChatUserStateAsync(string userId, CancellationToken ct)
         {
+            string lowerUserId = userId.ToLower();
+
             FriendshipStatus friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct);
             bool isUserConnected = UserIsConsideredAsOnline(userId);
 
@@ -180,20 +188,29 @@ namespace DCL.Chat.ChatServices
             if (friendshipStatus == FriendshipStatus.BLOCKED)
                 return new UserState(isUserConnected, ChatUserState.BLOCKED_BY_OWN_USER);
 
-            if (friendshipStatus == FriendshipStatus.BLOCKED_BY || !isUserConnected)
-                return new UserState(isUserConnected, ChatUserState.DISCONNECTED);
-
-            //At this point we know the user is connected
+            // If we are being blocked by them, show them as offline
+            if (friendshipStatus == FriendshipStatus.BLOCKED_BY)
+                return new UserState(false, ChatUserState.DISCONNECTED);
 
             //If the user is connected we need to check our settings and then theirs.
             if (settingsAsset.chatPrivacySettings == ChatPrivacySettings.ONLY_FRIENDS)
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
 
-            //If we allow ALL messages, we need to know their settings.
-            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(chatRoom.Participants.RemoteParticipant(userId)!.Metadata);
+            // This is done because other clients don't connect to chat livekit room, so they are not found in the participant list.
+            // If we are able to find them through either island or scene room, it means we cannot chat with them
+            if (!isUserConnected && (roomHub.TryGetUser(userId, out _, out _) || roomHub.TryGetUser(lowerUserId, out _, out _)))
+                return new UserState(isUserConnected, ChatUserState.OTHER_CLIENT);
 
-            if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
-                return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
+            if (isUserConnected)
+            {
+                Participant? participant = chatRoom.Participants.RemoteParticipant(userId) ?? chatRoom.Participants.RemoteParticipant(lowerUserId);
+
+                //If we allow ALL messages, we need to know their settings.
+                ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant!.Metadata);
+
+                if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
+                    return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED);
+            }
 
             return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
         }
@@ -292,7 +309,7 @@ namespace DCL.Chat.ChatServices
 
 
         private bool UserIsConnectedToRoom(string userId) =>
-            chatRoom.Participants.RemoteParticipant(userId) != null;
+            chatRoom.Participants.RemoteParticipant(userId) != null || chatRoom.Participants.RemoteParticipant(userId.ToLower()) != null;
 
         private void CheckOnlineStatusAndNotify(string userId)
         {

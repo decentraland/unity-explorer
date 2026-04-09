@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -20,6 +21,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         private readonly IParticipantsHub sceneParticipantsHub;
 
         private readonly HashSet<string> identityHashCache = new (32);
+
+        private IReadOnlyDictionary<string, Participant> islandIdentities;
+        private IReadOnlyDictionary<string, Participant> sceneIdentities;
 
         private long participantsUpdateLastFrame = -1;
 
@@ -47,6 +51,25 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
             voiceChatRoom;
+
+        public bool TryGetUser(string wallet, out Participant? participant, out IRoom? room)
+        {
+            if (islandIdentities.TryGetValue(wallet, out participant))
+            {
+                room = IslandRoom();
+                return true;
+            }
+
+            if (sceneIdentities.TryGetValue(wallet, out participant))
+            {
+                room = SceneRoom().Room();
+                return true;
+            }
+
+            participant = null;
+            room = null;
+            return false;
+        }
 
         /// <summary>
         ///     Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
@@ -89,8 +112,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             identityHashCache.Clear();
 
-            IReadOnlyDictionary<string, Participant> islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
-            IReadOnlyDictionary<string, Participant> sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
+            islandIdentities = islandParticipantsHub.RemoteParticipantIdentities();
+            sceneIdentities = sceneParticipantsHub.RemoteParticipantIdentities();
 
             identityHashCache.EnsureCapacity(islandIdentities.Count + sceneIdentities.Count);
 

@@ -34,6 +34,8 @@ MonoBehaviour:
   BlockedByOwnUserMessage: To message this user you must first unblock them.
   OnlyFriendsOwnUserMessage: Add this user as a friend to chat, or update your <b><u>DM
     & Call settings</b></u> to connect with everyone.
+  ConnectedFromAnotherClientMessage: User is not connected to chat. They may be using
+    a client without DM support.
   CheckingUserStatusMessage: Checking user status...
   InputUnfocusedMessages: Press Enter to chat
   InputFocusedMessages: Write a message
@@ -42,8 +44,6 @@ MonoBehaviour:
   DefaultLanguage: 1
   <TranslationMaxRetries>k__BackingField: 1
   <TranslationTimeoutSeconds>k__BackingField: 12
-  <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
   <FocusedChannelMessageAudioConfig>k__BackingField:
     receiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
     receiveMentionAudio: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
