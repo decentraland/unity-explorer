@@ -1,9 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests;
-using Newtonsoft.Json.Linq;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -32,7 +30,7 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsConsumed => status == Status.Consumed;
 
         public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
-            IYouTubeUrlResolver youTubeResolver = null, IAnalyticsController analyticsController = null)
+            TrackedMediaUrlResolver mediaUrlResolver)
         {
             status = Status.Pending;
             isReachable = false;
@@ -51,13 +49,13 @@ namespace DCL.SDKComponents.MediaStream
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
 
-            string sourceType = ClassifyMediaSource(url);
-            TrackMediaSource(analyticsController, sourceType, url);
+            // Track media source via analytics decorator
+            mediaUrlResolver.TrackMediaSource(url);
 
             // YouTube resolution: resolve to direct stream URL before reachability check
-            if (youTubeResolver != null && url.IsYouTubeUrl())
+            if (url.IsYouTubeUrl())
             {
-                ResolvedYouTubeUrl? resolved = await youTubeResolver.ResolveAsync(url, ct);
+                ResolvedYouTubeUrl? resolved = await mediaUrlResolver.ResolveYouTubeAsync(url, ct);
 
                 if (resolved.HasValue)
                 {
@@ -133,28 +131,6 @@ namespace DCL.SDKComponents.MediaStream
 
             isGetReachableRequest.Abort();
             return true;
-        }
-
-        private static string ClassifyMediaSource(string url)
-        {
-            try
-            {
-                var uri = new System.Uri(url);
-                string host = uri.Host;
-                // Extract root domain: "www.youtube.com" -> "youtube.com", "player.vimeo.com" -> "vimeo.com"
-                string[] parts = host.Split('.');
-                return parts.Length >= 2 ? parts[parts.Length - 2] + "." + parts[parts.Length - 1] : host;
-            }
-            catch { return "unknown"; }
-        }
-
-        private static void TrackMediaSource(IAnalyticsController analyticsController, string sourceType, string url)
-        {
-            analyticsController?.Track(AnalyticsEvents.Media.MEDIA_STREAM_OPENED, new JObject
-            {
-                ["source_type"] = sourceType,
-                ["url"] = url,
-            });
         }
 
         public bool IsReachableConsume(MediaAddress address)

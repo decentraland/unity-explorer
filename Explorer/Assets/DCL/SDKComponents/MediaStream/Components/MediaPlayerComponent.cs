@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.MediaStream
         public bool HasFailed { get; private set; }
         public VideoState LastPropagatedVideoState;
         public float LastPropagatedVideoTime;
-        public bool IsLiveStream;
         public float ResolvedUrlExpiresAt;
 
         /// <summary>

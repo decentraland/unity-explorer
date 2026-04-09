@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -24,12 +24,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IPerformanceBudget performanceBudget;
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
-        private readonly IYouTubeUrlResolver youTubeUrlResolver;
         private readonly IAnalyticsController analyticsController;
 
         public MediaFactoryBuilder(ObjectProxy<IRoomHub> roomHub, IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
         {
             this.roomHub = roomHub;
             this.webRequestController = webRequestController;
@@ -37,7 +36,6 @@ namespace DCL.SDKComponents.MediaStream
             this.videoTexturesPool = videoTexturesPool;
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
-            this.youTubeUrlResolver = youTubeUrlResolver;
             this.analyticsController = analyticsController;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
@@ -46,6 +44,6 @@ namespace DCL.SDKComponents.MediaStream
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
             new (sceneDeps.SceneData, roomHub.StrictObject.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
-                youTubeUrlResolver, analyticsController);
+                analyticsController);
     }
 }

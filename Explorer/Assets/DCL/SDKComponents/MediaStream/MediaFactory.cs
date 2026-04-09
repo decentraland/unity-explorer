@@ -44,12 +44,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
-        private readonly IYouTubeUrlResolver youTubeUrlResolver;
-        private readonly IAnalyticsController analyticsController;
+        private readonly TrackedMediaUrlResolver mediaUrlResolver;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IYouTubeUrlResolver youTubeUrlResolver, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -62,8 +61,8 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
-            this.youTubeUrlResolver = youTubeUrlResolver;
-            this.analyticsController = analyticsController;
+
+            mediaUrlResolver = new TrackedMediaUrlResolver(new YouTubeUrlResolver(), analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -86,9 +85,6 @@ namespace DCL.SDKComponents.MediaStream
 
         public VideoTextureConsumer CreateVideoConsumer()
         {
-            // var renderTexture = new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32) { useMipMap = false, autoGenerateMips = false };
-            // renderTexture.Create();
-
             var consumer = new VideoTextureConsumer(videoTexturesPool);
             return consumer;
         }
@@ -200,7 +196,7 @@ namespace DCL.SDKComponents.MediaStream
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
             if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, youTubeUrlResolver, analyticsController).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, mediaUrlResolver).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 

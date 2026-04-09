@@ -10,15 +10,21 @@ using YoutubeExplode.Videos.Streams;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public class YouTubeUrlResolver : IYouTubeUrlResolver
+    public class YouTubeUrlResolver
     {
         private const int TIMEOUT_MS = 10_000;
-        private const float CACHE_TTL_SECONDS = 90f * 60f; // 90 minutes
+        private const int RETRY_BACKOFF_MS = 1_000;
+
+        // YouTube stream URLs typically expire after 2-4 hours.
+        // 90 minutes is a conservative TTL that ensures re-resolution before expiry.
+        private const float CACHE_TTL_SECONDS = 90f * 60f;
+
         private const int PREFERRED_HEIGHT = 1080;
         private const int MAX_CACHE_ENTRIES = 50;
 
         private readonly YoutubeClient youtubeClient = new ();
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
+        private readonly List<string> expiredKeys = new ();
 
         public async UniTask<ResolvedYouTubeUrl?> ResolveAsync(string youtubeUrl, CancellationToken ct)
         {
@@ -40,17 +46,18 @@ namespace DCL.SDKComponents.MediaStream
             // First attempt
             ResolvedYouTubeUrl? result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
 
-            // Single retry on failure
+            // Single retry with backoff
             if (result == null)
             {
-                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] First attempt failed for {videoIdStr}, retrying...");
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[YouTubeResolver] First attempt failed for {videoIdStr}, retrying after {RETRY_BACKOFF_MS}ms...");
+                await UniTask.Delay(RETRY_BACKOFF_MS, cancellationToken: ct);
                 result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
             }
 
             if (result != null)
             {
                 if (cache.Count >= MAX_CACHE_ENTRIES)
-                    EvictExpiredEntries();
+                    EvictEntriesToMaintainCap();
 
                 cache[videoIdStr] = result.Value;
             }
@@ -74,23 +81,40 @@ namespace DCL.SDKComponents.MediaStream
             return false;
         }
 
-        private void EvictExpiredEntries()
+        private void EvictEntriesToMaintainCap()
         {
             float now = UnityEngine.Time.realtimeSinceStartup;
-            List<string> expired = null;
+
+            // First pass: remove expired entries
+            expiredKeys.Clear();
 
             foreach (var kvp in cache)
-            {
                 if (now >= kvp.Value.ExpiresAtRealtimeSinceStartup)
-                {
-                    expired ??= new List<string>();
-                    expired.Add(kvp.Key);
-                }
-            }
+                    expiredKeys.Add(kvp.Key);
 
-            if (expired != null)
-                foreach (string key in expired)
-                    cache.Remove(key);
+            foreach (string key in expiredKeys)
+                cache.Remove(key);
+
+            // If still at cap, remove the entry with earliest expiry
+            while (cache.Count >= MAX_CACHE_ENTRIES)
+            {
+                string oldestKey = null;
+                float oldestExpiry = float.MaxValue;
+
+                foreach (var kvp in cache)
+                {
+                    if (kvp.Value.ExpiresAtRealtimeSinceStartup < oldestExpiry)
+                    {
+                        oldestExpiry = kvp.Value.ExpiresAtRealtimeSinceStartup;
+                        oldestKey = kvp.Key;
+                    }
+                }
+
+                if (oldestKey != null)
+                    cache.Remove(oldestKey);
+                else
+                    break;
+            }
         }
 
         private async UniTask<ResolvedYouTubeUrl?> TryResolveInternalAsync(VideoId videoId, bool urlHintsLive, CancellationToken ct)

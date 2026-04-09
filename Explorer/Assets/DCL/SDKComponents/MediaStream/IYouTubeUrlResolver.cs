@@ -16,13 +16,4 @@ namespace DCL.SDKComponents.MediaStream
             ExpiresAtRealtimeSinceStartup = expiresAtRealtimeSinceStartup;
         }
     }
-
-    public interface IYouTubeUrlResolver
-    {
-        /// <summary>
-        ///     Resolves a YouTube URL into a direct stream URL that AVPro Video can play.
-        ///     Returns null if resolution fails (DRM, private, unavailable, etc.).
-        /// </summary>
-        UniTask<ResolvedYouTubeUrl?> ResolveAsync(string youtubeUrl, CancellationToken ct);
-    }
 }

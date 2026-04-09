@@ -307,7 +307,6 @@ namespace DCL.SDKComponents.MediaStream
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
                 // Transfer YouTube resolution metadata from the promise to the component
-                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
                 component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
 
                 // Use the resolved media address (which may be a direct URL after YouTube resolution)
