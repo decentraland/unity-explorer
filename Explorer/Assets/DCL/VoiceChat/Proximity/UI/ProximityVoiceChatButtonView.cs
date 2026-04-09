@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UI;
 using System;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -20,7 +21,8 @@ namespace DCL.VoiceChat.Proximity
         [SerializeField] private Button? button;
         [SerializeField] private Image? unselectedImage;
         [SerializeField] private Image? hoverStateImage;
-        [field: SerializeField] public GameObject? DisabledTooltip { get; private set; }
+        [SerializeField] private GameObject? suppressedTooltip;
+        [field: SerializeField] public TMP_Text SuppressedText { get; private set; } = null!;
         [field: SerializeField] public Button CloseAreaButton { get; private set; } = null!;
         [SerializeField] private ViewAnimationElementBase? tooltipAnimation;
         [SerializeField] private GameObject hoverTooltip = null!;
@@ -86,7 +88,7 @@ namespace DCL.VoiceChat.Proximity
 
         public void HideDisabledTooltip()
         {
-            if (!DisabledTooltip!.activeSelf) return;
+            if (!suppressedTooltip!.activeSelf) return;
 
             tooltipCts = tooltipCts.SafeRestart();
             HideTooltipAsync(tooltipCts.Token).Forget();
@@ -94,7 +96,7 @@ namespace DCL.VoiceChat.Proximity
 
         private async UniTaskVoid ShowTooltipAsync(CancellationToken ct)
         {
-            DisabledTooltip!.SetActive(true);
+            suppressedTooltip!.SetActive(true);
             CloseAreaButton.gameObject.SetActive(true);
             await tooltipAnimation!.PlayShowAnimation(ct);
         }
@@ -105,7 +107,7 @@ namespace DCL.VoiceChat.Proximity
 
             if (ct.IsCancellationRequested) return;
 
-            DisabledTooltip!.SetActive(false);
+            suppressedTooltip!.SetActive(false);
             CloseAreaButton.gameObject.SetActive(false);
         }
 

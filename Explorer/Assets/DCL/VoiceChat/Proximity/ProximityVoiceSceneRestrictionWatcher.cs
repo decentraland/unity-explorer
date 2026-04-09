@@ -37,11 +37,8 @@ namespace DCL.VoiceChat
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
-            // TODO: revert inversion — temporary test to verify toast UI
             bool blocksVoice = scene != null &&
-                               scene.SceneData.SceneEntityDefinition.metadata.featureToggles.ProximityVoiceChatEnabled;
-
-            blocksVoice = !blocksVoice;
+                               !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.ProximityVoiceChatEnabled;
             if (blocksVoice == currentSceneBlocksVoice)
                 return;
 

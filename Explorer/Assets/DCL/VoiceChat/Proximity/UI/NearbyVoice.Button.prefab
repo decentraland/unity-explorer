@@ -233,15 +233,11 @@ MonoBehaviour:
   barLeft: {fileID: 8351519148237826184}
   barCenter: {fileID: 2191418136491472976}
   barRight: {fileID: 2153679925950332305}
-  amplitudeSensitivity: 5
-  silenceThreshold: 0.01
-  smoothingUp: 14
-  smoothingDown: 4
-  barMinHeight: 1.8928
-  barMaxHeight: 9.0283
-  barSpeedLeft: 0.7
-  barSpeedCenter: 1
-  barSpeedRight: 0.85
+  minHeight: 1.8928
+  midHeight: 4.5
+  maxHeight: 9.0283
+  transitionDuration: 0.3
+  speakingThreshold: 0.01
 --- !u!1 &3248572993865499360
 GameObject:
   m_ObjectHideFlags: 0
@@ -1469,7 +1465,8 @@ MonoBehaviour:
   button: {fileID: 5839845052108196698}
   unselectedImage: {fileID: 3379401566610532616}
   hoverStateImage: {fileID: 7958809184563542825}
-  <DisabledTooltip>k__BackingField: {fileID: 6448161301622164182}
+  suppressedTooltip: {fileID: 6448161301622164182}
+  <SuppressedText>k__BackingField: {fileID: 8675716467445008219}
   <CloseAreaButton>k__BackingField: {fileID: 5740703227619954291}
   tooltipAnimation: {fileID: 5937488848181735481}
   hoverTooltip: {fileID: 1550531280301721178}

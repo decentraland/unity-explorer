@@ -13,6 +13,7 @@ namespace DCL.VoiceChat
         private const string TAG = nameof(ProximityVoiceChatStateModel);
 
         private readonly ReactiveProperty<ProximityVoiceChatState> state;
+        private readonly ReactiveProperty<string?> activeSuppression = new (null);
         private readonly HashSet<string> suppressionReasons = new ();
 
         private ProximityVoiceChatState preBlockedState;
@@ -24,6 +25,8 @@ namespace DCL.VoiceChat
         }
 
         public IReadonlyReactiveProperty<ProximityVoiceChatState> State => state;
+
+        public IReadonlyReactiveProperty<string?> ActiveSuppression => activeSuppression;
 
         public void Enable()
         {
@@ -64,6 +67,8 @@ namespace DCL.VoiceChat
             if (!suppressionReasons.Add(reason))
                 return;
 
+            activeSuppression.Value = reason;
+
             if (state.Value == ProximityVoiceChatState.Blocked)
                 return;
 
@@ -79,7 +84,17 @@ namespace DCL.VoiceChat
                 return;
 
             if (suppressionReasons.Count > 0)
+            {
+                foreach (string remaining in suppressionReasons)
+                {
+                    activeSuppression.Value = remaining;
+                    break;
+                }
+
                 return;
+            }
+
+            activeSuppression.Value = null;
 
             if (state.Value != ProximityVoiceChatState.Blocked)
                 return;
@@ -90,6 +105,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             state.ClearSubscriptionsList();
+            activeSuppression.ClearSubscriptionsList();
         }
 
         private void SetState(ProximityVoiceChatState newState)
