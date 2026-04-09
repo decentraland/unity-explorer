@@ -104,35 +104,41 @@ namespace DCL.Notifications
 
                 unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-                // TODO remove allocation of List on serialization
-                List<INotification> notifications =
-                    await webRequestController.GetAsync(
-                                                   commonArguments,
-                                                   ct,
-                                                   ReportCategory.UI,
-                                                   signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
-                                                   headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+                try
+                {
+                    List<INotification> notifications = await webRequestController.GetAsync(
+                                                                                       commonArguments,
+                                                                                       ct,
+                                                                                       ReportCategory.UI,
+                                                                                       signInfo: WebRequestSignInfo.NewFromUrl(urlsSource.GetOriginalUrl(commonArguments.URL), unixTimestamp, "get"),
+                                                                                       headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                                                                  .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
-                if (notifications.Count == 0)
-                    continue;
+                    if (notifications.Count == 0)
+                        continue;
 
-                lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                    lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
+                    using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
 
-                using var scope = ThreadSafeListPool<string>.SHARED.Get(out var list);
-                foreach (INotification notification in notifications)
-                    try
-                    {
-                        NotificationsBusController.Instance.AddNotification(notification);
-                        list.Add(notification.Id);
-                    }
-                    catch (Exception e)
-                    {
-                        ReportHub.LogException(e, ReportCategory.UI);
-                    }
+                    foreach (INotification notification in notifications)
+                        try
+                        {
+                            NotificationsBusController.Instance.AddNotification(notification);
+                            list.Add(notification.Id);
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, ReportCategory.UI);
+                        }
 
-                await SetNotificationAsReadAsync(list, ct);
+                    await SetNotificationAsReadAsync(list, ct);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogWarning(ReportCategory.UI, "Notifications request failed, retrying on next polling");
+                }
             }
             while (ct.IsCancellationRequested == false);
         }
