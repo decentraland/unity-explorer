@@ -36,6 +36,9 @@ namespace DCL.ExplorePanel
         public ProfileMenuView ProfileMenuView { get; private set; } = null!;
 
         [field: SerializeField]
+        public Button ProfileMenuCloserButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public WarningNotificationView? WarningNotificationView { get; private set; }
 
         [field: SerializeField]

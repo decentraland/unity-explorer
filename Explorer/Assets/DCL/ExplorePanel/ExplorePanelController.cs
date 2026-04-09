@@ -415,19 +415,33 @@ namespace DCL.ExplorePanel
         {
             profileMenuCts = profileMenuCts.SafeRestart();
 
-            if (profileMenuController.State == ControllerState.ViewHidden)
+            if (profileMenuController.State != ControllerState.ViewHidden)
+                return;
+
+            try
             {
-                try
+                viewInstance!.ProfileMenuCloserButton.gameObject.SetActive(true);
+                viewInstance.ProfileMenuCloserButton.onClick.AddListener(OnProfileMenuCloserClicked);
+
+                await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 0), new ControllerNoData(), profileMenuCts.Token);
+                await profileMenuController.HideViewAsync(CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancellations ignored
+            }
+            finally
+            {
+                if (viewInstance != null)
                 {
-                    await profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 0),new ControllerNoData(), profileMenuCts.Token);
-                    await profileMenuController.HideViewAsync(profileMenuCts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    // Cancellations ignored
+                    viewInstance.ProfileMenuCloserButton.onClick.RemoveListener(OnProfileMenuCloserClicked);
+                    viewInstance.ProfileMenuCloserButton.gameObject.SetActive(false);
                 }
             }
         }
+
+        private void OnProfileMenuCloserClicked() =>
+            profileMenuCts?.Cancel();
 
         private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
         {
