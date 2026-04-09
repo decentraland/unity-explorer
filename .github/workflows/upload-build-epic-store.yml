@@ -43,7 +43,7 @@ jobs:
         Write-Host "Windows download URL: $windowsUrl"
         Write-Host "macOS download URL: $macosUrl"
 
-        $platform = "${{ github.event.inputs.platform }}"
+        $platform = "${{ github.event.inputs.platform || 'both' }}"
         if (-not $windowsUrl -and ($platform -eq "windows" -or $platform -eq "both")) {
           Write-Error "Windows asset (Decentraland_windows64_epic.zip) not found in latest release $version"
           exit 1
