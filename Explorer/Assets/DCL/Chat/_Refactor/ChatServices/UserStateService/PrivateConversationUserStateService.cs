@@ -35,7 +35,7 @@ namespace DCL.Chat.ChatServices
             PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
             PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
             DISCONNECTED, //The other user is either offline or has blocked the own user.
-            OTHER_CLIENT, //The other user is either offline or has blocked the own user.
+            OTHER_CLIENT, //The other user is connected with a client that doesn't support DMs
         }
 
         public readonly struct UserState
