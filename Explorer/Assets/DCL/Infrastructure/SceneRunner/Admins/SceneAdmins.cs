@@ -144,7 +144,14 @@ namespace SceneRunner.Admins
 #if SCENE_ADMINS_TESTS
             return true; // consider always an admin during tests
 #else
-            return wallets.ContainsKey(wallet);
+            if (status == Status.Loaded)
+            {
+                return wallets.ContainsKey(wallet);
+            }
+            else
+            {
+                return null;
+            }
 #endif
         }
     }
