@@ -13,21 +13,22 @@ namespace DCL.VoiceChat.Proximity
         [field: SerializeField] public Toggle HearOthersToggle { get; private set; } = null!;
         [field: SerializeField] public GameObject VolumeSliderContainer { get; private set; } = null!;
         [field: SerializeField] public Slider VolumeSlider { get; private set; } = null!;
+        [field: SerializeField] public TMP_Text HearText { get; private set; } = null!;
+
+        [field: Header("SPEAK BUTTON")]
         [field: SerializeField] public GameObject SpeakButtonContainer { get; private set; } = null!;
         [field: SerializeField] public Button SpeakButton { get; private set; } = null!;
         [field: SerializeField] public GameObject SpeakStateVisuals { get; private set; } = null!;
         [field: SerializeField] public GameObject SpeakingStateVisuals { get; private set; } = null!;
-        [field: SerializeField] public TMP_Text HearText { get; private set; } = null!;
 
-        [Header("Speak Button Color")]
         [SerializeField] private Image speakButtonImage = null!;
         [SerializeField] private Color speakingColor = new (0.075f, 0.82f, 0.125f, 1f);
         [SerializeField] private Color speakingColorBright = new (0.15f, 1f, 0.25f, 1f);
-        [Tooltip("Multiplier for raw RMS amplitude")]
-        [Min(0.5f)]
+
+        [Min(0.5f)][Tooltip("Multiplier for raw RMS amplitude")]
         [SerializeField] private float colorSensitivity = 8f;
-        [Tooltip("How fast color reacts to amplitude changes")]
-        [Min(1f)]
+
+        [Min(1f)][Tooltip("How fast color reacts to amplitude changes")]
         [SerializeField] private float colorSmoothing = 12f;
 
         private System.Func<float>? amplitudeProvider;
