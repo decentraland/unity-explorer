@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
@@ -6,15 +7,7 @@ using DCL.WebRequests;
 
 namespace DCL.Chat.Commands
 {
-    public struct Response
-    {
-        public string id;
-        public string name;
-        public string admin;
-        public string active;
-        public bool canBeRemoved;
-    }
-
+    // TODO use SceneAdmins from the current Scene via ISceneCache
     public class SceneAdminsChatCommand : IChatCommand
     {
         private readonly IWebRequestController webRequestController;
@@ -30,9 +23,7 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            // TODO replace to DecentralandUrlsSource
-            const string url = "https://comms-gatekeeper.decentraland.zone/scene-admin";
-
+            /*
             var list = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                 .CreateFromJson<List<Response>>(WRJsonParser.Newtonsoft);
             
@@ -51,6 +42,8 @@ namespace DCL.Chat.Commands
             }
 
             return sb.ToString();
+            */
+            return "";
         }
     }
 }

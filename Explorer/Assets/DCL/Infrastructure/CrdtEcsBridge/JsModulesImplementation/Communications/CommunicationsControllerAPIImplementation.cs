@@ -4,22 +4,26 @@ using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
+using SceneRunner.Admins;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         private readonly IInstancePoolsProvider byteArrayPool;
+        private readonly SceneAdmins sceneAdmins;
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
                 ISceneCommunicationPipe messagePipesHub, 
                 IJsOperations jsOperations,
-                IInstancePoolsProvider byteArrayPool
+                IInstancePoolsProvider byteArrayPool,
+                SceneAdmins sceneAdmins
                 )
             : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {
             this.byteArrayPool = byteArrayPool;
+            this.sceneAdmins = sceneAdmins;
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
@@ -47,7 +51,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             Span<byte> filteredUnbounded = array.Array.AsSpan(dataOffset);
 
             // Message is considered safe if it's from a scene admin // TODO call Api to check if wallet is an admin
-            bool isFromSceneAdmin = false;
+            bool? adminResult = sceneAdmins.IsAdmin(message.FromWalletId);
+            // Consider the user as non-admin until we know for sure
+            bool isFromSceneAdmin = adminResult == null ? false : adminResult.Value; 
 
 
             // TODO This logic mostly duplicates CommunicationsControllerAPIImplementationBase.SendBinary we should standardise it later

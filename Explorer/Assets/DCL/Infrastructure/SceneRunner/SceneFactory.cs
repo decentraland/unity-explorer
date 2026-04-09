@@ -37,6 +37,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
+using SceneRunner.Admins;
 
 namespace SceneRunner
 {
@@ -194,14 +195,38 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
+            SceneAdmins sceneAdmins = new SceneAdmins(
+                    webRequestController,
+                    decentralandUrlsSource,
+                    realmData,
+                    sceneData
+                    );
+
+            sceneAdmins.FireRequestAsync(ct).Forget();
+
             if (ENABLE_SDK_OBSERVABLES)
             {
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
-                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(
+                    deps,
+                    sceneRuntime,
+                    sharedPoolsProvider,
+                    crdtSerializer,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData!,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
+                    engineAPIMutexOwner,
+                    profileRepository,
+                    systemClipboard,
+                    roomHub,
+                    sceneAdmins,
+                    installSource
+                );
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -228,9 +253,23 @@ namespace SceneRunner
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
-                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
+                        deps, 
+                        sceneRuntime, 
+                        sharedPoolsProvider,
+                        crdtSerializer, 
+                        mvcManager, 
+                        globalWorldActions, 
+                        realmData!, 
+                        messagePipesHub, 
+                        webRequestController,
+                        skyboxSettings, 
+                        engineAPIMutexOwner, 
+                        profileRepository, 
+                        systemClipboard, 
+                        roomHub,
+                        sceneAdmins,
+                        installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
