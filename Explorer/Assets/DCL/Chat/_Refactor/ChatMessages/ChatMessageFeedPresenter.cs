@@ -80,7 +80,9 @@ namespace DCL.Chat.ChatMessages
             RevertToOriginalCommand revertToOriginalCommand,
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
-            ReactionTooltipPresenter? tooltipPresenter = null)
+            ReactionTooltipPresenter? tooltipPresenter = null,
+            ReactionLimitToastView? limitToastView = null,
+            string limitToastMessage = "")
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -102,7 +104,9 @@ namespace DCL.Chat.ChatMessages
                 reactionsPresenter,
                 messageReactionService,
                 tooltipPresenter,
-                msgId => currentChannelService.CurrentChannel?.GetReactions(msgId));
+                msgId => currentChannelService.CurrentChannel?.GetReactions(msgId),
+                limitToastView,
+                limitToastMessage);
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);

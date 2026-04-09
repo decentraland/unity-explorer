@@ -187,7 +187,9 @@ namespace DCL.Chat
                 commandRegistry.RevertToOriginalCommand,
                 reactionsPresenter,
                 messageReactionService,
-                tooltipPresenter);
+                tooltipPresenter,
+                view.ReactionLimitToastView,
+                reactionsConfig.MessageReactions.ReactionLimitMessage);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,

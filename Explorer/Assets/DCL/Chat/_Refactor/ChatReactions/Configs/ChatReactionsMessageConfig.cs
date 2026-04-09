@@ -27,9 +27,9 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0, 20)]
         [field: SerializeField] public int MaxDistinctReactionsPerMessage { get; private set; } = 3;
 
-        [field: Note("Toast message shown when the reaction limit is reached. " +
+        [field: Note("Toast message shown inline when the reaction limit is reached. " +
                      "Use {0} as a placeholder for the max count.")]
-        [field: SerializeField] public string ReactionLimitMessage { get; private set; } = "Reaction limit reached ({0} max per message)";
+        [field: SerializeField] public string ReactionLimitMessage { get; private set; } = "This message has reached the reaction limit.";
 
         [field: Note("Debounce delay (seconds) before sending situational reactions to the network. " +
                      "Clicks within this window are deduplicated per emoji. " +

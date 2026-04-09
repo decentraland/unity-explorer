@@ -22,6 +22,7 @@ namespace DCL.Chat
         [field: SerializeField] public ChatReactionsSelectorView MessageReactionsSelector { get; private set; } = null!;
         [field: SerializeField] public EmojiPanelView EmojiPanelView { get; private set; } = null!;
         [field: SerializeField] public ReactionTooltipView? ReactionTooltipView { get; private set; }
+        [field: SerializeField] public ReactionLimitToastView? ReactionLimitToastView { get; private set; }
 
         [field: Header("Voice Chat")]
         [field: SerializeField] public JoinCommunityLiveStreamChatSubTitleButtonView JoinCommunityLiveStreamSubTitleButton { get; private set; } = null!;

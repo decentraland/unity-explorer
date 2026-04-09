@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
   <FixedDefaultEmojiUnicodes>k__BackingField: 642700004ff4010022f6010023f9010025f501002df60100
   <MaxRecentEmojis>k__BackingField: 3
+  <MaxDistinctReactionsPerMessage>k__BackingField: 3
+  <ReactionLimitMessage>k__BackingField: This message has reached the reaction limit.
   <NetworkDebounceSeconds>k__BackingField: 0.3
   <NetworkFlushThreshold>k__BackingField: 10
   <ReceiveStaggerInterval>k__BackingField: 0.2
@@ -22,9 +24,6 @@ MonoBehaviour:
   <TooltipHoverDelay>k__BackingField: 0.213
   <ShortcutsBarOffset>k__BackingField: {x: -28, y: 40}
   <ShortcutsBarOffsetOwnMessage>k__BackingField: {x: -5, y: 40}
-  <TooltipHoverDelay>k__BackingField: 0.213
-  <ShortcutsBarOffset>k__BackingField: {x: -28, y: 40}
-  <ShortcutsBarOffsetOwnMessage>k__BackingField: {x: -28, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}
   <EmojiPanelMessageOffset>k__BackingField: {x: -170, y: -20}
   <TooltipOffset>k__BackingField: {x: 0, y: 90}

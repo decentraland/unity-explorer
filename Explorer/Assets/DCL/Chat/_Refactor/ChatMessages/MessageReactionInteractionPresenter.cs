@@ -16,6 +16,8 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly ChatMessageReactionService messageReactionService;
         private readonly ReactionTooltipPresenter? tooltipPresenter;
+        private readonly ReactionLimitToastView? limitToastView;
+        private readonly string limitToastMessage;
         private readonly Func<string, ReactionSet?> getReactions;
 
         private string? pendingReactionMessageId;
@@ -25,12 +27,19 @@ namespace DCL.Chat.ChatMessages
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
             ReactionTooltipPresenter? tooltipPresenter,
-            Func<string, ReactionSet?> getReactions)
+            Func<string, ReactionSet?> getReactions,
+            ReactionLimitToastView? limitToastView = null,
+            string limitToastMessage = "")
         {
             this.reactionsPresenter = reactionsPresenter;
             this.messageReactionService = messageReactionService;
             this.tooltipPresenter = tooltipPresenter;
             this.getReactions = getReactions;
+            this.limitToastView = limitToastView;
+            this.limitToastMessage = limitToastMessage;
+
+            if (limitToastView != null)
+                messageReactionService.ReactionLimitReached += OnReactionLimitReached;
         }
 
         public void OnReactionButtonClicked(string messageId, ChatEntryView chatEntryView)
@@ -45,6 +54,7 @@ namespace DCL.Chat.ChatMessages
             ActivatePendingReaction(messageId, chatEntryView);
 
             var anchor = (RectTransform)chatEntryView.messageBubbleElement.reactionButton!.transform;
+
             reactionsPresenter.ShowForMessage(
                 anchor,
                 chatEntryView.IsSentByOwnUser,
@@ -93,11 +103,28 @@ namespace DCL.Chat.ChatMessages
             reactionsPresenter.CloseForMessage();
             ClearPendingState();
             HideTooltip();
+            limitToastView?.Hide();
         }
 
         public void Dispose()
         {
             tooltipPresenter?.Dispose();
+            limitToastView?.Hide();
+
+            if (limitToastView != null)
+                messageReactionService.ReactionLimitReached -= OnReactionLimitReached;
+        }
+
+        private void OnReactionLimitReached(int max)
+        {
+            // pendingReactionChatEntry is always set here: the limit can only fire from
+            // the selector bar (new distinct emoji), which requires OnReactionButtonClicked.
+            if (limitToastView == null || pendingReactionChatEntry == null)
+                return;
+
+            var anchor = (RectTransform)pendingReactionChatEntry.messageBubbleElement.reactionButton!.transform;
+            string message = string.Format(limitToastMessage, max);
+            limitToastView.Show(message, anchor);
         }
 
         private void ClearPendingState()
