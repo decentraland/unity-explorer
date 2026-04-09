@@ -198,7 +198,7 @@ namespace SceneRunner
             SceneAdmins sceneAdmins = new SceneAdmins(
                     webRequestController,
                     decentralandUrlsSource,
-                    realmData,
+                    realmData!,
                     sceneData
                     );
 

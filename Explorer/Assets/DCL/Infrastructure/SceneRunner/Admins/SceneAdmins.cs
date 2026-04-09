@@ -79,7 +79,7 @@ namespace SceneRunner.Admins
 #if SCENE_ADMINS_TESTS
         public static SceneAdmins NewTestInstance()
         {
-            return new SceneAdmins(null!, null!, null!);
+            return new SceneAdmins(null!, null!, null!, null!);
         }
 #endif
 
@@ -129,6 +129,10 @@ namespace SceneRunner.Admins
                 }
 
                 status = Status.Loaded;
+            }
+            catch (OperationCanceledException) 
+            { 
+                status = Status.Idle;
             }
             catch (Exception e)
             {
