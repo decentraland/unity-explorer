@@ -84,7 +84,7 @@ namespace SceneRunner.Admins
         }
 #endif
 
-        public async UniTaskVoid FireRequestAsync(CancellationToken ct)
+        public async UniTask FireRequestAsync(CancellationToken ct)
         {
 #if !SCENE_ADMINS_TESTS // it's not required to execute an actual request for tests
 
@@ -124,15 +124,15 @@ namespace SceneRunner.Admins
                     .CreateFromJson<List<AdminInfo>>(WRJsonParser.Newtonsoft);
 
                 wallets.Clear();
-                foreach (AdminInfo r in list) 
+                foreach (AdminInfo r in list)
                 {
                     wallets[r.admin] = r;
                 }
 
                 status = Status.Loaded;
             }
-            catch (OperationCanceledException) 
-            { 
+            catch (OperationCanceledException)
+            {
                 status = Status.Idle;
             }
             catch (Exception e)

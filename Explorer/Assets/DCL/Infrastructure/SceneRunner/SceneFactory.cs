@@ -202,7 +202,7 @@ namespace SceneRunner
                     sceneData
                     );
 
-            sceneAdmins.FireRequestAsync(ct).Forget();
+            await sceneAdmins.FireRequestAsync(ct);
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -254,19 +254,19 @@ namespace SceneRunner
             else
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
-                        deps, 
-                        sceneRuntime, 
+                        deps,
+                        sceneRuntime,
                         sharedPoolsProvider,
-                        crdtSerializer, 
-                        mvcManager, 
-                        globalWorldActions, 
-                        realmData!, 
-                        messagePipesHub, 
+                        crdtSerializer,
+                        mvcManager,
+                        globalWorldActions,
+                        realmData!,
+                        messagePipesHub,
                         webRequestController,
-                        skyboxSettings, 
-                        engineAPIMutexOwner, 
-                        profileRepository, 
-                        systemClipboard, 
+                        skyboxSettings,
+                        engineAPIMutexOwner,
+                        profileRepository,
+                        systemClipboard,
                         roomHub,
                         sceneAdmins,
                         installSource);
