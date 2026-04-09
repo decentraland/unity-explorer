@@ -72,6 +72,7 @@ namespace DCL.FeatureFlags
         public const string AVATAR_GHOSTS = "alfa-avatar-ghosts";
         public const string REPORT_USER = "alfa-report-user";
         public const string POINT_AT = "alfa-point-at";
+        public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
 
         public static class Endpoints
         {
