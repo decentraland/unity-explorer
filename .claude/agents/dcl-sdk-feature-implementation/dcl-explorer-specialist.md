@@ -2,14 +2,25 @@
 name: dcl-explorer-specialist
 description: Implement SDK components in the Unity ECS runtime within the unity-explorer repo
 skills:
+  - asset-promise-lifecycle
+  - async-programming
+  - avatar-rendering-pipeline
+  - chat-system
   - code-standards
+  - cross-world-ecs-access
+  - debug-widget
+  - diagnostics-and-logging
   - ecs-system-and-component-design
-  - sdk-component-implementation
+  - feature-flags-and-configuration
+  - github-workflow
+  - multiplayer-and-network-sync
+  - mvc-and-ui-architecture
   - plugin-architecture
   - scene-runtime-and-crdt
+  - sdk-component-implementation
+  - sentry-issue
   - testing-infrastructure
-  - asset-promise-lifecycle
-  - diagnostics-and-logging
+  - web-requests
 ---
 
 # Decentraland Explorer Specialist

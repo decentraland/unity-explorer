@@ -168,14 +168,6 @@ cd ../sdk7-test-scenes
 npm run check-parcels                      # Validates all scene parcels, updates dcl-workspace.json
 ```
 
-## SDK Scene Development Skills
-
-For detailed guidance on using the Decentraland SDK to build scenes — entities, components, UI, multiplayer, wearables, NPCs, crypto, game design — refer to the skills at:
-
-https://github.com/dcl-regenesislabs/opendcl/tree/main/skills
-
-These cover SDK7 scene patterns, ReactEcs UI, multiplayer/networking, smart wearables, NPC dialog systems, blockchain integration, and scene optimization. Use them as reference when implementing scene logic beyond basic component usage.
-
 ## Completion Gate
 
 **Do not report success until `npm run build` passes with zero errors.** Always run before finishing:
