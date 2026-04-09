@@ -20,6 +20,8 @@ namespace DCL.Chat
 
         internal readonly ChatInputPresenter chatInputPresenter;
 
+        public bool IsReactionPopupActive => reactionsPresenter.IsReactionPopupActive;
+
         public ChatUIMediator(
             ChatPanelView panelView,
             ChatConfig.ChatConfig config,

@@ -330,7 +330,9 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform);
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    chatPanelView.ChatReactionButton.transform,
+                    chatPanelView.EmojiPanelView.transform);
 
             pluginScope.Add(chatClickDetectionHandler);
 

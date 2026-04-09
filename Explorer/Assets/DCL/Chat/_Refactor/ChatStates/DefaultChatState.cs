@@ -22,8 +22,11 @@ namespace DCL.Chat.ChatStates
             uiMediator.chatInputPresenter.OnBlur();
         }
 
-        public override void OnPointerEnter() =>
-            uiMediator.SetPanelsFocus(isFocused: true, animate: true);
+        public override void OnPointerEnter()
+        {
+            if (!uiMediator.IsReactionPopupActive)
+                uiMediator.SetPanelsFocus(isFocused: true, animate: true);
+        }
 
         public override void OnPointerExit() =>
             uiMediator.SetPanelsFocus(isFocused: false, animate: true);
