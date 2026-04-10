@@ -84,6 +84,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
             CancelEmotesByDeletionQuery(World);
+            CancelMaskedEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
@@ -110,6 +111,17 @@ namespace DCL.AvatarRendering.Emotes.Play
         [All(typeof(DeleteEntityIntention))]
         private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CancelMaskedEmotesByDeletion(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
+        {
+            if (masked.CurrentEmoteReference == null) return;
+
+            // Force-stop regardless of animator state — the entity is being destroyed.
+            masked.StopEmote = true;
+            emotePlayer.TryCancelMaskedEmote(ref masked, avatarView);
+        }
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
@@ -304,12 +316,17 @@ namespace DCL.AvatarRendering.Emotes.Play
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody)
+                    // Capture intent and view values before any structural change that invalidate query-provided refs.
+                    AvatarEmoteMask mask = emoteIntent.Mask;
+                    bool spatial = emoteIntent.Spatial;
+                    IAvatarView view = avatarView;
+
+                    if (mask == AvatarEmoteMask.AemFullBody)
                     {
                         emoteComponent.EmoteUrn = emoteId;
-                        emoteComponent.Mask = emoteIntent.Mask;
+                        emoteComponent.Mask = mask;
 
-                        if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                        if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref emoteComponent))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                     }
                     else
@@ -317,20 +334,16 @@ namespace DCL.AvatarRendering.Emotes.Play
                         // Masked emotes for remote players are handled here in the global world.
                         // Local player masked emotes go through SceneMaskedEmoteSystem instead.
                         if (emoteComponent.CurrentEmoteReference != null)
-                            StopEmote(ref emoteComponent, avatarView);
+                            StopEmote(ref emoteComponent, view);
 
+                        // After AddOrGet the query-provided refs (emoteIntent, avatarView,
+                        // emoteComponent) are potentially dangling, use only local copies.
                         ref CharacterMaskedEmoteComponent masked = ref World.AddOrGet<CharacterMaskedEmoteComponent>(entity);
 
-                        if (masked.CurrentEmoteReference != null)
-                        {
-                            emotePlayer.StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
-                            masked.Reset();
-                        }
-
                         masked.EmoteUrn = emoteId;
-                        masked.Mask = emoteIntent.Mask;
+                        masked.Mask = mask;
 
-                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref masked))
+                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref masked))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                     }
 
