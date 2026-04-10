@@ -100,11 +100,11 @@
       "hash": "9365d4b0f148605d08c5944de3fec3ac76ee607c"
     },
     "com.decentraland.pulse.transport": {
-      "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport.Shared",
+      "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport.Shared#merge_channels",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "20d0f434e357a93f19df09abd0adee43c215f437"
+      "hash": "1298922b68f9257454bb059999d15202a9b5ba80"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",

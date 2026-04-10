@@ -10,12 +10,13 @@ namespace DCL.Multiplayer.Connections.Pulse
     public partial class PulseMultiplayerBus
     {
         /// <summary>
-        ///     Delta doesn't carry the "Emoting" state (and make it to do so seems strange in the authoritative server domain)
-        ///     Simple linear handling of EmoteStarted / EmoteStopped brings with it the following intricacies
-        ///     as Delta is received from the different unreliable channel and is not synced with the reliable one:
-        ///     - Delta (after emote has started) received before `EmoteStarted` - NO RISK - `EmoteStarted` carries a full snapshot or synchronization
-        ///     - Delta (after emote has finished) received before `EmoteStopped` - RISK - Delta will be resolved as `IsEmoting: true` leading to the slight drift while emoting until `EmoteStopped` has been received
-        ///     If during the test we notice a considerable drift, add one more flag to `PlayerAnimationFlags`
+        ///     Delta doesn't carry the "Emoting" state. RELIABLE and UNRELIABLE_SEQUENCED share the same
+        ///     ENet channel, so each reliable packet (EmoteStarted, EmoteStopped) acts as an ordering barrier:
+        ///     a STATE_DELTA sent after the reliable packet cannot arrive before it.
+        ///     <para />
+        ///     The <c>isEmoting</c> flag in <c>lastMovementMessages</c> is patched explicitly in
+        ///     <see cref="HandleEmoteStopped" /> because <c>MergeIntoNetworkMovementMessage</c> does not
+        ///     recompute it — without the patch, merged deltas would carry stale <c>isEmoting=true</c>.
         /// </summary>
         private readonly HashSet<uint> emotingSubjects = new ();
 
@@ -41,15 +42,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
                 TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage);
-
-                // A delta with the same sequence may have arrived first via the unreliable channel,
-                // storing isEmoting=false. EmoteStarted (reliable) is authoritative, so force-update the stored state.
-                if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out (uint sequence, NetworkMovementMessage message) stored)
-                    && !stored.message.isEmoting)
-                {
-                    stored.message.isEmoting = true;
-                    lastMovementMessages[emoteStarted.SubjectId] = stored;
-                }
 
                 // EmoteStarted is mutually exclusive with other messages so we don't receive two messages with the same Sequence
                 Inbox(movementMessage, walletId);
