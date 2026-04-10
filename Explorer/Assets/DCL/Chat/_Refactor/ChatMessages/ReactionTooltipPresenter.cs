@@ -197,13 +197,7 @@ namespace DCL.Chat.ChatMessages
 
         private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
         {
-            IReadOnlyList<string> unresolved = textBuilder.UnresolvedWallets;
-
-            for (int i = 0; i < unresolved.Count; i++)
-            {
-                if (ct.IsCancellationRequested) return;
-                await profileRepository.GetProfileAsync(unresolved[i], ct);
-            }
+            await profileRepository.GetProfilesAsync(textBuilder.UnresolvedWallets, ct);
 
             if (ct.IsCancellationRequested) return;
 

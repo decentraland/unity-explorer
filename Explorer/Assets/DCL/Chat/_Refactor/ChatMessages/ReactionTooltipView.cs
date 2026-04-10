@@ -43,9 +43,7 @@ namespace DCL.Chat.ChatMessages
 
         public void UpdateText(string text)
         {
-            loadingIndicator.SetActive(false);
-            namesText.gameObject.SetActive(true);
-            emojiImage.gameObject.SetActive(true);
+            ShowResolvedContent();
             namesText.text = text;
         }
 
@@ -56,13 +54,17 @@ namespace DCL.Chat.ChatMessages
 
         private void ShowContent(string text, Rect emojiUvRect, Texture atlas)
         {
-            loadingIndicator.SetActive(false);
-            namesText.gameObject.SetActive(true);
-            emojiImage.gameObject.SetActive(true);
-
+            ShowResolvedContent();
             namesText.text = text;
             emojiImage.texture = atlas;
             emojiImage.uvRect = emojiUvRect;
+        }
+
+        private void ShowResolvedContent()
+        {
+            loadingIndicator.SetActive(false);
+            namesText.gameObject.SetActive(true);
+            emojiImage.gameObject.SetActive(true);
         }
 
         private void ShowLoadingContent()
