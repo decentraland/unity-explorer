@@ -14,12 +14,13 @@ using Unity.PerformanceTesting;
 using Unity.Profiling;
 using UnityEngine;
 
-namespace DCL.Tests.PlayMode.PerformanceTests
+namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
     /// Benchmarks <see cref="ProximityAudioPositionSystem.Update"/> with varying participant counts.
     /// Measures main-thread cost of position sync + spatial angle calculation.
     /// </summary>
+    [Category("Performance")]
     public class ProximityAudioPositionSystemPerformanceTest : UnitySystemTestBase<ProximityAudioPositionSystem>
     {
         private IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -73,8 +74,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                .GC()
                .Run();
 
-            Debug.Log($"[ProximityAudioPositionSystem] {participantCount} participants — GC.Alloc last: {gcAlloc.LastValue} bytes");
+            long gcBytes = gcAlloc.LastValue;
             gcAlloc.Dispose();
+
+            Debug.Log($"[ProximityAudioPositionSystem] {participantCount} participants — GC.Alloc last: {gcBytes} bytes");
+            Assert.That(gcBytes, Is.EqualTo(0), $"System.Update must be allocation-free, but allocated {gcBytes} bytes with {participantCount} participants");
         }
 
         private void SetupParticipants(int count)

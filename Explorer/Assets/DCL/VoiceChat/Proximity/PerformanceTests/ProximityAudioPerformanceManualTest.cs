@@ -1,5 +1,8 @@
 using LiveKit.Rooms.Streaming.Audio;
+using RichTypes;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.Serialization;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,10 +10,14 @@ using UnityEngine.InputSystem;
 namespace DCL.VoiceChat.Proximity
 {
     /// <summary>
-    /// Manual performance testbed for proximity spatial audio.
+    /// Manual performance testbed for proximity spatial audio with real panning.
     /// Attach to any GameObject, adjust source count at runtime via Inspector or on-screen slider.
     /// Creates real <see cref="LivekitAudioSource"/> instances with a playing test tone
-    /// so that <c>OnAudioFilterRead</c> fires on the AudioThread.
+    /// and an injected fake <c>AudioStream</c> so that <c>ApplySpatialPanning</c> executes
+    /// on the AudioThread — use the Profiler to observe DSP CPU / AudioThread cost.
+    ///
+    /// The fake stream bypasses FFI (<c>ReadAudio</c> early-returns on disposed internal)
+    /// while letting the panning code path run. Audio data comes from the test tone clip.
     /// </summary>
     public class ProximityAudioPerformanceManualTest : MonoBehaviour
     {
@@ -60,8 +67,8 @@ namespace DCL.VoiceChat.Proximity
 
             UpdateSpatialSettings();
 
-            fps = 1f / Time.unscaledDeltaTime;
-            smoothFps = Mathf.Lerp(smoothFps, fps, Time.unscaledDeltaTime * 4f);
+            fps = 1f / UnityEngine.Time.unscaledDeltaTime;
+            smoothFps = Mathf.Lerp(smoothFps, fps, UnityEngine.Time.unscaledDeltaTime * 4f);
         }
 
         private void SyncSourceCount()
@@ -86,6 +93,8 @@ namespace DCL.VoiceChat.Proximity
             source.SetSpatialSettings(enableSpatialization, ildStrength, smoothPanning);
             source.transform.position = transform.position + Random.insideUnitSphere * spreadRadius;
             source.SetSpatialAngles(Random.Range(-Mathf.PI, Mathf.PI), Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
+
+            InjectFakeAudioStream(source);
 
             if (playTestTone && testClip != null)
             {
@@ -170,6 +179,33 @@ namespace DCL.VoiceChat.Proximity
             activeSources.Clear();
             mainThreadRecorder.Dispose();
             gcAllocRecorder.Dispose();
+        }
+
+        /// <summary>
+        /// Injects a fake <c>AudioStream</c> that passes <c>stream.Resource.Has</c> check
+        /// but early-returns in <c>ReadAudio</c> (disposed internal), allowing
+        /// <c>ApplySpatialPanning</c> to execute on the AudioThread without FFI.
+        /// </summary>
+        private static void InjectFakeAudioStream(LivekitAudioSource source)
+        {
+            var fakeInternal = (AudioStreamInternal)FormatterServices.GetUninitializedObject(typeof(AudioStreamInternal));
+            typeof(AudioStreamInternal)
+               .GetField("disposed", BindingFlags.NonPublic | BindingFlags.Instance)!
+               .SetValue(fakeInternal, true);
+
+            var fakeStream = (AudioStream)FormatterServices.GetUninitializedObject(typeof(AudioStream));
+            typeof(AudioStream)
+               .GetField("currentInternal", BindingFlags.NonPublic | BindingFlags.Instance)!
+               .SetValue(fakeStream, fakeInternal);
+            typeof(AudioStream)
+               .GetField("currentChannels", BindingFlags.NonPublic | BindingFlags.Instance)!
+               .SetValue(fakeStream, (uint)2);
+            typeof(AudioStream)
+               .GetField("currentSampleRate", BindingFlags.NonPublic | BindingFlags.Instance)!
+               .SetValue(fakeStream, (uint)AudioSettings.outputSampleRate);
+
+            var owned = new Owned<AudioStream>(fakeStream);
+            source.Construct(owned.Downgrade());
         }
 
         private static AudioClip CreateStereoTestClip()

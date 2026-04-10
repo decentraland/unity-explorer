@@ -3,7 +3,6 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.VoiceChat.Proximity;
 using DCL.VoiceChat.Proximity.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
@@ -14,7 +13,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Tests
+namespace DCL.VoiceChat.Proximity.Tests
 {
     /// <summary>
     /// Documents the Proximity Audio Position System behavior:

@@ -1,9 +1,8 @@
 using DCL.Utilities;
-using DCL.VoiceChat.Proximity;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace DCL.VoiceChat.Tests
+namespace DCL.VoiceChat.Proximity.Tests
 {
     /// <summary>
     /// Documents the Proximity Voice Chat state machine behavior.
