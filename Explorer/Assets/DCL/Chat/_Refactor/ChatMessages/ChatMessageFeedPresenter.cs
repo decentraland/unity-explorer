@@ -506,9 +506,13 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked += reactionInteraction.OnReactionButtonClicked;
-            view.OnReactionPillClicked += reactionInteraction.OnReactionPillClicked;
-            view.ReactionHoverEnter += reactionInteraction.OnReactionHoverEnter;
-            view.ReactionHoverExit += reactionInteraction.OnReactionHoverExit;
+
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillClicked>(
+                e => reactionInteraction.OnReactionPillClicked(e.MessageId, e.EmojiIndex)));
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillHoverEnter>(
+                e => reactionInteraction.OnReactionHoverEnter(e.EmojiIndex, e.PillRect, e.MessageId)));
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillHoverExit>(
+                e => reactionInteraction.OnReactionHoverExit(e.EmojiIndex)));
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -533,9 +537,6 @@ namespace DCL.Chat.ChatMessages
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
             view.OnReactionButtonClicked -= reactionInteraction.OnReactionButtonClicked;
-            view.OnReactionPillClicked -= reactionInteraction.OnReactionPillClicked;
-            view.ReactionHoverEnter -= reactionInteraction.OnReactionHoverEnter;
-            view.ReactionHoverExit -= reactionInteraction.OnReactionHoverExit;
             reactionInteraction.Deactivate();
 
             scope.Dispose();

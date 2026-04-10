@@ -3,6 +3,7 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.Utilities;
 using DG.Tweening;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -64,9 +65,9 @@ namespace DCL.Chat.ChatMessages
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
         public event Action<string, ChatEntryView>? OnReactionButtonClicked;
-        public event Action<string, int>? OnReactionPillClicked;
-        public event Action<int, RectTransform, string>? ReactionHoverEnter;
-        public event Action<int>? ReactionHoverExit;
+
+        [field: Header("Event Bus")]
+        [field: SerializeField] internal ViewEventBus reactionEventBus { get; private set; }
 
         private Sequence? _fadeSequenceTween;
 
@@ -261,12 +262,7 @@ namespace DCL.Chat.ChatMessages
                 chatEntry.OnRevertRequested += HandleRevertRequest;
 
                 if (chatEntry.messageReactionsView != null)
-                {
-                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig);
-                    chatEntry.messageReactionsView.ReactionClicked = HandleReactionPillClicked;
-                    chatEntry.messageReactionsView.ReactionHoverEnter = HandleReactionHoverEnter;
-                    chatEntry.messageReactionsView.ReactionHoverExit = HandleReactionHoverExit;
-                }
+                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig, reactionEventBus);
 
                 if (chatEntry.messageBubbleElement.reactionButton != null)
                 {
@@ -304,21 +300,6 @@ namespace DCL.Chat.ChatMessages
         private void HandleRevertRequest(string messageId)
         {
             OnRevertMessageRequested?.Invoke(messageId);
-        }
-
-        private void HandleReactionPillClicked(string messageId, int emojiIndex)
-        {
-            OnReactionPillClicked?.Invoke(messageId, emojiIndex);
-        }
-
-        private void HandleReactionHoverEnter(int emojiIndex, RectTransform pillRect, string messageId)
-        {
-            ReactionHoverEnter?.Invoke(emojiIndex, pillRect, messageId);
-        }
-
-        private void HandleReactionHoverExit(int emojiIndex)
-        {
-            ReactionHoverExit?.Invoke(emojiIndex);
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

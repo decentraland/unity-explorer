@@ -2,7 +2,6 @@ using System;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Presenters;
 using DCL.Chat.ChatServices;
-using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using UnityEngine;
 

@@ -1,5 +1,5 @@
-using System;
 using DG.Tweening;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,27 +21,27 @@ namespace DCL.Chat.ChatMessages
         private float animDuration = 0.1f;
         private int emojiIndex;
         private bool hiding;
-
-        public event Action<int>? Clicked;
-        public event Action<int, RectTransform>? HoverEnter;
-        public event Action<int>? HoverExit;
+        private ViewEventBus eventBus;
+        private string messageId;
 
         public int EmojiIndex => emojiIndex;
 
-        public void Configure(float hoverScale, float hoverAnimDuration)
+        public void Configure(float hoverScale, float hoverAnimDuration, ViewEventBus eventBus)
         {
             hoveredScale = new Vector3(hoverScale, hoverScale, hoverScale);
             animDuration = hoverAnimDuration;
+            this.eventBus = eventBus;
         }
 
         private void Awake()
         {
-            button.onClick.AddListener(() => Clicked?.Invoke(emojiIndex));
+            button.onClick.AddListener(OnButtonClicked);
         }
 
-        public void SetData(int emojiIndex, int count, bool isOwnReaction, Rect uvRect, Texture atlas)
+        public void SetData(int emojiIndex, int count, bool isOwnReaction, Rect uvRect, Texture atlas, string messageId)
         {
             this.emojiIndex = emojiIndex;
+            this.messageId = messageId;
 
             emojiImage.texture = atlas;
             emojiImage.uvRect = uvRect;
@@ -50,10 +50,15 @@ namespace DCL.Chat.ChatMessages
             gameObject.SetActive(true);
         }
 
+        private void OnButtonClicked()
+        {
+            eventBus.Publish(new ReactionPillEvents.ReactionPillClicked(messageId, emojiIndex));
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             contentContainer.DOScale(hoveredScale, animDuration).SetEase(Ease.OutQuad);
-            HoverEnter?.Invoke(emojiIndex, (RectTransform)transform);
+            eventBus.Publish(new ReactionPillEvents.ReactionPillHoverEnter(messageId, emojiIndex, (RectTransform)transform));
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -61,7 +66,7 @@ namespace DCL.Chat.ChatMessages
             if (hiding) return;
 
             contentContainer.DOScale(Vector3.one, animDuration).SetEase(Ease.OutQuad);
-            HoverExit?.Invoke(emojiIndex);
+            eventBus.Publish(new ReactionPillEvents.ReactionPillHoverExit(emojiIndex));
         }
 
         public void Hide()

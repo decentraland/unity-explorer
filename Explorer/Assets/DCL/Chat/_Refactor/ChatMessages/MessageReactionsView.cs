@@ -1,6 +1,6 @@
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
-using System;
+using MVC;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +23,7 @@ namespace DCL.Chat.ChatMessages
         private readonly List<RectTransform> activeRows = new ();
         private readonly List<RectTransform> rowPool = new ();
 
+        private ViewEventBus eventBus;
         private ChatReactionsAtlasConfig? atlasConfig;
         private string? ownWalletAddress;
         private float hoverScale = 1.2f;
@@ -31,17 +32,14 @@ namespace DCL.Chat.ChatMessages
 
         public float CurrentHeight { get; private set; }
 
-        public Action<string, int>? ReactionClicked;
-        public Action<int, RectTransform, string>? ReactionHoverEnter;
-        public Action<int>? ReactionHoverExit;
-
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
-            ChatReactionsMessageConfig messageConfig)
+            ChatReactionsMessageConfig messageConfig, ViewEventBus eventBus)
         {
             if (this.atlasConfig != null) return;
 
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
+            this.eventBus = eventBus;
             hoverScale = messageConfig.HoverScale;
             hoverAnimDuration = messageConfig.HoverAnimDuration;
         }
@@ -73,23 +71,6 @@ namespace DCL.Chat.ChatMessages
             CurrentMessageId = null;
         }
 
-        private void OnItemClicked(int emojiIndex)
-        {
-            if (CurrentMessageId != null)
-                ReactionClicked?.Invoke(CurrentMessageId, emojiIndex);
-        }
-
-        private void OnItemHoverEnter(int emojiIndex, RectTransform pillRect)
-        {
-            if (CurrentMessageId != null)
-                ReactionHoverEnter?.Invoke(emojiIndex, pillRect, CurrentMessageId);
-        }
-
-        private void OnItemHoverExit(int emojiIndex)
-        {
-            ReactionHoverExit?.Invoke(emojiIndex);
-        }
-
         private void PopulateItems(int totalCount, ReactionSet reactions)
         {
             int rowCount = Mathf.CeilToInt(totalCount / (float)MAX_PER_ROW);
@@ -106,35 +87,16 @@ namespace DCL.Chat.ChatMessages
                 RectTransform targetRow = activeRows[rowIndex];
 
                 ReactionCountItemView item = GetOrCreateItem(targetRow);
-                item.Configure(hoverScale, hoverAnimDuration);
+                item.Configure(hoverScale, hoverAnimDuration, eventBus);
                 item.transform.SetSiblingIndex(indexInRow);
 
                 bool isOwn = !string.IsNullOrEmpty(ownWalletAddress)
                              && reactions.HasReacted(emojiIndex, ownWalletAddress);
 
                 Rect uvRect = atlasConfig!.GetUVRect(emojiIndex);
-                int displayCount = count;
-                item.SetData(emojiIndex, displayCount, isOwn, uvRect, atlasConfig.Atlas);
-                SubscribeItemEvents(item);
+                item.SetData(emojiIndex, count, isOwn, uvRect, atlasConfig.Atlas, CurrentMessageId!);
                 activeItems.Add(item);
             }
-        }
-
-        private void SubscribeItemEvents(ReactionCountItemView item)
-        {
-            item.Clicked -= OnItemClicked;
-            item.Clicked += OnItemClicked;
-            item.HoverEnter -= OnItemHoverEnter;
-            item.HoverEnter += OnItemHoverEnter;
-            item.HoverExit -= OnItemHoverExit;
-            item.HoverExit += OnItemHoverExit;
-        }
-
-        private void UnsubscribeItemEvents(ReactionCountItemView item)
-        {
-            item.Clicked -= OnItemClicked;
-            item.HoverEnter -= OnItemHoverEnter;
-            item.HoverExit -= OnItemHoverExit;
         }
 
         private void LayoutRows()
@@ -180,22 +142,12 @@ namespace DCL.Chat.ChatMessages
         {
             for (int i = 0; i < activeItems.Count; i++)
             {
-                UnsubscribeItemEvents(activeItems[i]);
                 activeItems[i].Hide();
                 activeItems[i].transform.SetParent(transform, false);
                 pool.Add(activeItems[i]);
             }
 
             activeItems.Clear();
-        }
-
-        private void OnDestroy()
-        {
-            for (int i = 0; i < activeItems.Count; i++)
-                UnsubscribeItemEvents(activeItems[i]);
-
-            for (int i = 0; i < pool.Count; i++)
-                UnsubscribeItemEvents(pool[i]);
         }
 
         private RectTransform AcquireRow()
