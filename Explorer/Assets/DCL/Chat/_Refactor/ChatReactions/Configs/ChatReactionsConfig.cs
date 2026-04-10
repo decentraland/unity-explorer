@@ -41,7 +41,7 @@ namespace DCL.Chat.ChatReactions.Configs
         public int SafeTotalTiles => Atlas != null ? Mathf.Max(1, Atlas.TotalTiles) : 1;
 
         [field: Header("MESSAGE REACTIONS")]
-        [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; private set; }
+        [field: SerializeField] public ChatReactionsMessageConfig MessageReactions { get; internal set; }
 
         [Header("DEBUG — STREAMING")]
         [Note("Master toggle — enables debug toggles and live stats. Disable in production.")]

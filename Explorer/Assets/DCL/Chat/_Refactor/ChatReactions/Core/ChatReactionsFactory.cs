@@ -89,12 +89,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(streamEmitter);
 
             var remoteTarget = new SituationalRemoteTarget(
-                () => reactionsConfig.MessageReactions.ReceiveStaggerInterval,
-                () => reactionsConfig.MaxReceiveQueueDepth,
-                () => reactionsConfig.DynamicStaggerRampStart,
-                () => reactionsConfig.MinStaggerInterval,
-                () => reactionsConfig.MaxRemoteUIReactionsPerSec,
-                worldReactor, uiSimulation);
+                reactionsConfig, worldReactor, uiSimulation);
 
             var simulationLoop = new SituationalSimulationLoop(
                 uiSimulation, worldSimulation, facade.NetworkBroadcaster, remoteTarget, worldReactor,

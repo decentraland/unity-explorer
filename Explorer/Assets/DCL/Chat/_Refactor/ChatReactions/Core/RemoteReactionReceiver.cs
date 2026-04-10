@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Networking;
 using UnityEngine;
 
@@ -15,31 +16,22 @@ namespace DCL.Chat.ChatReactions.Core
 
         private readonly Queue<ReactionReceivedArgs> queue = new (MAX_EXPAND);
         private readonly Action<ReactionReceivedArgs> onProcessed;
-        private readonly Func<float> getBaseStagger;
-        private readonly Func<int> getMaxQueueDepth;
-        private readonly Func<int> getRampStart;
-        private readonly Func<float> getMinStagger;
+        private readonly ChatReactionsConfig config;
         private float staggerTimer;
 
         public int QueueCount => queue.Count;
 
         public RemoteReactionReceiver(
-            Func<float> getBaseStagger,
-            Func<int> getMaxQueueDepth,
-            Func<int> getRampStart,
-            Func<float> getMinStagger,
+            ChatReactionsConfig config,
             Action<ReactionReceivedArgs> onProcessed)
         {
-            this.getBaseStagger = getBaseStagger;
-            this.getMaxQueueDepth = getMaxQueueDepth;
-            this.getRampStart = getRampStart;
-            this.getMinStagger = getMinStagger;
+            this.config = config;
             this.onProcessed = onProcessed;
         }
 
         public void Enqueue(ReactionReceivedArgs args)
         {
-            int maxDepth = getMaxQueueDepth();
+            int maxDepth = config.MaxReceiveQueueDepth;
             int count = Mathf.Clamp(args.Count, 1, MAX_EXPAND);
 
             for (int i = 0; i < count; i++)
@@ -82,14 +74,14 @@ namespace DCL.Chat.ChatReactions.Core
 
         private float ComputeEffectiveStagger()
         {
-            float baseStagger = getBaseStagger();
-            int maxDepth = getMaxQueueDepth();
-            int rampStart = getRampStart();
+            float baseStagger = config.MessageReactions.ReceiveStaggerInterval;
+            int maxDepth = config.MaxReceiveQueueDepth;
+            int rampStart = config.DynamicStaggerRampStart;
 
             if (maxDepth <= 0 || queue.Count <= rampStart)
                 return baseStagger;
 
-            float minStagger = getMinStagger();
+            float minStagger = config.MinStaggerInterval;
 
             if (queue.Count >= maxDepth)
                 return minStagger;

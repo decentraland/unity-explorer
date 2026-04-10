@@ -1,4 +1,5 @@
 using System;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
@@ -11,11 +12,11 @@ namespace DCL.Chat.ChatReactions.Core
     /// </summary>
     internal sealed class SituationalRemoteTarget : IRemoteReactionTarget
     {
+        private readonly ChatReactionsConfig config;
         private readonly RemoteReactionReceiver remoteReceiver;
         private readonly LocalPlayerWorldReactor worldReactor;
         private readonly ChatReactionUISimulation uiSimulation;
         private readonly TokenBucketRateLimiter remoteUIBudget;
-        private readonly Func<float> getRemoteUIBudgetRate;
 
         /// <summary>
         /// When false, incoming remote reactions are not shown in the UI lane.
@@ -28,24 +29,17 @@ namespace DCL.Chat.ChatReactions.Core
         public event Action<ReactionReceivedArgs>? RemoteReactionProcessed;
 
         public SituationalRemoteTarget(
-            Func<float> getBaseStagger,
-            Func<int> getMaxQueueDepth,
-            Func<int> getRampStart,
-            Func<float> getMinStagger,
-            Func<float> getRemoteUIBudgetRate,
+            ChatReactionsConfig config,
             LocalPlayerWorldReactor worldReactor,
             ChatReactionUISimulation uiSimulation)
         {
+            this.config = config;
             this.worldReactor = worldReactor;
             this.uiSimulation = uiSimulation;
-            this.getRemoteUIBudgetRate = getRemoteUIBudgetRate;
 
-            float initialRate = getRemoteUIBudgetRate();
-            remoteUIBudget = new TokenBucketRateLimiter(initialRate);
+            remoteUIBudget = new TokenBucketRateLimiter(config.MaxRemoteUIReactionsPerSec);
 
-            remoteReceiver = new RemoteReactionReceiver(
-                getBaseStagger, getMaxQueueDepth, getRampStart, getMinStagger,
-                ProcessRemoteReaction);
+            remoteReceiver = new RemoteReactionReceiver(config, ProcessRemoteReaction);
         }
 
         public void HandleRemoteReaction(ReactionReceivedArgs args) =>
@@ -53,7 +47,7 @@ namespace DCL.Chat.ChatReactions.Core
 
         public void Tick(float dt)
         {
-            remoteUIBudget.Refill(dt, getRemoteUIBudgetRate());
+            remoteUIBudget.Refill(dt, config.MaxRemoteUIReactionsPerSec);
             remoteReceiver.Tick(dt);
         }
 
@@ -61,7 +55,7 @@ namespace DCL.Chat.ChatReactions.Core
         {
             worldReactor.TriggerRemoteBurst(args.WalletId, args.EmojiIndex, args.Count);
 
-            bool budgetUnlimited = getRemoteUIBudgetRate() <= 0f;
+            bool budgetUnlimited = config.MaxRemoteUIReactionsPerSec <= 0f;
 
             if (ShowRemoteUIReactions && (budgetUnlimited || remoteUIBudget.TryConsume()))
                 uiSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);

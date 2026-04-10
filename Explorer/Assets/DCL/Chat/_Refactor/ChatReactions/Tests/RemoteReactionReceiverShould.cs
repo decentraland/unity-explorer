@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Networking;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Tests
 {
@@ -9,27 +11,35 @@ namespace DCL.Chat.ChatReactions.Tests
     public class RemoteReactionReceiverShould
     {
         private List<ReactionReceivedArgs> processed;
-        private RemoteReactionReceiver receiver;
+        private ChatReactionsConfig config;
+        private ChatReactionsMessageConfig messageConfig;
 
         [SetUp]
         public void SetUp()
         {
             processed = new List<ReactionReceivedArgs>();
+            messageConfig = ScriptableObject.CreateInstance<ChatReactionsMessageConfig>();
+            config = ScriptableObject.CreateInstance<ChatReactionsConfig>();
+            config.MessageReactions = messageConfig;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(messageConfig);
+            Object.DestroyImmediate(config);
         }
 
         [Test]
         public void DrainAllImmediatelyWhenStaggerDisabled()
         {
-            // Arrange
-            receiver = new RemoteReactionReceiver(() => 0f, () => 0, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0f);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
 
-            // Act
             receiver.Tick(0.016f);
 
-            // Assert
             Assert.That(processed.Count, Is.EqualTo(2));
             Assert.That(processed[0].EmojiIndex, Is.EqualTo(1));
             Assert.That(processed[1].EmojiIndex, Is.EqualTo(2));
@@ -39,14 +49,12 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void StaggerDrainOnePerInterval()
         {
-            // Arrange
-            receiver = new RemoteReactionReceiver(() => 0.1f, () => 0, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0.1f);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
             receiver.Enqueue(MakeArgs("wallet_c", emojiIndex: 3, count: 1));
 
-            // Act & Assert — stepped ticks to verify one-per-interval drain
             // First tick (0.05s): timer 0 - 0.05 = -0.05 <= 0 → drain #1, timer becomes 0.05
             receiver.Tick(0.05f);
             Assert.That(processed.Count, Is.EqualTo(1));
@@ -64,14 +72,11 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ClampCountToMaxExpand()
         {
-            // Arrange
-            receiver = new RemoteReactionReceiver(() => 0f, () => 0, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0f);
 
-            // Act
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 7, count: 50));
             receiver.Tick(0.016f);
 
-            // Assert
             Assert.That(processed.Count, Is.EqualTo(20));
 
             for (int i = 0; i < processed.Count; i++)
@@ -85,17 +90,14 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void ResetStaggerTimerWhenQueueEmpties()
         {
-            // Arrange
-            receiver = new RemoteReactionReceiver(() => 0.1f, () => 0, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0.1f);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Tick(0.2f);
 
-            // Act
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
             receiver.Tick(0.001f);
 
-            // Assert
             Assert.That(processed.Count, Is.EqualTo(2));
         }
 
@@ -103,7 +105,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void DropEntriesWhenQueueExceedsMaxDepth()
         {
             // maxDepth = 3, enqueue 5 items — only first 3 should be queued
-            receiver = new RemoteReactionReceiver(() => 0f, () => 3, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0f, maxQueueDepth: 3);
 
             for (int i = 0; i < 5; i++)
                 receiver.Enqueue(MakeArgs("wallet", emojiIndex: i, count: 1));
@@ -120,7 +122,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void AllowUnlimitedQueueWhenMaxDepthIsZero()
         {
             // maxDepth = 0 means unlimited — all 25 items should be queued (20 from expand clamp)
-            receiver = new RemoteReactionReceiver(() => 0f, () => 0, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0f, maxQueueDepth: 0);
 
             receiver.Enqueue(MakeArgs("wallet", emojiIndex: 1, count: 25));
             receiver.Tick(0.016f);
@@ -132,7 +134,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void CapExpandedCountAtMaxDepth()
         {
             // maxDepth = 5, enqueue count=10 — expansion should stop at depth 5
-            receiver = new RemoteReactionReceiver(() => 0f, () => 5, () => 0, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0f, maxQueueDepth: 5);
 
             receiver.Enqueue(MakeArgs("wallet", emojiIndex: 3, count: 10));
             receiver.Tick(0.016f);
@@ -144,7 +146,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void UseBaseStaggerWhenQueueBelowRampStart()
         {
             // rampStart = 10, maxDepth = 50 — with only 2 items, should use base stagger (0.1)
-            receiver = new RemoteReactionReceiver(() => 0.1f, () => 50, () => 10, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0.1f, maxQueueDepth: 50, rampStart: 10);
 
             receiver.Enqueue(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             receiver.Enqueue(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
@@ -163,7 +165,7 @@ namespace DCL.Chat.ChatReactions.Tests
         {
             // minStagger = 0, rampStart = 2, maxDepth = 5
             // Fill queue to maxDepth → stagger should be 0 (drain all immediately)
-            receiver = new RemoteReactionReceiver(() => 0.1f, () => 5, () => 2, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0.1f, maxQueueDepth: 5, rampStart: 2, minStagger: 0f);
 
             for (int i = 0; i < 5; i++)
                 receiver.Enqueue(MakeArgs("wallet", emojiIndex: i, count: 1));
@@ -177,7 +179,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void FallBackToBaseStaggerWhenRampStartExceedsMaxDepth()
         {
             // rampStart = 100 > maxDepth = 50 — ramp is effectively disabled, use base stagger
-            receiver = new RemoteReactionReceiver(() => 0.1f, () => 50, () => 100, () => 0f, processed.Add);
+            var receiver = CreateReceiver(baseStagger: 0.1f, maxQueueDepth: 50, rampStart: 100);
 
             for (int i = 0; i < 50; i++)
                 receiver.Enqueue(MakeArgs("wallet", emojiIndex: i, count: 1));
@@ -185,6 +187,19 @@ namespace DCL.Chat.ChatReactions.Tests
             // With base stagger 0.1, a single 0.05 tick should drain only 1
             receiver.Tick(0.05f);
             Assert.That(processed.Count, Is.EqualTo(1), "Should use base stagger when rampStart >= maxDepth");
+        }
+
+        private RemoteReactionReceiver CreateReceiver(
+            float baseStagger = 0f,
+            int maxQueueDepth = 0,
+            int rampStart = 0,
+            float minStagger = 0f)
+        {
+            config.MaxReceiveQueueDepth = maxQueueDepth;
+            config.DynamicStaggerRampStart = rampStart;
+            config.MinStaggerInterval = minStagger;
+            messageConfig.ReceiveStaggerInterval = baseStagger;
+            return new RemoteReactionReceiver(config, processed.Add);
         }
 
         private static ReactionReceivedArgs MakeArgs(string wallet, int emojiIndex, int count) =>
