@@ -89,7 +89,7 @@ namespace DCL.AvatarRendering.Emotes
             in AvatarShapeComponent avatarShapeComponent,
             in GlideState glideState)
         {
-            if (inputModifier.DisableEmote || !avatarShapeComponent.IsVisible || glideState.Value != GlideStateValue.PROP_CLOSED) return;
+            if (inputModifier.DisableEmote /*|| !avatarShapeComponent.IsVisible*/ || glideState.Value != GlideStateValue.PROP_CLOSED) return;
 
             IReadOnlyList<URN> emotes = profile.Avatar.Emotes;
             if (emoteIndex < 0 || emoteIndex >= emotes.Count) return;
