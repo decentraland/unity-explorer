@@ -185,7 +185,7 @@ namespace DCL.Chat
 
         private void OnUIClose(InputAction.CallbackContext obj)
         {
-            if (chatStateMachine.IsMinimized) return;
+            if (chatStateMachine.IsMinimized || chatStateMachine.IsHidden) return;
 
             chatStateMachine.SetVisibility(true);
         }
