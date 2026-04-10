@@ -17,8 +17,8 @@ namespace DCL.Chat.ChatMessages
 
         private ReactionTooltipPositioner? positioner;
 
-        public RectTransform? ArrowTransform => arrowTransform;
-        public RectTransform? CenteringReference => centeringReference;
+        public RectTransform ArrowTransform => arrowTransform;
+        public RectTransform CenteringReference => centeringReference;
 
         public void Initialize(ReactionTooltipPositioner positioner)
         {

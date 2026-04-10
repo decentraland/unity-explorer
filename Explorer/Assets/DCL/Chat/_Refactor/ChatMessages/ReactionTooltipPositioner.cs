@@ -11,8 +11,8 @@ namespace DCL.Chat.ChatMessages
     public sealed class ReactionTooltipPositioner
     {
         private readonly RectTransform tooltipRect;
-        private readonly RectTransform? arrowTransform;
-        private readonly RectTransform? centeringReference;
+        private readonly RectTransform arrowTransform;
+        private readonly RectTransform centeringReference;
         private readonly Vector2 offset;
         private readonly float arrowMinX;
         private readonly float arrowMaxX;
@@ -21,8 +21,8 @@ namespace DCL.Chat.ChatMessages
 
         public ReactionTooltipPositioner(
             RectTransform tooltipRect,
-            RectTransform? arrowTransform,
-            RectTransform? centeringReference,
+            RectTransform arrowTransform,
+            RectTransform centeringReference,
             TooltipPositioningConfig config)
         {
             this.tooltipRect = tooltipRect;
@@ -55,17 +55,12 @@ namespace DCL.Chat.ChatMessages
 
         private float GetTooltipCenterX(RectTransform tooltipParent)
         {
-            if (centeringReference == null)
-                return tooltipParent.rect.center.x;
-
             Vector3 refCenter = centeringReference.TransformPoint(centeringReference.rect.center);
             return tooltipParent.InverseTransformPoint(refCenter).x;
         }
 
         private void PositionArrowAtPill(RectTransform pillTransform)
         {
-            if (arrowTransform == null) return;
-
             // pill.position gives the pivot world X. Since reaction pills have a centered
             // pivot (0.5), this matches the visual center without needing GetWorldCorners.
             Vector3 pillCenter = pillTransform.position;
