@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
 
@@ -28,7 +27,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
         private readonly List<string> expiredKeys = new ();
 
-        public YouTubeUrlResolver() : this(new YoutubeClientAdapter(), () => Time.realtimeSinceStartup) { }
+        public YouTubeUrlResolver() : this(new YoutubeClientAdapter(), () => UnityEngine.Time.realtimeSinceStartup) { }
 
         internal YouTubeUrlResolver(IYouTubeVideoClient client, Func<float> getRealtimeSinceStartup)
         {
