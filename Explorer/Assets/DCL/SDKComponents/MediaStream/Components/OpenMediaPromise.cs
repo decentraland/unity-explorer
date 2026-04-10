@@ -61,13 +61,12 @@ namespace DCL.SDKComponents.MediaStream
         {
             status = Status.Consumed;
 
-            // Compare against the original address (pre-resolution) since
-            // component.MediaAddress still holds the original URL
-            MediaAddress compareAddress = originalAddress.IsEmpty ? this.mediaAddress : originalAddress;
-
-            if (compareAddress != address)
+            // mediaAddress may be rewritten to a resolved direct URL (see UrlReachabilityResolveAsync),
+            // so compare against originalAddress which always holds the pre-resolution value
+            // that matches what the component stores in its MediaAddress field
+            if (originalAddress != address)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{compareAddress}>");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{originalAddress}>");
                 return false;
             }
 
