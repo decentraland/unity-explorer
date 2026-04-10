@@ -18,7 +18,6 @@ namespace DCL.Chat.ChatReactions.Configs
                      menuName = "DCL/Chat/Reactions/Atlas Config")]
     public class ChatReactionsAtlasConfig : ScriptableObject
     {
-        [field: Note("The emoji sprite sheet texture. Must have Read/Write enabled in import settings.")]
         [field: SerializeField] public Texture2D Atlas { get; private set; }
 
         [field: Note("Side length of one emoji tile in the atlas (pixels). " +

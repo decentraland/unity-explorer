@@ -25,16 +25,15 @@ namespace DCL.Chat.ChatMessages
 
         private ChatReactionsAtlasConfig? atlasConfig;
         private string? ownWalletAddress;
-        private ChatReactionsMessageConfig? messageConfig;
         private float hoverScale = 1.2f;
         private float hoverAnimDuration = 0.1f;
         public string? CurrentMessageId { get; set; }
 
         public float CurrentHeight { get; private set; }
 
-        public event Action<string, int>? ReactionClicked;
-        public event Action<int, RectTransform, string>? ReactionHoverEnter;
-        public event Action<int>? ReactionHoverExit;
+        public Action<string, int>? ReactionClicked;
+        public Action<int, RectTransform, string>? ReactionHoverEnter;
+        public Action<int>? ReactionHoverExit;
 
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
             ChatReactionsMessageConfig messageConfig)
@@ -43,7 +42,6 @@ namespace DCL.Chat.ChatMessages
 
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
-            this.messageConfig = messageConfig;
             hoverScale = messageConfig.HoverScale;
             hoverAnimDuration = messageConfig.HoverAnimDuration;
         }

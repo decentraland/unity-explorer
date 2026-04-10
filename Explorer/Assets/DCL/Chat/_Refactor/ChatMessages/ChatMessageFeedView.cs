@@ -263,12 +263,9 @@ namespace DCL.Chat.ChatMessages
                 if (chatEntry.messageReactionsView != null)
                 {
                     chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig);
-                    chatEntry.messageReactionsView.ReactionClicked -= HandleReactionPillClicked;
-                    chatEntry.messageReactionsView.ReactionClicked += HandleReactionPillClicked;
-                    chatEntry.messageReactionsView.ReactionHoverEnter -= HandleReactionHoverEnter;
-                    chatEntry.messageReactionsView.ReactionHoverEnter += HandleReactionHoverEnter;
-                    chatEntry.messageReactionsView.ReactionHoverExit -= HandleReactionHoverExit;
-                    chatEntry.messageReactionsView.ReactionHoverExit += HandleReactionHoverExit;
+                    chatEntry.messageReactionsView.ReactionClicked = HandleReactionPillClicked;
+                    chatEntry.messageReactionsView.ReactionHoverEnter = HandleReactionHoverEnter;
+                    chatEntry.messageReactionsView.ReactionHoverExit = HandleReactionHoverExit;
                 }
 
                 if (chatEntry.messageBubbleElement.reactionButton != null)
