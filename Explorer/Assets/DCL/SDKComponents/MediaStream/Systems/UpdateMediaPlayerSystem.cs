@@ -123,13 +123,12 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Src!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
+            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             component.UpdateState();
-
-            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             FadeVolume(ref component, sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME, dt);
 
