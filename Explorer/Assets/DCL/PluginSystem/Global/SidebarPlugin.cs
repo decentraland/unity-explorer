@@ -33,6 +33,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -71,6 +72,8 @@ namespace DCL.PluginSystem.Global
         private ControlsPanelController? controlsPanelController;
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
+
+        private CancellationTokenSource controlsShortcutCts;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -126,6 +129,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            DCLInput.Instance.Shortcuts.Controls.performed -= OnControlsShortcutPerformed;
+            controlsShortcutCts.SafeCancelAndDispose();
+
             sidebarController?.Dispose();
             notificationsPanelController?.Dispose();
             profileButtonPresenter?.Dispose();
@@ -182,6 +188,8 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(sidebarController);
+
+            DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
         }
 
         [Serializable]
@@ -192,6 +200,19 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
             [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
+        }
+
+        private void OnControlsShortcutPerformed(UnityEngine.InputSystem.InputAction.CallbackContext _)
+        {
+            if (controlsPanelController == null) return;
+
+            if (controlsPanelController.State == ControllerState.ViewHidden)
+            {
+                controlsShortcutCts = controlsShortcutCts.SafeRestart();
+                mvcManager.ShowAsync(ControlsPanelController.IssueCommand(), controlsShortcutCts.Token).Forget();
+            }
+            else
+                controlsShortcutCts.SafeCancelAndDispose();
         }
     }
 }

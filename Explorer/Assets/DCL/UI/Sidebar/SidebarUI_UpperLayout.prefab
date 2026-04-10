@@ -1145,6 +1145,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SidebarNotificationsButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4308766893799259907, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5558520591629475657, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1225,6 +1229,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7452515591013676434, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 86.76
+      objectReference: {fileID: 0}
+    - target: {fileID: 7452515591013676434, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5623652196741510038, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
     - {fileID: 2188360042018750645, guid: 433300ea16b5d9b4e82416af840c6cb2, type: 3}
@@ -1249,9 +1261,25 @@ PrefabInstance:
       propertyPath: m_Name
       value: SidebarSettingsButton
       objectReference: {fileID: 0}
+    - target: {fileID: 1502553203837451425, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4316276934457610618, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
       propertyPath: m_SortingLayer
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845612621206035589, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 98
+      objectReference: {fileID: 0}
+    - target: {fileID: 5223423455817053744, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 80.26
+      objectReference: {fileID: 0}
+    - target: {fileID: 5223423455817053744, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
       objectReference: {fileID: 0}
     - target: {fileID: 7075754814075952363, guid: 00b8806b687987f4a9eefa27c0bcb499, type: 3}
       propertyPath: m_Pivot.x
@@ -1447,6 +1475,18 @@ PrefabInstance:
       propertyPath: <OpenProfileButton>k__BackingField
       value: 
       objectReference: {fileID: 4548800795641847927}
+    - target: {fileID: 6759737177492826192, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 44.24
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759737177492826192, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 6877230238186844208, guid: 66db9cdbc60ca264aaa303a648b69fd5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1506,11 +1546,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 71.82
+      value: 72.04
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16.95
+      value: 16.75
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1843,6 +1883,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3204717146880721576, guid: 4c5c23cdd0ed6794ba051b7fabca1741, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 115.11
+      objectReference: {fileID: 0}
+    - target: {fileID: 3204717146880721576, guid: 4c5c23cdd0ed6794ba051b7fabca1741, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
     - target: {fileID: 6909187795622307298, guid: 4c5c23cdd0ed6794ba051b7fabca1741, type: 3}
       propertyPath: m_SortingLayer
       value: 0
@@ -1850,6 +1898,10 @@ PrefabInstance:
     - target: {fileID: 7927154498836805825, guid: 4c5c23cdd0ed6794ba051b7fabca1741, type: 3}
       propertyPath: m_Name
       value: SidebarCommunitiesButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 8132945247666554937, guid: 4c5c23cdd0ed6794ba051b7fabca1741, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1871,6 +1923,10 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 253649840078938354, guid: 98c20dddbb0c94f4a8806f785a58ac14, type: 3}
       propertyPath: m_SortingLayer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3222745558693743913, guid: 98c20dddbb0c94f4a8806f785a58ac14, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3631468766723571153, guid: 98c20dddbb0c94f4a8806f785a58ac14, type: 3}
@@ -1957,6 +2013,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8078905613907167160, guid: 98c20dddbb0c94f4a8806f785a58ac14, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 31.11
+      objectReference: {fileID: 0}
+    - target: {fileID: 8078905613907167160, guid: 98c20dddbb0c94f4a8806f785a58ac14, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1985,7 +2049,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 556587912230755051, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 85
+      value: 83
       objectReference: {fileID: 0}
     - target: {fileID: 791050805523401173, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2534,6 +2598,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SidebarControlsScreenButton
       objectReference: {fileID: 0}
+    - target: {fileID: 3610229566844102426, guid: 6b97a4d649653b843a3ff830ff06de3a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4968060860711831376, guid: 6b97a4d649653b843a3ff830ff06de3a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2613,6 +2681,14 @@ PrefabInstance:
     - target: {fileID: 4968060860711831376, guid: 6b97a4d649653b843a3ff830ff06de3a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979652248129695115, guid: 6b97a4d649653b843a3ff830ff06de3a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -17.349411
+      objectReference: {fileID: 0}
+    - target: {fileID: 7979652248129695115, guid: 6b97a4d649653b843a3ff830ff06de3a, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -16.25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2927,6 +3003,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5604293973387185170}
     m_Modifications:
+    - target: {fileID: 2214849841466912480, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 84.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 2214849841466912480, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
     - target: {fileID: 3815613507301131323, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3005,6 +3089,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3815613507301131323, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4763627439920718961, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6685350046635152521, guid: 5fecb48dcc9a0f9489ff41dd669961d7, type: 3}
@@ -3095,7 +3183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 599045850955965450, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 410
+      value: 721.5
       objectReference: {fileID: 0}
     - target: {fileID: 599045850955965450, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3113,6 +3201,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2458771272474824401, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 113.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2458771272474824401, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
+      objectReference: {fileID: 0}
     - target: {fileID: 6495809430634363955, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
       propertyPath: m_SortingLayer
       value: 0
@@ -3120,6 +3216,14 @@ PrefabInstance:
     - target: {fileID: 6945913133725611192, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
       propertyPath: m_Name
       value: SidebarMarketplaceCreditsButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 6945913133725611192, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9131110543774188608, guid: 31c9f6562a10299468c152ab410c7ca9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
