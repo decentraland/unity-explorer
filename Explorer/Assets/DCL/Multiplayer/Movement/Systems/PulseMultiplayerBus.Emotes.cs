@@ -2,22 +2,70 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
+using DCL.Optimization.Pools;
 using Decentraland.Pulse;
+using Pulse.Transport;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
     public partial class PulseMultiplayerBus
     {
-        /// <summary>
-        ///     Delta doesn't carry the "Emoting" state (and make it to do so seems strange in the authoritative server domain)
-        ///     Simple linear handling of EmoteStarted / EmoteStopped brings with it the following intricacies
-        ///     as Delta is received from the different unreliable channel and is not synced with the reliable one:
-        ///     - Delta (after emote has started) received before `EmoteStarted` - NO RISK - `EmoteStarted` carries a full snapshot or synchronization
-        ///     - Delta (after emote has finished) received before `EmoteStopped` - RISK - Delta will be resolved as `IsEmoting: true` leading to the slight drift while emoting until `EmoteStopped` has been received
-        ///     If during the test we notice a considerable drift, add one more flag to `PlayerAnimationFlags`
-        /// </summary>
         private readonly HashSet<uint> emotingSubjects = new ();
+        private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly MutexSync emoteSync = new ();
+
+        public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
+            new (emoteSync, emoteIntentions);
+
+        public void Send(URN urn, bool loopCyclePassed, uint durationMs = 0, NetworkMovementMessage? playerState = null)
+        {
+            if (loopCyclePassed)
+                return;
+
+            var outgoing = OutgoingMessage.Create(
+                PacketMode.RELIABLE,
+                ClientMessage.MessageOneofCase.EmoteStart);
+
+            outgoing.Message.EmoteStart.EmoteId = urn;
+
+            if (durationMs > 0)
+                outgoing.Message.EmoteStart.DurationMs = durationMs;
+
+            if (playerState.HasValue)
+            {
+                var playerStateInput = new PlayerStateInput();
+                WritePlayerStateInput(playerState.Value, playerStateInput);
+                outgoing.Message.EmoteStart.PlayerState = playerStateInput.State;
+            }
+
+            pulseService.Send(outgoing);
+        }
+
+        public void SendStop()
+        {
+            var outgoing = OutgoingMessage.Create(
+                PacketMode.RELIABLE,
+                ClientMessage.MessageOneofCase.EmoteStop);
+
+            pulseService.Send(outgoing);
+        }
+
+        public void OnPlayerRemoved(string walletId) { }
+
+        public void SaveForRetry(RemoteEmoteIntention intention)
+        {
+            using (emoteSync.GetScope())
+                emoteIntentions.Add(intention);
+        }
+
+        internal void EnqueueEmoteIntention(RemoteEmoteIntention intention)
+        {
+            using (emoteSync.GetScope())
+                emoteIntentions.Add(intention);
+        }
 
         private void HandleEmoteStarted(IncomingMessage message)
         {
@@ -51,12 +99,11 @@ namespace DCL.Multiplayer.Connections.Pulse
                     lastMovementMessages[emoteStarted.SubjectId] = stored;
                 }
 
-                // EmoteStarted is mutually exclusive with other messages so we don't receive two messages with the same Sequence
                 Inbox(movementMessage, walletId);
             }
 
             double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-            emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
+            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
         }
 
         private void HandleEmoteStopped(IncomingMessage message)

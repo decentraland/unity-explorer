@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed, uint durationMs = 0)
+        public void Send(URN emote, bool loopCyclePassed, uint durationMs = 0, NetworkMovementMessage? playerState = null)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");

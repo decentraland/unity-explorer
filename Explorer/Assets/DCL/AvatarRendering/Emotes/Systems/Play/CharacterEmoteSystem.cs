@@ -13,6 +13,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
@@ -77,6 +78,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
+            BroadcastEmoteOnLocalPlayerQuery(World);
+            DiscardEmoteBroadcastOnRemotePlayersQuery(World);
             CancelEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
@@ -277,11 +280,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (!emotePlayer.Play(mainAsset, audioClip, isLooping, emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
-                    // Only propagate the emotes for the local player
-                    else if (World.Has<PlayerComponent>(entity))
+                    else
                     {
                         uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-                        messageBus.Send(emoteId, false, durationMs);
+                        World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs });
                     }
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -294,6 +296,65 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        private void BroadcastEmoteOnLocalPlayer(
+            in Entity entity,
+            ref EmotePendingToBroadcast broadcast,
+            in PlayerMovementNetworkComponent playerMovement,
+            in CharacterAnimationComponent animation,
+            in StunComponent stun,
+            in MovementInputComponent input,
+            in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt)
+        {
+            var playerState = new NetworkMovementMessage
+            {
+                timestamp = UnityEngine.Time.unscaledTime,
+                position = playerMovement.Character.transform.position,
+                velocity = playerMovement.Character.velocity,
+                velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
+                rotationY = playerMovement.Character.transform.eulerAngles.y,
+                isEmoting = true,
+                isInstant = true,
+                isStunned = stun.IsStunned,
+                isSliding = animation.States.IsSliding,
+                isPointingAt = pointAt.IsPointing,
+                pointAtWorldHitPoint = pointAt.WorldHitPoint,
+                headIKYawEnabled = headIK.YawEnabled,
+                headIKPitchEnabled = headIK.PitchEnabled,
+                headYawAndPitch = headIK.GetHeadYawAndPitch(),
+                movementKind = input.Kind,
+                animState = new AnimationStates
+                {
+                    IsSliding = animation.States.IsSliding,
+                    IsGrounded = animation.States.IsGrounded,
+                    JumpCount = animation.States.JumpCount,
+                    IsLongJump = animation.States.IsLongJump,
+                    IsFalling = animation.States.IsFalling,
+                    IsLongFall = animation.States.IsLongFall,
+                    IsStunned = stun.IsStunned,
+                    GlideState = animation.States.GlideState,
+                    SlideBlendValue = animation.States.SlideBlendValue,
+                    MovementBlendValue = animation.States.MovementBlendValue,
+                },
+            };
+
+            URN emoteId = broadcast.EmoteId;
+            uint durationMs = broadcast.DurationMs;
+
+            World.Remove<EmotePendingToBroadcast>(entity);
+
+            messageBus.Send(emoteId, false, durationMs, playerState);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent))]
+        private void DiscardEmoteBroadcastOnRemotePlayers(in Entity entity, ref EmotePendingToBroadcast _)
+        {
+            World.Remove<EmotePendingToBroadcast>(entity);
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
