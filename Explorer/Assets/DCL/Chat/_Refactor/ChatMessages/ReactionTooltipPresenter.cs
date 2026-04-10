@@ -16,11 +16,15 @@ namespace DCL.Chat.ChatMessages
     public class ReactionTooltipPresenter : IDisposable
     {
         private readonly ReactionTooltipView view;
+        private readonly IProfileCache profileCache;
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly ChatReactionsAtlasConfig atlasConfig;
         private readonly ChatReactionsMessageConfig messageConfig;
         private readonly ReactionTooltipTextBuilder textBuilder;
+        private readonly string ownWalletAddress;
         private readonly List<string> lastReactors = new (8);
+        private readonly List<string> displayNames = new (8);
+        private readonly List<string> unresolvedWallets = new (8);
 
         private CancellationTokenSource? asyncCts;
         private CancellationTokenSource? delayCts;
@@ -37,11 +41,12 @@ namespace DCL.Chat.ChatMessages
             string ownWalletAddress)
         {
             this.view = view;
+            this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.atlasConfig = atlasConfig;
             this.messageConfig = messageConfig;
-            this.textBuilder = new ReactionTooltipTextBuilder(
-                profileCache, atlasConfig, messageConfig, emojiMapping, ownWalletAddress);
+            this.ownWalletAddress = ownWalletAddress;
+            this.textBuilder = new ReactionTooltipTextBuilder(atlasConfig, messageConfig, emojiMapping);
 
             var positioner = new ReactionTooltipPositioner(
                 (RectTransform)view.transform,
@@ -138,7 +143,8 @@ namespace DCL.Chat.ChatMessages
             const int mockUserCount = 0;
 #endif
 
-            string text = textBuilder.Build(lastReactors, mockUserCount, emojiIndex, out bool allResolved);
+            bool allResolved = ResolveDisplayNamesFromCache(out bool ownIncluded);
+            string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, emojiIndex);
             view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
 
             if (!allResolved)
@@ -177,7 +183,8 @@ namespace DCL.Chat.ChatMessages
 
                 if (ct.IsCancellationRequested) return;
 
-                string text = textBuilder.Build(lastReactors, mockUserCount, shownEmojiIndex, out bool allResolved);
+                bool allResolved = ResolveDisplayNamesFromCache(out bool ownIncluded);
+                string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
                 view.UpdateText(text);
 
                 if (!allResolved)
@@ -197,12 +204,50 @@ namespace DCL.Chat.ChatMessages
 
         private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
         {
-            await profileRepository.GetProfilesAsync(textBuilder.UnresolvedWallets, ct);
+            // Populates the profile cache as a side effect; return value intentionally discarded
+            await profileRepository.GetProfilesAsync(unresolvedWallets, ct);
 
             if (ct.IsCancellationRequested) return;
 
-            string updatedText = textBuilder.Build(lastReactors, mockUserCount, shownEmojiIndex, out _);
+            ResolveDisplayNamesFromCache(out bool ownIncluded);
+            string updatedText = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
             view.UpdateText(updatedText);
+        }
+
+        private bool ResolveDisplayNamesFromCache(out bool ownIncluded)
+        {
+            displayNames.Clear();
+            unresolvedWallets.Clear();
+            ownIncluded = false;
+            bool allResolved = true;
+
+            for (int i = 0; i < lastReactors.Count; i++)
+            {
+                string wallet = lastReactors[i];
+
+                if (string.Equals(wallet, ownWalletAddress, StringComparison.OrdinalIgnoreCase))
+                {
+                    ownIncluded = true;
+                    continue;
+                }
+
+                if (profileCache.TryGetCompact(wallet, out Profile.CompactInfo profile)
+                    && profile.DisplayName.Length > 0)
+                {
+                    displayNames.Add(profile.DisplayName);
+                }
+                else
+                {
+                    string fallback = wallet.Length > 8
+                        ? string.Concat(wallet[..6], "...", wallet[^4..])
+                        : wallet;
+                    displayNames.Add(fallback);
+                    unresolvedWallets.Add(wallet);
+                    allResolved = false;
+                }
+            }
+
+            return allResolved;
         }
     }
 }
