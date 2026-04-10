@@ -109,5 +109,11 @@ namespace DCL.CharacterMotion.Settings
         float ExternalEnvDrag { get; set; }
         float ExternalGroundFriction { get; set; }
         float MaxExternalVelocity { get; set; }
+
+        // Point-and-click navigation
+        float PointAndClickArrivalDistance { get; }
+        float PointAndClickStuckCheckInterval { get; }
+        float PointAndClickStuckMinMovement { get; }
+        float PointAndClickMaxRaycastDistance { get; }
     }
 }

@@ -147,6 +147,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBTriggerArea>.Create(ComponentID.TRIGGER_AREA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTriggerAreaResult>.Create(ComponentID.TRIGGER_AREA_RESULT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBAvatarLocomotionSettings>.Create(ComponentID.AVATAR_LOCOMOTION_SETTINGS).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBParticleSystem>.Create(ComponentID.PARTICLE_SYSTEM).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPhysicsCombinedImpulse>.Create(ComponentID.PHYSICS_COMBINED_IMPULSE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPhysicsCombinedForce>.Create(ComponentID.PHYSICS_COMBINED_FORCE).AsProtobufComponent());
 

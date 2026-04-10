@@ -272,6 +272,7 @@ namespace DCL.UI
             {
                 contextMenuMentionButton.Enabled = true;
 
+                // contextMenuJumpInButton.Enabled is already set above based on friendship status
                 if (invitationButton != null)
                     invitationButton.Enabled = true;
             }

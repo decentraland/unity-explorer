@@ -62,6 +62,7 @@ namespace DCL.ECS7
         public const int ASSET_LOAD_LOADING_STATE = 1214;
         public const int PHYSICS_COMBINED_IMPULSE = 1215;
         public const int PHYSICS_COMBINED_FORCE = 1216;
-        public const int AUDIO_EFFECT_ZONE = 1217;
+        public const int PARTICLE_SYSTEM = 1217;
+        public const int AUDIO_EFFECT_ZONE = 1218;
     }
 }

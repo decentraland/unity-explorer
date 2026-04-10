@@ -34,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IEventSystem eventSystem;
         private readonly IScenesCache scenesCache;
+        private readonly IMVCManager mvcManager;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
 
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
             GlobalInputEvents globalInputEvents,
             IEventSystem eventSystem,
             IScenesCache scenesCache,
+            IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade,
             ObjectProxy<Entity> cameraEntityProxy)
         {
@@ -56,6 +58,7 @@ namespace DCL.PluginSystem.Global
             this.globalInputEvents = globalInputEvents;
             this.eventSystem = eventSystem;
             this.scenesCache = scenesCache;
+            this.mvcManager = mvcManager;
             this.menusAccessFacade = menusAccessFacade;
             this.cameraEntityProxy = cameraEntityProxy;
         }
@@ -108,7 +111,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, cameraEntityProxy);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager, cameraEntityProxy);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

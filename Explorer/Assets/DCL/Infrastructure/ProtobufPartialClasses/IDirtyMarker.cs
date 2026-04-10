@@ -212,6 +212,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBParticleSystem : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBPointerLock : IDirtyMarker
     {
         public bool IsDirty { get; set; }
