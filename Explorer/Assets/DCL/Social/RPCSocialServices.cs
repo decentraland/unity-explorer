@@ -19,6 +19,8 @@ namespace DCL.SocialService
 
         public RpcClient? Client { get; }
 
+        bool IsDisconnecting { get; }
+
         RpcClientModule Module();
 
         /// <summary>
@@ -63,6 +65,7 @@ namespace DCL.SocialService
         private RpcClientModule? module;
         private RpcClientPort? port;
         private WebSocketRpcTransport? transport;
+        private bool isDisconnecting;
 
         private bool isConnectionReady => transport?.State == WebSocketState.Open
                                           && module != null
@@ -81,6 +84,8 @@ namespace DCL.SocialService
 
         public RpcClient? Client { get; private set; }
 
+        public bool IsDisconnecting => isDisconnecting;
+
         public void Dispose()
         {
             transport?.Dispose();
@@ -96,6 +101,7 @@ namespace DCL.SocialService
         {
             try
             {
+                isDisconnecting = true;
                 await handshakeMutex.WaitAsync(ct);
 
                 port?.Close();
@@ -114,7 +120,10 @@ namespace DCL.SocialService
                 Client?.Dispose();
                 Client = null;
             }
-            finally { handshakeMutex.Release(); }
+            finally {
+                handshakeMutex.Release();
+                isDisconnecting = false;
+            }
         }
 
         public async UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct)
