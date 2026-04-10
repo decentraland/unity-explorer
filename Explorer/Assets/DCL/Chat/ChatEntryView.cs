@@ -5,7 +5,6 @@ using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
-using DCL.FeatureFlags;
 using DCL.Translation;
 using DCL.Utilities;
 using MVC;
@@ -125,7 +124,13 @@ namespace DCL.Chat
             if (viewModel.ShowDateDivider)
                 dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
 
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            if (messageReactionsView != null)
+            {
+                messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
+                messageReactionsView.UpdateReactions(viewModel.Reactions);
+            }
+
+            RecalculateHeight();
 
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
@@ -213,8 +218,8 @@ namespace DCL.Chat
 
 
         /// <summary>
-        /// Recalculates the entry height after reactions have been updated.
-        /// Must be called after UpdateReactions since SetItemData doesn't know about reactions yet.
+        /// Recalculates the entry height including reactions.
+        /// Called automatically by SetItemData; call again externally if reactions change after binding.
         /// </summary>
         public void RecalculateHeight()
         {

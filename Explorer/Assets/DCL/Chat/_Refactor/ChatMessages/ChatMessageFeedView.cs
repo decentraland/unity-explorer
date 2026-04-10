@@ -30,9 +30,9 @@ namespace DCL.Chat.ChatMessages
 
         private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
 
-        private ChatReactionsAtlasConfig? reactionsAtlasConfig;
-        private string? ownWalletAddress;
-        private ChatReactionsMessageConfig? messageReactionsConfig;
+        private ChatReactionsAtlasConfig reactionsAtlasConfig;
+        private string ownWalletAddress = string.Empty;
+        private ChatReactionsMessageConfig messageReactionsConfig;
 
         // View models are reused and set
         // by reference from the presenter
@@ -93,8 +93,8 @@ namespace DCL.Chat.ChatMessages
             this.onlineParticipants = onlineParticipants;
         }
 
-        public void SetReactionsConfig(ChatReactionsAtlasConfig? atlasConfig, string? walletAddress,
-            ChatReactionsMessageConfig? messageReactionsConfig)
+        public void SetReactionsConfig(ChatReactionsAtlasConfig atlasConfig, string walletAddress,
+            ChatReactionsMessageConfig messageReactionsConfig)
         {
             reactionsAtlasConfig = atlasConfig;
             ownWalletAddress = walletAddress;
@@ -207,9 +207,7 @@ namespace DCL.Chat.ChatMessages
         internal void StartScrollBarFade(float targetValue, float duration, Ease easing)
         {
             scrollbarCanvasGroup.DOKill();
-
-            float scrollbarTargetAlpha = targetValue;
-            scrollbarCanvasGroup.DOFade(scrollbarTargetAlpha, duration).SetEase(easing);
+            scrollbarCanvasGroup.DOFade(targetValue, duration).SetEase(easing);
         }
 
         internal bool IsAtBottom() =>
@@ -262,19 +260,15 @@ namespace DCL.Chat.ChatMessages
                 chatEntry.OnTranslateRequested += HandleTranslateRequest;
                 chatEntry.OnRevertRequested += HandleRevertRequest;
 
-                if (chatEntry.messageReactionsView != null && reactionsAtlasConfig != null)
+                if (chatEntry.messageReactionsView != null)
                 {
-                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress ?? string.Empty, messageReactionsConfig!);
-                    chatEntry.messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
-                    chatEntry.messageReactionsView.UpdateReactions(viewModel.Reactions);
+                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig);
                     chatEntry.messageReactionsView.ReactionClicked -= HandleReactionPillClicked;
                     chatEntry.messageReactionsView.ReactionClicked += HandleReactionPillClicked;
                     chatEntry.messageReactionsView.ReactionHoverEnter -= HandleReactionHoverEnter;
                     chatEntry.messageReactionsView.ReactionHoverEnter += HandleReactionHoverEnter;
                     chatEntry.messageReactionsView.ReactionHoverExit -= HandleReactionHoverExit;
                     chatEntry.messageReactionsView.ReactionHoverExit += HandleReactionHoverExit;
-
-                    chatEntry.RecalculateHeight();
                 }
 
                 if (chatEntry.messageBubbleElement.reactionButton != null)

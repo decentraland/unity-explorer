@@ -39,6 +39,8 @@ namespace DCL.Chat.ChatMessages
         public void Initialize(ChatReactionsAtlasConfig atlasConfig, string ownWalletAddress,
             ChatReactionsMessageConfig messageConfig)
         {
+            if (this.atlasConfig != null) return;
+
             this.atlasConfig = atlasConfig;
             this.ownWalletAddress = ownWalletAddress;
             this.messageConfig = messageConfig;
