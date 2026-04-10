@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void SetUp()
         {
             IDecentralandUrlsSource? urls = Substitute.For<IDecentralandUrlsSource>();
-            urls.Url(DecentralandUrl.EntitiesActive).Returns("/entities/active");
+            urls.Url(DecentralandUrl.EntitiesActiveElements).Returns("/entities/active");
 
             system = new BatchWearablesDTOSystem(world, urls, TimeSpan.FromSeconds(2));
         }
