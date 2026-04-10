@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 
@@ -10,6 +11,12 @@ namespace DCL.Settings.ModuleControllers
         public DoubleTapToMoveSettingsController(SettingsToggleModuleView view)
         {
             this.view = view;
+
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_CLICK_WALK))
+            {
+                view.SetActive(false);
+                return;
+            }
 
             bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE, false);
             view.ToggleView.Toggle.SetIsOnWithoutNotify(value);
