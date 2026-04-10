@@ -142,5 +142,61 @@ namespace DCL.Chat.ChatReactions.Configs
 
             return new Rect(col * w, row * h, w, h);
         }
+
+        /// <summary>
+        /// Compares manual grid-based UV rects against TMP SpriteAsset glyph rects.
+        /// TMP stores pixel rects (e.g. x:64, y:32, w:32, h:32); RawImage.uvRect needs
+        /// normalized 0-1 UVs (e.g. x:0.25, y:0.125, w:0.125, h:0.125).
+        /// GetUVRect computes the normalized version directly via grid math.
+        /// </summary>
+        [ContextMenu("Validate UVs Against TMP Glyph Data")]
+        public void ValidateUVsAgainstTMP()
+        {
+#if UNITY_EDITOR
+            if (SpriteAsset == null || Atlas == null)
+            {
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"[{name}] SpriteAsset or Atlas is null.");
+                return;
+            }
+
+            var glyphs = SpriteAsset.spriteGlyphTable;
+            float texW = Atlas.width;
+            float texH = Atlas.height;
+            int mismatches = 0;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[{name}] Atlas {texW}x{texH}, tile {TileSizePx}px, {glyphs.Count} glyphs:");
+
+            for (int i = 0; i < glyphs.Count; i++)
+            {
+                var glyphRect = glyphs[i].glyphRect;
+                int tileIndex = (int)glyphs[i].index;
+
+                // TMP gives pixel rects — normalize to 0-1 UV space
+                Rect tmpUV = new Rect(
+                    glyphRect.x / texW,
+                    glyphRect.y / texH,
+                    glyphRect.width / texW,
+                    glyphRect.height / texH);
+
+                Rect gridUV = GetUVRect(tileIndex);
+
+                float epsilon = 0.001f;
+                bool match = Mathf.Abs(tmpUV.x - gridUV.x) < epsilon
+                             && Mathf.Abs(tmpUV.y - gridUV.y) < epsilon
+                             && Mathf.Abs(tmpUV.width - gridUV.width) < epsilon
+                             && Mathf.Abs(tmpUV.height - gridUV.height) < epsilon;
+
+                string status = match ? "OK" : "MISMATCH";
+                if (!match) mismatches++;
+
+                sb.AppendLine($"  tile {tileIndex}: TMP pixel=({glyphRect.x},{glyphRect.y},{glyphRect.width},{glyphRect.height}) → UV={tmpUV}  |  grid UV={gridUV}  [{status}]");
+            }
+
+            if (mismatches == 0)
+                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"{sb}\nResult: All {glyphs.Count} glyphs match. Grid math produces identical UVs to TMP glyph data.");
+            else
+                ReportHub.LogWarning(ReportCategory.CHAT_MESSAGES, $"{sb}\nResult: {mismatches}/{glyphs.Count} mismatches.");
+#endif
+        }
     }
 }
