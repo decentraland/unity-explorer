@@ -12,10 +12,8 @@ namespace DCL.Chat.ChatMessages
         [SerializeField] private RectTransform contentContainer;
         [SerializeField] private RawImage emojiImage;
         [SerializeField] private TextMeshProUGUI countLabel;
-        [SerializeField] private Image background;
+        [SerializeField] private Image outline;
         [SerializeField] private Button button;
-        [SerializeField] private Color defaultColor = new (0.2f, 0.2f, 0.2f, 0.8f);
-        [SerializeField] private Color highlightedColor = new (0.3f, 0.2f, 0.5f, 0.8f);
 
         private Vector3 hoveredScale = new (1.2f, 1.2f, 1.2f);
         private float animDuration = 0.1f;
@@ -46,7 +44,7 @@ namespace DCL.Chat.ChatMessages
             emojiImage.texture = atlas;
             emojiImage.uvRect = uvRect;
             countLabel.text = count.ToString();
-            background.color = isOwnReaction ? highlightedColor : defaultColor;
+            outline.enabled = isOwnReaction;
             gameObject.SetActive(true);
         }
 
@@ -74,6 +72,7 @@ namespace DCL.Chat.ChatMessages
             hiding = true;
             contentContainer.DOKill();
             contentContainer.localScale = Vector3.one;
+            outline.enabled = false;
             gameObject.SetActive(false);
             hiding = false;
         }
