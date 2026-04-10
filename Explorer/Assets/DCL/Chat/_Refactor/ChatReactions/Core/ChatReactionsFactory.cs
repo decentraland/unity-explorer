@@ -99,14 +99,14 @@ namespace DCL.Chat.ChatReactions.Core
             simulationLoop.WorldReactionsEnabled =
                 chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
 
-            simulationLoop.ShowRemoteUIReactions = chatSettingsAsset.chatReactionsEnabled;
+            simulationLoop.UIReactionsEnabled = chatSettingsAsset.chatReactionsEnabled;
 
             ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler =
                 visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
             chatSettingsAsset.BubblesVisibilityChanged += bubblesHandler;
 
             ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler =
-                enabled => simulationLoop.ShowRemoteUIReactions = enabled;
+                enabled => simulationLoop.UIReactionsEnabled = enabled;
             chatSettingsAsset.ChatReactionsEnabledChanged += reactionsHandler;
 
             scope.Add(new SettingsUnsubscriber(chatSettingsAsset, bubblesHandler, reactionsHandler));

@@ -25,10 +25,14 @@ namespace DCL.Chat.ChatReactions.Core
             set => worldReactor.WorldReactionsEnabled = value;
         }
 
-        public bool ShowRemoteUIReactions
+        public bool UIReactionsEnabled
         {
-            get => remoteTarget.ShowRemoteUIReactions;
-            set => remoteTarget.ShowRemoteUIReactions = value;
+            get => remoteTarget.ShowRemoteUIReactions && uiSimulation.Enabled;
+            set
+            {
+                remoteTarget.ShowRemoteUIReactions = value;
+                uiSimulation.Enabled = value;
+            }
         }
 
         internal StreamReactionsEmitter StreamEmitter => streamEmitter;

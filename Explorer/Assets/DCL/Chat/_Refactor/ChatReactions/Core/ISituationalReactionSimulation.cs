@@ -10,7 +10,7 @@ namespace DCL.Chat.ChatReactions.Core
     public interface ISituationalReactionSimulation
     {
         bool WorldReactionsEnabled { get; set; }
-        bool ShowRemoteUIReactions { get; set; }
+        bool UIReactionsEnabled { get; set; }
         void SetDefaultUISpawnRect(RectTransform rect);
         void Tick(float dt);
         void Draw(Camera cam);

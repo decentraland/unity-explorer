@@ -21,7 +21,7 @@ MonoBehaviour:
   <ReceiveStaggerInterval>k__BackingField: 0.2
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
-  <TooltipHoverDelay>k__BackingField: 0.213
+  <TooltipHoverDelay>k__BackingField: 0.3
   <ShortcutsBarOffset>k__BackingField: {x: -28, y: 40}
   <ShortcutsBarOffsetOwnMessage>k__BackingField: {x: -5, y: 40}
   <EmojiPanelOffset>k__BackingField: {x: 10, y: -18}

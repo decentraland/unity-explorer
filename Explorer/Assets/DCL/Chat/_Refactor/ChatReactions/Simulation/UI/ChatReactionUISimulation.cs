@@ -35,6 +35,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         public int AliveCount => uiStore.Count;
         public int PoolCapacity => uiStore.Capacity;
         public bool IsStreaming => streamEmitter.IsStreaming;
+        public bool Enabled { get; set; } = true;
 
         public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
 
@@ -95,12 +96,16 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
 
         public void TriggerUIReaction(int emojiIndex, int count)
         {
+            if (!Enabled) return;
+
             Vector2 basePx = ResolveDefaultSpawnPosition();
             SpawnBurst(basePx, emojiIndex, count, LANE_JITTER_H, LANE_JITTER_V);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
         {
+            if (!Enabled) return;
+
             Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect);
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
@@ -137,6 +142,8 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
 
         private void EmitStreamParticles(float dt)
         {
+            if (!Enabled) return;
+
             int ticks = streamEmitter.Tick(dt, config.UILane.StreamRatePerSecond);
             if (ticks == 0) return;
 
