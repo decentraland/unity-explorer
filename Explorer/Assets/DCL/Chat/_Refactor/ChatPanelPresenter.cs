@@ -28,10 +28,8 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        private readonly ChatPanelView view;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope chatAreaEventBusScope = new ();
-        private readonly ChatEventBus chatEventBus;
         private readonly ChatCommandRegistry chatCommandRegistry;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ChatStateMachine chatStateMachine;
@@ -61,8 +59,6 @@ namespace DCL.Chat
             ITranslationMemory translationMemory,
             ITranslationCache translationCache)
         {
-            this.view = view;
-            this.chatEventBus = chatEventBus;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.chatCommandRegistry = chatCommandRegistry;
@@ -225,15 +221,10 @@ namespace DCL.Chat
         private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
         {
             //We only need to hide the chat if a fullscreen view is shown
-            //Otherwise if it's a popup and the chat is focused, we must deselect the input box
             switch (evt.ViewSortingLayer)
             {
                 case CanvasOrdering.SortingLayer.FULLSCREEN:
                     chatStateMachine.SetVisibility(false);
-                    break;
-                case CanvasOrdering.SortingLayer.POPUP:
-                    if (chatStateMachine.IsFocused)
-                        chatEventBus.RaiseDeselectInputEvent();
                     break;
             }
         }
