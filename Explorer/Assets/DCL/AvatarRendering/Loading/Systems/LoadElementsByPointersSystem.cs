@@ -34,7 +34,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly StringBuilder bodyBuilder = new ();
 
-        protected LoadElementsByPointersSystem(World world, IStreamableCache<TAsset, TIntention> cache, IWebRequestController webRequestController, EntitiesAnalytics entitiesAnalytics) : base(world, cache)
+        protected LoadElementsByPointersSystem(World world,
+            IStreamableCache<TAsset, TIntention> cache,
+            IWebRequestController webRequestController,
+            EntitiesAnalytics entitiesAnalytics)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.entitiesAnalytics = entitiesAnalytics;
@@ -99,8 +103,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             foreach (TDTO entityDefinitionBase in dtoPooledList.Value)
             {
-                //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
-                //Could be removed when the asset bundle manifest registry is battle tested
+                // Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest
+                // Could be removed when the asset bundle manifest registry is battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, entityDefinitionBase, partitionComponent, ct);
             }
 
