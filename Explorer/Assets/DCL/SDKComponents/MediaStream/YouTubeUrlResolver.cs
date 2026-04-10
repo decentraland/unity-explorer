@@ -4,13 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public class YouTubeUrlResolver
+    public class YouTubeUrlResolver : IYouTubeUrlResolver
     {
         private static readonly string TAG = nameof(YouTubeUrlResolver);
 
@@ -19,14 +18,23 @@ namespace DCL.SDKComponents.MediaStream
 
         // YouTube stream URLs typically expire after 2-4 hours.
         // 90 minutes is a conservative TTL that ensures re-resolution before expiry.
-        private const float CACHE_TTL_SECONDS = 90f * 60f;
+        internal const float CACHE_TTL_SECONDS = 90f * 60f;
 
         private const int PREFERRED_HEIGHT = 1080;
         private const int MAX_CACHE_ENTRIES = 50;
 
-        private readonly YoutubeClient youtubeClient = new ();
+        private readonly IYouTubeVideoClient youtubeClient;
+        private readonly Func<float> getRealtimeSinceStartup;
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
         private readonly List<string> expiredKeys = new ();
+
+        public YouTubeUrlResolver() : this(new YoutubeClientAdapter(), () => Time.realtimeSinceStartup) { }
+
+        internal YouTubeUrlResolver(IYouTubeVideoClient client, Func<float> getRealtimeSinceStartup)
+        {
+            youtubeClient = client;
+            this.getRealtimeSinceStartup = getRealtimeSinceStartup;
+        }
 
         public async UniTask<ResolvedYouTubeUrl?> ResolveAsync(string youtubeUrl, CancellationToken ct)
         {
@@ -75,7 +83,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (cache.TryGetValue(videoId, out cached))
             {
-                if (UnityEngine.Time.realtimeSinceStartup < cached.ExpiresAtRealtimeSinceStartup)
+                if (getRealtimeSinceStartup() < cached.ExpiresAtRealtimeSinceStartup)
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Cache hit for {videoId}");
                     return true;
@@ -89,7 +97,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void EvictEntriesToMaintainCap()
         {
-            float now = UnityEngine.Time.realtimeSinceStartup;
+            float now = getRealtimeSinceStartup();
 
             // First pass: remove expired entries
             expiredKeys.Clear();
@@ -136,10 +144,7 @@ namespace DCL.SDKComponents.MediaStream
                 bool isLive = urlHintsLive;
 
                 if (!isLive)
-                {
-                    Video video = await youtubeClient.Videos.GetAsync(videoId, token);
-                    isLive = video.Duration == null;
-                }
+                    isLive = await youtubeClient.IsLiveStreamAsync(videoId, token);
 
                 if (isLive)
                 {
@@ -174,7 +179,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedYouTubeUrl?> ResolveLiveStreamAsync(VideoId videoId, CancellationToken token)
         {
-            string hlsUrl = await youtubeClient.Videos.Streams.GetHttpLiveStreamUrlAsync(videoId, token);
+            string hlsUrl = await youtubeClient.GetHttpLiveStreamUrlAsync(videoId, token);
 
             if (string.IsNullOrEmpty(hlsUrl))
             {
@@ -187,7 +192,7 @@ namespace DCL.SDKComponents.MediaStream
             return new ResolvedYouTubeUrl(
                 hlsUrl,
                 isLiveStream: true,
-                UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
+                getRealtimeSinceStartup() + CACHE_TTL_SECONDS
             );
         }
 
@@ -195,7 +200,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             try
             {
-                StreamManifest manifest = await youtubeClient.Videos.Streams.GetManifestAsync(videoId, token);
+                StreamManifest manifest = await youtubeClient.GetStreamManifestAsync(videoId, token);
 
                 IStreamInfo selectedStream = SelectBestStream(manifest.GetMuxedStreams())
                                              ?? SelectBestStream(manifest.GetVideoOnlyStreams());
@@ -213,7 +218,7 @@ namespace DCL.SDKComponents.MediaStream
                 return new ResolvedYouTubeUrl(
                     selectedStream.Url,
                     isLiveStream: false,
-                    UnityEngine.Time.realtimeSinceStartup + CACHE_TTL_SECONDS
+                    getRealtimeSinceStartup() + CACHE_TTL_SECONDS
                 );
             }
             catch (OperationCanceledException)
@@ -228,7 +233,7 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private static IStreamInfo SelectBestStream(IEnumerable<IStreamInfo> streams)
+        internal static IStreamInfo SelectBestStream(IEnumerable<IStreamInfo> streams)
         {
             IStreamInfo best = null;
             int bestHeight = -1;

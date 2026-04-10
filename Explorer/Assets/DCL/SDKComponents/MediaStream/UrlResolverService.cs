@@ -10,12 +10,15 @@ namespace DCL.SDKComponents.MediaStream
     public class UrlResolverService : IUrlResolverService
     {
         private readonly IWebRequestController webRequestController;
-        private readonly YouTubeUrlResolver youTubeResolver;
+        private readonly IYouTubeUrlResolver youTubeResolver;
 
         public UrlResolverService(IWebRequestController webRequestController)
+            : this(webRequestController, new YouTubeUrlResolver()) { }
+
+        internal UrlResolverService(IWebRequestController webRequestController, IYouTubeUrlResolver youTubeResolver)
         {
             this.webRequestController = webRequestController;
-            youTubeResolver = new YouTubeUrlResolver();
+            this.youTubeResolver = youTubeResolver;
         }
 
         public async UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct)
