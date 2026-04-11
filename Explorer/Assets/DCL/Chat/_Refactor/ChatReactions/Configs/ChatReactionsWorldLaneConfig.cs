@@ -39,25 +39,21 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("Constant acceleration (units/sec²). Negative Y = gentle downward pull.")]
         [field: SerializeField] public Vector3 Gravity { get; private set; } = new(0f, -0.2f, 0f);
 
-        [field: Header("ANCHOR SPRING — AVATAR-FOLLOWING FORCE")]
-        [field: Note("Spring stiffness pulling anchored particles toward their avatar on XZ. " +
-                     "Higher = tighter follow. Zero disables the spring (particles float freely). " +
-                     "Settling time ≈ 4 / (DampingRatio × √Strength).")]
-        [field: Range(0f, 200f)]
+        [field: Header("ANCHOR FOLLOW — AVATAR-FOLLOWING FORCE")]
+        [field: Note("Exponential follow rate for anchored particles on XZ. " +
+                     "Higher = tighter follow. Zero disables following (particles float freely). " +
+                     "Half-life ≈ ln(2) / FollowRate seconds.")]
+        [field: Range(0f, 20f)]
         [field: FormerlySerializedAs("<TetherStrength>k__BackingField")]
-        [field: SerializeField] public float SpringStrength { get; internal set; } = 50f;
+        [field: FormerlySerializedAs("<SpringStrength>k__BackingField")]
+        [field: SerializeField] public float FollowRate { get; internal set; } = 5f;
 
-        [field: Note("Damping ratio for the spring. 1.0 = critical (fastest approach, no oscillation). " +
-                     "<1.0 = underdamped (bouncy). >1.0 = overdamped (sluggish). " +
-                     "Actual damping is computed as: ratio × 2 × √SpringStrength.")]
-        [field: Range(0.1f, 2f)]
-        [field: SerializeField] public float SpringDampingRatio { get; private set; } = 1f;
-
-        [field: Note("Multiplier on spring strength over normalised lifetime [0,1]. " +
+        [field: Note("Multiplier on follow rate over normalised lifetime [0,1]. " +
                      "1 at birth → 0 at death makes young particles follow tightly " +
-                     "while old ones drift free. Leave empty for constant strength.")]
+                     "while old ones drift free. Leave empty for constant rate.")]
         [field: FormerlySerializedAs("<TetherOverLifetime>k__BackingField")]
-        [field: SerializeField] public AnimationCurve SpringOverLifetime { get; private set; }
+        [field: FormerlySerializedAs("<SpringOverLifetime>k__BackingField")]
+        [field: SerializeField] public AnimationCurve FollowOverLifetime { get; private set; }
 
         [field: Header("BURST")]
         [field: Note("How many particles to spawn per burst trigger (tap or stream tick).")]

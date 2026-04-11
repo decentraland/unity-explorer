@@ -86,7 +86,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
 
             forces = new IWorldParticleForce[]
             {
-                new AnchorSpringForce(anchorTable, config.WorldLane),
+                new AnchorFollowForce(anchorTable, config.WorldLane),
             };
         }
 

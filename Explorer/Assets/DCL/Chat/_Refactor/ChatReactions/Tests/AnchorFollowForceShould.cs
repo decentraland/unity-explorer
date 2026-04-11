@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DCL.Chat.ChatReactions.Tests
 {
     [TestFixture]
-    public class AnchorSpringForceShould
+    public class AnchorFollowForceShould
     {
         private AvatarAnchorTable anchorTable;
         private ChatReactionsWorldLaneConfig config;
@@ -32,10 +32,9 @@ namespace DCL.Chat.ChatReactions.Tests
         public void PullParticleTowardAnchorOnXZ()
         {
             // Arrange
-            SetSpringStrength(50f);
+            SetFollowRate(5f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
-            // Particle offset from anchor on X axis
             var buffer = new[]
             {
                 MakeParticle(
@@ -43,21 +42,23 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
-            float originalVelX = buffer[0].vel.x;
+            float originalPosX = buffer[0].pos.x;
 
             // Act
-            var force = new AnchorSpringForce(anchorTable, config);
+            var force = new AnchorFollowForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
-            // Assert — velocity should have gained a negative X component (toward anchor)
-            Assert.That(buffer[0].vel.x, Is.LessThan(originalVelX));
+            // Assert — position should have moved toward anchor (decreased X)
+            Assert.That(buffer[0].pos.x, Is.LessThan(originalPosX));
+            Assert.That(buffer[0].pos.x, Is.GreaterThan(ANCHOR_POS.x),
+                "Must not overshoot the anchor");
         }
 
         [Test]
         public void LeaveYAxisFree()
         {
             // Arrange
-            SetSpringStrength(50f);
+            SetFollowRate(5f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
             var buffer = new[]
@@ -68,11 +69,14 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            float originalPosY = buffer[0].pos.y;
+
             // Act
-            var force = new AnchorSpringForce(anchorTable, config);
+            var force = new AnchorFollowForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
-            // Assert — Y velocity should be unchanged since spring only acts on XZ
+            // Assert — Y position and velocity should be unchanged
+            Assert.That(buffer[0].pos.y, Is.EqualTo(originalPosY).Within(1e-6f));
             Assert.That(buffer[0].vel.y, Is.EqualTo(2f).Within(1e-6f));
         }
 
@@ -80,7 +84,7 @@ namespace DCL.Chat.ChatReactions.Tests
         public void SkipUnanchoredParticles()
         {
             // Arrange
-            SetSpringStrength(50f);
+            SetFollowRate(5f);
 
             var buffer = new[]
             {
@@ -90,19 +94,21 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: ChatReactionsParticle.ANCHOR_NONE),
             };
 
+            Vector3 originalPos = buffer[0].pos;
+
             // Act
-            var force = new AnchorSpringForce(anchorTable, config);
+            var force = new AnchorFollowForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
             // Assert
-            Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
+            Assert.That(buffer[0].pos, Is.EqualTo(originalPos));
         }
 
         [Test]
-        public void NoOpWhenStrengthIsZero()
+        public void NoOpWhenRateIsZero()
         {
             // Arrange
-            SetSpringStrength(0f);
+            SetFollowRate(0f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
             var buffer = new[]
@@ -113,20 +119,22 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            Vector3 originalPos = buffer[0].pos;
+
             // Act
-            var force = new AnchorSpringForce(anchorTable, config);
+            var force = new AnchorFollowForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
             // Assert
-            Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
+            Assert.That(buffer[0].pos, Is.EqualTo(originalPos));
         }
 
-        // Verifies that particles bound to a deactivated anchor are not affected by the spring.
+        // Verifies that particles bound to a deactivated anchor are not affected.
         [Test]
         public void SkipInactiveAnchors()
         {
             // Arrange
-            SetSpringStrength(50f);
+            SetFollowRate(5f);
             byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
 
             // Deactivate the anchor by refreshing with a provider that returns null for all wallets
@@ -140,19 +148,46 @@ namespace DCL.Chat.ChatReactions.Tests
                     anchor: anchor),
             };
 
+            Vector3 originalPos = buffer[0].pos;
+
             // Act
-            var force = new AnchorSpringForce(anchorTable, config);
+            var force = new AnchorFollowForce(anchorTable, config);
             force.Apply(buffer, 1, DT);
 
             // Assert
-            Assert.That(buffer[0].vel, Is.EqualTo(Vector3.zero));
+            Assert.That(buffer[0].pos, Is.EqualTo(originalPos));
+        }
+
+        [Test]
+        public void DoesNotOvershootTarget()
+        {
+            // Arrange — particle very close to anchor
+            SetFollowRate(15f);
+            byte anchor = anchorTable.Allocate("wallet_a", ANCHOR_POS);
+
+            var buffer = new[]
+            {
+                MakeParticle(
+                    pos: new Vector3(ANCHOR_POS.x + 0.001f, ANCHOR_POS.y, ANCHOR_POS.z + 0.001f),
+                    anchor: anchor),
+            };
+
+            // Act — apply many times to stress-test convergence
+            var force = new AnchorFollowForce(anchorTable, config);
+
+            for (int i = 0; i < 100; i++)
+                force.Apply(buffer, 1, DT);
+
+            // Assert — particle must stay on the same side or reach anchor, never cross it
+            Assert.That(buffer[0].pos.x, Is.GreaterThanOrEqualTo(ANCHOR_POS.x - 1e-6f));
+            Assert.That(buffer[0].pos.z, Is.GreaterThanOrEqualTo(ANCHOR_POS.z - 1e-6f));
         }
 
         // ── Helpers ─────────────────────────────────────────
 
-        private void SetSpringStrength(float strength)
+        private void SetFollowRate(float rate)
         {
-            config.SpringStrength = strength;
+            config.FollowRate = rate;
         }
 
         private static ChatReactionsParticle MakeParticle(

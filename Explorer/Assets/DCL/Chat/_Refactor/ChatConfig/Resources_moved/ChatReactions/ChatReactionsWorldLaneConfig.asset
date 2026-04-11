@@ -18,9 +18,8 @@ MonoBehaviour:
   <SizeRange>k__BackingField: {x: 0.16, y: 0.25}
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
-  <SpringStrength>k__BackingField: 50
-  <SpringDampingRatio>k__BackingField: 0.5
-  <SpringOverLifetime>k__BackingField:
+  <FollowRate>k__BackingField: 5
+  <FollowOverLifetime>k__BackingField:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
