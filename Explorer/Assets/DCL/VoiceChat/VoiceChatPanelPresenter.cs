@@ -6,6 +6,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
+using MVC;
 using System;
 using DCL.UI;
 using Utility;
@@ -19,6 +20,8 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
         private readonly EventSubscriptionScope presenterScope = new();
         private readonly ChatClickDetectionHandler clickDetectionHandler;
+
+        private bool wasVisibleBeforeFullscreen;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -58,6 +61,29 @@ namespace DCL.VoiceChat
 
             presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
             presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(HandleChatPanelToggle));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewOpenEvent>(OnMVCViewOpened));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewClosedEvent>(OnMVCViewClosed));
+        }
+
+        private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
+        {
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+
+            wasVisibleBeforeFullscreen = voiceChatPanelState.Value is not (VoiceChatPanelState.HIDDEN or VoiceChatPanelState.NONE);
+
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
+            clickDetectionHandler.Pause();
+        }
+
+        private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
+        {
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (!wasVisibleBeforeFullscreen) return;
+
+            wasVisibleBeforeFullscreen = false;
+
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, force: true);
+            clickDetectionHandler.Resume();
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
