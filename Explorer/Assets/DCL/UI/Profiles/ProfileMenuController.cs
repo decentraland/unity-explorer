@@ -97,6 +97,10 @@ namespace DCL.UI.Profiles
         public override void Dispose()
         {
             base.Dispose();
+
+            if (systemSectionPresenter != null)
+                systemSectionPresenter.OnClosed -= OnClose;
+
             profileMenuCts.SafeCancelAndDispose();
             profileSectionPresenter?.Dispose();
             systemSectionPresenter?.Dispose();
