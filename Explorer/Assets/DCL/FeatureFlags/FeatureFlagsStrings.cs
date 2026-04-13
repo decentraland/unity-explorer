@@ -74,6 +74,7 @@ namespace DCL.FeatureFlags
         public const string POINT_AT = "alfa-point-at";
         public const string PROXIMITY_VOICE_CHAT = "alfa-proximity-voice-chat";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
+        public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
 
         public static class Endpoints
         {

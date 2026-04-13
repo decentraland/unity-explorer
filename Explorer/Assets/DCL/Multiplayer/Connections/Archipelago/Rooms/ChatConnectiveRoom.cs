@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
@@ -63,8 +64,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             while (ct.IsCancellationRequested == false)
             {
-                if (CurrentState() == IConnectiveRoom.State.Running)
-                    ((InteriorRoom)Room()).SimulateConnectionStateChanged();
+                try
+                {
+                    if (CurrentState() == IConnectiveRoom.State.Running)
+                        ((InteriorRoom)Room()).SimulateConnectionStateChanged();
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.LIVEKIT);
+                }
 
                 await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
             }
