@@ -69,7 +69,6 @@ namespace DCL.VoiceChat
             catch (Exception ex)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to start listening to remote tracks: {ex.Message}");
-                throw;
             }
         }
 

@@ -111,10 +111,16 @@ namespace DCL.VoiceChat.Nearby
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
+        {
+            if (stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED) return;
+            remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
+        }
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
+        {
+            if (stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED) return;
+            remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
+        }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
