@@ -223,8 +223,15 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Assert — position is reprojected relative to camera, not raw avatar position
             //          sourcePos = listenerPos + (remoteHead - playerHead)
-            //          This ensures spatial audio gain matches the player's perspective, not the camera's offset position
-            Assert.That(audioSource.transform.position, Is.Not.EqualTo(Vector3.zero));
+            //                    = (0,0,0) + ((8,1.75,4) - (0,1.75,0)) = (8, 0, 4)
+            Vector3 remoteHead = remotePos + new Vector3(0, 1.75f, 0);
+            Vector3 playerHead = playerGo.transform.position;
+            Vector3 listenerPos = cam.Camera.transform.position;
+            Vector3 expected = listenerPos + (remoteHead - playerHead);
+
+            Assert.That(audioSource.transform.position.x, Is.EqualTo(expected.x).Within(0.01f));
+            Assert.That(audioSource.transform.position.y, Is.EqualTo(expected.y).Within(0.01f));
+            Assert.That(audioSource.transform.position.z, Is.EqualTo(expected.z).Within(0.01f));
         }
 
         // ── Helpers ─────────────────────────────────────────────────

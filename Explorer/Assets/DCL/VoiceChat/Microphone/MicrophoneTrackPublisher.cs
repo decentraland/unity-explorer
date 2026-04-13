@@ -139,8 +139,6 @@ namespace DCL.VoiceChat
         private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(
             VoiceChatConfiguration configuration, CancellationToken ct)
         {
-            micVolumeName = nameof(AudioMixerExposedParam.Microphone_Volume);
-
             if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
                 configuration.AudioMixerGroup.audioMixer.SetFloat(micVolumeName, 13);
 
