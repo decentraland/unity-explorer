@@ -154,6 +154,10 @@ namespace DCL.VoiceChat.Nearby
         {
             await UniTask.SwitchToMainThread(ct);
 
+            // Always start listening — does not require a microphone
+            remoteListener.StartListeningAsync().Forget();
+
+            // Try to publish mic track; failure is non-fatal (listening-only mode)
             for (var attempt = 1; attempt <= configuration.MaxReconnectionAttempts; attempt++)
             {
                 if (ct.IsCancellationRequested || disposed) return;
@@ -161,7 +165,6 @@ namespace DCL.VoiceChat.Nearby
                 try
                 {
                     await micPublisher.PublishAsync(false, ct);
-                    remoteListener.StartListeningAsync().Forget();
 
                     ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
@@ -174,13 +177,13 @@ namespace DCL.VoiceChat.Nearby
                 catch (Exception ex)
                 {
                     ReportHub.LogWarning(ReportCategory.NEARBY_VOICE_CHAT,
-                        $"Activation attempt {attempt}/{configuration.MaxReconnectionAttempts} failed: {ex.Message}");
+                        $"Mic publish attempt {attempt}/{configuration.MaxReconnectionAttempts} failed: {ex.Message}");
 
-                    Deactivate();
+                    micPublisher.Unpublish();
 
                     if (attempt >= configuration.MaxReconnectionAttempts)
                     {
-                        ReportHub.LogError(ReportCategory.NEARBY_VOICE_CHAT, "All activation attempts exhausted");
+                        ReportHub.LogWarning(ReportCategory.NEARBY_VOICE_CHAT, "All mic publish attempts exhausted — listening-only mode active");
                         return;
                     }
 

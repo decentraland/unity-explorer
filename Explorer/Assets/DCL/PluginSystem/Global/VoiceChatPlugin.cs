@@ -161,7 +161,7 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.SPEAKING);
+                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
                 pluginScope.Add(nearbyStateModel);
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
