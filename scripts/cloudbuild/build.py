@@ -376,7 +376,7 @@ def download_artifact(id):
 
         # Check if this is a macOS target and verify we have the right permissions set
         if 'macos' in os.getenv('TARGET', '').lower():
-            explorer_path = os.path.join(download_dir, 'Decentraland.app', 'Contents', 'MacOS', 'Explorer')
+            explorer_path = os.path.join(download_dir, 'Decentraland.app', 'Contents', 'MacOS', 'Decentraland')
             if os.path.exists(explorer_path):
                 is_executable = os.access(explorer_path, os.X_OK)
                 print(f"Is Explorer executable? {'Yes' if is_executable else 'No'}")
