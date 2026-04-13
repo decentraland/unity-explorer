@@ -23,6 +23,7 @@ namespace DCL.Chat.ChatServices
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<string> blockedOnlineParticipants = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<string> snapshotBuffer = new (PoolConstants.AVATARS_COUNT);
 
         public IReadOnlyCollection<string> OnlineParticipants
         {
@@ -59,6 +60,25 @@ namespace DCL.Chat.ChatServices
             userBlockingCache.StrictObject.UserBlocksYou += BlockedSetOffline;
             userBlockingCache.StrictObject.UserUnblocked += UnblockedSetOnline;
             userBlockingCache.StrictObject.UserUnblocksYou += UnblockedSetOnline;
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            lock (onlineParticipants)
+            {
+                foreach (string participant in onlineParticipants)
+                    destination.Add(participant);
+            }
+        }
+
+        private void CopyToSnapshotBuffer()
+        {
+            snapshotBuffer.Clear();
+
+            foreach (string participant in onlineParticipants)
+                snapshotBuffer.Add(participant);
         }
 
         public void Deactivate()
@@ -141,6 +161,8 @@ namespace DCL.Chat.ChatServices
         /// <param name="connectionState"></param>
         private void OnRoomConnectionStateChange(ConnectionState connectionState)
         {
+            bool shouldNotify = false;
+
             lock (onlineParticipants)
             {
                 switch (connectionState)
@@ -148,10 +170,14 @@ namespace DCL.Chat.ChatServices
                     case ConnectionState.ConnDisconnected:
                     case ConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
-                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants));
+                        CopyToSnapshotBuffer();
+                        shouldNotify = true;
                         break;
                 }
             }
+
+            if (shouldNotify)
+                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
         }
 
         private void SetOnline(string userId)
