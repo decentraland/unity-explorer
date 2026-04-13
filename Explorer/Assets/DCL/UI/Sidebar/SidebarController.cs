@@ -118,6 +118,9 @@ namespace DCL.UI.Sidebar
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
 
+            mvcManager.OnViewShowed -= OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed -= OnMvcManagerViewClosed;
+
             if (viewInstance != null)
             {
                 viewInstance.settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
