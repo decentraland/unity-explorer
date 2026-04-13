@@ -98,9 +98,9 @@ namespace DCL.VoiceChat
             try
             {
                 if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}"); }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}"); }
         }
 
         public async UniTaskVoid HandleTrackUnsubscribedAsync(TrackPublication publication, Participant participant, bool isLocalLoopback = false)

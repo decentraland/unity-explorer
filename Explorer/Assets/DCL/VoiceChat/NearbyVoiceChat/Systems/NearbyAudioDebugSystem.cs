@@ -25,6 +25,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly ElementBinding<bool> smoothPanningBinding;
         private readonly ElementBinding<float> ildBinding;
 
+        private bool prevSpatialize;
+        private bool prevSmoothPanning;
+        private float prevIldStrength;
+
         internal NearbyAudioDebugSystem(World world, VoiceChatConfiguration configuration,
             IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -43,16 +47,24 @@ namespace DCL.VoiceChat.Nearby.Systems
                        ?.AddControl(new DebugConstLabelDef("Spatialize"), new DebugToggleDef(spatializeBinding))
                         .AddControl(new DebugConstLabelDef("Smooth Panning"), new DebugToggleDef(smoothPanningBinding))
                         .AddFloatSliderField("ILD Strength", ildBinding, 0f, 1f);
+
+            prevSpatialize = configuration.nearbySpatialize;
+            prevSmoothPanning = configuration.nearbySmoothPanning;
+            prevIldStrength = configuration.nearbyIldStrength;
         }
 
         protected override void Update(float t)
         {
-            bool changed = spatializeBinding.Value != configuration.nearbySpatialize
-                        || smoothPanningBinding.Value != configuration.nearbySmoothPanning
-                        || !Mathf.Approximately(ildBinding.Value, configuration.nearbyIldStrength);
+            bool changed = prevSpatialize != configuration.nearbySpatialize
+                        || prevSmoothPanning != configuration.nearbySmoothPanning
+                        || !Mathf.Approximately(prevIldStrength, configuration.nearbyIldStrength);
 
             if (!changed)
                 return;
+
+            prevSpatialize = configuration.nearbySpatialize;
+            prevSmoothPanning = configuration.nearbySmoothPanning;
+            prevIldStrength = configuration.nearbyIldStrength;
 
             spatializeBinding.Value = configuration.nearbySpatialize;
             smoothPanningBinding.Value = configuration.nearbySmoothPanning;

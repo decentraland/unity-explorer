@@ -59,7 +59,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
-        private NearbyAudioPositionSystem? nearbyAudioPositionSystem;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
