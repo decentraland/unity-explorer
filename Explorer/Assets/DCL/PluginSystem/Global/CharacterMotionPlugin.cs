@@ -121,7 +121,8 @@ namespace DCL.PluginSystem.Global
                 new HandPointAtComponent(),
                 new TorsoIKComponent());
 
-            UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_CLICK_WALK))
+                UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
             TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
