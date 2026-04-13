@@ -36,6 +36,8 @@ ShaderVariantCollection:
       variants:
       - keywords: SOFTMASKABLE
         passType: 0
+      - keywords: SOFTMASKABLE UNDERLAY_ON
+        passType: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
