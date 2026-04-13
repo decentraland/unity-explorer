@@ -27,12 +27,15 @@ namespace Decentraland.Common {
             "CiBkZWNlbnRyYWxhbmQvY29tbW9uL2NvbG9ycy5wcm90bxITZGVjZW50cmFs",
             "YW5kLmNvbW1vbiIpCgZDb2xvcjMSCQoBchgBIAEoAhIJCgFnGAIgASgCEgkK",
             "AWIYAyABKAIiNAoGQ29sb3I0EgkKAXIYASABKAISCQoBZxgCIAEoAhIJCgFi",
-            "GAMgASgCEgkKAWEYBCABKAJiBnByb3RvMw=="));
+            "GAMgASgCEgkKAWEYBCABKAIiYgoKQ29sb3JSYW5nZRIqCgVzdGFydBgBIAEo",
+            "CzIbLmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0EigKA2VuZBgCIAEoCzIb",
+            "LmRlY2VudHJhbGFuZC5jb21tb24uQ29sb3I0YgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.Color3), global::Decentraland.Common.Color3.Parser, new[]{ "R", "G", "B" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.Color4), global::Decentraland.Common.Color4.Parser, new[]{ "R", "G", "B", "A" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.Color4), global::Decentraland.Common.Color4.Parser, new[]{ "R", "G", "B", "A" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.ColorRange), global::Decentraland.Common.ColorRange.Parser, new[]{ "Start", "End" }, null, null, null, null)
           }));
     }
     #endregion
@@ -611,6 +614,262 @@ namespace Decentraland.Common {
           }
           case 37: {
             A = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// A range of Color4 values. Randomized or lerped between start and end.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ColorRange : pb::IMessage<ColorRange>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ColorRange> _parser = new pb::MessageParser<ColorRange>(() => new ColorRange());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ColorRange> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Common.ColorsReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ColorRange() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ColorRange(ColorRange other) : this() {
+      start_ = other.start_ != null ? other.start_.Clone() : null;
+      end_ = other.end_ != null ? other.end_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ColorRange Clone() {
+      return new ColorRange(this);
+    }
+
+    /// <summary>Field number for the "start" field.</summary>
+    public const int StartFieldNumber = 1;
+    private global::Decentraland.Common.Color4 start_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 Start {
+      get { return start_; }
+      set {
+        start_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "end" field.</summary>
+    public const int EndFieldNumber = 2;
+    private global::Decentraland.Common.Color4 end_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Color4 End {
+      get { return end_; }
+      set {
+        end_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ColorRange);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ColorRange other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Start, other.Start)) return false;
+      if (!object.Equals(End, other.End)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (start_ != null) hash ^= Start.GetHashCode();
+      if (end_ != null) hash ^= End.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (start_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Start);
+      }
+      if (end_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(End);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (start_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Start);
+      }
+      if (end_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(End);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (start_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Start);
+      }
+      if (end_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(End);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ColorRange other) {
+      if (other == null) {
+        return;
+      }
+      if (other.start_ != null) {
+        if (start_ == null) {
+          Start = new global::Decentraland.Common.Color4();
+        }
+        Start.MergeFrom(other.Start);
+      }
+      if (other.end_ != null) {
+        if (end_ == null) {
+          End = new global::Decentraland.Common.Color4();
+        }
+        End.MergeFrom(other.End);
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (start_ == null) {
+              Start = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(Start);
+            break;
+          }
+          case 18: {
+            if (end_ == null) {
+              End = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(End);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (start_ == null) {
+              Start = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(Start);
+            break;
+          }
+          case 18: {
+            if (end_ == null) {
+              End = new global::Decentraland.Common.Color4();
+            }
+            input.ReadMessage(End);
             break;
           }
         }

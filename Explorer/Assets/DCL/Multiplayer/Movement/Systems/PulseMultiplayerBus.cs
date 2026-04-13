@@ -1,6 +1,5 @@
-using DCL.Diagnostics;
+using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Web3.Identities;
@@ -9,7 +8,7 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerBus : IPlayerTeleportBroadcast, IDisposable
+    public partial class PulseMultiplayerBus : IPlayerTeleportBroadcast, IEmotesMessageBus, IDisposable
     {
         internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
@@ -21,7 +20,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly ParcelEncoder parcelEncoder;
         private readonly PulseIncomingProfileAnnouncements incomingProfiles;
         private readonly PulseRemoveIntentions removeIntentions;
-        private readonly PulseEmotesMessageBus emotesMessageBus;
         private readonly IWeb3IdentityCache identityCache;
 
         private volatile bool isDisposed;
@@ -32,7 +30,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             ParcelEncoder parcelEncoder,
             PulseIncomingProfileAnnouncements incomingProfiles,
             PulseRemoveIntentions removeIntentions,
-            PulseEmotesMessageBus emotesMessageBus,
             IWeb3IdentityCache identityCache)
         {
             this.pulseService = pulseService;
@@ -41,7 +38,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.parcelEncoder = parcelEncoder;
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
-            this.emotesMessageBus = emotesMessageBus;
             this.identityCache = identityCache;
         }
 

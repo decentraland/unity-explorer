@@ -2,7 +2,11 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Multithreading;
+using DCL.Optimization.Pools;
 using Decentraland.Pulse;
+using Pulse.Transport;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -19,6 +23,58 @@ namespace DCL.Multiplayer.Connections.Pulse
         ///     recompute it — without the patch, merged deltas would carry stale <c>isEmoting=true</c>.
         /// </summary>
         private readonly HashSet<uint> emotingSubjects = new ();
+        private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly MutexSync emoteSync = new ();
+
+        public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
+            new (emoteSync, emoteIntentions);
+
+        public void Send(URN urn, bool loopCyclePassed, uint durationMs = 0, NetworkMovementMessage? playerState = null)
+        {
+            if (loopCyclePassed)
+                return;
+
+            var outgoing = OutgoingMessage.Create(
+                PacketMode.RELIABLE,
+                ClientMessage.MessageOneofCase.EmoteStart);
+
+            outgoing.Message.EmoteStart.EmoteId = urn;
+
+            if (durationMs > 0)
+                outgoing.Message.EmoteStart.DurationMs = durationMs;
+
+            if (playerState.HasValue)
+            {
+                var playerStateInput = new PlayerStateInput();
+                WritePlayerStateInput(playerState.Value, playerStateInput);
+                outgoing.Message.EmoteStart.PlayerState = playerStateInput.State;
+            }
+
+            pulseService.Send(outgoing);
+        }
+
+        public void SendStop()
+        {
+            var outgoing = OutgoingMessage.Create(
+                PacketMode.RELIABLE,
+                ClientMessage.MessageOneofCase.EmoteStop);
+
+            pulseService.Send(outgoing);
+        }
+
+        public void OnPlayerRemoved(string walletId) { }
+
+        public void SaveForRetry(RemoteEmoteIntention intention)
+        {
+            using (emoteSync.GetScope())
+                emoteIntentions.Add(intention);
+        }
+
+        internal void EnqueueEmoteIntention(RemoteEmoteIntention intention)
+        {
+            using (emoteSync.GetScope())
+                emoteIntentions.Add(intention);
+        }
 
         private void HandleEmoteStarted(IncomingMessage message)
         {
@@ -48,7 +104,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-            emotesMessageBus.Enqueue(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
+            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
         }
 
         private void HandleEmoteStopped(IncomingMessage message)

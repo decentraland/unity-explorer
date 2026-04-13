@@ -145,6 +145,7 @@ After the C# code for the protobuf component was generated, one or more systems 
 > **NOTE:** You'll see that some special components are registered as "result components". Those are some components designed mainly to be PUT by the Explorer and only READ by the scene (e.g. input result component, raycast result component).
 
 - Create a folder dedicated to the new component at https://github.com/decentraland/unity-explorer/tree/dev/Explorer/Assets/DCL/SDKComponents and implement the handling systems, components, etc. in there.
+  - **Assembly references:** add a `<Feature>.Systems.asmref` pointing at `DCL.Plugins` (GUID `fc4fd35fb877e904d8cedee73b2256f6`) for the systems folder, and a `<Feature>.Tests.asmref` pointing at `DCL.EditMode.Tests` for the `Tests/EditMode/` folder. Only create a new `asmdef` if the feature genuinely needs isolated compilation or has conflicting dependencies. Prefer edit-mode tests over play-mode tests unless the feature requires scene lifecycle or physics simulation.
 - Create a PLUGIN file at https://github.com/decentraland/unity-explorer/tree/dev/Explorer/Assets/DCL/PluginSystem/World to INJECT your Systems in that code.
   - Your Plugin has to be instantiated at https://github.com/decentraland/unity-explorer/blob/dev/Explorer/Assets/DCL/Infrastructure/Global/StaticContainer.cs#L254~L280 along with the other Scene Plugins (not GLOBAL).
 
@@ -158,7 +159,7 @@ The following must be implemented:
 
 - Relevant functionalities for the new component
   - Custom non-sdk `struct` components (can be empty) are normally used to change the state of the entity.
-  - If `IsDirty` needs to be relied upon, for the case of the scene modifying the component values in runtime and reacting to that: then the `IsDirty` reset handling can either be manual in your systems OR by injecting `ResetDirtyFlagSystem<PBYourComponent>.InjectToWorld(ref builder)` in your Plugin.
+  - If `IsDirty` needs to be relied upon, for the case of the scene modifying the component values in runtime and reacting to that: **prefer** injecting `ResetDirtyFlagSystem<PBYourComponent>.InjectToWorld(ref builder)` in your Plugin — it clears the flag automatically after all systems in the group have run. Only set `IsDirty = false` manually inside a query when you need granular control (e.g. a system that handles one sub-case and must leave the flag set for a downstream system).
 - Cleanup of the component
   - SDK component removal
   - Scene unloading (`IFinalizeWorldSystem` implementation)

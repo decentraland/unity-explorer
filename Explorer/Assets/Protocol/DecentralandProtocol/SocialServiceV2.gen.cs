@@ -11598,11 +11598,13 @@ namespace Decentraland.SocialService.V2 {
 
     /// <summary>Field number for the "show_situation_reactions" field.</summary>
     public const int ShowSituationReactionsFieldNumber = 3;
+    private readonly static global::Decentraland.SocialService.V2.SituationReactionsVisibility ShowSituationReactionsDefaultValue = global::Decentraland.SocialService.V2.SituationReactionsVisibility.Show;
+
     private global::Decentraland.SocialService.V2.SituationReactionsVisibility showSituationReactions_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::Decentraland.SocialService.V2.SituationReactionsVisibility ShowSituationReactions {
-      get { if ((_hasBits0 & 4) != 0) { return showSituationReactions_; } else { return global::Decentraland.SocialService.V2.SituationReactionsVisibility.Show; } }
+      get { if ((_hasBits0 & 4) != 0) { return showSituationReactions_; } else { return ShowSituationReactionsDefaultValue; } }
       set {
         _hasBits0 |= 4;
         showSituationReactions_ = value;

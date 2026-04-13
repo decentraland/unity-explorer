@@ -660,7 +660,7 @@ namespace Global.Dynamic
             // var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
             // Pulse emotes bus replaces the RFC4 MultiplayerEmotesMessageBus
             // TODO: branch properly depending on server mode
-            IEmotesMessageBus multiplayerEmotesMessageBus = pulseContainer.pulseEmotesMessageBus!;
+            IEmotesMessageBus multiplayerEmotesMessageBus = pulseContainer.pulseMultiplayerBus!;
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
