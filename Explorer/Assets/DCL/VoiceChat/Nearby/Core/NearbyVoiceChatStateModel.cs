@@ -7,9 +7,9 @@ namespace DCL.VoiceChat.Nearby
     public enum NearbyVoiceChatState
     {
         DISABLED,
-        HEARING,
+        IDLE, // default state where user is connected to nearby chat and can hear its participants
         SPEAKING,
-        SUPPRESSED, // when you have another more priority voice chat - Nearby or Community
+        SUPPRESSED, // when you have another more priority voice chat - Private or Community
     }
 
     public class NearbyVoiceChatStateModel : IDisposable
@@ -34,7 +34,7 @@ namespace DCL.VoiceChat.Nearby
         public void Enable()
         {
             if (state.Value == NearbyVoiceChatState.DISABLED)
-                SetState(NearbyVoiceChatState.HEARING);
+                SetState(NearbyVoiceChatState.IDLE);
         }
 
         public void Disable()
@@ -45,14 +45,14 @@ namespace DCL.VoiceChat.Nearby
         // Speaking
         public void StartSpeaking()
         {
-            if (state.Value == NearbyVoiceChatState.HEARING)
+            if (state.Value == NearbyVoiceChatState.IDLE)
                 SetState(NearbyVoiceChatState.SPEAKING);
         }
 
         public void StopSpeaking()
         {
             if (state.Value == NearbyVoiceChatState.SPEAKING)
-                SetState(NearbyVoiceChatState.HEARING);
+                SetState(NearbyVoiceChatState.IDLE);
         }
 
         // Suppression

@@ -78,7 +78,7 @@ namespace DCL.VoiceChat.Nearby
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
 
             if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected
-                && stateModel.State.Value is NearbyVoiceChatState.HEARING or NearbyVoiceChatState.SPEAKING)
+                && stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
                 ActivateWithRetryAsync(activationCts.Token).Forget();
         }
 
@@ -131,7 +131,7 @@ namespace DCL.VoiceChat.Nearby
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
-                        if (stateModel.State.Value is NearbyVoiceChatState.HEARING or NearbyVoiceChatState.SPEAKING)
+                        if (stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
@@ -209,7 +209,7 @@ namespace DCL.VoiceChat.Nearby
                         Deactivate();
                         break;
 
-                    case NearbyVoiceChatState.HEARING:
+                    case NearbyVoiceChatState.IDLE:
                     case NearbyVoiceChatState.SPEAKING:
                         if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {

@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.Enable();
 
             // Assert — player connects to island, starts hearing nearby voices
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         [Test]
         public void TransitionToDisabledFromAnyState(
-            [Values(NearbyVoiceChatState.HEARING, NearbyVoiceChatState.SPEAKING)]
+            [Values(NearbyVoiceChatState.IDLE, NearbyVoiceChatState.SPEAKING)]
             NearbyVoiceChatState activeState)
         {
             // Arrange
@@ -147,7 +147,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StopSpeaking();
 
             // Assert — still hearing nearby players, just not transmitting
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StopSpeaking();
 
             // Assert
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
             Assert.That(stateChanges, Is.Empty);
         }
 
@@ -225,7 +225,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.Resume();
 
             // Assert — back to hearing nearby players
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
         }
 
         [Test]
@@ -254,7 +254,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.Resume();
 
             // Assert
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
             Assert.That(stateChanges, Is.Empty);
         }
 
@@ -265,7 +265,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Player joins island → hears nearby players
             model.Enable();
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
 
             // Player activates microphone → starts speaking to nearby players
             model.StartSpeaking();
@@ -281,7 +281,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Player deactivates microphone → back to hearing only
             model.StopSpeaking();
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.HEARING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
 
             // Player leaves island → feature disabled
             model.Disable();
@@ -304,11 +304,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Assert — every meaningful transition was observed
             Assert.That(stateChanges, Is.EqualTo(new[]
             {
-                NearbyVoiceChatState.HEARING,   // Enable
+                NearbyVoiceChatState.IDLE,   // Enable
                 NearbyVoiceChatState.SPEAKING,   // StartSpeaking
                 NearbyVoiceChatState.SUPPRESSED, // Suppress
                 NearbyVoiceChatState.SPEAKING,   // Resume (back to pre-blocked)
-                NearbyVoiceChatState.HEARING,    // StopSpeaking
+                NearbyVoiceChatState.IDLE,    // StopSpeaking
                 NearbyVoiceChatState.DISABLED,   // Disable
             }));
         }
