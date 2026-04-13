@@ -111,6 +111,7 @@ namespace Global.AppArgs
         {
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
+            public const string CAMPAIGN_ID = "campaign_anon_user_id";
         }
     }
 }
