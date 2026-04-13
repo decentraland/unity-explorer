@@ -46,7 +46,7 @@ namespace DCL.VoiceChat
         public IReadOnlyCollection<string> Speakers => speakers;
 
         public string LocalParticipantId { get; private set; }
-        public VoiceChatParticipantState LocalParticipantState { get; private set; }
+        public VoiceChatParticipantState LocalParticipantState { get; }
         public event ParticipantJoinedDelegate? ParticipantJoined;
         public event Action<string>? ParticipantLeft;
         public event Action<int>? SpeakersUpdated;
@@ -160,13 +160,21 @@ namespace DCL.VoiceChat
 
                             ParticipantJoined?.Invoke(participant.Identity, state);
                             SetOnlineStatus(participant.Identity, true);
+                            #if UNITY_EDITOR
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Participant joined: {participant.Identity}");
+                            #else
                             ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant joined");
+                            #endif
                         }
 
                         break;
 
                     case UpdateFromParticipant.MetadataChanged:
+                        #if UNITY_EDITOR
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"Participant metadata changed: {participant.Identity}");
+                        #else
                         ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant metadata changed");
+                        #endif
 
                         if (participant.Identity == LocalParticipantId)
                         {
@@ -186,7 +194,11 @@ namespace DCL.VoiceChat
                             ParticipantLeft?.Invoke(participant.Identity);
                             activeSpeakers.Remove(participant.Identity);
                             speakers.Remove(participant.Identity);
+                            #if UNITY_EDITOR
+                            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Participant left: {participant.Identity}");
+                            #else
                             ReportHub.Log(ReportCategory.VOICE_CHAT, "Participant left");
+                            #endif
                         }
 
                         break;
