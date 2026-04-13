@@ -48,6 +48,7 @@ namespace DCL.Chat.ChatInput
                     PrivateConversationUserStateService.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
                     PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
                     PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
+                    PrivateConversationUserStateService.ChatUserState.OTHER_CLIENT => config.ConnectedFromAnotherClientMessage,
                     _ => string.Empty
                 };
             }

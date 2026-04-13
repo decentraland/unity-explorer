@@ -1,6 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -27,11 +28,12 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ObjectProxy<IRoomHub> roomHubProxy;
         private readonly CacheCleaner cacheCleaner;
         private readonly AssetPreLoadCache assetPreLoadCache;
+        private readonly IAnalyticsController analyticsController;
 
         private readonly MediaVolume mediaVolume;
 
         public MediaPlayerContainer(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, VolumeBus volumeBus, IPerformanceBudget frameBudget, ObjectProxy<IRoomHub> roomHubProxy,
-            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache)
+            CacheCleaner cacheCleaner, AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
@@ -39,6 +41,7 @@ namespace DCL.SDKComponents.MediaStream
             this.roomHubProxy = roomHubProxy;
             this.cacheCleaner = cacheCleaner;
             this.assetPreLoadCache = assetPreLoadCache;
+            this.analyticsController = analyticsController;
 
             mediaVolume = new MediaVolume(volumeBus);
         }
@@ -67,7 +70,7 @@ namespace DCL.SDKComponents.MediaStream
 
             cacheCleaner.Register(videoTexturesPool);
 
-            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache);
+            mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController);
         }
 
         public override void Dispose() =>
