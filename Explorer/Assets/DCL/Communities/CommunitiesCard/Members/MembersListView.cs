@@ -183,8 +183,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             // Owner can kick / ban either members and moderators,
             // moderators can only kick / ban members
             bool viewerCanKickOrBan = communityData?.role is CommunityMemberRole.owner
-                ? profile.Role is CommunityMemberRole.member or CommunityMemberRole.moderator
-                : communityData?.role is CommunityMemberRole.moderator && profile.Role is CommunityMemberRole.member;
+                ? profile.Role is not CommunityMemberRole.owner
+                : communityData?.role is CommunityMemberRole.moderator && profile.Role is not CommunityMemberRole.owner && profile.Role is not CommunityMemberRole.moderator;
 
             kickUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
             banUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
