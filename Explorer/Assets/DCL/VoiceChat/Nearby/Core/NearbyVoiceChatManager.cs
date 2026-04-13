@@ -111,10 +111,10 @@ namespace DCL.VoiceChat.Nearby
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackSubscribed(publication, participant).Forget();
+            => remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
-            => remoteListener.HandleTrackUnsubscribed(publication, participant).Forget();
+            => remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
         {
@@ -161,7 +161,7 @@ namespace DCL.VoiceChat.Nearby
                 try
                 {
                     await micPublisher.PublishAsync(false, ct);
-                    remoteListener.StartListening().Forget();
+                    remoteListener.StartListeningAsync().Forget();
 
                     ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 

@@ -227,16 +227,16 @@ namespace DCL.VoiceChat
         }
 
         private void OnTrackSubscribed(ITrack _, TrackPublication publication, Participant participant) =>
-            remoteListener.HandleTrackSubscribed(publication, participant).Forget();
+            remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
 
         private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant) =>
-            remoteListener.HandleTrackUnsubscribed(publication, participant).Forget();
+            remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
 
         private void OnLocalTrackPublished(TrackPublication publication, Participant participant) =>
-            remoteListener.HandleTrackSubscribed(publication, participant, isLocalLoopback: true).Forget();
+            remoteListener.HandleTrackSubscribedAsync(publication, participant, isLocalLoopback: true).Forget();
 
         private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant) =>
-            remoteListener.HandleTrackUnsubscribed(publication, participant, isLocalLoopback: true).Forget();
+            remoteListener.HandleTrackUnsubscribedAsync(publication, participant, isLocalLoopback: true).Forget();
 
         private static void OnReconnectionStarted() =>
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection process started");
@@ -257,7 +257,7 @@ namespace DCL.VoiceChat
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                remoteListener.StartListening().Forget();
+                remoteListener.StartListeningAsync().Forget();
 
                 ConnectionEstablished?.Invoke();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");

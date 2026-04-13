@@ -50,7 +50,7 @@ namespace DCL.VoiceChat
         public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output) =>
             voiceChatRoom.AudioStreams.ListInfo(output);
 
-        public async UniTaskVoid StartListening()
+        public async UniTaskVoid StartListeningAsync()
         {
             if (!PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToMainThread();
@@ -88,7 +88,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public async UniTaskVoid HandleTrackSubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackSubscribedAsync(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
             if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
@@ -103,7 +103,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : "(new remote)")}"); }
         }
 
-        public async UniTaskVoid HandleTrackUnsubscribed(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackUnsubscribedAsync(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
         {
             if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
             if (publication.Kind != TrackKind.KindAudio) return;
