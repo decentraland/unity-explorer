@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
             VoiceChatActivatableConnectiveRoom.Null.INSTANCE;
 
-        public bool TryGetUser(string wallet, out Participant? participant, out IRoom? room)
+        public bool TryGetUser(string wallet, out LKParticipant? participant, out IRoom? room)
         {
             participant = null;
             room = null;

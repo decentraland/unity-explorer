@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
@@ -34,7 +35,7 @@ namespace DCL.VoiceChat
         private readonly ConcurrentDictionary<string, ReactiveProperty<bool>> onlineStatus = new ();
         private readonly HashSet<string> speakers = new ();
 
-        private readonly List<Participant> currentParticipants = new();
+        private readonly List<LKParticipant> currentParticipants = new();
         private readonly List<string> participantsToRemove = new();
         private readonly List<(string participantId, VoiceChatParticipantState state)> joinedParticipants = new();
 
@@ -124,7 +125,7 @@ namespace DCL.VoiceChat
             return participantStates.TryGetValue(participantId, out participantState);
         }
 
-        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -248,7 +249,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -293,7 +294,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void HandleDisconnection(DisconnectReason? disconnectReason)
+        private void HandleDisconnection(LKDisconnectReason? disconnectReason)
         {
             bool shouldClearData = VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason);
 
@@ -350,7 +351,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity cleared, reset LocalParticipantId and state");
         }
 
-        private VoiceChatParticipantState CreateParticipantState(Participant participant)
+        private VoiceChatParticipantState CreateParticipantState(LKParticipant participant)
         {
             var state = VoiceChatParticipantState.CreateDefault(participant.Identity);
 
@@ -406,7 +407,7 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
             }
 
-            foreach (Participant participant in currentParticipants)
+            foreach (LKParticipant participant in currentParticipants)
             {
                 if (participantStates.TryGetValue(participant.Identity, out VoiceChatParticipantState existingState))
                 {
@@ -421,7 +422,7 @@ namespace DCL.VoiceChat
                 }
             }
 
-            Participant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+            LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
             RefreshParticipantStateFromMetadata(localParticipant, LocalParticipantState);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
 
@@ -429,7 +430,7 @@ namespace DCL.VoiceChat
             SpeakersUpdated?.Invoke(speakers.Count);
         }
 
-        private void RefreshParticipantStateFromMetadata(Participant? participant, VoiceChatParticipantState? existingState)
+        private void RefreshParticipantStateFromMetadata(LKParticipant? participant, VoiceChatParticipantState? existingState)
         {
             if (participant == null || existingState == null) return;
 
