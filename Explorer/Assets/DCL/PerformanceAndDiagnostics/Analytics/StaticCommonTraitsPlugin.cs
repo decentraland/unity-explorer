@@ -62,7 +62,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent["is_local_scene"] = isLocalSceneDevelopment;
 
             if (!string.IsNullOrEmpty(campaignAnonUserId))
-                trackEvent["campaignAnonUserId"] = campaignAnonUserId;
+                trackEvent["campaign_anon_user_id"] = campaignAnonUserId;
         }
     }
 
@@ -83,7 +83,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
             appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
-            appArgs.TryGetValue(AppArgsFlags.Analytics.CAMPAIGN_ID, out string? campaignAnonUserId);
+            appArgs.TryGetValue(AppArgsFlags.Analytics.CAMPAIGN_ANON_USER_ID, out string? campaignAnonUserId);
             return new LauncherTraits(launcherAnonymousId!, sessionId!, campaignAnonUserId);
         }
     }
