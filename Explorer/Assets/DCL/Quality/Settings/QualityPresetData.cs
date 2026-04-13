@@ -34,6 +34,9 @@ namespace DCL.Quality
         [SerializeField] internal ShadowQualityLevel shadowsQualityLevel;
         [SerializeField] internal int shadowDistance;
 
+        [Header("Other")]
+        [SerializeField] internal bool playCurrentSceneStreamsOnly;
+
         public int FpsLimit => fpsLimit;
         public bool VSyncEnabled => vSyncEnabled;
         public float ResolutionScale => resolutionScale;
@@ -49,6 +52,7 @@ namespace DCL.Quality
         public int MaxSceneLights => maxSceneLights;
         public ShadowQualityLevel ShadowsQualityLevel => shadowsQualityLevel;
         public int ShadowDistance => shadowDistance;
+        public bool PlayCurrentSceneStreamsOnly => playCurrentSceneStreamsOnly;
     }
 
     [Serializable]

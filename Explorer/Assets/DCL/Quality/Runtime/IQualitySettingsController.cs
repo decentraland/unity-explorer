@@ -37,6 +37,9 @@ namespace DCL.Quality.Runtime
         ShadowQualityLevel SceneShadowQuality { get; }
         int ShadowDistance { get; }
 
+        // Other
+        bool PlayCurrentSceneStreamsOnly { get; }
+
         /// <summary>
         ///     Applies a full preset, resetting all individual overrides
         /// </summary>
@@ -73,5 +76,8 @@ namespace DCL.Quality.Runtime
         // General Shadows
         void SetShadowQuality(ShadowQualityLevel level);
         void SetShadowDistance(int distance);
+
+        // Other
+        void SetPlayCurrentSceneStreamsOnly(bool enabled);
     }
 }
