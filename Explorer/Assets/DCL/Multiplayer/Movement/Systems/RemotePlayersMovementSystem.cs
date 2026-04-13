@@ -294,7 +294,8 @@ namespace DCL.Multiplayer.Movement.Systems
             float speed = MovementSpeedLimitHelper.GetMovementSpeedLimit(characterControllerSettings, movementKind);
 
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
-            intComp.UseMessageRotation = false;
+
+            // intComp.UseMessageRotation = false;
 
             intComp.Start.movementKind = movementKind;
             intComp.Start.animState.MovementBlendValue = (uint)movementKind;
