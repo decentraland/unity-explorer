@@ -4,6 +4,7 @@ using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleViews;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -22,13 +23,18 @@ namespace DCL.Settings.ModuleControllers
 
         protected override void OnPresetChanged(QualityPresetLevel _)
         {
-            ManualUpdate(qualitySettingsController.VSync);
+            ManualUpdate(qualitySettingsController.PlayCurrentSceneStreamsOnly);
         }
 
         private void SetPlayCurrentSceneStream(bool enabled)
         {
             qualitySettingsController.SetPlayCurrentSceneStreamsOnly(enabled);
             videoPrioritizationSettings.PlayCurrentSceneStreamOnly = enabled;
+        }
+        
+        public override void OnAllControllersInstantiated(List<SettingsFeatureController> controllers)
+        {
+            ManualUpdate(qualitySettingsController.PlayCurrentSceneStreamsOnly);
         }
 
         private void ManualUpdate(bool active)
