@@ -43,7 +43,6 @@ namespace DCL.VoiceChat
         private readonly ReactiveProperty<ActiveCommunityVoiceChat?> currentSceneActiveCommunityData = new (null);
 
         private IVoiceChatCallStatusServiceBase? activeCallStatusService;
-        private IVoiceChatOrchestrator? voiceChatOrchestratorImplementation;
         private CancellationTokenSource joinCallCts = new ();
 
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;

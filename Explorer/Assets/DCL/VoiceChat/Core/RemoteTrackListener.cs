@@ -113,9 +113,9 @@ namespace DCL.VoiceChat
             try
             {
                 playbackSourcesHub.TryRemoveStream(new StreamKey(participant.Identity, publication.Sid));
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : "(new remote)")}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : " (new remote)")}");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : "(new remote)")}"); }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : " (new remote)")}"); }
         }
 
         internal void MuteAll()
