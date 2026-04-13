@@ -1763,6 +1763,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1232204445048372571}
     m_Modifications:
+    - target: {fileID: 169087594940755901, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_MaskingMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Pivot.x
       value: 0
