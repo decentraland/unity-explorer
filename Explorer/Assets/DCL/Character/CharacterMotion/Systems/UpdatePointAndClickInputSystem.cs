@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Prefs;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
@@ -123,6 +124,9 @@ namespace DCL.CharacterMotion.Systems
             normal = Vector3.up;
 
             if (!navigateToAction.WasPerformedThisFrame())
+                return false;
+
+            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_DOUBLE_TAP_TO_MOVE, false))
                 return false;
 
             var mouse = Mouse.current;
