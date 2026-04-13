@@ -132,7 +132,7 @@ namespace DCL.PluginSystem.Global
             remoteListener = new RemoteTrackListener(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatConfiguration,
-                new PlaybackSourcesHub("Community", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
+                new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
 
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
             pluginScope.Add(roomManager);
