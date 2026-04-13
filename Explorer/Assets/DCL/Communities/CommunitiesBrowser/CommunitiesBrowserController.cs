@@ -446,19 +446,22 @@ namespace DCL.Communities.CommunitiesBrowser
 
             // Get the current invites & received requests to update the invite counter on the main page
             updateInvitesCounterCts = updateInvitesCounterCts.SafeRestart();
-            RefreshInvitesCounterAsync().Forget();
+            RefreshInvitesCounterAsync(updateInvitesCounterCts.Token).Forget();
             return;
 
-            async UniTaskVoid RefreshInvitesCounterAsync()
+            async UniTaskVoid RefreshInvitesCounterAsync(CancellationToken ct)
             {
                 try
                 {
-                    int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, updateInvitesCounterCts.Token);
-                    int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, updateInvitesCounterCts.Token);
+                    int invitesCount = await LoadInvitesAsync(updateInvitesGrid: false, ct);
+                    int receivedRequestsCount = await LoadRequestsReceivedAsync(updateRequestsReceivedGrid: false, ct);
+
+                    if (ct.IsCancellationRequested)
+                        return;
+
                     view.InvitesAndRequestsView.SetInvitesAndRequestsCounter(invitesCount + receivedRequestsCount);
                 }
                 catch (OperationCanceledException) {}
-                catch (ObjectDisposedException) {}
             }
         }
 
