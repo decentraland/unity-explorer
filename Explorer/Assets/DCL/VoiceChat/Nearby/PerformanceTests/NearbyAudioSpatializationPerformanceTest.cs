@@ -6,7 +6,7 @@ using Unity.PerformanceTesting;
 using Unity.Profiling;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
     /// Benchmarks the ILD equal-power panning cost of <c>LivekitAudioSource.ApplySpatialPanning</c>.
@@ -16,11 +16,11 @@ namespace DCL.VoiceChat.Proximity
     /// from a LiveKit room connection to reach the panning code path.
     ///
     /// For real AudioThread profiling with panning enabled (via fake stream injection),
-    /// use <see cref="ProximityAudioPerformanceManualTest"/> with the Unity Profiler —
+    /// use <see cref="NearbyAudioPerformanceManualTest"/> with the Unity Profiler —
     /// look for <c>LiveKit.Spatial.ILD.EqualPower</c> marker on the Audio Mixer Thread.
     /// </summary>
     [Category("Performance")]
-    public class ProximityAudioSpatializationPerformanceTest
+    public class NearbyAudioSpatializationPerformanceTest
     {
         private static readonly MethodInfo APPLY_SPATIAL_PANNING = typeof(LivekitAudioSource)
             .GetMethod("ApplySpatialPanning", BindingFlags.NonPublic | BindingFlags.Instance);

@@ -23,7 +23,7 @@ namespace DCL.VoiceChat
 {
     /// <summary>
     ///     Manages local microphone track publishing lifecycle.
-    ///     Used for both community and proximity voice chat.
+    ///     Used for both community and nearby voice chat.
     /// </summary>
     public class MicrophoneTrackPublisher : IDisposable
     {

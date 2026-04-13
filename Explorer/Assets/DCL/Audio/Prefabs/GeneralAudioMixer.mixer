@@ -162,7 +162,7 @@ AudioMixerController:
   - guid: 2ae382bb957ecd041acc0173f112a35f
     name: Music_Volume
   - guid: 62be0924fc021d348ba4b81f3129d674
-    name: ProximityVoiceChat_Volume
+    name: NearbyVoiceChat_Volume
   - guid: aa94afff7f3a3c547b715ba6b1477eeb
     name: UI_Volume
   - guid: 356c59c6149334c7ab06612e531fbcee
@@ -341,7 +341,7 @@ AudioMixerGroupController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ProximityVoiceChat
+  m_Name: NearbyVoiceChat
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 871cbae600ef66242800ec4ebc6981e2
   m_Children: []

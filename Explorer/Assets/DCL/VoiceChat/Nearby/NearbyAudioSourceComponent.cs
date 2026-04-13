@@ -1,20 +1,20 @@
 using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    /// Marks a remote entity as having an associated proximity audio source.
-    /// Position is synced each frame by <see cref="ProximityAudioPositionSystem"/>.
+    /// Marks a remote entity as having an associated nearby audio source.
+    /// Position is synced each frame by <see cref="NearbyAudioPositionSystem"/>.
     /// </summary>
-    public struct ProximityAudioSourceComponent
+    public struct NearbyAudioSourceComponent
     {
         public readonly string ParticipantIdentity;
 
         public LivekitAudioSource LivekitAudioSource;
         public Transform Transform;
 
-        public ProximityAudioSourceComponent(string participantIdentity, LivekitAudioSource livekitAudioSource)
+        public NearbyAudioSourceComponent(string participantIdentity, LivekitAudioSource livekitAudioSource)
         {
             ParticipantIdentity = participantIdentity;
             LivekitAudioSource = livekitAudioSource;

@@ -7,7 +7,7 @@ namespace DCL.VoiceChat
 {
     /// <summary>
     ///     Wraps a published microphone track with owned lifecycle management.
-    ///     Shared between Core and Proximity publishers.
+    ///     Shared between Core and Nearby publishers.
     /// </summary>
     internal readonly struct MicrophoneTrack : IDisposable
     {

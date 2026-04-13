@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities;
-using DCL.VoiceChat.Proximity;
+using DCL.VoiceChat.Nearby;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
@@ -24,7 +24,7 @@ namespace DCL.VoiceChat
 
         private Weak<MicrophoneRtcAudioSource> callSource = Weak<MicrophoneRtcAudioSource>.Null;
         private Weak<MicrophoneRtcAudioSource> spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
-        private ProximityVoiceChatStateModel? proximityStateModel;
+        private NearbyVoiceChatStateModel? nearbyStateModel;
 
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
@@ -100,8 +100,8 @@ namespace DCL.VoiceChat
 
                 if (isSpatialActive)
                 {
-                    if (newState) proximityStateModel?.StartSpeaking();
-                    else proximityStateModel?.StopSpeaking();
+                    if (newState) nearbyStateModel?.StartSpeaking();
+                    else nearbyStateModel?.StopSpeaking();
                 }
 
                 NotifyMicrophoneStateChange(newState);
@@ -116,7 +116,7 @@ namespace DCL.VoiceChat
                 case VoiceChatType.PRIVATE:
                     callSource = newSource;
                     break;
-                case VoiceChatType.PROXIMITY:
+                case VoiceChatType.NEARBY:
                     spatialSource = newSource;
                     break;
             }
@@ -131,16 +131,16 @@ namespace DCL.VoiceChat
                     if (callSource.Resource.Has) callSource.Resource.Value.Stop();
                     callSource = Weak<MicrophoneRtcAudioSource>.Null;
                     break;
-                case VoiceChatType.PROXIMITY:
+                case VoiceChatType.NEARBY:
                     if (spatialSource.Resource.Has) spatialSource.Resource.Value.Stop();
                     spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
                     break;
             }
         }
 
-        public void SetProximityStateModel(ProximityVoiceChatStateModel? model)
+        public void SetNearbyStateModel(NearbyVoiceChatStateModel? model)
         {
-            proximityStateModel = model;
+            nearbyStateModel = model;
         }
 
         internal void EnableMicrophone()
@@ -150,7 +150,7 @@ namespace DCL.VoiceChat
             isMicrophoneEnabledProperty.Value = true;
 
             if (isSpatialActive)
-                proximityStateModel?.StartSpeaking();
+                nearbyStateModel?.StartSpeaking();
 
             NotifyMicrophoneStateChange(true);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
@@ -180,7 +180,7 @@ namespace DCL.VoiceChat
                 isMicrophoneEnabledProperty.Value = false;
 
                 if (isSpatialActive)
-                    proximityStateModel?.StopSpeaking();
+                    nearbyStateModel?.StopSpeaking();
 
                 NotifyMicrophoneStateChange(false);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");

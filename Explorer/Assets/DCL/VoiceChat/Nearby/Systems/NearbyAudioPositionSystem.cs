@@ -16,17 +16,17 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity.Systems
+namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    /// Handles positioning of Audio Sources for Proximity Voice Chat
-    ///    - Assigns <see cref="ProximityAudioSourceComponent"/> to remote entities who participate in the Proximity Chat
+    /// Handles positioning of Audio Sources for Nearby Voice Chat
+    ///    - Assigns <see cref="NearbyAudioSourceComponent"/> to remote entities who participate in the Nearby Chat
     ///    - syncs AudioSource positions with <see cref="CharacterTransform"/> each frame, and applies spatial audio settings.
     /// <see cref="VoiceChatConfiguration"/> is the single source of truth.
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
-    public partial class ProximityAudioPositionSystem : BaseUnityLoopSystem
+    public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
         private const float FALLBACK_HEAD_HEIGHT = 1.75f;
 
@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.Proximity.Systems
         private SingleInstanceEntity playerEntity;
         private bool isFirstPerson;
 
-        internal ProximityAudioPositionSystem(World world,
+        internal NearbyAudioPositionSystem(World world,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources) : base(world)
         {
@@ -66,7 +66,7 @@ namespace DCL.VoiceChat.Proximity.Systems
             SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
 
             foreach (Entity entity in entitiesToCleanUp)
-                World.Remove<ProximityAudioSourceComponent>(entity);
+                World.Remove<NearbyAudioSourceComponent>(entity);
         }
 
         private void AssignPendingSources()
@@ -79,9 +79,9 @@ namespace DCL.VoiceChat.Proximity.Systems
                 if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
                 if (World.Has<DeleteEntityIntention>(entry.Entity)) continue;
 
-                if (World.Has<ProximityAudioSourceComponent>(entry.Entity))
+                if (World.Has<NearbyAudioSourceComponent>(entry.Entity))
                 {
-                    ref ProximityAudioSourceComponent component = ref World.Get<ProximityAudioSourceComponent>(entry.Entity);
+                    ref NearbyAudioSourceComponent component = ref World.Get<NearbyAudioSourceComponent>(entry.Entity);
                     component.LivekitAudioSource = kvp.Value;
                     component.Transform = kvp.Value.transform;
                 }
@@ -93,7 +93,7 @@ namespace DCL.VoiceChat.Proximity.Systems
 
             // Pass 2: structural changes (World.Add) after all refs are released
             foreach ((Entity entity, string key, LivekitAudioSource source) in entitiesToAdd)
-                World.Add(entity, new ProximityAudioSourceComponent(key, source));
+                World.Add(entity, new NearbyAudioSourceComponent(key, source));
         }
 
         private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
@@ -111,9 +111,9 @@ namespace DCL.VoiceChat.Proximity.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos,
-            Entity entity, in CharacterTransform characterTransform, ref ProximityAudioSourceComponent proximityAudio)
+            Entity entity, in CharacterTransform characterTransform, ref NearbyAudioSourceComponent nearbyAudio)
         {
-            if (!activeAudioSources.ContainsKey(proximityAudio.ParticipantIdentity))
+            if (!activeAudioSources.ContainsKey(nearbyAudio.ParticipantIdentity))
             {
                 entitiesToCleanUp.Add(entity);
                 return;
@@ -125,10 +125,10 @@ namespace DCL.VoiceChat.Proximity.Systems
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
-            proximityAudio.Transform.position = sourcePos;
+            nearbyAudio.Transform.position = sourcePos;
 
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
-            proximityAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
+            nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
         }
 
         private static (float azimuth, float elevation) CalculateSpatialAngles(Transform listenerTransform, Vector3 sourcePosition)

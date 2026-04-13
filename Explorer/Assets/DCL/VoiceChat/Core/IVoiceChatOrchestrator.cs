@@ -8,7 +8,7 @@ namespace DCL.VoiceChat
         NONE,
         PRIVATE,
         COMMUNITY,
-        PROXIMITY,
+        NEARBY,
     }
 
     public enum VoiceChatPanelSize

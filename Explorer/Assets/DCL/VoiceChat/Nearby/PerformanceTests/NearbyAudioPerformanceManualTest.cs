@@ -7,10 +7,10 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    /// Manual performance testbed for proximity spatial audio with real panning.
+    /// Manual performance testbed for nearby spatial audio with real panning.
     /// Attach to any GameObject, adjust source count at runtime via Inspector or on-screen slider.
     /// Creates real <see cref="LivekitAudioSource"/> instances with a playing test tone
     /// and an injected fake <c>AudioStream</c> so that <c>ApplySpatialPanning</c> executes
@@ -19,7 +19,7 @@ namespace DCL.VoiceChat.Proximity
     /// The fake stream bypasses FFI (<c>ReadAudio</c> early-returns on disposed internal)
     /// while letting the panning code path run. Audio data comes from the test tone clip.
     /// </summary>
-    public class ProximityAudioPerformanceManualTest : MonoBehaviour
+    public class NearbyAudioPerformanceManualTest : MonoBehaviour
     {
         [Header("Sources")]
         [Range(0, 200)]
@@ -135,7 +135,7 @@ namespace DCL.VoiceChat.Proximity
             var boxStyle = new GUIStyle(GUI.skin.box) { fontSize = 14 };
             GUILayout.BeginVertical(boxStyle);
 
-            GUILayout.Label("<b>Proximity Audio Perf Testbed</b>", new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 });
+            GUILayout.Label("<b>Nearby Audio Perf Testbed</b>", new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 });
 
             GUILayout.Space(4);
             GUILayout.Label($"Active Sources: {activeSources.Count}");

@@ -13,38 +13,38 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Orchestrates proximity voice chat: coordinates state transitions (Hearing/Speaking/Suppressed/Disabled),
+    ///     Orchestrates nearby voice chat: coordinates state transitions (Hearing/Speaking/Suppressed/Disabled),
     ///     delegates microphone publishing to <see cref="MicrophoneTrackPublisher"/>,
     ///     delegates remote track management to <see cref="RemoteTrackListener"/>.
     ///     Mic control (PTT, device switching) is handled by <see cref="VoiceChatMicrophoneHandler"/>.
     /// </summary>
-    public class ProximityVoiceChatManager : IDisposable
+    public class NearbyVoiceChatManager : IDisposable
     {
-        private const string TAG = nameof(ProximityVoiceChatManager);
+        private const string TAG = nameof(NearbyVoiceChatManager);
 
         private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
-        private readonly ProximityVoiceChatStateModel stateModel;
+        private readonly NearbyVoiceChatStateModel stateModel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
-        private readonly IDisposable? proximityStateSubscription;
+        private readonly IDisposable? nearbyStateSubscription;
 
         private CancellationTokenSource activationCts = new ();
 
         private bool disposed;
 
-        public ProximityVoiceChatManager(
+        public NearbyVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            ProximityVoiceChatStateModel stateModel,
+            NearbyVoiceChatStateModel stateModel,
             VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.islandRoom = islandRoom;
@@ -52,33 +52,33 @@ namespace DCL.VoiceChat.Proximity
             this.stateModel = stateModel;
             this.microphoneHandler = microphoneHandler;
 
-            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.PROXIMITY);
+            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.NEARBY);
 
-            var proximityHub = new PlaybackSourcesHub(
-                parentNameSuffix: "Proximity",
-                configuration.ProximityChatAudioMixerGroup,
+            var nearbyHub = new PlaybackSourcesHub(
+                parentNameSuffix: "Nearby",
+                configuration.NearbyChatAudioMixerGroup,
                 spatial: true,
                 onSourceConfigured: (key, lkSource) =>
                 {
-                    configuration.ApplyProximitySettings(lkSource.AudioSource);
+                    configuration.ApplyNearbySettings(lkSource.AudioSource);
                     configuration.ApplyLivekitSpatialSettings(lkSource);
                     activeAudioSources[key.identity] = lkSource;
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, proximityHub);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
-            proximityStateSubscription = stateModel.State.Subscribe(OnProximityStateChanged);
+            nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
 
             if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected
-                && stateModel.State.Value is ProximityVoiceChatState.HEARING or ProximityVoiceChatState.SPEAKING)
+                && stateModel.State.Value is NearbyVoiceChatState.HEARING or NearbyVoiceChatState.SPEAKING)
                 ActivateWithRetryAsync(activationCts.Token).Forget();
         }
 
@@ -89,7 +89,7 @@ namespace DCL.VoiceChat.Proximity
 
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
-            proximityStateSubscription?.Dispose();
+            nearbyStateSubscription?.Dispose();
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -99,7 +99,7 @@ namespace DCL.VoiceChat.Proximity
             micPublisher.Dispose();
             remoteListener.Dispose();
 
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"{TAG} Disposed");
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"{TAG} Disposed");
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -125,13 +125,13 @@ namespace DCL.VoiceChat.Proximity
             {
                 await UniTask.SwitchToMainThread();
 
-                ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT,
+                ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT,
                     $"Island Room connection: {connectionUpdate}{(disconnectReason.HasValue ? $" (reason: {disconnectReason.Value})" : "")}");
 
                 switch (connectionUpdate)
                 {
                     case ConnectionUpdate.Connected:
-                        if (stateModel.State.Value is ProximityVoiceChatState.HEARING or ProximityVoiceChatState.SPEAKING)
+                        if (stateModel.State.Value is NearbyVoiceChatState.HEARING or NearbyVoiceChatState.SPEAKING)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
@@ -142,7 +142,7 @@ namespace DCL.VoiceChat.Proximity
                         activationCts.SafeCancelAndDispose();
 
                         if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
-                            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
+                            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
 
                         Deactivate();
                         break;
@@ -163,9 +163,9 @@ namespace DCL.VoiceChat.Proximity
                     await micPublisher.PublishAsync(false, ct);
                     remoteListener.StartListening().Forget();
 
-                    ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
+                    ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
-                    if (stateModel.State.Value == ProximityVoiceChatState.SPEAKING)
+                    if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
                         microphoneHandler.EnableMicrophone();
 
                     return;
@@ -173,14 +173,14 @@ namespace DCL.VoiceChat.Proximity
                 catch (OperationCanceledException) { return; }
                 catch (Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.PROXIMITY_VOICE_CHAT,
+                    ReportHub.LogWarning(ReportCategory.NEARBY_VOICE_CHAT,
                         $"Activation attempt {attempt}/{configuration.MaxReconnectionAttempts} failed: {ex.Message}");
 
                     Deactivate();
 
                     if (attempt >= configuration.MaxReconnectionAttempts)
                     {
-                        ReportHub.LogError(ReportCategory.PROXIMITY_VOICE_CHAT, "All activation attempts exhausted");
+                        ReportHub.LogError(ReportCategory.NEARBY_VOICE_CHAT, "All activation attempts exhausted");
                         return;
                     }
 
@@ -190,12 +190,12 @@ namespace DCL.VoiceChat.Proximity
             }
         }
 
-        private void OnProximityStateChanged(ProximityVoiceChatState newState)
+        private void OnNearbyStateChanged(NearbyVoiceChatState newState)
         {
-            OnProximityStateChangedInternalAsync(newState).Forget();
+            OnNearbyStateChangedInternalAsync(newState).Forget();
             return;
 
-            async UniTaskVoid OnProximityStateChangedInternalAsync(ProximityVoiceChatState state)
+            async UniTaskVoid OnNearbyStateChangedInternalAsync(NearbyVoiceChatState state)
             {
                 await UniTask.SwitchToMainThread();
 
@@ -203,14 +203,14 @@ namespace DCL.VoiceChat.Proximity
 
                 switch (state)
                 {
-                    case ProximityVoiceChatState.DISABLED:
-                    case ProximityVoiceChatState.SUPPRESSED:
+                    case NearbyVoiceChatState.DISABLED:
+                    case NearbyVoiceChatState.SUPPRESSED:
                         activationCts.SafeCancelAndDispose();
                         Deactivate();
                         break;
 
-                    case ProximityVoiceChatState.HEARING:
-                    case ProximityVoiceChatState.SPEAKING:
+                    case NearbyVoiceChatState.HEARING:
+                    case NearbyVoiceChatState.SPEAKING:
                         if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
@@ -225,7 +225,7 @@ namespace DCL.VoiceChat.Proximity
         {
             micPublisher.Unpublish();
             remoteListener.StopListeningAsync().Forget();
-            ReportHub.Log(ReportCategory.PROXIMITY_VOICE_CHAT, "Deactivated");
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Deactivated");
         }
     }
 }

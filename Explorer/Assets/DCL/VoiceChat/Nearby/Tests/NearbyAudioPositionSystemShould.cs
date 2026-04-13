@@ -3,7 +3,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.VoiceChat.Proximity.Systems;
+using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming.Audio;
@@ -13,17 +13,17 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity.Tests
+namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents the Proximity Audio Position System behavior:
+    /// Documents the Nearby Audio Position System behavior:
     ///
-    /// - Assigns <see cref="ProximityAudioSourceComponent"/> to remote entities who participate in Proximity Chat
+    /// - Assigns <see cref="NearbyAudioSourceComponent"/> to remote entities who participate in Nearby Chat
     /// - Syncs AudioSource positions with avatar head positions each frame for 3D spatial audio
     /// - Cleans up components when a participant leaves or their audio source is removed
     /// - Safely handles ECS structural changes (two-pass pattern to avoid ref invalidation)
     /// </summary>
-    public class ProximityAudioPositionSystemShould : UnitySystemTestBase<ProximityAudioPositionSystem>
+    public class NearbyAudioPositionSystemShould : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
         private const string PARTICIPANT_A = "wallet-alice";
         private const string PARTICIPANT_B = "wallet-bob";
@@ -51,7 +51,7 @@ namespace DCL.VoiceChat.Proximity.Tests
             var playerGo = CreateTrackedGameObject("TestPlayer");
             playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new ProximityAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
+            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
             system.Initialize();
         }
 
@@ -77,10 +77,10 @@ namespace DCL.VoiceChat.Proximity.Tests
             // Act
             system.Update(0);
 
-            // Assert — system assigned a ProximityAudioSourceComponent to track spatial audio
-            Assert.That(world.Has<ProximityAudioSourceComponent>(remoteEntity), Is.True);
+            // Assert — system assigned a NearbyAudioSourceComponent to track spatial audio
+            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.True);
 
-            ref readonly ProximityAudioSourceComponent comp = ref world.Get<ProximityAudioSourceComponent>(remoteEntity);
+            ref readonly NearbyAudioSourceComponent comp = ref world.Get<NearbyAudioSourceComponent>(remoteEntity);
             Assert.That(comp.ParticipantIdentity, Is.EqualTo(PARTICIPANT_A));
             Assert.That(comp.LivekitAudioSource, Is.EqualTo(audioSource));
         }
@@ -101,8 +101,8 @@ namespace DCL.VoiceChat.Proximity.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<ProximityAudioSourceComponent>(entityA), Is.True);
-            Assert.That(world.Has<ProximityAudioSourceComponent>(entityB), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(entityA), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(entityB), Is.True);
         }
 
         [Test]
@@ -120,13 +120,13 @@ namespace DCL.VoiceChat.Proximity.Tests
             system.Update(0);
 
             // Assert — component not assigned to dying entity
-            Assert.That(world.Has<ProximityAudioSourceComponent>(remoteEntity), Is.False);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.False);
         }
 
         [Test]
         public void UpdateExistingComponentWhenAudioSourceChanges()
         {
-            // Arrange — Alice already has a proximity component
+            // Arrange — Alice already has a nearby component
             Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, Vector3.zero);
             LivekitAudioSource oldSource = CreateLivekitAudioSource();
 
@@ -142,14 +142,14 @@ namespace DCL.VoiceChat.Proximity.Tests
             system.Update(0);
 
             // Assert — existing component updated in-place, no structural change needed
-            ref readonly ProximityAudioSourceComponent comp = ref world.Get<ProximityAudioSourceComponent>(remoteEntity);
+            ref readonly NearbyAudioSourceComponent comp = ref world.Get<NearbyAudioSourceComponent>(remoteEntity);
             Assert.That(comp.LivekitAudioSource, Is.EqualTo(newSource));
         }
 
         // ── Source Cleanup ──────────────────────────────────────────
 
         [Test]
-        public void RemoveComponentWhenParticipantLeavesProximity()
+        public void RemoveComponentWhenParticipantLeavesNearby()
         {
             // Arrange — Alice was nearby, had an assigned audio source
             Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, new Vector3(5, 0, 0));
@@ -157,7 +157,7 @@ namespace DCL.VoiceChat.Proximity.Tests
             activeAudioSources[PARTICIPANT_A] = CreateLivekitAudioSource();
 
             system.Update(0);
-            Assert.That(world.Has<ProximityAudioSourceComponent>(remoteEntity), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.True);
 
             // Act — Alice's audio stream ended (left island, moved out of range, etc.)
             activeAudioSources.TryRemove(PARTICIPANT_A, out _);
@@ -165,7 +165,7 @@ namespace DCL.VoiceChat.Proximity.Tests
             system.Update(0);
 
             // Assert — component cleaned up, entity continues to exist without spatial audio
-            Assert.That(world.Has<ProximityAudioSourceComponent>(remoteEntity), Is.False);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.False);
         }
 
         // ── Position Sync ───────────────────────────────────────────

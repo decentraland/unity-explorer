@@ -46,11 +46,11 @@ namespace DCL.VoiceChat
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
 
-        [Tooltip("Specify group where proximity voice chat sources should put its output")]
-        public AudioMixerGroup ProximityChatAudioMixerGroup;
+        [Tooltip("Specify group where nearby voice chat sources should put its output")]
+        public AudioMixerGroup NearbyChatAudioMixerGroup;
 
-        [Header("PROXIMITY")]
-        public AnimationCurve ProximityCustomRolloffCurve = new (
+        [Header("NEARBY")]
+        public AnimationCurve NearbyCustomRolloffCurve = new (
             new Keyframe(0f, 1f, 0f, 0f),
             new Keyframe(3f, 1f, 0f, 0f),
             new Keyframe(8f, 0.5f, -0.15f, -0.15f),
@@ -58,23 +58,23 @@ namespace DCL.VoiceChat
             new Keyframe(16f, 0f, -0.01f, 0f)
         );
 
-        [Header("PROXIMITY - LiveKit Spatial")]
-        public bool proximitySpatialize = true;
-        [Range(0f, 1f)] public float proximityIldStrength = 0.75f;
-        public bool proximitySmoothPanning;
+        [Header("NEARBY - LiveKit Spatial")]
+        public bool nearbySpatialize = true;
+        [Range(0f, 1f)] public float nearbyIldStrength = 0.75f;
+        public bool nearbySmoothPanning;
 
-        public void ApplyProximitySettings(AudioSource source)
+        public void ApplyNearbySettings(AudioSource source)
         {
             source.dopplerLevel = 0;
             source.spread = 0;
 
             source.rolloffMode = AudioRolloffMode.Custom;
-            source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, ProximityCustomRolloffCurve);
+            source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, NearbyCustomRolloffCurve);
         }
 
         public void ApplyLivekitSpatialSettings(LivekitAudioSource source)
         {
-            source.SetSpatialSettings(proximitySpatialize, proximityIldStrength, proximitySmoothPanning);
+            source.SetSpatialSettings(nearbySpatialize, nearbyIldStrength, nearbySmoothPanning);
         }
     }
 }

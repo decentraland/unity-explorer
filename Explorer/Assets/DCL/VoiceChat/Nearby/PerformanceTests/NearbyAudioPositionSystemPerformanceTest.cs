@@ -3,7 +3,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.VoiceChat.Proximity.Systems;
+using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
@@ -14,14 +14,14 @@ using Unity.PerformanceTesting;
 using Unity.Profiling;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    /// Benchmarks <see cref="ProximityAudioPositionSystem.Update"/> with varying participant counts.
+    /// Benchmarks <see cref="NearbyAudioPositionSystem.Update"/> with varying participant counts.
     /// Measures main-thread cost of position sync + spatial angle calculation.
     /// </summary>
     [Category("Performance")]
-    public class ProximityAudioPositionSystemPerformanceTest : UnitySystemTestBase<ProximityAudioPositionSystem>
+    public class NearbyAudioPositionSystemPerformanceTest : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
         private IReadOnlyEntityParticipantTable entityParticipantTable;
         private ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
@@ -41,7 +41,7 @@ namespace DCL.VoiceChat.Proximity
             playerGo.transform.position = new Vector3(0, 1.75f, 0);
             world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new ProximityAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
+            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
             system.Initialize();
         }
 
@@ -62,7 +62,7 @@ namespace DCL.VoiceChat.Proximity
         {
             SetupParticipants(participantCount);
 
-            // First update assigns ProximityAudioSourceComponent to all entities
+            // First update assigns NearbyAudioSourceComponent to all entities
             system.Update(0);
 
             ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
@@ -77,7 +77,7 @@ namespace DCL.VoiceChat.Proximity
             long gcBytes = gcAlloc.LastValue;
             gcAlloc.Dispose();
 
-            Debug.Log($"[ProximityAudioPositionSystem] {participantCount} participants — GC.Alloc last: {gcBytes} bytes");
+            Debug.Log($"[NearbyAudioPositionSystem] {participantCount} participants — GC.Alloc last: {gcBytes} bytes");
             Assert.That(gcBytes, Is.EqualTo(0), $"System.Update must be allocation-free, but allocated {gcBytes} bytes with {participantCount} participants");
         }
 
