@@ -202,7 +202,17 @@ namespace MVC
 
                 await controller.HideViewAsync(ct);
             }
-            finally { windowsStackManager.PopFullscreen(controller); }
+            finally
+            {
+                // If the lifecycle was aborted by cancellation before HideViewAsync completed,
+                // force a clean tear-down so State returns to ViewHidden. Otherwise, the view
+                // stays active and interactive while the controller is stuck at ViewFocused,
+                // making it unreachable on subsequent opens and breaking its close intents.
+                if (controller.State != ControllerState.ViewHidden)
+                    await controller.HideViewAsync(CancellationToken.None).SuppressCancellationThrow();
+
+                windowsStackManager.PopFullscreen(controller);
+            }
         }
 
         private async UniTask ShowPopupAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
