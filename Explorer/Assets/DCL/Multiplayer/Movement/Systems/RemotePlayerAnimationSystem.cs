@@ -21,7 +21,7 @@ using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(RemotePlayersMovementSystem))]
+    [UpdateAfter(typeof(PulseRemotePlayersMovementSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {

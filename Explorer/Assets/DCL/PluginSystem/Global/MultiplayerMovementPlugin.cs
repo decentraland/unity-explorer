@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, pulseMultiplayerBus, settings, debugSettings);
-            RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
+            PulseRemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings, settings, entityParticipantTable, remoteMetadata);

@@ -17,6 +17,7 @@ namespace DCL.Character.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
+    [UpdateAfter(typeof(PulseRemotePlayersMovementSystem))]
     public partial class RemoteHandPointAtSystem : BaseUnityLoopSystem
     {
         private const float ROTATION_FACTOR_MULTIPLIER = 150f;

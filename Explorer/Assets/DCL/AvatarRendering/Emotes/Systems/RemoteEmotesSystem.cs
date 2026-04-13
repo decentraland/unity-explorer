@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
+    [UpdateAfter(typeof(PulseRemotePlayersMovementSystem))]
     public partial class RemoteEmotesSystem : BaseUnityLoopSystem
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
