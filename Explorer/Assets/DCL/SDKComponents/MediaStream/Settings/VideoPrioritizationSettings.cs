@@ -38,6 +38,10 @@ namespace DCL.SDKComponents.MediaStream.Settings
         [SerializeField]
         private float maximumDistanceLimit = 100.0f;
 
+        [Tooltip("A value that determines if only streams of the current scene will play or even in the nearby scenes.")]
+        [SerializeField]
+        public bool PlayCurrentSceneStreamOnly = true;
+
         /// <summary>
         ///     Gets or sets the amount of videos that will be playing at the same time, at most, on camera.
         /// </summary>
