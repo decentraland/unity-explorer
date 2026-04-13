@@ -96,7 +96,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             if (emoteStarted.PlayerState != null)
             {
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, false);
                 TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage);
 
                 // EmoteStarted is mutually exclusive with other messages so we don't receive two messages with the same Sequence
