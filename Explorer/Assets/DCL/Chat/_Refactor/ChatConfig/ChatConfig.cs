@@ -81,6 +81,9 @@ namespace DCL.Chat.ChatConfig
         [Tooltip("Message shown when your own settings prevent you from sending a DM.")]
         public string OnlyFriendsOwnUserMessage = "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.";
 
+        [Tooltip("Message shown when a target user is not connected to chat room, preventing you from sending them a DM.")]
+        public string ConnectedFromAnotherClientMessage = "User is not connected to chat. They may be using a client without DM support.";
+
         [Tooltip("Message when status is being checked.")]
         public string CheckingUserStatusMessage = "Checking user status...";
 
