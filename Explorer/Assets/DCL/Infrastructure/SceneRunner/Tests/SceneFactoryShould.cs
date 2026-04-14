@@ -85,9 +85,7 @@ namespace SceneRunner.Tests
         {
             if (sceneFacade != null)
                 await sceneFacade.DisposeAsync();
-
-            engineFactory.Dispose();
-        }
+          }
 
         private V8EngineFactory engineFactory;
 

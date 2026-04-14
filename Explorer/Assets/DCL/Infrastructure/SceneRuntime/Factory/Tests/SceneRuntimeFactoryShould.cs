@@ -35,7 +35,6 @@ namespace SceneRuntime.Factory.Tests
         [TearDown]
         public void TearDown()
         {
-            engineFactory.Dispose();
         }
 
         [UnityTest]
