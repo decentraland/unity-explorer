@@ -118,6 +118,14 @@ namespace DCL.Chat.ChatServices
                 eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants.normal));
         }
 
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            foreach (string participant in OnlineParticipants)
+                destination.Add(participant);
+        }
+
         public void Deactivate()
         {
             OnlineParticipants = Array.Empty<string>();

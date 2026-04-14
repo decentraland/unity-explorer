@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
@@ -14,6 +14,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         IGateKeeperSceneRoom SceneRoom();
         IRoom ChatRoom();
         VoiceChatActivatableConnectiveRoom VoiceChatRoom();
+
+        bool TryGetUser(string wallet, out Participant? participant, out IRoom? room);
 
         UniTask<bool> StartAsync();
         UniTask StopAsync();
