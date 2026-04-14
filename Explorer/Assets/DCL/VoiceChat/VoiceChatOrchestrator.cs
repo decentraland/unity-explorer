@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.NotificationsBus.NotificationTypes;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -24,8 +22,7 @@ namespace DCL.VoiceChat
         private readonly IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly SceneVoiceChatTrackerService sceneVoiceChatTrackerService;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly CurrentChannelService currentChannelService;
 
         private readonly IDisposable? privateStatusSubscription;
@@ -64,12 +61,13 @@ namespace DCL.VoiceChat
             IPrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             VoiceChatParticipantsStateService participantsStateService,
-            SceneVoiceChatTrackerService sceneVoiceChatTrackerService, ISharedSpaceManager sharedSpaceManager, IChatEventBus chatEventBus, CurrentChannelService currentChannelService)
+            SceneVoiceChatTrackerService sceneVoiceChatTrackerService,
+            ChatEventBus chatEventBus,
+            CurrentChannelService currentChannelService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.sceneVoiceChatTrackerService = sceneVoiceChatTrackerService;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.currentChannelService = currentChannelService;
             ParticipantsStateService = participantsStateService;
@@ -117,16 +115,8 @@ namespace DCL.VoiceChat
 
             var notification = (CommunityVoiceChatStartedNotification)parameters[0];
 
-            ShowCommunityInChatAndJoinAsync().Forget();
-            return;
-
-            async UniTaskVoid ShowCommunityInChatAndJoinAsync()
-            {
-                JoinCommunityVoiceChat(notification.Metadata.CommunityId, true);
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true));
-                chatEventBus.OpenCommunityConversationUsingCommunityId(notification.Metadata.CommunityId);
-            }
-
+            JoinCommunityVoiceChat(notification.Metadata.CommunityId, true);
+            ChatOpener.Instance.OpenCommunityConversationWithId(notification.Metadata.CommunityId);
         }
 
         public void StartCall(string callId, VoiceChatType callType)
@@ -182,7 +172,7 @@ namespace DCL.VoiceChat
                 var targetChannelId = new ChatChannel.ChannelId(userId);
                 if (currentChannelService.CurrentChannelId.Equals(targetChannelId))
                 {
-                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+                    chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
                     StartCall(userId, VoiceChatType.PRIVATE);
                     return;
                 }
@@ -195,7 +185,7 @@ namespace DCL.VoiceChat
 
                 try
                 {
-                    chatEventBus.OpenPrivateConversationUsingUserId(userId);
+                    chatEventBus.RaiseOpenPrivateConversationRequestedEvent(userId);
 
                     int winningTaskIndex = await UniTask.WhenAny(
                         channelChangedSource.Task,

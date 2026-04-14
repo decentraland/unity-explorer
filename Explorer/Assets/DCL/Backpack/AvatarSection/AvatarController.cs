@@ -28,7 +28,6 @@ namespace DCL.Backpack
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "backpack");
 
         public AvatarController(AvatarView view,
-            FeatureFlagsConfiguration featureFlags,
             IWebBrowser webBrowser,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
@@ -66,7 +65,7 @@ namespace DCL.Backpack
                 outfitsPresenter,
                 (RectTransform) view.transform);
 
-            bool isOutfitsEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.OUTFITS_ENABLED);
+            bool isOutfitsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.BACKPACK_OUTFITS);
             if (!isOutfitsEnabled)
                 tabsManager.SetTabEnabled(AvatarSubSection.Outfits, false);
 

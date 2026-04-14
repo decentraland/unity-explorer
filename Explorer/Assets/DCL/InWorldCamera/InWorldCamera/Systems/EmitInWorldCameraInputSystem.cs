@@ -19,10 +19,10 @@ namespace DCL.InWorldCamera.Systems
 
         private SingleInstanceEntity camera;
 
-        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, DCLInput.ShortcutsActions shortcutsInputSchema) : base(world)
+        private EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
             this.inputSchema = inputSchema;
-            this.shortcutsInputSchema = shortcutsInputSchema;
+            this.shortcutsInputSchema = DCLInput.Instance.Shortcuts;
         }
 
         public override void Initialize()
