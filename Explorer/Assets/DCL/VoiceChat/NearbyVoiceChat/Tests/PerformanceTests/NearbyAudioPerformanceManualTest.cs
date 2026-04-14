@@ -3,21 +3,15 @@ using RichTypes;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
-using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
     /// Manual performance testbed for nearby spatial audio with real panning.
-    /// Attach to any GameObject, adjust source count at runtime via Inspector or on-screen slider.
-    /// Creates real <see cref="LivekitAudioSource"/> instances with a playing test tone
-    /// and an injected fake <c>AudioStream</c> so that <c>ApplySpatialPanning</c> executes
-    /// on the AudioThread — use the Profiler to observe DSP CPU / AudioThread cost.
-    ///
-    /// The fake stream bypasses FFI (<c>ReadAudio</c> early-returns on disposed internal)
-    /// while letting the panning code path run. Audio data comes from the test tone clip.
+    /// Creates real <see cref="LivekitAudioSource"/> instances with an injected fake
+    /// <c>AudioStream</c> so that <c>ApplySpatialPanning</c> executes on the AudioThread.
+    /// Use the Profiler to observe <c>LiveKit.Spatial.ILD.EqualPower</c> marker on Audio Mixer Thread.
     /// </summary>
     public class NearbyAudioPerformanceManualTest : MonoBehaviour
     {
@@ -37,38 +31,20 @@ namespace DCL.VoiceChat.Nearby
         [Range(0f, 0.1f)]
         [SerializeField] private float testToneVolume;
 
-        [Header("GUI")]
-        [SerializeField] private bool showOverlay = true;
-        [SerializeField] private Key toggleOverlayKey = Key.F9;
-
         private readonly List<LivekitAudioSource> activeSources = new (128);
         private AudioClip testClip;
-
-        private ProfilerRecorder mainThreadRecorder;
-        private ProfilerRecorder gcAllocRecorder;
-
-        private float fps;
-        private float smoothFps;
 
         private void Start()
         {
             testClip = CreateStereoTestClip();
-            mainThreadRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread");
-            gcAllocRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
         }
 
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current[toggleOverlayKey].wasPressedThisFrame)
-                showOverlay = !showOverlay;
-
             if (activeSources.Count != targetSourceCount)
                 SyncSourceCount();
 
             UpdateSpatialSettings();
-
-            fps = 1f / UnityEngine.Time.unscaledDeltaTime;
-            smoothFps = Mathf.Lerp(smoothFps, fps, UnityEngine.Time.unscaledDeltaTime * 4f);
         }
 
         private void SyncSourceCount()
@@ -126,59 +102,12 @@ namespace DCL.VoiceChat.Nearby
             }
         }
 
-        private void OnGUI()
-        {
-            if (!showOverlay) return;
-
-            GUILayout.BeginArea(new Rect(10, 10, 360, 280));
-
-            var boxStyle = new GUIStyle(GUI.skin.box) { fontSize = 14 };
-            GUILayout.BeginVertical(boxStyle);
-
-            GUILayout.Label("<b>Nearby Audio Perf Testbed</b>", new GUIStyle(GUI.skin.label) { richText = true, fontSize = 15 });
-
-            GUILayout.Space(4);
-            GUILayout.Label($"Active Sources: {activeSources.Count}");
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Count:", GUILayout.Width(50));
-            targetSourceCount = Mathf.RoundToInt(GUILayout.HorizontalSlider(targetSourceCount, 0, 200));
-            GUILayout.Label(targetSourceCount.ToString(), GUILayout.Width(35));
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(4);
-            GUILayout.Label($"FPS: {smoothFps:F1}");
-
-            if (mainThreadRecorder.Valid && mainThreadRecorder.Count > 0)
-                GUILayout.Label($"Main Thread: {mainThreadRecorder.LastValue / 1_000_000.0:F2} ms");
-
-            if (gcAllocRecorder.Valid && gcAllocRecorder.Count > 0)
-                GUILayout.Label($"GC.Alloc: {gcAllocRecorder.LastValue} bytes");
-
-            GUILayout.Space(4);
-            enableSpatialization = GUILayout.Toggle(enableSpatialization, "Spatialization");
-            smoothPanning = GUILayout.Toggle(smoothPanning, "Smooth Panning");
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("ILD:", GUILayout.Width(30));
-            ildStrength = GUILayout.HorizontalSlider(ildStrength, 0f, 1f);
-            GUILayout.Label(ildStrength.ToString("F2"), GUILayout.Width(35));
-            GUILayout.EndHorizontal();
-
-            GUILayout.Label($"<i>Toggle overlay: {toggleOverlayKey}</i>", new GUIStyle(GUI.skin.label) { richText = true });
-
-            GUILayout.EndVertical();
-            GUILayout.EndArea();
-        }
-
         private void OnDestroy()
         {
             foreach (LivekitAudioSource source in activeSources)
                 if (source != null) Destroy(source.gameObject);
 
             activeSources.Clear();
-            mainThreadRecorder.Dispose();
-            gcAllocRecorder.Dispose();
         }
 
         /// <summary>
@@ -227,4 +156,29 @@ namespace DCL.VoiceChat.Nearby
             return clip;
         }
     }
+
+#if UNITY_EDITOR
+    public static class NearbyAudioPerformanceManualTestMenu
+    {
+        [UnityEditor.MenuItem("Decentraland/Manual Tests/ Nearby Audio Panning [Perf]")]
+        private static void OpenTestbed()
+        {
+            if (UnityEditor.EditorApplication.isPlaying)
+            {
+                Debug.LogWarning("Stop Play mode first.");
+                return;
+            }
+
+            UnityEditor.SceneManagement.EditorSceneManager.NewScene(
+                UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
+                UnityEditor.SceneManagement.NewSceneMode.Single);
+
+            var go = new GameObject("NearbyAudioPerfTestbed");
+            go.AddComponent<NearbyAudioPerformanceManualTest>();
+
+            UnityEditor.Selection.activeGameObject = go;
+            Debug.Log("Nearby Audio Panning Testbed ready — press Play.");
+        }
+    }
+#endif
 }
