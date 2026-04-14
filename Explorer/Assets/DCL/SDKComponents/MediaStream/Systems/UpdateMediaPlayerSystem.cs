@@ -80,6 +80,7 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Url!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
+            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             component.UpdateState();
 
@@ -122,6 +123,7 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Src!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
+            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
@@ -162,7 +164,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             if (ConsumePromise(ref component, false))
-                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent).Forget();
+                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
 
             // Need to re-update state in case an update was needed from the sdk component or promise
             component.UpdateState();
@@ -246,6 +248,17 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
+        private bool TryReInitializeOnExpiredYouTubeUrl(in Entity entity, ref MediaPlayerComponent component)
+        {
+            if (component.State != VideoState.VsError) return false;
+            if (component.ResolvedUrlExpiresAt <= 0f) return false;
+            if (UnityEngine.Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
+
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, "[YouTubeResolver] Resolved URL expired, triggering re-resolution");
+            RemoveAndForceReInitialization(ref component, entity);
+            return true;
+        }
+
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
         {
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
@@ -264,12 +277,12 @@ namespace DCL.SDKComponents.MediaStream
 
             RemoveAndForceReInitialization(ref component, entity);
             return true;
+        }
 
-            void RemoveAndForceReInitialization(ref MediaPlayerComponent component, Entity entity)
-            {
-                component.Dispose();
-                World.Remove<MediaPlayerComponent>(entity);
-            }
+        private void RemoveAndForceReInitialization(ref MediaPlayerComponent component, in Entity entity)
+        {
+            component.Dispose();
+            World.Remove<MediaPlayerComponent>(entity);
         }
 
         private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
@@ -290,18 +303,25 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
+                // Transfer YouTube resolution metadata from the promise to the component
+                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
+                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
+
+                // Use the resolved media address (which may be a direct URL after YouTube resolution)
+                MediaAddress resolvedAddress = component.OpenMediaPromise.mediaAddress;
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
                 lastOpenMediaTime = currentTime;
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
+                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 #endif
 
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"
                     : "MediaPlayer.InitialiseAndOpenMedia");
 
-                try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
+                try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
 
                 return true;

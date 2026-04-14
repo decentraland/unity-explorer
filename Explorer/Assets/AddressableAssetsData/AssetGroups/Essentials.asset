@@ -185,6 +185,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 762878a7bf3715b44ac918395f691db6
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker.glb
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 77042a6626e1a064f90b622d0381d7df
     m_Address: JumpIndicator
     m_ReadOnly: 0
@@ -212,6 +217,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a91951d2f71f174d998356f01a3603c
     m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -287,6 +297,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9870b17ce36346458f07a63c096a16a
     m_Address: FaillingLODCubePivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb23ae366d31146bf85b403f6149419b
+    m_Address: SDKParticleSystem
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
