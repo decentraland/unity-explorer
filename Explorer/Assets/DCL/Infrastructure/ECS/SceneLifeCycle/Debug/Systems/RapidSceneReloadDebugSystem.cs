@@ -33,6 +33,8 @@ namespace ECS.SceneLifeCycle.Debug
         private bool isEnabled;
         private float timer;
         private int cycleCount;
+        private int lastDisplayedCycle = -1;
+        private int lastDisplayedTenths = -1;
 
         private RapidSceneReloadDebugSystem(World world, DebugWidgetBuilder debugWidgetBuilder) : base(world)
         {
@@ -60,10 +62,11 @@ namespace ECS.SceneLifeCycle.Debug
             float interval = Mathf.Max(0.1f, intervalBinding.Value);
             float remaining = Mathf.Max(0f, interval - timer);
             int displayTenths = (int)(remaining * 10f);
-            if (cycleCount != _lastDisplayedCycle || displayTenths != _lastDisplayedTenths)
+
+            if (cycleCount != lastDisplayedCycle || displayTenths != lastDisplayedTenths)
             {
-                _lastDisplayedCycle = cycleCount;
-                _lastDisplayedTenths = displayTenths;
+                lastDisplayedCycle = cycleCount;
+                lastDisplayedTenths = displayTenths;
                 statusBinding.Value = $"Cycle #{cycleCount} | Next: {remaining:F1}s";
             }
 
