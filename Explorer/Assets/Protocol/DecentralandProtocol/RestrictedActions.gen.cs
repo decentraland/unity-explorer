@@ -34,60 +34,65 @@ namespace Decentraland.Kernel.Apis {
             "CghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFyZ2V0QhAKDl9h",
             "dmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9ydFRvUmVxdWVz",
             "dBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uVmVjdG9yMiIvChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
-            "ZmluZWRfZW1vdGUYASABKAkiRQoSQ2hhbmdlUmVhbG1SZXF1ZXN0Eg0KBXJl",
-            "YWxtGAEgASgJEhQKB21lc3NhZ2UYAiABKAlIAIgBAUIKCghfbWVzc2FnZSIl",
-            "ChZPcGVuRXh0ZXJuYWxVcmxSZXF1ZXN0EgsKA3VybBgBIAEoCSIjChRPcGVu",
-            "TmZ0RGlhbG9nUmVxdWVzdBILCgN1cm4YASABKAkiFwoVVW5ibG9ja1BvaW50",
-            "ZXJSZXF1ZXN0IjAKE0NvbW1zQWRhcHRlclJlcXVlc3QSGQoRY29ubmVjdGlv",
-            "bl9zdHJpbmcYASABKAkiQwoYVHJpZ2dlclNjZW5lRW1vdGVSZXF1ZXN0EgsK",
-            "A3NyYxgBIAEoCRIRCgRsb29wGAIgASgISACIAQFCBwoFX2xvb3AiIgoPU3Vj",
-            "Y2Vzc1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3Rl",
-            "UmVzcG9uc2UiJwoUTW92ZVBsYXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgB",
-            "IAEoCCIUChJUZWxlcG9ydFRvUmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJk",
-            "UmVxdWVzdBIMCgR0ZXh0GAEgASgJIg8KDUVtcHR5UmVzcG9uc2UyjwgKGFJl",
-            "c3RyaWN0ZWRBY3Rpb25zU2VydmljZRJvCgxNb3ZlUGxheWVyVG8SLS5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuTW92ZVBsYXllclRvUmVxdWVzdBouLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXNwb25zZSIA",
-            "EmkKClRlbGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
-            "ZXBvcnRUb1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVs",
-            "ZXBvcnRUb1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVtb3RlEi0uZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJlcXVlc3QaLi5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVzcG9uc2UiABJoCgtD",
-            "aGFuZ2VSZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DaGFuZ2VS",
-            "ZWFsbVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vz",
-            "c1Jlc3BvbnNlIgAScAoPT3BlbkV4dGVybmFsVXJsEjAuZGVjZW50cmFsYW5k",
-            "Lmtlcm5lbC5hcGlzLk9wZW5FeHRlcm5hbFVybFJlcXVlc3QaKS5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbAoNT3Blbk5m",
-            "dERpYWxvZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuTmZ0RGlh",
-            "bG9nUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNz",
-            "UmVzcG9uc2UiABJ2ChhTZXRDb21tdW5pY2F0aW9uc0FkYXB0ZXISLS5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuQ29tbXNBZGFwdGVyUmVxdWVzdBopLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ0ChFU",
-            "cmlnZ2VyU2NlbmVFbW90ZRIyLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
-            "cmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVs",
-            "LmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbgoPQ29weVRvQ2xpcGJvYXJkEjAu",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNvcHlUb0NsaXBib2FyZFJlcXVl",
-            "c3QaJy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuRW1wdHlSZXNwb25zZSIA",
-            "YgZwcm90bzM="));
+            "b21tb24uVmVjdG9yMiJLChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
+            "ZmluZWRfZW1vdGUYASABKAkSEQoEbWFzaxgCIAEoDUgAiAEBQgcKBV9tYXNr",
+            "IkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgBIAEoCRIUCgdtZXNz",
+            "YWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3BlbkV4dGVybmFsVXJs",
+            "UmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERpYWxvZ1JlcXVlc3QS",
+            "CwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVxdWVzdCIwChNDb21t",
+            "c0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3RyaW5nGAEgASgJIl8K",
+            "GFRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBILCgNzcmMYASABKAkSEQoEbG9v",
+            "cBgCIAEoCEgAiAEBEhEKBG1hc2sYAyABKA1IAYgBAUIHCgVfbG9vcEIHCgVf",
+            "bWFzayIiCg9TdWNjZXNzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIWChRU",
+            "cmlnZ2VyRW1vdGVSZXNwb25zZSInChRNb3ZlUGxheWVyVG9SZXNwb25zZRIP",
+            "CgdzdWNjZXNzGAEgASgIIhQKElRlbGVwb3J0VG9SZXNwb25zZSImChZDb3B5",
+            "VG9DbGlwYm9hcmRSZXF1ZXN0EgwKBHRleHQYASABKAkiDwoNRW1wdHlSZXNw",
+            "b25zZSISChBTdG9wRW1vdGVSZXF1ZXN0MvUIChhSZXN0cmljdGVkQWN0aW9u",
+            "c1NlcnZpY2USbwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5l",
+            "bC5hcGlzLk1vdmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmFwaXMuTW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRv",
+            "EisuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0",
+            "GiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25z",
+            "ZSIAEm8KDFRyaWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
+            "cy5UcmlnZ2VyRW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLlRyaWdnZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5k",
+            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0Giku",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAK",
+            "D09wZW5FeHRlcm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5P",
+            "cGVuRXh0ZXJuYWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5k",
+            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoY",
+            "U2V0Q29tbXVuaWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5l",
+            "bC5hcGlzLkNvbW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1v",
+            "dGUSMi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1v",
+            "dGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NS",
+            "ZXNwb25zZSIAEm4KD0NvcHlUb0NsaXBib2FyZBIwLmRlY2VudHJhbGFuZC5r",
+            "ZXJuZWwuYXBpcy5Db3B5VG9DbGlwYm9hcmRSZXF1ZXN0GicuZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLkVtcHR5UmVzcG9uc2UiABJkCglTdG9wRW1vdGUS",
+            "Ki5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3RvcEVtb3RlUmVxdWVzdBop",
+            "LmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiAGIG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote", "Mask" }, new[]{ "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.ChangeRealmRequest), global::Decentraland.Kernel.Apis.ChangeRealmRequest.Parser, new[]{ "Realm", "Message" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExternalUrlRequest), global::Decentraland.Kernel.Apis.OpenExternalUrlRequest.Parser, new[]{ "Url" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenNftDialogRequest), global::Decentraland.Kernel.Apis.OpenNftDialogRequest.Parser, new[]{ "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.UnblockPointerRequest), global::Decentraland.Kernel.Apis.UnblockPointerRequest.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CommsAdapterRequest), global::Decentraland.Kernel.Apis.CommsAdapterRequest.Parser, new[]{ "ConnectionString" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest), global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest.Parser, new[]{ "Src", "Loop" }, new[]{ "Loop" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest), global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest.Parser, new[]{ "Src", "Loop", "Mask" }, new[]{ "Loop", "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SuccessResponse), global::Decentraland.Kernel.Apis.SuccessResponse.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteResponse), global::Decentraland.Kernel.Apis.TriggerEmoteResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToResponse), global::Decentraland.Kernel.Apis.MovePlayerToResponse.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToResponse), global::Decentraland.Kernel.Apis.TeleportToResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CopyToClipboardRequest), global::Decentraland.Kernel.Apis.CopyToClipboardRequest.Parser, new[]{ "Text" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.EmptyResponse), global::Decentraland.Kernel.Apis.EmptyResponse.Parser, null, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.EmptyResponse), global::Decentraland.Kernel.Apis.EmptyResponse.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.StopEmoteRequest), global::Decentraland.Kernel.Apis.StopEmoteRequest.Parser, null, null, null, null, null)
           }));
     }
     #endregion
@@ -644,6 +649,7 @@ namespace Decentraland.Kernel.Apis {
   {
     private static readonly pb::MessageParser<TriggerEmoteRequest> _parser = new pb::MessageParser<TriggerEmoteRequest>(() => new TriggerEmoteRequest());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pb::MessageParser<TriggerEmoteRequest> Parser { get { return _parser; } }
@@ -671,7 +677,9 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public TriggerEmoteRequest(TriggerEmoteRequest other) : this() {
+      _hasBits0 = other._hasBits0;
       predefinedEmote_ = other.predefinedEmote_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -693,6 +701,31 @@ namespace Decentraland.Kernel.Apis {
       }
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 2;
+    private uint mask_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Mask {
+      get { if ((_hasBits0 & 1) != 0) { return mask_; } else { return 0; } }
+      set {
+        _hasBits0 |= 1;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~1;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -709,6 +742,7 @@ namespace Decentraland.Kernel.Apis {
         return true;
       }
       if (PredefinedEmote != other.PredefinedEmote) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -717,6 +751,7 @@ namespace Decentraland.Kernel.Apis {
     public override int GetHashCode() {
       int hash = 1;
       if (PredefinedEmote.Length != 0) hash ^= PredefinedEmote.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -739,6 +774,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(10);
         output.WriteString(PredefinedEmote);
       }
+      if (HasMask) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -753,6 +792,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(10);
         output.WriteString(PredefinedEmote);
       }
+      if (HasMask) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -765,6 +808,9 @@ namespace Decentraland.Kernel.Apis {
       int size = 0;
       if (PredefinedEmote.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(PredefinedEmote);
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -780,6 +826,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.PredefinedEmote.Length != 0) {
         PredefinedEmote = other.PredefinedEmote;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -800,6 +849,10 @@ namespace Decentraland.Kernel.Apis {
             PredefinedEmote = input.ReadString();
             break;
           }
+          case 16: {
+            Mask = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -817,6 +870,10 @@ namespace Decentraland.Kernel.Apis {
             break;
           case 10: {
             PredefinedEmote = input.ReadString();
+            break;
+          }
+          case 16: {
+            Mask = input.ReadUInt32();
             break;
           }
         }
@@ -1821,6 +1878,7 @@ namespace Decentraland.Kernel.Apis {
       _hasBits0 = other._hasBits0;
       src_ = other.src_;
       loop_ = other.loop_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1867,6 +1925,31 @@ namespace Decentraland.Kernel.Apis {
       _hasBits0 &= ~1;
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 3;
+    private uint mask_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Mask {
+      get { if ((_hasBits0 & 2) != 0) { return mask_; } else { return 0; } }
+      set {
+        _hasBits0 |= 2;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 2) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~2;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1884,6 +1967,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (Src != other.Src) return false;
       if (Loop != other.Loop) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1893,6 +1977,7 @@ namespace Decentraland.Kernel.Apis {
       int hash = 1;
       if (Src.Length != 0) hash ^= Src.GetHashCode();
       if (HasLoop) hash ^= Loop.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1919,6 +2004,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(16);
         output.WriteBool(Loop);
       }
+      if (HasMask) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1937,6 +2026,10 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(16);
         output.WriteBool(Loop);
       }
+      if (HasMask) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1952,6 +2045,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasLoop) {
         size += 1 + 1;
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1970,6 +2066,9 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.HasLoop) {
         Loop = other.Loop;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1994,6 +2093,10 @@ namespace Decentraland.Kernel.Apis {
             Loop = input.ReadBool();
             break;
           }
+          case 24: {
+            Mask = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -2015,6 +2118,10 @@ namespace Decentraland.Kernel.Apis {
           }
           case 16: {
             Loop = input.ReadBool();
+            break;
+          }
+          case 24: {
+            Mask = input.ReadUInt32();
             break;
           }
         }
@@ -3007,6 +3114,158 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void MergeFrom(EmptyResponse other) {
+      if (other == null) {
+        return;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class StopEmoteRequest : pb::IMessage<StopEmoteRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<StopEmoteRequest> _parser = new pb::MessageParser<StopEmoteRequest>(() => new StopEmoteRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<StopEmoteRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[15]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public StopEmoteRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public StopEmoteRequest(StopEmoteRequest other) : this() {
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public StopEmoteRequest Clone() {
+      return new StopEmoteRequest(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as StopEmoteRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(StopEmoteRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(StopEmoteRequest other) {
       if (other == null) {
         return;
       }
