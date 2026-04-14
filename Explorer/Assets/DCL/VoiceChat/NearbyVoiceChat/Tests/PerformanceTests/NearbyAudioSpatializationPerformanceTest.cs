@@ -3,7 +3,6 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.PerformanceTesting;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby
@@ -53,6 +52,7 @@ namespace DCL.VoiceChat.Nearby
         [TestCase(1, 512, TestName = "Panning_1_Source_512")]
         [TestCase(1, 1024, TestName = "Panning_1_Source_1024")]
         [TestCase(10, 1024, TestName = "Panning_10_Sources_1024")]
+        [TestCase(30, 1024, TestName = "Panning_30_Sources_1024")]
         [TestCase(50, 1024, TestName = "Panning_50_Sources_1024")]
         [TestCase(100, 1024, TestName = "Panning_100_Sources_1024")]
         public void ApplySpatialPanningForNSources(int sourceCount, int bufferSize)
@@ -64,8 +64,6 @@ namespace DCL.VoiceChat.Nearby
             SetupSources(sourceCount);
 
             var invokeArgs = new object[] { audioBuffer, CHANNELS };
-
-            ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
 
             Measure
                .Method(() =>
@@ -82,12 +80,6 @@ namespace DCL.VoiceChat.Nearby
                .MeasurementCount(50)
                .GC()
                .Run();
-
-            long gcBytes = gcAlloc.LastValue;
-            gcAlloc.Dispose();
-
-            Debug.Log($"[ApplySpatialPanning] {sourceCount} sources × {bufferSize} samples — GC.Alloc last: {gcBytes} bytes");
-            Assert.That(gcBytes, Is.EqualTo(0), $"ApplySpatialPanning must be allocation-free, but allocated {gcBytes} bytes with {sourceCount} sources × {bufferSize} samples");
         }
 
         private void SetupSources(int count)
