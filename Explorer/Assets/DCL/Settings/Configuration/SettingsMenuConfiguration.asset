@@ -93,6 +93,7 @@ MonoBehaviour:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
       - rid: 5190442991532376251
+      - rid: 3126482891795070978
     - <GroupTitle>k__BackingField: Point At
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 53
@@ -753,3 +754,19 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 10
+    - rid: 3126482891795070978
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Double tap to move
+          <Description>k__BackingField: Double-click on any surface to walk there automatically.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 11

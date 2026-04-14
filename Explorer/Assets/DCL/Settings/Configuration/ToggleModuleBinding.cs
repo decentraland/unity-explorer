@@ -40,6 +40,7 @@ namespace DCL.Settings.Configuration
             SCENE_LIGHTS_FEATURE,
             FULLSCREEN_FEATURE,
             SUN_LENS_FLARE_FEATURE,
+            DOUBLE_TAP_TO_MOVE
             // add other features...
         }
 
@@ -82,6 +83,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
                 ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
                 ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),
+                ToggleFeatures.DOUBLE_TAP_TO_MOVE => new DoubleTapToMoveSettingsController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
