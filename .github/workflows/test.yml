@@ -2,6 +2,11 @@ name: Unity Test
 
 on:
   workflow_dispatch:
+    inputs:
+      clean_build:
+        description: 'Clear Library cache before building'
+        type: boolean
+        default: false
   pull_request:
     paths:
       - 'Explorer/**'
