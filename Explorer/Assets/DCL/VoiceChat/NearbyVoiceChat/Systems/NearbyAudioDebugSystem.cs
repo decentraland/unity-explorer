@@ -77,7 +77,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ApplySettings(ref NearbyAudioSourceComponent nearbyAudio)
         {
-            configuration.ApplyLivekitSpatialSettings(nearbyAudio.LivekitAudioSource);
+            nearbyAudio.LivekitAudioSource.ApplySpatialSettings(configuration);
         }
     }
 }

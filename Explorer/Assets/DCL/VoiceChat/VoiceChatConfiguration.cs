@@ -1,4 +1,3 @@
-using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -62,21 +61,5 @@ namespace DCL.VoiceChat
         public bool nearbySpatialize = true;
         [Range(0f, 1f)] public float nearbyIldStrength = 0.75f;
         public bool nearbySmoothPanning;
-
-        public void ApplyNearbySettings(AudioSource source)
-        {
-            source.dopplerLevel = 0;
-            source.spread = 0;
-            source.spatialBlend = 1f;
-
-            source.rolloffMode = AudioRolloffMode.Custom;
-            source.maxDistance = NearbyCustomRolloffCurve[NearbyCustomRolloffCurve.length - 1].time;
-            source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, NearbyCustomRolloffCurve);
-        }
-
-        public void ApplyLivekitSpatialSettings(LivekitAudioSource source)
-        {
-            source.SetSpatialSettings(nearbySpatialize, nearbyIldStrength, nearbySmoothPanning);
-        }
     }
 }
