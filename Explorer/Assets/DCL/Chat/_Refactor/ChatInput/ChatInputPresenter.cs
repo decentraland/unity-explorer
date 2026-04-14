@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
-using DCL.Chat.EventBus;
 using DCL.Emoji;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
@@ -26,8 +25,7 @@ namespace DCL.Chat.ChatInput
         public ChatInputPresenter(
             ChatInputView view,
             ChatConfig.ChatConfig chatConfig,
-            IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             CurrentChannelService currentChannelService,
             ResolveInputStateCommand resolveInputStateCommand,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
@@ -44,8 +42,8 @@ namespace DCL.Chat.ChatInput
             fsm.AddStates(
                 new InitializingChatInputState(fsm),
                 new HiddenChatInputState(view),
-                new BlockedChatInputState(fsm, view, eventBus, chatConfig, currentChannelService),
-                new UnfocusedChatInputState(fsm, view, eventBus),
+                new BlockedChatInputState(fsm, view, chatEventBus, chatConfig, currentChannelService),
+                new UnfocusedChatInputState(fsm, view, chatEventBus),
                 new TypingEnabledChatInputState(fsm, view,
                     chatEventBus,
                     sendMessageCommand,
@@ -57,9 +55,15 @@ namespace DCL.Chat.ChatInput
             );
             fsm.Enter<InitializingChatInputState>();
 
-            scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
-            scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
-            scope.Add(eventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.ChatResetEvent>(OnChatReset));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.DeselectInputEvent>(OnDeselectInput));
+        }
+
+        private void OnDeselectInput(ChatEvents.DeselectInputEvent _)
+        {
+            OnBlur();
         }
 
         private void OnChatReset(ChatEvents.ChatResetEvent obj)
