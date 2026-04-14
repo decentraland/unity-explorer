@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7649156017502701365}
   - component: {fileID: 5720736840471354618}
   - component: {fileID: 2656312807904965334}
+  - component: {fileID: 4934359884182590148}
   m_Layer: 5
   m_Name: Mask
   m_TagString: Untagged
@@ -53,7 +54,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Coffee.SoftMaskForUGUI::Coffee.UISoftMask.SoftMask
   m_ShowMaskGraphic: 0
-  m_MaskingMode: 2
+  m_MaskingMode: 1
   m_AlphaHitTest: 0
   m_SoftnessRange:
     m_Min: 0
@@ -93,6 +94,14 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2.2
+--- !u!222 &4934359884182590148
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116953813753342971}
+  m_CullTransparentMesh: 1
 --- !u!1 &277893000728977253
 GameObject:
   m_ObjectHideFlags: 0
