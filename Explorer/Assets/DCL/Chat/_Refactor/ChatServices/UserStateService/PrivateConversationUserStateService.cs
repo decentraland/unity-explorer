@@ -10,6 +10,7 @@ using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utility;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -117,7 +118,7 @@ namespace DCL.Chat.ChatServices
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
 
                 await UniTask.WaitUntil(() =>
-                    chatRoom.Info.ConnectionState == ConnectionState.ConnConnected &&
+                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected &&
                     userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
@@ -204,7 +205,7 @@ namespace DCL.Chat.ChatServices
                 return new UserState(isUserConnected, ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER);
 
             // User should be online, but check if they disconnected while processing this data + ensure we have metadata
-            Participant? participant = chatRoom.Participants.RemoteParticipant(userId)
+            LKParticipant? participant = chatRoom.Participants.RemoteParticipant(userId)
                                        ?? chatRoom.Participants.RemoteParticipant(lowerUserId);
 
             if (participant != null && !string.IsNullOrEmpty(participant.Metadata))
@@ -219,7 +220,7 @@ namespace DCL.Chat.ChatServices
             return new UserState(isUserConnected, isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED);
         }
 
-        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnRoomConnectionStateChanged(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             bool shouldNotify = false;
 
@@ -251,7 +252,7 @@ namespace DCL.Chat.ChatServices
                 eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.EMPTY_CHANNEL_ID, ChatChannel.ChatChannelType.USER, snapshotBuffer));
         }
 
-        private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
             string userId = participant.Identity;
