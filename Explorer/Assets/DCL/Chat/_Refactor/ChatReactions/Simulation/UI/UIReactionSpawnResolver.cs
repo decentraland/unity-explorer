@@ -22,11 +22,11 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
             this.laneRect = laneRect;
         }
 
-        /// <summary>Screen position (pixels) at the center of the given rect.</summary>
-        public Vector2 GetSpawnPxFromRectCenter(RectTransform rect)
+        /// <summary>Screen position (pixels) at the center of the given rect, plus a local-space offset.</summary>
+        public Vector2 GetSpawnPxFromRectCenter(RectTransform rect, Vector2 localOffset = default)
         {
-            Vector3 worldCenter = rect.TransformPoint(rect.rect.center);
-            return RectTransformUtility.WorldToScreenPoint(null, worldCenter);
+            Vector3 worldPoint = rect.TransformPoint(rect.rect.center + localOffset);
+            return RectTransformUtility.WorldToScreenPoint(null, worldPoint);
         }
 
         /// <summary>Screen position (pixels) at the bottom 12% of the lane rect.</summary>

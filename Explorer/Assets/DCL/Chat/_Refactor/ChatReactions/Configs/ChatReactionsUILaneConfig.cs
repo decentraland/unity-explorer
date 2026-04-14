@@ -52,8 +52,8 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: SerializeField] public Vector2 Gravity { get; private set; } = Vector2.zero;
 
         [field: Header("SPAWN OFFSET")]
-        [field: Note("Pixel offset applied to rect-based spawns (e.g. reaction button). " +
-                     "X = right, Y = up. Use to shift particles away from the source button.")]
+        [field: Note("Local-space offset applied to rect-based spawns (e.g. reaction button). " +
+                     "X = right, Y = up in canvas units. Scales with the canvas, so it's resolution-independent.")]
         [field: SerializeField] public Vector2 RectSpawnOffset { get; private set; } = new(40f, 0f);
 
         [field: Header("STREAMING (HOLD-TO-EMIT)")]
