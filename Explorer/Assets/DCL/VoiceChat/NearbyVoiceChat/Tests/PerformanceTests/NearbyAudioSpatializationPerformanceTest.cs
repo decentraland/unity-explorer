@@ -1,5 +1,6 @@
 using LiveKit.Rooms.Streaming.Audio;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.PerformanceTesting;
@@ -10,9 +11,8 @@ namespace DCL.VoiceChat.Nearby
     /// <summary>
     /// Benchmarks the ILD equal-power panning cost of <c>LivekitAudioSource.ApplySpatialPanning</c>.
     ///
-    /// Calls the REAL method via reflection on real instances configured through the public API.
-    /// We use reflection because <c>OnAudioFilterRead</c> requires a live <c>AudioStream</c>
-    /// from a LiveKit room connection to reach the panning code path.
+    /// Uses a cached open-instance delegate to eliminate reflection overhead from measurements.
+    /// Buffer reset is performed in SetUp (excluded from timing).
     ///
     /// For real AudioThread profiling with panning enabled (via fake stream injection),
     /// use <see cref="NearbyAudioPerformanceManualTest"/> with the Unity Profiler —
@@ -21,15 +21,21 @@ namespace DCL.VoiceChat.Nearby
     [Category("Performance")]
     public class NearbyAudioSpatializationPerformanceTest
     {
-        private static readonly MethodInfo APPLY_SPATIAL_PANNING = typeof(LivekitAudioSource)
+        private delegate void ApplySpatialPanningDelegate(LivekitAudioSource instance, float[] data, int channels);
+
+        private static readonly MethodInfo APPLY_SPATIAL_PANNING_METHOD = typeof(LivekitAudioSource)
             .GetMethod("ApplySpatialPanning", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly ApplySpatialPanningDelegate APPLY_SPATIAL_PANNING =
+            (ApplySpatialPanningDelegate)Delegate.CreateDelegate(
+                typeof(ApplySpatialPanningDelegate), APPLY_SPATIAL_PANNING_METHOD);
 
         private readonly List<LivekitAudioSource> sources = new (128);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            Assert.That(APPLY_SPATIAL_PANNING, Is.Not.Null,
+            Assert.That(APPLY_SPATIAL_PANNING_METHOD, Is.Not.Null,
                 "ApplySpatialPanning not found — LiveKit SDK API may have changed");
         }
 
@@ -37,21 +43,24 @@ namespace DCL.VoiceChat.Nearby
         public void TearDown()
         {
             foreach (LivekitAudioSource source in sources)
-                if (source != null) Object.DestroyImmediate(source.gameObject);
+                if (source != null) UnityEngine.Object.DestroyImmediate(source.gameObject);
 
             sources.Clear();
         }
 
         /// <summary>
-        /// Calls the real <c>LivekitAudioSource.ApplySpatialPanning</c> on N real instances.
-        /// Each instance is configured via public API (SetSpatialSettings / SetSpatialAngles).
-        /// Buffer is pre-filled to simulate ReadAudio output.
+        /// Measures only the panning math for N sources.
+        /// Buffer fill is in SetUp (not measured); delegate call eliminates reflection overhead.
         /// </summary>
         [Test]
         [Performance]
+        [TestCase(1, 256, TestName = "Panning_1_Source_256")]
         [TestCase(1, 512, TestName = "Panning_1_Source_512")]
         [TestCase(1, 1024, TestName = "Panning_1_Source_1024")]
+        [TestCase(10, 512, TestName = "Panning_10_Sources_512")]
         [TestCase(10, 1024, TestName = "Panning_10_Sources_1024")]
+        [TestCase(30, 256, TestName = "Panning_30_Sources_256")]
+        [TestCase(30, 512, TestName = "Panning_30_Sources_512")]
         [TestCase(30, 1024, TestName = "Panning_30_Sources_1024")]
         [TestCase(50, 1024, TestName = "Panning_50_Sources_1024")]
         [TestCase(100, 1024, TestName = "Panning_100_Sources_1024")]
@@ -63,19 +72,13 @@ namespace DCL.VoiceChat.Nearby
 
             SetupSources(sourceCount);
 
-            var invokeArgs = new object[] { audioBuffer, CHANNELS };
-
             Measure
                .Method(() =>
                 {
                     for (int s = 0; s < sourceCount; s++)
-                    {
-                        for (int i = 0; i < totalSamples; i++)
-                            audioBuffer[i] = 0.5f;
-
-                        APPLY_SPATIAL_PANNING.Invoke(sources[s], invokeArgs);
-                    }
+                        APPLY_SPATIAL_PANNING(sources[s], audioBuffer, CHANNELS);
                 })
+               .SetUp(() => Array.Fill(audioBuffer, 0.5f))
                .WarmupCount(10)
                .MeasurementCount(50)
                .GC()
@@ -84,15 +87,15 @@ namespace DCL.VoiceChat.Nearby
 
         private void SetupSources(int count)
         {
-            Random.InitState(42);
+            UnityEngine.Random.InitState(42);
 
             for (int i = 0; i < count; i++)
             {
                 LivekitAudioSource source = LivekitAudioSource.New(isSpatial: true);
                 source.SetSpatialSettings(true, 0.75f, false);
                 source.SetSpatialAngles(
-                    Random.Range(-Mathf.PI, Mathf.PI),
-                    Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
+                    UnityEngine.Random.Range(-Mathf.PI, Mathf.PI),
+                    UnityEngine.Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
                 sources.Add(source);
             }
         }
