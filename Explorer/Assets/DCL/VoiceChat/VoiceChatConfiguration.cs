@@ -67,8 +67,10 @@ namespace DCL.VoiceChat
         {
             source.dopplerLevel = 0;
             source.spread = 0;
+            source.spatialBlend = 1f;
 
             source.rolloffMode = AudioRolloffMode.Custom;
+            source.maxDistance = NearbyCustomRolloffCurve[NearbyCustomRolloffCurve.length - 1].time;
             source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, NearbyCustomRolloffCurve);
         }
 
