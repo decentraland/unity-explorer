@@ -123,6 +123,10 @@ namespace DCL.VoiceChat.Nearby
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, LKDisconnectReason? reason)
         {
+            // Cancel in-flight activation immediately so PublishAsync observes it via its CancellationToken
+            if (update == ConnectionUpdate.Disconnected)
+                activationCts.SafeCancelAndDispose();
+
             OnConnectionUpdatedInternalAsync(update, reason).Forget();
             return;
 
@@ -144,8 +148,6 @@ namespace DCL.VoiceChat.Nearby
                         break;
 
                     case ConnectionUpdate.Disconnected:
-                        activationCts.SafeCancelAndDispose();
-
                         if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
 
@@ -200,6 +202,10 @@ namespace DCL.VoiceChat.Nearby
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)
         {
+            // Cancel in-flight activation immediately so PublishAsync observes it via its CancellationToken
+            if (newState is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED)
+                activationCts.SafeCancelAndDispose();
+
             OnNearbyStateChangedInternalAsync(newState).Forget();
             return;
 
@@ -213,7 +219,6 @@ namespace DCL.VoiceChat.Nearby
                 {
                     case NearbyVoiceChatState.DISABLED:
                     case NearbyVoiceChatState.SUPPRESSED:
-                        activationCts.SafeCancelAndDispose();
                         Deactivate();
                         break;
 
