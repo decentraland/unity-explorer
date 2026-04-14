@@ -396,7 +396,6 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
-                appArgs,
                 staticContainer.RealmData);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,

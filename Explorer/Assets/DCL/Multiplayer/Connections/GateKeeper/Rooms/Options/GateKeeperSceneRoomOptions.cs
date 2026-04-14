@@ -2,7 +2,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Utility;
 using ECS;
-using Global.AppArgs;
 using System;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
@@ -14,7 +13,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
         public bool IsCommsOffline => RealmData.CommsAdapter.Contains("offline:offline");
 
-        private readonly string? overrideAdapterURL;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -23,7 +21,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             IDecentralandUrlsSource decentralandUrlsSource,
             ISceneRoomMetaDataSource play,
             ISceneRoomMetaDataSource localSceneDevelopment,
-            IAppArgs appArgs,
             IRealmData realmData
         )
         {
@@ -37,19 +34,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
             this.launchMode = launchMode;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            if (appArgs.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? overrideUrl)
-                && !string.IsNullOrEmpty(overrideUrl))
-                overrideAdapterURL = overrideUrl;
-            else
-                overrideAdapterURL = null;
         }
 
         public string GetAdapterURL(string sceneID)
         {
-            if (!string.IsNullOrEmpty(overrideAdapterURL))
-                return overrideAdapterURL;
-
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 return decentralandUrlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter);
 
