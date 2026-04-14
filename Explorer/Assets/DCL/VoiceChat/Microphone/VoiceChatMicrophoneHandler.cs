@@ -25,6 +25,7 @@ namespace DCL.VoiceChat
         private Weak<MicrophoneRtcAudioSource> callSource = Weak<MicrophoneRtcAudioSource>.Null;
         private Weak<MicrophoneRtcAudioSource> spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
         private NearbyVoiceChatStateModel? nearbyStateModel;
+        private bool wasNearbyMicActiveBeforeFocusLoss;
 
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
 
@@ -39,6 +40,7 @@ namespace DCL.VoiceChat
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
+            Application.focusChanged += OnApplicationFocusChanged;
         }
 
         public void Dispose()
@@ -47,6 +49,7 @@ namespace DCL.VoiceChat
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
+            Application.focusChanged -= OnApplicationFocusChanged;
         }
 
         /// <summary>
@@ -84,6 +87,38 @@ namespace DCL.VoiceChat
 
                 if (shouldDisableByThreshold || hasIntentionToDisable)
                     DisableMicrophone();
+            }
+        }
+
+        private void OnApplicationFocusChanged(bool hasFocus)
+        {
+            if (!isSpatialActive) return;
+
+            if (!hasFocus)
+            {
+                Option<MicrophoneRtcAudioSource> resource = spatialSource.Resource;
+
+                if (resource.Has && resource.Value.IsRecording)
+                {
+                    resource.Value.Stop();
+                    wasNearbyMicActiveBeforeFocusLoss = true;
+                    isMicrophoneEnabledProperty.Value = false;
+                    nearbyStateModel?.StopSpeaking();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Nearby mic paused — application lost focus");
+                }
+            }
+            else if (wasNearbyMicActiveBeforeFocusLoss)
+            {
+                wasNearbyMicActiveBeforeFocusLoss = false;
+                Option<MicrophoneRtcAudioSource> resource = spatialSource.Resource;
+
+                if (resource.Has)
+                {
+                    resource.Value.Start();
+                    isMicrophoneEnabledProperty.Value = true;
+                    nearbyStateModel?.StartSpeaking();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Nearby mic resumed — application regained focus");
+                }
             }
         }
 
