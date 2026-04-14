@@ -1,6 +1,6 @@
-Shader "Custom/LavaFlow" 
+Shader "Custom/LavaFlow"
 {
-    Properties 
+    Properties
     {
         _MainTex ("Texture", 2D) = "white" {} // just placeholder to remove exception in the build
         _Color1 ("Color 1", Color) = (.957, .804, .623)
@@ -11,10 +11,18 @@ Shader "Custom/LavaFlow"
         _Frequency ("Frequency", float) = 5
         _Amplitude ("Amplitude", float) = 30
 
+        // Stencil support for UI masking (SoftMask Normal mode / Unity Mask)
+        _StencilComp ("Stencil Comparison", Float) = 8
+        _Stencil ("Stencil ID", Float) = 0
+        _StencilOp ("Stencil Operation", Float) = 0
+        _StencilWriteMask ("Stencil Write Mask", Float) = 255
+        _StencilReadMask ("Stencil Read Mask", Float) = 255
+        _ColorMask ("Color Mask", Float) = 15
+
         // Soft Mask determines that shader supports soft masking by presence of this property.
         [PerRendererData] _SoftMask("Mask", 2D) = "white" {}
     }
-    SubShader 
+    SubShader
     {
         Tags
         {
@@ -24,22 +32,35 @@ Shader "Custom/LavaFlow"
             "PreviewType"="Plane"
             "CanUseSpriteAtlas"="True"
         }
-        
+
+        Stencil
+        {
+            Ref [_Stencil]
+            Comp [_StencilComp]
+            Pass [_StencilOp]
+            ReadMask [_StencilReadMask]
+            WriteMask [_StencilWriteMask]
+        }
+
         Cull Off
         Lighting Off
         ZWrite Off
         ZTest [unity_GUIZTestMode]
         Blend SrcAlpha OneMinusSrcAlpha
+        ColorMask [_ColorMask]
 
-        Pass 
+        Pass
         {
             CGPROGRAM
             #pragma vertex vertexShader
             #pragma fragment fragmentShader
 
-            #pragma multi_compile __ SOFTMASKABLE
-            
+            // ==== SOFTMASKABLE ====
+            #pragma shader_feature _ SOFTMASK_EDITOR
+            #pragma shader_feature_local_fragment _ SOFTMASKABLE
+            #if SOFTMASKABLE
             #include "Packages/com.coffee.softmask-for-ugui/Shaders/SoftMask.cginc"
+            #endif
             
             float4 _Color1; 
             float4 _Color2;
@@ -57,19 +78,25 @@ Shader "Custom/LavaFlow"
                 float4 color : COLOR; 
             };
 
-            struct interpolator 
+            struct interpolator
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
+                #if SOFTMASK_EDITOR
+                float4 worldPosition : TEXCOORD1;
+                #endif
             };
 
-            interpolator vertexShader (mesh m) 
+            interpolator vertexShader (mesh m)
             {
                 interpolator o;
-                o.vertex = UnityObjectToClipPos(m.vertex); 
+                o.vertex = UnityObjectToClipPos(m.vertex);
                 o.uv = m.uv;
                 o.color = m.color;
+                #if SOFTMASK_EDITOR
+                o.worldPosition = m.vertex;
+                #endif
                 return o;
             }
 
@@ -132,7 +159,11 @@ Shader "Custom/LavaFlow"
                 float4 layer1 = lerp(_Color1, _Color2, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
                 float4 layer2 = lerp(_Color3, _Color4, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
                 float4 finalComp = lerp(layer1, layer2, smoothstep(.5, -.3, tuv.y));
-                finalComp.a = i.color.a * SoftMask(i.vertex.xy, float4(0, 0, 0, 0), finalComp.a);
+                finalComp.a = i.color.a;
+
+                #if SOFTMASKABLE
+                finalComp.a *= SoftMask(i.vertex, i.worldPosition, finalComp.a);
+                #endif
 
                 return finalComp;
             }
