@@ -94,6 +94,8 @@ namespace DCL.Prefs
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
+
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
