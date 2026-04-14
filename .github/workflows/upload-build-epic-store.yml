@@ -1,6 +1,8 @@
 name: Upload Latest Build to Epic Store
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       platform:
@@ -25,14 +27,16 @@ jobs:
     - name: Set platform flags
       id: platforms
       run: |
-        $p = "${{ github.event.inputs.platform }}"
+        $p = "${{ github.event.inputs.platform || 'both' }}"
         echo "build_windows=$($p -eq 'windows' -or $p -eq 'both')" >> $env:GITHUB_OUTPUT
         echo "build_mac=$($p -eq 'mac' -or $p -eq 'both')" >> $env:GITHUB_OUTPUT
 
     - name: Get the latest release info
       id: get_release
       run: |
-        $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/decentraland/unity-explorer/releases/latest"
+        $releaseTag = "${{ github.event.release.tag_name }}"
+        $apiUrl = if ($releaseTag -ne "") { "https://api.github.com/repos/decentraland/unity-explorer/releases/tags/$releaseTag" } else { "https://api.github.com/repos/decentraland/unity-explorer/releases/latest" }
+        $releaseData = Invoke-RestMethod -Uri $apiUrl -Headers @{ Authorization = "token $env:GITHUB_TOKEN" }
         $version = $releaseData.tag_name
         $windowsUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_windows64_epic.zip" }).browser_download_url
         $macosUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_macos_epic.zip" }).browser_download_url
@@ -41,7 +45,7 @@ jobs:
         Write-Host "Windows download URL: $windowsUrl"
         Write-Host "macOS download URL: $macosUrl"
 
-        $platform = "${{ github.event.inputs.platform }}"
+        $platform = "${{ github.event.inputs.platform || 'both' }}"
         if (-not $windowsUrl -and ($platform -eq "windows" -or $platform -eq "both")) {
           Write-Error "Windows asset (Decentraland_windows64_epic.zip) not found in latest release $version"
           exit 1
@@ -128,8 +132,10 @@ jobs:
 
     - name: Upload Windows artifact
       if: steps.platforms.outputs.build_windows == 'True'
+      id: upload_windows
       run: |
-        BuildPatchTool.exe `
+        $exitCode = 0
+        & BuildPatchTool.exe `
         -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
         -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
         -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
@@ -140,12 +146,26 @@ jobs:
         -CloudDir="$env:RUNNER_TEMP\BuildPatchTool\CloudDir_Windows" `
         -BuildVersion="${{ steps.get_release.outputs.version }}-win" `
         -AppLaunch="Decentraland.exe" `
-        -AppArgs="--skip-version-check"
+        -AppArgs="--skip-version-check" 2>&1 | Tee-Object -Variable bptOutput
+        $exitCode = $LASTEXITCODE
+
+        if ($exitCode -ne 0) {
+          $outputStr = $bptOutput -join "`n"
+          if ($outputStr -match "Build already exists") {
+            Write-Host "::warning::Windows build version already uploaded to Epic — skipping."
+            echo "skipped=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "BuildPatchTool failed with exit code $exitCode"
+            exit $exitCode
+          }
+        }
 
     - name: Upload macOS artifact
       if: steps.platforms.outputs.build_mac == 'True'
+      id: upload_mac
       run: |
-        BuildPatchTool.exe `
+        $exitCode = 0
+        & BuildPatchTool.exe `
         -OrganizationId="${{ secrets.EPIC_STORE_ORG_ID }}" `
         -ProductId="${{ secrets.EPIC_STORE_PRODUCT_ID }}" `
         -ArtifactId="${{ secrets.EPIC_STORE_ARTIFACT_ID }}" `
@@ -157,7 +177,19 @@ jobs:
         -BuildVersion="${{ steps.get_release.outputs.version }}-mac" `
         -AppLaunch="Decentraland.app/Contents/MacOS/Explorer" `
         -AppArgs="--skip-version-check" `
-        -Platform="Mac"
+        -Platform="Mac" 2>&1 | Tee-Object -Variable bptOutput
+        $exitCode = $LASTEXITCODE
+
+        if ($exitCode -ne 0) {
+          $outputStr = $bptOutput -join "`n"
+          if ($outputStr -match "Build already exists") {
+            Write-Host "::warning::macOS build version already uploaded to Epic — skipping."
+            echo "skipped=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "BuildPatchTool failed with exit code $exitCode"
+            exit $exitCode
+          }
+        }
 
     - name: Post-upload instructions
       if: steps.platforms.outputs.build_windows == 'True' || steps.platforms.outputs.build_mac == 'True'

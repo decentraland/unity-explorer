@@ -138,6 +138,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ReportUserForm = 84,
         BannedUsers = 85,
-        SceneAdmins = 86,
+
+        EntitiesActiveElements = 86,
+
+        SceneAdmins = 87,
     }
 }

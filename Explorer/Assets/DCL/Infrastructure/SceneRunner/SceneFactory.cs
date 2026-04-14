@@ -34,6 +34,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
@@ -59,7 +60,7 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData? realmData;
+        private readonly IRealmData realmData;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneCommunicationPipe messagePipesHub;
@@ -85,7 +86,7 @@ namespace SceneRunner
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
@@ -94,6 +95,7 @@ namespace SceneRunner
             ISystemClipboard systemClipboard,
             string installSource)
         {
+            Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
             this.sharedPoolsProvider = sharedPoolsProvider;
@@ -209,24 +211,9 @@ namespace SceneRunner
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(
-                    deps,
-                    sceneRuntime,
-                    sharedPoolsProvider,
-                    crdtSerializer,
-                    mvcManager,
-                    globalWorldActions,
-                    realmData!,
-                    messagePipesHub,
-                    webRequestController,
-                    skyboxSettings,
-                    engineAPIMutexOwner,
-                    profileRepository,
-                    systemClipboard,
-                    roomHub,
-                    sceneAdmins,
-                    installSource
-                );
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
+                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -246,30 +233,16 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
                     remoteMetadata
                 );
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(
-                        deps,
-                        sceneRuntime,
-                        sharedPoolsProvider,
-                        crdtSerializer,
-                        mvcManager,
-                        globalWorldActions,
-                        realmData!,
-                        messagePipesHub,
-                        webRequestController,
-                        skyboxSettings,
-                        engineAPIMutexOwner,
-                        profileRepository,
-                        systemClipboard,
-                        roomHub,
-                        sceneAdmins,
-                        installSource);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
+                    crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController,
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -288,7 +261,7 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
                     remoteMetadata
                 );

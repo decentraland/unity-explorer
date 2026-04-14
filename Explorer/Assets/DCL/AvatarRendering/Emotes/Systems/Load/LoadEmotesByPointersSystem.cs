@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly URLBuilder urlBuilder = new ();
 
-        public LoadEmotesByPointersSystem(
+        internal LoadEmotesByPointersSystem(
             World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention> cache,
@@ -173,7 +173,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             var promise = EmotesFromRealmPromise.Create(
                 World!,
                 new GetEmotesDTOByPointersFromRealmIntention(convertedPointers,
-                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive))
+                    new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActiveElements))
                 ),
                 partitionComponent
             );

@@ -41,6 +41,7 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Settings;
 using DCL.Translation;
 using DCL.Translation.Processors;
@@ -254,7 +255,7 @@ namespace DCL.PluginSystem.Global
                 settings.ChatSettingsAsset,
                 privacySettings,
                 friendsEventBus,
-                roomHub.ChatRoom());
+                roomHub);
 
             pluginScope.Add(chatUserStateService);
 

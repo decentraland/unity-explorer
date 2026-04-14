@@ -95,15 +95,12 @@ namespace DCL.WebRequests
                         return default(TResult);
 
                     if (!envelope.SuppressErrors)
-
                         // Print verbose
                         ReportHub.LogError(
                             envelope.ReportData,
                             $"Exception (code {exception.ResponseCode}) occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
                             + $"Attempt: {attemptNumber}/{retryPolicy.maxRetriesCount + 1}"
                         );
-
-                    analyticsContainer.OnException(request, exception);
 
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attemptNumber, retryPolicy, idempotent, exception);
 
