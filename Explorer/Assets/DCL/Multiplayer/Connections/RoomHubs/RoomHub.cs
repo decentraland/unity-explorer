@@ -22,8 +22,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         private readonly HashSet<string> identityHashCache = new (32);
 
-        private IReadOnlyDictionary<string, Participant> islandIdentities;
-        private IReadOnlyDictionary<string, Participant> sceneIdentities;
+        private IReadOnlyDictionary<string, LKParticipant> islandIdentities;
+        private IReadOnlyDictionary<string, LKParticipant> sceneIdentities;
 
         private long participantsUpdateLastFrame = -1;
 
@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
             voiceChatRoom;
 
-        public bool TryGetUser(string wallet, out Participant? participant, out IRoom? room)
+        public bool TryGetUser(string wallet, out LKParticipant? participant, out IRoom? room)
         {
             // Ensure latest data
             AllLocalRoomsRemoteParticipantIdentities();

@@ -95,6 +95,7 @@ using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
+using DCL.LiveKit.Public;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -436,10 +437,10 @@ namespace Global.Dynamic
 
                 //override allowed only in Editor
                 Application.isEditor
-                    ? new LinkedBox<(bool use, ConnectionQuality quality)>(
+                    ? new LinkedBox<(bool use, LKConnectionQuality quality)>(
                         () => (bootstrapContainer.DebugSettings.OverrideConnectionQuality, bootstrapContainer.DebugSettings.ConnectionQuality)
                     )
-                    : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
+                    : new Box<(bool use, LKConnectionQuality quality)>((false, LKConnectionQuality.QualityExcellent))
             );
 
             var entityParticipantTable = new EntityParticipantTable();
