@@ -105,6 +105,28 @@ namespace DCL.AvatarRendering.Loading.Assets
         private static bool HasSpringBoneInHierarchy(Transform transform) =>
             transform.GetComponentInChildren<SpringBoneJointComponent>();
 
+        private static void PropagateSpringBoneToChildren(Transform root, SpringBoneJointComponent rootConfig, Dictionary<Transform, int> boneIndexLookup)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (!boneIndexLookup.TryGetValue(child, out int boneIndex)) continue;
+                if (boneIndex < 62) continue;
+                if (child.GetComponent<SpringBoneJointComponent>() != null) continue;
+
+                var component = child.gameObject.AddComponent<SpringBoneJointComponent>();
+                component.Stiffness = rootConfig.Stiffness;
+                component.Drag = rootConfig.Drag;
+                component.GravityDir = rootConfig.GravityDir;
+                component.GravityPower = rootConfig.GravityPower;
+                component.HitRadius = rootConfig.HitRadius;
+                component.IsRoot = false;
+
+                // Recurse into children
+                PropagateSpringBoneToChildren(child, rootConfig, boneIndexLookup);
+            }
+        }
+
         private static SpringBoneData[] BuildSpringBoneData(GameObject wearable)
         {
             using var resultScope = ListPool<SpringBoneData>.Get(out var result);
@@ -116,10 +138,24 @@ namespace DCL.AvatarRendering.Loading.Assets
             for (int boneIndex = 0; boneIndex < skeleton.bones.Length; boneIndex++)
                 boneIndexLookup.Add(skeleton.bones[boneIndex], boneIndex);
 
+            // First pass: propagate SpringBoneJointComponent to children of root spring bones
+            // that are part of the skeleton but weren't tagged in the GLTF extension.
+            foreach (var bone in skeleton.bones)
+            {
+                SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
+                if (!jointAuthoring || !jointAuthoring.IsRoot) continue;
+
+                PropagateSpringBoneToChildren(bone, jointAuthoring, boneIndexLookup);
+            }
+
             foreach (var bone in skeleton.bones)
             {
                 SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
                 if (!jointAuthoring) continue;
+
+                int boneIdx = boneIndexLookup[bone];
+                // Skip base skeleton bones — they are anchor points, not spring bones
+                if (boneIdx < 62) continue;
 
                 result.Add(new SpringBoneData(bone,
                     jointAuthoring.IsRoot,
