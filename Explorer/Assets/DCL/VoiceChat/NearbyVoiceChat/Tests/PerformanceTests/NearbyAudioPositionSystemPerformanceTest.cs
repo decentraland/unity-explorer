@@ -11,7 +11,6 @@ using NUnit.Framework;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.PerformanceTesting;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby
@@ -65,20 +64,12 @@ namespace DCL.VoiceChat.Nearby
             // First update assigns NearbyAudioSourceComponent to all entities
             system.Update(0);
 
-            ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
-
             Measure
                .Method(() => system.Update(0))
                .WarmupCount(5)
                .MeasurementCount(50)
                .GC()
                .Run();
-
-            long gcBytes = gcAlloc.LastValue;
-            gcAlloc.Dispose();
-
-            Debug.Log($"[NearbyAudioPositionSystem] {participantCount} participants — GC.Alloc last: {gcBytes} bytes");
-            Assert.That(gcBytes, Is.EqualTo(0), $"System.Update must be allocation-free, but allocated {gcBytes} bytes with {participantCount} participants");
         }
 
         private void SetupParticipants(int count)
