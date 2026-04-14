@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream.Settings
 
         [Tooltip("A value that determines if only streams of the current scene will play or even in the nearby scenes.")]
         [SerializeField]
-        public bool PlayCurrentSceneStreamOnly = true;
+        private bool playCurrentSceneStreamOnly = true;
 
         /// <summary>
         ///     Gets or sets the amount of videos that will be playing at the same time, at most, on camera.
@@ -83,6 +83,12 @@ namespace DCL.SDKComponents.MediaStream.Settings
         ///     Gets a value that determines which videos will be paused, without being prioritized, when their distance to the camera is above it.
         /// </summary>
         public float MaximumDistanceLimit => maximumDistanceLimit;
+
+        public bool PlayCurrentSceneStreamOnly
+        {
+            get => playCurrentSceneStreamOnly;
+            set => playCurrentSceneStreamOnly = value;
+        }
 
         /// <summary>
         ///     Raised when the maximum simultaneous videos property changes.

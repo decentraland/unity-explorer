@@ -31,7 +31,7 @@ namespace DCL.Settings.ModuleControllers
             qualitySettingsController.SetPlayCurrentSceneStreamsOnly(enabled);
             videoPrioritizationSettings.PlayCurrentSceneStreamOnly = enabled;
         }
-        
+
         public override void OnAllControllersInstantiated(List<SettingsFeatureController> controllers)
         {
             ManualUpdate(qualitySettingsController.PlayCurrentSceneStreamsOnly);
