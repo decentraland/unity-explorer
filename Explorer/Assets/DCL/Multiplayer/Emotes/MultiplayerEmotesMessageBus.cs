@@ -13,6 +13,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
+using DCL.LiveKit.Public;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -91,7 +92,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.Mask = (uint)mask;
             // Message objects are pooled/reused; ensure no stale optional fields leak from previous uses (e.g. SendStop()).
             emote.Payload.ClearIsStopping();
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, AvatarEmoteMask mask)
