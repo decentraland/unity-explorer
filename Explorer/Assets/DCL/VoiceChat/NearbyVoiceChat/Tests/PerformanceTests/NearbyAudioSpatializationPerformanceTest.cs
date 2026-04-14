@@ -54,23 +54,22 @@ namespace DCL.VoiceChat.Nearby
         /// </summary>
         [Test]
         [Performance]
-        [TestCase(1, 256, TestName = "Panning_1_Source_256")]
         [TestCase(1, 512, TestName = "Panning_1_Source_512")]
         [TestCase(1, 1024, TestName = "Panning_1_Source_1024")]
         [TestCase(10, 512, TestName = "Panning_10_Sources_512")]
         [TestCase(10, 1024, TestName = "Panning_10_Sources_1024")]
-        [TestCase(30, 256, TestName = "Panning_30_Sources_256")]
-        [TestCase(30, 512, TestName = "Panning_30_Sources_512")]
-        [TestCase(30, 1024, TestName = "Panning_30_Sources_1024")]
-        [TestCase(50, 1024, TestName = "Panning_50_Sources_1024")]
-        [TestCase(100, 1024, TestName = "Panning_100_Sources_1024")]
-        public void ApplySpatialPanningForNSources(int sourceCount, int bufferSize)
+        [TestCase(30, 512,  false, TestName = "Panning_30_Sources_512")]
+        [TestCase(30, 1024,  false, TestName = "Panning_30_Sources_1024")]
+        [TestCase(30, 1024,  true, TestName = "Panning_30_Sources_1024_SmoothPanning")]
+        [TestCase(50, 1024,  false, TestName = "Panning_50_Sources_1024")]
+        [TestCase(100, 1024,  false, TestName = "Panning_100_Sources_1024")]
+        public void ApplySpatialPanningForNSources(int sourceCount, int bufferSize, bool smoothPanning = false)
         {
             const int CHANNELS = 2;
             int totalSamples = bufferSize * CHANNELS;
             float[] audioBuffer = new float[totalSamples];
 
-            SetupSources(sourceCount);
+            SetupSources(sourceCount, smoothPanning);
 
             Measure
                .Method(() =>
@@ -85,14 +84,14 @@ namespace DCL.VoiceChat.Nearby
                .Run();
         }
 
-        private void SetupSources(int count)
+        private void SetupSources(int count, bool smoothPanning = false)
         {
             UnityEngine.Random.InitState(42);
 
             for (int i = 0; i < count; i++)
             {
                 LivekitAudioSource source = LivekitAudioSource.New(isSpatial: true);
-                source.SetSpatialSettings(true, 0.75f, false);
+                source.SetSpatialSettings(true, 0.75f, smoothPanning);
                 source.SetSpatialAngles(
                     UnityEngine.Random.Range(-Mathf.PI, Mathf.PI),
                     UnityEngine.Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
