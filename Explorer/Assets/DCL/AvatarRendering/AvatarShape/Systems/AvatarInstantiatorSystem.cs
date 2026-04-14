@@ -201,6 +201,13 @@ namespace DCL.AvatarRendering.AvatarShape
             ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {
+            // No new WearablePromise — cosmetic change only, skip re-instantiation
+            if (avatarShapeComponent.IsDirty && avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                avatarShapeComponent.IsDirty = false;
+                return;
+            }
+
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return;

@@ -7,6 +7,7 @@ namespace DCL.SpringBones
     {
         public List<int> SlotIndices;
         public int AvatarVersion;
+        public int StructuralHash;
         public List<(Transform wearableParent, Transform skeletonBone)> SyncPairs;
     }
 }

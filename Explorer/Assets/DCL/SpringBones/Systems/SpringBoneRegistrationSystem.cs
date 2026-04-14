@@ -47,13 +47,14 @@ namespace DCL.SpringBones
             var slotIndices = ListPool<int>.Get();
             var syncPairs = ListPool<(Transform, Transform)>.Get();
 
-            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase,
-                ref transformMatrixComponent, slotIndices, syncPairs);
+            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase, ref transformMatrixComponent, slotIndices, syncPairs);
+            Debug.Log($"[Alex] Registering Spring Bones for: {avatarBase.RandomID} spring bones {transformMatrixComponent.bones.Count} with hash: {avatarShapeComponent.StructuralHash}");
 
             World.Add(entity, new SpringBoneRegistrationComponent
             {
                 SlotIndices = slotIndices,
                 AvatarVersion = avatarShapeComponent.InstantiationVersion,
+                StructuralHash = avatarShapeComponent.StructuralHash,
                 SyncPairs = syncPairs,
             });
         }
@@ -69,6 +70,12 @@ namespace DCL.SpringBones
             if (avatarShapeComponent.InstantiationVersion == registration.AvatarVersion) return;
 
             registration.AvatarVersion = avatarShapeComponent.InstantiationVersion;
+
+            // Only re-register when structural fields changed (wearables, body shape).
+            // Cosmetic changes (colors, expressions) reuse the same cached GameObjects/transforms.
+            if (avatarShapeComponent.StructuralHash == registration.StructuralHash) return;
+
+            registration.StructuralHash = avatarShapeComponent.StructuralHash;
 
             UnregisterSlots(registration.SlotIndices);
             registration.SyncPairs.Clear();

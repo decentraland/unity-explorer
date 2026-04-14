@@ -29,8 +29,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public bool ShowOnlyWearables;
 
+        /// <summary>
+        /// Hash of structural fields (BodyShape, Wearables, ShowOnlyWearables).
+        /// Used to detect whether a PBAvatarShape update requires full re-instantiation
+        /// or just a cosmetic refresh (colors, name, expressions).
+        /// </summary>
+        public int StructuralHash;
+
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
-            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
+            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false, int structuralHash = 0)
         {
             ID = id;
             Name = name;
@@ -47,6 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
             InstantiationVersion = -1;
+            StructuralHash = structuralHash;
         }
 
         public void CreateOutlineCompatibilityList()
