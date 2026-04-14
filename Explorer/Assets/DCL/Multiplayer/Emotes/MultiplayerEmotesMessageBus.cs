@@ -120,7 +120,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Timestamp = timestamp;
             emote.Payload.IsStopping = true;
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
         private async UniTaskVoid SelfSendStopWithDelayAsync(float timestamp)
         {

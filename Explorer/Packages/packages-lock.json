@@ -114,11 +114,11 @@
       "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/update-to-gltfast-6.16.1",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e7dc3286806e732f4388754ec17df23b81a8d89e"
+      "hash": "0132f23fb5d1bfa1634a872ef28e131067df7a69"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
