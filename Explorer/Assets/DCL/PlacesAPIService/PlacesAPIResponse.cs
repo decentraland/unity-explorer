@@ -32,6 +32,7 @@ namespace DCL.PlacesAPIService
             public string owner;
             public string[] tags;
             public string world_name;
+            public bool is_private;
             public string? creator_address;
 
             public Vector2Int[] Positions;
@@ -62,7 +63,7 @@ namespace DCL.PlacesAPIService
             public Realm[] realms_detail;
             public string like_rate;
             public bool live;
-            public string[] connected_addresses;
+            public string[]? connected_addresses;
 
             [SerializeField] private string[] positions;
 

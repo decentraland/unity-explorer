@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -12,6 +13,7 @@ using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -68,6 +70,8 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsCache friendsCache;
         private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
 
+        private UniTask[] subscriptions = new UniTask[3];
+
         public FriendsContainer(
             MainUIView mainUIView,
             IMVCManager mvcManager,
@@ -94,7 +98,9 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatOrchestrator voiceChatOrchestrator)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -143,7 +149,10 @@ namespace DCL.PluginSystem.Global
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatOrchestrator
+                voiceChatOrchestrator,
+                webBrowser,
+                decentralandUrlsSource,
+                selfProfile
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
@@ -233,7 +242,7 @@ namespace DCL.PluginSystem.Global
 
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
-            LaunchSubscriptions(friendServiceSubscriptionCts.Token);
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token);
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -242,10 +251,18 @@ namespace DCL.PluginSystem.Global
             async UniTaskVoid PrewarmAsync(CancellationToken ct)
             {
                 await friendsPanelController.InitAsync(ct);
+                await PreWarmFriendsCacheAsync(ct);
 
                 // TODO should not unsubscribe as the user can re-login with another account, and thus, pre-warming will be skipped
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
+        }
+
+        private async UniTask PreWarmFriendsCacheAsync(CancellationToken ct)
+        {
+            friendsCache.Clear();
+            await friendsService.GetFriendsAsync(0, 1000, ct)
+                                .SuppressToResultAsync(ReportCategory.FRIENDS);
         }
 
         private void OnTransportClosed() =>
@@ -274,26 +291,25 @@ namespace DCL.PluginSystem.Global
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCts.Token);
+            ReconnectFriendServiceAsync(friendServiceSubscriptionCts.Token).Forget();
             return;
 
-            void ReconnectFriendServiceAsync(CancellationToken ct)
+            async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
             {
-                LaunchSubscriptions(ct);
+                await LaunchSubscriptionsAsync(ct);
+                await PreWarmFriendsCacheAsync(ct);
 
                 friendsPanelController?.Reset();
             }
         }
 
-        private void LaunchSubscriptions(CancellationToken ct)
+        private async UniTask LaunchSubscriptionsAsync(CancellationToken ct)
         {
-            rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
+            subscriptions[0] = rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct);
+            subscriptions[1] = IsConnectivityStatusEnabled() ? rpcFriendsService.SubscribeToConnectivityStatusAsync(ct) : UniTask.CompletedTask;
+            subscriptions[2] = includeUserBlocking ? rpcFriendsService.SubscribeToUserBlockUpdatersAsync(ct) : UniTask.CompletedTask;
 
-            if (IsConnectivityStatusEnabled())
-                rpcFriendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
-
-            if (includeUserBlocking)
-                rpcFriendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
+            await UniTask.WhenAll(subscriptions);
         }
     }
 

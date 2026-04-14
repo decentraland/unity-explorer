@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Avatar_Fall_Long
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 63a86ad2327497440a10ac906e382987, type: 3}
-  - {fileID: 8300000, guid: 9d41617110f7136479e938bad8bbd599, type: 3}
-  - {fileID: 8300000, guid: 6502663cae0809c4f9a443057c15ed3b, type: 3}
-  - {fileID: 8300000, guid: da0ce89bf527bfb45bdc6b7a3d8230f7, type: 3}
-  - {fileID: 8300000, guid: 4baf518baed6e3d479d5ea08602dc612, type: 3}
-  - {fileID: 8300000, guid: b7a12ff9c31c1414dbfd1cd04cf75850, type: 3}
-  - {fileID: 8300000, guid: 14aa2386c04ce174ab6a6938d97fec9c, type: 3}
+  - {fileID: 8300000, guid: 8f52f789dd3954375b6a46c3611894de, type: 3}
+  - {fileID: 8300000, guid: 22b97edaac1f148a09d722a5ceae532a, type: 3}
+  - {fileID: 8300000, guid: 36f8c0444f98940499324484913ba5d3, type: 3}
+  - {fileID: 8300000, guid: 942cd3a6edfd8412abc4221c825a02a1, type: 3}
+  - {fileID: 8300000, guid: a98ba218b9eee48a1b791709a7815858, type: 3}
+  - {fileID: 8300000, guid: 0d3b99dbd61f94b918e66b2e5a15bf0e, type: 3}
+  - {fileID: 8300000, guid: 3e5ac0262619d4a398cae16fa785774f, type: 3}
   relativeVolume: 0.4
   audioCategory: 3
   pitchVariation: 0.05

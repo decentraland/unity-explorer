@@ -103,7 +103,7 @@ namespace DCL.Chat.ChatServices
 
             foreach (ICommunityMemberData memberData in response.data.results)
             {
-                if (web3IdentityCache.Identity?.Address == localPlayerAddress)
+                if (memberData.Address == localPlayerAddress)
                     continue;
 
                 if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address))
@@ -116,6 +116,14 @@ namespace DCL.Chat.ChatServices
             // (on the moment of the community selection the online users collection was empty)
             if (currentChannelId.Equals(communityChannelId))
                 eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants.normal));
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            foreach (string participant in OnlineParticipants)
+                destination.Add(participant);
         }
 
         public void Deactivate()

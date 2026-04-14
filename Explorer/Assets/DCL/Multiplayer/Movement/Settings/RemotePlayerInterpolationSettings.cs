@@ -41,5 +41,10 @@ namespace DCL.Multiplayer.Movement.Settings
         [field: SerializeField]
         [field: Tooltip("Interpolation factor used for Head IK. Higher values makes transitions snappier.")]
         public float HeadIKInterpolationFactor { get; set; } = 10;
+
+        [field: Space]
+        [field: SerializeField]
+        [field: Tooltip("Interpolation factor used for Point At IK. Higher values makes transitions snappier.")]
+        public float PointAtIKInterpolationFactor { get; set; } = 10;
     }
 }

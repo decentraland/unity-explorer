@@ -31,13 +31,15 @@ namespace DCL.ECSComponents {
             "QVJEEAQSDwoLSUFfQkFDS1dBUkQQBRIMCghJQV9SSUdIVBAGEgsKB0lBX0xF",
             "RlQQBxILCgdJQV9KVU1QEAgSCwoHSUFfV0FMSxAJEg8KC0lBX0FDVElPTl8z",
             "EAoSDwoLSUFfQUNUSU9OXzQQCxIPCgtJQV9BQ1RJT05fNRAMEg8KC0lBX0FD",
-            "VElPTl82EA0SDwoLSUFfTU9ESUZJRVIQDipWChBQb2ludGVyRXZlbnRUeXBl",
-            "EgoKBlBFVF9VUBAAEgwKCFBFVF9ET1dOEAESEwoPUEVUX0hPVkVSX0VOVEVS",
-            "EAISEwoPUEVUX0hPVkVSX0xFQVZFEANCFKoCEURDTC5FQ1NDb21wb25lbnRz",
-            "YgZwcm90bzM="));
+            "VElPTl82EA0SDwoLSUFfTU9ESUZJRVIQDiqIAQoQUG9pbnRlckV2ZW50VHlw",
+            "ZRIKCgZQRVRfVVAQABIMCghQRVRfRE9XThABEhMKD1BFVF9IT1ZFUl9FTlRF",
+            "UhACEhMKD1BFVF9IT1ZFUl9MRUFWRRADEhcKE1BFVF9QUk9YSU1JVFlfRU5U",
+            "RVIQBBIXChNQRVRfUFJPWElNSVRZX0xFQVZFEAUqLAoPSW50ZXJhY3Rpb25U",
+            "eXBlEgoKBkNVUlNPUhAAEg0KCVBST1hJTUlUWRABQhSqAhFEQ0wuRUNTQ29t",
+            "cG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), }, null, null));
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), typeof(global::DCL.ECSComponents.InteractionType), }, null, null));
     }
     #endregion
 
@@ -69,6 +71,13 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("PET_DOWN")] PetDown = 1,
     [pbr::OriginalName("PET_HOVER_ENTER")] PetHoverEnter = 2,
     [pbr::OriginalName("PET_HOVER_LEAVE")] PetHoverLeave = 3,
+    [pbr::OriginalName("PET_PROXIMITY_ENTER")] PetProximityEnter = 4,
+    [pbr::OriginalName("PET_PROXIMITY_LEAVE")] PetProximityLeave = 5,
+  }
+
+  public enum InteractionType {
+    [pbr::OriginalName("CURSOR")] Cursor = 0,
+    [pbr::OriginalName("PROXIMITY")] Proximity = 1,
   }
 
   #endregion

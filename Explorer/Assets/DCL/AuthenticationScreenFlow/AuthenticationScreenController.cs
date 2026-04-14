@@ -9,7 +9,6 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -57,13 +56,11 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly BuildData buildData;
+        private readonly string installSource;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
-        private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -96,12 +93,11 @@ namespace DCL.AuthenticationScreenFlow
             SplashScreen splashScreen,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
-            BuildData buildData,
+            string installSource,
             World world,
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource)
@@ -115,17 +111,14 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
-            this.buildData = buildData;
+            this.installSource = installSource;
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
         }
 
         public override void Dispose()
@@ -155,10 +148,10 @@ namespace DCL.AuthenticationScreenFlow
             fsm = new MVCStateMachine<AuthStateBase>();
 
             fsm.AddStates(
-                new InitAuthState(viewInstance, buildData.InstallSource),
+                new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
             );
 

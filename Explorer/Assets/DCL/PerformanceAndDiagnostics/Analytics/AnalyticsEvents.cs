@@ -87,6 +87,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
 
+            // Auto login with token file analytics events
+            public const string AUTOLOGIN_INITIATED = "autologin_initiated";
+            public const string AUTOLOGIN_SUCCESS = "autologin_success";
+            public const string AUTOLOGIN_FAILURE = "autologin_failure";
+
             // 1. LOGIN SELECTION SCREEN
             public const string LOGIN_SELECTION_SCREEN = "login_selection_screen";
             public const string LOGIN_REQUESTED = "login_requested";
@@ -181,6 +186,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public static class Settings
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
+            public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
         }
 
         public static class FeatureFlags
@@ -215,6 +221,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string OPEN_COMMUNITY_PROFILE = "open_community_profile";
             public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
+        }
+
+        public static class Media
+        {
+            public const string MEDIA_STREAM_OPENED = "media_stream_opened";
         }
 
         public static class Events

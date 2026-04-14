@@ -1,4 +1,5 @@
 using CRDT;
+using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -6,7 +7,6 @@ using DCL.SDKComponents.Tween.Components;
 using DG.Tweening;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -54,6 +54,21 @@ namespace DCL.SDKComponents.Tween
 
         public static Ease GetEase(EasingFunction easingFunction) =>
             EASING_FUNCTIONS_MAP.GetValueOrDefault(easingFunction, Linear);
+
+        /// <summary>
+        /// Resolves undefined position/rotation/scale from the entity's current Transform.
+        /// Used so that sequence steps use up-to-date transform when the step starts.
+        /// </summary>
+        public static void ResolveMoveRotateScale(MoveRotateScale moveRotateScale, Transform? transform, out ResolvedMoveRotateScale resolved)
+        {
+            resolved = new ResolvedMoveRotateScale(
+                moveRotateScale.PositionStart?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.PositionEnd?.ToUnityVector() ?? (transform ? transform.localPosition : Vector3.zero),
+                moveRotateScale.RotationStart?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.RotationEnd?.ToUnityQuaternion() ?? (transform ? transform.localRotation : Quaternion.identity),
+                moveRotateScale.ScaleStart?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one),
+                moveRotateScale.ScaleEnd?.ToUnityVector() ?? (transform ? transform.localScale : Vector3.one));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TweenStateStatus GetTweenerState(ITweener tweener)
@@ -109,7 +124,7 @@ namespace DCL.SDKComponents.Tween
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)
         {
-            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>((component, transform) =>
+            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>(static (component, transform) =>
             {
                 component.Position.Value = transform.Position.Value;
                 component.ParentId = transform.ParentId;
@@ -132,22 +147,22 @@ namespace DCL.SDKComponents.Tween
                 sdkTweenComponent.CustomTweener.Kill(true);
         }
 
-        public static void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent, TweenerPool tweenerPool, IECSToCRDTWriter ecsToCRDTWriter, ISceneStateProvider sceneStateProvider)
+        public static void UpdateTweenTransform(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent, TweenerPool tweenerPool, IECSToCRDTWriter ecsToCRDTWriter, bool isCurrentScene)
         {
             if (pbTween.ModeCase is PBTween.ModeOneofCase.TextureMove or PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
             if (sdkTweenComponent.IsDirty)
             {
                 SetupTween(ref sdkTweenComponent, in pbTween, transformComponent.Transform, null, tweenerPool);
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider, ecsToCRDTWriter);
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isCurrentScene, ecsToCRDTWriter);
             }
             else
             {
-                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent, sceneStateProvider, ecsToCRDTWriter);
+                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent, isCurrentScene, ecsToCRDTWriter);
             }
         }
 
-        public static void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TweenerPool tweenerPool, IECSToCRDTWriter ecsToCRDTWriter, ISceneStateProvider sceneStateProvider)
+        public static void UpdateTweenTexture(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TweenerPool tweenerPool, IECSToCRDTWriter ecsToCRDTWriter, bool isCurrentScene)
         {
             if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove && pbTween.ModeCase != PBTween.ModeOneofCase.TextureMoveContinuous) return;
 
@@ -156,36 +171,36 @@ namespace DCL.SDKComponents.Tween
                 SetupTween(ref sdkTweenComponent, in pbTween, null, materialComponent, tweenerPool);
                 UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent,
                     pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
-                        : pbTween.TextureMoveContinuous.MovementType, sceneStateProvider, ecsToCRDTWriter);
+                        : pbTween.TextureMoveContinuous.MovementType, isCurrentScene, ecsToCRDTWriter);
             }
             else
             {
                 UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent,
                     pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove ? pbTween.TextureMove.MovementType
-                        : pbTween.TextureMoveContinuous.MovementType, sceneStateProvider, ecsToCRDTWriter);
+                        : pbTween.TextureMoveContinuous.MovementType, isCurrentScene, ecsToCRDTWriter);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter)
+        private static void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
             TweenStateStatus newState = GetTweenerState(sdkTweenComponent.CustomTweener);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider, ecsToCRDTWriter);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, movementType, isCurrentScene, ecsToCRDTWriter);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
-                UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
+                UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, isCurrentScene);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter)
+        private static void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
+            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, isCurrentScene);
             WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
@@ -218,31 +233,35 @@ namespace DCL.SDKComponents.Tween
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter)
+        private static void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity, TransformComponent transformComponent, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
             TweenStateStatus newState = GetTweenerState(sdkTweenComponent.CustomTweener);
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider, ecsToCRDTWriter);
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isCurrentScene, ecsToCRDTWriter);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
-                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent, ecsToCRDTWriter);
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isCurrentScene, ecsToCRDTWriter);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter)
+        private static void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, sceneStateProvider.IsCurrent, ecsToCRDTWriter);
+            UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform, transformComponent, isCurrentScene, ecsToCRDTWriter);
             WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, TransformComponent transformComponent, bool isInCurrentScene, IECSToCRDTWriter ecsToCRDTWriter)
         {
-            UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+            if (sdkTweenComponent.TweenMode is PBTween.ModeOneofCase.MoveRotateScale)
+                SyncTransformToSDKTransform(transformComponent.Transform, ref sdkTransform, ref transformComponent, isInCurrentScene);
+            else
+                UpdateTweenResult(ref sdkTransform, ref transformComponent, sdkTweenComponent, isInCurrentScene);
+
             WriteSDKTransformUpdateInCRDT(sdkTransform, ecsToCRDTWriter, sdkEntity);
         }
 
@@ -275,4 +294,28 @@ namespace DCL.SDKComponents.Tween
             && !sdkTweenComponent.CustomTweener.IsFinished()
             && sdkTweenComponent.CustomTweener.GetElapsedTime() >= (pbTween.Duration / MILLISECONDS_CONVERSION_INT);
     }
+
+    /// <summary>
+    /// Resolved MoveRotateScale values with undefined fields filled from current Transform.
+    /// </summary>
+    public readonly struct ResolvedMoveRotateScale
+    {
+        public readonly Vector3 PositionStart;
+        public readonly Vector3 PositionEnd;
+        public readonly Quaternion RotationStart;
+        public readonly Quaternion RotationEnd;
+        public readonly Vector3 ScaleStart;
+        public readonly Vector3 ScaleEnd;
+
+        public ResolvedMoveRotateScale(Vector3 positionStart, Vector3 positionEnd, Quaternion rotationStart, Quaternion rotationEnd, Vector3 scaleStart, Vector3 scaleEnd)
+        {
+            PositionStart = positionStart;
+            PositionEnd = positionEnd;
+            RotationStart = rotationStart;
+            RotationEnd = rotationEnd;
+            ScaleStart = scaleStart;
+            ScaleEnd = scaleEnd;
+        }
+    }
+
 }

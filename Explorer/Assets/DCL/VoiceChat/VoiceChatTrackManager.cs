@@ -6,6 +6,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -129,9 +130,11 @@ namespace DCL.VoiceChat
                 if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
                 MicrophoneRtcAudioSource rtcAudioSource = result.Value;
-                rtcAudioSource.Start();
 
-                ITrack livekitMicrophoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
+                if (microphoneHandler.IsMicrophoneEnabled.Value)
+                    rtcAudioSource.Start();
+
+                ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
                     rtcAudioSource
                 );
@@ -178,7 +181,7 @@ namespace DCL.VoiceChat
             {
                 playbackSourcesHub.Reset();
 
-                foreach (KeyValuePair<string, Participant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                foreach (KeyValuePair<string, LKParticipant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
                     foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
                     {
@@ -226,7 +229,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public void HandleTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             try
             {
@@ -244,7 +247,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}"); }
         }
 
-        public void HandleTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             try
             {
@@ -257,7 +260,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}"); }
         }
 
-        public void HandleLocalTrackPublished(TrackPublication publication, Participant participant)
+        public void HandleLocalTrackPublished(TrackPublication publication, LKParticipant participant)
         {
             try
             {
@@ -276,7 +279,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}"); }
         }
 
-        public void HandleLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        public void HandleLocalTrackUnpublished(TrackPublication publication, LKParticipant participant)
         {
             try
             {

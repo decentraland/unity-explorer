@@ -1,4 +1,6 @@
+using AltTester.AltTesterUnitySDK.Editor;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PluginSystem.Global;
 using JetBrains.Annotations;
 using System;
 using System.Collections;
@@ -59,6 +61,13 @@ namespace Editor
             else
             {
                 Debug.Log($"[INSTALL_SOURCE]: write key not found");
+            }
+
+            if (Parameters.TryGetValue("IS_RELEASE_BUILD", out object isReleaseBuild)
+                && (isReleaseBuild as string) == "true")
+            {
+                Debug.Log("[ALTTESTER]: Release build — removing AltTester scripting define");
+                AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
 
         }

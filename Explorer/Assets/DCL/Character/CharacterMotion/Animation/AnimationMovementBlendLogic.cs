@@ -20,10 +20,6 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetAnimatorParameters(ref CharacterAnimationComponent animationComponent, IAvatarView view, bool isGrounded, int movementBlendId)
         {
-            // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
-            if (!isGrounded)
-                return;
-
             view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, movementBlendId);
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }

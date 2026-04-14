@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using System;
@@ -12,6 +13,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
+        private const float GHOST_NAMETAG_HEIGHT = 2f;
+
+        private int rightPointAtLayerIndex;
+        private int rotationLayerIndex;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
@@ -19,6 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; }
 
         public Animation? LegacyAnimation { get; private set; }
 
@@ -57,17 +64,28 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandRaycast { get; private set; }
         [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; }
         [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
+        [field: SerializeField] public Transform RightHandTarget { get; private set; }
         [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
         [field: Header("LOOK-AT IK")]
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
+        [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; }
 
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
+
+        [field: Header("TORSO IK")]
+        [field: SerializeField] public Rig TorsoIKRig { get; private set; }
+        [field: SerializeField] public Transform TorsoTarget { get; private set; }
+
+        [field: Header("ADDITIVE BREATH")]
+        [field: SerializeField] public Rig CachePoseRig { get; private set; }
+        [field: SerializeField] public Rig AdditiveBreathRig { get; private set; }
+        [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; }
 
         [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
@@ -98,6 +116,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
         [field: SerializeField] public Transform Armature { get; private set; }
 
+        [field: SerializeField] public GameObject GhostGameObject { get; private set; }
+
+        public Renderer GhostRenderer { get; private set; }
+
         [Header("NAMETAG RELATED")]
         [SerializeField] [Tooltip("How high could nametag be, [m]")]
         private float nametagMaxOffset = 2f;
@@ -118,6 +140,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             RandomID = Random.Range(0, 1000);
 
+            rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
+            rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -127,6 +151,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
 
             headArmatureBoneStartPosition = headAramatureBone.position - transform.position;
+
+            GhostRenderer = GhostGameObject.GetComponentInChildren<Renderer>();
         }
 
         public Transform GetTransform() =>
@@ -137,6 +163,16 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             if (LegacyAnimation != null) return LegacyAnimation;
             LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
             return LegacyAnimation;
+        }
+
+        public void SetPointAtLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
+
+        public void SetRotationLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
         }
 
         public void SetAnimatorFloat(int hash, float value)
@@ -179,6 +215,19 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             Armature.eulerAngles = angles;
         }
 
+        // Called onRelease of the pool. Resets stuff to avoid:
+        //   - Armature inclination that could be caused by emotes
+        //   - Things that could cause the avatar to shift in X/Y/Z such as animations and feet IK resolution
+        public void ResetState()
+        {
+            ResetArmatureInclination();
+            transform.localPosition = Vector3.zero;
+            AvatarAnimator.Rebind();
+            HipsConstraint.data.offset = Vector3.zero;
+            HipsConstraint.weight = 0;
+            FeetIKRig.enabled = false;
+        }
+
         public bool GetAnimatorBool(int hash) =>
             AvatarAnimator.GetBool(hash);
 
@@ -206,6 +255,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public Vector3 GetAdaptiveNametagPosition()
         {
+            if (GhostGameObject.activeSelf)
+            {
+                Vector3 basePos = transform.position;
+                return new Vector3(basePos.x, basePos.y + GHOST_NAMETAG_HEIGHT, basePos.z);
+            }
+
             Vector3 headPos = headAramatureBone.position;
 
             float maxY = headPos.y;

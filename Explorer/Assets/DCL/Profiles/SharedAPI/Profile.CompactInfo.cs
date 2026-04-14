@@ -81,14 +81,6 @@ namespace DCL.Profiles
                 this.claimedNameColor = claimedNameColor;
             }
 
-            public void Clear()
-            {
-                HasClaimedName = false;
-                UserId = "";
-                Name = "";
-                FaceSnapshotUrl = default(URLAddress);
-            }
-
             /// <summary>
             ///     Is the complete wallet address of the user
             /// </summary>

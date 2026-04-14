@@ -15,6 +15,7 @@ namespace DCL.SDKComponents.SceneUI.Components
                 defaultCapacity: PoolConstants.SCENES_COUNT * 100, maxSize: PoolConstants.SCENES_MAX_CAPACITY * 100);
 
             public CRDTEntity EntityId { get; private set; }
+            public CRDTEntity RightOf { get; set; }
             public Node? Next { get; set; }
             public Node? Previous { get; set; }
 
@@ -25,6 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             private void Reset()
             {
                 EntityId = 0;
+                RightOf = 0;
                 Next = null;
                 Previous = null;
             }
@@ -41,8 +43,9 @@ namespace DCL.SDKComponents.SceneUI.Components
         private const int CHILDREN_DEFAULT_CAPACITY = 10;
 
         internal Node? head;
-        private Dictionary<CRDTEntity, Node> nodes;
-        private Dictionary<CRDTEntity, Node> pendingRightOf; // key is the left entity
+        private Dictionary<CRDTEntity, Node>? nodes;
+        private Dictionary<CRDTEntity, Node>? pendingRightOf; // key is the left entity
+        private Dictionary<CRDTEntity, Node>? reverseRightOf; // key is the rightOf target, used for O(n) rebuild
 
         internal Entity parent;
 
@@ -60,6 +63,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             Node newNode = Node.POOL.Get();
             newNode.Setup(childEntity);
+            newNode.RightOf = childComponent.rightOf;
 
             nodes ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
             pendingRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
@@ -106,32 +110,32 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private void ResolvePending(CRDTEntity newlyAddedEntityId, Node leftNode)
         {
-            if (pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+            if (pendingRightOf == null || !pendingRightOf.TryGetValue(newlyAddedEntityId, out var rightNode))
+                return;
+
+            if (leftNode.Next != null)
+                leftNode.Next.Previous = rightNode;
+
+            leftNode.Next = rightNode;
+            rightNode.Previous = leftNode;
+
+            Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
+
+            if (rightNode == head)
             {
-                if (leftNode.Next != null)
-                    leftNode.Next.Previous = rightNode;
-
-                leftNode.Next = rightNode;
-                rightNode.Previous = leftNode;
-
-                Assert.AreNotEqual(leftNode.Next.EntityId, leftNode.EntityId);
-
-                if (rightNode == head)
+                // if the current head is the right node then the left-most becomes the new head
+                for (head = rightNode; head.Previous != null; head = head.Previous)
                 {
-                    // if the current head is the right node then the left-most becomes the new head
-                    for (head = rightNode; head.Previous != null; head = head.Previous)
-                    {
-                    }
                 }
-
-                pendingRightOf.Remove(newlyAddedEntityId);
             }
+
+            pendingRightOf?.Remove(newlyAddedEntityId);
         }
 
         public void RemoveChild(CRDTEntity child, ref UITransformRelationLinkedData childData)
         {
             // Child could be already removed from the nodes list if its entity was deleted
-            if (!nodes.TryGetValue(child, out Node? nodeToRemove))
+            if (nodes == null || !nodes.TryGetValue(child, out Node? nodeToRemove))
                 return;
 
             if (nodeToRemove == head)
@@ -151,34 +155,73 @@ namespace DCL.SDKComponents.SceneUI.Components
             nodes.Remove(child);
 
             // Update pendingRightOf if necessary
-            pendingRightOf.Remove(child);
-            pendingRightOf.Remove(childData.rightOf);
+            pendingRightOf?.Remove(child);
+            pendingRightOf?.Remove(childData.rightOf);
 
             childData.parent = Entity.Null;
 
             Node.POOL.Release(nodeToRemove);
         }
 
-        public void ChangeChildRightOf(CRDTEntity oldRightOf, CRDTEntity newChildEntity, ref UITransformRelationLinkedData newChildData)
+        internal void UpdateNodeRightOf(CRDTEntity childEntity, CRDTEntity newRightOf)
         {
-            var thisEntity = newChildData.parent;
+            if (nodes != null && nodes.TryGetValue(childEntity, out var node))
+                node.RightOf = newRightOf;
 
-            RemoveChild(oldRightOf, ref newChildData);
-            AddChild(thisEntity, newChildEntity, ref newChildData);
+            layoutIsDirty = true;
+        }
+
+        internal void RebuildLinkedList()
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                head = null;
+                return;
+            }
+
+            reverseRightOf ??= new Dictionary<CRDTEntity, Node>(CHILDREN_DEFAULT_CAPACITY);
+            reverseRightOf.Clear();
+
+            // Single pass: reset pointers, find head, build reverse map (rightOf target → node)
+            head = null;
+
+            foreach (var kvp in nodes)
+            {
+                kvp.Value.Next = null;
+                kvp.Value.Previous = null;
+
+                if (kvp.Value.RightOf.Id == 0)
+                    head = kvp.Value;
+                else
+                    reverseRightOf[kvp.Value.RightOf] = kvp.Value;
+            }
+
+            if (head == null)
+                return;
+
+            // Follow the chain using O(1) lookups
+            var current = head;
+
+            while (reverseRightOf.TryGetValue(current.EntityId, out var next))
+            {
+                current.Next = next;
+                next.Previous = current;
+                current = next;
+            }
         }
 
         public void Dispose()
         {
-            // Release all nodes
-            while (head != null)
+            if (nodes != null)
             {
-                Node next = head.Next!;
-                Node.POOL.Release(head);
-                head = next;
+                foreach (var kvp in nodes)
+                    Node.POOL.Release(kvp.Value);
+
+                nodes.Clear();
             }
 
-            nodes?.Clear();
             pendingRightOf?.Clear();
+            reverseRightOf?.Clear();
             head = null;
         }
     }

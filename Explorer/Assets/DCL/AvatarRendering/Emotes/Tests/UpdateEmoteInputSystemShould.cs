@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Profiles;
@@ -63,7 +64,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 new PlayerComponent(testGameObject.transform),
                 profile,
                 avatarShape,
-                inputModifier
+                inputModifier,
+                new GlideState()
             );
 
             return entity;
@@ -209,14 +211,16 @@ namespace DCL.AvatarRendering.Emotes.Tests
                     new PlayerComponent(testGameObject.transform),
                     profile1,
                     avatarShape1,
-                    new InputModifierComponent()
+                    new InputModifierComponent(),
+                    new GlideState()
                 );
 
                 var entity2 = world.Create(
                     new PlayerComponent(testGo2.transform),
                     profile2,
                     avatarShape2,
-                    new InputModifierComponent()
+                    new InputModifierComponent(),
+                    new GlideState()
                 );
 
                 world.Add(entity1, new TriggerEmoteBySlotIntent { Slot = 0 });

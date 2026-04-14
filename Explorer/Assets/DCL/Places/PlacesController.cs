@@ -1,4 +1,4 @@
-﻿using DCL.Browser;
+using DCL.Browser;
 using DCL.Communities;
 using DCL.EventsApi;
 using DCL.Friends;
@@ -6,6 +6,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
@@ -47,6 +48,7 @@ namespace DCL.Places
             ThumbnailLoader thumbnailLoader,
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService,
             HttpEventsApiService eventsApiService)
         {
             this.view = view;
@@ -58,7 +60,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

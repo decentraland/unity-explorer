@@ -48,6 +48,13 @@ namespace DCL.FeatureFlags
                 [FeatureId.CHECK_DISK_SPACE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.DISCOVER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DISCOVER, featureFlags.IsEnabled(FeatureFlagsStrings.DISCOVER) || Application.isEditor),
                 [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || Application.isEditor, requireDebug: false),
+                [FeatureId.DOUBLE_JUMP] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
+                [FeatureId.GLIDING] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.GLIDING, featureFlags.IsEnabled(FeatureFlagsStrings.GLIDING) || Application.isEditor),
+                [FeatureId.AVATAR_GHOSTS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_GHOSTS, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_GHOSTS)),
+                [FeatureId.REPORT_USER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.REPORT_USER, featureFlags.IsEnabled(FeatureFlagsStrings.REPORT_USER) || Application.isEditor),
+                [FeatureId.POINT_AT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
+                [FeatureId.AVATAR_CONTEXT_MENU] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
+                [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK) || Application.isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -159,6 +166,13 @@ namespace DCL.FeatureFlags
         EMAIL_OTP_AUTH,
         CHECK_DISK_SPACE,
         DISCOVER,
-        AVATAR_HIGHLIGHT
+        AVATAR_HIGHLIGHT,
+        DOUBLE_JUMP,
+        GLIDING,
+        AVATAR_GHOSTS,
+        REPORT_USER,
+        POINT_AT,
+        AVATAR_CONTEXT_MENU,
+        DOUBLE_CLICK_WALK,
     }
 }

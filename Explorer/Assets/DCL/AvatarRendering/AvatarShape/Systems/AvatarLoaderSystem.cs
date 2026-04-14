@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -108,6 +108,27 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!profile.IsDirty)
                 return;
 
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+            profile.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
+        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
+            if (!profile.IsDirty)
+                return;
+
+            ApplyProfileToAvatarShape(profile, ref avatarShapeComponent, ref partition);
+
+            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
+            LoadAllEmotes(profile, partition);
+            profile.IsDirty = false;
+        }
+
+        private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
@@ -120,19 +141,6 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
             avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
-        }
-
-        [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void UpdateMainPlayerAvatarFromProfile(in Entity entity, ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
-        {
-            UpdateAvatarFromProfile(ref profile, ref avatarShapeComponent, ref partition);
-
-            if (!profile.IsDirty) return;
-
-            // No lazy load for main player. Get all emotes, so it can play them accordingly without undesired delays
-            LoadAllEmotes(profile, partition);
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>

@@ -34,6 +34,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             get
             {
+                if (!realmData.Configured)
+                    return false;
+
                 CanBeDirty<Vector3> characterPosition = characterTransform.Position;
 
                 bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;

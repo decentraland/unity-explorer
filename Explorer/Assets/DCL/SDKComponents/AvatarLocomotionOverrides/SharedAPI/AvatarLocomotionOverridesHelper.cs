@@ -15,6 +15,9 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
                 case AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT: locomotionOverrides.JumpHeight = value; break;
                 case AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT: locomotionOverrides.RunJumpHeight = value; break;
                 case AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN: locomotionOverrides.HardLandingCooldown = value; break;
+                case AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT: locomotionOverrides.DoubleJumpHeight = value; break;
+                case AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED: locomotionOverrides.GlidingSpeed = value; break;
+                case AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY: locomotionOverrides.GlidingMaxGravity = value; break;
                 default: throw new ArgumentException();
             }
 
@@ -46,6 +49,9 @@ namespace DCL.SDKComponents.AvatarLocomotion.Systems
                 AvatarLocomotionOverrides.OverrideID.JUMP_HEIGHT => locomotionOverrides.JumpHeight,
                 AvatarLocomotionOverrides.OverrideID.RUN_JUMP_HEIGHT => locomotionOverrides.RunJumpHeight,
                 AvatarLocomotionOverrides.OverrideID.HARD_LANDING_COOLDOWN => locomotionOverrides.HardLandingCooldown,
+                AvatarLocomotionOverrides.OverrideID.DOUBLE_JUMP_HEIGHT => locomotionOverrides.DoubleJumpHeight,
+                AvatarLocomotionOverrides.OverrideID.GLIDE_SPEED => locomotionOverrides.GlidingSpeed,
+                AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY => locomotionOverrides.GlidingMaxGravity,
                 _ => throw new ArgumentException(),
             };
     }

@@ -49,9 +49,13 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 8fd0fd0188702304689c461c6aacc7c5, type: 3}
   m_SortingOrder: 500
+  m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
 --- !u!114 &-918733153027326477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,3 +68,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa37bb57f2a2400497b84e42b9a35f06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <CanBeHidden>k__BackingField: 0

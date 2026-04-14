@@ -136,11 +136,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 56.1
+      value: 32.41
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16.95
+      value: 16.75
       objectReference: {fileID: 0}
     - target: {fileID: 2749807465873248309, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Controller
@@ -236,7 +236,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_text
-      value: 'Chat [T]'
+      value: Chat
       objectReference: {fileID: 0}
     - target: {fileID: 7727841365288015261, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Type
@@ -283,6 +283,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numberText: {fileID: 5963940505578897515}
+  mentionSign: {fileID: 0}
   numberPanel: {fileID: 2572776792413058915}
   maximum: 9
 --- !u!224 &7334132066458495893 stripped

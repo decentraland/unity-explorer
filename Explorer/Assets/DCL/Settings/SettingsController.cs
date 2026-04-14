@@ -7,6 +7,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -38,6 +39,7 @@ namespace DCL.Settings
 
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly QualitySettingsController qualitySettingsController;
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
@@ -57,6 +59,7 @@ namespace DCL.Settings
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly IAppArgs appParameters;
+        private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
@@ -65,6 +68,7 @@ namespace DCL.Settings
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            QualitySettingsController qualitySettingsController,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -81,10 +85,12 @@ namespace DCL.Settings
             bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.qualitySettingsController = qualitySettingsController;
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
@@ -102,6 +108,7 @@ namespace DCL.Settings
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.appParameters = appParameters;
+            this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -201,6 +208,7 @@ namespace DCL.Settings
                             await module.CreateModuleAsync
                             (
                                 generalGroupView.ModulesContainer,
+                                qualitySettingsController,
                                 realmPartitionSettingsAsset,
                                 videoPrioritizationSettings,
                                 landscapeData,
@@ -218,7 +226,8 @@ namespace DCL.Settings
                                 volumeBus,
                                 isTranslationChatEnabled,
                                 eventBus,
-                                appParameters);
+                                appParameters,
+                                pointAtMarkerVisibilitySettings);
 
                         if (controller != null)
                             controllers.Add(controller);

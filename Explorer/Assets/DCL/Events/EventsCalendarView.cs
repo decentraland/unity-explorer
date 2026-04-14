@@ -27,6 +27,8 @@ namespace DCL.Events
         private const int EVENT_CARD_SMALL_PREFAB_INDEX = 0;
         private const int EVENT_CARD_BIG_PREFAB_INDEX = 1;
         private const int EVENT_CARD_EMPTY_PREFAB_INDEX = 2;
+        private const float SCROLL_STEP_PIXELS = 300f;
+        private const float SCROLL_ANIMATION_DURATION = 0.3f;
 
         public event Action<DateTime, int>? DaysRangeChanged;
 
@@ -49,12 +51,14 @@ namespace DCL.Events
             public HoverableUiElement hoverableUiElement;
             public CanvasGroup scrollBarCanvasGroup;
             public SkeletonLoadingView skeletonLoadingView;
-            public GameObject moreEventsArrow;
+            public Button moreEventsArrowUpButton;
+            public Button moreEventsArrowDownButton;
             public ScrollRect scrollRect;
         }
 
         private readonly Dictionary<int, List<string>> currentEventsIds = new ();
         private readonly Dictionary<int, float> currentOccupancies = new (5);
+        private readonly Dictionary<int, Tweener> activeScrollTweens = new ();
         private DateTime currentFromDate;
         private int currentNumberOfDaysShowed;
         private EventsStateService eventsStateService = null!;
@@ -74,6 +78,8 @@ namespace DCL.Events
                 int eventsListIndex = i;
                 EventListConfiguration eventListConfiguration = eventsLists[eventsListIndex];
                 eventListConfiguration.scrollRect.onValueChanged.AddListener(_ => OnEventsScrollValueChanged(eventsListIndex));
+                eventListConfiguration.moreEventsArrowUpButton.onClick.AddListener(() => ScrollEventsList(eventsListIndex, SCROLL_STEP_PIXELS));
+                eventListConfiguration.moreEventsArrowDownButton.onClick.AddListener(() => ScrollEventsList(eventsListIndex, -SCROLL_STEP_PIXELS));
             }
         }
 
@@ -86,7 +92,16 @@ namespace DCL.Events
                 daySelectorButton.ButtonClicked -= OnDaySelectorButtonClicked;
 
             foreach (EventListConfiguration eventListConfiguration in eventsLists)
+            {
                 eventListConfiguration.scrollRect.onValueChanged.RemoveAllListeners();
+                eventListConfiguration.moreEventsArrowUpButton.onClick.RemoveAllListeners();
+                eventListConfiguration.moreEventsArrowDownButton.onClick.RemoveAllListeners();
+            }
+
+            foreach (Tweener tween in activeScrollTweens.Values)
+                tween?.Kill();
+
+            activeScrollTweens.Clear();
         }
 
         public void SetDependencies(
@@ -180,6 +195,95 @@ namespace DCL.Events
                 eventList.eventsLoopList.SetListItemCount(0, false);
         }
 
+        public void ClearEventsForDay(int eventsListIndex)
+        {
+            if (!currentEventsIds.Remove(eventsListIndex))
+                return;
+
+            eventsLists[eventsListIndex].eventsLoopList.SetListItemCount(0, false);
+        }
+
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
+            {
+                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                    continue;
+
+                LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
+
+                for (var i = 0; i < eventIds.Count; i++)
+                {
+                    LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                    if (item == null) continue;
+
+                    string eventId = eventIds[i];
+                    if (string.IsNullOrEmpty(eventId)) continue;
+
+                    var eventData = eventsStateService.GetEventDataById(eventId);
+                    if (eventData == null) continue;
+
+                    EventCardView cardView = item.GetComponent<EventCardView>();
+                    cardView.UpdateFriendsData(eventData.FriendsConnectedToPlace, profileRepositoryWrapper);
+                }
+            }
+        }
+
+        public void RefreshVisibleCardsCommunityData()
+        {
+            for (var listIndex = 0; listIndex < eventsLists.Count; listIndex++)
+            {
+                if (!currentEventsIds.TryGetValue(listIndex, out List<string> eventIds))
+                    continue;
+
+                LoopListView2 loopList = eventsLists[listIndex].eventsLoopList;
+                var needsFullRebuild = false;
+
+                for (var i = 0; i < eventIds.Count; i++)
+                {
+                    LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                    if (item == null) continue;
+
+                    string eventId = eventIds[i];
+                    if (string.IsNullOrEmpty(eventId)) continue;
+
+                    var eventData = eventsStateService.GetEventDataById(eventId);
+                    if (eventData == null) continue;
+
+                    int currentPrefabIndex = GetCurrentPrefabIndex(item);
+                    int newPrefabIndex = GetCardPrefabIndex(eventData);
+
+                    if (currentPrefabIndex != newPrefabIndex)
+                    {
+                        needsFullRebuild = true;
+                        break;
+                    }
+                }
+
+                if (needsFullRebuild)
+                {
+                    loopList.RefreshAllShownItem();
+                }
+                else
+                {
+                    for (var i = 0; i < eventIds.Count; i++)
+                    {
+                        LoopListViewItem2? item = loopList.GetShownItemByItemIndex(i);
+                        if (item == null) continue;
+
+                        string eventId = eventIds[i];
+                        if (string.IsNullOrEmpty(eventId)) continue;
+
+                        var eventData = eventsStateService.GetEventDataById(eventId);
+                        if (eventData == null) continue;
+
+                        if (item.GetComponent<EventCardBigView>() is { } bigCard)
+                            bigCard.UpdateCommunityData(eventData.CommunityInfo, eventCardsThumbnailLoader!);
+                    }
+                }
+            }
+        }
+
         public void SetEvents(IReadOnlyList<EventDTO> events, int eventsListIndex, bool resetPos)
         {
             currentEventsIds.Remove(eventsListIndex);
@@ -239,6 +343,11 @@ namespace DCL.Events
                 eventData.EventInfo.highlighted || eventData.EventInfo.live || eventData.EventInfo.attending || eventData.CommunityInfo != null ? EVENT_CARD_BIG_PREFAB_INDEX : EVENT_CARD_SMALL_PREFAB_INDEX :
                 EVENT_CARD_EMPTY_PREFAB_INDEX;
 
+        private static int GetCurrentPrefabIndex(LoopListViewItem2 item) =>
+            item.GetComponent<EventCardBigView>() != null ? EVENT_CARD_BIG_PREFAB_INDEX :
+            item.GetComponent<EventCardSmallView>() != null ? EVENT_CARD_SMALL_PREFAB_INDEX :
+            EVENT_CARD_EMPTY_PREFAB_INDEX;
+
         private void FillWithEmptyCards(IReadOnlyList<EventDTO> events, int eventsListIndex)
         {
             var columnOccupancyValue = 0f;
@@ -271,8 +380,32 @@ namespace DCL.Events
 
         private void OnEventsScrollValueChanged(int eventsListIndex)
         {
+            bool scrollIsNotAtTheTop = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition < 0.99f && currentOccupancies[eventsListIndex] > 1.5f;
+            eventsLists[eventsListIndex].moreEventsArrowUpButton.gameObject.SetActive(scrollIsNotAtTheTop);
+
             bool scrollIsNotAtTheBottom = eventsLists[eventsListIndex].scrollRect.verticalNormalizedPosition > 0.01f && currentOccupancies[eventsListIndex] > 1.5f;
-            eventsLists[eventsListIndex].moreEventsArrow.SetActive(scrollIsNotAtTheBottom);
+            eventsLists[eventsListIndex].moreEventsArrowDownButton.gameObject.SetActive(scrollIsNotAtTheBottom);
+        }
+
+        private void ScrollEventsList(int eventsListIndex, float pixelStep)
+        {
+            ScrollRect scrollRect = eventsLists[eventsListIndex].scrollRect;
+            float contentHeight = scrollRect.content.rect.height;
+            float viewportHeight = scrollRect.viewport.rect.height;
+            float scrollableHeight = contentHeight - viewportHeight;
+
+            if (scrollableHeight <= 0f)
+                return;
+
+            float normalizedStep = pixelStep / scrollableHeight;
+            float targetPos = Mathf.Clamp01(scrollRect.verticalNormalizedPosition + normalizedStep);
+
+            if (activeScrollTweens.TryGetValue(eventsListIndex, out Tweener existingTween))
+                existingTween.Kill();
+
+            activeScrollTweens[eventsListIndex] = scrollRect
+                                                 .DOVerticalNormalizedPos(targetPos, SCROLL_ANIMATION_DURATION)
+                                                 .SetEase(Ease.OutQuad);
         }
 
         private void OnDaySelectorButtonClicked(DateTime date) =>

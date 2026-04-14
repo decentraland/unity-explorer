@@ -28,6 +28,13 @@ namespace DCL.Profiles
             ///     When the request is not resolved it will be repeated in a non-batched mode
             /// </summary>
             DELAY_UNTIL_RESOLVED = 2,
+
+            /// <summary>
+            ///     Forces the request to go directly to the catalyst (lambdas) instead of the centralized profiles service. <br />
+            ///     Implicitly enforces a single GET request (not batched). <br />
+            ///     Compact tiers are not supported on catalysts, so the tier is forced to Full.
+            /// </summary>
+            FORCE_FETCH_FROM_CATALYST = 4,
         }
 
         public const string PROFILE_FRAGMENTATION_OBSOLESCENCE = "Should be moved to the unified POST originated from the client";

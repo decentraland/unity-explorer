@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             else
             {
                 // Create a new entity
-                World.Create(CreateAssetPromise(currentBatch, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActive), cancellationTokenSource: cts)));
+                World.Create(CreateAssetPromise(currentBatch, new CommonLoadingArguments(urlsSource.Url(DecentralandUrl.EntitiesActiveElements), cancellationTokenSource: cts)));
 
                 // The batch will be finalized by FinalizeWearableLoadingSystemBase - no special actions are needed
             }

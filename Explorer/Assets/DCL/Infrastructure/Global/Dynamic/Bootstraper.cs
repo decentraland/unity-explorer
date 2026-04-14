@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -12,13 +13,10 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
@@ -36,8 +34,6 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Text;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -175,6 +171,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
@@ -285,6 +282,27 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
+            if (realmLaunchSettings.initialRealm is InitialRealm.World)
+            {
+                bool isAuthorized = await dynamicWorldContainer.RealmController
+                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
+
+                if (!isAuthorized)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
+
+                    dynamicWorldContainer.ChatHistory.AddMessage(
+                        ChatChannel.NEARBY_CHANNEL_ID,
+                        ChatChannel.ChatChannelType.NEARBY,
+                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
+
+                    await dynamicWorldContainer.RealmController
+                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
+                    return;
+                }
+            }
+
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
@@ -300,13 +318,17 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
+            IWeb3Authenticator authenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController,
+                bootstrapContainer.Web3AccountFactory);
+
+            if (EnableAnalytics)
+                authenticator = new TrackedTokenFileAuthenticator((TokenFileAuthenticator)authenticator, bootstrapContainer.Analytics.Controller);
+
             try
             {
-                IWeb3Identity identity = await new TokenFileAuthenticator(
-                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                          webRequestsContainer.WebRequestController,
-                          bootstrapContainer.Web3AccountFactory)
-                     .LoginAsync(new LoginPayload(), ct); // doesn't use payload
+                IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
 
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
@@ -314,6 +336,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(

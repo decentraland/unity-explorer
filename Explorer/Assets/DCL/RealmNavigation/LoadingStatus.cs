@@ -17,7 +17,6 @@ namespace DCL.RealmNavigation
             [LoadingStage.UnloadCacheChecking] = 0.05f,
             [LoadingStage.LiveKitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
-            [LoadingStage.OnboardingChecking] = 0.3f,
             [LoadingStage.ProfileLoading] = 0.4f,
             [LoadingStage.PlayerAvatarLoading] = 0.5f,
             [LoadingStage.LandscapeLoading] = 0.6f,
@@ -40,13 +39,12 @@ namespace DCL.RealmNavigation
             // Initial loading stages, in order
             Init = 0,
             AuthenticationScreenShowing = 1,
-            OnboardingChecking = 2,
-            ProfileLoading = 3,
-            PlayerAvatarLoading = 4,
-            LandscapeLoading = 5,
-            PlayerTeleporting = 6,
-            GlobalPXsLoading = 7,
-            Completed = 8,
+            ProfileLoading = 2,
+            PlayerAvatarLoading = 3,
+            LandscapeLoading = 4,
+            PlayerTeleporting = 5,
+            GlobalPXsLoading = 6,
+            Completed = 7,
 
             // Others
             UnloadCacheChecking,

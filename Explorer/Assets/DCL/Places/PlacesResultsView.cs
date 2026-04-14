@@ -1,7 +1,9 @@
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Communities;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.UI;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
@@ -39,6 +41,7 @@ namespace DCL.Places
         private GenericContextMenu? contextMenu;
         private CancellationTokenSource? openContextMenuCts;
         private HomePlaceEventBus? homePlaceEventBus;
+        private IWorldPermissionsService worldPermissionsService = null!;
 
         [Header("Places Counter")]
         [SerializeField] private GameObject placesResultsCounterContainer = null!;
@@ -82,12 +85,14 @@ namespace DCL.Places
             PlacesStateService stateService,
             ThumbnailLoader thumbnailLoader,
             ProfileRepositoryWrapper profileRepoWrapper,
-            HomePlaceEventBus homeEventBus)
+            HomePlaceEventBus homeEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.placesStateService = stateService;
             this.placesCardsThumbnailLoader = thumbnailLoader;
             this.profileRepositoryWrapper = profileRepoWrapper;
             this.homePlaceEventBus = homeEventBus;
+            this.worldPermissionsService = worldPermissionsService;
         }
 
         public void SetPlacesCounter(string text, bool showBackButton = false)
@@ -158,16 +163,47 @@ namespace DCL.Places
             }
         }
 
+        public void RefreshVisibleCardsFriendsData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateFriendsData(placeData.ConnectedFriends, profileRepositoryWrapper);
+            }
+        }
+
+        public void RefreshVisibleCardsLiveEventData()
+        {
+            for (var i = 0; i < currentPlacesIds.Count; i++)
+            {
+                LoopGridViewItem? item = placesResultsLoopGrid.GetShownItemByItemIndex(i);
+                if (item == null) continue;
+
+                var placeData = placesStateService.GetPlaceInfoById(currentPlacesIds[i]);
+                if (placeData == null) continue;
+
+                PlaceCardView cardView = item.GetComponent<PlaceCardView>();
+                cardView.UpdateLiveEventData(placeData.PlaceInfo.live, placeData.LiveEvent);
+            }
+        }
+
         private LoopGridViewItem SetupPlaceResultCardByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(currentPlacesIds[index]);
+
             LoopGridViewItem gridItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             PlaceCardView cardView = gridItem.GetComponent<PlaceCardView>();
 
             // Setup card data
-            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends.PlaceInfo) ?? false;
+            bool isHome = homePlaceEventBus?.IsHome(placeInfoWithConnectedFriends!.PlaceInfo) ?? false;
             cardView.Configure(
-                placeInfo: placeInfoWithConnectedFriends.PlaceInfo,
+                placeInfo: placeInfoWithConnectedFriends!.PlaceInfo,
                 ownerName: placeInfoWithConnectedFriends.PlaceInfo.contact_name,
                 userOwnsPlace: false,
                 thumbnailLoader: placesCardsThumbnailLoader!,
@@ -187,6 +223,12 @@ namespace DCL.Places
                 jumpInButtonClicked: place => PlaceJumpInButtonClicked?.Invoke(place),
                 deleteButtonClicked: _ => { },
                 mainButtonClicked: (place, card) => MainButtonClicked?.Invoke(place, card));
+
+            if (!string.IsNullOrEmpty(placeInfoWithConnectedFriends.PlaceInfo.world_name) &&
+                placeInfoWithConnectedFriends.PlaceInfo.is_private)
+            {
+                WorldAccessCardHelper.CheckAndUpdateCardAsync(worldPermissionsService, placeInfoWithConnectedFriends.PlaceInfo.world_name, cardView, cardView.WorldAccessCancellationToken).Forget();
+            }
 
             if (index == currentPlacesIds.Count - 1)
                 PlacesGridScrollAtTheBottom?.Invoke();

@@ -131,16 +131,16 @@ namespace DCL.Character.CharacterMotion.Systems
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // other states
-            AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, jumpTriggered: false, isStunned: false);
+            AnimationStatesLogic.SetAnimatorParameters(view, animationComponent.States, jumpTriggered: false, glidingTriggered: false);
         }
 
         private static void SetGroundedMovement(ref CharacterAnimationComponent animationComponent, float movementBlendValue)
         {
-            animationComponent.IsSliding = false;
+            animationComponent.States.IsSliding = false;
             animationComponent.States.MovementBlendValue = movementBlendValue;
             animationComponent.States.SlideBlendValue = 0;
             animationComponent.States.IsGrounded = true;
-            animationComponent.States.IsJumping = false;
+            animationComponent.States.JumpCount = 0;
             animationComponent.States.IsLongJump = false;
             animationComponent.States.IsLongFall = false;
             animationComponent.States.IsFalling = false;

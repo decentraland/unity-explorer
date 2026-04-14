@@ -3,7 +3,6 @@ using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.PluginSystem.World;
@@ -11,7 +10,6 @@ using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
-using Global.AppArgs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -34,19 +32,12 @@ namespace DCL.Multiplayer.SDK.Tests
         private ISceneFacade scene2Facade;
 
         [OneTimeSetUp]
-        public void InitFF()
-        {
-            var appArgs = new ApplicationParametersParser();
-            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
-            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
-        }
+        public void OneTimeSetUp() =>
+            EcsTestsUtils.SetUpFeaturesRegistry();
 
         [OneTimeTearDown]
-        public void ResetFF()
-        {
-            FeaturesRegistry.Reset();
-            FeatureFlagsConfiguration.Reset();
-        }
+        public void OneTimeTearDown() =>
+            EcsTestsUtils.TearDownFeaturesRegistry();
 
         [SetUp]
         public void Setup()

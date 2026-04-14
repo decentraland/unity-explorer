@@ -75,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bd30078b12df4679bed329bf3c002ad
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Ghosts/HologramShader.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2df144b808932744487656f89a42fb11
     m_Address: FlatNormal_256_BC5.DDS
     m_ReadOnly: 0
@@ -82,6 +87,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
     m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c7d798e18864314497aa15d59d3ee1b
+    m_Address: Assets/DCL/Character/CharacterMotion/Assets/GliderProp.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -160,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a252383173104e17acac54eb364afc4
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bdb4b9ae9bf04745acee14bf4c684e1
     m_Address: DefaultBlack_256_BC7.DDS
     m_ReadOnly: 0
@@ -167,6 +182,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73ed2f04eda7b4677b5c6e9d73681b0e
     m_Address: Assets/DCL/SDKComponents/Fonts/AtkinsonHyperlegibleMono.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 762878a7bf3715b44ac918395f691db6
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker.glb
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77042a6626e1a064f90b622d0381d7df
+    m_Address: JumpIndicator
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -190,13 +215,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 86bf0204cf3bb75429342452a2a460af
-    m_Address: Assets/DCL/Landscape/Data/ParcelData.asset
+  - m_GUID: 8a91951d2f71f174d998356f01a3603c
+    m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8a91951d2f71f174d998356f01a3603c
-    m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
+  - m_GUID: 8b74e4206cd344b4c80b50f32f6c403a
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/DestinationMarker/DestinationMarker.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -275,8 +300,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb23ae366d31146bf85b403f6149419b
+    m_Address: SDKParticleSystem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d08e60223593f4abe8863c64316f3476
     m_Address: FlipLinearToGammaMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b42532e2af88d479961e27dd400651
+    m_Address: Assets/DCL/Settings/Prefabs/SettingsModuleView_Dropdown_Unselectable.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

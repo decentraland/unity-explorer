@@ -25,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             IAppArgs appArgs,
             AnalyticsConfiguration configuration,
             LauncherTraits launcherTraits,
-            BuildData buildData,
+            string installSource,
             DCLVersion dclVersion,
             IWeb3Identity? identity)
         {
@@ -34,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, installSource, dclVersion));
 
             Initialize(identity);
         }

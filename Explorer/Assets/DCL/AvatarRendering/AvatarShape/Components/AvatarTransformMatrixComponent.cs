@@ -11,6 +11,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public GlobalJobArrayIndex IndexInGlobalJobArray;
         public BoneArray bones;
+        public bool IsMainPlayer;
 
         public static AvatarTransformMatrixComponent Create(BoneArray bones) =>
             new ()

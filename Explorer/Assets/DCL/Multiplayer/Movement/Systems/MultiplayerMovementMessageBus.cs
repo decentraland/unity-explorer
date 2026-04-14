@@ -96,6 +96,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     temporalData = receivedMessage.Payload.TemporalData,
                     movementData = receivedMessage.Payload.MovementData,
                     headSyncData = receivedMessage.Payload.HeadSyncData,
+                    pointAtData = receivedMessage.Payload.PointAtData,
                 };
 
                 Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
@@ -132,10 +133,12 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = movementBlend,
                     SlideBlendValue = proto.SlideBlendValue,
                     IsGrounded = proto.IsGrounded,
-                    IsJumping = proto.IsJumping,
+                    JumpCount = proto.JumpCount,
                     IsLongJump = proto.IsLongJump,
-                    IsFalling = proto.IsFalling,
                     IsLongFall = proto.IsLongFall,
+                    IsFalling = proto.IsFalling,
+                    IsStunned = proto.IsStunned,
+                    GlideState = (GlideStateValue)proto.GlideState,
                 },
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
@@ -144,6 +147,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 headIKYawEnabled = proto.HeadIkYawEnabled,
                 headIKPitchEnabled = proto.HeadIkPitchEnabled,
                 headYawAndPitch = new Vector2(proto.HeadYaw, proto.HeadPitch),
+
+                isPointingAt = proto.IsPointingAt,
+                pointAtWorldHitPoint = new Vector3(proto.PointAtX, proto.PointAtY, proto.PointAtZ),
             };
         }
 
@@ -191,10 +197,11 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.SlideBlendValue = message.animState.SlideBlendValue;
 
             movement.IsGrounded = message.animState.IsGrounded;
-            movement.IsJumping = message.animState.IsJumping;
+            movement.JumpCount = message.animState.JumpCount;
             movement.IsLongJump = message.animState.IsLongJump;
-            movement.IsFalling = message.animState.IsFalling;
             movement.IsLongFall = message.animState.IsLongFall;
+            movement.IsFalling = message.animState.IsFalling;
+            movement.GlideState = (Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState)message.animState.GlideState;
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
             movement.IsEmoting = message.isEmoting;
@@ -203,6 +210,11 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.HeadIkPitchEnabled = message.headIKPitchEnabled;
             movement.HeadYaw = message.headYawAndPitch.x;
             movement.HeadPitch = message.headYawAndPitch.y;
+
+            movement.IsPointingAt = message.isPointingAt;
+            movement.PointAtX = message.pointAtWorldHitPoint.x;
+            movement.PointAtY = message.pointAtWorldHitPoint.y;
+            movement.PointAtZ = message.pointAtWorldHitPoint.z;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
@@ -210,6 +222,7 @@ namespace DCL.Multiplayer.Movement.Systems
             proto.TemporalData = message.temporalData;
             proto.MovementData = message.movementData;
             proto.HeadSyncData = message.headSyncData;
+            proto.PointAtData = message.pointAtData;
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)

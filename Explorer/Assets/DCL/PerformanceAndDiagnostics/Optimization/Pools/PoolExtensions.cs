@@ -70,5 +70,25 @@ namespace DCL.Optimization.Pools
                 Value = null;
             }
         }
+
+        private static class WarmUpCache<TElement> where TElement: class
+        {
+            public static readonly List<TElement> Value = new (10);
+        }
+
+        public static void WarmUp<TElement>(this IObjectPool<TElement> pool, int count) where TElement: class
+        {
+            List<TElement> cache = WarmUpCache<TElement>.Value;
+
+            try
+            {
+                for (int i = 0; i < count; i++) cache.Add(pool.Get());
+                foreach (var obj in cache) pool.Release(obj);
+            }
+            finally
+            {
+                cache.Clear();
+            }
+        }
     }
 }

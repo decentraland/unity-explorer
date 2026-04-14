@@ -22,6 +22,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -189,8 +190,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    // When we receive a 403 Forbidden Access error, we have to set the attempt to connect state to FORBIDDEN_ACCESS
-                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS })
+                    // World content server scene comms can return 401 for denied access, while older flows returned 403.
+                    // Both should trigger the forbidden-access recovery path (used by scene-ban handling).
+                    if (e is UnityWebRequestException { ResponseCode: WebRequestUtils.FORBIDDEN_ACCESS or WebRequestUtils.UNAUTHORIZED_ACCESS })
                         OnForbiddenAccess();
 
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
@@ -299,9 +301,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             return (connectResult, roomSelection);
         }
 
-        private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is DisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();

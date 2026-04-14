@@ -27,6 +27,7 @@ namespace ECS
         string Protocol { get; }
         string Hostname { get; }
         bool IsLocalSceneDevelopment { get; }
+        string WorldCommsSecret { get; set; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -59,6 +60,7 @@ namespace ECS
             public string Protocol { get; }
             public string Hostname { get; }
             public bool IsLocalSceneDevelopment { get; }
+            public string WorldCommsSecret { get; set; } = string.Empty;
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
             public WorldManifest WorldManifest { get; }

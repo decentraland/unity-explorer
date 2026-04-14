@@ -17,6 +17,7 @@ using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
@@ -64,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly IAnalyticsController analytics;
         private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly ISocialServiceEventBus socialServiceEventBus;
 
         private CommunityCardController? communityCardController;
@@ -96,9 +98,11 @@ namespace DCL.PluginSystem.Global
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IAnalyticsController analytics,
             HomePlaceEventBus homePlaceEventBus,
-            ISocialServiceEventBus socialServiceEventBus)
+            ISocialServiceEventBus socialServiceEventBus,
+            IWorldPermissionsService worldPermissionsService)
         {
             this.mvcManager = mvcManager;
+            this.worldPermissionsService = worldPermissionsService;
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -124,7 +128,7 @@ namespace DCL.PluginSystem.Global
             this.homePlaceEventBus = homePlaceEventBus;
             this.socialServiceEventBus = socialServiceEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus, socialServiceEventBus, web3IdentityCache);
-            notificationHandler = new NotificationHandler(realmNavigator);
+            notificationHandler = new NotificationHandler(realmNavigator, decentralandUrlsSource);
         }
 
         public void Dispose()
@@ -168,7 +172,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 selfProfile,
                 analytics,
-                homePlaceEventBus);
+                homePlaceEventBus,
+                worldPermissionsService);
 
             mvcManager.RegisterController(communityCardController);
 

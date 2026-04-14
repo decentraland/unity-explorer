@@ -15,40 +15,41 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
     public class MessagePipe : IMessagePipe
     {
         private readonly IDataPipe dataPipe;
-        private readonly IMultiPool sendingMultiPool;
+        private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
         private readonly uint supportedVersion;
         private readonly RoomSource roomId;
         private readonly CancellationTokenSource cts;
 
-        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
+        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
 
         private bool isDisposed;
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool, RoomSource roomId) : this(
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, RoomSource roomId) : this(
             dataPipe,
-            sendingMultiPool,
+            multiPool,
             memoryPool,
             new MessageParser<Packet>(() =>
             {
-                var packet = receivingMultiPool.Get<Packet>();
+                var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
             }),
             100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
             RoomSource roomId)
         {
             this.dataPipe = dataPipe;
-            this.sendingMultiPool = sendingMultiPool;
+            this.multiPool = multiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
             this.supportedVersion = supportedVersion;
@@ -71,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             isDisposed = true;
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
+        private void OnDataReceived(ReadOnlySpan<byte> data, LKParticipant participant, string topic, LKDataPacketKind kind)
         {
             try
             {
@@ -88,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, Participant participant, string topic, CancellationToken ctsToken)
+        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, LKParticipant participant, string topic, CancellationToken ctsToken)
         {
             try
             {
@@ -102,7 +103,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
                     await UniTask.SwitchToMainThread();
 
-                foreach (Action<(Packet, Participant, string)>? action in r.list)
+                foreach (Action<(Packet, LKParticipant, string)>? action in r.list)
                 {
                     ctsToken.ThrowIfCancellationRequested();
                     action((packet, participant, topic));
@@ -113,7 +114,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         public MessageWrap<T> NewMessage<T>(string topic) where T: class, IMessage, new() =>
-            new (dataPipe, sendingMultiPool, memoryPool, topic, supportedVersion);
+            new (dataPipe, multiPool, memoryPool, topic, supportedVersion);
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
@@ -126,7 +127,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
-                        Participant participant = tuple.Item2!;
+                        LKParticipant participant = tuple.Item2!;
                         string topic = tuple.Item3!;
 
                         uint version = packet.ProtocolVersion;
@@ -157,7 +158,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             payload,
                             packet,
                             participant.Identity,
-                            sendingMultiPool,
+                            multiPool,
                             roomId,
                             topic
                         );
@@ -167,17 +168,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
-        private (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
+        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
-                subscribers[typeName] = item = (new List<Action<(Packet, Participant, string)>>(), threadStrict);
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+                subscribers[typeName] = item = (new List<Action<(Packet, LKParticipant, string)>>(), threadStrict);
 
             return item;
         }
 
-        private (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
+        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
                 return null;
 
             return item;

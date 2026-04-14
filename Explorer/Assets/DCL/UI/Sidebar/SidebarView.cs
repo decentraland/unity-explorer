@@ -29,6 +29,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button placesButton { get; private set; }
         [field: SerializeField] internal Button eventsButton { get; private set; }
         [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; }
+        [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; }
         [field: SerializeField] internal Button communitiesButton { get; private set; }
         [field: SerializeField] internal Button mapButton { get; private set; }
         [field: SerializeField] internal Button backpackButton { get; private set; }
@@ -98,7 +99,7 @@ namespace DCL.UI.Sidebar
         public void SetLiveEventsCounter(int count)
         {
             liveEventsCounterText.text = count.ToString();
-            liveEventsCounterText.transform.parent.gameObject.SetActive(count > 0);
+            liveEventsCounterContainer.SetActive(count > 0);
         }
     }
 }

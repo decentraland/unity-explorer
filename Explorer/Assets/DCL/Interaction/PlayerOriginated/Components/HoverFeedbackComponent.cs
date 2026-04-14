@@ -1,12 +1,13 @@
 using DCL.ECSComponents;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Interaction.PlayerOriginated.Components
 {
     /// <summary>
     ///     Holds the state to show/hide the hover canvas
     /// </summary>
-    public readonly struct HoverFeedbackComponent
+    public struct HoverFeedbackComponent
     {
         public readonly struct Tooltip
         {
@@ -24,6 +25,11 @@ namespace DCL.Interaction.PlayerOriginated.Components
         ///     Whether feedback should be shown
         /// </summary>
         public bool Enabled => tooltips.Count > 0;
+
+        /// <summary>
+        ///     Overrides the screen position at which the hover feedback is shown
+        /// </summary>
+        public Vector2? ScreenPositionOverride { get; set; }
 
         public IReadOnlyList<Tooltip> Tooltips => tooltips;
 

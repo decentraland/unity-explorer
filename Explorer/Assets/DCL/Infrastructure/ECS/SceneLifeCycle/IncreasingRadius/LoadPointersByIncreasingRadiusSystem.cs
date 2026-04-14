@@ -99,7 +99,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
-                    if (!realmData.WorldManifest.GetOccupiedParcels().Contains(parcelInfo.Parcel))
+                    if (!realmData.WorldManifest.IsEmpty && !realmData.WorldManifest.GetOccupiedParcels().Contains(parcelInfo.Parcel))
                         // If parcel is empty skip request but mark as processed...
                         processedScenePointers.Value.Add(parcelInfo.Parcel);
                     else

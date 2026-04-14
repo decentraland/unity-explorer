@@ -55,7 +55,8 @@ namespace DCL.Multiplayer.Movement.Systems
             ref StunComponent stun,
             ref MovementInputComponent move,
             in CharacterEmoteComponent emote,
-            in HeadIKComponent headIK
+            in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt
         )
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -64,7 +65,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, isInstant: true);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isInstant: true);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -74,13 +75,13 @@ namespace DCL.Multiplayer.Movement.Systems
             bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
-                || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
+                || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
                 return;
             }
 
-            bool anythingChanged = AnythingChanged(playerMovement, headIK);
+            bool anythingChanged = AnythingChanged(playerMovement, headIK, pointAt);
 
             if (anythingChanged && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
@@ -90,12 +91,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!anythingChanged && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
             }
 
             return;
 
-            bool AnythingChanged(PlayerMovementNetworkComponent playerMovement, in HeadIKComponent headIK)
+            bool AnythingChanged(PlayerMovementNetworkComponent playerMovement, in HeadIKComponent headIK, in HandPointAtComponent pointAt)
             {
                 NetworkMovementMessage snapshot = playerMovement.LastSentMessage;
                 Vector2 currentHeadYawAndPitch = headIK.GetHeadYawAndPitch();
@@ -106,7 +107,9 @@ namespace DCL.Multiplayer.Movement.Systems
                        snapshot.headIKYawEnabled != headIK.YawEnabled ||
                        snapshot.headIKPitchEnabled != headIK.PitchEnabled ||
                        Math.Abs(snapshot.headYawAndPitch.x - currentHeadYawAndPitch.x) > HEAD_IK_EPSILON ||
-                       Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON;
+                       Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON ||
+                       Vector3.SqrMagnitude(snapshot.pointAtWorldHitPoint - pointAt.WorldHitPoint) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
+                       snapshot.isPointingAt != pointAt.IsPointing;
             }
         }
 
@@ -126,6 +129,7 @@ namespace DCL.Multiplayer.Movement.Systems
             in StunComponent playerStunComponent,
             in MovementInputComponent input,
             in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt,
             bool isEmoting,
             bool isInstant)
         {
@@ -156,18 +160,23 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocityTier = velocityTier,
 
                 isStunned = playerStunComponent.IsStunned,
-                isSliding = animation.IsSliding,
+                isSliding = animation.States.IsSliding,
                 isInstant = isInstant,
                 isEmoting = isEmoting,
 
+                isPointingAt = pointAt.IsPointing,
+                pointAtWorldHitPoint =  pointAt.WorldHitPoint,
+
                 animState = new AnimationStates
                 {
+                    IsSliding = animation.States.IsSliding,
                     IsGrounded = animation.States.IsGrounded,
-                    IsJumping = animation.States.IsJumping,
+                    JumpCount = animation.States.JumpCount,
                     IsLongJump = animation.States.IsLongJump,
                     IsFalling = animation.States.IsFalling,
                     IsLongFall = animation.States.IsLongFall,
-                    // NOTE we are NOT setting 'is stunned' because it's already sent as part of the movement message itself
+                    IsStunned = playerStunComponent.IsStunned,
+                    GlideState = animation.States.GlideState,
 
                     // Just for testing purposes. We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
                     SlideBlendValue = animation.States.SlideBlendValue,

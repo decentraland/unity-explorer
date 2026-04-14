@@ -1,6 +1,8 @@
 ﻿using CodeLess.Attributes;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
+using LiveKit.Rooms;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -29,10 +31,24 @@ namespace DCL.SceneBannedUsers
             this.roomHub = roomHub;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
+            roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
+        }
+
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
+        {
+            if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
+                OnRoomMetadataChanged(room.Info.Metadata);
         }
 
         private void OnRoomMetadataChanged(string metadata)
         {
+            UpdateBannedList(metadata);
+        }
+
+        private void UpdateBannedList(string metadata)
+        {
+            if (string.IsNullOrEmpty(metadata)) return;
+
             roomMetadata = metadata;
             bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
 
@@ -52,7 +68,7 @@ namespace DCL.SceneBannedUsers
             if (!includeBannedUsersFromScene)
                 return false;
 
-            if (roomHub.SceneRoom().Room().Info.ConnectionState != ConnectionState.ConnConnected)
+            if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return false;
 
             return bannedAddressesSet?.Contains(userId) ?? false;

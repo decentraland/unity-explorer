@@ -13,6 +13,7 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Optimization.Pools;
 using DCL.Places;
 using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -71,10 +72,12 @@ namespace DCL.Communities.CommunitiesCard.Places
             IWebBrowser webBrowser,
             IProfileRepository profileRepository,
             IDecentralandUrlsSource dclUrlSource,
-            HomePlaceEventBus homePlaceEventBus) : base(view, PAGE_SIZE)
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService) : base(view, PAGE_SIZE)
         {
             this.view = view;
             view.SetDependencies(homePlaceEventBus);
+            view.SetWorldPermissionsService(worldPermissionsService);
 
             this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
@@ -215,7 +218,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
-            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+            Result<PlacesData.IPlacesAPIResponse> response = await placesAPIService.GetDestinationsByIdsAsync(slice, ct)
                                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)

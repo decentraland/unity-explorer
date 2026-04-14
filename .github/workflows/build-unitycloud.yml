@@ -2,8 +2,6 @@ name: Unity Cloud Build
 
 on:
   pull_request:
-    paths:
-      - 'Explorer/**'
     types:
       - opened
       - reopened
@@ -159,7 +157,11 @@ jobs:
               (github.event.action == 'opened' ||
                github.event.action == 'reopened' ||
                github.event.action == 'synchronize') &&
-              !github.event.pull_request.draft
+              (
+                !github.event.pull_request.draft ||
+                contains(github.event.pull_request.labels.*.name, 'force-build') ||
+                contains(github.event.pull_request.labels.*.name, 'clean-build')
+              )
             ) ||
             github.event.action == 'ready_for_review' ||
             (
@@ -170,6 +172,7 @@ jobs:
         )
       )
     outputs:
+      should_build: ${{ steps.decide.outputs.should_build }}
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
       version: ${{ github.event.inputs.version || inputs.version || steps.get_version.outputs.full_version }}
@@ -184,8 +187,91 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
+      - name: Detect changes under Explorer/**
+        id: changed_explorer
+        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        with:
+          files: |
+            Explorer/**
+
+      - name: Decide whether to build
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          should_build=false
+
+          # Non-PR triggers that reached prebuild => build
+          echo "[check non-PR] event_name='${{ github.event_name }}' != 'pull_request'"
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "[non-PR] TRUE -> should_build=true"
+            should_build=true
+          fi
+
+          if [ "$should_build" = "false" ]; then
+            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+            echo "labels='$labels'"
+
+            has_override=false
+            echo "[check override] searching for 'force-build|clean-build' in labels"
+            echo "$labels" | grep -qwE 'force-build|clean-build' && has_override=true
+
+            echo "has_override='$has_override'"
+            if [ "$has_override" = "true" ]; then
+              echo "[override] TRUE -> should_build=true"
+              should_build=true
+            fi
+          fi
+
+          if [ "$should_build" = "false" ]; then
+            # If still draft and no override => do not build
+            is_draft="${{ github.event.pull_request.draft }}"
+            echo "[check draft] is_draft='$is_draft'"
+            if [ "$is_draft" = "true" ]; then
+              echo "[draft] TRUE -> should_build=false"
+            else
+              explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
+              echo "[check explorer_changed] explorer_changed='$explorer_changed'"
+              if [ "$explorer_changed" = "true" ]; then
+                echo "[explorer_changed] TRUE -> should_build=true"
+                should_build=true
+              else
+                echo "[explorer_changed] FALSE -> should_build=false"
+              fi
+            fi
+          fi
+
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+          echo "Final decision: should_build=$should_build"
+
+      - name: Skip build and test checks
+        if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            const checks = [
+              'Build (macos)',
+              'Build (windows64)',
+              'Test (editmode)',
+              'Test (playmode)'
+            ];
+            for (const check of checks) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: 'success',
+                context: check,
+                description: 'Skipped — no Explorer/ changes detected'
+              });
+            }
+            console.log(`Posted success statuses for: ${checks.join(', ')}`);
+
       - name: Get commit SHA
+        if: steps.decide.outputs.should_build == 'true'
         id: get_commit_sha
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -195,6 +281,7 @@ jobs:
           fi
 
       - name: Debug Commit SHA
+        if: steps.decide.outputs.should_build == 'true'
         run: |
           echo "Ref from Pull Request: ${{ github.event.pull_request.head.sha }}"
           echo "Full Commit from git rev-parse: $(git rev-parse $GITHUB_SHA)"
@@ -202,13 +289,13 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: ${{ github.event.inputs.version == '' && inputs.version == '' }}
+        if: steps.decide.outputs.should_build == 'true' && github.event.inputs.version == '' && inputs.version == ''
         uses: ./.github/actions/version
         with:
           commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
 
-          
       - name: Get Sentry parameters
+        if: steps.decide.outputs.should_build == 'true'
         id: get_sentry
         run: |
           #!/bin/bash
@@ -229,6 +316,7 @@ jobs:
           fi
 
       - name: Set default values
+        if: steps.decide.outputs.should_build == 'true'
         id: set_defaults
         run: |
           # Clean build logic
@@ -268,6 +356,7 @@ jobs:
           echo "install_source=${install_source}" >> $GITHUB_OUTPUT
 
       - name: Get BuildOptions
+        if: steps.decide.outputs.should_build == 'true'
         id: get_options
         run: |
           #!/bin/bash
@@ -304,6 +393,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: prebuild
+    if: needs.prebuild.outputs.should_build == 'true'
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -365,6 +455,7 @@ jobs:
           PARAM_SENTRY_ENABLED: ${{ needs.prebuild.outputs.sentry_enabled }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
+          PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
       - name: 'Tar artifact to maintain original permissions'
@@ -418,8 +509,8 @@ jobs:
         id: size_check
         env:
           # Per-target absolute caps (MB)
-          MAX_MACOS_MB: 410
-          MAX_WINDOWS64_MB: 320
+          MAX_MACOS_MB: 450
+          MAX_WINDOWS64_MB: 360
 
           # Per-platform delta thresholds (MB); 0 = disabled
           DELTA_MACOS_MB:   ${{ github.event.inputs.delta_threshold_macos_mb   || inputs.delta_threshold_macos_mb   || '0' }}
@@ -554,7 +645,7 @@ jobs:
         if: always() && steps.size_check.outputs.result != ''
         uses: actions/upload-artifact@v4
         with:
-          name: size_report_${{ matrix.target }}
+          name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: size_report/
           if-no-files-found: warn
 
@@ -652,3 +743,4 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel
+# Test change

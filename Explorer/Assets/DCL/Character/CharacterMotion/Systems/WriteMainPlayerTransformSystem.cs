@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.Character;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;

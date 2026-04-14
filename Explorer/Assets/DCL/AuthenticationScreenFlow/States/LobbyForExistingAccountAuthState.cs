@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterPreview;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
@@ -83,6 +84,8 @@ namespace DCL.AuthenticationScreenFlow
             // Listeners
             view.JumpIntoWorldButton.onClick.AddListener(OnJumpIntoWorld);
             view.DiffAccountButton.onClick.AddListener(OnDiffAccountButtonClicked);
+
+            ReportHub.LogProductionInfo($"Existing account logged in: {profile.WalletId}");
             return;
 
             bool IsNewUser() =>

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
@@ -23,10 +23,12 @@ namespace DCL.CharacterMotion.Components
         public float SteepSlopeAngle;
         public bool IsCollidingWithWall;
 
-        // Buffers used to decide if the character can jump
-        public int LastGroundedFrame;
-        public int LastJumpFrame;
-        public bool JustJumped;
+        // Distance of the character from the ground
+        public float GroundDistance;
+
+        // Multiplier applied to gravity
+        // The value is set to 1 after gravity calculations, so it needs to be computed every frame if needed
+        public float GravityMultiplier;
 
         // Current velocity of the gravity
         public Vector3 GravityVelocity;
@@ -45,6 +47,20 @@ namespace DCL.CharacterMotion.Components
 
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
+
+        // Net external force acting on the character (persistent while source is active, managed by the writer's lifecycle)
+        public Vector3 ExternalForce;
+
+        // Computed acceleration from ExternalForce (a = F / mass), per-frame
+        public Vector3 ExternalAcceleration;
+
+        // Pending external impulse to apply this frame (cleared after applying)
+        // Impulse = instant velocity change: Δv = J / mass
+        public Vector3 ExternalImpulse;
+
+        // External velocity from impulses, forces (jump pads, knockbacks, wind, etc.)
+        // Decays over time via drag/friction
+        public Vector3 ExternalVelocity;
 
         public struct MovementVelocity
         {
