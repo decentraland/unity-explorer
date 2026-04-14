@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
@@ -52,7 +53,7 @@ namespace DCL.PrivateWorlds
             disposeCts.SafeCancelAndDispose();
         }
 
-        private void OnIslandRoomConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnIslandRoomConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             if (connectionUpdate != ConnectionUpdate.Disconnected)
                 return;
@@ -63,7 +64,7 @@ namespace DCL.PrivateWorlds
                     $"[PrivateWorlds] Island room disconnected with reason {disconnectReason.Value}");
             }
 
-            if (disconnectReason != DisconnectReason.ParticipantRemoved)
+            if (disconnectReason != LKDisconnectReason.ParticipantRemoved)
                 return;
 
             RequestPermissionCheck();
