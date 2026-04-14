@@ -358,7 +358,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
-        // TODO (Kinerius): This does not support scene emotes yet
+        // TODO: we can safely remove this propagation for pulse multiplayer as it is no longer needed (based on emote start/emote stop events)
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]

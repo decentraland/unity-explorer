@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -28,6 +29,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
         private readonly PulseMultiplayerBus pulseMultiplayerBus;
+        private readonly PulseMultiplayerService pulseMultiplayerService;
+        private readonly ITransport pulseTransport;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -41,13 +44,17 @@ namespace DCL.PluginSystem.Global
         private MultiplayerMovementSettings settings;
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus, IDebugContainerBuilder debugBuilder
-          , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus,
+            PulseMultiplayerService pulseMultiplayerService, ITransport pulseTransport,
+            IDebugContainerBuilder debugBuilder,
+            RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, ParcelEncoder parcelEncoder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
             this.pulseMultiplayerBus = pulseMultiplayerBus;
+            this.pulseMultiplayerService = pulseMultiplayerService;
+            this.pulseTransport = pulseTransport;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
@@ -95,6 +102,7 @@ namespace DCL.PluginSystem.Global
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings, settings, entityParticipantTable, remoteMetadata);
+            DebugPulseSystem.InjectToWorld(ref builder, pulseMultiplayerService, pulseTransport, pulseMultiplayerBus, debugBuilder);
         }
     }
 }

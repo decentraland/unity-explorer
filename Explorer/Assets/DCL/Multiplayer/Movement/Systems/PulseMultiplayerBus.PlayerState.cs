@@ -161,6 +161,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             {
                 if (!pendingResyncs.TryAdd(subjectId, 0)) return false;
 
+                ResyncCount++;
+
                 OutgoingMessage resyncMessage = OutgoingMessage.Create(PacketMode.RELIABLE,
                     ClientMessage.MessageOneofCase.Resync);
 

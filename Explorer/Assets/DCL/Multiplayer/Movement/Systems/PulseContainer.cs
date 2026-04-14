@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly PeerIdCache peerIdCache = new ();
         private readonly MessagePipe messagePipe = new ();
 
-        private ENetTransport? transport;
+        internal ENetTransport? transport;
         private CancellationTokenSource? lifeCycleCts;
 
         internal readonly ParcelEncoder parcelEncoder;

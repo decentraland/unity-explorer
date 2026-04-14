@@ -97,6 +97,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 {
                     stored.message.isEmoting = true;
                     lastMovementMessages[emoteStarted.SubjectId] = stored;
+                    EmoteStateMismatchCount++;
                 }
 
                 Inbox(movementMessage, walletId);

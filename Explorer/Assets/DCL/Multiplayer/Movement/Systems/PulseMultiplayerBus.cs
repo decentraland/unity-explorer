@@ -24,6 +24,10 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private volatile bool isDisposed;
 
+        internal long ResyncCount { get; private set; }
+
+        internal long EmoteStateMismatchCount { get; private set; }
+
         public PulseMultiplayerBus(PulseMultiplayerService pulseService,
             PeerIdCache peerIdCache,
             MovementInbox movementInbox,

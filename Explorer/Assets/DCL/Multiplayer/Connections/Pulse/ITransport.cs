@@ -13,6 +13,11 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         TransportState State { get; }
 
+        long BytesSent { get; }
+        long BytesReceived { get; }
+        long PacketsSent { get; }
+        long PacketsReceived { get; }
+
         UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
         public void Disconnect(DisconnectReason reason);

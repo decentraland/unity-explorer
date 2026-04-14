@@ -22,6 +22,14 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private Host? client;
         private CancellationTokenSource? lifeCycleCts;
 
+        public long BytesSent { get; private set; }
+
+        public long BytesReceived { get; private set; }
+
+        public long PacketsSent { get; private set; }
+
+        public long PacketsReceived { get; private set; }
+
         public ITransport.TransportState State
         {
             get
@@ -188,6 +196,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 {
                     using Packet _ = netEvent.Packet;
                     netEvent.Packet.CopyTo(receiveBuffer);
+                    BytesReceived += netEvent.Packet.Length;
+                    PacketsReceived++;
 
                     messagePipe.OnDataReceived(new MessagePacket(new ReadOnlySpan<byte>(receiveBuffer, 0, netEvent.Packet.Length), peerId));
 
@@ -217,6 +227,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             int size = message.CalculateSize();
             var span = new Span<byte>(sendBuffer, 0, size);
             message.WriteTo(span);
+            BytesSent += size;
+            PacketsSent++;
             var packet = default(Packet);
             packet.Create(span, channel.PacketMode);
             peer.Send(channel.ChannelId, ref packet);

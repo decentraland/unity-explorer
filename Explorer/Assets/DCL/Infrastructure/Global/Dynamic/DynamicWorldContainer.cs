@@ -1026,6 +1026,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
                     pulseContainer.pulseMultiplayerBus!,
+                    pulseContainer.pulseMultiplayerService!,
+                    pulseContainer.transport!,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
