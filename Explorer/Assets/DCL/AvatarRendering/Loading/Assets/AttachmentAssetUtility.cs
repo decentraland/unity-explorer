@@ -105,25 +105,33 @@ namespace DCL.AvatarRendering.Loading.Assets
         private static bool HasSpringBoneInHierarchy(Transform transform) =>
             transform.GetComponentInChildren<SpringBoneJointComponent>();
 
-        private static void PropagateSpringBoneToChildren(Transform root, SpringBoneJointComponent rootConfig, Dictionary<Transform, int> boneIndexLookup)
+        private static void CollectSpringBoneChain(
+            Transform root,
+            SpringBoneJointComponent rootConfig,
+            Dictionary<Transform, int> boneIndexLookup,
+            List<SpringBoneData> result)
         {
             for (int i = 0; i < root.childCount; i++)
             {
                 Transform child = root.GetChild(i);
                 if (!boneIndexLookup.TryGetValue(child, out int boneIndex)) continue;
                 if (boneIndex < 62) continue;
+
+                // If the child has its own component, it's an independent root — skip
                 if (child.GetComponent<SpringBoneJointComponent>() != null) continue;
 
-                var component = child.gameObject.AddComponent<SpringBoneJointComponent>();
-                component.Stiffness = rootConfig.Stiffness;
-                component.Drag = rootConfig.Drag;
-                component.GravityDir = rootConfig.GravityDir;
-                component.GravityPower = rootConfig.GravityPower;
-                component.HitRadius = rootConfig.HitRadius;
-                component.IsRoot = false;
+                result.Add(new SpringBoneData(
+                    child,
+                    isRoot: false,
+                    boneIndexLookup[child.parent],
+                    rootConfig.Stiffness,
+                    rootConfig.Drag,
+                    rootConfig.GravityDir,
+                    rootConfig.GravityPower,
+                    rootConfig.HitRadius,
+                    child.localRotation));
 
-                // Recurse into children
-                PropagateSpringBoneToChildren(child, rootConfig, boneIndexLookup);
+                CollectSpringBoneChain(child, rootConfig, boneIndexLookup, result);
             }
         }
 
@@ -138,34 +146,24 @@ namespace DCL.AvatarRendering.Loading.Assets
             for (int boneIndex = 0; boneIndex < skeleton.bones.Length; boneIndex++)
                 boneIndexLookup.Add(skeleton.bones[boneIndex], boneIndex);
 
-            // First pass: propagate SpringBoneJointComponent to children of root spring bones
-            // that are part of the skeleton but weren't tagged in the GLTF extension.
-            foreach (var bone in skeleton.bones)
-            {
-                SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
-                if (!jointAuthoring || !jointAuthoring.IsRoot) continue;
-
-                PropagateSpringBoneToChildren(bone, jointAuthoring, boneIndexLookup);
-            }
-
             foreach (var bone in skeleton.bones)
             {
                 SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
                 if (!jointAuthoring) continue;
 
-                int boneIdx = boneIndexLookup[bone];
-                // Skip base skeleton bones — they are anchor points, not spring bones
-                if (boneIdx < 62) continue;
-
                 result.Add(new SpringBoneData(bone,
                     jointAuthoring.IsRoot,
-                    boneIndexLookup[bone.parent], // Store parent bone index to sync transforms later on
+                    boneIndexLookup[bone.parent],
                     jointAuthoring.Stiffness,
                     jointAuthoring.Drag,
                     jointAuthoring.GravityDir,
                     jointAuthoring.GravityPower,
                     jointAuthoring.HitRadius,
-                    bone.localRotation)); // Store initial rotation to reset reused transforms later on
+                    bone.localRotation));
+
+                // Collect untagged children that inherit this root's spring bone parameters
+                if (jointAuthoring.IsRoot)
+                    CollectSpringBoneChain(bone, jointAuthoring, boneIndexLookup, result);
             }
 
             return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
