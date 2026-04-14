@@ -32,7 +32,7 @@ namespace DCL.UI
             clipboardManager.Paste(this);
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),

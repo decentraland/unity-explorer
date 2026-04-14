@@ -6,6 +6,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.WebRequests;
+using MVC;
 using System;
 using DCL.UI;
 using Utility;
@@ -19,6 +20,8 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatPanelState> voiceChatPanelState;
         private readonly EventSubscriptionScope presenterScope = new();
         private readonly ChatClickDetectionHandler clickDetectionHandler;
+
+        private bool wasVisibleBeforeFullscreen;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -57,10 +60,30 @@ namespace DCL.VoiceChat
             clickDetectionHandler.OnClickOutside += HandleClickOutside;
 
             presenterScope.Add(voiceChatOrchestrator.CommunityCallStatus.Subscribe(OnCallStatusChanged));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(HandleChatPanelShownInSharedSpace));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(HandleChatPanelHiddenInSharedSpace));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(HandleChatPanelToggle));
-            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(HandleChatPanelVisibility));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(HandleChatPanelToggle));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewOpenEvent>(OnMVCViewOpened));
+            presenterScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewClosedEvent>(OnMVCViewClosed));
+        }
+
+        private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
+        {
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+
+            wasVisibleBeforeFullscreen = voiceChatPanelState.Value is not (VoiceChatPanelState.HIDDEN or VoiceChatPanelState.NONE);
+
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
+            clickDetectionHandler.Pause();
+        }
+
+        private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
+        {
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
+            if (!wasVisibleBeforeFullscreen) return;
+
+            wasVisibleBeforeFullscreen = false;
+
+            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, force: true);
+            clickDetectionHandler.Resume();
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -71,28 +94,13 @@ namespace DCL.VoiceChat
                 clickDetectionHandler.Resume();
         }
 
-        private void HandleChatPanelVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
-        {
-            voiceChatOrchestrator.ChangePanelState(evt.IsVisible ? VoiceChatPanelState.UNFOCUSED : VoiceChatPanelState.HIDDEN, force: true);
-        }
-
-        private void HandleChatPanelToggle(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
+        private void HandleChatPanelToggle(ChatSharedAreaEvents.ToggleChatPanelEvent evt)
         {
             if (voiceChatOrchestrator.CurrentVoiceChatPanelState.Value is VoiceChatPanelState.HIDDEN)
             {
                 voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.FOCUSED, force: true);
                 clickDetectionHandler.Resume();
             }
-        }
-
-        private void HandleChatPanelHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent _)
-        {
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
-        }
-
-        private void HandleChatPanelShownInSharedSpace(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
-        {
-            voiceChatOrchestrator.ChangePanelState(evt.Focus? VoiceChatPanelState.FOCUSED : VoiceChatPanelState.UNFOCUSED, force: true);
         }
 
         private void OnPointerExit()

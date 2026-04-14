@@ -48,6 +48,7 @@ namespace DCL.Prefs
         public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
         public const string PS_GRASS_PRESET = "QS_GrassPreset";
         public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SUN_LENS_FLARE = "QS_SunLensFlare";
         public const string PS_SCENE_LIGHTS = "QS_SceneLights";
         public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
@@ -92,6 +93,8 @@ namespace DCL.Prefs
         public const string GIFTING_PENDING_GIFTS = "PendingGifts";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
+
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
 
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 

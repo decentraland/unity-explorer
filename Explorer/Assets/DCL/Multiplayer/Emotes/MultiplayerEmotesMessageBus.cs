@@ -12,6 +12,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
+using DCL.LiveKit.Public;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -83,7 +84,7 @@ namespace DCL.Multiplayer.Emotes
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Urn = emoteId;
             emote.Payload.Timestamp = (float)timestamp;
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, double timestamp)

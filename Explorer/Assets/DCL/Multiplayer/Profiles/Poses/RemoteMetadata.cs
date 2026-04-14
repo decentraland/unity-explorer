@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using DCL.LiveKit.Public;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Concurrent;
@@ -48,7 +49,7 @@ namespace DCL.Multiplayer.Profiles.Poses
 
         public IReadOnlyDictionary<string, IRemoteMetadata.ParticipantMetadata> Metadata => metadata;
 
-        private void OnUpdatesFromParticipantInIsland(Participant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipantInIsland(LKParticipant participant, UpdateFromParticipant update)
         {
             if (update is UpdateFromParticipant.MetadataChanged or UpdateFromParticipant.Connected)
             {
@@ -64,7 +65,7 @@ namespace DCL.Multiplayer.Profiles.Poses
             }
         }
 
-        // private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        // private void OnConnectedToSceneRoom(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         // {
         //     if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
         //     {
@@ -73,7 +74,7 @@ namespace DCL.Multiplayer.Profiles.Poses
         //     }
         // }
 
-        private void OnUpdatesFromParticipantInSceneRoom(Participant participant, UpdateFromParticipant update)
+        private void OnUpdatesFromParticipantInSceneRoom(LKParticipant participant, UpdateFromParticipant update)
         {
             if (update is UpdateFromParticipant.MetadataChanged or UpdateFromParticipant.Connected)
             {
@@ -93,7 +94,7 @@ namespace DCL.Multiplayer.Profiles.Poses
             }
         }
 
-        private void ParticipantsOnUpdatesFromParticipant(Participant participant, IRemoteMetadata.ParticipantMetadata participantMetadata)
+        private void ParticipantsOnUpdatesFromParticipant(LKParticipant participant, IRemoteMetadata.ParticipantMetadata participantMetadata)
         {
             metadata[participant.Identity] = participantMetadata;
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"{nameof(RemoteMetadata)}: metadata of {participant.Identity} is {participantMetadata}");

@@ -31,7 +31,7 @@ namespace Runtime.Wearables
             this.categoryIcons = categoryIcons;
         }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         protected override void OnViewInstantiated()
         {
