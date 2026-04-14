@@ -27,6 +27,7 @@ namespace DCL.Quality.Runtime
 
         // Sun
         bool SunShadows { get; }
+        bool SunLensFlare { get; }
 
         // Scene lighting
         bool SceneLights { get; }
@@ -67,6 +68,7 @@ namespace DCL.Quality.Runtime
 
         // Sun
         void SetSunShadows(bool enabled);
+        void SetSunLensFlare(bool enabled);
 
         // Scene lighting
         void SetSceneLights(bool enabled);

@@ -24,6 +24,7 @@ namespace DCL.Quality
 
         [Header("Sun")]
         [SerializeField] internal bool sunShadows;
+        [SerializeField] internal bool sunLensFlare;
 
         [Header("Scene Lights")]
         [SerializeField] internal bool sceneLightsEnabled;
@@ -47,6 +48,7 @@ namespace DCL.Quality
         public int SceneDistance => sceneDistance;
         public float LandscapeDistance => landscapeDistance;
         public bool SunShadows => sunShadows;
+        public bool SunLensFlare => sunLensFlare;
         public bool SceneLightsEnabled => sceneLightsEnabled;
         public bool SceneLightShadowsEnabled => sceneLightShadowsEnabled;
         public int MaxSceneLights => maxSceneLights;

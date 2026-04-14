@@ -20,6 +20,7 @@ namespace DCL.Quality.Runtime
             public int SceneDistance;
             public float LandscapeDistance;
             public bool SunShadows;
+            public bool SunLensFlare;
             public bool SceneLights;
             public bool SceneLightShadows;
             public int MaxSceneLights;
@@ -52,6 +53,7 @@ namespace DCL.Quality.Runtime
                 SceneDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_DISTANCE, basePresetData.SceneDistance),
                 LandscapeDistance = DCLPlayerPrefs.GetFloat(DCLPrefKeys.PS_LANDSCAPE_DISTANCE, basePresetData.LandscapeDistance),
                 SunShadows = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_SHADOWS, basePresetData.SunShadows),
+                SunLensFlare = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, basePresetData.SunLensFlare),
                 SceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHTS, basePresetData.SceneLightsEnabled ? 1 : 0) == 1,
                 SceneLightShadows = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS, basePresetData.SceneLightShadowsEnabled ? 1 : 0) == 1,
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
@@ -78,6 +80,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_LANDSCAPE_DISTANCE);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_GRASS_PRESET);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SUN_SHADOWS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SUN_LENS_FLARE);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHTS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_MAX_SCENE_LIGHTS);

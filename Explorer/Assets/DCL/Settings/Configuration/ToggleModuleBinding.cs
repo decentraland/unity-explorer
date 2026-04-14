@@ -40,7 +40,8 @@ namespace DCL.Settings.Configuration
             SCENE_LIGHTS_FEATURE,
             FULLSCREEN_FEATURE,
             PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE,
-            DOUBLE_TAP_TO_MOVE,
+            SUN_LENS_FLARE_FEATURE,
+            DOUBLE_TAP_TO_MOVE
             // add other features...
         }
 
@@ -79,6 +80,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.BLOOM_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
                 ToggleFeatures.AVATAR_OUTLINE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
                 ToggleFeatures.SUN_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunShadows, x => x.SunShadows),
+                ToggleFeatures.SUN_LENS_FLARE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSunLensFlare, x => x.SunLensFlare),
                 ToggleFeatures.SCENE_SHADOWS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLightShadows, x => x.SceneLightShadows),
                 ToggleFeatures.SCENE_LIGHTS_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSceneLights, x => x.SceneLights),
                 ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),

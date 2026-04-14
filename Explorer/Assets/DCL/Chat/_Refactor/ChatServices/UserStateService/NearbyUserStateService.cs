@@ -3,6 +3,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -114,17 +115,17 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        private void OnSceneRoomUpdatesFromParticipants(Participant participant, UpdateFromParticipant update)
+        private void OnSceneRoomUpdatesFromParticipants(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.IslandRoom());
         }
 
-        private void OnIslandUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
+        private void OnIslandUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update)
         {
             OnRoomUpdatesFromParticipant(participant, update, roomHub.SceneRoom().Room());
         }
 
-        private void OnRoomUpdatesFromParticipant(Participant participant, UpdateFromParticipant update, IRoom otherRoom)
+        private void OnRoomUpdatesFromParticipant(LKParticipant participant, UpdateFromParticipant update, IRoom otherRoom)
         {
             lock (onlineParticipants)
             {
@@ -159,7 +160,7 @@ namespace DCL.Chat.ChatServices
         ///     </list>
         /// </summary>
         /// <param name="connectionState"></param>
-        private void OnRoomConnectionStateChange(ConnectionState connectionState)
+        private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
             bool shouldNotify = false;
 
@@ -167,8 +168,8 @@ namespace DCL.Chat.ChatServices
             {
                 switch (connectionState)
                 {
-                    case ConnectionState.ConnDisconnected:
-                    case ConnectionState.ConnConnected:
+                    case LKConnectionState.ConnDisconnected:
+                    case LKConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
                         CopyToSnapshotBuffer();
                         shouldNotify = true;
