@@ -106,7 +106,8 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         {
             if (!Enabled) return;
 
-            Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect);
+            Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect)
+                           + config.UILane.RectSpawnOffset;
             SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
         }
 

@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions.Configs
 
         [field: Note("Upward launch speed when UseFlightPath is OFF (simple straight-up mode). " +
                      "Ignored when flight path is ON — InitialUpRange is used instead.")]
-        [field: MinMaxRange(0f, 500f)]
+        [field: MinMaxRange(0f, 1500f)]
         [field: SerializeField] public Vector2 SpeedRange { get; private set; } = new(80f, 200f);
 
         [field: Note("Final particle size in pixels. Each particle spawns at 20-50% of this and grows to full size.")]
@@ -50,6 +50,11 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Note("Constant acceleration (px/sec²). X = horizontal drift, Y = vertical. " +
                      "Zero = floating-upward feel; negative Y = confetti falling down.")]
         [field: SerializeField] public Vector2 Gravity { get; private set; } = Vector2.zero;
+
+        [field: Header("SPAWN OFFSET")]
+        [field: Note("Pixel offset applied to rect-based spawns (e.g. reaction button). " +
+                     "X = right, Y = up. Use to shift particles away from the source button.")]
+        [field: SerializeField] public Vector2 RectSpawnOffset { get; private set; } = new(40f, 0f);
 
         [field: Header("STREAMING (HOLD-TO-EMIT)")]
         [field: Note("Emission ticks per second while holding the reaction button. Each tick spawns StreamBurst particles.")]
