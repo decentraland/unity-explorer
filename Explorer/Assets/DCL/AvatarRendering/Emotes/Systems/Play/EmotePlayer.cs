@@ -99,24 +99,25 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// Checks if a masked emote should be cancelled based on its animator state.
         /// Used by CharacterEmoteSystem for remote player entities.
         /// </summary>
-        public void TryCancelMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
+        /// <returns>True if the emote was cancelled, false otherwise.</returns>
+        public bool TryCancelMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
-            if (masked.StopEmote)
+            if (masked.CurrentEmoteReference == null) return false;
+
+            bool shouldCancel = masked.StopEmote;
+
+            if (!shouldCancel && masked.IsPlaying)
             {
-                masked.StopEmote = false;
-                StopAndResetMaskedEmote(ref masked, avatarView);
-                return;
+                string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
+                shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
             }
 
-            if (masked.CurrentEmoteReference == null) return;
-            if (!masked.IsPlaying) return;
+            if (!shouldCancel) return false;
 
-            string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
-            bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
-
-            if (isOnAnotherTag)
-                StopAndResetMaskedEmote(ref masked, avatarView);
+            StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
+            masked.Reset();
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,14 +185,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             return emoteReferences;
-        }
-
-        private void StopAndResetMaskedEmote(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
-        {
-            if (masked.CurrentEmoteReference == null) return;
-
-            StopMasked(masked.CurrentEmoteReference, in avatarView, masked.Mask);
-            masked.Reset();
         }
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)

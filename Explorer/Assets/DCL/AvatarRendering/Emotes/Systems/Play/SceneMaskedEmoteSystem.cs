@@ -108,9 +108,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             URN emoteId = emoteIntent.EmoteId;
 
-            try
-            {
-                if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
+            if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
 
                 if (emote.IsLoading)
                     return;
@@ -172,11 +170,15 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarBase, ref masked))
                     ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
-                messageBus.Send(emoteId, emote.IsLooping(), emoteIntent.Mask);
-
-                World.Remove<CharacterEmoteIntent>(entity);
-            }
-            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+                try
+                {
+                    messageBus.Send(emoteId, emote.IsLooping(), emoteIntent.Mask);
+                    World.Remove<CharacterEmoteIntent>(entity);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, GetReportData());
+                }
         }
 
         [Query]

@@ -44,6 +44,8 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
+        private static readonly string SCENE_EMOTE_PREFIX_WITH_COLON = GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
+
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
@@ -53,8 +55,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
         private readonly bool localSceneDevelopment;
-
-        private ReadOnlySpan<char> sceneEmotePrefixWithColon => GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
 
         public CharacterEmoteSystem(
             World world,
@@ -426,11 +426,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             resolvedScene = null;
 
             ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
+            ReadOnlySpan<char> emotePrefixWithColon = (ReadOnlySpan<char>)SCENE_EMOTE_PREFIX_WITH_COLON;
 
-            if (urnStr.IsEmpty || !urnStr.StartsWith(sceneEmotePrefixWithColon, StringComparison.OrdinalIgnoreCase))
+            if (urnStr.IsEmpty || !urnStr.StartsWith(emotePrefixWithColon, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            ReadOnlySpan<char> payload = urnStr.Slice(sceneEmotePrefixWithColon.Length);
+            ReadOnlySpan<char> payload = urnStr.Slice(emotePrefixWithColon.Length);
 
             // Parse loop from the right-most "-{bool}" segment
             int lastDash = payload.LastIndexOf('-');

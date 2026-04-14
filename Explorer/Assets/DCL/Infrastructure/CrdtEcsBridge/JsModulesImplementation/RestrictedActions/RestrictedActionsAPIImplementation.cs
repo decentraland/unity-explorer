@@ -133,17 +133,15 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await UniTask.SwitchToMainThread();
 
+                var resolved = await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct);
+
+                if (resolved is not var (urn, isLooping))
+                    return false;
+
                 if (mask == AvatarEmoteMask.AemFullBody)
-                {
-                    await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct);
-                }
+                    globalWorldActions.TriggerEmote(urn, isLooping, mask);
                 else
-                {
-                    // Load the emote through global world (emote storage/promises are global),
-                    // then route the resolved URN to the scene world
-                    await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, mask, ct,
-                        (urn, isLooping, emMask) => TriggerMaskedEmoteOnSceneWorld(urn, emMask));
-                }
+                    TriggerMaskedEmoteOnSceneWorld(urn, mask);
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)
