@@ -98,9 +98,23 @@ namespace DCL.Profiles
             GetCompact().Dispose();
             compact = new CompactInfo();
 
-            blocked = null;
-            interests = null;
-            links = null;
+            if (blocked != null)
+            {
+                ThreadSafeCollectionPool<HashSet<string>, string>.SHARED.Release(blocked);
+                blocked = null;
+            }
+
+            if (interests != null)
+            {
+                ThreadSafeCollectionPool<List<string>, string>.SHARED.Release(interests);
+                interests = null;
+            }
+
+            if (links != null)
+            {
+                ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Release(links);
+                links = null;
+            }
             Birthdate = null;
 
             // Avatars on the pool should always have an empty avatar for reusage.
@@ -151,10 +165,10 @@ namespace DCL.Profiles
 
         public void ClearLinks()
         {
-            if (Links == null)
-                Links = new List<LinkJsonDto>();
+            if (links == null)
+                links = ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
             else
-                Links.Clear();
+                links.Clear();
         }
 
         public bool IsSameProfile(Profile profile)

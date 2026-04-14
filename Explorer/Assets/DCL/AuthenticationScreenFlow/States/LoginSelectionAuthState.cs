@@ -12,7 +12,7 @@ using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<PopupType>, IPayloadedState<int>
+    public class LoginSelectionAuthState : AuthStateBase, IState, IPayloadedState<ErrorType>, IPayloadedState<int>
     {
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -50,6 +50,7 @@ namespace DCL.AuthenticationScreenFlow
             currentState.Value = AuthStatus.LoginSelectionScreen;
 
             view.SetLoadingSpinnerVisibility(false);
+            view.SetEmailInputFieldSpinnerActive(false);
 
             if (view.gameObject.activeSelf)
             {
@@ -109,18 +110,22 @@ namespace DCL.AuthenticationScreenFlow
             base.Exit();
         }
 
-        public void Enter(PopupType popupType)
+        public void Enter(ErrorType errorType)
         {
-            switch (popupType)
+            switch (errorType)
             {
-                case PopupType.NONE: break;
-                case PopupType.CONNECTION_ERROR:
+                case ErrorType.NONE: break;
+                case ErrorType.CONNECTION_ERROR:
                     view.ErrorPopupRoot.SetActive(true);
                     break;
-                case PopupType.RESTRICTED_USER:
+                case ErrorType.RESTRICTED_USER:
                     view.RestrictedUserContainer.SetActive(true);
                     break;
-                default: throw new ArgumentOutOfRangeException(nameof(popupType), popupType, null);
+                case ErrorType.INVALID_EMAIL:
+                    view.SetEmailInputFieldErrorState(true);
+                    Enter();
+                    return;
+                default: throw new ArgumentOutOfRangeException(nameof(errorType), errorType, null);
             }
 
             Enter(UIAnimationHashes.SLIDE);
@@ -178,10 +183,10 @@ namespace DCL.AuthenticationScreenFlow
 
             controller.CurrentLoginMethod = LoginMethod.EMAIL_OTP;
             currentState.Value = AuthStatus.LoginRequested;
+            view.SetEmailInputFieldSpinnerActive(true);
 
-            view.Hide();
             machine.Enter<IdentityVerificationOTPAuthState, (string, CancellationToken)>(
-                payload: (viewInstance.LoginSelectionAuthView.EmailInputField.Text, controller.GetRestartedLoginToken()));
+                payload: (view.EmailInputField.Text, controller.GetRestartedLoginToken()));
         }
 
         private void OnRetryFromError()
@@ -203,10 +208,11 @@ namespace DCL.AuthenticationScreenFlow
             webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
     }
 
-    public enum PopupType
+    public enum ErrorType
     {
         NONE = 0,
         CONNECTION_ERROR = 1,
         RESTRICTED_USER = 2,
+        INVALID_EMAIL = 3,
     }
 }

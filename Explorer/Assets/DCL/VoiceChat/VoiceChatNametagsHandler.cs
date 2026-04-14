@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -74,7 +75,7 @@ namespace DCL.VoiceChat
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
         }
 
-        private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
+        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
             switch (update)
             {
