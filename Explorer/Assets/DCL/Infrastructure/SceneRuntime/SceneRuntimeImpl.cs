@@ -94,8 +94,8 @@ namespace SceneRuntime
         /// </remarks>
         public void Dispose()
         {
-            engine.Dispose();
             jsApiBunch.Dispose();
+            engine.Dispose();
         }
 
         public void ExecuteSceneJson()

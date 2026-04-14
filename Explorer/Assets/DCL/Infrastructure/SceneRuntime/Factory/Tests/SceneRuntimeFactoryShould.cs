@@ -32,6 +32,12 @@ namespace SceneRuntime.Factory.Tests
             webJsSources = new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE));
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            engineFactory.Dispose();
+        }
+
         [UnityTest]
         public IEnumerator CreateBySourceCode() =>
             UniTask.ToCoroutine(async () =>

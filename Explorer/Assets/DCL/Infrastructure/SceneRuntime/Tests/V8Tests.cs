@@ -22,6 +22,7 @@ namespace SceneRuntime.Tests
         public void TearDown()
         {
             engine.Dispose();
+            engineFactory.Dispose();
         }
 
         [Test]
