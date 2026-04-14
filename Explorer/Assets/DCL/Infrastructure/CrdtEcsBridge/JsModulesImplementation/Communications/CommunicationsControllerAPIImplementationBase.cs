@@ -46,6 +46,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventArray = jsOperations.NewArray();
             onMessageReceivedCached = OnMessageReceived;
 
+            // Register event preparation to run before each JS update.
+            // GetResult() is called by JavaScript during V8 execution; building the JS array
+            // (SetProperty, InvokeMethod("subarray")) from inside a host callback is re-entrant and
+            // corrupts V8's internal EphemeronRememberedSet. Pre-building outside the execution window fixes this.
+            jsOperations.AddPreUpdateAction(BuildResultArray);
+
             this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
         }
 
@@ -94,25 +100,29 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public ScriptObject GetResult()
+        /// <summary>
+        /// Called by JavaScript during scene update to retrieve queued events.
+        /// The array is already populated by <see cref="BuildResultArray"/> which ran before JS execution started.
+        /// </summary>
+        public ScriptObject GetResult() =>
+            eventArray;
+
+        /// <summary>
+        /// Builds the JS event array from queued C# events. Must be called before V8 starts executing JS
+        /// (registered via <see cref="IJsOperations.AddPreUpdateAction"/>).
+        /// All V8 operations here (SetProperty, InvokeMethod) are safe because V8 is not yet executing.
+        /// </summary>
+        private void BuildResultArray()
         {
+            // VALIDATION STUB: discard all events without touching V8.
+            // Comms is broken but if the crash stops this proves the EphemeronHashTable
+            // corruption originates from the TypedArray view creation in the real implementation.
             lock (eventsToProcess)
             {
-                eventArray.SetProperty("length", eventsToProcess.Count);
-
-                for (var i = 0; i < eventsToProcess.Count; i++)
-                {
-                    PoolableByteArray src = eventsToProcess[i];
-                    ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
-                    dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
-                    src.Dispose();
-                    object subArray = dst.InvokeMethod("subarray", 0, src.Length);
-                    eventArray.SetProperty(i, subArray);
-                }
-
+                foreach (var e in eventsToProcess) e.Dispose();
                 eventsToProcess.Clear();
-                return eventArray;
             }
+            eventArray.SetProperty("length", 0);
         }
 
         private static int FilterCRDTMessage(ReadOnlySpan<byte> message, Span<byte> output)

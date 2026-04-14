@@ -24,6 +24,13 @@ namespace SceneRuntime
         private readonly ScriptObject unit8ArrayCtor;
         private readonly List<ITypedArray<byte>> uint8Arrays;
         private readonly JsApiBunch jsApiBunch;
+        private readonly List<Action> preUpdateActions = new ();
+
+        // Tracks the thread currently executing JS inside this scene's V8 engine.
+        // Used to detect same-thread re-entrancy: host callbacks must not call back into V8
+        // (e.g. construct new JS objects) while V8 is already executing on the same thread,
+        // because the inner invocation can trigger GC which frees objects the outer frame holds.
+        private Thread? v8ExecutingThread;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
         private readonly JSTaskResolverResetable resetableSource;
@@ -115,6 +122,13 @@ namespace SceneRuntime
 
             updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate").EnsureNotNull();
             startFunc = (ScriptObject)engine.Evaluate("__internalOnStart").EnsureNotNull();
+
+            // Pre-allocate temp Uint8Array pool to avoid re-entrant V8 calls from host callbacks.
+            // Calling unit8ArrayCtor.Invoke() while V8 is already executing JS (e.g. from GetTempUint8Array
+            // inside a host callback) causes use-after-free crashes because the inner invocation can trigger GC.
+            const int PREWARM_COUNT = 16;
+            for (int i = 0; i < PREWARM_COUNT; i++)
+                uint8Arrays.Add((ITypedArray<byte>)unit8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -141,7 +155,9 @@ namespace SceneRuntime
         public UniTask StartScene()
         {
             resetableSource.Reset();
-            startFunc.InvokeAsFunction();
+            v8ExecutingThread = Thread.CurrentThread;
+            try { startFunc.InvokeAsFunction(); }
+            finally { v8ExecutingThread = null; }
             return resetableSource.Task;
         }
 
@@ -149,8 +165,17 @@ namespace SceneRuntime
         {
             nextUint8Array = 0;
             RuntimeHeapInfo = engine.GetRuntimeHeapInfo();
+
+            // Run pre-update actions before V8 starts executing.
+            // These are V8 operations (property writes, method calls, object construction) that
+            // host callbacks register to avoid performing them re-entrantly during JS execution.
+            foreach (Action action in preUpdateActions)
+                action();
+
             resetableSource.Reset();
-            updateFunc.InvokeAsFunction(dt);
+            v8ExecutingThread = Thread.CurrentThread;
+            try { updateFunc.InvokeAsFunction(dt); }
+            finally { v8ExecutingThread = null; }
             return resetableSource.Task;
         }
 
@@ -162,19 +187,49 @@ namespace SceneRuntime
             Assert.IsTrue(result.IsEmpty);
         }
 
-        ScriptObject IJsOperations.NewArray() =>
-            (ScriptObject)arrayCtor.Invoke(true);
+        ScriptObject IJsOperations.NewArray()
+        {
+            ThrowIfReentrant(nameof(IJsOperations.NewArray));
+            return (ScriptObject)arrayCtor.Invoke(true);
+        }
 
-        ITypedArray<byte> IJsOperations.NewUint8Array(int length) =>
-            (ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length);
+        ITypedArray<byte> IJsOperations.NewUint8Array(int length)
+        {
+            ThrowIfReentrant(nameof(IJsOperations.NewUint8Array));
+            return (ITypedArray<byte>)unit8ArrayCtor.Invoke(true, length);
+        }
 
         ITypedArray<byte> IJsOperations.GetTempUint8Array()
         {
             if (nextUint8Array >= uint8Arrays.Count)
+            {
+                ThrowIfReentrant(nameof(IJsOperations.GetTempUint8Array));
                 uint8Arrays.Add((ITypedArray<byte>)unit8ArrayCtor.Invoke(true,
                     IJsOperations.LIVEKIT_MAX_SIZE));
+            }
 
             return uint8Arrays[nextUint8Array++];
+        }
+
+        void IJsOperations.AddPreUpdateAction(Action action)
+        {
+            preUpdateActions.Add(action);
+        }
+
+        /// <summary>
+        /// Throws if the calling thread is the same thread currently executing JS inside this engine.
+        /// Any V8 object construction (Invoke on a constructor) from a host callback re-enters V8 on the
+        /// same thread while its lock is already held. The inner invocation can trigger GC, freeing heap
+        /// objects the outer execution frame still references, causing use-after-free crashes.
+        /// </summary>
+        private void ThrowIfReentrant(string callerName)
+        {
+            if (v8ExecutingThread == Thread.CurrentThread)
+                throw new InvalidOperationException(
+                    $"Re-entrant V8 call detected in {callerName}: a host callback is attempting to construct " +
+                    "a new V8 object while V8 is already executing JS on this thread. " +
+                    "This can trigger GC inside an active V8 frame and cause use-after-free crashes. " +
+                    "Pre-allocate any required JS objects before calling InvokeAsFunction.");
         }
     }
 }

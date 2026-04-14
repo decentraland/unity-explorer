@@ -16,5 +16,12 @@ namespace SceneRuntime
         ScriptObject NewArray();
 
         ITypedArray<byte> NewUint8Array(int length);
+
+        /// <summary>
+        /// Registers an action to be called once per scene update, immediately before JS execution begins.
+        /// Use this to perform any V8 operations (object construction, property writes, method calls) that
+        /// must happen outside the V8 execution window to avoid re-entrant V8 calls from host callbacks.
+        /// </summary>
+        void AddPreUpdateAction(Action action);
     }
 }

@@ -217,7 +217,6 @@ namespace SceneRunner
 
             DisposeInternal();
             SceneData.InitialSceneStateInfo.Dispose();
-
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
