@@ -72,7 +72,9 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = payload.profile;
 
             view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
-            view.DiffAccountButton.gameObject.SetActive(!IsNewUser() || !payload.isCached);
+
+            if (IsNewUser() || !payload.isCached)
+                view.DiffAccountButton.gameObject.SetActive(false);
 
             characterPreviewView.transform.SetParent(view.transform);
             characterPreviewView.transform.SetAsFirstSibling();
