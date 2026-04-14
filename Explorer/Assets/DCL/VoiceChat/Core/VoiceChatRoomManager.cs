@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
@@ -184,7 +185,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
             OnConnectionUpdatedInternalAsync().Forget();
             return;
@@ -226,16 +227,16 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnTrackSubscribed(ITrack _, TrackPublication publication, Participant participant) =>
+        private void OnTrackSubscribed(ITrack _, TrackPublication publication, LKParticipant participant) =>
             remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
 
-        private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, Participant participant) =>
+        private void OnTrackUnsubscribed(ITrack _, TrackPublication publication, LKParticipant participant) =>
             remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
 
-        private void OnLocalTrackPublished(TrackPublication publication, Participant participant) =>
+        private void OnLocalTrackPublished(TrackPublication publication, LKParticipant participant) =>
             remoteListener.HandleTrackSubscribedAsync(publication, participant, isLocalLoopback: true).Forget();
 
-        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant) =>
+        private void OnLocalTrackUnpublished(TrackPublication publication, LKParticipant participant) =>
             remoteListener.HandleTrackUnsubscribedAsync(publication, participant, isLocalLoopback: true).Forget();
 
         private static void OnReconnectionStarted() =>
@@ -275,7 +276,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
 
-        private void OnConnectionLost(DisconnectReason? disconnectReason)
+        private void OnConnectionLost(LKDisconnectReason? disconnectReason)
         {
             try
             {

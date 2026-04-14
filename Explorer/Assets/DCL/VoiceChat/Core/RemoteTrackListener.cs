@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -59,7 +60,7 @@ namespace DCL.VoiceChat
             {
                 playbackSourcesHub.Reset();
 
-                foreach (KeyValuePair<string, Participant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                foreach (KeyValuePair<string, LKParticipant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
                     if (TryAddStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity.Key}");
@@ -87,7 +88,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}"); }
         }
 
-        public async UniTaskVoid HandleTrackSubscribedAsync(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackSubscribedAsync(TrackPublication publication, LKParticipant participant, bool isLocalLoopback = false)
         {
             if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
 
@@ -102,7 +103,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}"); }
         }
 
-        public async UniTaskVoid HandleTrackUnsubscribedAsync(TrackPublication publication, Participant participant, bool isLocalLoopback = false)
+        public async UniTaskVoid HandleTrackUnsubscribedAsync(TrackPublication publication, LKParticipant participant, bool isLocalLoopback = false)
         {
             if (isLocalLoopback && !configuration.EnableLocalTrackPlayback) return; // debug loopback
             if (publication.Kind != TrackKind.KindAudio) return;

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Utilities;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming.Audio;
@@ -10,7 +10,6 @@ using LiveKit.Rooms.Tracks;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat.Nearby
@@ -77,7 +76,7 @@ namespace DCL.VoiceChat.Nearby
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
 
-            if (islandRoom.Info.ConnectionState == ConnectionState.ConnConnected
+            if (islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected
                 && stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
                 ActivateWithRetryAsync(activationCts.Token).Forget();
         }
@@ -110,24 +109,24 @@ namespace DCL.VoiceChat.Nearby
                 stateModel.Resume();
         }
 
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             if (stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED) return;
             remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
         }
 
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             if (stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED) return;
             remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, DisconnectReason? reason)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, LKDisconnectReason? reason)
         {
             OnConnectionUpdatedInternalAsync(update, reason).Forget();
             return;
 
-            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+            async UniTaskVoid OnConnectionUpdatedInternalAsync(ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
             {
                 await UniTask.SwitchToMainThread();
 
@@ -220,7 +219,7 @@ namespace DCL.VoiceChat.Nearby
 
                     case NearbyVoiceChatState.IDLE:
                     case NearbyVoiceChatState.SPEAKING:
-                        if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == ConnectionState.ConnConnected)
+                        if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
