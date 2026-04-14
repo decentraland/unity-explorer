@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: ChatReactionsWorldLaneConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsWorldLaneConfig
   <MaxParticles>k__BackingField: 1023
-  <LifetimeRange>k__BackingField: {x: 1.92, y: 3.01}
-  <SpeedRange>k__BackingField: {x: 0.69, y: 1.12}
-  <SizeRange>k__BackingField: {x: 0.16, y: 0.25}
+  <LifetimeRange>k__BackingField: {x: 0.75, y: 1}
+  <SpeedRange>k__BackingField: {x: 1, y: 1.5}
+  <SizeRange>k__BackingField: {x: 0.15, y: 0.2}
   <Drag>k__BackingField: 0.4
   <Gravity>k__BackingField: {x: 0, y: 0, z: 0}
   <FollowRate>k__BackingField: 5
@@ -56,15 +56,15 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 0.2
-      inSlope: 50.73085
-      outSlope: 50.73085
+      inSlope: 8.250152
+      outSlope: 8.250152
       tangentMode: 35
       weightedMode: 0
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.01583206
-      value: 1.0031738
+      time: 0.09696792
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -72,8 +72,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.8907459
-      value: 0.99046326
+      time: 0.7680084
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -81,8 +81,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.9286833
-      value: 1.7048748
+      time: 0.84144276
+      value: 1.7107952
       inSlope: 0.7490359
       outSlope: 0.7490359
       tangentMode: 0
@@ -90,10 +90,10 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.95586175
-      value: 0.9914343
-      inSlope: -24.356115
-      outSlope: -24.356115
+      time: 0.896026
+      value: 1.000315
+      inSlope: -11.318636
+      outSlope: -11.318636
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
