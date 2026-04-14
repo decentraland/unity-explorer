@@ -42,7 +42,7 @@ namespace DCL.LOD.Systems
                         {
                             if (TEMP_MATERIALS[j].mainTexture.width != TEMP_MATERIALS[j].mainTexture.height)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneID} {baseCoordinate}");
+                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneID} {baseCoordinate}. Texture '{TEMP_MATERIALS[j].mainTexture.name}' is {TEMP_MATERIALS[j].mainTexture.width}x{TEMP_MATERIALS[j].mainTexture.height}");
                                 continue;
                             }
 
