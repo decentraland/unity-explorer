@@ -477,6 +477,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(CAMERA_REEL_RESPONSES_POOL, ct);
 
+            if (ct.IsCancellationRequested)
+            {
+                isLoading = false;
+                return;
+            }
+
             foreach (var bucket in result)
             {
                 MonthGridController monthGridView = GetMonthGrid(bucket.Key);
@@ -507,6 +513,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             //ScrollRect gets updated in LateUpdate, therefore waiting for PostLateUpdate ensures that the layout has been correctly updated
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, ct);
+
+            if (ct.IsCancellationRequested)
+            {
+                isLoading = false;
+                return;
+            }
 
             HandleElementsVisibility(ScrollDirection.UP);
 

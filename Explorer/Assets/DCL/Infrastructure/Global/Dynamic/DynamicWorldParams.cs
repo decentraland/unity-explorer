@@ -65,6 +65,12 @@ namespace Global.Dynamic
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
+
+        /// <summary>
+        ///     True when running in the Unity Editor with EditorSceneStartPosition enabled in MainSceneLoader.
+        ///     Prevents the world manifest spawn coordinate from overriding the developer's configured start position.
+        /// </summary>
+        public bool EditorPositionOverrideActive { get; init; }
     }
 
 

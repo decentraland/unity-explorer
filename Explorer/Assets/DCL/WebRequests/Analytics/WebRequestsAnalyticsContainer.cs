@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Networking;
@@ -8,7 +9,7 @@ namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        private readonly Dictionary<UnityWebRequest, DateTime> pendingRequests = new (10);
+        private readonly ConcurrentDictionary<UnityWebRequest, DateTime> pendingRequests = new ();
         private readonly List<IWebRequestAnalyticsHandler> handlers;
 
         public WebRequestsAnalyticsContainer(params IWebRequestAnalyticsHandler?[] handlers)
@@ -18,7 +19,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnBeforeBudgeting<T, TWebRequestArgs>(in RequestEnvelope<T, TWebRequestArgs> envelope, T request)
         {
-            pendingRequests.Add(request.UnityWebRequest, DateTime.MinValue);
+            pendingRequests.TryAdd(request.UnityWebRequest, DateTime.MinValue);
 
             foreach (IWebRequestAnalyticsHandler? handler in handlers)
                 handler.OnBeforeBudgeting(in envelope, request);
@@ -50,7 +51,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnProcessDataFinished<T>(T request)
         {
-            if (!pendingRequests.Remove(request.UnityWebRequest))
+            if (!pendingRequests.TryRemove(request.UnityWebRequest, out _))
                 return;
 
             foreach (IWebRequestAnalyticsHandler? handler in handlers)
@@ -59,7 +60,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnException<T>(T request, Exception exception)
         {
-            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+            if (!pendingRequests.TryRemove(request.UnityWebRequest, out DateTime startTime))
                 return;
 
             DateTime now = DateTime.Now;
@@ -71,7 +72,7 @@ namespace DCL.WebRequests.Analytics
 
         void IWebRequestsAnalyticsContainer.OnException<T>(T request, UnityWebRequestException exception)
         {
-            if (!pendingRequests.Remove(request.UnityWebRequest, out DateTime startTime))
+            if (!pendingRequests.TryRemove(request.UnityWebRequest, out DateTime startTime))
                 return;
 
             DateTime now = DateTime.Now;

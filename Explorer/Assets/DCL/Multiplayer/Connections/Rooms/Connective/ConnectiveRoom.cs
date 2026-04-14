@@ -22,6 +22,7 @@ using System.Threading;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -300,9 +301,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             return (connectResult, roomSelection);
         }
 
-        private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnConnectionUpdated(IRoom _, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is DisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason is LKDisconnectReason.DuplicateIdentity && isDuplicateIdentityStopFeatureEnabled)
             {
                 isDuplicateIdentityDetected = true;
                 cancellationTokenSource?.SafeCancelAndDispose();

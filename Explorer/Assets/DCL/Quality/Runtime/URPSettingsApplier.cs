@@ -91,6 +91,15 @@ namespace DCL.Quality.Runtime
             return true;
         }
 
+        public static void ApplySunLensFlare(bool enabled)
+        {
+            Light? sun = RenderSettings.sun;
+            if (sun == null) return;
+            var lensFlare = sun.GetComponent<LensFlareComponentSRP>();
+            if (lensFlare != null)
+                lensFlare.enabled = enabled;
+        }
+
         public static void ApplySunShadows(bool enabled)
         {
             EnsureReflectionProperties();

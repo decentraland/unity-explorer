@@ -84,11 +84,17 @@ namespace Global.AppArgs
         public const string DOUBLE_JUMP = "double-jump";
 
         public const string GLIDING = "gliding";
+        public const string POINT_AT = "point-at";
 
         public const string AVATAR_GHOSTS = "avatar-ghosts";
 
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
+
+        public const string REPORT_USER = "report-user";
+
+        public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
+        public const string DOUBLE_CLICK_WALK = "double-click-walk";
 
         public static class Multiplayer
         {

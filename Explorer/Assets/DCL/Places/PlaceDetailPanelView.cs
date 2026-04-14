@@ -195,7 +195,7 @@ namespace DCL.Places
             SilentlySetLikeToggle(placeInfo.user_like);
             SilentlySetDislikeToggle(placeInfo.user_dislike);
             SilentlySetFavoriteToggle(placeInfo.user_favorite);
-            int onlineMembers = placeInfo.connected_addresses != null ? placeInfo.connected_addresses.Length : placeInfo.user_count;
+            int onlineMembers = placeInfo.connected_addresses?.Length ?? placeInfo.user_count;
             onlineMembersText.text = $"{onlineMembers}";
             onlineMembersContainer.SetActive(onlineMembers > 0);
             descriptionText.text = !string.IsNullOrEmpty(placeInfo.description) ? placeInfo.description : NO_DESCRIPTION_TEXT;

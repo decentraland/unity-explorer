@@ -20,6 +20,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
         private readonly ConcurrentDictionary<uint, long> requests = new ();
 
         public RpcClient? Client => core.Client;
+        public bool IsDisconnecting { get; }
 
         public bool WarmingUp { private get; set; }
 

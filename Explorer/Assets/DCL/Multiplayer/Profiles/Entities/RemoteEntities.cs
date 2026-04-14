@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
@@ -152,7 +153,9 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent(),
+                new TorsoIKComponent()
             );
 
             collidersGlobalCache.Associate(remoteAvatarCollider.Collider, entity);
