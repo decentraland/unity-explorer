@@ -169,6 +169,7 @@ namespace DCL.VoiceChat.Nearby
                 return;
             }
 
+
             UnityEditor.SceneManagement.EditorSceneManager.NewScene(
                 UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
                 UnityEditor.SceneManagement.NewSceneMode.Single);

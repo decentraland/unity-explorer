@@ -12,6 +12,7 @@ namespace DCL.Nametags
         private const string USS_VERIFIED = USS_BLOCK + "--verified";
         private const string USS_OFFICIAL = USS_BLOCK + "--official";
         private const string USS_VOICE_CHAT = USS_BLOCK + "--voice-chat";
+        private const string USS_HUSHED = USS_BLOCK + "--hushed";
         private const string USS_DM = USS_BLOCK + "--dm";
         private const string USS_MENTION = USS_BLOCK + "--mention";
         private const string USS_COMMUNITY = USS_BLOCK + "--community";
@@ -35,6 +36,7 @@ namespace DCL.Nametags
         private const string USS_BADGE_VOICE_CHAT_MIDDLE = USS_BLOCK + "__badge-voice-chat-middle";
         private const string USS_BADGE_VOICE_CHAT_SIDE = USS_BLOCK + "__badge-voice-chat-side";
         private const string USS_BADGE_VOICE_CHAT_ALT = USS_BLOCK + "__badge-voice-chat--alt";
+        private const string USS_BADGE_HUSHED = USS_BLOCK + "__badge-hushed";
 
         private const string USS_MESSAGE = USS_BLOCK + "__message";
         private const string USS_MESSAGE_CONTAINER = USS_BLOCK + "__message-container";
@@ -75,6 +77,13 @@ namespace DCL.Nametags
         {
             get => ClassListContains(USS_VOICE_CHAT);
             set => EnableInClassList(USS_VOICE_CHAT, value);
+        }
+
+        [UxmlAttribute]
+        public bool Hushed
+        {
+            get => ClassListContains(USS_HUSHED);
+            set => EnableInClassList(USS_HUSHED, value);
         }
 
         [UxmlAttribute]
@@ -162,6 +171,7 @@ namespace DCL.Nametags
         private readonly VisualElement dmBadge;
         private readonly Label dmRecipientLabel;
         private readonly VisualElement voiceChatBadge;
+        private readonly VisualElement hushedBadge;
 
         private readonly VisualElement messageContainer;
         private readonly Label messageLabel;
@@ -253,6 +263,9 @@ namespace DCL.Nametags
                             ne.voiceChatBadge.RemoveFromClassList(USS_BADGE_VOICE_CHAT_ALT);
                     }, this);
                 }
+
+                header.Add(hushedBadge = new VisualElement { name = "hushed-badge" });
+                hushedBadge.AddToClassList(USS_BADGE_HUSHED);
 
                 header.Add(dmBadge = new VisualElement { name = "dm-badge" });
                 dmBadge.AddToClassList(USS_BADGE_DM);
