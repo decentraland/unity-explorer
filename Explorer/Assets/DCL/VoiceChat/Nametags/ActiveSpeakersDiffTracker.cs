@@ -1,0 +1,105 @@
+using Arch.Core;
+using DCL.Multiplayer.Profiles.Tables;
+using System.Collections.Generic;
+using Utility.Arch;
+
+namespace DCL.VoiceChat
+{
+    /// <summary>
+    /// Tracks active speaker changes by diffing consecutive snapshots from <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>
+    /// and writes <see cref="VoiceChatNametagComponent"/> to ECS entities via <see cref="IReadOnlyEntityParticipantTable"/>.
+    /// Shared by both Community and Nearby nametag handlers to avoid duplicating diff + entity-write logic.
+    /// </summary>
+    internal class ActiveSpeakersDiffTracker
+    {
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly World world;
+
+        /// <summary>
+        /// All participants that ever had <see cref="VoiceChatNametagComponent"/> written to them.
+        /// Used by <see cref="MarkAllRemoving"/> to clean up only entities we actually touched,
+        /// and by <see cref="Update"/> to retry writing the component when a participant appeared
+        /// in ActiveSpeakers before their entity was registered in the participant table (join race condition).
+        /// See <see cref="Tests.ActiveSpeakersDiffTrackerShould.RetrySpeakerWhenEntityAppearsAfterFirstUpdate"/>
+        /// and <see cref="Tests.ActiveSpeakersDiffTrackerShould.MarkAllRemovingClearsTouchedStateAllowingReactivation"/>.
+        /// </summary>
+        private readonly HashSet<string> touchedParticipants = new ();
+
+        private HashSet<string> activeSpeakers = new ();
+
+        internal ActiveSpeakersDiffTracker(
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            World world)
+        {
+            this.entityParticipantTable = entityParticipantTable;
+            this.world = world;
+        }
+
+        internal void Update(IEnumerable<string> currentSpeakers)
+        {
+            var newActiveSpeakers = new HashSet<string>();
+
+            foreach (string speakerId in currentSpeakers)
+            {
+                newActiveSpeakers.Add(speakerId);
+
+                // Second condition handles join race: participant appeared in ActiveSpeakers before
+                // their entity existed in the table, so the previous attempt's TryGet failed
+                // and touchedParticipants was never populated — retry on next update.
+                // See ActiveSpeakersDiffTrackerShould.RetrySpeakerWhenEntityAppearsAfterFirstUpdate
+                if (!activeSpeakers.Contains(speakerId) || !touchedParticipants.Contains(speakerId))
+                    SetSpeakingState(speakerId, true);
+            }
+
+            foreach (string oldSpeakerId in activeSpeakers)
+            {
+                if (!newActiveSpeakers.Contains(oldSpeakerId))
+                    SetSpeakingState(oldSpeakerId, false);
+            }
+
+            activeSpeakers = newActiveSpeakers;
+        }
+
+        /// <summary>
+        /// Retries setting the speaking state for a specific participant.
+        /// Called when a new entity is registered in the participant table,
+        /// handling the race condition where ActiveSpeakers reported a speaker
+        /// before their entity existed in the table.
+        /// </summary>
+        internal void RetrySpeaker(string participantId)
+        {
+            if (activeSpeakers.Contains(participantId))
+                SetSpeakingState(participantId, true);
+        }
+
+        internal void MarkAllRemoving()
+        {
+            foreach (string participantId in touchedParticipants)
+            {
+                if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
+            }
+
+            touchedParticipants.Clear();
+            activeSpeakers.Clear();
+        }
+
+        internal void RemoveParticipant(string participantId)
+        {
+            if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
+
+            activeSpeakers.Remove(participantId);
+            touchedParticipants.Remove(participantId);
+        }
+
+        private void SetSpeakingState(string participantId, bool isSpeaking)
+        {
+            if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+            {
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
+                touchedParticipants.Add(participantId);
+            }
+        }
+    }
+}

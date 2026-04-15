@@ -9,7 +9,6 @@ namespace DCL.Multiplayer.Profiles.Tables
     public interface IReadOnlyEntityParticipantTable
     {
         event Action<string> OnRegistered;
-
         public readonly struct Entry
         {
             public readonly string WalletId;
