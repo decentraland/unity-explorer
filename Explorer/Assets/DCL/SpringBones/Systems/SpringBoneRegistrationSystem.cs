@@ -48,7 +48,6 @@ namespace DCL.SpringBones
             var syncPairs = ListPool<(Transform, Transform)>.Get();
 
             RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase, ref transformMatrixComponent, slotIndices, syncPairs);
-            Debug.Log($"[Alex] Registering Spring Bones for: {avatarBase.RandomID} spring bones {transformMatrixComponent.bones.Count} with hash: {avatarShapeComponent.StructuralHash}");
 
             World.Add(entity, new SpringBoneRegistrationComponent
             {
