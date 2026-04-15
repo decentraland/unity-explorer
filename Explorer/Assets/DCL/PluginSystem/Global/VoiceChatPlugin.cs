@@ -47,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
+        private readonly NearbyMuteService? nearbyMuteService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -75,8 +76,10 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer)
+            IDebugContainerBuilder debugContainer,
+            NearbyMuteService? nearbyMuteService = null)
         {
+            this.nearbyMuteService = nearbyMuteService;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -170,7 +173,7 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler);
+                    nearbyStateModel, voiceChatHandler, nearbyMuteService);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyNametagsHandler = new VoiceChatNametagsHandler(

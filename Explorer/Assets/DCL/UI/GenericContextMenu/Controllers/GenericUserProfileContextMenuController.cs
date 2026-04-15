@@ -17,6 +17,7 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -88,11 +89,16 @@ namespace DCL.UI
         private readonly ButtonWithDelegateContextMenuControlSettings<string> reportButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string>? muteNearbyButtonControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string>? unmuteNearbyButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly GenericContextMenuElement contextGiftButton;
         private readonly GenericContextMenuElement contextMenuMentionButton;
+        private readonly GenericContextMenuElement? contextMenuMuteNearbyButton;
+        private readonly GenericContextMenuElement? contextMenuUnmuteNearbyButton;
+        private readonly NearbyMuteService? nearbyMuteService;
 
         private CancellationTokenSource cancellationTokenSource = new();
         private UniTaskCompletionSource closeContextMenuTask = new ();
@@ -114,8 +120,10 @@ namespace DCL.UI
             IVoiceChatOrchestratorActions voiceChatOrchestrator,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            NearbyMuteService? nearbyMuteService = null)
         {
+            this.nearbyMuteService = nearbyMuteService;
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
@@ -151,6 +159,14 @@ namespace DCL.UI
 
             contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
 
+            if (nearbyMuteService != null)
+            {
+                muteNearbyButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HushNearbyButtonConfig.Text, contextMenuSettings.HushNearbyButtonConfig.Sprite, new StringDelegate(OnMuteNearbyClicked));
+                unmuteNearbyButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.HearNearbyButtonConfig.Text, contextMenuSettings.HearNearbyButtonConfig.Sprite, new StringDelegate(OnUnmuteNearbyClicked));
+                contextMenuMuteNearbyButton = new GenericContextMenuElement(muteNearbyButtonControlSettings, false);
+                contextMenuUnmuteNearbyButton = new GenericContextMenuElement(unmuteNearbyButtonControlSettings, false);
+            }
+
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
@@ -158,6 +174,12 @@ namespace DCL.UI
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton);
+
+            if (contextMenuMuteNearbyButton != null)
+                contextMenu.AddControl(contextMenuMuteNearbyButton);
+
+            if (contextMenuUnmuteNearbyButton != null)
+                contextMenu.AddControl(contextMenuUnmuteNearbyButton);
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GIFTING_ENABLED))
                 contextMenu.AddControl(contextGiftButton);
@@ -228,6 +250,15 @@ namespace DCL.UI
             {
                 contextMenuCallButton.Enabled = isVoiceChatFeatureEnabled;
                 startCallButtonControlSettings.SetData(profile.UserId);
+            }
+
+            if (nearbyMuteService != null && contextMenuMuteNearbyButton != null && contextMenuUnmuteNearbyButton != null)
+            {
+                bool isMuted = nearbyMuteService.IsMuted(profile.UserId);
+                contextMenuMuteNearbyButton.Enabled = !isMuted;
+                contextMenuUnmuteNearbyButton.Enabled = isMuted;
+                muteNearbyButtonControlSettings!.SetData(profile.UserId);
+                unmuteNearbyButtonControlSettings!.SetData(profile.UserId);
             }
 
             if (isOpenedOnWorldAvatar)
@@ -381,6 +412,24 @@ namespace DCL.UI
             closeContextMenuTask.TrySetResult();
             ChatOpener.Instance.CloseAllViewsAndFocusChat();
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
+        }
+
+        private void OnMuteNearbyClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, true).Forget();
+        }
+
+        private void OnUnmuteNearbyClicked(string userId)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, false).Forget();
+        }
+
+        private async UniTaskVoid MuteNearbyAsync(string userId, bool muted)
+        {
+            await nearbyMuteService!.SetMutedAsync(userId, muted, cancellationTokenSource.Token);
+            closeContextMenuTask.TrySetResult();
         }
 
         private void OnBlockUserClicked(string userId)
