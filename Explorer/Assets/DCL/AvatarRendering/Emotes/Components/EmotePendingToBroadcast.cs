@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -6,5 +7,6 @@ namespace DCL.AvatarRendering.Emotes
     {
         public URN EmoteId;
         public uint DurationMs;
+        public AvatarEmoteMask Mask;
     }
 }

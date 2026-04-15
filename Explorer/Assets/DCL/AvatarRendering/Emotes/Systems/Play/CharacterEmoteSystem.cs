@@ -100,13 +100,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void CancelSceneEmotesBySceneChange(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        private void CancelSceneEmotesBySceneChange(in Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
             if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
             if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
 
-            StopEmote(ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView);
             messageBus.SendStop();
         }
 
@@ -329,19 +329,19 @@ namespace DCL.AvatarRendering.Emotes.Play
                     bool spatial = emoteIntent.Spatial;
                     IAvatarView view = avatarView;
 
+                    bool isLooping = emote.IsLooping();
+
                     if (mask == AvatarEmoteMask.AemFullBody)
                     {
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = mask;
-
-                        bool isLooping = emote.IsLooping();
 
                         if (!emotePlayer.Play(mainAsset, audioClip, isLooping, spatial, in view, ref emoteComponent))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
                         else
                         {
                             uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs });
+                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
                         }
                     }
                     else
@@ -349,7 +349,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         // Masked emotes for remote players are handled here in the global world.
                         // Local player masked emotes go through SceneMaskedEmoteSystem instead.
                         if (emoteComponent.CurrentEmoteReference != null)
-                            StopEmote(ref emoteComponent, view);
+                            StopEmote(entity, ref emoteComponent, view);
 
                         // After AddOrGet the query-provided refs (emoteIntent, avatarView,
                         // emoteComponent) are potentially dangling, use only local copies.
@@ -358,8 +358,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                         masked.EmoteUrn = emoteId;
                         masked.Mask = mask;
 
-                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref masked))
+                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, spatial, in view, ref masked))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                        else
+                        {
+                            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                        }
                     }
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -417,10 +422,11 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             URN emoteId = broadcast.EmoteId;
             uint durationMs = broadcast.DurationMs;
+            AvatarEmoteMask mask = broadcast.Mask;
 
             World.Remove<EmotePendingToBroadcast>(entity);
 
-            messageBus.Send(emoteId, false, durationMs, playerState);
+            messageBus.Send(emoteId, false, mask, durationMs, playerState);
         }
 
         [Query]

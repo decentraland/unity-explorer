@@ -146,8 +146,6 @@ namespace CrdtEcsBridge.RestrictedActions
                 emoteComponent.StopEmote = true;
                 world.Set(playerEntity, emoteComponent);
             }
-
-            messageBus.SendStop();
         }
 
         private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)

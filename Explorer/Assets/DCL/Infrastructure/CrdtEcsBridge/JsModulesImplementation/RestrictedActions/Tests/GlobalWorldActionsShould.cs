@@ -10,21 +10,15 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Ipfs;
-using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Profiles.Bunches;
 using DCL.SceneRunner.Scene;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Entity = Arch.Core.Entity;
-using DCL.SceneRunner.Scene;
-using DCL.Utility;
-using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
+using Entity = Arch.Core.Entity;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {

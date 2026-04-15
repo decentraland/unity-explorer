@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Emotes
 {

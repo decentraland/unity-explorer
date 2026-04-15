@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Bunches;
@@ -7,6 +8,7 @@ using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using Decentraland.Pulse;
 using Pulse.Transport;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -20,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (emoteSync, emoteIntentions);
 
-        public void Send(URN urn, bool loopCyclePassed, uint durationMs = 0, NetworkMovementMessage? playerState = null)
+        public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask, uint durationMs = 0, NetworkMovementMessage? playerState = null)
         {
             if (loopCyclePassed)
                 return;
@@ -61,7 +63,15 @@ namespace DCL.Multiplayer.Connections.Pulse
                 emoteIntentions.Add(intention);
         }
 
-        internal void EnqueueEmoteIntention(RemoteEmoteIntention intention)
+        public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+            throw new NotImplementedException();
+
+        public void SaveForRetry(RemoteEmoteStopIntention intention)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void EnqueueEmoteIntention(RemoteEmoteIntention intention)
         {
             using (emoteSync.GetScope())
                 emoteIntentions.Add(intention);
@@ -103,8 +113,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                 Inbox(movementMessage, walletId);
             }
 
-            double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
+            float timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp, AvatarEmoteMask.AemFullBody));
         }
 
         private void HandleEmoteStopped(IncomingMessage message)
