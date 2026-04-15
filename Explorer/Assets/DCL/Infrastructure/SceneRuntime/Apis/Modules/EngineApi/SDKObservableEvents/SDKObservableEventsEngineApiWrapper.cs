@@ -30,6 +30,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public override PoolableSDKObservableEventArray? SendBatch()
         {
+            return null;
+
             // If there are no subscriptions at all there is nothing to handle
             if (engineApi.IsAnySubscription() == false)
             {
@@ -75,12 +77,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public void SubscribeToSDKObservableEvent(string eventId)
         {
+            return;
+
             engineApi.TryAddSubscription(eventId);
         }
 
         [UsedImplicitly]
         public void UnsubscribeFromSDKObservableEvent(string eventId)
         {
+            return;
+
             engineApi.RemoveSubscriptionIfExists(eventId);
         }
     }

@@ -27,7 +27,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-        private readonly ScriptObject eventArray;
+
+        //private readonly ScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
@@ -43,7 +44,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
             this.typeToHandle = typeToHandle;
-            eventArray = jsOperations.NewArray();
+
+            //eventArray = jsOperations.NewArray();
             onMessageReceivedCached = OnMessageReceived;
 
             this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
@@ -94,27 +96,26 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public ScriptObject GetResult()
-        {
-            lock (eventsToProcess)
-            {
-                eventArray.SetProperty("length", eventsToProcess.Count);
+        public ScriptObject GetResult() =>
+            throw new NotSupportedException();
 
-                for (var i = 0; i < eventsToProcess.Count; i++)
-                {
-                    PoolableByteArray src = eventsToProcess[i];
-                    ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
-                    dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
-                    src.Dispose();
-                    object subArray = dst.InvokeMethod("subarray", 0, src.Length);
-                    eventArray.SetProperty(i, subArray);
-                }
-
-                eventsToProcess.Clear();
-                return eventArray;
-            }
-        }
-
+        // lock (eventsToProcess)
+        // {
+        //     eventArray.SetProperty("length", eventsToProcess.Count);
+        //
+        //     for (var i = 0; i < eventsToProcess.Count; i++)
+        //     {
+        //         PoolableByteArray src = eventsToProcess[i];
+        //         ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
+        //         dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
+        //         src.Dispose();
+        //         object subArray = dst.InvokeMethod("subarray", 0, src.Length);
+        //         eventArray.SetProperty(i, subArray);
+        //     }
+        //
+        //     eventsToProcess.Clear();
+        //     return eventArray;
+        // }
         private static int FilterCRDTMessage(ReadOnlySpan<byte> message, Span<byte> output)
         {
             CRDTFilter.FilterSceneMessageBatch(message, output, out int totalWrite);

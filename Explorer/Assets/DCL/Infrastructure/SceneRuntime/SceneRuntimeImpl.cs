@@ -64,6 +64,8 @@ namespace SceneRuntime
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
+            engine.AddHostObject("host", new HostFunctions());
+
             // engine.Execute(initCode.validateCode!);
             engine.Execute(initCode);
 

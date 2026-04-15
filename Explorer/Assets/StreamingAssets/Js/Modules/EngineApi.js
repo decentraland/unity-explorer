@@ -2,7 +2,14 @@
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/engine_api.proto
 
 module.exports.crdtSendToRenderer = async function(messages) {
-    const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
+
+    var clrArray = host.newArr(messages.data.length);
+    for (var i = 0; i < messages.data.length; ++i) {
+        clrArray[i] = messages.data[i];
+    }
+    
+    const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(clrArray))
+    // const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
     return {
         data: [data]
     };

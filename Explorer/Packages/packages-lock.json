@@ -535,13 +535,12 @@
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "org.decentraland.clearscript": {
-      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package",
+      "version": "file:D:/Decentraland/ClearScript/Unity/Package",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
-      },
-      "hash": "6d422ccc8835130dbe5664074405773b7bdc70f0"
+      }
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
