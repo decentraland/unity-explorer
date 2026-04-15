@@ -101,6 +101,8 @@ namespace DCL.VoiceChat
             lkSource.AudioSource.EnsureNotNull().outputAudioMixerGroup = mixerGroup;
             lkSource.name = $"LivekitSource_{key.identity}";
             lkSource.transform.SetParent(parent);
+            lkSource.AudioSource.mute = spatial;
+
             lkSource.Play();
 
             return lkSource;

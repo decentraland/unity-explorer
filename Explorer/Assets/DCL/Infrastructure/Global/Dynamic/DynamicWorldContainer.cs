@@ -1132,6 +1132,7 @@ namespace Global.Dynamic
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder,
+                        staticContainer.LoadingStatus,
                         nearbyMuteService)
                 );
 

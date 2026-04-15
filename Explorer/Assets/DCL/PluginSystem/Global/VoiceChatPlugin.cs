@@ -24,6 +24,7 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.RealmNavigation;
 using DCL.Utilities;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
         private readonly NearbyMuteService? nearbyMuteService;
+        private readonly ILoadingStatus loadingStatus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -77,9 +79,11 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
+            ILoadingStatus loadingStatus,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
+            this.loadingStatus = loadingStatus;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -165,7 +169,7 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.DISABLED);
                 pluginScope.Add(nearbyStateModel);
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
@@ -186,6 +190,11 @@ namespace DCL.PluginSystem.Global
                     world,
                     playerEntity);
                 pluginScope.Add(nearbyNametagsHandler);
+
+                loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
+
+                if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed)
+                    nearbyStateModel.Enable();
             }
         }
 
@@ -205,6 +214,14 @@ namespace DCL.PluginSystem.Global
                 NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING => VoiceChatActivityState.ACTIVE,
                 _ => VoiceChatActivityState.INACTIVE,
             };
+
+        private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
+        {
+            if (stage == LoadingStatus.LoadingStage.Completed)
+                nearbyStateModel?.Enable();
+            else
+                nearbyStateModel?.Disable();
+        }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

@@ -68,8 +68,7 @@ namespace DCL.VoiceChat.Nearby
                     lkSource.ApplySpatialSettings(configuration);
                     activeAudioSources[key.identity] = lkSource;
 
-                    if (muteService.IsMuted(key.identity))
-                        lkSource.AudioSource.mute = true;
+                    lkSource.AudioSource.mute = muteService.IsMuted(key.identity);
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
