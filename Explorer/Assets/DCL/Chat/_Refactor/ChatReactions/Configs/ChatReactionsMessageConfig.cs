@@ -35,13 +35,13 @@ namespace DCL.Chat.ChatReactions.Configs
                      "Clicks within this window are deduplicated per emoji. " +
                      "0 = disabled (sends immediately). Enable only after deploying protocol with count field.")]
         [field: Range(0f, 2f)]
-        [field: SerializeField] public float NetworkDebounceSeconds { get; private set; } = 0f;
+        [field: SerializeField] public float NetworkDebounceSeconds { get; internal set; } = 0f;
 
         [field: Note("Max buffered reactions before forcing a network flush, even if the debounce timer hasn't expired. " +
                      "Prevents the buffer from growing unbounded during continuous streaming. " +
                      "0 = disabled (only debounce timer triggers flush).")]
         [field: Range(0, 50)]
-        [field: SerializeField] public int NetworkFlushThreshold { get; private set; } = 10;
+        [field: SerializeField] public int NetworkFlushThreshold { get; internal set; } = 10;
 
         [field: Note("Minimum interval (seconds) between processing queued incoming situational reactions. " +
                      "Creates a visual cascade instead of all reactions appearing at once. 0 = disabled (process all immediately).")]

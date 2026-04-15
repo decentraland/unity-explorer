@@ -55,11 +55,8 @@ namespace DCL.Chat.ChatReactions.Core
             this.uiSimulation = uiSimulation;
             this.worldReactor = worldReactor;
 
-            networkBroadcaster = new ReactionNetworkBroadcaster(
-                reactionBus,
-                () => config.MessageReactions.NetworkDebounceSeconds,
-                () => config.MessageReactions.NetworkFlushThreshold,
-                (unique, total, ts) => NetworkFlushed?.Invoke(unique, total, ts));
+            networkBroadcaster = new ReactionNetworkBroadcaster(config, reactionBus);
+            networkBroadcaster.Flushed += (unique, total, ts) => NetworkFlushed?.Invoke(unique, total, ts);
         }
 
         public void Dispose()
