@@ -178,11 +178,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        private void TryUpdateLastMovementAndCompleteResync(uint serverTick, uint subjectId, uint sequence, NetworkMovementMessage movementMessage)
+        private void TryUpdateLastMovementAndCompleteResync(uint serverTick, uint subjectId, uint sequence, NetworkMovementMessage movementMessage, bool allowOverrides = false)
         {
             if (lastMovementMessages.TryGetValue(subjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
             {
-                if (lastMessage.sequence < sequence)
+                if (lastMessage.sequence < sequence || (allowOverrides && lastMessage.sequence == sequence))
                     lastMovementMessages[subjectId] = (sequence, movementMessage);
             }
             else
