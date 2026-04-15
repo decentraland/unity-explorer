@@ -85,23 +85,24 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             emotingSubjects.Add(emoteStarted.SubjectId);
 
-            if (emoteStarted.PlayerState != null)
+            NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
+
+            // if the snapshot on the server was evicted due to the high latency, EmoteStarted may arrive with the same sequence as Teleport or Diff
+            // It's a valid case - override the snapshot
+            TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage, true);
+
+            // A delta with the same sequence may have arrived first via the unreliable channel,
+            // storing isEmoting=false. EmoteStarted (reliable) is authoritative, so force-update the stored state.
+            // Should be unreachable now
+            if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out (uint sequence, NetworkMovementMessage message) stored)
+                && !stored.message.isEmoting)
             {
-                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStarted.PlayerState, emoteStarted.SubjectId, emoteStarted.ServerTick, isInstant: true);
-                TryUpdateLastMovementAndCompleteResync(emoteStarted.ServerTick, emoteStarted.SubjectId, emoteStarted.Sequence, movementMessage);
-
-                // A delta with the same sequence may have arrived first via the unreliable channel,
-                // storing isEmoting=false. EmoteStarted (reliable) is authoritative, so force-update the stored state.
-                if (lastMovementMessages.TryGetValue(emoteStarted.SubjectId, out (uint sequence, NetworkMovementMessage message) stored)
-                    && !stored.message.isEmoting)
-                {
-                    stored.message.isEmoting = true;
-                    lastMovementMessages[emoteStarted.SubjectId] = stored;
-                    EmoteStateMismatchCount++;
-                }
-
-                Inbox(movementMessage, walletId);
+                stored.message.isEmoting = true;
+                lastMovementMessages[emoteStarted.SubjectId] = stored;
+                EmoteStateMismatchCount++;
             }
+
+            Inbox(movementMessage, walletId);
 
             double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
             EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp));
@@ -125,8 +126,15 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             emotingSubjects.Remove(emoteStopped.SubjectId);
 
+            // It carries a new snapshot with the refreshed sequence
+            if (emoteStopped.PlayerState != null)
+            {
+                NetworkMovementMessage movementMessage = ToNetworkMovementMessage(emoteStopped.PlayerState, emoteStopped.SubjectId, emoteStopped.ServerTick, false);
+                TryUpdateLastMovementAndCompleteResync(emoteStopped.ServerTick, emoteStopped.SubjectId, emoteStopped.Sequence, movementMessage);
+            }
+
             // Update the stored state so it will be applied with the next delta
-            if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
+            else if (lastMovementMessages.TryGetValue(emoteStopped.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMessage))
             {
                 lastMessage.message.isEmoting = false;
                 lastMovementMessages[emoteStopped.SubjectId] = (lastMessage.sequence, lastMessage.message);
