@@ -86,8 +86,6 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
-using DCL.VoiceChat.Nearby;
-using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -688,12 +686,6 @@ namespace Global.Dynamic
 
             var passportBridge = new MVCPassportBridge(mvcManager);
 
-            var nearbyMuteCache = new NearbyMuteCache();
-            var nearbyMuteRepository = new RestNearbyMuteRepository(
-                staticContainer.WebRequestsContainer.WebRequestController,
-                bootstrapContainer.DecentralandUrlsSource);
-            var nearbyMuteService = new NearbyMuteService(nearbyMuteCache, nearbyMuteRepository);
-
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -711,8 +703,7 @@ namespace Global.Dynamic
                 communitiesDataProvider,
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
-                selfProfile,
-                nearbyMuteService);
+                selfProfile);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -1131,9 +1122,7 @@ namespace Global.Dynamic
                         staticContainer.ImageControllerProvider,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
-                        debugBuilder,
-                        identityCache,
-                        nearbyMuteService)
+                        debugBuilder)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

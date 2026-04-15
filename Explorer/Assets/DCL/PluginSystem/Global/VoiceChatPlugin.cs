@@ -21,8 +21,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
 using DCL.Utilities.Extensions;
-using DCL.VoiceChat.Nearby;
-using DCL.Web3.Identities;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
@@ -61,9 +59,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
-        private NearbyNametagsHandler? nearbyNametagsHandler;
-        private readonly IWeb3IdentityCache identityCache;
-        private readonly NearbyMuteService nearbyMuteService;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -78,12 +73,8 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer,
-            IWeb3IdentityCache identityCache,
-            NearbyMuteService nearbyMuteService)
+            IDebugContainerBuilder debugContainer)
         {
-            this.identityCache = identityCache;
-            this.nearbyMuteService = nearbyMuteService;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -101,8 +92,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            identityCache.OnIdentityChanged -= OnNearbyIdentityAvailable;
-
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -179,36 +168,9 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler, nearbyMuteService);
+                    nearbyStateModel, voiceChatHandler);
                 pluginScope.Add(nearbyVoiceChatManager);
-
-                // Identity-dependent initialization (nametags + mute loading)
-                identityCache.OnIdentityChanged += OnNearbyIdentityAvailable;
-
-                if (identityCache.Identity != null)
-                    InitializeNearbyIdentityDependentAsync(ct).Forget();
             }
-        }
-
-        private void OnNearbyIdentityAvailable()
-        {
-            if (identityCache.Identity == null) return;
-            if (nearbyNametagsHandler != null) return;
-
-            InitializeNearbyIdentityDependentAsync(CancellationToken.None).Forget();
-        }
-
-        private async UniTaskVoid InitializeNearbyIdentityDependentAsync(CancellationToken ct)
-        {
-            await nearbyMuteService.LoadAsync(ct);
-
-            string localIdentity = identityCache.Identity!.Address.ToString();
-
-            nearbyNametagsHandler = new NearbyNametagsHandler(
-                roomHub.IslandRoom(), entityParticipantTable, world,
-                voiceChatOrchestrator.CurrentCallStatus, playerEntity,
-                localIdentity, nearbyMuteService, nearbyStateModel!);
-            pluginScope.Add(nearbyNametagsHandler);
         }
 
         [Serializable]
