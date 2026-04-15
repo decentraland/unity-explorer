@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.UI.DuplicateIdentityPopup;
 using DCL.Utilities.Extensions;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
@@ -52,9 +53,9 @@ namespace DCL.PluginSystem.Global
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.DuplicateIdentity && duplicateIdentityController?.State != ControllerState.ViewShowing)
                 ShowDuplicateIdentityWindowAsync().Forget();
 
             return;

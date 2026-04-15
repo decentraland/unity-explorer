@@ -17,7 +17,7 @@ namespace DCL.ApplicationBlocklistGuard
         private readonly IWebBrowser webBrowser;
         private readonly StringBuilder infoTextBuilder = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
 
         public BlockedScreenController(ViewFactoryMethod viewFactory, IWebBrowser webBrowser) : base(viewFactory)
         {

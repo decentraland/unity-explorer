@@ -52,6 +52,8 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
 
         private void ResetModifiers()
         {
+            if (!globalWorld.Has<InputModifierComponent>(playerEntity)) return;
+
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.RemoveAllModifiers();
 

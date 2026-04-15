@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using System;
@@ -14,15 +15,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     {
         private const float GHOST_NAMETAG_HEIGHT = 2f;
 
+        private int rightPointAtLayerIndex;
+        private int rotationLayerIndex;
+
         public int RandomID;
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
+        private AnimationClip? lastMaskedEmote;
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
-
-        public Animation? LegacyAnimation { get; private set; }
+        [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; }
 
         [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
@@ -59,17 +63,28 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandRaycast { get; private set; }
         [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; }
         [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
+        [field: SerializeField] public Transform RightHandTarget { get; private set; }
         [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
         [field: Header("LOOK-AT IK")]
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
 
         // The LookAt IK is based on 2 constraints, one for horizontal rotation and other for vertical rotation in order to control different bone chains for both of them, Horizontal is applied first
+        [field: SerializeField] public TwistChainConstraint HeadLookAtTargetVerticalConstraint { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; }
         [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; }
 
         // Position of the head after the animations
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
+
+        [field: Header("TORSO IK")]
+        [field: SerializeField] public Rig TorsoIKRig { get; private set; }
+        [field: SerializeField] public Transform TorsoTarget { get; private set; }
+
+        [field: Header("ADDITIVE BREATH")]
+        [field: SerializeField] public Rig CachePoseRig { get; private set; }
+        [field: SerializeField] public Rig AdditiveBreathRig { get; private set; }
+        [field: SerializeField] public AdditiveBreathDataBridge AdditiveBreathBridge { get; private set; }
 
         [field: Header("OTHER")]
         // Anchor points to attach entities to, through the SDK
@@ -124,6 +139,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
             RandomID = Random.Range(0, 1000);
 
+            rightPointAtLayerIndex = AvatarAnimator.GetLayerIndex("RightPointAtHand");
+            rotationLayerIndex = AvatarAnimator.GetLayerIndex("Rotation");
             overrideController = new AnimatorOverrideController(AvatarAnimator.runtimeAnimatorController);
             animationOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
             overrideController.GetOverrides(animationOverrides);
@@ -140,11 +157,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public Transform GetTransform() =>
             transform;
 
-        public Animation AddOrGetLegacyAnimation()
+        public void SetPointAtLayerWeight(float weight)
         {
-            if (LegacyAnimation != null) return LegacyAnimation;
-            LegacyAnimation = AvatarAnimator.gameObject.AddComponent<Animation>();
-            return LegacyAnimation;
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
+
+        public void SetRotationLayerWeight(float weight)
+        {
+            AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
         }
 
         public void SetAnimatorFloat(int hash, float value)
@@ -172,8 +192,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool IsAnimatorInTag(int hashTag) =>
             AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
 
-        public int GetAnimatorCurrentStateTag() =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
+        public int GetAnimatorCurrentStateTag(string layerName)
+        {
+            int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
+            return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+        }
 
         public void ResetAnimatorTrigger(int hash)
         {
@@ -197,6 +220,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.Rebind();
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
+            FeetIKRig.enabled = false;
+        }
+
+        public void SetLayerWeight(string layerName, float weight)
+        {
+            int index = AvatarAnimator.GetLayerIndex(layerName);
+            AvatarAnimator.SetLayerWeight(index, weight);
         }
 
         public bool GetAnimatorBool(int hash) =>
@@ -223,6 +253,20 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             lastEmote = animationClip;
             AvatarAnimator.enabled = true;
         }
+
+        public void ReplaceMaskedEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastMaskedEmote == animationClip) return;
+
+            overrideController["MaskedEmote"] = animationClip;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastMaskedEmote = animationClip;
+            AvatarAnimator.enabled = true;
+        }
+
+        public void ClearMaskedEmoteAnimationCache() =>
+            lastMaskedEmote = null;
 
         public Vector3 GetAdaptiveNametagPosition()
         {
@@ -280,9 +324,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         Transform GetTransform();
 
         Animator AvatarAnimator { get; }
-        Animation? LegacyAnimation { get; }
-
-        Animation AddOrGetLegacyAnimation();
 
         void SetAnimatorFloat(int hash, float value);
 
@@ -296,14 +337,20 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
 
+        void ReplaceMaskedEmoteAnimation(AnimationClip animationClip);
+
+        void ClearMaskedEmoteAnimationCache();
+
         float GetAnimatorFloat(int hash);
 
         bool IsAnimatorInTag(int hashTag);
 
-        int GetAnimatorCurrentStateTag();
+        int GetAnimatorCurrentStateTag(string layerName);
 
         void ResetAnimatorTrigger(int hash);
 
         void ResetArmatureInclination();
+
+        void SetLayerWeight(string layerName, float weight);
     }
 }

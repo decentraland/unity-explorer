@@ -63,9 +63,9 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
             viewInstance.Configure(Config);
