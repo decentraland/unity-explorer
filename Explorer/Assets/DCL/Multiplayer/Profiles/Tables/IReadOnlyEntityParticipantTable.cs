@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Multiplayer.Connections.Rooms;
+using System;
 using System.Collections.Generic;
 using Utility;
 
@@ -7,6 +8,8 @@ namespace DCL.Multiplayer.Profiles.Tables
 {
     public interface IReadOnlyEntityParticipantTable
     {
+        event Action<string> OnRegistered;
+
         public readonly struct Entry
         {
             public readonly string WalletId;

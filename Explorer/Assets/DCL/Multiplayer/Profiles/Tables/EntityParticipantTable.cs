@@ -16,6 +16,8 @@ namespace DCL.Multiplayer.Profiles.Tables
 
         private readonly Dictionary<Entity, string> entityToWalletId = new (PoolConstants.AVATARS_COUNT);
 
+        public event Action<string>? OnRegistered;
+
         public int Count => walletIdToEntity.Count;
 
         public IReadOnlyEntityParticipantTable.Entry Get(string walletId)
@@ -40,6 +42,7 @@ namespace DCL.Multiplayer.Profiles.Tables
         {
             walletIdToEntity.Add(walletId, new IReadOnlyEntityParticipantTable.Entry(walletId, entity, fromRoom));
             entityToWalletId.Add(entity, walletId);
+            OnRegistered?.Invoke(walletId);
         }
 
         public void AddRoomSource(string walletId, RoomSource fromRoom)
