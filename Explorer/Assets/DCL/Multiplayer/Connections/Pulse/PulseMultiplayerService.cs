@@ -123,8 +123,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask ConnectInternalAsync(CancellationToken ct)
         {
-            // await transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT, ct);
-            await transport.ConnectAsync("127.0.0.1", PORT, ct);
+            await transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT, ct);
 
             // Register handshake handler before starting the routing loop so it's visible immediately.
             // Extract fields inside the handler — the underlying proto message is returned to pool after the handler returns.
