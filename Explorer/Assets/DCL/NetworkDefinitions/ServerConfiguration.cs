@@ -14,7 +14,6 @@ namespace DCL.Ipfs
     public class ServerConfiguration
     {
         public List<string> scenesUrn;
-        public List<string> localSceneParcels;
         public string realmName;
         public int networkId;
         public ServerSkyboxConfig skybox;
