@@ -24,6 +24,7 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.Utilities;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
+        private VoiceChatNametagsHandler? nearbyNametagsHandler;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -138,7 +140,7 @@ namespace DCL.PluginSystem.Global
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
-                voiceChatOrchestrator,
+                voiceChatOrchestrator.CurrentCallStatus.Select(MapCallStatus),
                 entityParticipantTable,
                 world,
                 playerEntity);
@@ -170,8 +172,33 @@ namespace DCL.PluginSystem.Global
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
                     nearbyStateModel, voiceChatHandler);
                 pluginScope.Add(nearbyVoiceChatManager);
+
+                nearbyNametagsHandler = new VoiceChatNametagsHandler(
+                    islandRoom,
+                    nearbyStateModel.State.Select(MapNearbyState),
+                    entityParticipantTable,
+                    world,
+                    playerEntity);
+                pluginScope.Add(nearbyNametagsHandler);
             }
         }
+
+        private static VoiceChatActivityState MapCallStatus(VoiceChatStatus status) =>
+            status switch
+            {
+                VoiceChatStatus.VOICE_CHAT_IN_CALL => VoiceChatActivityState.ACTIVE,
+                VoiceChatStatus.VOICE_CHAT_ENDING_CALL
+                    or VoiceChatStatus.DISCONNECTED
+                    or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR => VoiceChatActivityState.INACTIVE,
+                _ => VoiceChatActivityState.TRANSITION,
+            };
+
+        private static VoiceChatActivityState MapNearbyState(NearbyVoiceChatState state) =>
+            state switch
+            {
+                NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING => VoiceChatActivityState.ACTIVE,
+                _ => VoiceChatActivityState.INACTIVE,
+            };
 
         [Serializable]
         public class Settings : IDCLPluginSettings
