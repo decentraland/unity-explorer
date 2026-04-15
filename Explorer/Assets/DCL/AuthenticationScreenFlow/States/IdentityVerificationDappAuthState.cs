@@ -55,7 +55,14 @@ namespace DCL.AuthenticationScreenFlow
         public override void Exit()
         {
             if (loginException == null)
+            {
                 view.Hide(OUT);
+
+                // Hide login selection view if still visible (social logins skip the verification step,
+                // so ShowVerification is never called and the login selection view remains active)
+                if (viewInstance.LoginSelectionAuthView.gameObject.activeSelf)
+                    viewInstance.LoginSelectionAuthView.Hide();
+            }
             else
             {
                 if (currentState.Value == AuthStatus.VerificationRequested)
