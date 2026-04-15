@@ -96,45 +96,31 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    // If the entity has an emote intent not already consumed we remove it straight away
-                    if (World.Has<CharacterEmoteIntent>(entry.Entity))
+                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+
+                    // Wait until interpolation reaches the stop's timestamp before applying
+                    if (interpolationExists && !StopIsInPresentOrPast(replicaMovement, stopIntention, intComp))
                     {
-                        World.Remove<CharacterEmoteIntent>(entry.Entity);
+                        savedStopIntentions!.Add(stopIntention);
                         continue;
                     }
 
-                    // Check if any emote (full-body or masked) is playing on the remote entity and stop it
-                    bool isPlayingAny = false;
+                    // If the entity has an emote intent not already consumed we remove it straight away
+                    if (World.Has<CharacterEmoteIntent>(entry.Entity))
+                        World.Remove<CharacterEmoteIntent>(entry.Entity);
 
                     if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.CurrentEmoteReference != null))
                     {
                         emoteComponent.StopEmote = true;
                         World.Set(entry.Entity, emoteComponent);
-                        isPlayingAny = true;
                     }
 
                     if (World.TryGet(entry.Entity, out CharacterMaskedEmoteComponent masked) && (masked.IsPlaying || masked.CurrentEmoteReference != null))
                     {
                         masked.StopEmote = true;
                         World.Set(entry.Entity, masked);
-                        isPlayingAny = true;
                     }
-
-                    if (isPlayingAny)
-                        continue;
-
-                    // Entity exists but the play intention hasn't been applied yet (still queued
-                    // waiting for interpolation to catch up). Save the stop for retry so it can
-                    // cancel the emote once the play is eventually consumed.
-                    // However, if interpolation has already passed the stop's timestamp, the
-                    // corresponding play was either never received or already consumed — discard.
-                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
-                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
-
-                    if (!interpolationExists || StopIsInPresentOrPast(replicaMovement, stopIntention, intComp))
-                        continue;
-
-                    savedStopIntentions!.Add(stopIntention);
                 }
             }
 

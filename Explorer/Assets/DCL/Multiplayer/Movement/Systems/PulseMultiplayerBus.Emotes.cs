@@ -17,6 +17,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         private readonly HashSet<uint> emotingSubjects = new ();
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync emoteSync = new ();
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
@@ -64,11 +65,12 @@ namespace DCL.Multiplayer.Connections.Pulse
         }
 
         public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
-            throw new NotImplementedException();
+            new (emoteSync, emoteStopIntentions);
 
         public void SaveForRetry(RemoteEmoteStopIntention intention)
         {
-            throw new NotImplementedException();
+            using (emoteSync.GetScope())
+                emoteStopIntentions.Add(intention);
         }
 
         private void EnqueueEmoteIntention(RemoteEmoteIntention intention)
@@ -135,6 +137,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             emotingSubjects.Remove(emoteStopped.SubjectId);
+
+            float timestamp = emoteStopped.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+
+            using (emoteSync.GetScope())
+                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
 
             // It carries a new snapshot with the refreshed sequence
             if (emoteStopped.PlayerState != null)
