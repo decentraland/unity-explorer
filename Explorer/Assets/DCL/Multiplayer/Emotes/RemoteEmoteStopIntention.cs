@@ -8,15 +8,16 @@ namespace DCL.Multiplayer.Emotes
     public struct RemoteEmoteStopIntention
     {
         public readonly string WalletId;
-        public readonly float Timestamp;
-        public RemoteEmoteStopIntention(string walletId, float timestamp)
+        public readonly double Timestamp;
+        
+        public RemoteEmoteStopIntention(string walletId, double timestamp)
         {
             WalletId = walletId;
             Timestamp = timestamp;
         }
 
         public bool Equals(RemoteEmoteStopIntention other) =>
-            WalletId == other.WalletId && Mathf.Approximately(Timestamp, other.Timestamp);
+            WalletId == other.WalletId && Math.Abs(Timestamp - other.Timestamp) < 0.001;
 
         public override bool Equals(object? obj) =>
             obj is RemoteEmoteStopIntention other && Equals(other);

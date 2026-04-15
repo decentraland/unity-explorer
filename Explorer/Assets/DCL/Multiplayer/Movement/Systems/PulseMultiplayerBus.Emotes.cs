@@ -116,7 +116,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             Inbox(movementMessage, walletId);
 
-            float timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+            double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
             EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp, AvatarEmoteMask.AemFullBody));
         }
 
@@ -138,7 +138,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             emotingSubjects.Remove(emoteStopped.SubjectId);
 
-            float timestamp = emoteStopped.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
+            double timestamp = emoteStopped.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
 
             using (emoteSync.GetScope())
                 emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));

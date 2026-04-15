@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     {
         internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
-        private const float SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001f;
+        private const double SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001;
 
         private readonly PulseMultiplayerService pulseService;
         private readonly PeerIdCache peerIdCache;
