@@ -78,6 +78,7 @@ namespace DCL.Nametags
             UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
+            UpdateNametagHushedStateQuery(World);
         }
 
         [Query]
@@ -152,6 +153,24 @@ namespace DCL.Nametags
             }
 
             voiceChatComponent.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateNametagHushedState(Entity e, in NametagHolder nametagHolder, ref VoiceChatHushedComponent hushed)
+        {
+            if (!hushed.IsDirty)
+                return;
+
+            if (hushed.IsRemoving)
+            {
+                nametagHolder.Nametag.Hushed = false;
+                World.Remove<VoiceChatHushedComponent>(e);
+                return;
+            }
+
+            nametagHolder.Nametag.Hushed = true;
+            hushed.IsDirty = false;
         }
 
         [Query]

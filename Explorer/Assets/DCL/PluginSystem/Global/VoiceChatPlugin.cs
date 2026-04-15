@@ -29,6 +29,7 @@ using DCL.Utilities;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
+using Utility.Arch;
 
 namespace DCL.PluginSystem.Global
 {
@@ -101,6 +102,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            if (nearbyMuteService != null)
+                nearbyMuteService.MuteStateChanged -= OnNearbyMuteStateChanged;
+
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -191,6 +195,9 @@ namespace DCL.PluginSystem.Global
                     playerEntity);
                 pluginScope.Add(nearbyNametagsHandler);
 
+                if (nearbyMuteService != null)
+                    nearbyMuteService.MuteStateChanged += OnNearbyMuteStateChanged;
+
                 loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
 
                 if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed)
@@ -214,6 +221,14 @@ namespace DCL.PluginSystem.Global
                 NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING => VoiceChatActivityState.ACTIVE,
                 _ => VoiceChatActivityState.INACTIVE,
             };
+
+        private void OnNearbyMuteStateChanged(string walletId, bool isMuted)
+        {
+            if (!entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                return;
+
+            world.AddOrSet(entry.Entity, new VoiceChatHushedComponent(isRemoving: !isMuted));
+        }
 
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
