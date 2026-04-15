@@ -62,80 +62,78 @@ namespace DCL.Chat.ChatReactions.Core
             ChatSettingsAsset chatSettingsAsset,
             EventSubscriptionScope scope)
         {
-            // --- Message bus ---
-            IReactionMessageBus reactionBus = CreateReactionBus(
-                messagePipesHub, userBlockingCacheProxy, web3IdentityCache, environment);
-            scope.Add(reactionBus);
-
-            // --- Message reactions ---
-            var messageReactionService = new ChatMessageReactionService(
-                reactionBus, chatHistory, web3IdentityCache,
+            IReactionMessageBus reactionBus = CreateReactionBus(messagePipesHub,
+                userBlockingCacheProxy,
+                web3IdentityCache,
+                environment);
+            
+            var messageReactionService = new ChatMessageReactionService(reactionBus,
+                chatHistory,
+                web3IdentityCache,
                 reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage);
-            scope.Add(messageReactionService);
-
-            // --- Simulations ---
+            
             var uiSimulation = new ChatReactionUISimulation(reactionsConfig, uiLaneRect);
             var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig, avatarPosition);
-            scope.Add(uiSimulation);
-            scope.Add(worldSimulation);
+            
+            var worldReactor = new LocalPlayerWorldReactor(worldSimulation,
+                reactionsConfig.WorldLane,
+                avatarPosition);
 
-            // --- Split service classes ---
-            var worldReactor = new LocalPlayerWorldReactor(worldSimulation, reactionsConfig.WorldLane, avatarPosition);
+            var situationalReactionFacade = new SituationalReactionFacade(reactionsConfig,
+                uiSimulation,
+                worldReactor,
+                reactionBus);
+            
+            var streamEmitter = new StreamReactionsEmitter(situationalReactionFacade, reactionsConfig);
+            
+            var remoteTarget = new SituationalRemoteTarget(reactionsConfig,
+                worldReactor,
+                uiSimulation);
 
-            var facade = new SituationalReactionFacade(reactionsConfig, uiSimulation, worldReactor, reactionBus);
-            scope.Add(facade);
+            var simulationLoop = new SituationalSimulationLoop(uiSimulation,
+                worldSimulation,
+                situationalReactionFacade.NetworkBroadcaster,
+                remoteTarget, worldReactor, situationalReactionFacade,
+                streamEmitter);
 
-            var streamEmitter = new StreamReactionsEmitter(facade, reactionsConfig);
-            scope.Add(streamEmitter);
-
-            var remoteTarget = new SituationalRemoteTarget(
-                reactionsConfig, worldReactor, uiSimulation);
-
-            var simulationLoop = new SituationalSimulationLoop(
-                uiSimulation, worldSimulation, facade.NetworkBroadcaster, remoteTarget, worldReactor,
-                facade, streamEmitter);
-
-            // --- Settings bindings ---
-            simulationLoop.WorldReactionsEnabled =
-                chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
-
+            simulationLoop.WorldReactionsEnabled = chatSettingsAsset.chatBubblesVisibilitySettings != ChatBubbleVisibilitySettings.NONE;
             simulationLoop.UIReactionsEnabled = chatSettingsAsset.chatReactionsEnabled;
 
-            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler =
-                visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
+            ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler = visibility => simulationLoop.WorldReactionsEnabled = visibility != ChatBubbleVisibilitySettings.NONE;
             chatSettingsAsset.BubblesVisibilityChanged += bubblesHandler;
 
-            ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler =
-                enabled => simulationLoop.UIReactionsEnabled = enabled;
+            ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler = enabled => simulationLoop.UIReactionsEnabled = enabled;
             chatSettingsAsset.ChatReactionsEnabledChanged += reactionsHandler;
 
-            scope.Add(new SettingsUnsubscriber(chatSettingsAsset, bubblesHandler, reactionsHandler));
-
-            // --- Routing ---
             var reactionRouter = new ReactionRouter(reactionBus, remoteTarget, messageReactionService);
-            scope.Add(reactionRouter);
-
-            // --- Debug ---
+            
             var debugState = new ChatReactionDebugState();
-            scope.Add(debugState);
-
             var debugController = new SituationalReactionDebugController(uiSimulation, worldSimulation, avatarPosition);
-            scope.Add(debugController);
-
             worldSimulation.SetDebugNearbyUICallback((emoji, count) => uiSimulation.TriggerUIReaction(emoji, count));
 
+            scope.Add(uiSimulation);
+            scope.Add(reactionBus);
+            scope.Add(worldSimulation);
+            scope.Add(messageReactionService);
+            scope.Add(situationalReactionFacade);
+            scope.Add(streamEmitter);
+            scope.Add(new SettingsUnsubscriber(chatSettingsAsset, bubblesHandler, reactionsHandler));
+            scope.Add(reactionRouter);
+            scope.Add(debugState);
+            scope.Add(debugController);
+            
 #if UNITY_EDITOR
             var reactionEventBus = new ChatReactionEventBus();
             scope.Add(reactionEventBus);
 
-            facade.ReactionSent += (emoji, count, ts) =>
+            situationalReactionFacade.ReactionSent += (emoji, count, ts) =>
                 reactionEventBus.NotifySent(new ReactionSentEvent(emoji, count, ts, ReactionType.Situational));
 
             remoteTarget.RemoteReactionProcessed += args =>
                 reactionEventBus.NotifyReceived(new ReactionReceivedEvent(
                     args.WalletId, args.EmojiIndex, args.Count, args.Type, args.MessageId, args.IsRemoval));
 
-            facade.NetworkFlushed += (unique, total, ts) =>
+            situationalReactionFacade.NetworkFlushed += (unique, total, ts) =>
                 reactionEventBus.NotifyFlushed(new ReactionFlushedEvent(unique, total, ts));
 
             var debugGo = new GameObject("[Debug] ChatReactions");
@@ -144,7 +142,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(facade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
+            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
         }
 
         private static IReactionMessageBus CreateReactionBus(
@@ -173,8 +171,7 @@ namespace DCL.Chat.ChatReactions.Core
             private readonly ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler;
             private readonly ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler;
 
-            public SettingsUnsubscriber(
-                ChatSettingsAsset chatSettingsAsset,
+            public SettingsUnsubscriber(ChatSettingsAsset chatSettingsAsset,
                 ChatSettingsAsset.ChatBubblesVisibilityDelegate bubblesHandler,
                 ChatSettingsAsset.ChatReactionsEnabledDelegate reactionsHandler)
             {
