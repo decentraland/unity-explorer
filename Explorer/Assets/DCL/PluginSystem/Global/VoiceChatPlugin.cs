@@ -170,6 +170,9 @@ namespace DCL.PluginSystem.Global
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
 
+                if (nearbyMuteService != null)
+                    await nearbyMuteService.LoadAsync(ct);
+
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
