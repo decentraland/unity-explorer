@@ -28,5 +28,10 @@ namespace Utility.Animations
         public static readonly int ROTATING_LEFT = Animator.StringToHash("RotatingLeft");
         public static readonly int ROTATING_RIGHT = Animator.StringToHash("RotatingRight");
         public static readonly int ROTATION_SPEED = Animator.StringToHash("RotationSpeed");
+        public static readonly int PROP_ANIMATION_TRIGGER = Animator.StringToHash("PropAnimation");
+        public static readonly int MASKED_EMOTE = Animator.StringToHash("MaskedEmote");
+        public static readonly int MASKED_EMOTE_LOOP = Animator.StringToHash("MaskedEmoteLoop");
+        public static readonly int MASKED_EMOTE_REFRESH = Animator.StringToHash("MaskedEmoteRefresh");
+        public static readonly int MASKED_EMOTE_STOP = Animator.StringToHash("MaskedEmoteStop");
     }
 }

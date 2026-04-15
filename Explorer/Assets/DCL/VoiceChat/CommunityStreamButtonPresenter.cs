@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.EventBus;
+using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
@@ -17,10 +17,11 @@ namespace DCL.VoiceChat
 
         private readonly IDisposable currentChannelSubscription;
         private readonly IDisposable communityCallStateSubscription;
+        private readonly IDisposable startCallSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestrator orchestrator;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private readonly CommunitiesDataProvider communityDataProvider;
 
@@ -30,7 +31,7 @@ namespace DCL.VoiceChat
         public CommunityStreamButtonPresenter(
             CallButtonView view,
             IVoiceChatOrchestrator orchestrator,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IReadonlyReactiveProperty<ChatChannel> currentChannel,
             CommunitiesDataProvider communityDataProvider)
         {
@@ -42,14 +43,14 @@ namespace DCL.VoiceChat
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
             communityCallStateSubscription = orchestrator.CommunityCallStatus.Subscribe(OnCommunityCallStatusChanged);
-            chatEventBus.StartCall += OnCallButtonClicked;
+            startCallSubscription = chatEventBus.Subscribe<ChatEvents.StartCallEvent>(_ => OnCallButtonClicked());
         }
 
         public void Dispose()
         {
             currentChannelSubscription.Dispose();
             communityCallStateSubscription.Dispose();
-            chatEventBus.StartCall -= OnCallButtonClicked;
+            startCallSubscription.Dispose();
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
             communityCts.SafeCancelAndDispose();
         }
@@ -75,7 +76,6 @@ namespace DCL.VoiceChat
 
         private void OnCallButtonClicked()
         {
-            orchestrator.HangUp();
             orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY);
         }
 

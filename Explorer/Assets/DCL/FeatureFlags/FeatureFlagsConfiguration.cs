@@ -19,12 +19,9 @@ namespace DCL.FeatureFlags
             this.result = result;
         }
 
+        public bool IsEnabled(string id) =>
+            result.flags.GetValueOrDefault(id, false);
         public bool IsEmpty => result.IsEmpty;
-
-        public bool IsEnabled(string id)
-        {
-            return result.flags.GetValueOrDefault(id, false);
-        }
 
         public bool IsEnabled(string id, string variantId)
         {
@@ -60,9 +57,7 @@ namespace DCL.FeatureFlags
             csv = new List<List<string>>();
             using StringReader reader = new (str);
 
-            string? line;
-
-            while ((line = reader.ReadLine()) != null)
+            while (reader.ReadLine() is { } line)
                 csv.Add(new List<string>(line.Split(',', StringSplitOptions.RemoveEmptyEntries)));
 
             return true;

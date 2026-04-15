@@ -26,6 +26,7 @@ namespace DCL.Quality.Runtime
             public int MaxSceneLights;
             public ShadowQualityLevel SceneShadowQuality;
             public int ShadowDistance;
+            public bool PlayCurrentSceneStreamsOnly;
         }
 
         public static QualityPresetLevel ReadSavedPreset() =>
@@ -58,6 +59,7 @@ namespace DCL.Quality.Runtime
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
                 SceneShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowsQualityLevel))),
                 ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.ShadowDistance),
+                PlayCurrentSceneStreamsOnly = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, basePresetData.PlayCurrentSceneStreamsOnly ? 1 : 0) == 1
             };
         }
 
@@ -84,6 +86,7 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_MAX_SCENE_LIGHTS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_QUALITY);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_DISTANCE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY);
         }
 
         /// <summary>

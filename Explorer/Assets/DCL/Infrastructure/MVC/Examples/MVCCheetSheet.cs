@@ -49,7 +49,7 @@ namespace MVC
         {
             public ExampleController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
             protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 viewInstance.CloseButton.OnClickAsync(ct);

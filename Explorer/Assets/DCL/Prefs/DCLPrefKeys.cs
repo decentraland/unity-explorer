@@ -54,6 +54,7 @@ namespace DCL.Prefs
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
         public const string PS_RESOLUTION = "QS_Resolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
