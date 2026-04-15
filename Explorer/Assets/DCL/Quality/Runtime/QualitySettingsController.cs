@@ -34,6 +34,7 @@ namespace DCL.Quality.Runtime
         public int MaxSceneLights { get; private set; }
         public ShadowQualityLevel SceneShadowQuality { get; private set; }
         public int ShadowDistance { get; private set; }
+        public bool PlayCurrentSceneStreamsOnly { get; private set; }
 
         private readonly QualityPresetsAsset presetsAsset;
         private readonly UpscalingController upscalingController;
@@ -104,6 +105,7 @@ namespace DCL.Quality.Runtime
             MaxSceneLights = preset.MaxSceneLights;
             SceneShadowQuality = preset.ShadowsQualityLevel;
             ShadowDistance = preset.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = preset.PlayCurrentSceneStreamsOnly;
 
             ApplyAllSettings();
             OnPresetChanged?.Invoke(level);
@@ -277,6 +279,14 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetPlayCurrentSceneStreamsOnly(bool enabled)
+        {
+            PlayCurrentSceneStreamsOnly = enabled;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, enabled ? 1 : 0);
+            SwitchToCustom();
+            TrackQualitySettingsReport();
+        }
+
         private void SwitchToCustom()
         {
             if (CurrentPreset == QualityPresetLevel.Custom)
@@ -306,6 +316,7 @@ namespace DCL.Quality.Runtime
             MaxSceneLights = saved.MaxSceneLights;
             SceneShadowQuality = saved.SceneShadowQuality;
             ShadowDistance = saved.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = saved.PlayCurrentSceneStreamsOnly;
         }
 
         private static void DeleteCustomSettings()
@@ -343,6 +354,7 @@ namespace DCL.Quality.Runtime
                 if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
                 if (SceneShadowQuality != b.ShadowsQualityLevel) properties["shadow_quality"] = SceneShadowQuality.ToString();
                 if (ShadowDistance != b.ShadowDistance) properties["shadow_distance"] = ShadowDistance;
+                if (PlayCurrentSceneStreamsOnly != b.PlayCurrentSceneStreamsOnly) properties["play_current_scene_streams_only"] = PlayCurrentSceneStreamsOnly;
             }
 
             analytics.Track(AnalyticsEvents.Settings.QUALITY_SETTINGS_REPORT, properties);
