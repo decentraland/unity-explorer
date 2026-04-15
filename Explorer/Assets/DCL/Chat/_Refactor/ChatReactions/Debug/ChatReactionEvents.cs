@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using System;
 using DCL.Chat.ChatReactions.Networking;
 
 namespace DCL.Chat.ChatReactions.Debug
@@ -54,15 +53,5 @@ namespace DCL.Chat.ChatReactions.Debug
         }
     }
 
-    public interface IChatReactionEventBus : IDisposable
-    {
-        event Action<ReactionSentEvent> ReactionSent;
-        event Action<ReactionReceivedEvent> ReactionReceived;
-        event Action<ReactionFlushedEvent> ReactionFlushed;
-
-        void NotifySent(in ReactionSentEvent e);
-        void NotifyReceived(in ReactionReceivedEvent e);
-        void NotifyFlushed(in ReactionFlushedEvent e);
-    }
 }
 #endif

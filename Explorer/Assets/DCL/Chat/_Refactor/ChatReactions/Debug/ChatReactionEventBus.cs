@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.Chat.ChatReactions.Debug
 {
-    public sealed class ChatReactionEventBus : IChatReactionEventBus
+    public sealed class ChatReactionEventBus : IDisposable
     {
         public event Action<ReactionSentEvent>? ReactionSent;
         public event Action<ReactionReceivedEvent>? ReactionReceived;

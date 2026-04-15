@@ -16,7 +16,7 @@ namespace DCL.Chat.ChatReactions.Debug
     {
         private const int LOG_CAPACITY = 32;
 
-        private IChatReactionEventBus? eventBus;
+        private ChatReactionEventBus? eventBus;
         private bool initialized;
 
         // --- Public accessors for the custom editor ---
@@ -36,7 +36,7 @@ namespace DCL.Chat.ChatReactions.Debug
             }
         }
 
-        public void Init(ChatReactionsConfig config, IChatReactionEventBus bus)
+        public void Init(ChatReactionsConfig config, ChatReactionEventBus bus)
         {
             Config = config;
             eventBus = bus;
