@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;

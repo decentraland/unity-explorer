@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;

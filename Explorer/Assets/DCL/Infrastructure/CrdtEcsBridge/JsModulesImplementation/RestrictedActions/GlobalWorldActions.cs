@@ -9,6 +9,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -36,7 +37,10 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly bool useRemoteAssetBundles;
         private readonly bool isBuilderCollectionPreview;
 
-        public GlobalWorldActions(World world, Entity playerEntity, bool localSceneDevelopment, bool useRemoteAssetBundles, bool isBuilderCollectionPreview)
+        public GlobalWorldActions(World world, Entity playerEntity,
+            bool localSceneDevelopment,
+            bool useRemoteAssetBundles,
+            bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
@@ -53,6 +57,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
 
                 var completionSource = new UniTaskCompletionSource<bool>();
+
                 world.AddOrSet(playerEntity, new PlayerMoveToWithDurationIntent(
                     startPosition,
                     newPlayerPosition,
@@ -66,6 +71,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // Instant teleport (through TeleportCharacterSystem -> TeleportPlayerQuery)
             world.AddOrSet(playerEntity, new PlayerTeleportIntent(null, Vector2Int.zero, newPlayerPosition, CancellationToken.None, isPositionSet: true));
+
             // Fixes https://github.com/decentraland/unity-explorer/issues/6246
             // We need to add a delay before we can start transitioning in the animator, or we might encounter artifacts
             world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(Time.frameCount + 20));
@@ -77,10 +83,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 lookAtDirection.y = 0;
                 world.AddOrSet(playerEntity, new PlayerLookAtIntent(newPlayerPosition + lookAtDirection.normalized));
             }
-            else if (newCameraTarget != null)
-            {
-                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
-            }
+            else if (newCameraTarget != null) { world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value)); }
 
             // Instant teleport is always successful
             return true;
@@ -96,47 +99,63 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public void TriggerEmote(URN urn, bool isLooping)
+        public void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask)
         {
             // if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
 
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
-            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE, Mask = mask });
         }
 
-        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
+        public async UniTask<(URN Urn, bool IsLooping)?> TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask,
+            CancellationToken ct)
         {
             world.AddOrSet(playerEntity, new CharacterWaitingSceneEmoteLoading(MultithreadingUtility.FrameCount));
+
+            (URN Urn, bool IsLooping)? result = null;
 
             bool loadFromLocalScene = (localSceneDevelopment && !useRemoteAssetBundles) ||
                                       (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
 
             if (loadFromLocalScene)
             {
-                // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
-                // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
                 if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
-                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+                    result = await ResolveSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
                 else
                     ReportHub.LogError(ReportCategory.EMOTE, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
             }
             else
-            {
-                await TriggerSceneEmoteFromRealmAsync(
+                result = await ResolveSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
                     sceneData.SceneEntityDefinition.assetBundleManifestVersion,
                     hash, loop, ct);
-            }
 
             world.Remove<CharacterWaitingSceneEmoteLoading>(playerEntity);
+            return result;
         }
 
-        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
+        public void StopEmote()
+        {
+            // If the avatar is not visible, there is nothing to stop (matches TriggerEmote guard).
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible)
+                return;
+
+            // Stop full-body emote (global world only, masked emotes are handled by scene-side systems)
+            if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
+            {
+                emoteComponent.StopEmote = true;
+                world.Set(playerEntity, emoteComponent);
+            }
+
+            messageBus.SendStop();
+        }
+
+        private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
-            // if (!avatarShape.IsVisible) return;
+            // if (!avatarShape.IsVisible) return null;
 
             var promise = SceneEmotePromise.Create(world,
                 new GetSceneEmoteFromRealmIntention(sceneId, sceneAssetBundleManifestVersion, emoteHash, loop, avatarShape.BodyShape),
@@ -144,21 +163,20 @@ namespace CrdtEcsBridge.RestrictedActions
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (promise.Result is {Succeeded: true})
+            if (promise.Result is { Succeeded: true })
             {
                 using var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
                 var value = consumed.Value[0];
-                URN urn = value.GetUrn();
-                bool isLooping = value.IsLooping();
-
-                TriggerEmote(urn, isLooping);
+                return (value.GetUrn(), value.IsLooping());
             }
+
+            return null;
         }
 
-        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
-                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+                return null;
 
             var promise = LocalSceneEmotePromise.Create(world,
                 new GetSceneEmoteFromLocalSceneIntention(sceneData, emotePath, emoteHash,
@@ -167,14 +185,12 @@ namespace CrdtEcsBridge.RestrictedActions
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (promise.Result is {Succeeded: true})
-            {
-                using ConsumedList<IEmote> consumed = promise.Result!.Value.Asset.ConsumeEmotes();
-                var value = consumed.Value[0]!;
-                URN urn = value.GetUrn();
+            if (promise.Result is not { Succeeded: true }) return null;
 
-                TriggerEmote(urn, loop);
-            }
+            using ConsumedList<IEmote> consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            var value = consumed.Value[0]!;
+
+            return (value.GetUrn(), loop);
         }
     }
 }

@@ -670,6 +670,10 @@ namespace Global.Dynamic
             // TODO: branch properly depending on server mode
             IEmotesMessageBus multiplayerEmotesMessageBus = pulseContainer.pulseMultiplayerBus!;
 
+            // Configure proxies for scene-side masked emote system
+            staticContainer.EmoteStorageProxy.SetObject(emotesCache);
+            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
+
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -833,7 +837,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
-                    trimmedEmoteCatalog),
+                    trimmedEmoteCatalog,
+                staticContainer.EmotePlayerProxy),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
