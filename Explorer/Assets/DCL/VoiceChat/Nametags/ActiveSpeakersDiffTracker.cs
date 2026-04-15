@@ -20,6 +20,8 @@ namespace DCL.VoiceChat
         /// Used by <see cref="MarkAllRemoving"/> to clean up only entities we actually touched,
         /// and by <see cref="Update"/> to retry writing the component when a participant appeared
         /// in ActiveSpeakers before their entity was registered in the participant table (join race condition).
+        /// See <see cref="Tests.ActiveSpeakersDiffTrackerShould.RetrySpeakerWhenEntityAppearsAfterFirstUpdate"/>
+        /// and <see cref="Tests.ActiveSpeakersDiffTrackerShould.MarkAllRemovingClearsTouchedStateAllowingReactivation"/>.
         /// </summary>
         private readonly HashSet<string> touchedParticipants = new ();
 
@@ -44,6 +46,7 @@ namespace DCL.VoiceChat
                 // Second condition handles join race: participant appeared in ActiveSpeakers before
                 // their entity existed in the table, so the previous attempt's TryGet failed
                 // and touchedParticipants was never populated — retry on next update.
+                // See ActiveSpeakersDiffTrackerShould.RetrySpeakerWhenEntityAppearsAfterFirstUpdate
                 if (!activeSpeakers.Contains(speakerId) || !touchedParticipants.Contains(speakerId))
                     SetSpeakingState(speakerId, true);
             }
