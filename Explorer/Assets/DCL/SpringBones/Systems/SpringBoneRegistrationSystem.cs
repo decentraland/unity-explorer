@@ -71,17 +71,23 @@ namespace DCL.SpringBones
 
             registration.AvatarVersion = avatarShapeComponent.InstantiationVersion;
 
-            // Only re-register when structural fields changed (wearables, body shape).
-            // Cosmetic changes (colors, expressions) reuse the same cached GameObjects/transforms.
-            if (avatarShapeComponent.StructuralHash == registration.StructuralHash) return;
+            if (avatarShapeComponent.StructuralHash != registration.StructuralHash)
+            {
+                // Wearables changed — full unregister + re-register in spring bone service
+                registration.StructuralHash = avatarShapeComponent.StructuralHash;
 
-            registration.StructuralHash = avatarShapeComponent.StructuralHash;
+                UnregisterSlots(registration.SlotIndices);
+                registration.SyncPairs.Clear();
 
-            UnregisterSlots(registration.SlotIndices);
-            registration.SyncPairs.Clear();
-
-            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase,
-                ref transformMatrixComponent, registration.SlotIndices, registration.SyncPairs);
+                RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase,
+                    ref transformMatrixComponent, registration.SlotIndices, registration.SyncPairs);
+            }
+            else
+            {
+                // Same wearables but avatar was rebuilt (e.g. preview reopen) —
+                // service slots still valid, just re-append transforms to the fresh bone array.
+                ReAppendSpringBoneTransforms(avatarShapeComponent.InstantiatedWearables, ref transformMatrixComponent);
+            }
         }
 
         [Query]
@@ -92,6 +98,19 @@ namespace DCL.SpringBones
         [Query]
         private void CleanUpOnDispose(ref SpringBoneRegistrationComponent registration) =>
             CleanUp(ref registration);
+
+        private static void ReAppendSpringBoneTransforms(IList<CachedAttachment> wearables,
+            ref AvatarTransformMatrixComponent transformMatrixComponent)
+        {
+            using var scope = ListPool<Transform>.Get(out var springBoneTransforms);
+
+            foreach (CachedAttachment wearable in wearables)
+                foreach (SpringBoneData springBone in wearable.SpringBones)
+                    springBoneTransforms.Add(springBone.ManagedTransform);
+
+            if (springBoneTransforms.Count > 0)
+                transformMatrixComponent.bones.Append(springBoneTransforms);
+        }
 
         private void RegisterSprings(IList<CachedAttachment> wearables, AvatarBase avatarBase,
             ref AvatarTransformMatrixComponent transformMatrixComponent,

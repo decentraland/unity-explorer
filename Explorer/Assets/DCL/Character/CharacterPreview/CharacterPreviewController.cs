@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
@@ -116,6 +117,8 @@ namespace DCL.CharacterPreview
                     PartitionComponent.TOP_PRIORITY));
 
             avatarShape.IsDirty = true;
+            avatarShape.StructuralHash = AvatarStructuralHashUtils.ComputeStructuralHash(avatarShape.BodyShape,
+                avatarModel.Wearables ?? (IReadOnlyCollection<URN>)Array.Empty<URN>());
 
             return WaitForAvatarInstantiatedAsync(emotePromiseEntity, ct);
         }

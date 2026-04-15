@@ -14,7 +14,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
-using System.Collections.Generic;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -53,7 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
                 pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true },
-                ComputeStructuralHash(pbAvatarShape)));
+                AvatarStructuralHashUtils.ComputeStructuralHash(pbAvatarShape, pbAvatarShape.Wearables, pbAvatarShape.ShowOnlyWearables)));
             World.Add(entity, new AvatarHighlightComponent());
         }
 
@@ -97,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.IsDirty = true;
 
             // Only create a new WearablePromise when structural fields changed (BodyShape, Wearables, ShowOnlyWearables)
-            int newHash = ComputeStructuralHash(pbAvatarShape);
+            int newHash = AvatarStructuralHashUtils.ComputeStructuralHash(pbAvatarShape, pbAvatarShape.Wearables, pbAvatarShape.ShowOnlyWearables);
 
             if (newHash != avatarShapeComponent.StructuralHash)
             {
@@ -151,6 +150,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
             avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
+            avatarShapeComponent.StructuralHash = AvatarStructuralHashUtils.ComputeStructuralHash(profile.Avatar.BodyShape, profile.Avatar.Wearables);
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
@@ -175,15 +175,5 @@ namespace DCL.AvatarRendering.AvatarShape
         private EmotePromise CreateEmotePromise(Profile profile, PartitionComponent partition) =>
             EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.Emotes), partition);
 
-        private static int ComputeStructuralHash(PBAvatarShape pbAvatarShape)
-        {
-            int hash = HashCode.Combine(pbAvatarShape.BodyShape, pbAvatarShape.ShowOnlyWearables);
-
-            IList<string> wearables = pbAvatarShape.Wearables;
-            for (int i = 0; i < wearables.Count; i++)
-                hash = HashCode.Combine(hash, wearables[i]);
-
-            return hash;
-        }
     }
 }
