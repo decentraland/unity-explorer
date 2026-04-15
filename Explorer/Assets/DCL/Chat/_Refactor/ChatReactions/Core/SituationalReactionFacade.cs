@@ -39,12 +39,6 @@ namespace DCL.Chat.ChatReactions.Core
         /// </summary>
         public event Action<int, int, float>? NetworkFlushed;
 
-        /// <summary>
-        /// The broadcaster created and owned by this facade.
-        /// Exposed so the simulation loop can drive its <c>Tick</c>.
-        /// </summary>
-        internal ReactionNetworkBroadcaster NetworkBroadcaster => networkBroadcaster;
-
         internal SituationalReactionFacade(
             ChatReactionsConfig config,
             ChatReactionUISimulation uiSimulation,
@@ -135,6 +129,11 @@ namespace DCL.Chat.ChatReactions.Core
         internal void TickSendBudget(float dt)
         {
             sendBudget?.Refill(dt, sendBudgetRate);
+        }
+
+        internal void TickNetwork(float dt)
+        {
+            networkBroadcaster.Tick(dt);
         }
     }
 }

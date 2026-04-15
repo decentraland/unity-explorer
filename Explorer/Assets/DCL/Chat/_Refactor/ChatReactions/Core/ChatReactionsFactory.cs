@@ -92,7 +92,6 @@ namespace DCL.Chat.ChatReactions.Core
 
             var simulationLoop = new SituationalSimulationLoop(uiSimulation,
                 worldSimulation,
-                situationalReactionFacade.NetworkBroadcaster,
                 remoteTarget, worldReactor, situationalReactionFacade,
                 streamEmitter);
 

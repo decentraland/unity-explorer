@@ -1,4 +1,3 @@
-using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
@@ -13,7 +12,6 @@ namespace DCL.Chat.ChatReactions.Core
     {
         private readonly ChatReactionUISimulation uiSimulation;
         private readonly ChatReactionWorldSimulation worldSimulation;
-        private readonly ReactionNetworkBroadcaster networkBroadcaster;
         private readonly SituationalRemoteTarget remoteTarget;
         private readonly LocalPlayerWorldReactor worldReactor;
         private readonly SituationalReactionFacade facade;
@@ -40,7 +38,6 @@ namespace DCL.Chat.ChatReactions.Core
         public SituationalSimulationLoop(
             ChatReactionUISimulation uiSimulation,
             ChatReactionWorldSimulation worldSimulation,
-            ReactionNetworkBroadcaster networkBroadcaster,
             SituationalRemoteTarget remoteTarget,
             LocalPlayerWorldReactor worldReactor,
             SituationalReactionFacade facade,
@@ -48,7 +45,6 @@ namespace DCL.Chat.ChatReactions.Core
         {
             this.uiSimulation = uiSimulation;
             this.worldSimulation = worldSimulation;
-            this.networkBroadcaster = networkBroadcaster;
             this.remoteTarget = remoteTarget;
             this.worldReactor = worldReactor;
             this.facade = facade;
@@ -62,7 +58,7 @@ namespace DCL.Chat.ChatReactions.Core
         {
             facade.TickSendBudget(dt);
             streamEmitter.Tick(dt);
-            networkBroadcaster.Tick(dt);
+            facade.TickNetwork(dt);
             remoteTarget.Tick(dt);
             uiSimulation.Tick(dt);
             worldSimulation.Tick(dt);
