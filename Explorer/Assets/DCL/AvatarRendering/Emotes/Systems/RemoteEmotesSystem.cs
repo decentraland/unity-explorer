@@ -56,14 +56,14 @@ namespace DCL.AvatarRendering.Emotes
                     ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
-                    if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                    if (interpolationExists && !EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                        savedIntentions.Add(remoteEmoteIntention);
+                    else
                     {
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                         intention.Mask = remoteEmoteIntention.Mask;
                     }
-                    else
-                        savedIntentions.Add(remoteEmoteIntention);
                 }
             }
 
@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.Emotes
             return;
 
             bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
-                intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
+                intComp.Present + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
 
         private void ProcessRemoteStopIntentions(float t)
@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.Emotes
             return;
 
             bool StopIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteStopIntention stopIntention, InterpolationComponent intComp) =>
-                intComp.Time + t >= stopIntention.Timestamp || replicaMovement.PastMessage.timestamp >= stopIntention.Timestamp;
+                intComp.Present + t >= stopIntention.Timestamp || replicaMovement.PastMessage.timestamp >= stopIntention.Timestamp;
         }
     }
 }
