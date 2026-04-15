@@ -195,6 +195,13 @@ namespace DCL.SpringBones
             parentData = newParentData;
             slotCapacity = newCapacity;
 
+            // Resize managed transforms array (was missing — caused IndexOutOfRangeException)
+            var newManagedTransforms = new Transform[newTotalJoints];
+            Array.Copy(managedTransforms, newManagedTransforms, oldTotalJoints);
+            for (int i = oldTotalJoints; i < newTotalJoints; i++)
+                newManagedTransforms[i] = dummyTransform;
+            managedTransforms = newManagedTransforms;
+
             // Rebuild TAA
             var taaTransforms = new Transform[newTotalJoints];
 
