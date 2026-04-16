@@ -294,13 +294,17 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // First caller starts the warm-up; everyone else awaits the shared TCS.
             if (System.Threading.Interlocked.CompareExchange(ref warmupState, 1, 0) == 0)
             {
+                bool cancelled = false;
+
                 try
                 {
                     await PerformWarmupAsync(ct);
                 }
                 catch (OperationCanceledException)
                 {
-                    // Reset so the next caller can retry; do NOT mark warmupCompletion as done.
+                    // Reset so the next caller can retry — do NOT mark warmupCompletion
+                    // as done, and skip the finally's state advancement.
+                    cancelled = true;
                     System.Threading.Interlocked.Exchange(ref warmupState, 0);
                     throw;
                 }
@@ -313,8 +317,11 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 }
                 finally
                 {
-                    warmupState = 2;
-                    warmupCompletion.TrySetResult();
+                    if (!cancelled)
+                    {
+                        warmupState = 2;
+                        warmupCompletion.TrySetResult();
+                    }
                 }
             }
             else
@@ -417,13 +424,16 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         private static void CaptureResponseCookies(UnityWebRequest request)
         {
             // UnityWebRequest concatenates multiple Set-Cookie headers with ", " when present.
-            // Each cookie's first segment (before the first ';') is the "name=value" we want.
+            // BUT Set-Cookie dates also contain commas ("Thu, 01 Jan 2026 ...") — a naive
+            // Split(',') would break on those. We split on ", " (comma+space) and then verify
+            // each segment starts with a valid "name=value" pattern; segments that don't
+            // (like the tail of a date) are skipped.
             string? setCookie = request.GetResponseHeader("Set-Cookie");
             if (string.IsNullOrEmpty(setCookie)) return;
 
             lock (cookieLock)
             {
-                foreach (string entry in setCookie.Split(','))
+                foreach (string entry in setCookie!.Split(new[] { ", " }, StringSplitOptions.None))
                 {
                     int semi = entry.IndexOf(';');
                     ReadOnlySpan<char> head = (semi >= 0 ? entry.AsSpan(0, semi) : entry.AsSpan()).Trim();
@@ -431,7 +441,12 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     int eq = head.IndexOf('=');
                     if (eq <= 0) continue;
 
+                    // Cookie names are tokens (no spaces, no digits-only). Reject fragments
+                    // from date splits like "01 Jan 2026 00:00:00 GMT" which have no '=' or
+                    // start with a digit.
                     string name = head[..eq].ToString();
+                    if (name.Length == 0 || char.IsDigit(name[0])) continue;
+
                     string value = head[(eq + 1)..].ToString();
 
                     // Skip SOCS — we have our own hardcoded value above.
