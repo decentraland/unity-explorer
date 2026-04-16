@@ -1,35 +1,54 @@
 using Cysharp.Threading.Tasks;
+using DCL.SDKComponents.MediaStream.YouTube;
 using System.Threading;
-using YoutubeExplode;
-using YoutubeExplode.Videos;
-using YoutubeExplode.Videos.Streams;
 
 namespace DCL.SDKComponents.MediaStream
 {
     internal interface IYouTubeVideoClient
     {
-        /// <summary>Returns true if the video is a live stream (Duration == null).</summary>
+        /// <summary>Returns true if the video is a live stream.</summary>
         UniTask<bool> IsLiveStreamAsync(VideoId videoId, CancellationToken ct);
 
         UniTask<StreamManifest> GetStreamManifestAsync(VideoId videoId, CancellationToken ct);
 
-        UniTask<string> GetHttpLiveStreamUrlAsync(VideoId videoId, CancellationToken ct);
+        /// <summary>
+        ///     Returns a streaming manifest URL for the given video — HLS if YouTube provides it,
+        ///     otherwise DASH, otherwise empty. Both formats give AVPro the timing metadata
+        ///     it needs for clean A/V sync, unlike YouTube's legacy muxed MP4 (itag=18).
+        /// </summary>
+        UniTask<string> GetStreamingManifestUrlAsync(VideoId videoId, CancellationToken ct);
     }
 
-    internal class YoutubeClientAdapter : IYouTubeVideoClient
+    internal class YouTubeVideoClient : IYouTubeVideoClient
     {
-        private readonly YoutubeClient client = new ();
+        private readonly InnerTubeClient innerTube = new ();
 
         public async UniTask<bool> IsLiveStreamAsync(VideoId videoId, CancellationToken ct)
         {
-            Video video = await client.Videos.GetAsync(videoId, ct);
-            return video.Duration == null;
+            PlayerResponse response = await innerTube.FetchPlayerResponseAsync(videoId, ct);
+            return response.IsLive;
         }
 
-        public async UniTask<StreamManifest> GetStreamManifestAsync(VideoId videoId, CancellationToken ct) =>
-            await client.Videos.Streams.GetManifestAsync(videoId, ct);
+        public async UniTask<StreamManifest> GetStreamManifestAsync(VideoId videoId, CancellationToken ct)
+        {
+            PlayerResponse response = await innerTube.FetchPlayerResponseAsync(videoId, ct);
+            return new StreamManifest(response.MuxedStreams, response.VideoOnlyStreams);
+        }
 
-        public async UniTask<string> GetHttpLiveStreamUrlAsync(VideoId videoId, CancellationToken ct) =>
-            await client.Videos.Streams.GetHttpLiveStreamUrlAsync(videoId, ct);
+        public async UniTask<string> GetStreamingManifestUrlAsync(VideoId videoId, CancellationToken ct)
+        {
+            PlayerResponse response = await innerTube.FetchPlayerResponseAsync(videoId, ct);
+
+            // HLS preferred for AVPro compatibility (rock-solid HLS support).
+            // ANDROID_VR typically returns HLS only for live, DASH for VODs — so DASH
+            // is the actual codepath that fixes A/V sync on most VODs.
+            if (!string.IsNullOrEmpty(response.HlsManifestUrl))
+                return response.HlsManifestUrl!;
+
+            if (!string.IsNullOrEmpty(response.DashManifestUrl))
+                return response.DashManifestUrl!;
+
+            return string.Empty;
+        }
     }
 }

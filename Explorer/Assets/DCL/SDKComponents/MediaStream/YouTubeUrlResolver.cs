@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.SDKComponents.MediaStream.YouTube;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using YoutubeExplode.Videos;
-using YoutubeExplode.Videos.Streams;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -27,7 +26,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
         private readonly List<string> expiredKeys = new ();
 
-        public YouTubeUrlResolver() : this(new YoutubeClientAdapter(), () => UnityEngine.Time.realtimeSinceStartup) { }
+        public YouTubeUrlResolver() : this(new YouTubeVideoClient(), () => UnityEngine.Time.realtimeSinceStartup) { }
 
         internal YouTubeUrlResolver(IYouTubeVideoClient client, Func<float> getRealtimeSinceStartup)
         {
@@ -148,17 +147,25 @@ namespace DCL.SDKComponents.MediaStream
                 if (isLive)
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Detected live stream: {videoId}");
-                    return await ResolveLiveStreamAsync(videoId, token);
+                    return await ResolveHlsAsync(videoId, isLiveStream: true, token);
                 }
 
-                // Try VOD first, fall back to live stream if it fails
+                // Prefer HLS for VODs too — YouTube's muxed MP4 (itag=18) has known A/V sync
+                // problems that don't show up over HLS. Many VOD responses include an HLS
+                // manifest URL; if so, use it. Fall back to muxed/video-only selection only
+                // when HLS isn't available for this video.
+                ResolvedYouTubeUrl? hlsResult = await ResolveHlsAsync(videoId, isLiveStream: false, token);
+
+                if (hlsResult != null)
+                    return hlsResult;
+
                 ResolvedYouTubeUrl? vodResult = await TryResolveVodAsync(videoId, token);
 
                 if (vodResult != null)
                     return vodResult;
 
-                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] VOD failed for {videoId}, trying live stream path...");
-                return await ResolveLiveStreamAsync(videoId, token);
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] VOD/HLS both failed for {videoId}, last-resort live HLS retry...");
+                return await ResolveHlsAsync(videoId, isLiveStream: true, token);
             }
             catch (OperationCanceledException)
             {
@@ -176,21 +183,27 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private async UniTask<ResolvedYouTubeUrl?> ResolveLiveStreamAsync(VideoId videoId, CancellationToken token)
+        private async UniTask<ResolvedYouTubeUrl?> ResolveHlsAsync(VideoId videoId, bool isLiveStream, CancellationToken token)
         {
-            string hlsUrl = await youtubeClient.GetHttpLiveStreamUrlAsync(videoId, token);
+            string hlsUrl = await youtubeClient.GetStreamingManifestUrlAsync(videoId, token);
 
             if (string.IsNullOrEmpty(hlsUrl))
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] No HLS manifest found for live stream {videoId}");
+                // Live: warn (HLS is required for live). VOD: log at info — the muxed fallback will run.
+                if (isLiveStream)
+                    ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"[{TAG}] No HLS manifest found for live stream {videoId}");
+                else
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] No HLS manifest for VOD {videoId}, falling back to muxed MP4");
+
                 return null;
             }
 
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] Resolved live stream {videoId} to HLS manifest");
+            ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                $"[{TAG}] Resolved {(isLiveStream ? "live stream" : "VOD")} {videoId} to streaming manifest");
 
             return new ResolvedYouTubeUrl(
                 hlsUrl,
-                isLiveStream: true,
+                isLiveStream: isLiveStream,
                 getRealtimeSinceStartup() + CACHE_TTL_SECONDS
             );
         }
@@ -210,9 +223,14 @@ namespace DCL.SDKComponents.MediaStream
                     return null;
                 }
 
-                ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[{TAG}] Resolved VOD {videoId}: {selectedStream.Container} " +
-                    $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")}");
+                // Muxed MP4 (typically itag=18) is YouTube's legacy compatibility format; some
+                // videos (embed-restricted music videos especially) only expose this format and
+                // not HLS/DASH manifests. AVPro can have minor A/V sync drift on these — that's
+                // a YouTube-side limitation, not something our resolver can fix. Logged at
+                // Warning so operators notice when a video falls into this degraded path.
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
+                    $"[{TAG}] Resolved VOD {videoId} to muxed {selectedStream.Container} " +
+                    $"{(selectedStream is IVideoStreamInfo vs ? $"{vs.VideoResolution.Width}x{vs.VideoResolution.Height}" : "audio-only")} (no HLS/DASH manifest available — may have A/V sync drift)");
 
                 return new ResolvedYouTubeUrl(
                     selectedStream.Url,
