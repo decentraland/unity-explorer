@@ -107,8 +107,8 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
             emissionModule.enabled = particleSystemData.GetActive();
             emissionModule.rateOverTime = particleSystemData.GetRate();
 
-            var burstsWrapper = particleSystemData.Bursts;
-            int burstCount = burstsWrapper?.Values.Count ?? 0;
+            var bursts = particleSystemData.Bursts;
+            int burstCount = bursts?.Values.Count ?? 0;
 
             if (burstCount == 0)
             {
@@ -121,7 +121,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             for (int i = 0; i < burstCount; i++)
             {
-                var protoBurst = burstsWrapper.Values[i];
+                var protoBurst = bursts.Values[i];
                 short count = (short)protoBurst.Count;
                 component.CachedBursts[i] = new UnityEngine.ParticleSystem.Burst(
                     protoBurst.Time,
