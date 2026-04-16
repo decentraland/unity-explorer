@@ -25,10 +25,10 @@ namespace DCL.VoiceChat.Nearby
         [SerializeField] private Color speakingColor = new (0.075f, 0.82f, 0.125f, 1f);
         [SerializeField] private Color speakingColorBright = new (0.15f, 1f, 0.25f, 1f);
 
-        [Min(0.5f)]
+        [Min(0.5f)][Tooltip("Multiplier for raw RMS amplitude")]
         [SerializeField] private float colorSensitivity = 8f;
 
-        [Min(1f)]
+        [Min(1f)][Tooltip("How fast color reacts to amplitude changes")]
         [SerializeField] private float colorSmoothing = 12f;
 
         private System.Func<float>? amplitudeProvider;

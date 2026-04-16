@@ -1136,7 +1136,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.NearbyVoiceWidgetView
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.NearbyVoiceWidgetView
   <canvas>k__BackingField: {fileID: 1762814490784345320}
   <raycaster>k__BackingField: {fileID: 576444685409359194}
   <viewAnimationElement>k__BackingField: {fileID: 1674241877427284860}

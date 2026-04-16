@@ -487,7 +487,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b6e14a39d15d53468ac7051fa13cfa3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.NearbyVoiceTipView
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.ProximityVoiceTipView
   <CloseButton>k__BackingField: {fileID: 6182018206026664790}
   <TryItNowButton>k__BackingField: {fileID: 8914304758717541262}
 --- !u!1 &5019498267584366488
