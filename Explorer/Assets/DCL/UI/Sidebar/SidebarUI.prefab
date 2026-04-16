@@ -96,9 +96,9 @@ MonoBehaviour:
   <controlsButton>k__BackingField: {fileID: 2642532882811586268}
   <unreadMessagesButton>k__BackingField: {fileID: 3472291053238887700}
   <chatUnreadMessagesNumber>k__BackingField: {fileID: 3554301536170617574}
-  <NearbyVoiceChatButton>k__BackingField: {fileID: 2645182747962779940}
-  <NearbyVoiceWidget>k__BackingField: {fileID: 1109719569979314351}
-  <NearbyVoiceTip>k__BackingField: {fileID: 7364069419554192953}
+  <NearbyVoiceChatButton>k__BackingField: {fileID: 3283011950901128146}
+  <NearbyVoiceWidget>k__BackingField: {fileID: 3326973332496372382}
+  <NearbyVoiceTip>k__BackingField: {fileID: 3278540452595179668}
   <marketplaceCreditsButton>k__BackingField: {fileID: 2307622500487672837}
   <marketplaceCreditsButtonAnimator>k__BackingField: {fileID: 8553432859607388883}
   <marketplaceCreditsButtonAlertMark>k__BackingField: {fileID: 8415137157935535153}
@@ -150,6 +150,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1311,6 +1312,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3278540452595179668 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 964223354361068088, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e1c013b3023c8f439e7dcef81c0a326, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.ProximityVoiceTipView
+--- !u!114 &3283011950901128146 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 977759244775223678, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff05dbcd27013f4da6ed6fe6de0cbc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.ProximityVoiceChatButtonView
+--- !u!114 &3326973332496372382 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1023974893447301170, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.NearbyVoiceWidgetView
 --- !u!114 &3472291053238887700 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1165910529578811320, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
@@ -1504,36 +1538,3 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4025224332538706265, guid: a6d5885fdf7854743861ea324687f23f, type: 3}
   m_PrefabInstance: {fileID: 7111363830280531555}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2645182747962779940 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 336565534913770376, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
-  m_PrefabInstance: {fileID: 2314334691772897964}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6501b832b0a499399aba20d9ba37161, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.NearbyVoiceChatButtonView
---- !u!114 &1109719569979314351 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3420676546985593347, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
-  m_PrefabInstance: {fileID: 2314334691772897964}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56f80c3ec72949e439b3dfa446c120ca, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.NearbyVoiceWidgetView
---- !u!114 &7364069419554192953 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5056492610859082901, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
-  m_PrefabInstance: {fileID: 2314334691772897964}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b6e14a39d15d53468ac7051fa13cfa3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.NearbyVoiceTipView
