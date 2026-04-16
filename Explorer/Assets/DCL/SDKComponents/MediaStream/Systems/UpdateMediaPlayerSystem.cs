@@ -34,7 +34,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Material flipMaterial;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         private static float lastOpenMediaTime;
         private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
 
