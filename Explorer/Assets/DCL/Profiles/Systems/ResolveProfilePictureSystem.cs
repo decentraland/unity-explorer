@@ -7,6 +7,7 @@ using DCL.Profiles.Helpers;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.Profiles
@@ -25,14 +26,29 @@ namespace DCL.Profiles
         [Query]
         private void CompleteProfilePictureDownload(in Entity entity, ref ProfileTier profile, ref Promise promise)
         {
-            if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
+            if (promise.IsCancellationRequested(World))
+            {
+                World.Destroy(entity);
+                return;
+            }
+
+            if (!promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
+                return;
+
+            try
             {
                 // Guard: the Profile object may have been returned to the pool and reused for a different user
                 if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
                     profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
                 else
                     result.Asset?.Dispose();
-
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+            }
+            finally
+            {
                 World.Destroy(entity);
             }
         }
