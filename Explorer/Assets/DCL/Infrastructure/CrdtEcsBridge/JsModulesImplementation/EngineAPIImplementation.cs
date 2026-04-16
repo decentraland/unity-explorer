@@ -102,9 +102,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // Reconcile CRDT state
             for (var i = 0; i < messages.Count; i++)
             {
+                CRDTMessage message = messages[i];
+
+                // Skip Creator Hub components leaked from main.composite (inspector::*,
+                // specific asset-packs:: tooling metadata, composite::root) and phantom
+                // Creator Hub tags (custom components with empty data, e.g. cube-id).
+                if (message.Type is CRDTMessageType.PUT_COMPONENT
+                        or CRDTMessageType.DELETE_COMPONENT
+                        or CRDTMessageType.APPEND_COMPONENT
+                    && CreatorHubComponentFilter.ShouldFilter(in message))
+                {
+                    message.Data.Dispose();
+                    continue;
+                }
+
                 crdtProcessMessagesSampler.Begin();
 
-                CRDTMessage message = messages[i];
                 CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
