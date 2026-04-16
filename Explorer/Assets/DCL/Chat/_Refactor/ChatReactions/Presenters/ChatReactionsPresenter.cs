@@ -37,10 +37,13 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly IEventBus eventBus;
         private ReactionMode currentMode = ReactionMode.Situational;
 
-        // Message mode callbacks — valid only when currentMode == Message
-        private Action<int>? messageReactionHandler;
-        private Action? messageDismissHandler;
         private Transform? messageAnchor;
+
+        /// <summary>Fired in message mode when the user picks an emoji (atlas index).</summary>
+        public event Action<int>? MessageReactionRequested;
+
+        /// <summary>Fired when the message-mode bar closes (click outside, dismiss, etc.).</summary>
+        public event Action? MessageBarDismissed;
 
         internal ChatReactionsPresenter(
             ChatReactionButtonView buttonView,
@@ -123,13 +126,11 @@ namespace DCL.Chat.ChatReactions.Presenters
         /// <summary>
         /// Opens the message selector bar near a message's reaction button anchor.
         /// </summary>
-        public void ShowForMessage(RectTransform anchor, bool isOwnMessage, Action<int> onReaction, Action onDismiss)
+        public void ShowForMessage(RectTransform anchor, bool isOwnMessage)
         {
             HideBar();
 
             currentMode = ReactionMode.Message;
-            messageReactionHandler = onReaction;
-            messageDismissHandler = onDismiss;
             messageAnchor = anchor;
 
             clickDetectionHandler.AddIgnoredTransform(anchor);
@@ -208,13 +209,10 @@ namespace DCL.Chat.ChatReactions.Presenters
             if (messageAnchor != null)
                 clickDetectionHandler.RemoveIgnoredTransform(messageAnchor);
 
-            Action? dismiss = messageDismissHandler;
-            messageReactionHandler = null;
-            messageDismissHandler = null;
             messageAnchor = null;
             currentMode = ReactionMode.Situational;
 
-            dismiss?.Invoke();
+            MessageBarDismissed?.Invoke();
         }
 
         private void OnAddClicked()
@@ -246,7 +244,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private void DispatchReaction(int atlasIndex)
         {
             if (IsInMessageMode)
-                messageReactionHandler?.Invoke(atlasIndex);
+                MessageReactionRequested?.Invoke(atlasIndex);
             else
                 reactionService.TriggerUIReactionFromRect(buttonRect, atlasIndex, count: 1);
         }

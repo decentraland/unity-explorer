@@ -39,6 +39,9 @@ namespace DCL.Chat.ChatMessages
             this.limitToastView = limitToastView;
             this.limitToastMessage = limitToastMessage;
 
+            reactionsPresenter.MessageReactionRequested += OnMessageReactionSelected;
+            reactionsPresenter.MessageBarDismissed += ClearPendingState;
+
             if (limitToastView != null)
                 messageReactionService.ReactionLimitReached += OnReactionLimitReached;
         }
@@ -58,9 +61,7 @@ namespace DCL.Chat.ChatMessages
 
             reactionsPresenter.ShowForMessage(
                 anchor,
-                chatEntryView.IsSentByOwnUser,
-                OnMessageReactionSelected,
-                ClearPendingState);
+                chatEntryView.IsSentByOwnUser);
         }
 
         private void OnMessageReactionSelected(int atlasIndex)
@@ -115,6 +116,9 @@ namespace DCL.Chat.ChatMessages
 
         public void Dispose()
         {
+            reactionsPresenter.MessageReactionRequested -= OnMessageReactionSelected;
+            reactionsPresenter.MessageBarDismissed -= ClearPendingState;
+
             tooltipPresenter?.Dispose();
             limitToastView?.Hide();
 
