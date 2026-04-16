@@ -245,14 +245,23 @@ namespace DCL.SDKComponents.MediaStream
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
-            if (room.ActiveSpeakers.Count == 0) return;
-
             string? dominantSpeaker = null;
 
-            foreach (string speakerIdentity in room.ActiveSpeakers)
+            try
             {
-                dominantSpeaker = speakerIdentity;
-                break;
+                if (room.ActiveSpeakers.Count == 0) return;
+
+                foreach (string speakerIdentity in room.ActiveSpeakers)
+                {
+                    dominantSpeaker = speakerIdentity;
+                    break;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // ActiveSpeakers was modified on the LiveKit FFI thread during iteration.
+                // Will retry on the next frame.
+                return;
             }
 
             if (dominantSpeaker == null) return;
