@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Diagnostics;
 using UnityEditor;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
 using static Utility.Tests.TestsCategories;
@@ -90,7 +91,35 @@ namespace DCL.Tests
             if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
                 return;
 
-            ShouldNotUseThreadingApiDirectly(filePath);
+            var patternList = new List<string>();
+            foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)
+            {
+                var pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
+                patternList.Add(pattern);
+            }
+
+            ShouldNotUseThreadingApiDirectly(filePath, patternList);
+        }
+
+        //[Test]
+        public void VerifyShouldNotUseThreadingApiDirectly_ByRg()
+        {
+            // TODO include
+            //if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
+             //   return;
+
+            StringBuilder pattern = new StringBuilder();
+            IEnumerable<string> regexFriendly = THREADING_FORBIDDEN_CLASSES.Select(Regex.Escape);
+
+            // output like: \b(ONE|TWO|THREE)\b
+            pattern.Append(@"\b");
+            pattern.Append(@"(");
+            pattern.Append(string.Join("|", regexFriendly));
+            pattern.Append(@")");
+            pattern.Append(@"\b");
+
+            ProcessStartInfo psi = NewRgProcessInfo(pattern.ToString());
+            TestWithRGProcess(psi, "Please exclude THREADING_FORBIDDEN_CLASSES");
         }
 
         [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
@@ -179,7 +208,7 @@ namespace DCL.Tests
             return psi;
         }
 
-        private static void ExecuteRGProcess(ProcessStartInfo psi, string recommendationOnFailure)
+        private static void ExecuteRG(ProcessStartInfo psi, out string? matches)
         {
             using var process = Process.Start(psi);
             if (process == null)
@@ -201,7 +230,20 @@ namespace DCL.Tests
 
             if (process.ExitCode == 0)
             {
-                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendationOnFailure}\n\nArgs: {psi.Arguments}");
+                matches = stdout;
+            }
+            else
+            {
+                matches = null;
+            }
+        }
+
+        private static void TestWithRGProcess(ProcessStartInfo psi, string recommendationOnFailure)
+        {
+            ExecuteRG(psi, out string? matches);
+            if (matches != null)
+            {
+                Assert.Fail($"Detected forbidden API usage:\n\n{matches}\nRecommentation: {recommendationOnFailure}\n\nArgs: {psi.Arguments}");
             }
         }
 
@@ -221,7 +263,7 @@ namespace DCL.Tests
                 }
             }
 
-            ExecuteRGProcess(psi, recommendation);
+            TestWithRGProcess(psi, recommendation);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -342,13 +384,16 @@ namespace DCL.Tests
                     $"File {Path.GetFileName(filePath)}: Detected forbidden API usage:\n{string.Join("\n", violations)}\nUse DCLTask instead");
         }
 
+        // TODO test is slow, migrate to rg
         // To support WebGL compatability
-        private static void ShouldNotUseThreadingApiDirectly(string filePath)
+        private static void ShouldNotUseThreadingApiDirectly(string filePath, IReadOnlyList<string> patternList)
         {
+
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             using var reader = new StreamReader(fs);
 
             var violations = new List<string>();
+
 
             int i = 0;
             string? current;
@@ -367,13 +412,11 @@ namespace DCL.Tests
                 if (line.StartsWith("namespace"))
                     continue;
 
-                foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)
+                foreach (string pattern in patternList)
                 {
-                    var pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
-
                     if (Regex.IsMatch(line, pattern))
                     {
-                        violations.Add($"{filePath}:{i}: uses '{forbiddenClass}'");
+                        violations.Add($"{filePath}:{i}: uses '{pattern}'");
                     }
                 }
             }
