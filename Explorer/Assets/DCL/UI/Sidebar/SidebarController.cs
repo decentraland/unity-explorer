@@ -24,7 +24,6 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using DCL.Utilities.Extensions;
-using DCL.VoiceChat.Nearby;
 using DCL.Utility.Types;
 using ECS;
 using MVC;

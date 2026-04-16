@@ -17,7 +17,7 @@ namespace DCL.VoiceChat.UI
 
         private readonly NearbyVoiceWidgetView view;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly AudioMixerGroup? proximityMixerGroup;
+        private readonly AudioMixerGroup? nearbyMixerGroup;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
 
         private bool pushToTalkSubscribed;
@@ -25,12 +25,12 @@ namespace DCL.VoiceChat.UI
         public NearbyVoiceWidgetController(
             NearbyVoiceWidgetView view,
             NearbyVoiceChatStateModel stateModel,
-            AudioMixerGroup? proximityMixerGroup,
+            AudioMixerGroup? nearbyMixerGroup,
             MicAmplitudeProvider? micAmplitudeProvider = null)
         {
             this.view = view;
             this.stateModel = stateModel;
-            this.proximityMixerGroup = proximityMixerGroup;
+            this.nearbyMixerGroup = nearbyMixerGroup;
 
             if (micAmplitudeProvider != null)
                 view.InitializeAmplitude(() => micAmplitudeProvider.Amplitude);
@@ -141,8 +141,8 @@ namespace DCL.VoiceChat.UI
 
         private void SyncSliderWithMixer()
         {
-            if (proximityMixerGroup != null &&
-                proximityMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
+            if (nearbyMixerGroup != null &&
+                nearbyMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
             {
                 float linear = db > MIN_VOLUME_DB
                     ? Mathf.Pow(10f, db / 20f)
@@ -154,13 +154,13 @@ namespace DCL.VoiceChat.UI
 
         private void ApplySliderVolume(float sliderValue)
         {
-            if (proximityMixerGroup == null) return;
+            if (nearbyMixerGroup == null) return;
 
             float db = sliderValue > 0.0001f
                 ? Mathf.Log10(sliderValue) * 20f
                 : MIN_VOLUME_DB;
 
-            proximityMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
+            nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
         }
     }
 }
