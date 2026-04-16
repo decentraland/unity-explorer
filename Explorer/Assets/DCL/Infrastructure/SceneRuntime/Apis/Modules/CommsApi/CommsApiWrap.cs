@@ -79,7 +79,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                     writer.WriteStartArray();
 
                     var participants = roomHub.StreamingRoom().Participants;
-                    (string identity, TrackPublication publication)? asCurrent = null;
+                    bool currentWritten = false;
 
                     // See: https://github.com/decentraland/unity-explorer/issues/3796
                     lock (participants)
@@ -98,9 +98,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                                     GetActiveVideoStreamsResponse.WriteTo(writer,
                                         remoteParticipantIdentity, participant, track);
 
-                                    if (asCurrent == null)
+                                    if (!currentWritten)
                                     {
-                                        asCurrent = (remoteParticipantIdentity, track);
+                                        currentWritten = true;
 
                                         GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer,
                                             remoteParticipantIdentity, participant, track);
@@ -148,6 +148,10 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                 // Wire format: [MsgType.CommsData 1 byte][topicLen 2 bytes LE][topic UTF-8][data UTF-8].
                 int payloadLength = 2 + topicBytes.Length + dataBytes.Length;
+
+                if (1 + payloadLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                    return;
+
                 Span<byte> encoded = stackalloc byte[1 + payloadLength];
                 encoded[0] = (byte)ISceneCommunicationPipe.MsgType.CommsData;
                 BinaryPrimitives.WriteUInt16LittleEndian(encoded[1..], (ushort)topicBytes.Length);

@@ -5,6 +5,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommsApi;
 using System;
 using System.Collections.Generic;
@@ -222,6 +223,20 @@ namespace SceneRuntime.Tests
 
             //Assert — topic-a exhausted, topic-b should still work.
             Assert.AreEqual(11, pipe.sendMessageCalls.Count);
+        }
+
+        [Test]
+        public void RejectOversizedData()
+        {
+            //Arrange — data larger than LIVEKIT_MAX_SIZE (13 312 bytes).
+            string topic = "big-topic";
+            string data = new string('A', IJsOperations.LIVEKIT_MAX_SIZE);
+
+            //Act
+            commsApi.PublishData(topic, data);
+
+            //Assert
+            Assert.AreEqual(0, pipe.sendMessageCalls.Count, "Oversized payload should be silently dropped.");
         }
 
         private void SimulateIncomingMessage(string topic, string data, string senderIdentity)
