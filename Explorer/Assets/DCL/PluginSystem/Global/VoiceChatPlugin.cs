@@ -46,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
+        private readonly NearbyVoiceChatButtonView? nearbyVoiceChatButtonView;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
+        private NearbyVoiceChatButtonController? nearbyButtonController;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -73,7 +75,8 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer)
+            IDebugContainerBuilder debugContainer,
+            NearbyVoiceChatButtonView? nearbyVoiceChatButtonView = null)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -86,6 +89,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
+            this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -170,6 +174,13 @@ namespace DCL.PluginSystem.Global
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
                     nearbyStateModel, voiceChatHandler);
                 pluginScope.Add(nearbyVoiceChatManager);
+
+                if (nearbyVoiceChatButtonView != null)
+                {
+                    nearbyButtonController = new NearbyVoiceChatButtonController(
+                        nearbyVoiceChatButtonView, nearbyStateModel);
+                    pluginScope.Add(nearbyButtonController);
+                }
             }
         }
 

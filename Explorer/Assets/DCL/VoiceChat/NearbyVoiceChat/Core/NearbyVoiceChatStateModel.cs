@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby
 {
@@ -14,11 +15,18 @@ namespace DCL.VoiceChat.Nearby
 
     public class NearbyVoiceChatStateModel : IDisposable
     {
+        public const string SUPPRESSION_CALL = "call";
+        public const string SUPPRESSION_SCENE = "scene";
+
         private readonly ReactiveProperty<NearbyVoiceChatState> state;
+        private readonly ReactiveProperty<string?> activeSuppression = new (null);
+        private readonly HashSet<string> suppressionReasons = new ();
 
         private NearbyVoiceChatState preBlockedState;
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
+
+        public IReadonlyReactiveProperty<string?> ActiveSuppression => activeSuppression;
 
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
@@ -29,6 +37,7 @@ namespace DCL.VoiceChat.Nearby
         public void Dispose()
         {
             state.ClearSubscriptionsList();
+            activeSuppression.ClearSubscriptionsList();
         }
 
         public void Enable()
@@ -56,8 +65,15 @@ namespace DCL.VoiceChat.Nearby
         }
 
         // Suppression
-        public void Suppress()
+        public void Suppress() => Suppress(SUPPRESSION_CALL);
+
+        public void Suppress(string reason)
         {
+            if (!suppressionReasons.Add(reason))
+                return;
+
+            activeSuppression.Value = reason;
+
             if (state.Value == NearbyVoiceChatState.SUPPRESSED)
                 return;
 
@@ -65,10 +81,30 @@ namespace DCL.VoiceChat.Nearby
             SetState(NearbyVoiceChatState.SUPPRESSED);
         }
 
-        public void Resume()
+        public void Resume() => Resume(SUPPRESSION_CALL);
+
+        public void Resume(string reason)
         {
-            if (state.Value == NearbyVoiceChatState.SUPPRESSED)
-                SetState(preBlockedState);
+            if (!suppressionReasons.Remove(reason))
+                return;
+
+            if (suppressionReasons.Count > 0)
+            {
+                foreach (string remaining in suppressionReasons)
+                {
+                    activeSuppression.Value = remaining;
+                    break;
+                }
+
+                return;
+            }
+
+            activeSuppression.Value = null;
+
+            if (state.Value != NearbyVoiceChatState.SUPPRESSED)
+                return;
+
+            SetState(preBlockedState);
         }
 
         private void SetState(NearbyVoiceChatState newState)
