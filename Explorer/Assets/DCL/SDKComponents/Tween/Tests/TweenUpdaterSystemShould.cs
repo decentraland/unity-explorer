@@ -280,8 +280,9 @@ namespace DCL.SDKComponents.Tween.Tests
             Entity posEntity = CreateContinuousTween<RotateContinuous>(0, rotateDirection: posYDir, speed: 90f);
             Entity negEntity = CreateContinuousTween<RotateContinuous>(0, rotateDirection: negYDir, speed: 90f);
 
-            // Both entities advance simultaneously since the system updates all world entities
-            await RunSystemForSeconds(1000, posEntity);
+            // Both entities must have IsDirty reset each frame, otherwise the tween is
+            // re-created every tick and never advances past the identity quaternion.
+            await RunSystemForSeconds(1000, posEntity, negEntity);
 
             var posY = ((QuaternionTweener)world.Get<SDKTweenComponent>(posEntity).CustomTweener).CurrentValue.y;
             var negY = ((QuaternionTweener)world.Get<SDKTweenComponent>(negEntity).CustomTweener).CurrentValue.y;
@@ -615,7 +616,7 @@ namespace DCL.SDKComponents.Tween.Tests
                 W = unityQuaternion.w,
             };
 
-        private async Task RunSystemForSeconds(int durationInMs, Entity testEntity)
+        private async Task RunSystemForSeconds(int durationInMs, params Entity[] testEntities)
         {
             int updateInterval = 1;
             float currentInterval = 0;
@@ -624,8 +625,11 @@ namespace DCL.SDKComponents.Tween.Tests
                 await Task.Delay(updateInterval);
                 currentInterval += updateInterval;
                 system!.Update(updateInterval);
-                var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);
-                pbTween.IsDirty = false; // simulate dirty reset system
+                foreach (Entity testEntity in testEntities)
+                {
+                    var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);
+                    pbTween.IsDirty = false; // simulate dirty reset system
+                }
             }
         }
     }
