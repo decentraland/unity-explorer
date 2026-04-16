@@ -25,6 +25,7 @@ namespace DCL.Minimap
             { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• Passports can not be opened" },
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
             { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Skybox time controls are blocked"},
+            { SceneRestrictions.NEARBY_VOICE_BLOCKED, "• Nearby voice"},
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
@@ -34,7 +35,6 @@ namespace DCL.Minimap
 
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
 
             foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
             {
@@ -42,10 +42,13 @@ namespace DCL.Minimap
 
                 GameObject restrictionsObject = Object.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
                 restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
-                restrictionsObject.SetActive(false);
                 restrictionsObject.name = restriction.ToString();
                 restrictionsGameObjects[restriction] = restrictionsObject;
+
+                restrictionsObject.SetActive(false);
             }
+
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()

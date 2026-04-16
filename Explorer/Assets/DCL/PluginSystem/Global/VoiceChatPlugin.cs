@@ -9,7 +9,9 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Profiles.Helpers;
+using ECS.SceneLifeCycle;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
@@ -52,6 +54,8 @@ namespace DCL.PluginSystem.Global
         private readonly NearbyVoiceWidgetView? nearbyVoiceWidgetView;
         private readonly NearbyVoiceTipView? nearbyVoiceTipView;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -85,6 +89,8 @@ namespace DCL.PluginSystem.Global
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
             ILoadingStatus loadingStatus,
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             NearbyVoiceChatButtonView? nearbyVoiceChatButtonView = null,
             NearbyVoiceWidgetView? nearbyVoiceWidgetView = null,
             NearbyVoiceTipView? nearbyVoiceTipView = null)
@@ -101,6 +107,8 @@ namespace DCL.PluginSystem.Global
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
             this.loadingStatus = loadingStatus;
+            this.scenesCache = scenesCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
             this.nearbyVoiceTipView = nearbyVoiceTipView;
@@ -182,6 +190,10 @@ namespace DCL.PluginSystem.Global
                 pluginScope.Add(nearbyStateModel);
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
+
+                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(
+                    scenesCache, sceneRestrictionBusController, nearbyStateModel);
+                pluginScope.Add(sceneRestrictionWatcher);
 
                 micAmplitudeProvider = new MicAmplitudeProvider();
                 pluginScope.Add(micAmplitudeProvider);

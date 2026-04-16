@@ -1124,6 +1124,8 @@ namespace Global.Dynamic
                         chatSharedAreaEventBus,
                         debugBuilder,
                         staticContainer.LoadingStatus,
+                        staticContainer.ScenesCache,
+                        staticContainer.SceneRestrictionBusController,
                         mainUIView.SidebarView.NearbyVoiceChatButton,
                         mainUIView.SidebarView.NearbyVoiceWidget,
                         mainUIView.SidebarView.NearbyVoiceTip)
