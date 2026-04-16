@@ -133,11 +133,31 @@ jobs:
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
             echo "❌ PR must have at least 1: $MISSING_MSG."
             echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
+            echo "MISSING_MSG=Waiting on: $MISSING_MSG" >> $GITHUB_ENV
             exit 1
           fi
 
           echo "✅ PR has the required approvals."
           echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
+          echo "MISSING_MSG=" >> $GITHUB_ENV
+
+      - name: Set approval status on commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          if [ "$APPROVAL_CHECK" == "passed" ]; then
+            STATE="success"
+            DESC="QA and DEV approvals satisfied"
+          else
+            STATE="failure"
+            DESC="${MISSING_MSG:-Waiting on: QA approval, DEV approval}"
+          fi
+
+          gh api "repos/$REPO_OWNER/$REPO_NAME/statuses/$HEAD_SHA" \
+            -f state="$STATE" \
+            -f context="QA and DEV Approvals" \
+            -f description="$DESC"
 
       - name: Search Failed "Enforce QA and DEV Approvals" Run
         env:

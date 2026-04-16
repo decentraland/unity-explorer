@@ -27,6 +27,7 @@ namespace DCL.Quality.Runtime
 
         // Sun
         bool SunShadows { get; }
+        bool SunLensFlare { get; }
 
         // Scene lighting
         bool SceneLights { get; }
@@ -36,6 +37,9 @@ namespace DCL.Quality.Runtime
         // General Shadows
         ShadowQualityLevel SceneShadowQuality { get; }
         int ShadowDistance { get; }
+
+        // Other
+        bool PlayCurrentSceneStreamsOnly { get; }
 
         /// <summary>
         ///     Applies a full preset, resetting all individual overrides
@@ -64,6 +68,7 @@ namespace DCL.Quality.Runtime
 
         // Sun
         void SetSunShadows(bool enabled);
+        void SetSunLensFlare(bool enabled);
 
         // Scene lighting
         void SetSceneLights(bool enabled);
@@ -73,5 +78,8 @@ namespace DCL.Quality.Runtime
         // General Shadows
         void SetShadowQuality(ShadowQualityLevel level);
         void SetShadowDistance(int distance);
+
+        // Other
+        void SetPlayCurrentSceneStreamsOnly(bool enabled);
     }
 }

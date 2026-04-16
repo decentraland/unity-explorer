@@ -15,6 +15,7 @@ using DCL.SceneBannedUsers;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
@@ -99,10 +100,10 @@ namespace DCL.Chat.MessageBus
             nearbyChannelBuffer?.Dispose();
         }
 
-        private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             //We clear the buffer if we disconnect from the island, so we won't keep receiving messages from that nearby area.
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.UnknownReason)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.UnknownReason)
                 nearbyChannelBuffer!.Reset();
         }
 
@@ -245,11 +246,11 @@ namespace DCL.Chat.MessageBus
             chat.Payload.ClearForwardedFrom(); // It has to be reset in every use. To be filled by the server.
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
-
+            
             string msgId = ChatUtils.GetId(identityCache.Identity?.Address ?? "", timestamp);
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] SENT message: timestamp={timestamp} messageId={msgId}");
 
-            chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            chat.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
     }
 }

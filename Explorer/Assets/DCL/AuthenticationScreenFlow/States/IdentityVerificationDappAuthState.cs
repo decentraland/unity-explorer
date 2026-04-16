@@ -55,7 +55,14 @@ namespace DCL.AuthenticationScreenFlow
         public override void Exit()
         {
             if (loginException == null)
+            {
                 view.Hide(OUT);
+
+                // Hide login selection view if still visible (social logins skip the verification step,
+                // so ShowVerification is never called and the login selection view remains active)
+                if (viewInstance.LoginSelectionAuthView.gameObject.activeSelf)
+                    viewInstance.LoginSelectionAuthView.Hide();
+            }
             else
             {
                 if (currentState.Value == AuthStatus.VerificationRequested)
@@ -111,12 +118,12 @@ namespace DCL.AuthenticationScreenFlow
             catch (Web3Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
             }
             catch (Exception e)
             {
                 loginException = e;
-                machine.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
             }
             finally
             {

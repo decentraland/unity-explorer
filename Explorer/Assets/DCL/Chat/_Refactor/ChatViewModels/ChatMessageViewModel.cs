@@ -5,7 +5,6 @@ using DCL.UI.ProfileElements;
 using DCL.Utilities;
 using System;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -15,7 +14,7 @@ namespace DCL.Chat.ChatViewModels
     {
         internal static readonly ObjectPool<ChatMessageViewModel> POOL = new (
             () => new ChatMessageViewModel(),
-            actionOnGet: viewModel => { viewModel.cancellationTokenSource = new CancellationTokenSource(); },
+            actionOnGet: viewModel => { viewModel.cancellationTokenSource = viewModel.cancellationTokenSource.SafeRestart(); },
             actionOnRelease: viewModel =>
             {
                 viewModel.Message = default(ChatMessage);
@@ -35,7 +34,7 @@ namespace DCL.Chat.ChatViewModels
 
         internal static readonly Action<ChatMessageViewModel> RELEASE = viewModel => POOL.Release(viewModel);
 
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource cancellationTokenSource = new ();
 
         public ChatMessage Message { get; internal set; }
         public bool ShowDateDivider { get; internal set; }

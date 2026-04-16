@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLmBwoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLhBgoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -44,68 +44,63 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "cmVzc2VkGAwgASgLMjIuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0",
             "Lk1vdmVtZW50Q29tcHJlc3NlZEgAEkoKEGxvb2tfYXRfcG9zaXRpb24YDSAB",
             "KAsyLi5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuTG9va0F0UG9z",
-            "aXRpb25IABI8CghyZWFjdGlvbhgOIAEoCzIoLmRlY2VudHJhbGFuZC5rZXJu",
-            "ZWwuY29tbXMucmZjNC5SZWFjdGlvbkgAEkUKDWNoYXRfcmVhY3Rpb24YDyAB",
-            "KAsyLC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuQ2hhdFJlYWN0",
-            "aW9uSAASGAoQcHJvdG9jb2xfdmVyc2lvbhgLIAEoDUIJCgdtZXNzYWdlIqUB",
-            "CghQb3NpdGlvbhINCgVpbmRleBgBIAEoDRISCgpwb3NpdGlvbl94GAMgASgC",
-            "EhIKCnBvc2l0aW9uX3kYBCABKAISEgoKcG9zaXRpb25fehgFIAEoAhISCgpy",
-            "b3RhdGlvbl94GAYgASgCEhIKCnJvdGF0aW9uX3kYByABKAISEgoKcm90YXRp",
-            "b25fehgIIAEoAhISCgpyb3RhdGlvbl93GAkgASgCIusFCghNb3ZlbWVudBIR",
-            "Cgl0aW1lc3RhbXAYASABKAISEgoKcG9zaXRpb25feBgCIAEoAhISCgpwb3Np",
-            "dGlvbl95GAMgASgCEhIKCnBvc2l0aW9uX3oYBCABKAISEgoKdmVsb2NpdHlf",
-            "eBgFIAEoAhISCgp2ZWxvY2l0eV95GAYgASgCEhIKCnZlbG9jaXR5X3oYByAB",
-            "KAISHAoUbW92ZW1lbnRfYmxlbmRfdmFsdWUYCCABKAISGQoRc2xpZGVfYmxl",
-            "bmRfdmFsdWUYCSABKAISEwoLaXNfZ3JvdW5kZWQYCiABKAgSEgoKaXNfanVt",
-            "cGluZxgLIAEoCBISCgpqdW1wX2NvdW50GBggASgFEhQKDGlzX2xvbmdfanVt",
-            "cBgMIAEoCBIUCgxpc19sb25nX2ZhbGwYDSABKAgSEgoKaXNfZmFsbGluZxgO",
-            "IAEoCBISCgppc19zdHVubmVkGA8gASgIEkgKC2dsaWRlX3N0YXRlGBcgASgO",
-            "MjMuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0Lk1vdmVtZW50Lkds",
-            "aWRlU3RhdGUSEgoKcm90YXRpb25feRgQIAEoAhISCgppc19pbnN0YW50GBEg",
-            "ASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgSGwoTaGVhZF9pa195YXdfZW5hYmxl",
-            "ZBgTIAEoCBIdChVoZWFkX2lrX3BpdGNoX2VuYWJsZWQYFCABKAgSEAoIaGVh",
-            "ZF95YXcYFSABKAISEgoKaGVhZF9waXRjaBgWIAEoAhISCgpwb2ludF9hdF94",
-            "GBkgASgCEhIKCnBvaW50X2F0X3kYGiABKAISEgoKcG9pbnRfYXRfehgbIAEo",
-            "AhIWCg5pc19wb2ludGluZ19hdBgcIAEoCCJOCgpHbGlkZVN0YXRlEg8KC1BS",
-            "T1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAK",
-            "DENMT1NJTkdfUFJPUBADInEKEk1vdmVtZW50Q29tcHJlc3NlZBIVCg10ZW1w",
-            "b3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMSFgoOaGVh",
-            "ZF9zeW5jX2RhdGEYAyABKAUSFQoNcG9pbnRfYXRfZGF0YRgEIAEoBSKfAwoL",
-            "UGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxfaWQYASABKA0SCwoDdXJuGAIg",
-            "ASgJEhEKCXRpbWVzdGFtcBgDIAEoAhIYCgtpc19zdG9wcGluZxgEIAEoCEgA",
-            "iAEBEhkKDGlzX3JlcGVhdGluZxgFIAEoCEgBiAEBEhsKDmludGVyYWN0aW9u",
-            "X2lkGAYgASgFSAKIAQESIQoUc29jaWFsX2Vtb3RlX291dGNvbWUYByABKAVI",
-            "A4gBARIYCgtpc19yZWFjdGluZxgIIAEoCEgEiAEBEiMKFnNvY2lhbF9lbW90",
-            "ZV9pbml0aWF0b3IYCSABKAlIBYgBARIaCg10YXJnZXRfYXZhdGFyGAogASgJ",
-            "SAaIAQFCDgoMX2lzX3N0b3BwaW5nQg8KDV9pc19yZXBlYXRpbmdCEQoPX2lu",
-            "dGVyYWN0aW9uX2lkQhcKFV9zb2NpYWxfZW1vdGVfb3V0Y29tZUIOCgxfaXNf",
-            "cmVhY3RpbmdCGQoXX3NvY2lhbF9lbW90ZV9pbml0aWF0b3JCEAoOX3Rhcmdl",
-            "dF9hdmF0YXIihQEKDkxvb2tBdFBvc2l0aW9uEhEKCXRpbWVzdGFtcBgBIAEo",
-            "AhISCgpwb3NpdGlvbl94GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoK",
-            "cG9zaXRpb25fehgEIAEoAhIkChx0YXJnZXRfYXZhdGFyX3dhbGxldF9hZGRy",
-            "ZXNzGAUgASgJIjUKClNjZW5lRW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEg",
-            "ASgJEg4KBnNvdXJjZRgCIAEoCSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9u",
-            "EhcKD3Byb2ZpbGVfdmVyc2lvbhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIP",
-            "CgdhZGRyZXNzGAQgASgJEhcKD3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Q",
-            "cm9maWxlUmVzcG9uc2USGgoSc2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAK",
-            "CGJhc2VfdXJsGAIgASgJIloKBENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0",
-            "aW1lc3RhbXAYAiABKAESGwoOZm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIR",
-            "Cg9fZm9yd2FyZGVkX2Zyb20iJwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkS",
-            "DAoEZGF0YRgCIAEoDCKLAQoFVm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEg",
-            "ASgMEg0KBWluZGV4GAIgASgNEj8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5jb21tcy5yZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9p",
-            "Y2VDb2RlYxILCgdWQ19PUFVTEAAiQQoIUmVhY3Rpb24SEwoLZW1vamlfaW5k",
-            "ZXgYASABKAUSEQoJdGltZXN0YW1wGAIgASgCEg0KBWNvdW50GAMgASgFIkgK",
-            "DENoYXRSZWFjdGlvbhITCgtlbW9qaV9pbmRleBgBIAEoBRISCgptZXNzYWdl",
-            "X2lkGAIgASgJEg8KB2FkZHJlc3MYAyABKAliBnByb3RvMw=="));
+            "aXRpb25IABIYChBwcm90b2NvbF92ZXJzaW9uGAsgASgNQgkKB21lc3NhZ2Ui",
+            "pQEKCFBvc2l0aW9uEg0KBWluZGV4GAEgASgNEhIKCnBvc2l0aW9uX3gYAyAB",
+            "KAISEgoKcG9zaXRpb25feRgEIAEoAhISCgpwb3NpdGlvbl96GAUgASgCEhIK",
+            "CnJvdGF0aW9uX3gYBiABKAISEgoKcm90YXRpb25feRgHIAEoAhISCgpyb3Rh",
+            "dGlvbl96GAggASgCEhIKCnJvdGF0aW9uX3cYCSABKAIi6wUKCE1vdmVtZW50",
+            "EhEKCXRpbWVzdGFtcBgBIAEoAhISCgpwb3NpdGlvbl94GAIgASgCEhIKCnBv",
+            "c2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEoAhISCgp2ZWxvY2l0",
+            "eV94GAUgASgCEhIKCnZlbG9jaXR5X3kYBiABKAISEgoKdmVsb2NpdHlfehgH",
+            "IAEoAhIcChRtb3ZlbWVudF9ibGVuZF92YWx1ZRgIIAEoAhIZChFzbGlkZV9i",
+            "bGVuZF92YWx1ZRgJIAEoAhITCgtpc19ncm91bmRlZBgKIAEoCBISCgppc19q",
+            "dW1waW5nGAsgASgIEhIKCmp1bXBfY291bnQYGCABKAUSFAoMaXNfbG9uZ19q",
+            "dW1wGAwgASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5n",
+            "GA4gASgIEhIKCmlzX3N0dW5uZWQYDyABKAgSSAoLZ2xpZGVfc3RhdGUYFyAB",
+            "KA4yMy5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuTW92ZW1lbnQu",
+            "R2xpZGVTdGF0ZRISCgpyb3RhdGlvbl95GBAgASgCEhIKCmlzX2luc3RhbnQY",
+            "ESABKAgSEgoKaXNfZW1vdGluZxgSIAEoCBIbChNoZWFkX2lrX3lhd19lbmFi",
+            "bGVkGBMgASgIEh0KFWhlYWRfaWtfcGl0Y2hfZW5hYmxlZBgUIAEoCBIQCgho",
+            "ZWFkX3lhdxgVIAEoAhISCgpoZWFkX3BpdGNoGBYgASgCEhIKCnBvaW50X2F0",
+            "X3gYGSABKAISEgoKcG9pbnRfYXRfeRgaIAEoAhISCgpwb2ludF9hdF96GBsg",
+            "ASgCEhYKDmlzX3BvaW50aW5nX2F0GBwgASgIIk4KCkdsaWRlU3RhdGUSDwoL",
+            "UFJPUF9DTE9TRUQQABIQCgxPUEVOSU5HX1BST1AQARILCgdHTElESU5HEAIS",
+            "EAoMQ0xPU0lOR19QUk9QEAMicQoSTW92ZW1lbnRDb21wcmVzc2VkEhUKDXRl",
+            "bXBvcmFsX2RhdGEYASABKAUSFQoNbW92ZW1lbnRfZGF0YRgCIAEoAxIWCg5o",
+            "ZWFkX3N5bmNfZGF0YRgDIAEoBRIVCg1wb2ludF9hdF9kYXRhGAQgASgFIrsD",
+            "CgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEoDRILCgN1cm4Y",
+            "AiABKAkSEQoJdGltZXN0YW1wGAMgASgCEhgKC2lzX3N0b3BwaW5nGAQgASgI",
+            "SACIAQESGQoMaXNfcmVwZWF0aW5nGAUgASgISAGIAQESGwoOaW50ZXJhY3Rp",
+            "b25faWQYBiABKAVIAogBARIhChRzb2NpYWxfZW1vdGVfb3V0Y29tZRgHIAEo",
+            "BUgDiAEBEhgKC2lzX3JlYWN0aW5nGAggASgISASIAQESIwoWc29jaWFsX2Vt",
+            "b3RlX2luaXRpYXRvchgJIAEoCUgFiAEBEhoKDXRhcmdldF9hdmF0YXIYCiAB",
+            "KAlIBogBARIRCgRtYXNrGAsgASgNSAeIAQFCDgoMX2lzX3N0b3BwaW5nQg8K",
+            "DV9pc19yZXBlYXRpbmdCEQoPX2ludGVyYWN0aW9uX2lkQhcKFV9zb2NpYWxf",
+            "ZW1vdGVfb3V0Y29tZUIOCgxfaXNfcmVhY3RpbmdCGQoXX3NvY2lhbF9lbW90",
+            "ZV9pbml0aWF0b3JCEAoOX3RhcmdldF9hdmF0YXJCBwoFX21hc2sihQEKDkxv",
+            "b2tBdFBvc2l0aW9uEhEKCXRpbWVzdGFtcBgBIAEoAhISCgpwb3NpdGlvbl94",
+            "GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoKcG9zaXRpb25fehgEIAEo",
+            "AhIkChx0YXJnZXRfYXZhdGFyX3dhbGxldF9hZGRyZXNzGAUgASgJIjUKClNj",
+            "ZW5lRW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNvdXJjZRgC",
+            "IAEoCSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2ZpbGVfdmVy",
+            "c2lvbhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNzGAQgASgJ",
+            "EhcKD3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVzcG9uc2US",
+            "GgoSc2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJsGAIgASgJ",
+            "IloKBENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAES",
+            "GwoOZm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2FyZGVkX2Zy",
+            "b20iJwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgCIAEoDCKL",
+            "AQoFVm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWluZGV4GAIg",
+            "ASgNEj8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21t",
+            "cy5yZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxILCgdWQ19P",
+            "UFVTEABiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "Reaction", "ChatReaction", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "JumpCount", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "GlideState", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch", "PointAtX", "PointAtY", "PointAtZ", "IsPointingAt" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState) }, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData", "HeadSyncData", "PointAtData" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, new[]{ "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp", "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar", "Mask" }, new[]{ "IsStopping", "IsRepeating", "InteractionId", "SocialEmoteOutcome", "IsReacting", "SocialEmoteInitiator", "TargetAvatar", "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition), global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "TargetAvatarWalletAddress" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
@@ -113,9 +108,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse), global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse.Parser, new[]{ "SerializedProfile", "BaseUrl" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Chat), global::Decentraland.Kernel.Comms.Rfc4.Chat.Parser, new[]{ "Message", "Timestamp", "ForwardedFrom" }, new[]{ "ForwardedFrom" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Scene), global::Decentraland.Kernel.Comms.Rfc4.Scene.Parser, new[]{ "SceneId", "Data" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice), global::Decentraland.Kernel.Comms.Rfc4.Voice.Parser, new[]{ "EncodedSamples", "Index", "Codec" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice.Types.VoiceCodec) }, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Reaction), global::Decentraland.Kernel.Comms.Rfc4.Reaction.Parser, new[]{ "EmojiIndex", "Timestamp", "Count" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ChatReaction), global::Decentraland.Kernel.Comms.Rfc4.ChatReaction.Parser, new[]{ "EmojiIndex", "MessageId", "Address" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice), global::Decentraland.Kernel.Comms.Rfc4.Voice.Parser, new[]{ "EncodedSamples", "Index", "Codec" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice.Types.VoiceCodec) }, null, null)
           }));
     }
     #endregion
@@ -193,12 +186,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           break;
         case MessageOneofCase.LookAtPosition:
           LookAtPosition = other.LookAtPosition.Clone();
-          break;
-        case MessageOneofCase.Reaction:
-          Reaction = other.Reaction.Clone();
-          break;
-        case MessageOneofCase.ChatReaction:
-          ChatReaction = other.ChatReaction.Clone();
           break;
       }
 
@@ -355,30 +342,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
-    /// <summary>Field number for the "reaction" field.</summary>
-    public const int ReactionFieldNumber = 14;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Kernel.Comms.Rfc4.Reaction Reaction {
-      get { return messageCase_ == MessageOneofCase.Reaction ? (global::Decentraland.Kernel.Comms.Rfc4.Reaction) message_ : null; }
-      set {
-        message_ = value;
-        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.Reaction;
-      }
-    }
-
-    /// <summary>Field number for the "chat_reaction" field.</summary>
-    public const int ChatReactionFieldNumber = 15;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Kernel.Comms.Rfc4.ChatReaction ChatReaction {
-      get { return messageCase_ == MessageOneofCase.ChatReaction ? (global::Decentraland.Kernel.Comms.Rfc4.ChatReaction) message_ : null; }
-      set {
-        message_ = value;
-        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.ChatReaction;
-      }
-    }
-
     /// <summary>Field number for the "protocol_version" field.</summary>
     public const int ProtocolVersionFieldNumber = 11;
     private uint protocolVersion_;
@@ -407,8 +370,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       SceneEmote = 10,
       MovementCompressed = 12,
       LookAtPosition = 13,
-      Reaction = 14,
-      ChatReaction = 15,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -451,8 +412,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(SceneEmote, other.SceneEmote)) return false;
       if (!object.Equals(MovementCompressed, other.MovementCompressed)) return false;
       if (!object.Equals(LookAtPosition, other.LookAtPosition)) return false;
-      if (!object.Equals(Reaction, other.Reaction)) return false;
-      if (!object.Equals(ChatReaction, other.ChatReaction)) return false;
       if (ProtocolVersion != other.ProtocolVersion) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -474,8 +433,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.SceneEmote) hash ^= SceneEmote.GetHashCode();
       if (messageCase_ == MessageOneofCase.MovementCompressed) hash ^= MovementCompressed.GetHashCode();
       if (messageCase_ == MessageOneofCase.LookAtPosition) hash ^= LookAtPosition.GetHashCode();
-      if (messageCase_ == MessageOneofCase.Reaction) hash ^= Reaction.GetHashCode();
-      if (messageCase_ == MessageOneofCase.ChatReaction) hash ^= ChatReaction.GetHashCode();
       if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
@@ -548,14 +505,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(106);
         output.WriteMessage(LookAtPosition);
       }
-      if (messageCase_ == MessageOneofCase.Reaction) {
-        output.WriteRawTag(114);
-        output.WriteMessage(Reaction);
-      }
-      if (messageCase_ == MessageOneofCase.ChatReaction) {
-        output.WriteRawTag(122);
-        output.WriteMessage(ChatReaction);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -618,14 +567,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(106);
         output.WriteMessage(LookAtPosition);
       }
-      if (messageCase_ == MessageOneofCase.Reaction) {
-        output.WriteRawTag(114);
-        output.WriteMessage(Reaction);
-      }
-      if (messageCase_ == MessageOneofCase.ChatReaction) {
-        output.WriteRawTag(122);
-        output.WriteMessage(ChatReaction);
-      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -671,12 +612,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (messageCase_ == MessageOneofCase.LookAtPosition) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(LookAtPosition);
-      }
-      if (messageCase_ == MessageOneofCase.Reaction) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Reaction);
-      }
-      if (messageCase_ == MessageOneofCase.ChatReaction) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ChatReaction);
       }
       if (ProtocolVersion != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
@@ -768,18 +703,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             LookAtPosition = new global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition();
           }
           LookAtPosition.MergeFrom(other.LookAtPosition);
-          break;
-        case MessageOneofCase.Reaction:
-          if (Reaction == null) {
-            Reaction = new global::Decentraland.Kernel.Comms.Rfc4.Reaction();
-          }
-          Reaction.MergeFrom(other.Reaction);
-          break;
-        case MessageOneofCase.ChatReaction:
-          if (ChatReaction == null) {
-            ChatReaction = new global::Decentraland.Kernel.Comms.Rfc4.ChatReaction();
-          }
-          ChatReaction.MergeFrom(other.ChatReaction);
           break;
       }
 
@@ -910,24 +833,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             LookAtPosition = subBuilder;
             break;
           }
-          case 114: {
-            global::Decentraland.Kernel.Comms.Rfc4.Reaction subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.Reaction();
-            if (messageCase_ == MessageOneofCase.Reaction) {
-              subBuilder.MergeFrom(Reaction);
-            }
-            input.ReadMessage(subBuilder);
-            Reaction = subBuilder;
-            break;
-          }
-          case 122: {
-            global::Decentraland.Kernel.Comms.Rfc4.ChatReaction subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.ChatReaction();
-            if (messageCase_ == MessageOneofCase.ChatReaction) {
-              subBuilder.MergeFrom(ChatReaction);
-            }
-            input.ReadMessage(subBuilder);
-            ChatReaction = subBuilder;
-            break;
-          }
         }
       }
     #endif
@@ -1053,24 +958,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             }
             input.ReadMessage(subBuilder);
             LookAtPosition = subBuilder;
-            break;
-          }
-          case 114: {
-            global::Decentraland.Kernel.Comms.Rfc4.Reaction subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.Reaction();
-            if (messageCase_ == MessageOneofCase.Reaction) {
-              subBuilder.MergeFrom(Reaction);
-            }
-            input.ReadMessage(subBuilder);
-            Reaction = subBuilder;
-            break;
-          }
-          case 122: {
-            global::Decentraland.Kernel.Comms.Rfc4.ChatReaction subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.ChatReaction();
-            if (messageCase_ == MessageOneofCase.ChatReaction) {
-              subBuilder.MergeFrom(ChatReaction);
-            }
-            input.ReadMessage(subBuilder);
-            ChatReaction = subBuilder;
             break;
           }
         }
@@ -3122,6 +3009,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       isReacting_ = other.isReacting_;
       socialEmoteInitiator_ = other.socialEmoteInitiator_;
       targetAvatar_ = other.targetAvatar_;
+      mask_ = other.mask_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -3361,6 +3249,34 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       targetAvatar_ = null;
     }
 
+    /// <summary>Field number for the "mask" field.</summary>
+    public const int MaskFieldNumber = 11;
+    private uint mask_;
+    /// <summary>
+    /// mask for which bones an animation applies to.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Mask {
+      get { if ((_hasBits0 & 32) != 0) { return mask_; } else { return 0; } }
+      set {
+        _hasBits0 |= 32;
+        mask_ = value;
+      }
+    }
+    /// <summary>Gets whether the "mask" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasMask {
+      get { return (_hasBits0 & 32) != 0; }
+    }
+    /// <summary>Clears the value of the "mask" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearMask() {
+      _hasBits0 &= ~32;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -3386,6 +3302,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (IsReacting != other.IsReacting) return false;
       if (SocialEmoteInitiator != other.SocialEmoteInitiator) return false;
       if (TargetAvatar != other.TargetAvatar) return false;
+      if (Mask != other.Mask) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3403,6 +3320,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (HasIsReacting) hash ^= IsReacting.GetHashCode();
       if (HasSocialEmoteInitiator) hash ^= SocialEmoteInitiator.GetHashCode();
       if (HasTargetAvatar) hash ^= TargetAvatar.GetHashCode();
+      if (HasMask) hash ^= Mask.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3461,6 +3379,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(82);
         output.WriteString(TargetAvatar);
       }
+      if (HasMask) {
+        output.WriteRawTag(88);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3511,6 +3433,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(82);
         output.WriteString(TargetAvatar);
       }
+      if (HasMask) {
+        output.WriteRawTag(88);
+        output.WriteUInt32(Mask);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3550,6 +3476,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (HasTargetAvatar) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(TargetAvatar);
+      }
+      if (HasMask) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -3592,6 +3521,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.HasTargetAvatar) {
         TargetAvatar = other.TargetAvatar;
+      }
+      if (other.HasMask) {
+        Mask = other.Mask;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3648,6 +3580,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             TargetAvatar = input.ReadString();
             break;
           }
+          case 88: {
+            Mask = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -3701,6 +3637,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 82: {
             TargetAvatar = input.ReadString();
+            break;
+          }
+          case 88: {
+            Mask = input.ReadUInt32();
             break;
           }
         }
@@ -5697,532 +5637,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
 
     }
     #endregion
-
-  }
-
-  public sealed partial class Reaction : pb::IMessage<Reaction>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<Reaction> _parser = new pb::MessageParser<Reaction>(() => new Reaction());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Reaction> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[13]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Reaction() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Reaction(Reaction other) : this() {
-      emojiIndex_ = other.emojiIndex_;
-      timestamp_ = other.timestamp_;
-      count_ = other.count_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Reaction Clone() {
-      return new Reaction(this);
-    }
-
-    /// <summary>Field number for the "emoji_index" field.</summary>
-    public const int EmojiIndexFieldNumber = 1;
-    private int emojiIndex_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int EmojiIndex {
-      get { return emojiIndex_; }
-      set {
-        emojiIndex_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "timestamp" field.</summary>
-    public const int TimestampFieldNumber = 2;
-    private float timestamp_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Timestamp {
-      get { return timestamp_; }
-      set {
-        timestamp_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "count" field.</summary>
-    public const int CountFieldNumber = 3;
-    private int count_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int Count {
-      get { return count_; }
-      set {
-        count_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as Reaction);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Reaction other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (EmojiIndex != other.EmojiIndex) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
-      if (Count != other.Count) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (EmojiIndex != 0) hash ^= EmojiIndex.GetHashCode();
-      if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
-      if (Count != 0) hash ^= Count.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (EmojiIndex != 0) {
-        output.WriteRawTag(8);
-        output.WriteInt32(EmojiIndex);
-      }
-      if (Timestamp != 0F) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Timestamp);
-      }
-      if (Count != 0) {
-        output.WriteRawTag(24);
-        output.WriteInt32(Count);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (EmojiIndex != 0) {
-        output.WriteRawTag(8);
-        output.WriteInt32(EmojiIndex);
-      }
-      if (Timestamp != 0F) {
-        output.WriteRawTag(21);
-        output.WriteFloat(Timestamp);
-      }
-      if (Count != 0) {
-        output.WriteRawTag(24);
-        output.WriteInt32(Count);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (EmojiIndex != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(EmojiIndex);
-      }
-      if (Timestamp != 0F) {
-        size += 1 + 4;
-      }
-      if (Count != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Count);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Reaction other) {
-      if (other == null) {
-        return;
-      }
-      if (other.EmojiIndex != 0) {
-        EmojiIndex = other.EmojiIndex;
-      }
-      if (other.Timestamp != 0F) {
-        Timestamp = other.Timestamp;
-      }
-      if (other.Count != 0) {
-        Count = other.Count;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 8: {
-            EmojiIndex = input.ReadInt32();
-            break;
-          }
-          case 21: {
-            Timestamp = input.ReadFloat();
-            break;
-          }
-          case 24: {
-            Count = input.ReadInt32();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 8: {
-            EmojiIndex = input.ReadInt32();
-            break;
-          }
-          case 21: {
-            Timestamp = input.ReadFloat();
-            break;
-          }
-          case 24: {
-            Count = input.ReadInt32();
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class ChatReaction : pb::IMessage<ChatReaction>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<ChatReaction> _parser = new pb::MessageParser<ChatReaction>(() => new ChatReaction());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<ChatReaction> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[14]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ChatReaction() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ChatReaction(ChatReaction other) : this() {
-      emojiIndex_ = other.emojiIndex_;
-      messageId_ = other.messageId_;
-      address_ = other.address_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ChatReaction Clone() {
-      return new ChatReaction(this);
-    }
-
-    /// <summary>Field number for the "emoji_index" field.</summary>
-    public const int EmojiIndexFieldNumber = 1;
-    private int emojiIndex_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int EmojiIndex {
-      get { return emojiIndex_; }
-      set {
-        emojiIndex_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "message_id" field.</summary>
-    public const int MessageIdFieldNumber = 2;
-    private string messageId_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string MessageId {
-      get { return messageId_; }
-      set {
-        messageId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "address" field.</summary>
-    public const int AddressFieldNumber = 3;
-    private string address_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Address {
-      get { return address_; }
-      set {
-        address_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as ChatReaction);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(ChatReaction other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (EmojiIndex != other.EmojiIndex) return false;
-      if (MessageId != other.MessageId) return false;
-      if (Address != other.Address) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (EmojiIndex != 0) hash ^= EmojiIndex.GetHashCode();
-      if (MessageId.Length != 0) hash ^= MessageId.GetHashCode();
-      if (Address.Length != 0) hash ^= Address.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (EmojiIndex != 0) {
-        output.WriteRawTag(8);
-        output.WriteInt32(EmojiIndex);
-      }
-      if (MessageId.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(MessageId);
-      }
-      if (Address.Length != 0) {
-        output.WriteRawTag(26);
-        output.WriteString(Address);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (EmojiIndex != 0) {
-        output.WriteRawTag(8);
-        output.WriteInt32(EmojiIndex);
-      }
-      if (MessageId.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(MessageId);
-      }
-      if (Address.Length != 0) {
-        output.WriteRawTag(26);
-        output.WriteString(Address);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (EmojiIndex != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(EmojiIndex);
-      }
-      if (MessageId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(MessageId);
-      }
-      if (Address.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Address);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(ChatReaction other) {
-      if (other == null) {
-        return;
-      }
-      if (other.EmojiIndex != 0) {
-        EmojiIndex = other.EmojiIndex;
-      }
-      if (other.MessageId.Length != 0) {
-        MessageId = other.MessageId;
-      }
-      if (other.Address.Length != 0) {
-        Address = other.Address;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 8: {
-            EmojiIndex = input.ReadInt32();
-            break;
-          }
-          case 18: {
-            MessageId = input.ReadString();
-            break;
-          }
-          case 26: {
-            Address = input.ReadString();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 8: {
-            EmojiIndex = input.ReadInt32();
-            break;
-          }
-          case 18: {
-            MessageId = input.ReadString();
-            break;
-          }
-          case 26: {
-            Address = input.ReadString();
-            break;
-          }
-        }
-      }
-    }
-    #endif
 
   }
 
