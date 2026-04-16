@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Diagnostics;
@@ -6,7 +8,6 @@ using DCL.NotificationsBus.NotificationTypes;
 using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using LiveKit.Audio;
-using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -42,7 +43,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly SemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphoreSlimMicrophone = new (1, 1);
 
         private CancellationTokenSource? trackPublishingCts;
         private bool isDisposed;
@@ -130,9 +131,7 @@ namespace DCL.VoiceChat
                 if (!result.Success) throw new Exception($"Couldn't create RTCAudioSource: {result.ErrorMessage}");
 
                 MicrophoneRtcAudioSource rtcAudioSource = result.Value;
-
-                if (microphoneHandler.IsMicrophoneEnabled.Value)
-                    rtcAudioSource.Start();
+                rtcAudioSource.Start();
 
                 ITrack livekitMicrophoneTrack = voiceChatRoom.LocalTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
@@ -323,3 +322,5 @@ namespace DCL.VoiceChat
         }
     }
 }
+
+#endif

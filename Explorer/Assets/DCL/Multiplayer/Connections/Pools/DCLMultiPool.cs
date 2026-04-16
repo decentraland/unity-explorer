@@ -1,14 +1,14 @@
 using DCL.Optimization.ThreadSafePool;
 using LiveKit.Internal.FFIClients.Pools;
 using System;
-using System.Collections.Concurrent;
 using UnityEngine.Pool;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Pools
 {
     public class DCLMultiPool : IMultiPool
     {
-        private readonly ConcurrentDictionary<Type, IObjectPool<object>> pools = new ();
+        private readonly DCLConcurrentDictionary<Type, IObjectPool<object>> pools = new ();
 
         public T Get<T>() where T: class, new()
         {

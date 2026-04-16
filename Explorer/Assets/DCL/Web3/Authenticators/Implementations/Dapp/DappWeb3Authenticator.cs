@@ -13,9 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
@@ -39,14 +40,14 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new (1, 1);
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
-        private ClientWebSocket? rpcWebSocket;
+        private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
 
@@ -300,7 +301,7 @@ namespace DCL.Web3.Authenticators
             urlBuilder.AppendDomain(rpcServerUrl);
             urlBuilder.AppendPath(new URLPath(network));
 
-            rpcWebSocket = new ClientWebSocket();
+            rpcWebSocket = new DCLWebSocket();
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
@@ -496,7 +497,6 @@ namespace DCL.Web3.Authenticators
 
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
         }
 
