@@ -28,7 +28,7 @@ namespace DCL.ECSComponents {
             "LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJh",
             "bGFuZC9jb21tb24vY29sb3JzLnByb3RvGiBkZWNlbnRyYWxhbmQvY29tbW9u",
             "L2Zsb2F0cy5wcm90bxohZGVjZW50cmFsYW5kL2NvbW1vbi90ZXh0dXJlLnBy",
-            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i8BQKEFBC",
+            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i7hUKEFBC",
             "UGFydGljbGVTeXN0ZW0SEwoGYWN0aXZlGAEgASgISAGIAQESEQoEcmF0ZRgC",
             "IAEoAkgCiAEBEhoKDW1heF9wYXJ0aWNsZXMYAyABKA1IA4gBARIVCghsaWZl",
             "dGltZRgEIAEoAkgEiAEBEhQKB2dyYXZpdHkYBSABKAJIBYgBARI7ChBhZGRp",
@@ -62,42 +62,46 @@ namespace DCL.ECSComponents {
             "dHkYGiABKAsyOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
             "aWNsZVN5c3RlbS5MaW1pdFZlbG9jaXR5SBaIAQESWAoOcGxheWJhY2tfc3Rh",
             "dGUYFiABKA4yOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
-            "aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBeIAQESQwoGYnVyc3RzGB0gAygL",
-            "MjMuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0",
-            "ZW0uQnVyc3QabgoUU3ByaXRlU2hlZXRBbmltYXRpb24SDwoHdGlsZXNfeBgB",
-            "IAEoDRIPCgd0aWxlc195GAIgASgNEh4KEWZyYW1lc19wZXJfc2Vjb25kGAMg",
-            "ASgCSACIAQFCFAoSX2ZyYW1lc19wZXJfc2Vjb25kGj4KDUxpbWl0VmVsb2Np",
-            "dHkSDQoFc3BlZWQYASABKAISEwoGZGFtcGVuGAIgASgCSACIAQFCCQoHX2Rh",
-            "bXBlbhoHCgVQb2ludBooCgZTcGhlcmUSEwoGcmFkaXVzGAEgASgCSACIAQFC",
-            "CQoHX3JhZGl1cxpECgRDb25lEhIKBWFuZ2xlGAEgASgCSACIAQESEwoGcmFk",
-            "aXVzGAIgASgCSAGIAQFCCAoGX2FuZ2xlQgkKB19yYWRpdXMaPwoDQm94Ei8K",
-            "BHNpemUYASABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjNIAIgB",
-            "AUIHCgVfc2l6ZRqSAQoFQnVyc3QSDAoEdGltZRgBIAEoAhINCgVjb3VudBgC",
-            "IAEoDRITCgZjeWNsZXMYAyABKAVIAIgBARIVCghpbnRlcnZhbBgEIAEoAkgB",
-            "iAEBEhgKC3Byb2JhYmlsaXR5GAUgASgCSAKIAQFCCQoHX2N5Y2xlc0ILCglf",
-            "aW50ZXJ2YWxCDgoMX3Byb2JhYmlsaXR5IjkKCUJsZW5kTW9kZRINCglQU0Jf",
-            "QUxQSEEQABILCgdQU0JfQUREEAESEAoMUFNCX01VTFRJUExZEAIiPgoNUGxh",
-            "eWJhY2tTdGF0ZRIOCgpQU19QTEFZSU5HEAASDQoJUFNfUEFVU0VEEAESDgoK",
-            "UFNfU1RPUFBFRBACIi8KD1NpbXVsYXRpb25TcGFjZRINCglQU1NfTE9DQUwQ",
-            "ABINCglQU1NfV09STEQQAUIHCgVzaGFwZUIJCgdfYWN0aXZlQgcKBV9yYXRl",
-            "QhAKDl9tYXhfcGFydGljbGVzQgsKCV9saWZldGltZUIKCghfZ3Jhdml0eUIT",
-            "ChFfYWRkaXRpb25hbF9mb3JjZUIPCg1faW5pdGlhbF9zaXplQhEKD19zaXpl",
-            "X292ZXJfdGltZUITChFfaW5pdGlhbF9yb3RhdGlvbkIVChNfcm90YXRpb25f",
-            "b3Zlcl90aW1lQhgKFl9mYWNlX3RyYXZlbF9kaXJlY3Rpb25CEAoOX2luaXRp",
-            "YWxfY29sb3JCEgoQX2NvbG9yX292ZXJfdGltZUIZChdfaW5pdGlhbF92ZWxv",
-            "Y2l0eV9zcGVlZEIKCghfdGV4dHVyZUINCgtfYmxlbmRfbW9kZUIMCgpfYmls",
-            "bGJvYXJkQg8KDV9zcHJpdGVfc2hlZXRCBwoFX2xvb3BCCgoIX3ByZXdhcm1C",
-            "EwoRX3NpbXVsYXRpb25fc3BhY2VCEQoPX2xpbWl0X3ZlbG9jaXR5QhEKD19w",
-            "bGF5YmFja19zdGF0ZUIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBeIAQESVQoGYnVyc3RzGB4gASgL",
+            "MkAuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0",
+            "ZW0uQnVyc3RDb25maWd1cmF0aW9uSBiIAQEabgoUU3ByaXRlU2hlZXRBbmlt",
+            "YXRpb24SDwoHdGlsZXNfeBgBIAEoDRIPCgd0aWxlc195GAIgASgNEh4KEWZy",
+            "YW1lc19wZXJfc2Vjb25kGAMgASgCSACIAQFCFAoSX2ZyYW1lc19wZXJfc2Vj",
+            "b25kGj4KDUxpbWl0VmVsb2NpdHkSDQoFc3BlZWQYASABKAISEwoGZGFtcGVu",
+            "GAIgASgCSACIAQFCCQoHX2RhbXBlbhoHCgVQb2ludBooCgZTcGhlcmUSEwoG",
+            "cmFkaXVzGAEgASgCSACIAQFCCQoHX3JhZGl1cxpECgRDb25lEhIKBWFuZ2xl",
+            "GAEgASgCSACIAQESEwoGcmFkaXVzGAIgASgCSAGIAQFCCAoGX2FuZ2xlQgkK",
+            "B19yYWRpdXMaPwoDQm94Ei8KBHNpemUYASABKAsyHC5kZWNlbnRyYWxhbmQu",
+            "Y29tbW9uLlZlY3RvcjNIAIgBAUIHCgVfc2l6ZRpZChJCdXJzdENvbmZpZ3Vy",
+            "YXRpb24SQwoGdmFsdWVzGAEgAygLMjMuZGVjZW50cmFsYW5kLnNkay5jb21w",
+            "b25lbnRzLlBCUGFydGljbGVTeXN0ZW0uQnVyc3QakgEKBUJ1cnN0EgwKBHRp",
+            "bWUYASABKAISDQoFY291bnQYAiABKA0SEwoGY3ljbGVzGAMgASgFSACIAQES",
+            "FQoIaW50ZXJ2YWwYBCABKAJIAYgBARIYCgtwcm9iYWJpbGl0eRgFIAEoAkgC",
+            "iAEBQgkKB19jeWNsZXNCCwoJX2ludGVydmFsQg4KDF9wcm9iYWJpbGl0eSI5",
+            "CglCbGVuZE1vZGUSDQoJUFNCX0FMUEhBEAASCwoHUFNCX0FERBABEhAKDFBT",
+            "Ql9NVUxUSVBMWRACIj4KDVBsYXliYWNrU3RhdGUSDgoKUFNfUExBWUlORxAA",
+            "Eg0KCVBTX1BBVVNFRBABEg4KClBTX1NUT1BQRUQQAiIvCg9TaW11bGF0aW9u",
+            "U3BhY2USDQoJUFNTX0xPQ0FMEAASDQoJUFNTX1dPUkxEEAFCBwoFc2hhcGVC",
+            "CQoHX2FjdGl2ZUIHCgVfcmF0ZUIQCg5fbWF4X3BhcnRpY2xlc0ILCglfbGlm",
+            "ZXRpbWVCCgoIX2dyYXZpdHlCEwoRX2FkZGl0aW9uYWxfZm9yY2VCDwoNX2lu",
+            "aXRpYWxfc2l6ZUIRCg9fc2l6ZV9vdmVyX3RpbWVCEwoRX2luaXRpYWxfcm90",
+            "YXRpb25CFQoTX3JvdGF0aW9uX292ZXJfdGltZUIYChZfZmFjZV90cmF2ZWxf",
+            "ZGlyZWN0aW9uQhAKDl9pbml0aWFsX2NvbG9yQhIKEF9jb2xvcl9vdmVyX3Rp",
+            "bWVCGQoXX2luaXRpYWxfdmVsb2NpdHlfc3BlZWRCCgoIX3RleHR1cmVCDQoL",
+            "X2JsZW5kX21vZGVCDAoKX2JpbGxib2FyZEIPCg1fc3ByaXRlX3NoZWV0QgcK",
+            "BV9sb29wQgoKCF9wcmV3YXJtQhMKEV9zaW11bGF0aW9uX3NwYWNlQhEKD19s",
+            "aW1pdF92ZWxvY2l0eUIRCg9fcGxheWJhY2tfc3RhdGVCCQoHX2J1cnN0c0oE",
+            "CB0QHkIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.FloatsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "Bursts" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "FramesPerSecond" }, new[]{ "FramesPerSecond" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem), global::DCL.ECSComponents.PBParticleSystem.Parser, new[]{ "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Point", "Sphere", "Cone", "Box", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "Bursts" }, new[]{ "Shape", "Active", "Rate", "MaxParticles", "Lifetime", "Gravity", "AdditionalForce", "InitialSize", "SizeOverTime", "InitialRotation", "RotationOverTime", "FaceTravelDirection", "InitialColor", "ColorOverTime", "InitialVelocitySpeed", "Texture", "BlendMode", "Billboard", "SpriteSheet", "Loop", "Prewarm", "SimulationSpace", "LimitVelocity", "PlaybackState", "Bursts" }, new[]{ typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BlendMode), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.PlaybackState), typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SimulationSpace) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation), global::DCL.ECSComponents.PBParticleSystem.Types.SpriteSheetAnimation.Parser, new[]{ "TilesX", "TilesY", "FramesPerSecond" }, new[]{ "FramesPerSecond" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity), global::DCL.ECSComponents.PBParticleSystem.Types.LimitVelocity.Parser, new[]{ "Speed", "Dampen" }, new[]{ "Dampen" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Point), global::DCL.ECSComponents.PBParticleSystem.Types.Point.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Sphere), global::DCL.ECSComponents.PBParticleSystem.Types.Sphere.Parser, new[]{ "Radius" }, new[]{ "Radius" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Cone), global::DCL.ECSComponents.PBParticleSystem.Types.Cone.Parser, new[]{ "Angle", "Radius" }, new[]{ "Angle", "Radius" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Box), global::DCL.ECSComponents.PBParticleSystem.Types.Box.Parser, new[]{ "Size" }, new[]{ "Size" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration), global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration.Parser, new[]{ "Values" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBParticleSystem.Types.Burst), global::DCL.ECSComponents.PBParticleSystem.Types.Burst.Parser, new[]{ "Time", "Count", "Cycles", "Interval", "Probability" }, new[]{ "Cycles", "Interval", "Probability" }, null, null, null)})
           }));
     }
@@ -164,7 +168,7 @@ namespace DCL.ECSComponents {
       simulationSpace_ = other.simulationSpace_;
       limitVelocity_ = other.limitVelocity_ != null ? other.limitVelocity_.Clone() : null;
       playbackState_ = other.playbackState_;
-      bursts_ = other.bursts_.Clone();
+      bursts_ = other.bursts_ != null ? other.bursts_.Clone() : null;
       switch (other.ShapeCase) {
         case ShapeOneofCase.Point:
           Point = other.Point.Clone();
@@ -739,17 +743,15 @@ namespace DCL.ECSComponents {
     }
 
     /// <summary>Field number for the "bursts" field.</summary>
-    public const int BurstsFieldNumber = 29;
-    private static readonly pb::FieldCodec<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> _repeated_bursts_codec
-        = pb::FieldCodec.ForMessage(234, global::DCL.ECSComponents.PBParticleSystem.Types.Burst.Parser);
-    private readonly pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> bursts_ = new pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst>();
-    /// <summary>
-    /// --- Emission Bursts ---
-    /// </summary>
+    public const int BurstsFieldNumber = 30;
+    private global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration bursts_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> Bursts {
+    public global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration Bursts {
       get { return bursts_; }
+      set {
+        bursts_ = value;
+      }
     }
 
     private object shape_;
@@ -817,7 +819,7 @@ namespace DCL.ECSComponents {
       if (SimulationSpace != other.SimulationSpace) return false;
       if (!object.Equals(LimitVelocity, other.LimitVelocity)) return false;
       if (PlaybackState != other.PlaybackState) return false;
-      if(!bursts_.Equals(other.bursts_)) return false;
+      if (!object.Equals(Bursts, other.Bursts)) return false;
       if (ShapeCase != other.ShapeCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -853,7 +855,7 @@ namespace DCL.ECSComponents {
       if (HasSimulationSpace) hash ^= SimulationSpace.GetHashCode();
       if (limitVelocity_ != null) hash ^= LimitVelocity.GetHashCode();
       if (HasPlaybackState) hash ^= PlaybackState.GetHashCode();
-      hash ^= bursts_.GetHashCode();
+      if (bursts_ != null) hash ^= Bursts.GetHashCode();
       hash ^= (int) shapeCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -981,7 +983,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(224, 1);
         output.WriteBool(FaceTravelDirection);
       }
-      bursts_.WriteTo(output, _repeated_bursts_codec);
+      if (bursts_ != null) {
+        output.WriteRawTag(242, 1);
+        output.WriteMessage(Bursts);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1100,7 +1105,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(224, 1);
         output.WriteBool(FaceTravelDirection);
       }
-      bursts_.WriteTo(ref output, _repeated_bursts_codec);
+      if (bursts_ != null) {
+        output.WriteRawTag(242, 1);
+        output.WriteMessage(Bursts);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1192,7 +1200,9 @@ namespace DCL.ECSComponents {
       if (HasPlaybackState) {
         size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) PlaybackState);
       }
-      size += bursts_.CalculateSize(_repeated_bursts_codec);
+      if (bursts_ != null) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(Bursts);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -1307,7 +1317,12 @@ namespace DCL.ECSComponents {
       if (other.HasPlaybackState) {
         PlaybackState = other.PlaybackState;
       }
-      bursts_.Add(other.bursts_);
+      if (other.bursts_ != null) {
+        if (bursts_ == null) {
+          Bursts = new global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration();
+        }
+        Bursts.MergeFrom(other.Bursts);
+      }
       switch (other.ShapeCase) {
         case ShapeOneofCase.Point:
           if (Point == null) {
@@ -1511,8 +1526,11 @@ namespace DCL.ECSComponents {
             FaceTravelDirection = input.ReadBool();
             break;
           }
-          case 234: {
-            bursts_.AddEntriesFrom(input, _repeated_bursts_codec);
+          case 242: {
+            if (bursts_ == null) {
+              Bursts = new global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration();
+            }
+            input.ReadMessage(Bursts);
             break;
           }
         }
@@ -1691,8 +1709,11 @@ namespace DCL.ECSComponents {
             FaceTravelDirection = input.ReadBool();
             break;
           }
-          case 234: {
-            bursts_.AddEntriesFrom(ref input, _repeated_bursts_codec);
+          case 242: {
+            if (bursts_ == null) {
+              Bursts = new global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration();
+            }
+            input.ReadMessage(Bursts);
             break;
           }
         }
@@ -3121,6 +3142,184 @@ namespace DCL.ECSComponents {
       /// <summary>
       /// Emission burst configuration.
       /// </summary>
+      public sealed partial class BurstConfiguration : pb::IMessage<BurstConfiguration>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<BurstConfiguration> _parser = new pb::MessageParser<BurstConfiguration>(() => new BurstConfiguration());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<BurstConfiguration> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[6]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public BurstConfiguration() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public BurstConfiguration(BurstConfiguration other) : this() {
+          values_ = other.values_.Clone();
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public BurstConfiguration Clone() {
+          return new BurstConfiguration(this);
+        }
+
+        /// <summary>Field number for the "values" field.</summary>
+        public const int ValuesFieldNumber = 1;
+        private static readonly pb::FieldCodec<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> _repeated_values_codec
+            = pb::FieldCodec.ForMessage(10, global::DCL.ECSComponents.PBParticleSystem.Types.Burst.Parser);
+        private readonly pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> values_ = new pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst>();
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public pbc::RepeatedField<global::DCL.ECSComponents.PBParticleSystem.Types.Burst> Values {
+          get { return values_; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as BurstConfiguration);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(BurstConfiguration other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if(!values_.Equals(other.values_)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          hash ^= values_.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          values_.WriteTo(output, _repeated_values_codec);
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          values_.WriteTo(ref output, _repeated_values_codec);
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          size += values_.CalculateSize(_repeated_values_codec);
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(BurstConfiguration other) {
+          if (other == null) {
+            return;
+          }
+          values_.Add(other.values_);
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                values_.AddEntriesFrom(input, _repeated_values_codec);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                values_.AddEntriesFrom(ref input, _repeated_values_codec);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
       public sealed partial class Burst : pb::IMessage<Burst>
       #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           , pb::IBufferMessage
@@ -3136,7 +3335,7 @@ namespace DCL.ECSComponents {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public static pbr::MessageDescriptor Descriptor {
-          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[6]; }
+          get { return global::DCL.ECSComponents.PBParticleSystem.Descriptor.NestedTypes[7]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
