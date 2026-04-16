@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.UI
 {
-    public class ProximityVoiceTipView : MonoBehaviour
+    public class NearbyVoiceTipView : MonoBehaviour
     {
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
         [field: SerializeField] public Button TryItNowButton { get; private set; } = null!;

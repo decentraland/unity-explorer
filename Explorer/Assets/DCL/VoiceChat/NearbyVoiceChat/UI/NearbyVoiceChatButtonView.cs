@@ -8,9 +8,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.UI
 {
-    public class ProximityVoiceChatButtonView : MonoBehaviour
+    public class NearbyVoiceChatButtonView : MonoBehaviour
     {
         [Serializable]
         public struct MetaStateSprites

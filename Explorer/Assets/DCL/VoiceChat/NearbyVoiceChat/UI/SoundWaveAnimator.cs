@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.UI
 {
     /// <summary>
     /// Replicates the nametag voice-chat wave animation for uGUI.

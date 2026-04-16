@@ -34,7 +34,7 @@ using System.Threading;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
-using DCL.VoiceChat.Proximity;
+using DCL.VoiceChat.UI;
 using ECS.Abstract;
 using Utility;
 

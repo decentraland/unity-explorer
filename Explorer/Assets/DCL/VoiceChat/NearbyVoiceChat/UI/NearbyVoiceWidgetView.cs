@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.UI
 {
     public class NearbyVoiceWidgetView : ViewBaseWithAnimationElement, IView
     {

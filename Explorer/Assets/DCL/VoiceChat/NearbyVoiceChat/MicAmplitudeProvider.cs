@@ -1,11 +1,11 @@
+using LiveKit.Audio;
+using LiveKit.Scripts.Audio;
 using System;
 using System.Reflection;
 using System.Threading;
-using LiveKit.Audio;
-using LiveKit.Scripts.Audio;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat
 {
     public class MicAmplitudeProvider : IDisposable
     {

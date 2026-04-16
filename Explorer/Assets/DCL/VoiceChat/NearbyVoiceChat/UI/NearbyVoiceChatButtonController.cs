@@ -2,19 +2,19 @@ using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
 using System;
 
-namespace DCL.VoiceChat.Proximity
+namespace DCL.VoiceChat.UI
 {
-    public class ProximityVoiceChatButtonController : IDisposable
+    public class NearbyVoiceChatButtonController : IDisposable
     {
         private const string CALL_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nduring Calls & Streams.";
         private const string SCENE_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nin this scene.";
 
-        private readonly ProximityVoiceChatButtonView view;
+        private readonly NearbyVoiceChatButtonView view;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
         private readonly ReactivePropertyExtensions.DisposableSubscription<string?> suppressionSubscription;
 
-        public ProximityVoiceChatButtonController(
-            ProximityVoiceChatButtonView view,
+        public NearbyVoiceChatButtonController(
+            NearbyVoiceChatButtonView view,
             NearbyVoiceChatStateModel stateModel)
         {
             this.view = view;

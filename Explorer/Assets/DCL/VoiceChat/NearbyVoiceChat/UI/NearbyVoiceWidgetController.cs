@@ -1,15 +1,15 @@
 using DCL.Utilities;
-using DCL.VoiceChat.Proximity;
+using DCL.VoiceChat.Nearby;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.UI
 {
     public class NearbyVoiceWidgetController : IDisposable
     {
-        private const string VOLUME_PARAM = "ProximityVoiceChat_Volume";
+        private const string VOLUME_PARAM = "NearbyVoiceChat_Volume";
         private const float MIN_VOLUME_DB = -80f;
         private const string IDLE_TEXT = "Hold <color=#A09BA8>[T]</color> to speak momentarily";
         private const string SPEAKING_PUSH_TO_TALK_TEXT = "Release <color=#A09BA8>[T]</color> to stop speaking";
