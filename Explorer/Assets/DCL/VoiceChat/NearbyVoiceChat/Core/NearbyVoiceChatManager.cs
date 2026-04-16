@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
 using DCL.Utilities;
 using LiveKit.Rooms;
@@ -29,6 +30,7 @@ namespace DCL.VoiceChat.Nearby
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly NearbyMuteService muteService;
+        private readonly ObjectProxy<IUserBlockingCache> blockingCacheProxy;
         private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
@@ -47,13 +49,15 @@ namespace DCL.VoiceChat.Nearby
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
             VoiceChatMicrophoneHandler microphoneHandler,
-            NearbyMuteService muteService)
+            NearbyMuteService muteService,
+            ObjectProxy<IUserBlockingCache> blockingCacheProxy)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
             this.microphoneHandler = microphoneHandler;
             this.muteService = muteService;
+            this.blockingCacheProxy = blockingCacheProxy;
             this.activeAudioSources = activeAudioSources;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.NEARBY);
@@ -72,7 +76,8 @@ namespace DCL.VoiceChat.Nearby
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub,
+                isIdentityBlocked: id => blockingCacheProxy.Object?.UserIsBlocked(id) == true);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -82,6 +87,11 @@ namespace DCL.VoiceChat.Nearby
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
             muteService.MuteStateChanged += OnMuteStateChanged;
+
+            if (blockingCacheProxy.Configured)
+                SubscribeToBlockingEvents(blockingCacheProxy.Object!);
+
+            blockingCacheProxy.OnObjectSet += SubscribeToBlockingEvents;
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
 
@@ -100,6 +110,14 @@ namespace DCL.VoiceChat.Nearby
             nearbyStateSubscription?.Dispose();
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
+
+            blockingCacheProxy.OnObjectSet -= SubscribeToBlockingEvents;
+
+            if (blockingCacheProxy.Object != null)
+            {
+                blockingCacheProxy.Object.UserBlocked -= OnUserBlocked;
+                blockingCacheProxy.Object.UserBlocksYou -= OnUserBlocked;
+            }
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -123,6 +141,7 @@ namespace DCL.VoiceChat.Nearby
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             if (stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED) return;
+            if (blockingCacheProxy.Object?.UserIsBlocked(participant.Identity) == true) return;
             remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
         }
 
@@ -249,6 +268,22 @@ namespace DCL.VoiceChat.Nearby
         {
             if (activeAudioSources.TryGetValue(walletId, out LivekitAudioSource? lkSource) && lkSource != null)
                 lkSource.AudioSource.mute = isMuted;
+        }
+
+        private void SubscribeToBlockingEvents(IUserBlockingCache cache)
+        {
+            cache.UserBlocked += OnUserBlocked;
+            cache.UserBlocksYou += OnUserBlocked;
+        }
+
+        private void OnUserBlocked(string userId)
+        {
+            if (disposed) return;
+
+            remoteListener.RemoveStreamsByIdentity(userId);
+            activeAudioSources.TryRemove(userId, out _);
+
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
         }
 
         private void Deactivate()

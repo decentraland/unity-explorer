@@ -24,6 +24,7 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.Friends.UserBlocking;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Utility;
@@ -50,6 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
         private readonly NearbyMuteService? nearbyMuteService;
+        private readonly ObjectProxy<IUserBlockingCache> blockingCacheProxy;
         private readonly ILoadingStatus loadingStatus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
@@ -81,9 +83,11 @@ namespace DCL.PluginSystem.Global
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
             ILoadingStatus loadingStatus,
+            ObjectProxy<IUserBlockingCache> blockingCacheProxy,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
+            this.blockingCacheProxy = blockingCacheProxy;
             this.loadingStatus = loadingStatus;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -184,7 +188,8 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler, nearbyMuteService);
+                    nearbyStateModel, voiceChatHandler, nearbyMuteService,
+                    blockingCacheProxy);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyNametagsHandler = new VoiceChatNametagsHandler(

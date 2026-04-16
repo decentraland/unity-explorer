@@ -86,6 +86,18 @@ namespace DCL.VoiceChat
             });
         }
 
+        internal void RemoveStreamsByIdentity(string identity)
+        {
+            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var keysToRemove);
+
+            foreach (StreamKey key in streams.Keys)
+                if (key.identity == identity)
+                    keysToRemove.Add(key);
+
+            foreach (StreamKey key in keysToRemove)
+                TryRemoveStream(key);
+        }
+
         internal void Reset()
         {
             using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);

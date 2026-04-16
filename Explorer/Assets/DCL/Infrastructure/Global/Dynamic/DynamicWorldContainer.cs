@@ -1133,6 +1133,7 @@ namespace Global.Dynamic
                         chatSharedAreaEventBus,
                         debugBuilder,
                         staticContainer.LoadingStatus,
+                        userBlockingCacheProxy,
                         nearbyMuteService)
                 );
 
