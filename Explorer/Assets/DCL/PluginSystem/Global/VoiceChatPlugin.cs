@@ -192,7 +192,8 @@ namespace DCL.PluginSystem.Global
                     nearbyStateModel.State.Select(MapNearbyState),
                     entityParticipantTable,
                     world,
-                    playerEntity);
+                    playerEntity,
+                    nearbyMuteService != null ? nearbyMuteService.IsMuted : null);
                 pluginScope.Add(nearbyNametagsHandler);
 
                 if (nearbyMuteService != null)

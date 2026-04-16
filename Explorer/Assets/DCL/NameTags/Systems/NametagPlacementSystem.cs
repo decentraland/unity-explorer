@@ -144,7 +144,9 @@ namespace DCL.Nametags
             if (!voiceChatComponent.IsDirty)
                 return;
 
-            nametagHolder.Nametag.VoiceChat = voiceChatComponent.IsSpeaking;
+            bool isHushed = World.Has<VoiceChatHushedComponent>(e);
+            nametagHolder.Nametag.VoiceChat = voiceChatComponent.IsSpeaking && !isHushed;
+            nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && isHushed;
 
             if (voiceChatComponent.IsRemoving)
             {
@@ -164,12 +166,18 @@ namespace DCL.Nametags
 
             if (hushed.IsRemoving)
             {
+                bool speakingAfterUnhush = World.Has<VoiceChatNametagComponent>(e)
+                                           && World.Get<VoiceChatNametagComponent>(e).IsSpeaking;
+                nametagHolder.Nametag.VoiceChat = speakingAfterUnhush;
                 nametagHolder.Nametag.Hushed = false;
                 World.Remove<VoiceChatHushedComponent>(e);
                 return;
             }
 
-            nametagHolder.Nametag.Hushed = true;
+            bool isSpeaking = World.Has<VoiceChatNametagComponent>(e)
+                              && World.Get<VoiceChatNametagComponent>(e).IsSpeaking;
+            nametagHolder.Nametag.Hushed = isSpeaking;
+            nametagHolder.Nametag.VoiceChat = false;
             hushed.IsDirty = false;
         }
 

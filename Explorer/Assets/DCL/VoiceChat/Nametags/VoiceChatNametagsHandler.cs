@@ -17,6 +17,7 @@ namespace DCL.VoiceChat
         private readonly ActiveSpeakersDiffTracker tracker;
         private readonly IReadonlyReactiveProperty<VoiceChatActivityState> activityState;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly Func<string, bool>? isMuted;
         private readonly IDisposable statusSubscription;
 
         private readonly World world;
@@ -30,13 +31,15 @@ namespace DCL.VoiceChat
             IReadonlyReactiveProperty<VoiceChatActivityState> activityState,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            Func<string, bool>? isMuted = null)
         {
             this.room = room;
             this.activityState = activityState;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.isMuted = isMuted;
 
             tracker = new ActiveSpeakersDiffTracker(entityParticipantTable, world);
 
@@ -89,6 +92,7 @@ namespace DCL.VoiceChat
             if (activityState.Value != VoiceChatActivityState.ACTIVE) return;
 
             tracker.Update(room.ActiveSpeakers);
+            ApplyHushedStateToActiveSpeakers();
             UpdateLocalPlayerSpeakingState();
         }
 
@@ -132,6 +136,19 @@ namespace DCL.VoiceChat
             }
 
             return false;
+        }
+
+        private void ApplyHushedStateToActiveSpeakers()
+        {
+            if (isMuted == null) return;
+
+            foreach (string speakerId in room.ActiveSpeakers)
+            {
+                if (!isMuted(speakerId)) continue;
+                if (!entityParticipantTable.TryGet(speakerId, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
+
+                world.AddOrSet(entry.Entity, new VoiceChatHushedComponent());
+            }
         }
 
         private void MarkLocalPlayerRemoving()
