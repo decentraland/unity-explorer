@@ -28,11 +28,13 @@ namespace DCL.Quality.Runtime
         public int SceneDistance { get; private set; }
         public float LandscapeDistance { get; private set; }
         public bool SunShadows { get; private set; }
+        public bool SunLensFlare { get; private set; }
         public bool SceneLights { get; private set; }
         public bool SceneLightShadows { get; private set; }
         public int MaxSceneLights { get; private set; }
         public ShadowQualityLevel SceneShadowQuality { get; private set; }
         public int ShadowDistance { get; private set; }
+        public bool PlayCurrentSceneStreamsOnly { get; private set; }
 
         private readonly QualityPresetsAsset presetsAsset;
         private readonly UpscalingController upscalingController;
@@ -97,11 +99,13 @@ namespace DCL.Quality.Runtime
             SceneDistance = preset.SceneDistance;
             LandscapeDistance = preset.LandscapeDistance;
             SunShadows = preset.SunShadows;
+            SunLensFlare = preset.SunLensFlare;
             SceneLights = preset.SceneLightsEnabled;
             SceneLightShadows = preset.SceneLightShadowsEnabled;
             MaxSceneLights = preset.MaxSceneLights;
             SceneShadowQuality = preset.ShadowsQualityLevel;
             ShadowDistance = preset.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = preset.PlayCurrentSceneStreamsOnly;
 
             ApplyAllSettings();
             OnPresetChanged?.Invoke(level);
@@ -121,6 +125,8 @@ namespace DCL.Quality.Runtime
             landscapeData.DetailDistance = LandscapeDistance;
 
             URPSettingsApplier.ApplySunShadows(SunShadows);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, SunLensFlare);
+            URPSettingsApplier.ApplySunLensFlare(SunLensFlare);
             URPSettingsApplier.ApplySceneLight(SceneLights);
             URPSettingsApplier.ApplyMaxObjectsPerLight(MaxSceneLights);
             URPSettingsApplier.ApplySceneLightsShadows(SceneLightShadows);
@@ -219,6 +225,15 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetSunLensFlare(bool enabled)
+        {
+            SunLensFlare = enabled;
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, enabled);
+            SwitchToCustom();
+            URPSettingsApplier.ApplySunLensFlare(enabled);
+            TrackQualitySettingsReport();
+        }
+
         public void SetSceneLights(bool enabled)
         {
             SceneLights = enabled;
@@ -264,6 +279,14 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetPlayCurrentSceneStreamsOnly(bool enabled)
+        {
+            PlayCurrentSceneStreamsOnly = enabled;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, enabled ? 1 : 0);
+            SwitchToCustom();
+            TrackQualitySettingsReport();
+        }
+
         private void SwitchToCustom()
         {
             if (CurrentPreset == QualityPresetLevel.Custom)
@@ -287,11 +310,13 @@ namespace DCL.Quality.Runtime
             SceneDistance = saved.SceneDistance;
             LandscapeDistance = saved.LandscapeDistance;
             SunShadows = saved.SunShadows;
+            SunLensFlare = saved.SunLensFlare;
             SceneLights = saved.SceneLights;
             SceneLightShadows = saved.SceneLightShadows;
             MaxSceneLights = saved.MaxSceneLights;
             SceneShadowQuality = saved.SceneShadowQuality;
             ShadowDistance = saved.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = saved.PlayCurrentSceneStreamsOnly;
         }
 
         private static void DeleteCustomSettings()
@@ -323,11 +348,13 @@ namespace DCL.Quality.Runtime
                 if (SceneDistance != b.SceneDistance) properties["scene_distance"] = SceneDistance;
                 if (!Mathf.Approximately(LandscapeDistance, b.LandscapeDistance)) properties["landscape_distance"] = LandscapeDistance;
                 if (SunShadows != b.SunShadows) properties["sun_shadows"] = SunShadows;
+                if (SunLensFlare != b.SunLensFlare) properties["sun_lens_flare"] = SunLensFlare;
                 if (SceneLights != b.SceneLightsEnabled) properties["scene_lights"] = SceneLights;
                 if (SceneLightShadows != b.SceneLightShadowsEnabled) properties["scene_light_shadows"] = SceneLightShadows;
                 if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
                 if (SceneShadowQuality != b.ShadowsQualityLevel) properties["shadow_quality"] = SceneShadowQuality.ToString();
                 if (ShadowDistance != b.ShadowDistance) properties["shadow_distance"] = ShadowDistance;
+                if (PlayCurrentSceneStreamsOnly != b.PlayCurrentSceneStreamsOnly) properties["play_current_scene_streams_only"] = PlayCurrentSceneStreamsOnly;
             }
 
             analytics.Track(AnalyticsEvents.Settings.QUALITY_SETTINGS_REPORT, properties);

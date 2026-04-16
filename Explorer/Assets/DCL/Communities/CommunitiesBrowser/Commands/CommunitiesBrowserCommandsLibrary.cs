@@ -1,8 +1,6 @@
-using DCL.Chat.EventBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
 using MVC;
 
@@ -17,8 +15,6 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
 
         public CommunitiesBrowserCommandsLibrary(
             ICommunityCallOrchestrator orchestrator,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IMVCManager mvcManager,
@@ -26,8 +22,8 @@ namespace DCL.Communities.CommunitiesBrowser.Commands
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider
             )
         {
-            JoinStreamCommand = new JoinStreamCommand(orchestrator, sharedSpaceManager, chatEventBus);
-            GoToStreamCommand = new GoToStreamCommand(sharedSpaceManager, chatEventBus);
+            JoinStreamCommand = new JoinStreamCommand(orchestrator);
+            GoToStreamCommand = new GoToStreamCommand();
             CreateCommunityCommand = new CreateCommunityCommand(selfProfile, nftNamesProvider, mvcManager, spriteCache);
             JoinCommunityCommand = new JoinCommunityCommand(dataProvider);
         }

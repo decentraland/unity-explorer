@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using UnityEngine;
 
 namespace DCL.UI
@@ -9,4 +8,3 @@ namespace DCL.UI
         public string Note = string.Empty;
     }
 }
-#endif

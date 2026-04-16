@@ -5,6 +5,7 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
@@ -28,11 +29,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaFactory mediaFactory;
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
+        private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
         private static float lastOpenMediaTime;
         private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
-#endif
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -41,7 +41,8 @@ namespace DCL.SDKComponents.MediaStream
             IPerformanceBudget frameTimeBudget,
             MediaFactory mediaFactory,
             float audioFadeSpeed,
-            Material flipMaterial
+            Material flipMaterial,
+            VideoPrioritizationSettings videoPrioritizationSettings
         ) : base(world)
         {
             this.sceneData = sceneData;
@@ -50,6 +51,7 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaFactory = mediaFactory;
             this.audioFadeSpeed = audioFadeSpeed;
             this.flipMaterial = flipMaterial;
+            this.videoPrioritizationSettings = videoPrioritizationSettings;
         }
 
         protected override void Update(float t)
@@ -80,7 +82,6 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Url!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
-            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             component.UpdateState();
 
@@ -111,7 +112,8 @@ namespace DCL.SDKComponents.MediaStream
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
             }
 
-            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+            if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
+                ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
 
             // Need to re-update state in case an update was needed from the sdk component or promise
             component.UpdateState();
@@ -123,7 +125,6 @@ namespace DCL.SDKComponents.MediaStream
             var address = MediaAddress.New(sdkComponent.Src!);
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
-            if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
 
             if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
@@ -163,8 +164,8 @@ namespace DCL.SDKComponents.MediaStream
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
             }
 
-            if (ConsumePromise(ref component, false))
-                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+            if ((!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent) && ConsumePromise(ref component, false))
+                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent).Forget();
 
             // Need to re-update state in case an update was needed from the sdk component or promise
             component.UpdateState();
@@ -180,7 +181,7 @@ namespace DCL.SDKComponents.MediaStream
 
             FadeVolume(ref mediaPlayer, customMediaStream.Volume, dt);
 
-            if (ConsumePromise(ref mediaPlayer, true))
+            if ((!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent) && ConsumePromise(ref mediaPlayer, true))
                 mediaPlayer.MediaPlayer.SetPlaybackProperties(customMediaStream);
         }
 
@@ -239,24 +240,18 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void ToggleCurrentStreamsState(Entity entity, MediaPlayerComponent mediaPlayerComponent, [Data] bool enteredScene)
         {
-            if (mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !enteredScene)
+            if (enteredScene) return;
+
+            bool isLivekit = mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out _);
+
+            // Livekit streams rely on the livekit room being active for the current scene only.
+            // Non-livekit streams are also stopped when PlayCurrentSceneStreamOnly is on so they can be
+            // recreated fresh by CreateMediaPlayerSystem when the player re-enters the scene.
+            if (isLivekit || videoPrioritizationSettings.PlayCurrentSceneStreamOnly)
             {
-                //Streams rely on livekit room being active; which can only be in we are on the same scene. Next time we enter the scene, it will be recreate by
-                //the regular CreateMediaPlayerSystem
                 mediaPlayerComponent.Dispose();
                 World.Remove<MediaPlayerComponent>(entity);
             }
-        }
-
-        private bool TryReInitializeOnExpiredYouTubeUrl(in Entity entity, ref MediaPlayerComponent component)
-        {
-            if (component.State != VideoState.VsError) return false;
-            if (component.ResolvedUrlExpiresAt <= 0f) return false;
-            if (UnityEngine.Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
-
-            ReportHub.Log(ReportCategory.MEDIA_STREAM, "[YouTubeResolver] Resolved URL expired, triggering re-resolution");
-            RemoveAndForceReInitialization(ref component, entity);
-            return true;
         }
 
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
@@ -277,12 +272,12 @@ namespace DCL.SDKComponents.MediaStream
 
             RemoveAndForceReInitialization(ref component, entity);
             return true;
-        }
 
-        private void RemoveAndForceReInitialization(ref MediaPlayerComponent component, in Entity entity)
-        {
-            component.Dispose();
-            World.Remove<MediaPlayerComponent>(entity);
+            void RemoveAndForceReInitialization(ref MediaPlayerComponent component, Entity entity)
+            {
+                component.Dispose();
+                World.Remove<MediaPlayerComponent>(entity);
+            }
         }
 
         private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
@@ -290,38 +285,28 @@ namespace DCL.SDKComponents.MediaStream
             if (!component.OpenMediaPromise.IsResolved) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             // On macOS, enforce minimum gap between HLS stream opens to prevent
             // AVFoundation crashes when opening multiple streams simultaneously.
             // If too soon since last open, defer the opening.
+            // On windows deferr to avoid frame drops when opening multiple streams simultaneously, as the media player can consume a lot of resources while opening a stream.
             float currentTime = UnityEngine.Time.realtimeSinceStartup;
             float timeSinceLastOpen = currentTime - lastOpenMediaTime;
 
             if (timeSinceLastOpen < MIN_OPEN_MEDIA_INTERVAL_SECONDS)
                 return false;
-#endif
 
             if (component.OpenMediaPromise.IsReachableConsume(component.MediaAddress))
             {
-                // Transfer YouTube resolution metadata from the promise to the component
-                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
-                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
-
-                // Use the resolved media address (which may be a direct URL after YouTube resolution)
-                MediaAddress resolvedAddress = component.OpenMediaPromise.mediaAddress;
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
                 lastOpenMediaTime = currentTime;
 
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                    $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
-#endif
+                    $"[OpenMedia] Opening media: {component.MediaAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
                 Profiler.BeginSample(component.MediaPlayer.HasControl
                     ? "MediaPlayer.OpenMedia"
                     : "MediaPlayer.InitialiseAndOpenMedia");
 
-                try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
+                try { component.MediaPlayer.OpenMedia(component.MediaAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
 
                 return true;
