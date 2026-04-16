@@ -30,7 +30,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             MEMBERS,
             BANNED,
             REQUESTS,
-            INVITES
+            INVITES,
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
@@ -104,7 +104,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private GetCommunityResponse.CommunityData? communityData;
         private CancellationTokenSource contextMenuCts = new ();
         private UniTask panelTask;
-        private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
 
         private CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
         private CommunitiesDataProvider.CommunitiesDataProvider? communitiesDataProvider;
@@ -181,8 +180,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             if (!transferOwnershipContextMenuElement!.Interactable)
                 transferOwnershipContextMenuElement!.NonInteractableFeedback = TRANSFER_OWNERSHIP_NON_INTERACTABLE_FEEDBACK;
 
-            kickUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
-            banUserContextMenuElement!.Enabled = profile.Role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MemberListSections.MEMBERS;
+            // Owner can kick / ban either members and moderators,
+            // moderators can only kick / ban members
+            bool viewerCanKickOrBan = communityData?.role is CommunityMemberRole.owner
+                ? profile.Role is not CommunityMemberRole.owner
+                : communityData?.role is CommunityMemberRole.moderator && profile.Role is not CommunityMemberRole.owner && profile.Role is not CommunityMemberRole.moderator;
+
+            kickUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
+            banUserContextMenuElement!.Enabled = viewerCanKickOrBan && currentSection == MemberListSections.MEMBERS;
 
             communityOptionsSeparatorContextMenuElement!.Enabled = removeModeratorContextMenuElement.Enabled ||
                                                                    addModeratorContextMenuElement.Enabled ||

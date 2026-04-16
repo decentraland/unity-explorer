@@ -264,7 +264,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233166825}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
@@ -316,7 +316,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -388,7 +388,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 100, y: 100}
-    targetWorld: yemel.dcl.eth
+    targetWorld: flutterecho.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1

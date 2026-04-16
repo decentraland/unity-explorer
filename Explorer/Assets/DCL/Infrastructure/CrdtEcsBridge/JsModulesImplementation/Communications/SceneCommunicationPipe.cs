@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
@@ -89,7 +90,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
-            sceneMessage.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
+            sceneMessage.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
         }
 
         private readonly struct SubscriberKey : IEquatable<SubscriberKey>

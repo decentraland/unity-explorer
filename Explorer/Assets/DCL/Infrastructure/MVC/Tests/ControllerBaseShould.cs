@@ -27,7 +27,7 @@ namespace MVC.Tests
         [Test]
         public async Task LaunchViewLifeCycle()
         {
-            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100);
+            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 100);
             var input = new TestInputData { Value = 123 };
 
             // Fire the closing intent
@@ -58,7 +58,7 @@ namespace MVC.Tests
         {
             // Show first
 
-            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 100);
+            var canvasOrdering = new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 100);
 
             controller.CompletionSource.TrySetResult();
             await controller.LaunchViewLifeCycleAsync(canvasOrdering, new TestInputData(), CancellationToken.None);
@@ -115,7 +115,7 @@ namespace MVC.Tests
 
             public readonly IMVCControllerModule Module;
 
-            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+            public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
 
             internal TestInputData Input => inputData;
 

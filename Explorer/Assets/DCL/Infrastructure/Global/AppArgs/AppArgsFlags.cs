@@ -42,6 +42,7 @@ namespace Global.AppArgs
         public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
         public const string VOICE_CHAT = "voice-chat";
+        public const string NEARBY_VOICE_CHAT = "nearby-voice-chat";
         public const string DONATIONS_UI = "donations-ui";
 
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
@@ -94,6 +95,7 @@ namespace Global.AppArgs
         public const string REPORT_USER = "report-user";
 
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
+        public const string DOUBLE_CLICK_WALK = "double-click-walk";
 
         public static class Multiplayer
         {
