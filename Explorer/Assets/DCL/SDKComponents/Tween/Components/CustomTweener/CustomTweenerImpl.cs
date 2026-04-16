@@ -65,10 +65,7 @@ namespace DCL.SDKComponents.Tween.Components
             // This correctly preserves the sign of the axis (e.g. +Y vs -Y) and avoids the identity problem
             // where any rotation around Y would leave Vector3.up unchanged and lose direction information.
             var axis = new Vector3(direction.x, direction.y, direction.z);
-            if (axis.sqrMagnitude < 1e-6f)
-                axis = Vector3.up;
-            else
-                axis = axis.normalized;
+            axis = axis.sqrMagnitude < 1e-6f ? Vector3.up : axis.normalized;
 
             float absSpeed = Mathf.Abs(speed);
             float secondsPerRevolution = 360f / Mathf.Max(absSpeed, 0.0001f);
