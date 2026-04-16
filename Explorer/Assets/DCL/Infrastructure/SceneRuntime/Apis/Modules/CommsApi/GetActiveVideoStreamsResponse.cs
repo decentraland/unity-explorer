@@ -21,12 +21,12 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        private static string DisplayNameOf(Participant participant)
+        private static string DisplayNameOf(LKParticipant participant)
         {
             return string.IsNullOrEmpty(participant.Name) ? participant.Identity : participant.Name;
         }
 
-        private static void WriteTo(JsonWriter writer, string identity, string trackSid, Participant participant, TrackPublication publication)
+        private static void WriteTo(JsonWriter writer, string identity, string trackSid, LKParticipant participant, TrackPublication publication)
         {
             var sourceType = From(publication.Source);
             string displayName = DisplayNameOf(participant);
@@ -51,7 +51,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             writer.WriteEndObject();
         }
 
-        public static void WriteTo(JsonWriter writer, string identity, Participant participant, TrackPublication publication)
+        public static void WriteTo(JsonWriter writer, string identity, LKParticipant participant, TrackPublication publication)
         {
             // like in unity-renderer version trackSid: `livekit-video://${sid}/${videoSid}`,
             // https://github.com/decentraland/unity-renderer/blob/ae68fec703f3c0ebd2251ce7cff2ad465f6f7f7d/browser-interface/packages/shared/apis/host/CommsAPI.ts#L19
@@ -59,7 +59,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             WriteTo(writer, identity, address, participant, publication);
         }
 
-        public static void WriteAsCurrentTo(JsonWriter writer, string identity, Participant participant, TrackPublication publication) =>
+        public static void WriteAsCurrentTo(JsonWriter writer, string identity, LKParticipant participant, TrackPublication publication) =>
             WriteTo(writer, identity, LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM, participant, publication);
 
         public enum VideoTrackSourceType
