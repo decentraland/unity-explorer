@@ -45,6 +45,7 @@ namespace DCL.Profiles
             }
             catch (Exception e)
             {
+                result.Asset?.Dispose();
                 ReportHub.LogException(e, ReportCategory.PROFILE);
             }
             finally
