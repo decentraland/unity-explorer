@@ -117,7 +117,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Explorer/Library
-          key: Library-Explorer-Ubuntu
+          key: Library-Explorer-Ubuntu-${{ hashFiles('Explorer/Packages/packages-lock.json', 'Explorer/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Explorer-Ubuntu-
 
       - name: Read Unity version from ProjectVersion.txt
         id: unity-version
@@ -191,6 +192,7 @@ jobs:
             -testCategory "!Performance"
             -testFilter "${{ matrix.testFilter }}"
             -burst-disable-compilation
+            -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
