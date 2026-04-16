@@ -420,7 +420,7 @@ namespace DCL.UI.Sidebar
         {
             if (viewInstance?.NearbyVoiceChatButton == null) return;
 
-            if (viewInstance.NearbyVoiceChatButton.IsBlocked)
+            if (viewInstance.NearbyVoiceChatButton.IsSuppressed)
             {
                 viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
                 return;

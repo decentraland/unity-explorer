@@ -15,13 +15,15 @@ namespace DCL.VoiceChat.UI
 
         public NearbyVoiceChatButtonController(
             NearbyVoiceChatButtonView view,
-            NearbyVoiceChatStateModel stateModel)
+            NearbyVoiceChatStateModel stateModel,
+            MicAmplitudeProvider micAmplitudeProvider)
         {
             this.view = view;
 
             view.SetState(stateModel.State.Value);
-            view.IsBlocked = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
+            view.IsSuppressed = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
             view.CloseAreaButton.onClick.AddListener(view.HideDisabledTooltip);
+            view.InitializeSoundWave(() => micAmplitudeProvider.Amplitude);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             suppressionSubscription = stateModel.ActiveSuppression.Subscribe(OnSuppressionReasonChanged);
         }
@@ -29,7 +31,7 @@ namespace DCL.VoiceChat.UI
         private void OnStateChanged(NearbyVoiceChatState state)
         {
             view.SetState(state);
-            view.IsBlocked = state == NearbyVoiceChatState.SUPPRESSED;
+            view.IsSuppressed = state == NearbyVoiceChatState.SUPPRESSED;
 
             if (state != NearbyVoiceChatState.SUPPRESSED)
                 view.HideDisabledTooltip();

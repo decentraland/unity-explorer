@@ -183,24 +183,25 @@ namespace DCL.PluginSystem.Global
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
 
+                micAmplitudeProvider = new MicAmplitudeProvider();
+                pluginScope.Add(micAmplitudeProvider);
+
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler);
+                    nearbyStateModel, voiceChatHandler,
+                    micAmplitudeProvider);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 if (nearbyVoiceChatButtonView != null)
                 {
                     nearbyButtonController = new NearbyVoiceChatButtonController(
-                        nearbyVoiceChatButtonView, nearbyStateModel);
+                        nearbyVoiceChatButtonView, nearbyStateModel, micAmplitudeProvider);
                     pluginScope.Add(nearbyButtonController);
                 }
 
                 if (nearbyVoiceWidgetView != null)
                 {
-                    micAmplitudeProvider = new MicAmplitudeProvider();
-                    pluginScope.Add(micAmplitudeProvider);
-
                     nearbyWidgetController = new NearbyVoiceWidgetController(
                         nearbyVoiceWidgetView, nearbyStateModel,
                         voiceChatConfiguration.NearbyChatAudioMixerGroup,

@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.UI
 
         public Button? Button => button;
 
-        public bool IsBlocked { get; set; }
+        public bool IsSuppressed { get; set; }
 
         private void Awake()
         {
