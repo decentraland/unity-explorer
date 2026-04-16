@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
@@ -44,11 +43,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
-        private readonly IUrlResolverService urlResolverService;
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -61,10 +59,6 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
-
-            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
-                new UrlResolverService(webRequestController),
-                analyticsController);
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;
@@ -87,6 +81,9 @@ namespace DCL.SDKComponents.MediaStream
 
         public VideoTextureConsumer CreateVideoConsumer()
         {
+            // var renderTexture = new RenderTexture(1, 1, 0, RenderTextureFormat.BGRA32) { useMipMap = false, autoGenerateMips = false };
+            // renderTexture.Create();
+
             var consumer = new VideoTextureConsumer(videoTexturesPool);
             return consumer;
         }
@@ -198,7 +195,7 @@ namespace DCL.SDKComponents.MediaStream
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
             if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
-                component.OpenMediaPromise.UrlReachabilityResolveAsync(component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, urlResolverService).SuppressCancellationThrow().Forget();
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
 
