@@ -90,8 +90,7 @@ namespace DCL.Tests
             if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
                 return;
 
-            string fileContent = File.ReadAllText(filePath);
-            ShouldNotUseThreadingApiDirectly(fileContent, filePath);
+            ShouldNotUseThreadingApiDirectly(filePath);
         }
 
         [TestCaseSource(nameof(AllCSharpFilesWithSocketIO))]
@@ -152,13 +151,9 @@ namespace DCL.Tests
             ShouldNotUseNativeWebSocket(fileContent, filePath);
         }
 
-        private static void ValidateNoForbiddenApiUsed(
-                string pattern,
-                string recommendation,
-                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+        private static ProcessStartInfo NewRgProcessInfo(string pattern)
         {
             string projectRoot = Directory.GetCurrentDirectory();
-
 
             // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
             var psi = new ProcessStartInfo
@@ -181,15 +176,11 @@ namespace DCL.Tests
             psi.ArgumentList.Add("--glob");
             psi.ArgumentList.Add("*.cs");
 
-            if (ignorePaths != null)
-            {
-                foreach (var p in ignorePaths)
-                {
-                    psi.ArgumentList.Add("--glob");
-                    psi.ArgumentList.Add($"!{p}");
-                }
-            }
+            return psi;
+        }
 
+        private static void ExecuteRGProcess(ProcessStartInfo psi, string recommendationOnFailure)
+        {
             using var process = Process.Start(psi);
             if (process == null)
                 Assert.Fail("Failed to start ripgrep (rg). Is it installed and on PATH?");
@@ -210,8 +201,27 @@ namespace DCL.Tests
 
             if (process.ExitCode == 0)
             {
-                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendation}\n\nArgs: {psi.Arguments}");
+                Assert.Fail($"Detected forbidden API usage:\n\n{stdout}\nRecommentation: {recommendationOnFailure}\n\nArgs: {psi.Arguments}");
             }
+        }
+
+        private static void ValidateNoForbiddenApiUsed(
+                string pattern,
+                string recommendation,
+                IReadOnlyList<string>? ignorePaths) // Path ignore starts from {ROOT}/Assets
+        {
+            ProcessStartInfo psi = NewRgProcessInfo(pattern);
+
+            if (ignorePaths != null)
+            {
+                foreach (var p in ignorePaths)
+                {
+                    psi.ArgumentList.Add("--glob");
+                    psi.ArgumentList.Add($"!{p}");
+                }
+            }
+
+            ExecuteRGProcess(psi, recommendation);
         }
 
         private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
@@ -262,9 +272,6 @@ namespace DCL.Tests
         // To support WebGL compatability
         private static void ShouldNotUseNativeWebSocket(string fileContent, string filePath)
         {
-            //if (fileContent.Contains(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG))
-             //   return;
-
             var lines = fileContent.Split('\n');
             var violations = new List<string>();
 
@@ -274,7 +281,6 @@ namespace DCL.Tests
 
                 string pattern = "System.Net.WebSockets";
                 if (line.Contains(pattern))
-                        //&& line.Contains(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG) == false)
                 {
                     violations.Add($"{filePath}:{i + 1}: uses '{pattern}'");
                 }
@@ -337,14 +343,19 @@ namespace DCL.Tests
         }
 
         // To support WebGL compatability
-        private static void ShouldNotUseThreadingApiDirectly(string fileContent, string filePath)
+        private static void ShouldNotUseThreadingApiDirectly(string filePath)
         {
-            var lines = fileContent.Split('\n');
+            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using var reader = new StreamReader(fs);
+
             var violations = new List<string>();
 
-            for (int i = 0; i < lines.Length; i++)
+            int i = 0;
+            string? current;
+            while ((current = reader.ReadLine()) != null)
             {
-                string line = lines[i];
+                i++;
+                string line = current!;
 
                 if (line.Contains(TRUST_WEBGL_THREAD_SAFETY_FLAG))
                     break;
@@ -362,7 +373,7 @@ namespace DCL.Tests
 
                     if (Regex.IsMatch(line, pattern))
                     {
-                        violations.Add($"{filePath}:{i + 1}: uses '{forbiddenClass}'");
+                        violations.Add($"{filePath}:{i}: uses '{forbiddenClass}'");
                     }
                 }
             }
