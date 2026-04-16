@@ -7,6 +7,7 @@ using DCL.Settings.Settings;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
@@ -91,18 +92,26 @@ namespace DCL.VoiceChat
 
             try
             {
+                LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+
+                if (localParticipant == null)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Cannot publish: local participant is not available");
+                    return;
+                }
+
                 MicrophoneRtcAudioSource rtcAudioSource = await CreateMicrophoneSourceAsync(configuration, ct);
 
                 if (micAutoStart && microphoneHandler.IsMicrophoneEnabled.Value)
                     rtcAudioSource.Start();
 
                 ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(
-                    voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
+                    localParticipant.Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
                 microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
 
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
+                localParticipant.PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track published successfully");
             }
@@ -122,7 +131,15 @@ namespace DCL.VoiceChat
 
             try
             {
-                voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
+                LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+
+                if (localParticipant == null)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Cannot unpublish: local participant is not available");
+                    return;
+                }
+
+                localParticipant.UnpublishTrack(microphoneTrack.Value.Track, true);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track unpublished");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Failed to unpublish: {ex.Message}"); }
