@@ -237,8 +237,8 @@ MonoBehaviour:
   midHeight: 4
   maxHeight: 10
   waveDuration: 0.3
-  attackDuration: 0.15
-  decayDuration: 0.3
+  attackDuration: 0.1
+  decayDuration: 0.1
   speakingThreshold: 0.001
 --- !u!1 &3425816795021787574
 GameObject:
