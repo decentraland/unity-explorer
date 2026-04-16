@@ -528,7 +528,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
     /// <summary>
     ///     Rich data extracted from a single adaptive-format entry. Carries everything required
-    ///     to synthesize a DASH MPD when YouTube doesn't provide one — see <see cref="DashManifestBuilder"/>.
+    ///     to synthesize an HLS playlist when YouTube doesn't provide one — see <see cref="HlsManifestBuilder"/>.
     /// </summary>
     internal readonly struct AdaptiveFormatData
     {
