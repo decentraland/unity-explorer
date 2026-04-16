@@ -72,6 +72,16 @@ namespace DCL.Chat
             popupOpen = open;
         }
 
+        /// <summary>
+        /// Sets the visual state for when a reaction selector popup targets this message.
+        /// Keeps the hover buttons visible and marks the reaction button as active.
+        /// </summary>
+        public void SetReactionPopupActive(bool active)
+        {
+            popupOpen = active;
+            reactionButtonHoverView?.SetClicked(active);
+        }
+
         public void Reset()
         {
             popupOpen = false;

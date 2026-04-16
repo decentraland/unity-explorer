@@ -74,8 +74,7 @@ namespace DCL.Chat.ChatMessages
         {
             pendingReactionMessageId = messageId;
             pendingReactionChatEntry = chatEntryView;
-            chatEntryView.messageBubbleElement.SetPopupOpen(true);
-            chatEntryView.messageBubbleElement.reactionButtonHoverView?.SetClicked(true);
+            chatEntryView.messageBubbleElement.SetReactionPopupActive(true);
         }
 
         public void OnReactionPillClicked(string messageId, int emojiIndex)
@@ -142,8 +141,7 @@ namespace DCL.Chat.ChatMessages
         {
             if (pendingReactionMessageId == null) return;
 
-            pendingReactionChatEntry?.messageBubbleElement.reactionButtonHoverView?.SetClicked(false);
-            pendingReactionChatEntry?.messageBubbleElement.SetPopupOpen(false);
+            pendingReactionChatEntry?.messageBubbleElement.SetReactionPopupActive(false);
             pendingReactionChatEntry = null;
             pendingReactionMessageId = null;
         }
