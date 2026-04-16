@@ -85,6 +85,17 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
+        /// Forces a participant into the speaking state. Called when an audio track
+        /// is subscribed — ActiveSpeakers may not include them yet (no initial state on connect).
+        /// The next <see cref="Update"/> will reconcile via diff.
+        /// </summary>
+        internal void ForceStartSpeaking(string participantId)
+        {
+            activeSpeakers.Add(participantId);
+            SetSpeakingState(participantId, true);
+        }
+
+        /// <summary>
         /// Forces a participant to stop speaking. Called when their audio track
         /// is unsubscribed — ActiveSpeakers may never fire an update to clear them.
         /// </summary>

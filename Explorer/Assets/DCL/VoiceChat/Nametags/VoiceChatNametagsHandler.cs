@@ -7,6 +7,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
+using System.Collections.Generic;
 using Utility.Arch;
 
 namespace DCL.VoiceChat
@@ -18,6 +19,7 @@ namespace DCL.VoiceChat
         private readonly IReadonlyReactiveProperty<VoiceChatActivityState> activityState;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Func<string, bool>? isMuted;
+        private readonly string? localIdentity;
         private readonly IDisposable statusSubscription;
 
         private readonly World world;
@@ -32,7 +34,8 @@ namespace DCL.VoiceChat
             IReadOnlyEntityParticipantTable entityParticipantTable,
             World world,
             Entity playerEntity,
-            Func<string, bool>? isMuted = null)
+            Func<string, bool>? isMuted = null,
+            string? localIdentity = null)
         {
             this.room = room;
             this.activityState = activityState;
@@ -40,20 +43,21 @@ namespace DCL.VoiceChat
             this.world = world;
             this.playerEntity = playerEntity;
             this.isMuted = isMuted;
+            this.localIdentity = localIdentity;
 
             tracker = new ActiveSpeakersDiffTracker(entityParticipantTable, world);
 
             statusSubscription = activityState.Subscribe(OnActivityStateChanged);
             room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             room.Participants.UpdatesFromParticipant += OnParticipantUpdated;
+            room.TrackSubscribed += OnTrackSubscribed;
             room.TrackUnsubscribed += OnTrackUnsubscribed;
             entityParticipantTable.OnRegistered += OnEntityRegistered;
 
-            // Subscribe does not fire for the current value, so sync existing remote speakers
-            // if voice chat is already active when the handler is created.
-            // Only tracker is updated — LocalParticipant may not be initialized at construction time.
+            // ActiveSpeakers does not include initial state on connect — only fires on changes.
+            // Bootstrap from existing published audio tracks to cover already-speaking participants.
             if (activityState.Value == VoiceChatActivityState.ACTIVE)
-                tracker.Update(room.ActiveSpeakers);
+                BootstrapExistingPublishers();
         }
 
         public void Dispose()
@@ -64,6 +68,7 @@ namespace DCL.VoiceChat
             statusSubscription?.Dispose();
             room.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             room.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            room.TrackSubscribed -= OnTrackSubscribed;
             room.TrackUnsubscribed -= OnTrackUnsubscribed;
             entityParticipantTable.OnRegistered -= OnEntityRegistered;
 
@@ -78,7 +83,12 @@ namespace DCL.VoiceChat
             switch (state)
             {
                 case VoiceChatActivityState.ACTIVE:
+                    // Process current ActiveSpeakers first (may be empty on fresh connect),
+                    // then bootstrap from existing published tracks. Order matters:
+                    // BootstrapExistingPublishers calls ForceStartSpeaking which adds to activeSpeakers,
+                    // so it must run AFTER Update() to avoid being immediately undone by an empty diff.
                     OnActiveSpeakersUpdated();
+                    BootstrapExistingPublishers();
                     break;
                 case VoiceChatActivityState.INACTIVE:
                     tracker.MarkAllRemoving();
@@ -101,6 +111,23 @@ namespace DCL.VoiceChat
             if (activityState.Value != VoiceChatActivityState.ACTIVE) return;
 
             tracker.RetrySpeaker(walletId);
+
+            // RetrySpeaker only retries the speaking component. If the entity wasn't
+            // registered when ActivateRemoteSpeaker ran, the hushed check also failed.
+            // Apply it now that the entity exists.
+            if (isMuted != null && isMuted(walletId)
+                && entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry)
+                && world.Has<VoiceChatNametagComponent>(entry.Entity))
+                world.AddOrSet(entry.Entity, new VoiceChatHushedComponent());
+        }
+
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        {
+            if (publication.Kind != TrackKind.KindAudio) return;
+            if (activityState.Value != VoiceChatActivityState.ACTIVE) return;
+            if (participant.Identity == localIdentity) return;
+
+            ActivateRemoteSpeaker(participant.Identity);
         }
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
@@ -117,8 +144,8 @@ namespace DCL.VoiceChat
 
         private void UpdateLocalPlayerSpeakingState()
         {
-            string localIdentity = room.Participants.LocalParticipant().Identity;
-            bool isSpeaking = IsIdentityAmongActiveSpeakers(localIdentity);
+            string identity = localIdentity ?? room.Participants.LocalParticipant().Identity;
+            bool isSpeaking = IsIdentityAmongActiveSpeakers(identity);
 
             if (isSpeaking == localPlayerSpeaking)
                 return;
@@ -136,6 +163,34 @@ namespace DCL.VoiceChat
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Mirrors <see cref="RemoteTrackListener.StartListeningAsync"/> — iterates existing
+        /// remote participants and force-starts nametags for those with published audio tracks.
+        /// Needed because ActiveSpeakers does not include initial state on connect.
+        /// </summary>
+        private void BootstrapExistingPublishers()
+        {
+            foreach (KeyValuePair<string, LKParticipant> kvp in room.Participants.RemoteParticipantIdentities())
+            {
+                foreach ((string _, TrackPublication publication) in kvp.Value.Tracks)
+                {
+                    if (publication.Kind != TrackKind.KindAudio) continue;
+
+                    ActivateRemoteSpeaker(kvp.Key);
+                    break;
+                }
+            }
+        }
+
+        private void ActivateRemoteSpeaker(string participantId)
+        {
+            tracker.ForceStartSpeaking(participantId);
+
+            if (isMuted != null && isMuted(participantId)
+                && entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                world.AddOrSet(entry.Entity, new VoiceChatHushedComponent());
         }
 
         private void ApplyHushedStateToActiveSpeakers()

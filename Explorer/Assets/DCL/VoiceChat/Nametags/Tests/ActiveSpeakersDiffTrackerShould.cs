@@ -137,6 +137,36 @@ namespace DCL.VoiceChat.Tests
         }
 
         [Test]
+        public void ForceStartSpeakingWhenTrackSubscribed()
+        {
+            Entity aliceEntity = world.Create();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+
+            tracker.ForceStartSpeaking(PARTICIPANT_A);
+
+            Assert.That(world.Has<VoiceChatNametagComponent>(aliceEntity), Is.True);
+
+            ref readonly var comp = ref world.Get<VoiceChatNametagComponent>(aliceEntity);
+            Assert.That(comp.IsSpeaking, Is.True);
+        }
+
+        [Test]
+        public void ForceStartSpeakingReconcilesWithNextUpdate()
+        {
+            Entity aliceEntity = world.Create();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+
+            // Bootstrap: track subscribed before ActiveSpeakers fires
+            tracker.ForceStartSpeaking(PARTICIPANT_A);
+
+            // ActiveSpeakers update arrives with empty list (Alice stopped talking)
+            tracker.Update(new string[] { });
+
+            ref readonly var comp = ref world.Get<VoiceChatNametagComponent>(aliceEntity);
+            Assert.That(comp.IsSpeaking, Is.False);
+        }
+
+        [Test]
         public void ForceStopSpeakingWhenTrackUnsubscribed()
         {
             Entity aliceEntity = world.Create();
@@ -163,6 +193,28 @@ namespace DCL.VoiceChat.Tests
             tracker.ForceStopSpeaking(PARTICIPANT_A);
 
             Assert.That(world.Has<VoiceChatNametagComponent>(aliceEntity), Is.False);
+        }
+
+        [Test]
+        public void EmptyUpdateAfterForceStartPreservesBootstrapWhenOrderIsCorrect()
+        {
+            // Reproduces the bootstrap-then-empty-ActiveSpeakers scenario:
+            // OnActiveSpeakersUpdated (empty) runs FIRST, then BootstrapExistingPublishers.
+            // This is the correct order — bootstrap must survive.
+            Entity aliceEntity = world.Create();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+
+            // Step 1: empty Update (simulates OnActiveSpeakersUpdated with no data)
+            tracker.Update(new string[] { });
+
+            // Step 2: bootstrap (simulates BootstrapExistingPublishers finding Alice's audio track)
+            tracker.ForceStartSpeaking(PARTICIPANT_A);
+
+            // Assert — Alice's nametag is speaking
+            Assert.That(world.Has<VoiceChatNametagComponent>(aliceEntity), Is.True);
+
+            ref readonly var comp = ref world.Get<VoiceChatNametagComponent>(aliceEntity);
+            Assert.That(comp.IsSpeaking, Is.True);
         }
 
         [Test]

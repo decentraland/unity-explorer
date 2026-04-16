@@ -77,7 +77,30 @@ namespace DCL.Nametags
         public bool VoiceChat
         {
             get => ClassListContains(USS_VOICE_CHAT);
-            set => EnableInClassList(USS_VOICE_CHAT, value);
+
+            set
+            {
+                EnableInClassList(USS_VOICE_CHAT, value);
+
+                if (value)
+                {
+                    // The wave animation is a CSS transition loop driven by TransitionEndEvent
+                    // toggling USS_BADGE_VOICE_CHAT_ALT. If USS_VOICE_CHAT is added before the
+                    // element's first layout pass (e.g. nametag just taken from pool), no CSS
+                    // transition fires and the loop never starts. Waiting for GeometryChangedEvent
+                    // guarantees the element has been laid out so the first transition can fire.
+                    voiceChatBadge.RemoveFromClassList(USS_BADGE_VOICE_CHAT_ALT);
+                    voiceChatBadge.RegisterCallbackOnce<GeometryChangedEvent>(_ =>
+                    {
+                        if (ClassListContains(USS_VOICE_CHAT))
+                            voiceChatBadge.AddToClassList(USS_BADGE_VOICE_CHAT_ALT);
+                    });
+                }
+                else
+                {
+                    voiceChatBadge.RemoveFromClassList(USS_BADGE_VOICE_CHAT_ALT);
+                }
+            }
         }
 
         [UxmlAttribute]

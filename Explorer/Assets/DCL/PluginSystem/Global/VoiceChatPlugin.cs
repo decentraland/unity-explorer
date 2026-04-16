@@ -193,7 +193,8 @@ namespace DCL.PluginSystem.Global
                     entityParticipantTable,
                     world,
                     playerEntity,
-                    nearbyMuteService != null ? nearbyMuteService.IsMuted : null);
+                    nearbyMuteService != null ? nearbyMuteService.IsMuted : null,
+                    voiceChatOrchestrator.ParticipantsStateService.LocalParticipantId);
                 pluginScope.Add(nearbyNametagsHandler);
 
                 if (nearbyMuteService != null)
