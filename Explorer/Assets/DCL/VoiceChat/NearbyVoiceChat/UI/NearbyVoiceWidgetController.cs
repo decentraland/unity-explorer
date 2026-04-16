@@ -25,15 +25,13 @@ namespace DCL.VoiceChat.UI
         public NearbyVoiceWidgetController(
             NearbyVoiceWidgetView view,
             NearbyVoiceChatStateModel stateModel,
-            AudioMixerGroup? nearbyMixerGroup,
-            MicAmplitudeProvider? micAmplitudeProvider = null)
+            AudioMixerGroup? nearbyMixerGroup)
         {
             this.view = view;
             this.stateModel = stateModel;
             this.nearbyMixerGroup = nearbyMixerGroup;
 
-            if (micAmplitudeProvider != null)
-                view.InitializeAmplitude(() => micAmplitudeProvider.Amplitude);
+            view.InitializeAmplitude(() => stateModel.IsLocalSpeaking ? 1f : 0f);
 
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             SyncViewWithState(stateModel.State.Value);

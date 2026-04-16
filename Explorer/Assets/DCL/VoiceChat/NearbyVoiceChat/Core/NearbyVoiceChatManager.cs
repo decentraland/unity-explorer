@@ -30,7 +30,6 @@ namespace DCL.VoiceChat.Nearby
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
-        private readonly MicAmplitudeProvider? micAmplitudeProvider;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? nearbyStateSubscription;
@@ -45,14 +44,12 @@ namespace DCL.VoiceChat.Nearby
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
-            VoiceChatMicrophoneHandler microphoneHandler,
-            MicAmplitudeProvider? micAmplitudeProvider = null)
+            VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
             this.microphoneHandler = microphoneHandler;
-            this.micAmplitudeProvider = micAmplitudeProvider;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.NEARBY);
 
@@ -73,6 +70,7 @@ namespace DCL.VoiceChat.Nearby
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
+            islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
@@ -96,12 +94,37 @@ namespace DCL.VoiceChat.Nearby
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
             islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
+            islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
 
             Deactivate();
             micPublisher.Dispose();
             remoteListener.Dispose();
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"{TAG} Disposed");
+        }
+
+        private void OnActiveSpeakersUpdated()
+        {
+            string? localIdentity = islandRoom.Participants.LocalParticipant()?.Identity;
+
+            if (localIdentity == null)
+            {
+                stateModel.IsLocalSpeaking = false;
+                return;
+            }
+
+            bool found = false;
+
+            foreach (string speakerId in islandRoom.ActiveSpeakers)
+            {
+                if (speakerId == localIdentity)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            stateModel.IsLocalSpeaking = found;
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
@@ -175,9 +198,6 @@ namespace DCL.VoiceChat.Nearby
                 try
                 {
                     await micPublisher.PublishAsync(false, ct);
-
-                    if (micAmplitudeProvider != null && micPublisher.CurrentMicrophone.Resource.Has)
-                        micAmplitudeProvider.Bind(micPublisher.CurrentMicrophone.Resource.Value);
 
                     ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Activated — publishing and listening with 3D spatial audio");
 
@@ -253,7 +273,7 @@ namespace DCL.VoiceChat.Nearby
 
         private void Deactivate()
         {
-            micAmplitudeProvider?.Unbind();
+            stateModel.IsLocalSpeaking = false;
             micPublisher.Unpublish();
             remoteListener.StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Deactivated");

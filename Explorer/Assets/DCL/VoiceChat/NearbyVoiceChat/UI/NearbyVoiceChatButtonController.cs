@@ -15,15 +15,14 @@ namespace DCL.VoiceChat.UI
 
         public NearbyVoiceChatButtonController(
             NearbyVoiceChatButtonView view,
-            NearbyVoiceChatStateModel stateModel,
-            MicAmplitudeProvider micAmplitudeProvider)
+            NearbyVoiceChatStateModel stateModel)
         {
             this.view = view;
 
             view.SetState(stateModel.State.Value);
             view.IsSuppressed = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
             view.CloseAreaButton.onClick.AddListener(view.HideDisabledTooltip);
-            view.InitializeSoundWave(() => micAmplitudeProvider.Amplitude);
+            view.InitializeSoundWave(() => stateModel.IsLocalSpeaking ? 1f : 0f);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             suppressionSubscription = stateModel.ActiveSuppression.Subscribe(OnSuppressionReasonChanged);
         }

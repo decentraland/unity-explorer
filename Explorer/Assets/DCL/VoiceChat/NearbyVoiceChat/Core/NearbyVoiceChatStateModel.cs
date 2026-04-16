@@ -28,6 +28,12 @@ namespace DCL.VoiceChat.Nearby
 
         public IReadonlyReactiveProperty<string?> ActiveSuppression => activeSuppression;
 
+        /// <summary>
+        ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
+        ///     Updated from <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>.
+        /// </summary>
+        public bool IsLocalSpeaking { get; set; }
+
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
             state = new ReactiveProperty<NearbyVoiceChatState>(initialState);

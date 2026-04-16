@@ -71,7 +71,6 @@ namespace DCL.PluginSystem.Global
         private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private MicAmplitudeProvider? micAmplitudeProvider;
         private NearbyVoiceTipController? nearbyTipController;
         private VoiceChatConfiguration voiceChatConfiguration;
 
@@ -195,20 +194,16 @@ namespace DCL.PluginSystem.Global
                     scenesCache, sceneRestrictionBusController, nearbyStateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
-                micAmplitudeProvider = new MicAmplitudeProvider();
-                pluginScope.Add(micAmplitudeProvider);
-
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler,
-                    micAmplitudeProvider);
+                    nearbyStateModel, voiceChatHandler);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 if (nearbyVoiceChatButtonView != null)
                 {
                     nearbyButtonController = new NearbyVoiceChatButtonController(
-                        nearbyVoiceChatButtonView, nearbyStateModel, micAmplitudeProvider);
+                        nearbyVoiceChatButtonView, nearbyStateModel);
                     pluginScope.Add(nearbyButtonController);
                 }
 
@@ -216,8 +211,7 @@ namespace DCL.PluginSystem.Global
                 {
                     nearbyWidgetController = new NearbyVoiceWidgetController(
                         nearbyVoiceWidgetView, nearbyStateModel,
-                        voiceChatConfiguration.NearbyChatAudioMixerGroup,
-                        micAmplitudeProvider);
+                        voiceChatConfiguration.NearbyChatAudioMixerGroup);
                     pluginScope.Add(nearbyWidgetController);
                 }
 
