@@ -190,6 +190,7 @@ jobs:
             -buildTarget StandaloneLinux64
             -testCategory "!Performance"
             -testFilter "${{ matrix.testFilter }}"
+            -burst-disable-compilation
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
