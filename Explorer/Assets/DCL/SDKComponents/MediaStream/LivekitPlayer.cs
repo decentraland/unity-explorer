@@ -245,34 +245,39 @@ namespace DCL.SDKComponents.MediaStream
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
-            string? dominantSpeaker = null;
+            string? activeSpeaker = null;
+            List<string>? activeSpeakersSnapshot = null;
 
             try
             {
                 if (room.ActiveSpeakers.Count == 0) return;
 
-                foreach (string speakerIdentity in room.ActiveSpeakers)
-                {
-                    dominantSpeaker = speakerIdentity;
-                    break;
-                }
+                // ActiveSpeakers is backed by a plain List<string> in the livekit-sdk
+                // (DefaultActiveSpeakers) mutated on the FFI thread without synchronization.
+                // Snapshot to a local list so iteration is safe on the main thread.
+                activeSpeakersSnapshot = new List<string>(room.ActiveSpeakers);
             }
             catch (InvalidOperationException)
             {
-                // ActiveSpeakers was modified on the LiveKit FFI thread during iteration.
-                // Will retry on the next frame.
+                // Collection modified during snapshot; retry next frame.
                 return;
             }
 
-            if (dominantSpeaker == null) return;
-            if (dominantSpeaker == currentVideoIdentity) return;
+            foreach (string speakerIdentity in activeSpeakersSnapshot)
+            {
+                activeSpeaker = speakerIdentity;
+                break;
+            }
 
-            StreamKey? videoTrack = FindVideoTrackForParticipant(dominantSpeaker);
+            if (activeSpeaker == null) return;
+            if (activeSpeaker == currentVideoIdentity) return;
+
+            StreamKey? videoTrack = FindVideoTrackForParticipant(activeSpeaker);
 
             if (videoTrack == null) return;
 
             currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
-            currentVideoIdentity = dominantSpeaker;
+            currentVideoIdentity = activeSpeaker;
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 

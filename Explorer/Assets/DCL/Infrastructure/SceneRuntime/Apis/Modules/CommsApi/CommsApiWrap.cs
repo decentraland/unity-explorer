@@ -31,8 +31,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private readonly ISceneCommunicationPipe.SceneMessageHandler onDataReceivedCached;
 
         private readonly StringBuilder stringBuilder;
-        private readonly StringWriter stringWriter;
-        private readonly JsonWriter writer;
+        private StringWriter stringWriter;
+        private JsonTextWriter writer;
 
         private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
         private readonly ConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
@@ -64,6 +64,20 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             stringBuilder.Clear();
             writer.Close();
             stringWriter.Dispose();
+        }
+
+        /// <summary>
+        /// Recreates the JsonTextWriter after a mid-write exception leaves its
+        /// internal depth stack corrupted. The allocation is negligible — this
+        /// runs only on error paths that already allocated an exception object.
+        /// </summary>
+        private void ResetWriter()
+        {
+            try { writer.Close(); }
+            catch { /* writer may already be corrupted */ }
+
+            stringWriter = new StringWriter(stringBuilder);
+            writer = new JsonTextWriter(stringWriter);
         }
 
         public string GetActiveVideoStreams()
@@ -119,6 +133,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             catch (Exception e)
             {
                 sceneExceptionsHandler.OnEngineException(e);
+                ResetWriter();
                 return EMPTY_RESPONSE;
             }
         }
@@ -215,6 +230,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             catch (Exception e)
             {
                 sceneExceptionsHandler.OnEngineException(e);
+                ResetWriter();
                 return EMPTY_ARRAY;
             }
         }
