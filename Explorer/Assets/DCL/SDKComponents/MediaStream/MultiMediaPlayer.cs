@@ -193,14 +193,14 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
+        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
                 MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 mediaPlayer.WaitingForProperties = true;
-                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer, isLiveStream);
+                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer);
                 mediaPlayer.WaitingForProperties = false;
             }
 

@@ -64,15 +64,14 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Stop();
         }
 
-        internal static UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
+        internal static UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer) =>
             SetPlaybackPropertiesAsync(control,
                 sdkVideoPlayer.HasPosition ? sdkVideoPlayer.Position : MediaPlayerComponent.DEFAULT_POSITION,
                 sdkVideoPlayer is { HasLoop: true, Loop: true },
                 sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE,
-                sdkVideoPlayer is { HasPlaying: true, Playing: true },
-                isLiveStream);
+                sdkVideoPlayer is { HasPlaying: true, Playing: true });
 
-        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
+        internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, float position, bool loop, float rate, bool isPlaying)
         {
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
@@ -82,11 +81,7 @@ namespace DCL.SDKComponents.MediaStream
 
             control.SetLooping(loop);
             control.SetPlaybackRate(rate);
-
-            // For live streams, seeking to a position would move to the beginning of the DVR window.
-            // Skip the seek entirely to let AVPro start at the live edge.
-            if (!isLiveStream)
-                control.Seek(position);
+            control.Seek(position);
 
             if (isPlaying)
                 control.Play();
