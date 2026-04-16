@@ -26,32 +26,33 @@ namespace DCL.Profiles
         [Query]
         private void CompleteProfilePictureDownload(in Entity entity, ref ProfileTier profile, ref Promise promise)
         {
-            if (promise.IsCancellationRequested(World))
+            // Try to consume first: if the load already completed, we must dispose the asset
+            // even when cancellation was requested (late-cancel race)
+            if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                World.Destroy(entity);
-                return;
-            }
-
-            if (!promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
-                return;
-
-            try
-            {
-                // Guard: the Profile object may have been returned to the pool and reused for a different user
-                if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
-                    profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
-                else
+                try
+                {
+                    // Guard: the Profile object may have been returned to the pool and reused for a different user
+                    if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
+                        profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                    else
+                        result.Asset?.Dispose();
+                }
+                catch (Exception e)
+                {
                     result.Asset?.Dispose();
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
+                }
+                finally
+                {
+                    World.Destroy(entity);
+                }
+
+                return;
             }
-            catch (Exception e)
-            {
-                result.Asset?.Dispose();
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-            }
-            finally
-            {
+
+            if (promise.IsCancellationRequested(World))
                 World.Destroy(entity);
-            }
         }
     }
 }
