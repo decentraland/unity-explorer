@@ -1,4 +1,5 @@
 using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatReactions.Core;
 using DCL.Emoji;
 using System.Collections.Generic;
 using System.Text;
@@ -89,7 +90,8 @@ namespace DCL.Chat.ChatMessages
 
             if (unicode == 0) return null;
 
-            return emojiMapping.ValueMapping.GetValueOrDefault((int)unicode);
+            return EmojiCodepointHelper.TryGetRegionalIndicatorShortcode(unicode)
+                   ?? emojiMapping.ValueMapping.GetValueOrDefault((int)unicode);
         }
     }
 }

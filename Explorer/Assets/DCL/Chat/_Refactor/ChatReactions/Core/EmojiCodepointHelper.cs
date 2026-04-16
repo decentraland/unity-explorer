@@ -28,6 +28,33 @@ namespace DCL.Chat.ChatReactions.Core
             return true;
         }
 
+        public const uint REGIONAL_INDICATOR_START = 0x1F1E6;
+        public const uint REGIONAL_INDICATOR_END = 0x1F1FF;
+        public const int REGIONAL_INDICATOR_COUNT = 26;
+
+        private static readonly string[] LetterShortcodes = BuildLetterShortcodes();
+
+        private static string[] BuildLetterShortcodes()
+        {
+            var arr = new string[REGIONAL_INDICATOR_COUNT];
+
+            for (int i = 0; i < REGIONAL_INDICATOR_COUNT; i++)
+                arr[i] = $":letter-{(char)('A' + i)}:";
+
+            return arr;
+        }
+
+        /// <summary>
+        /// Regional indicator symbols (U+1F1E6–U+1F1FF) render as boxed letters A–Z,
+        /// but the emoji panel maps them to flag shortcodes (flags are pairs of these).
+        /// Returns the correct letter shortcode, or null if outside the range.
+        /// </summary>
+        public static string? TryGetRegionalIndicatorShortcode(uint unicode)
+        {
+            if (unicode < REGIONAL_INDICATOR_START || unicode > REGIONAL_INDICATOR_END) return null;
+            return LetterShortcodes[unicode - REGIONAL_INDICATOR_START];
+        }
+
         /// <summary>
         /// Converts a Unicode codepoint to its display string.
         /// Returns "?" for surrogates and out-of-range values.
