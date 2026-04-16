@@ -320,7 +320,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             else
             {
                 // Another caller is doing the warm-up — wait for it.
-                await warmupCompletion.Task;
+                await warmupCompletion.Task.AttachExternalCancellation(ct);
             }
         }
 

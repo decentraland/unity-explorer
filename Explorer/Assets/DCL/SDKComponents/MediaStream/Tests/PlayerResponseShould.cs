@@ -95,8 +95,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
 
         [Test]
-        public void DetectLive_WhenHlsManifestPresent()
+        public void DetectNotLive_WhenOnlyHlsManifestPresent()
         {
+            // HLS manifest presence alone does NOT imply live — many VODs also expose HLS.
+            // Only videoDetails.isLive / isLiveContent / lengthSeconds=="0" are live signals.
             const string json = @"{
                 ""videoDetails"": { ""lengthSeconds"": ""100"" },
                 ""streamingData"": { ""hlsManifestUrl"": ""https://manifest.googlevideo.com/hls/x.m3u8"" }
@@ -104,7 +106,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             PlayerResponse response = PlayerResponse.Parse(json);
 
-            Assert.That(response.IsLive, Is.True);
+            Assert.That(response.IsLive, Is.False);
             Assert.That(response.HlsManifestUrl, Is.EqualTo("https://manifest.googlevideo.com/hls/x.m3u8"));
         }
 
