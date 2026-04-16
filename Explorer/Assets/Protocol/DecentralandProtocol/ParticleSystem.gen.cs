@@ -28,7 +28,7 @@ namespace DCL.ECSComponents {
             "LnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJh",
             "bGFuZC9jb21tb24vY29sb3JzLnByb3RvGiBkZWNlbnRyYWxhbmQvY29tbW9u",
             "L2Zsb2F0cy5wcm90bxohZGVjZW50cmFsYW5kL2NvbW1vbi90ZXh0dXJlLnBy",
-            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i7hUKEFBC",
+            "b3RvGiFkZWNlbnRyYWxhbmQvY29tbW9uL3ZlY3RvcnMucHJvdG8i6BUKEFBC",
             "UGFydGljbGVTeXN0ZW0SEwoGYWN0aXZlGAEgASgISAGIAQESEQoEcmF0ZRgC",
             "IAEoAkgCiAEBEhoKDW1heF9wYXJ0aWNsZXMYAyABKA1IA4gBARIVCghsaWZl",
             "dGltZRgEIAEoAkgEiAEBEhQKB2dyYXZpdHkYBSABKAJIBYgBARI7ChBhZGRp",
@@ -62,7 +62,7 @@ namespace DCL.ECSComponents {
             "dHkYGiABKAsyOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
             "aWNsZVN5c3RlbS5MaW1pdFZlbG9jaXR5SBaIAQESWAoOcGxheWJhY2tfc3Rh",
             "dGUYFiABKA4yOy5kZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMuUEJQYXJ0",
-            "aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBeIAQESVQoGYnVyc3RzGB4gASgL",
+            "aWNsZVN5c3RlbS5QbGF5YmFja1N0YXRlSBeIAQESVQoGYnVyc3RzGB0gASgL",
             "MkAuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCUGFydGljbGVTeXN0",
             "ZW0uQnVyc3RDb25maWd1cmF0aW9uSBiIAQEabgoUU3ByaXRlU2hlZXRBbmlt",
             "YXRpb24SDwoHdGlsZXNfeBgBIAEoDRIPCgd0aWxlc195GAIgASgNEh4KEWZy",
@@ -90,8 +90,8 @@ namespace DCL.ECSComponents {
             "bWVCGQoXX2luaXRpYWxfdmVsb2NpdHlfc3BlZWRCCgoIX3RleHR1cmVCDQoL",
             "X2JsZW5kX21vZGVCDAoKX2JpbGxib2FyZEIPCg1fc3ByaXRlX3NoZWV0QgcK",
             "BV9sb29wQgoKCF9wcmV3YXJtQhMKEV9zaW11bGF0aW9uX3NwYWNlQhEKD19s",
-            "aW1pdF92ZWxvY2l0eUIRCg9fcGxheWJhY2tfc3RhdGVCCQoHX2J1cnN0c0oE",
-            "CB0QHkIUqgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "aW1pdF92ZWxvY2l0eUIRCg9fcGxheWJhY2tfc3RhdGVCCQoHX2J1cnN0c0IU",
+            "qgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, global::Decentraland.Common.FloatsReflection.Descriptor, global::Decentraland.Common.TextureReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -743,8 +743,11 @@ namespace DCL.ECSComponents {
     }
 
     /// <summary>Field number for the "bursts" field.</summary>
-    public const int BurstsFieldNumber = 30;
+    public const int BurstsFieldNumber = 29;
     private global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration bursts_;
+    /// <summary>
+    /// --- Emission Bursts ---
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration Bursts {
@@ -984,7 +987,7 @@ namespace DCL.ECSComponents {
         output.WriteBool(FaceTravelDirection);
       }
       if (bursts_ != null) {
-        output.WriteRawTag(242, 1);
+        output.WriteRawTag(234, 1);
         output.WriteMessage(Bursts);
       }
       if (_unknownFields != null) {
@@ -1106,7 +1109,7 @@ namespace DCL.ECSComponents {
         output.WriteBool(FaceTravelDirection);
       }
       if (bursts_ != null) {
-        output.WriteRawTag(242, 1);
+        output.WriteRawTag(234, 1);
         output.WriteMessage(Bursts);
       }
       if (_unknownFields != null) {
@@ -1526,7 +1529,7 @@ namespace DCL.ECSComponents {
             FaceTravelDirection = input.ReadBool();
             break;
           }
-          case 242: {
+          case 234: {
             if (bursts_ == null) {
               Bursts = new global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration();
             }
@@ -1709,7 +1712,7 @@ namespace DCL.ECSComponents {
             FaceTravelDirection = input.ReadBool();
             break;
           }
-          case 242: {
+          case 234: {
             if (bursts_ == null) {
               Bursts = new global::DCL.ECSComponents.PBParticleSystem.Types.BurstConfiguration();
             }
