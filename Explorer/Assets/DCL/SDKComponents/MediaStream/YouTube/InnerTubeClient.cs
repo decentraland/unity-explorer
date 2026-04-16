@@ -527,6 +527,52 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     }
 
     /// <summary>
+    ///     Rich data extracted from a single adaptive-format entry. Carries everything required
+    ///     to synthesize a DASH MPD when YouTube doesn't provide one — see <see cref="DashManifestBuilder"/>.
+    /// </summary>
+    internal readonly struct AdaptiveFormatData
+    {
+        public int Itag { get; }
+        public string Url { get; }
+        public string MimeType { get; }      // e.g. "video/mp4; codecs=\"avc1.640028\""
+        public long Bitrate { get; }
+        public int? Width { get; }            // null for audio-only
+        public int? Height { get; }           // null for audio-only
+        public int? Fps { get; }              // null for audio-only
+        public int? AudioSampleRate { get; }  // null for video-only
+        public int? AudioChannels { get; }    // null for video-only
+        public long InitRangeStart { get; }
+        public long InitRangeEnd { get; }
+        public long IndexRangeStart { get; }
+        public long IndexRangeEnd { get; }
+        public long ContentLength { get; }
+
+        public bool IsVideo => Width != null && Height != null;
+        public bool IsAudio => AudioSampleRate != null;
+        public bool HasByteRanges => InitRangeEnd > 0 && IndexRangeEnd > 0;
+
+        public AdaptiveFormatData(int itag, string url, string mimeType, long bitrate,
+            int? width, int? height, int? fps, int? audioSampleRate, int? audioChannels,
+            long initRangeStart, long initRangeEnd, long indexRangeStart, long indexRangeEnd, long contentLength)
+        {
+            Itag = itag;
+            Url = url;
+            MimeType = mimeType;
+            Bitrate = bitrate;
+            Width = width;
+            Height = height;
+            Fps = fps;
+            AudioSampleRate = audioSampleRate;
+            AudioChannels = audioChannels;
+            InitRangeStart = initRangeStart;
+            InitRangeEnd = initRangeEnd;
+            IndexRangeStart = indexRangeStart;
+            IndexRangeEnd = indexRangeEnd;
+            ContentLength = contentLength;
+        }
+    }
+
+    /// <summary>
     ///     Thin wrapper over the fields of the InnerTube player JSON response that we actually read.
     /// </summary>
     internal readonly struct PlayerResponse
@@ -536,6 +582,16 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         public string? DashManifestUrl { get; }
         public IReadOnlyList<IStreamInfo> MuxedStreams { get; }
         public IReadOnlyList<IStreamInfo> VideoOnlyStreams { get; }
+
+        /// <summary>
+        ///     All adaptive-format entries (video AND audio) with the rich metadata required for
+        ///     local DASH manifest synthesis. Populated even when YouTube doesn't return a
+        ///     dashManifestUrl — we use it to build one ourselves for the muxed-fallback path.
+        /// </summary>
+        public IReadOnlyList<AdaptiveFormatData> AdaptiveFormats { get; }
+
+        /// <summary>Video duration in seconds — needed for DASH MPD <c>mediaPresentationDuration</c>.</summary>
+        public int DurationSeconds { get; }
 
         /// <summary>
         ///     True if the response carries any playable content at all (manifest, muxed, or
@@ -555,13 +611,16 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             !string.IsNullOrEmpty(HlsManifestUrl) || !string.IsNullOrEmpty(DashManifestUrl);
 
         private PlayerResponse(bool isLive, string? hlsManifestUrl, string? dashManifestUrl,
-            IReadOnlyList<IStreamInfo> muxedStreams, IReadOnlyList<IStreamInfo> videoOnlyStreams)
+            IReadOnlyList<IStreamInfo> muxedStreams, IReadOnlyList<IStreamInfo> videoOnlyStreams,
+            IReadOnlyList<AdaptiveFormatData> adaptiveFormats, int durationSeconds)
         {
             IsLive = isLive;
             HlsManifestUrl = hlsManifestUrl;
             DashManifestUrl = dashManifestUrl;
             MuxedStreams = muxedStreams;
             VideoOnlyStreams = videoOnlyStreams;
+            AdaptiveFormats = adaptiveFormats;
+            DurationSeconds = durationSeconds;
         }
 
         public static PlayerResponse Parse(string json)
@@ -590,19 +649,44 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                           || (bool?)details?["isLiveContent"] == true
                           || (string?)details?["lengthSeconds"] == "0";
 
+            int durationSeconds = 0;
+            string? lengthSecondsStr = (string?)details?["lengthSeconds"];
+            if (!string.IsNullOrEmpty(lengthSecondsStr) && int.TryParse(lengthSecondsStr, out int parsedDuration))
+                durationSeconds = parsedDuration;
+
             var muxed = new List<IStreamInfo>();
             var videoOnly = new List<IStreamInfo>();
+            var adaptiveFormatsList = new List<AdaptiveFormatData>();
 
             if (streamingData?["formats"] is JArray formats)
-                ParseFormats(formats, muxed, videoOnlyTarget: null);
+                ParseMuxedFormats(formats, muxed);
 
-            if (streamingData?["adaptiveFormats"] is JArray adaptiveFormats)
-                ParseFormats(adaptiveFormats, muxedTarget: null, videoOnly);
+            if (streamingData?["adaptiveFormats"] is JArray adaptive)
+                ParseAdaptiveFormats(adaptive, videoOnly, adaptiveFormatsList);
 
-            return new PlayerResponse(isLive, hlsManifestUrl, dashManifestUrl, muxed, videoOnly);
+            return new PlayerResponse(isLive, hlsManifestUrl, dashManifestUrl, muxed, videoOnly, adaptiveFormatsList, durationSeconds);
         }
 
-        private static void ParseFormats(JArray array, List<IStreamInfo>? muxedTarget, List<IStreamInfo>? videoOnlyTarget)
+        private static void ParseMuxedFormats(JArray array, List<IStreamInfo> muxedTarget)
+        {
+            foreach (JToken entry in array)
+            {
+                string? url = (string?)entry["url"];
+                if (string.IsNullOrEmpty(url)) continue;
+
+                int? width = (int?)entry["width"];
+                int? height = (int?)entry["height"];
+                if (width == null || height == null) continue;
+
+                Container container = ContainerExtensions.ParseMimeType((string?)entry["mimeType"]);
+                var bitrate = new Bitrate((long?)entry["bitrate"] ?? 0);
+                var resolution = new VideoResolution(width.Value, height.Value);
+
+                muxedTarget.Add(new MuxedStreamInfo(container, bitrate, url!, resolution));
+            }
+        }
+
+        private static void ParseAdaptiveFormats(JArray array, List<IStreamInfo> videoOnlyTarget, List<AdaptiveFormatData> adaptiveTarget)
         {
             foreach (JToken entry in array)
             {
@@ -611,24 +695,54 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 // Skip entries that only expose signatureCipher — we don't implement the decipher.
                 if (string.IsNullOrEmpty(url)) continue;
 
-                string? mimeType = (string?)entry["mimeType"];
-                Container container = ContainerExtensions.ParseMimeType(mimeType);
+                int itag = (int?)entry["itag"] ?? 0;
+                string mimeType = (string?)entry["mimeType"] ?? string.Empty;
                 long bitrateValue = (long?)entry["bitrate"] ?? 0;
-                var bitrate = new Bitrate(bitrateValue);
-
                 int? width = (int?)entry["width"];
                 int? height = (int?)entry["height"];
+                int? fps = (int?)entry["fps"];
 
-                // Audio-only entries from adaptiveFormats lack width/height — skip them; we only need video.
-                if (width == null || height == null) continue;
+                int? audioSampleRate = null;
+                string? audioSampleRateStr = (string?)entry["audioSampleRate"];
+                if (!string.IsNullOrEmpty(audioSampleRateStr) && int.TryParse(audioSampleRateStr, out int parsedAsr))
+                    audioSampleRate = parsedAsr;
 
-                var resolution = new VideoResolution(width.Value, height.Value);
+                int? audioChannels = (int?)entry["audioChannels"];
 
-                if (muxedTarget != null)
-                    muxedTarget.Add(new MuxedStreamInfo(container, bitrate, url, resolution));
-                else if (videoOnlyTarget != null)
-                    videoOnlyTarget.Add(new VideoOnlyStreamInfo(container, bitrate, url, resolution));
+                long initStart = ParseRangeEndpoint(entry["initRange"]?["start"]);
+                long initEnd = ParseRangeEndpoint(entry["initRange"]?["end"]);
+                long indexStart = ParseRangeEndpoint(entry["indexRange"]?["start"]);
+                long indexEnd = ParseRangeEndpoint(entry["indexRange"]?["end"]);
+
+                long contentLength = 0;
+                string? contentLengthStr = (string?)entry["contentLength"];
+                if (!string.IsNullOrEmpty(contentLengthStr) && long.TryParse(contentLengthStr, out long parsedClen))
+                    contentLength = parsedClen;
+
+                // Capture rich data for DASH synthesis (covers BOTH video and audio entries).
+                adaptiveTarget.Add(new AdaptiveFormatData(
+                    itag, url!, mimeType, bitrateValue,
+                    width, height, fps, audioSampleRate, audioChannels,
+                    initStart, initEnd, indexStart, indexEnd, contentLength));
+
+                // Also populate the simple IStreamInfo collection for the muxed-fallback path
+                // — but only for video entries (audio-only is useless on its own to AVPro).
+                if (width != null && height != null)
+                {
+                    Container container = ContainerExtensions.ParseMimeType(mimeType);
+                    var bitrate = new Bitrate(bitrateValue);
+                    var resolution = new VideoResolution(width.Value, height.Value);
+                    videoOnlyTarget.Add(new VideoOnlyStreamInfo(container, bitrate, url!, resolution));
+                }
             }
+        }
+
+        private static long ParseRangeEndpoint(JToken? token)
+        {
+            if (token == null) return 0;
+            string? str = (string?)token;
+            if (string.IsNullOrEmpty(str)) return 0;
+            return long.TryParse(str, out long parsed) ? parsed : 0;
         }
     }
 }
