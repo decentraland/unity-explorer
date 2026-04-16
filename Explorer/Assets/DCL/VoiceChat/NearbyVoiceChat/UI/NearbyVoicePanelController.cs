@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.Proximity
 {
     public class NearbyVoicePanelController : ControllerBase<NearbyVoiceWidgetView>
     {

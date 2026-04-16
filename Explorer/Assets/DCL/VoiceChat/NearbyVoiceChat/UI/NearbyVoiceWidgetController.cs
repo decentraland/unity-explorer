@@ -1,4 +1,5 @@
 using DCL.Utilities;
+using DCL.VoiceChat.Proximity;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;

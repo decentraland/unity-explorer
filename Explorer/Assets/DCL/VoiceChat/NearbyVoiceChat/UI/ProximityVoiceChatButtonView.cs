@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DCL.VoiceChat.Nearby;
 using System;
 using System.Threading;
 using TMPro;
@@ -7,9 +8,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.Proximity
 {
-    public class NearbyVoiceChatButtonView : MonoBehaviour
+    public class ProximityVoiceChatButtonView : MonoBehaviour
     {
         [Serializable]
         public struct MetaStateSprites
@@ -27,18 +28,19 @@ namespace DCL.VoiceChat.Nearby
         [SerializeField] private ViewAnimationElementBase? tooltipAnimation;
         [SerializeField] private GameObject hoverTooltip = null!;
         [SerializeField] private GameObject greenDotImage = null!;
+        [SerializeField] private SoundWaveAnimator? soundWaveAnimator;
 
         [Space]
-        [SerializeField] private MetaStateSprites disabledSprites;
-        [SerializeField] private MetaStateSprites idleSprites;
+        [SerializeField] private MetaStateSprites disconnectedSprites;
+        [SerializeField] private MetaStateSprites hearingSprites;
         [SerializeField] private MetaStateSprites speakingSprites;
-        [SerializeField] private MetaStateSprites suppressedSprites;
+        [SerializeField] private MetaStateSprites blockedSprites;
 
         private CancellationTokenSource tooltipCts = new ();
 
         public Button? Button => button;
 
-        public bool IsSuppressed { get; set; }
+        public bool IsBlocked { get; set; }
 
         private void Awake()
         {
@@ -55,16 +57,28 @@ namespace DCL.VoiceChat.Nearby
         {
             MetaStateSprites sprites = state switch
                                        {
-                                           NearbyVoiceChatState.DISABLED => disabledSprites,
-                                           NearbyVoiceChatState.IDLE => idleSprites,
+                                           NearbyVoiceChatState.DISABLED => disconnectedSprites,
+                                           NearbyVoiceChatState.IDLE => hearingSprites,
                                            NearbyVoiceChatState.SPEAKING => speakingSprites,
-                                           NearbyVoiceChatState.SUPPRESSED => suppressedSprites,
-                                           _ => disabledSprites,
+                                           NearbyVoiceChatState.SUPPRESSED => blockedSprites,
+                                           _ => disconnectedSprites,
                                        };
 
             greenDotImage.SetActive(state is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING);
             unselectedImage!.sprite = sprites.unselected;
             hoverStateImage!.sprite = sprites.hover;
+
+            if (soundWaveAnimator != null)
+                soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.SPEAKING);
+        }
+
+        public void InitializeSoundWave(Func<float> amplitudeProvider)
+        {
+            if (soundWaveAnimator != null)
+            {
+                soundWaveAnimator.Initialize(amplitudeProvider);
+                soundWaveAnimator.gameObject.SetActive(false);
+            }
         }
 
         public void ShowDisabledTooltip()

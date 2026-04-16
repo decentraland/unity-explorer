@@ -34,6 +34,7 @@ using System.Threading;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
+using DCL.VoiceChat.Proximity;
 using ECS.Abstract;
 using Utility;
 
@@ -420,7 +421,7 @@ namespace DCL.UI.Sidebar
         {
             if (viewInstance?.NearbyVoiceChatButton == null) return;
 
-            if (viewInstance.NearbyVoiceChatButton.IsSuppressed)
+            if (viewInstance.NearbyVoiceChatButton.IsBlocked)
             {
                 viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
                 return;

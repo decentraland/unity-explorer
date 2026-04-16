@@ -5,6 +5,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Proximity;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -75,9 +76,9 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; } = null!;
 
         [field: Header("Nearby Voice Chat")]
-        [field: SerializeField] public NearbyVoiceChatButtonView? NearbyVoiceChatButton { get; private set; }
+        [field: SerializeField] public ProximityVoiceChatButtonView? NearbyVoiceChatButton { get; private set; }
         [field: SerializeField] public NearbyVoiceWidgetView? NearbyVoiceWidget { get; private set; }
-        [field: SerializeField] public NearbyVoiceTipView? NearbyVoiceTip { get; private set; }
+        [field: SerializeField] public ProximityVoiceTipView? NearbyVoiceTip { get; private set; }
 
         [field: Header("Marketplace Credits")]
         [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; } = null!;

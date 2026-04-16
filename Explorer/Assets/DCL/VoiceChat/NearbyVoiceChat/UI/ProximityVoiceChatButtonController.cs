@@ -1,25 +1,26 @@
 using DCL.Utilities;
+using DCL.VoiceChat.Nearby;
 using System;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.Proximity
 {
-    public class NearbyVoiceChatButtonController : IDisposable
+    public class ProximityVoiceChatButtonController : IDisposable
     {
         private const string CALL_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nduring Calls & Streams.";
         private const string SCENE_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nin this scene.";
 
-        private readonly NearbyVoiceChatButtonView view;
+        private readonly ProximityVoiceChatButtonView view;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
         private readonly ReactivePropertyExtensions.DisposableSubscription<string?> suppressionSubscription;
 
-        public NearbyVoiceChatButtonController(
-            NearbyVoiceChatButtonView view,
+        public ProximityVoiceChatButtonController(
+            ProximityVoiceChatButtonView view,
             NearbyVoiceChatStateModel stateModel)
         {
             this.view = view;
 
             view.SetState(stateModel.State.Value);
-            view.IsSuppressed = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
+            view.IsBlocked = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
             view.CloseAreaButton.onClick.AddListener(view.HideDisabledTooltip);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             suppressionSubscription = stateModel.ActiveSuppression.Subscribe(OnSuppressionReasonChanged);
@@ -28,7 +29,7 @@ namespace DCL.VoiceChat.Nearby
         private void OnStateChanged(NearbyVoiceChatState state)
         {
             view.SetState(state);
-            view.IsSuppressed = state == NearbyVoiceChatState.SUPPRESSED;
+            view.IsBlocked = state == NearbyVoiceChatState.SUPPRESSED;
 
             if (state != NearbyVoiceChatState.SUPPRESSED)
                 view.HideDisabledTooltip();

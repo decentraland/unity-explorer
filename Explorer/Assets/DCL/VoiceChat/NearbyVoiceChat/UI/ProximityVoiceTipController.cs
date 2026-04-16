@@ -5,16 +5,16 @@ using System;
 using System.Threading;
 using Utility;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.Proximity
 {
-    public class NearbyVoiceTipController : IDisposable
+    public class ProximityVoiceTipController : IDisposable
     {
-        private readonly NearbyVoiceTipView view;
+        private readonly ProximityVoiceTipView view;
         private readonly Action? onTryItNow;
         private CancellationTokenSource? cts;
         private bool subscribed;
 
-        public NearbyVoiceTipController(NearbyVoiceTipView view, Action? onTryItNow, ILoadingStatus loadingStatus)
+        public ProximityVoiceTipController(ProximityVoiceTipView view, Action? onTryItNow, ILoadingStatus loadingStatus)
         {
             this.view = view;
             this.onTryItNow = onTryItNow;

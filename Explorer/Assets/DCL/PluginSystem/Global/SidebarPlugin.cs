@@ -24,6 +24,7 @@ using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.Nearby;
 using DCL.UserInAppInitializationFlow;
+using DCL.VoiceChat.Proximity;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;

@@ -485,7 +485,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4785629390260472247}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b6e14a39d15d53468ac7051fa13cfa3, type: 3}
+  m_Script: {fileID: 11500000, guid: 6e1c013b3023c8f439e7dcef81c0a326, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.ProximityVoiceTipView
   <CloseButton>k__BackingField: {fileID: 6182018206026664790}
