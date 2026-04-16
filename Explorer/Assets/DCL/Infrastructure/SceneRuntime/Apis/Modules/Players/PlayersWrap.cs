@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using JetBrains.Annotations;
+using DCL.LiveKit.Public;
 using LiveKit.Rooms.Participants;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
@@ -59,7 +60,7 @@ namespace SceneRuntime.Apis.Modules.Players
 
             public PlayerListResponse(IParticipantsHub participantsHub)
             {
-                IReadOnlyDictionary<string, Participant> identities = participantsHub.RemoteParticipantIdentities();
+                IReadOnlyDictionary<string, LKParticipant> identities = participantsHub.RemoteParticipantIdentities();
 
                 using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
 
@@ -68,7 +69,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 {
                     foreach ((string identity, _) in identities)
                     {
-                        Participant remote = participantsHub.RemoteParticipant(identity)!;
+                        LKParticipant remote = participantsHub.RemoteParticipant(identity)!;
                         players!.Add(new Player(remote));
                     }
                 }
@@ -83,7 +84,7 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             public string userId;
 
-            public Player(Participant participant) : this(participant.Identity) { }
+            public Player(LKParticipant participant) : this(participant.Identity) { }
 
             public Player(string userId)
             {

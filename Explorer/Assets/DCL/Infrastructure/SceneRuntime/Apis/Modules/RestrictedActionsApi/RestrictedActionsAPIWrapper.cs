@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using JetBrains.Annotations;
-using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -11,6 +11,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
     {
         private readonly IRestrictedActionsAPI api;
 
+        private CancellationTokenSource? triggerEmoteCancellationToken;
         private CancellationTokenSource? triggerSceneEmoteCancellationToken;
 
         public RestrictedActionsAPIWrapper(IRestrictedActionsAPI api, CancellationTokenSource disposeCts) : base(disposeCts)
@@ -52,25 +53,27 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
-        public object TriggerEmote(string predefinedEmote)
+        public object TriggerEmote(string predefinedEmote, uint mask)
         {
-            return TriggerEmoteAsync().ToDisconnectedPromise(this);
+            triggerEmoteCancellationToken = triggerEmoteCancellationToken.SafeRestart();
+            return TriggerEmoteAsync(triggerEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
-            async UniTask TriggerEmoteAsync()
+            async UniTask TriggerEmoteAsync(CancellationToken ct)
             {
                 await UniTask.SwitchToMainThread();
-                api.TryTriggerEmote(predefinedEmote);
+                if (ct.IsCancellationRequested) return;
+                api.TryTriggerEmote(predefinedEmote, EnumUtils.FromInt<AvatarEmoteMask>((int)mask));
             }
         }
 
         [UsedImplicitly]
-        public object TriggerSceneEmote(string src, bool loop)
+        public object TriggerSceneEmote(string src, bool loop, uint mask)
         {
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
-                await api.TryTriggerSceneEmoteAsync(src, loop, ct);
+                await api.TryTriggerSceneEmoteAsync(src, loop, EnumUtils.FromInt<AvatarEmoteMask>((int)mask), ct);
         }
 
         [UsedImplicitly]
@@ -80,6 +83,22 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public bool OpenNftDialog(string urn) =>
             api.TryOpenNftDialog(urn);
+
+        [UsedImplicitly]
+        public object StopEmote()
+        {
+            // Cancel any in-flight trigger operations so they don't fire after the stop
+            triggerEmoteCancellationToken = triggerEmoteCancellationToken.SafeRestart();
+            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
+
+            return StopEmoteAsync().ToDisconnectedPromise(this);
+
+            async UniTask StopEmoteAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                api.TryStopEmote();
+            }
+        }
 
         public override void Dispose() { }
     }
