@@ -1,4 +1,5 @@
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -27,8 +28,8 @@ namespace DCL.Chat
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
         private Func<bool>? IsTranslationActivated;
         private Func<bool>? IsAutoTranslationEnabled;
-        public event Action<string> OnTranslateRequested;
-        public event Action<string> OnRevertRequested;
+        public Action<string>? OnTranslateRequested;
+        public Action<string>? OnRevertRequested;
         private bool isPointerInside;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
@@ -226,6 +227,16 @@ namespace DCL.Chat
             float reactionsHeight = messageReactionsView != null ? messageReactionsView.CurrentHeight : 0f;
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
                 messageBubbleElement.backgroundRectTransform.sizeDelta.y + reactionsHeight);
+        }
+
+        /// <summary>
+        /// Initializes the reactions view if present (system message prefabs lack one).
+        /// Safe to call on every bind — the view's internal guard prevents re-initialization.
+        /// </summary>
+        public void InitializeReactions(ChatReactionsAtlasConfig atlasConfig, string walletAddress,
+            ChatReactionsMessageConfig config, ViewEventBus eventBus)
+        {
+            messageReactionsView?.Initialize(atlasConfig, walletAddress, config, eventBus);
         }
 
         public void Reset()

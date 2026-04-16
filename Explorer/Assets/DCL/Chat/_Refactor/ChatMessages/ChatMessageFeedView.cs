@@ -256,13 +256,9 @@ namespace DCL.Chat.ChatMessages
                 chatEntry.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
                     !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
 
-                chatEntry.OnTranslateRequested -= HandleTranslateRequest;
-                chatEntry.OnRevertRequested -= HandleRevertRequest;
-                chatEntry.OnTranslateRequested += HandleTranslateRequest;
-                chatEntry.OnRevertRequested += HandleRevertRequest;
-
-                if (chatEntry.messageReactionsView != null)
-                    chatEntry.messageReactionsView.Initialize(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig, reactionEventBus);
+                chatEntry.OnTranslateRequested = HandleTranslateRequest;
+                chatEntry.OnRevertRequested = HandleRevertRequest;
+                chatEntry.InitializeReactions(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig, reactionEventBus);
 
                 if (chatEntry.messageBubbleElement.reactionButton != null)
                 {
