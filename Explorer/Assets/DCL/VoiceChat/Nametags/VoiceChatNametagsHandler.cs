@@ -144,7 +144,10 @@ namespace DCL.VoiceChat
 
         private void UpdateLocalPlayerSpeakingState()
         {
-            string identity = localIdentity ?? room.Participants.LocalParticipant().Identity;
+            string? identity = localIdentity ?? room.Participants.LocalParticipant()?.Identity;
+
+            if (identity == null) return;
+
             bool isSpeaking = IsIdentityAmongActiveSpeakers(identity);
 
             if (isSpeaking == localPlayerSpeaking)
