@@ -82,4 +82,4 @@ metaforge explorer test XXXX
 - [ ] For SDK features: Test scene is included
 
 ## Code Review Reference
-Please review our [Code Review Standards](https://github.com/decentraland/unity-renderer/blob/master/docs/code-review-standards.md) before submitting.
+Please review our [Branch & PR Standards](../docs/branch-and-pr-standards.md) before submitting. It explains the automated review flow, QA/DEV approval requirements, and what each label does — especially useful for first-time contributors.
