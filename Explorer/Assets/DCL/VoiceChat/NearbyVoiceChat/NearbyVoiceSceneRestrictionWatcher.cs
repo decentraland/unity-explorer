@@ -16,10 +16,7 @@ namespace DCL.VoiceChat
 
         private bool currentSceneBlocksVoice;
 
-        public NearbyVoiceSceneRestrictionWatcher(
-            IScenesCache scenesCache,
-            ISceneRestrictionBusController restrictionBus,
-            NearbyVoiceChatStateModel stateModel)
+        public NearbyVoiceSceneRestrictionWatcher(IScenesCache scenesCache, ISceneRestrictionBusController restrictionBus, NearbyVoiceChatStateModel stateModel)
         {
             this.restrictionBus = restrictionBus;
             this.stateModel = stateModel;
@@ -33,35 +30,32 @@ namespace DCL.VoiceChat
             subscription.Dispose();
 
             if (currentSceneBlocksVoice)
-                RemoveRestriction();
+            {
+                currentSceneBlocksVoice = false;
+                restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.REMOVED));
+                stateModel.Resume(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+            }
         }
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
-            bool blocksVoice = scene != null &&
-                               !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.NearbyVoiceChatEnabled;
+            bool blocksVoice = scene != null && !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.NearbyVoiceChatEnabled;
 
             if (blocksVoice == currentSceneBlocksVoice)
                 return;
 
+            currentSceneBlocksVoice = blocksVoice;
+
             if (blocksVoice)
-                ApplyRestriction();
+            {
+                restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.APPLIED));
+                stateModel.Suppress(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+            }
             else
-                RemoveRestriction();
-        }
-
-        private void ApplyRestriction()
-        {
-            currentSceneBlocksVoice = true;
-            restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.APPLIED));
-            stateModel.Suppress(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
-        }
-
-        private void RemoveRestriction()
-        {
-            currentSceneBlocksVoice = false;
-            restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.REMOVED));
-            stateModel.Resume(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+            {
+                restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.REMOVED));
+                stateModel.Resume(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+            }
         }
     }
 }

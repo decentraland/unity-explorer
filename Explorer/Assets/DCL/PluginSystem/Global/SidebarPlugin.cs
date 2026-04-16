@@ -22,7 +22,6 @@ using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
-using DCL.VoiceChat.Nearby;
 using DCL.UserInAppInitializationFlow;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Authenticators;
@@ -165,9 +164,7 @@ namespace DCL.PluginSystem.Global
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
-
-            if (mainUIView.SidebarView.NearbyVoiceWidget != null)
-                nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -194,8 +191,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
-            if (nearbyVoicePanelController != null)
-                mvcManager.RegisterController(nearbyVoicePanelController);
+            mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
