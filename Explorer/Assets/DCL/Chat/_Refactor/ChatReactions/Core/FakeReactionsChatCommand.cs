@@ -17,8 +17,7 @@ namespace DCL.Chat.ChatReactions.Core
     {
         private const string STOP = "stop";
 
-        private readonly ObjectProxy<SituationalReactionDebugController> debugControllerProxy;
-        private readonly ObjectProxy<ChatReactionsConfig> configProxy;
+        private readonly ChatReactionsContainer container;
 
         private bool isActive;
         private bool prevDebugEnabled;
@@ -33,12 +32,9 @@ namespace DCL.Chat.ChatReactions.Core
 
         public bool DebugOnly => true;
 
-        public FakeReactionsChatCommand(
-            ObjectProxy<SituationalReactionDebugController> debugControllerProxy,
-            ObjectProxy<ChatReactionsConfig> configProxy)
+        public FakeReactionsChatCommand(ChatReactionsContainer container)
         {
-            this.debugControllerProxy = debugControllerProxy;
-            this.configProxy = configProxy;
+            this.container = container;
         }
 
         public bool ValidateParameters(string[] parameters)
@@ -50,10 +46,10 @@ namespace DCL.Chat.ChatReactions.Core
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (!debugControllerProxy.Configured)
+            if (!container.IsInitialized)
                 return UniTask.FromResult("Reaction system not yet initialized.");
 
-            SituationalReactionDebugController controller = debugControllerProxy.Object!;
+            SituationalReactionDebugController controller = container.Result!.Value.DebugController;
 
             // Stop
             if ((parameters.Length == 1 && parameters[0] == STOP) || (parameters.Length == 0 && isActive))
@@ -76,9 +72,7 @@ namespace DCL.Chat.ChatReactions.Core
 
         private void SaveAndEnableFlags()
         {
-            if (!configProxy.Configured) return;
-
-            var config = configProxy.Object!;
+            var config = container.Config!;
             prevDebugEnabled = config.DebugEnabled;
             prevDynamicScaling = config.DynamicScalingEnabled;
             config.DebugEnabled = true;
@@ -87,9 +81,7 @@ namespace DCL.Chat.ChatReactions.Core
 
         private void RestoreFlags()
         {
-            if (!configProxy.Configured) return;
-
-            var config = configProxy.Object!;
+            var config = container.Config!;
             config.DebugEnabled = prevDebugEnabled;
             config.DynamicScalingEnabled = prevDynamicScaling;
         }

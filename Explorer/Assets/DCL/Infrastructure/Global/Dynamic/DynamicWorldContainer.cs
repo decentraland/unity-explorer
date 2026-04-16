@@ -1,8 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
-using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
-using DCL.Chat.ChatReactions.Debug;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
@@ -145,6 +143,7 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
+        private readonly ChatReactionsContainer chatReactionsContainer;
 
         public IMVCManager MvcManager { get; }
 
@@ -187,7 +186,8 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler)
+            BannedNotificationHandler bannedNotificationHandler,
+            ChatReactionsContainer chatReactionsContainer)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -206,10 +206,12 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
+            this.chatReactionsContainer = chatReactionsContainer;
         }
 
         public override void Dispose()
         {
+            chatReactionsContainer.Dispose();
             bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
@@ -562,9 +564,7 @@ namespace Global.Dynamic
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
             var currentChannelService = new CurrentChannelService();
 
-            var streamReactionsEmitterProxy = new ObjectProxy<StreamReactionsEmitter>();
-            var debugControllerProxy = new ObjectProxy<SituationalReactionDebugController>();
-            var reactionsConfigProxy = new ObjectProxy<ChatReactionsConfig>();
+            var chatReactionsContainer = new ChatReactionsContainer();
 
             var chatCommands = new List<IChatCommand>
             {
@@ -580,8 +580,8 @@ namespace Global.Dynamic
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
-                new StreamReactionsChatCommand(streamReactionsEmitterProxy, reactionsConfigProxy),
-                new FakeReactionsChatCommand(debugControllerProxy, reactionsConfigProxy),
+                new StreamReactionsChatCommand(chatReactionsContainer),
+                new FakeReactionsChatCommand(chatReactionsContainer),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -885,10 +885,8 @@ namespace Global.Dynamic
                     messagePipesHub,
                     bootstrapContainer.Environment,
                     bootstrapContainer.Analytics.Controller,
-                    currentChannelService,
-                    streamReactionsEmitterProxy,
-                    debugControllerProxy,
-                    reactionsConfigProxy),
+                    chatReactionsContainer,
+                    currentChannelService),
                 new ExplorePanelPlugin(
                     eventBus,
                     featureFlags,
@@ -1325,7 +1323,8 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler
+                bannedNotificationHandler,
+                chatReactionsContainer
             );
 
             // Init itself

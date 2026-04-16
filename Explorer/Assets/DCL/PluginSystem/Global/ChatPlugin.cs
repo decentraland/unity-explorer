@@ -107,9 +107,7 @@ namespace DCL.PluginSystem.Global
         private readonly DecentralandEnvironment decentralandEnvironment;
         private readonly IAnalyticsController analytics;
         private readonly CurrentChannelService? externalCurrentChannelService;
-        private readonly ObjectProxy<StreamReactionsEmitter>? streamReactionsEmitterProxy;
-        private readonly ObjectProxy<SituationalReactionDebugController>? debugControllerProxy;
-        private readonly ObjectProxy<ChatReactionsConfig>? reactionsConfigProxy;
+        private readonly ChatReactionsContainer chatReactionsContainer;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private CommandRegistry? commandRegistry;
@@ -156,10 +154,8 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
-            CurrentChannelService? externalCurrentChannelService = null,
-            ObjectProxy<StreamReactionsEmitter>? streamReactionsEmitterProxy = null,
-            ObjectProxy<SituationalReactionDebugController>? debugControllerProxy = null,
-            ObjectProxy<ChatReactionsConfig>? reactionsConfigProxy = null)
+            ChatReactionsContainer chatReactionsContainer,
+            CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
@@ -200,10 +196,8 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
+            this.chatReactionsContainer = chatReactionsContainer;
             this.externalCurrentChannelService = externalCurrentChannelService;
-            this.streamReactionsEmitterProxy = streamReactionsEmitterProxy;
-            this.debugControllerProxy = debugControllerProxy;
-            this.reactionsConfigProxy = reactionsConfigProxy;
 
             pluginCts = new CancellationTokenSource();
             eventBus.Subscribe<ChatEvents.ClickableBlockedInputClickedEvent>(OnChatClickableBlockedInputClickedEventAsync);
@@ -234,10 +228,8 @@ namespace DCL.PluginSystem.Global
 
             var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
 
-            var reactionsConfig = settings.ReactionsConfig;
-
-            var reactions = ChatReactionsFactory.Create(
-                reactionsConfig,
+            chatReactionsContainer.Initialize(
+                settings.ReactionsConfig,
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
                 messagePipesHub,
@@ -245,13 +237,11 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 chatHistory,
                 decentralandEnvironment,
-                settings.ChatSettingsAsset,
-                pluginScope);
+                settings.ChatSettingsAsset);
+
+            ChatReactionsFactory.Result reactions = chatReactionsContainer.Result!.Value;
 
             messageReactionService = reactions.MessageReactionService;
-            streamReactionsEmitterProxy?.SetObject(reactions.StreamEmitter);
-            debugControllerProxy?.SetObject(reactions.DebugController);
-            reactionsConfigProxy?.SetObject(settings.ReactionsConfig);
 
             var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
                 messageReactionService,

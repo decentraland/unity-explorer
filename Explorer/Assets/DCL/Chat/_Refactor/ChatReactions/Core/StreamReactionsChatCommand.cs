@@ -16,8 +16,7 @@ namespace DCL.Chat.ChatReactions.Core
     {
         private const string STOP = "stop";
 
-        private readonly ObjectProxy<StreamReactionsEmitter> emitterProxy;
-        private readonly ObjectProxy<ChatReactionsConfig> configProxy;
+        private readonly ChatReactionsContainer container;
 
         private bool prevDebugEnabled;
 
@@ -30,12 +29,9 @@ namespace DCL.Chat.ChatReactions.Core
 
         public bool DebugOnly => true;
 
-        public StreamReactionsChatCommand(
-            ObjectProxy<StreamReactionsEmitter> emitterProxy,
-            ObjectProxy<ChatReactionsConfig> configProxy)
+        public StreamReactionsChatCommand(ChatReactionsContainer container)
         {
-            this.emitterProxy = emitterProxy;
-            this.configProxy = configProxy;
+            this.container = container;
         }
 
         public bool ValidateParameters(string[] parameters)
@@ -54,10 +50,10 @@ namespace DCL.Chat.ChatReactions.Core
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (!emitterProxy.Configured)
+            if (!container.IsInitialized)
                 return UniTask.FromResult("Reaction system not yet initialized.");
 
-            StreamReactionsEmitter emitter = emitterProxy.Object!;
+            StreamReactionsEmitter emitter = container.Result!.Value.StreamEmitter;
 
             if (parameters.Length == 1 || (parameters.Length == 0 && emitter.IsActive))
             {
@@ -88,18 +84,14 @@ namespace DCL.Chat.ChatReactions.Core
 
         private void SaveAndEnableFlags()
         {
-            if (!configProxy.Configured) return;
-
-            var config = configProxy.Object!;
+            var config = container.Config!;
             prevDebugEnabled = config.DebugEnabled;
             config.DebugEnabled = true;
         }
 
         private void RestoreFlags()
         {
-            if (!configProxy.Configured) return;
-
-            configProxy.Object!.DebugEnabled = prevDebugEnabled;
+            container.Config!.DebugEnabled = prevDebugEnabled;
         }
     }
 }
