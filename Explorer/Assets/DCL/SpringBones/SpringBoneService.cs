@@ -24,6 +24,8 @@ namespace DCL.SpringBones
         NativeArray<SpringBoneJointConfig> jointConfigs;
         NativeArray<int> slotJointCounts;
         NativeArray<SpringBoneParentData> parentData;
+        NativeArray<bool> slotActive;
+        NativeArray<bool> slotWasActive;
 
         public SpringBoneService()
         {
@@ -48,6 +50,8 @@ namespace DCL.SpringBones
             jointConfigs = new NativeArray<SpringBoneJointConfig>(totalJoints, Allocator.Persistent);
             slotJointCounts = new NativeArray<int>(slotCapacity, Allocator.Persistent);
             parentData = new NativeArray<SpringBoneParentData>(slotCapacity, Allocator.Persistent);
+            slotActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
+            slotWasActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
 
             // Build TAA filled with dummies
             var taaTransforms = new Transform[totalJoints];
@@ -99,6 +103,53 @@ namespace DCL.SpringBones
             }
         }
 
+        public void DeactivateAllSlots()
+        {
+            for (int i = 0; i < slotCapacity; i++)
+                slotActive[i] = false;
+        }
+
+        public void SetSlotActive(int slotIndex, bool active) { slotActive[slotIndex] = active; }
+
+        public bool IsSlotActive(int slotIndex) => slotActive[slotIndex];
+
+        public void PrepareSimulation()
+        {
+            for (int slot = 0; slot < slotCapacity; slot++)
+            {
+                bool isActive = slotActive[slot];
+                bool wasActive = slotWasActive[slot];
+                slotWasActive[slot] = isActive;
+
+                if (isActive == wasActive) continue;
+
+                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+                int jointCount = slotJointCounts[slot];
+
+                if (isActive)
+                {
+                    // Inactive→active: snap tail buffers to current transform position (rest pose)
+                    for (int j = 0; j < jointCount; j++)
+                    {
+                        int idx = baseIndex + j;
+                        float3 pos = (float3)managedTransforms[idx].position;
+                        prevTails[idx] = pos;
+                        currentTails[idx] = pos;
+                        nextTails[idx] = pos;
+                    }
+                }
+                else
+                {
+                    // Active→inactive: reset bones to rest pose rotation
+                    for (int j = 0; j < jointCount; j++)
+                    {
+                        int idx = baseIndex + j;
+                        managedTransforms[idx].localRotation = jointConfigs[idx].LocalRotation;
+                    }
+                }
+            }
+        }
+
         public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix)
         {
             parentData[slotIndex] = new SpringBoneParentData
@@ -112,11 +163,20 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
-            int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+            // 1. Pull transforms on main thread — only active slots
+            for (int slot = 0; slot < slotCapacity; slot++)
+            {
+                if (!slotActive[slot]) continue;
 
-            // 1. Pull transforms on main thread
-            for (int i = 0; i < totalJoints; i++)
-                transforms[i] = SpringBoneTransformData.FromTransform(managedTransforms[i]);
+                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+                int jointCount = slotJointCounts[slot];
+
+                for (int j = 0; j < jointCount; j++)
+                {
+                    int idx = baseIndex + j;
+                    transforms[idx] = SpringBoneTransformData.FromTransform(managedTransforms[idx]);
+                }
+            }
 
             // 2. Flip tail buffers: prev ← current ← next ← prev
             FlipBuffers();
@@ -125,6 +185,7 @@ namespace DCL.SpringBones
             new SpringBoneSimulationJob
             {
                 SlotJointCounts = slotJointCounts,
+                SlotActive = slotActive,
                 JointConfigs = jointConfigs,
                 ParentData = parentData,
                 Transforms = transforms,
@@ -134,9 +195,20 @@ namespace DCL.SpringBones
                 DeltaTime = deltaTime,
             }.Schedule(slotCapacity, 1).Complete();
 
-            // 4. Push rotations back on main thread
-            for (int i = 0; i < totalJoints; i++)
-                managedTransforms[i].rotation = transforms[i].Rotation;
+            // 4. Push rotations back on main thread — only active slots
+            for (int slot = 0; slot < slotCapacity; slot++)
+            {
+                if (!slotActive[slot]) continue;
+
+                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+                int jointCount = slotJointCounts[slot];
+
+                for (int j = 0; j < jointCount; j++)
+                {
+                    int idx = baseIndex + j;
+                    managedTransforms[idx].rotation = transforms[idx].Rotation;
+                }
+            }
         }
 
         void FlipBuffers()
@@ -166,6 +238,8 @@ namespace DCL.SpringBones
             var newJointConfigs = new NativeArray<SpringBoneJointConfig>(newTotalJoints, Allocator.Persistent);
             var newSlotJointCounts = new NativeArray<int>(newCapacity, Allocator.Persistent);
             var newParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
+            var newSlotActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
+            var newSlotWasActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
 
             NativeArray<SpringBoneTransformData>.Copy(transforms, newTransforms, oldTotalJoints);
             NativeArray<float3>.Copy(prevTails, newPrevTails, oldTotalJoints);
@@ -174,6 +248,8 @@ namespace DCL.SpringBones
             NativeArray<SpringBoneJointConfig>.Copy(jointConfigs, newJointConfigs, oldTotalJoints);
             NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, slotCapacity);
             NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, slotCapacity);
+            NativeArray<bool>.Copy(slotActive, newSlotActive, slotCapacity);
+            NativeArray<bool>.Copy(slotWasActive, newSlotWasActive, slotCapacity);
 
             // Dispose old
             transforms.Dispose();
@@ -183,6 +259,8 @@ namespace DCL.SpringBones
             jointConfigs.Dispose();
             slotJointCounts.Dispose();
             parentData.Dispose();
+            slotActive.Dispose();
+            slotWasActive.Dispose();
             taa.Dispose();
 
             // Assign new
@@ -193,6 +271,8 @@ namespace DCL.SpringBones
             jointConfigs = newJointConfigs;
             slotJointCounts = newSlotJointCounts;
             parentData = newParentData;
+            slotActive = newSlotActive;
+            slotWasActive = newSlotWasActive;
             slotCapacity = newCapacity;
 
             // Resize managed transforms array (was missing — caused IndexOutOfRangeException)
@@ -228,6 +308,8 @@ namespace DCL.SpringBones
             if (jointConfigs.IsCreated) jointConfigs.Dispose();
             if (slotJointCounts.IsCreated) slotJointCounts.Dispose();
             if (parentData.IsCreated) parentData.Dispose();
+            if (slotActive.IsCreated) slotActive.Dispose();
+            if (slotWasActive.IsCreated) slotWasActive.Dispose();
             if (taa.isCreated) taa.Dispose();
 
             if (dummyTransform != null)

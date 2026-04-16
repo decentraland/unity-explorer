@@ -10,6 +10,7 @@ namespace DCL.SpringBones
     public struct SpringBoneSimulationJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> SlotJointCounts;
+        [ReadOnly] public NativeArray<bool> SlotActive;
         [ReadOnly] public NativeArray<SpringBoneJointConfig> JointConfigs;
         [ReadOnly] public NativeArray<SpringBoneParentData> ParentData;
         [ReadOnly] public NativeArray<float3> PrevTails;
@@ -24,7 +25,7 @@ namespace DCL.SpringBones
         public void Execute(int slotIndex)
         {
             int jointCount = SlotJointCounts[slotIndex];
-            if (jointCount == 0) return;
+            if (jointCount == 0 || !SlotActive[slotIndex]) return;
 
             int baseIndex = slotIndex * SpringBoneService.MAX_JOINTS_PER_SPRING;
 
