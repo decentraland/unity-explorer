@@ -34,7 +34,7 @@ namespace DCL.VoiceChat
             Source = TrackSource.SourceMicrophone,
         };
 
-        private static string micVolumeName = nameof(AudioMixerExposedParam.Microphone_Volume);
+        private const string MIC_VOLUME_NAME = nameof(AudioMixerExposedParam.Microphone_Volume);
 
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
@@ -105,8 +105,7 @@ namespace DCL.VoiceChat
                 if (micAutoStart && microphoneHandler.IsMicrophoneEnabled.Value)
                     rtcAudioSource.Start();
 
-                ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(
-                    localParticipant.Name, rtcAudioSource);
+                ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(localParticipant.Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
                 microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
@@ -153,11 +152,10 @@ namespace DCL.VoiceChat
             microphoneTrack = null;
         }
 
-        private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(
-            VoiceChatConfiguration configuration, CancellationToken ct)
+        private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(VoiceChatConfiguration configuration, CancellationToken ct)
         {
             if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
-                configuration.AudioMixerGroup.audioMixer.SetFloat(micVolumeName, 13);
+                configuration.AudioMixerGroup.audioMixer.SetFloat(MIC_VOLUME_NAME, 13);
 
 #if UNITY_STANDALONE_OSX
             bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
@@ -173,12 +171,11 @@ namespace DCL.VoiceChat
 
             Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
                 reachable.Value,
-                (configuration.AudioMixerGroup.audioMixer, micVolumeName),
+                (configuration.AudioMixerGroup.audioMixer, MIC_VOLUME_NAME),
                 configuration.microphonePlaybackToSpeakers);
 
             if (!result.Success)
-                throw new InvalidOperationException(
-                    $"Failed to create RTC audio source: {result.ErrorMessage}");
+                throw new InvalidOperationException($"Failed to create RTC audio source: {result.ErrorMessage}");
 
             return result.Value;
         }

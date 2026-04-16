@@ -61,11 +61,11 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
 
         private readonly HttpEventsApiService eventsApiService;
-        private CancellationTokenSource profileWidgetCts = new ();
+        private readonly CancellationTokenSource profileWidgetCts = new ();
+        private readonly CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
-        private CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource openPanelCts = new ();
         private SingleInstanceEntity? cameraInternal;
         private bool isMarketplaceCreditsFeatureEnabled;
@@ -141,7 +141,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
-                viewInstance.NearbyVoiceChatButton?.Button?.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
+                viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
                 if (isCameraReelFeatureEnabled)
                     viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
@@ -418,9 +418,7 @@ namespace DCL.UI.Sidebar
 
         private void OnNearbyVoiceButtonClicked()
         {
-            if (viewInstance?.NearbyVoiceChatButton == null) return;
-
-            if (viewInstance.NearbyVoiceChatButton.IsSuppressed)
+            if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
             {
                 viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
                 return;

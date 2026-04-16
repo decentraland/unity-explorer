@@ -19,16 +19,16 @@ namespace DCL.VoiceChat.UI
             public Sprite hover;
         }
 
-        [SerializeField] private Button? button;
-        [SerializeField] private Image? unselectedImage;
-        [SerializeField] private Image? hoverStateImage;
-        [SerializeField] private GameObject? suppressedTooltip;
+        [SerializeField] private Button button = null!;
+        [SerializeField] private Image unselectedImage = null!;
+        [SerializeField] private Image hoverStateImage = null!;
+        [SerializeField] private GameObject suppressedTooltip = null!;
         [field: SerializeField] public TMP_Text SuppressedText { get; private set; } = null!;
         [field: SerializeField] public Button CloseAreaButton { get; private set; } = null!;
-        [SerializeField] private ViewAnimationElementBase? tooltipAnimation;
+        [SerializeField] private ViewAnimationElementBase tooltipAnimation = null!;
         [SerializeField] private GameObject hoverTooltip = null!;
         [SerializeField] private GameObject greenDotImage = null!;
-        [SerializeField] private SoundWaveAnimator? soundWaveAnimator;
+        [SerializeField] private SoundWaveAnimator soundWaveAnimator = null!;
 
         [Space]
         [SerializeField] private MetaStateSprites disconnectedSprites;
@@ -38,19 +38,19 @@ namespace DCL.VoiceChat.UI
 
         private CancellationTokenSource tooltipCts = new ();
 
-        public Button? Button => button;
+        public Button Button => button;
 
         public bool IsSuppressed { get; set; }
 
         private void Awake()
         {
             SetState(NearbyVoiceChatState.DISABLED);
-            button!.onClick.AddListener(HideHoverTooltip);
+            button.onClick.AddListener(HideHoverTooltip);
         }
 
-        private void HideHoverTooltip()
+        private void OnDestroy()
         {
-            hoverTooltip.SetActive(false);
+            tooltipCts.SafeCancelAndDispose();
         }
 
         public void SetState(NearbyVoiceChatState state)
@@ -65,20 +65,16 @@ namespace DCL.VoiceChat.UI
                                        };
 
             greenDotImage.SetActive(state is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING);
-            unselectedImage!.sprite = sprites.unselected;
-            hoverStateImage!.sprite = sprites.hover;
+            unselectedImage.sprite = sprites.unselected;
+            hoverStateImage.sprite = sprites.hover;
 
-            if (soundWaveAnimator != null)
-                soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.SPEAKING);
+            soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.SPEAKING);
         }
 
         public void InitializeSoundWave(Func<float> amplitudeProvider)
         {
-            if (soundWaveAnimator != null)
-            {
-                soundWaveAnimator.Initialize(amplitudeProvider);
-                soundWaveAnimator.gameObject.SetActive(false);
-            }
+            soundWaveAnimator.Initialize(amplitudeProvider);
+            soundWaveAnimator.gameObject.SetActive(false);
         }
 
         public void ShowDisabledTooltip()
@@ -89,7 +85,7 @@ namespace DCL.VoiceChat.UI
 
         public void HideDisabledTooltip()
         {
-            if (!suppressedTooltip!.activeSelf) return;
+            if (!suppressedTooltip.activeSelf) return;
 
             tooltipCts = tooltipCts.SafeRestart();
             HideTooltipAsync(tooltipCts.Token).Forget();
@@ -97,24 +93,22 @@ namespace DCL.VoiceChat.UI
 
         private async UniTaskVoid ShowTooltipAsync(CancellationToken ct)
         {
-            suppressedTooltip!.SetActive(true);
+            suppressedTooltip.SetActive(true);
             CloseAreaButton.gameObject.SetActive(true);
-            await tooltipAnimation!.PlayShowAnimation(ct);
+            await tooltipAnimation.PlayShowAnimation(ct);
         }
+
+        private void HideHoverTooltip() =>
+            hoverTooltip.SetActive(false);
 
         private async UniTaskVoid HideTooltipAsync(CancellationToken ct)
         {
-            await tooltipAnimation!.PlayHideAnimation(ct);
+            await tooltipAnimation.PlayHideAnimation(ct);
 
             if (ct.IsCancellationRequested) return;
 
-            suppressedTooltip!.SetActive(false);
+            suppressedTooltip.SetActive(false);
             CloseAreaButton.gameObject.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            tooltipCts.SafeCancelAndDispose();
         }
     }
 }
