@@ -137,6 +137,35 @@ namespace DCL.VoiceChat.Tests
         }
 
         [Test]
+        public void ForceStopSpeakingWhenTrackUnsubscribed()
+        {
+            Entity aliceEntity = world.Create();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+
+            tracker.Update(new[] { PARTICIPANT_A });
+
+            ref readonly var speaking = ref world.Get<VoiceChatNametagComponent>(aliceEntity);
+            Assert.That(speaking.IsSpeaking, Is.True);
+
+            tracker.ForceStopSpeaking(PARTICIPANT_A);
+
+            ref readonly var stopped = ref world.Get<VoiceChatNametagComponent>(aliceEntity);
+            Assert.That(stopped.IsSpeaking, Is.False);
+        }
+
+        [Test]
+        public void ForceStopSpeakingDoesNothingForNonSpeaker()
+        {
+            Entity aliceEntity = world.Create();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+
+            // Alice is not speaking
+            tracker.ForceStopSpeaking(PARTICIPANT_A);
+
+            Assert.That(world.Has<VoiceChatNametagComponent>(aliceEntity), Is.False);
+        }
+
+        [Test]
         public void RemoveComponentOnParticipantDisconnect()
         {
             Entity aliceEntity = world.Create();

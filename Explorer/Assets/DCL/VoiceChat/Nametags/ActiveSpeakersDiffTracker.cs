@@ -84,6 +84,16 @@ namespace DCL.VoiceChat
             activeSpeakers.Clear();
         }
 
+        /// <summary>
+        /// Forces a participant to stop speaking. Called when their audio track
+        /// is unsubscribed — ActiveSpeakers may never fire an update to clear them.
+        /// </summary>
+        internal void ForceStopSpeaking(string participantId)
+        {
+            if (activeSpeakers.Remove(participantId))
+                SetSpeakingState(participantId, false);
+        }
+
         internal void RemoveParticipant(string participantId)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))

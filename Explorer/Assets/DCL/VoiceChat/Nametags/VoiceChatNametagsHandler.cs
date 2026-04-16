@@ -1,8 +1,11 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks;
 using System;
 using Utility.Arch;
 
@@ -40,6 +43,7 @@ namespace DCL.VoiceChat
             statusSubscription = activityState.Subscribe(OnActivityStateChanged);
             room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             room.Participants.UpdatesFromParticipant += OnParticipantUpdated;
+            room.TrackUnsubscribed += OnTrackUnsubscribed;
             entityParticipantTable.OnRegistered += OnEntityRegistered;
 
             // Subscribe does not fire for the current value, so sync existing remote speakers
@@ -57,6 +61,7 @@ namespace DCL.VoiceChat
             statusSubscription?.Dispose();
             room.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             room.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            room.TrackUnsubscribed -= OnTrackUnsubscribed;
             entityParticipantTable.OnRegistered -= OnEntityRegistered;
 
             (activityState as IDisposable)?.Dispose();
@@ -92,6 +97,12 @@ namespace DCL.VoiceChat
             if (activityState.Value != VoiceChatActivityState.ACTIVE) return;
 
             tracker.RetrySpeaker(walletId);
+        }
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio)
+                tracker.ForceStopSpeaking(participant.Identity);
         }
 
         private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
