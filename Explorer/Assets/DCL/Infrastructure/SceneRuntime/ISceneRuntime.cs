@@ -118,22 +118,19 @@ namespace SceneRuntime
         )
         {
             sceneRuntime.RegisterEngineAPI( sceneData, engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
-
-            // sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
-            // sceneRuntime.RegisterSceneApi(sceneApi);
-            // sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
-            // sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
-            // sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
-            // sceneRuntime.RegisterUserActions(restrictedActionsAPI);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
+            sceneRuntime.RegisterSceneApi(sceneApi);
+            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+            sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
+            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
-
-            // sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
-            // sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
-            // sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
-            // sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider, exceptionsHandler, realmData.IsLocalSceneDevelopment);
-
-            // sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
+            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)

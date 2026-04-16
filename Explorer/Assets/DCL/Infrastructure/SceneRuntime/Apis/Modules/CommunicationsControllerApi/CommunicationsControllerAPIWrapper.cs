@@ -81,8 +81,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         [UsedImplicitly]
         public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
-            return new byte[0];
-
             SendBinaryToParticipants(broadcastData, null);
 
             if (peerData != null)

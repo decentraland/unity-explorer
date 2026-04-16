@@ -5,7 +5,6 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Profiling;
 
@@ -33,10 +32,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtSendToRenderer(object[] data)
+        public PoolableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
-            return PoolableByteArray.EMPTY;
-
             if (disposeCts.IsCancellationRequested)
                 return PoolableByteArray.EMPTY;
 
@@ -44,11 +41,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                //instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
 
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
-
-                // PoolableByteArray result = api.CrdtSendToRenderer(data);
 
                 Profiler.EndThreadProfiling();
 

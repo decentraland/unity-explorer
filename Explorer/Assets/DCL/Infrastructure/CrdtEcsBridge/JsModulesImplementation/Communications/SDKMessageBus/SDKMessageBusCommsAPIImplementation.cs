@@ -24,7 +24,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 
         public void Send(string data)
         {
-            return;
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
             EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.String, dataBytes, ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED, null);
         }
