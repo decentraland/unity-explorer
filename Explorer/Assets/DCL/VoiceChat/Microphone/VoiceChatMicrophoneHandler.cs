@@ -191,7 +191,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
-        private void DisableMicrophone()
+        internal void DisableMicrophone()
         {
             if (!PlayerLoopHelper.IsMainThread)
             {

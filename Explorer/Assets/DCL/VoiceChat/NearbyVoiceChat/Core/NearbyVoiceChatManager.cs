@@ -229,8 +229,19 @@ namespace DCL.VoiceChat.Nearby
                         break;
 
                     case NearbyVoiceChatState.IDLE:
+                        if (micPublisher.isPublished)
+                            microphoneHandler.DisableMicrophone();
+                        else if (islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected)
+                        {
+                            activationCts = activationCts.SafeRestart();
+                            await ActivateWithRetryAsync(activationCts.Token);
+                        }
+                        break;
+
                     case NearbyVoiceChatState.SPEAKING:
-                        if (!micPublisher.isPublished && islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected)
+                        if (micPublisher.isPublished)
+                            microphoneHandler.EnableMicrophone();
+                        else if (islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected)
                         {
                             activationCts = activationCts.SafeRestart();
                             await ActivateWithRetryAsync(activationCts.Token);
