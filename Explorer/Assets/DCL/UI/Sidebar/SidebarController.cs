@@ -24,6 +24,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat.Nearby;
 using DCL.Utility.Types;
 using ECS;
 using MVC;
@@ -140,6 +141,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
+                viewInstance.NearbyVoiceChatButton?.Button?.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
                 if (isCameraReelFeatureEnabled)
                     viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
@@ -215,6 +217,7 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.smartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            viewInstance.NearbyVoiceChatButton?.Button?.onClick.AddListener(OnNearbyVoiceButtonClicked);
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
@@ -412,6 +415,19 @@ namespace DCL.UI.Sidebar
 
         private void OnSmartWearablesButtonHover() => OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
         private void OnSmartWearablesButtonUnhover() => smartWearablesTooltipController.Close();
+
+        private void OnNearbyVoiceButtonClicked()
+        {
+            if (viewInstance?.NearbyVoiceChatButton == null) return;
+
+            if (viewInstance.NearbyVoiceChatButton.IsSuppressed)
+            {
+                viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
+                return;
+            }
+
+            OpenPanelAsync(null, NearbyVoicePanelController.IssueCommand()).Forget();
+        }
 
         private void OnMarketplaceButtonClicked()
         {

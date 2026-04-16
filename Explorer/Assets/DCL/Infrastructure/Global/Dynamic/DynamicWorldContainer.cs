@@ -1123,7 +1123,10 @@ namespace Global.Dynamic
                         assetsProvisioner,
                         chatSharedAreaEventBus,
                         debugBuilder,
-                        mainUIView.SidebarView.NearbyVoiceChatButton)
+                        staticContainer.LoadingStatus,
+                        mainUIView.SidebarView.NearbyVoiceChatButton,
+                        mainUIView.SidebarView.NearbyVoiceWidget,
+                        mainUIView.SidebarView.NearbyVoiceTip)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

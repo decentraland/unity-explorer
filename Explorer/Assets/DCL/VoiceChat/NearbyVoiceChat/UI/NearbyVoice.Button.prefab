@@ -229,7 +229,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5942afbef8e879c4aa9a1bbc46ecc44b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Proximity.SoundWaveAnimator
+  m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.Nearby.SoundWaveAnimator
   barLeft: {fileID: 8351519148237826184}
   barCenter: {fileID: 2191418136491472976}
   barRight: {fileID: 2153679925950332305}

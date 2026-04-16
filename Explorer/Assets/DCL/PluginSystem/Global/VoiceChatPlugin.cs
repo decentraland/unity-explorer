@@ -24,6 +24,7 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.RealmNavigation;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
@@ -47,6 +48,9 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
         private readonly NearbyVoiceChatButtonView? nearbyVoiceChatButtonView;
+        private readonly NearbyVoiceWidgetView? nearbyVoiceWidgetView;
+        private readonly NearbyVoiceTipView? nearbyVoiceTipView;
+        private readonly ILoadingStatus loadingStatus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -61,6 +65,9 @@ namespace DCL.PluginSystem.Global
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
+        private NearbyVoiceWidgetController? nearbyWidgetController;
+        private MicAmplitudeProvider? micAmplitudeProvider;
+        private NearbyVoiceTipController? nearbyTipController;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -76,7 +83,10 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             IDebugContainerBuilder debugContainer,
-            NearbyVoiceChatButtonView? nearbyVoiceChatButtonView = null)
+            ILoadingStatus loadingStatus,
+            NearbyVoiceChatButtonView? nearbyVoiceChatButtonView = null,
+            NearbyVoiceWidgetView? nearbyVoiceWidgetView = null,
+            NearbyVoiceTipView? nearbyVoiceTipView = null)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -89,7 +99,10 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
+            this.loadingStatus = loadingStatus;
             this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
+            this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
+            this.nearbyVoiceTipView = nearbyVoiceTipView;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -180,6 +193,27 @@ namespace DCL.PluginSystem.Global
                     nearbyButtonController = new NearbyVoiceChatButtonController(
                         nearbyVoiceChatButtonView, nearbyStateModel);
                     pluginScope.Add(nearbyButtonController);
+                }
+
+                if (nearbyVoiceWidgetView != null)
+                {
+                    micAmplitudeProvider = new MicAmplitudeProvider();
+                    pluginScope.Add(micAmplitudeProvider);
+
+                    nearbyWidgetController = new NearbyVoiceWidgetController(
+                        nearbyVoiceWidgetView, nearbyStateModel,
+                        voiceChatConfiguration.NearbyChatAudioMixerGroup,
+                        micAmplitudeProvider);
+                    pluginScope.Add(nearbyWidgetController);
+                }
+
+                if (nearbyVoiceTipView != null)
+                {
+                    nearbyTipController = new NearbyVoiceTipController(
+                        nearbyVoiceTipView,
+                        () => nearbyStateModel.Enable(),
+                        loadingStatus);
+                    pluginScope.Add(nearbyTipController);
                 }
             }
         }

@@ -76,6 +76,8 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Nearby Voice Chat")]
         [field: SerializeField] public NearbyVoiceChatButtonView? NearbyVoiceChatButton { get; private set; }
+        [field: SerializeField] public NearbyVoiceWidgetView? NearbyVoiceWidget { get; private set; }
+        [field: SerializeField] public NearbyVoiceTipView? NearbyVoiceTip { get; private set; }
 
         [field: Header("Marketplace Credits")]
         [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; } = null!;
