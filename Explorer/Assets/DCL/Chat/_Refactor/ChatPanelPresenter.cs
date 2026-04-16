@@ -152,7 +152,7 @@ namespace DCL.Chat
                 emojiPanelPresenter,
                 reactionsConfig.MessageReactions,
                 chatSettingsAsset,
-                eventBus);
+                chatEventBus);
 
             string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
             view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,
@@ -180,11 +180,11 @@ namespace DCL.Chat
                 translationMemory,
                 translationCache,
                 translationSettings,
-                commandRegistry.GetMessageHistory,
-                commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead,
-                commandRegistry.TranslateMessageCommand,
-                commandRegistry.RevertToOriginalCommand,
+                chatCommandRegistry.GetMessageHistory,
+                chatCommandRegistry.CreateMessageViewModel,
+                chatCommandRegistry.MarkMessagesAsRead,
+                chatCommandRegistry.TranslateMessageCommand,
+                chatCommandRegistry.RevertToOriginalCommand,
                 reactionsPresenter,
                 messageReactionService,
                 tooltipPresenter,
@@ -199,7 +199,7 @@ namespace DCL.Chat
                 chatCommandRegistry.ResolveInputStateCommand,
                 chatCommandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
-                commandRegistry.SendMessage,
+                chatCommandRegistry.SendMessage,
                 textFormatter,
                 emojiMapping,
                 emojiPanelPresenter,

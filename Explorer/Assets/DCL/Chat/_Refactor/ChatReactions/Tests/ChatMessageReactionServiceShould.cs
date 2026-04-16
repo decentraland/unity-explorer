@@ -19,6 +19,9 @@ namespace DCL.Chat.ChatReactions.Tests
         [SetUp]
         public void SetUp()
         {
+            FeatureFlagsConfiguration.Reset();
+            OfficialWalletsHelper.Reset();
+
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
             OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 

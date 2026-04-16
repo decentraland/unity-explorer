@@ -52,7 +52,7 @@ namespace DCL.Chat.ChatReactions.Debug
         {
             UnsubscribeEventBus();
 
-            if (gameObject != null)
+            if (this != null)
                 Destroy(gameObject);
         }
 

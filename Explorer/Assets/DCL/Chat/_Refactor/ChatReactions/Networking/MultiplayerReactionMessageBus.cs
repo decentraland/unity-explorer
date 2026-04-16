@@ -5,6 +5,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -112,7 +113,7 @@ namespace DCL.Chat.ChatReactions.Networking
             reaction.Payload.EmojiIndex = emojiIndex;
             reaction.Payload.Timestamp = timestamp;
             reaction.Payload.Count = count;
-            reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
+            reaction.SendAndDisposeAsync(cts.Token, LKDataPacketKind.KindReliable).Forget();
         }
 
         private void SendChatReactionTo(int emojiIndex, string messageId, string address,
@@ -128,7 +129,7 @@ namespace DCL.Chat.ChatReactions.Networking
             reaction.Payload.EmojiIndex = emojiIndex;
             reaction.Payload.MessageId = messageId;
             reaction.Payload.Address = address;
-            reaction.SendAndDisposeAsync(cts.Token, DataPacketKind.KindReliable).Forget();
+            reaction.SendAndDisposeAsync(cts.Token, LKDataPacketKind.KindReliable).Forget();
         }
 
         private void OnSituationalReactionReceived(ReceivedMessage<Reaction> receivedMessage)
