@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatType voiceChatType;
         private readonly string tag;
 
-        private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphoreSlim = new (1, 1);
 
         private MicrophoneTrack? microphoneTrack;
 
