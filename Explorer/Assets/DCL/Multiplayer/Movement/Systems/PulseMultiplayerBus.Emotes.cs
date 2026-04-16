@@ -6,9 +6,9 @@ using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
+using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
-            if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out string walletId))
+            if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out Web3Address walletId))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
                 return;
@@ -130,7 +130,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
 
-            if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out string walletId))
+            if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out Web3Address walletId))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
                 return;
@@ -159,5 +159,9 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             ReportHub.Log(ReportCategory.MULTIPLAYER, $"EmoteStopped for {walletId}, reason: {emoteStopped.Reason}");
         }
+
+        internal bool IsPeerEmoting(Web3Address wallet) =>
+            peerIdCache.TryGetPeerId(wallet, out uint subjectId)
+            && emotingSubjects.Contains(subjectId);
     }
 }

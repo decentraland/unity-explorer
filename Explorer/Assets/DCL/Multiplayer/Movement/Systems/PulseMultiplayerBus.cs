@@ -2,6 +2,7 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
 using System;
@@ -45,12 +46,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.identityCache = identityCache;
         }
 
-        private string ResolveSelfMirrorWallet(string userId)
+        private Web3Address ResolveSelfMirrorWallet(string userId)
         {
             if (userId != SELF_MIRROR_WALLET_ID)
-                return userId;
+                return new Web3Address(userId);
 
-            return identityCache.EnsuredIdentity().Address.ToString();
+            return identityCache.EnsuredIdentity().Address;
         }
 
         public void Dispose()

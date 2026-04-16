@@ -3,6 +3,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
+using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
 using System;
@@ -40,7 +41,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
 
             PlayerJoined playerJoined = message.Message.PlayerJoined;
-            string resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
+            Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
@@ -62,7 +63,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
-            if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out string wallet))
+            if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
                 removeIntentions.Enqueue(wallet);
 
             peerIdCache.Remove(playerLeft.SubjectId);
@@ -81,7 +82,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out string wallet))
+            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out Web3Address wallet))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
                 return;
@@ -102,7 +103,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!peerIdCache.TryGetWallet(delta.SubjectId, out string wallet))
+            if (!peerIdCache.TryGetWallet(delta.SubjectId, out Web3Address wallet))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
                 return;

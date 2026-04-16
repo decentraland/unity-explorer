@@ -1,3 +1,4 @@
+using DCL.Web3;
 using System;
 using System.Collections.Generic;
 
@@ -6,10 +7,10 @@ namespace DCL.Multiplayer.Connections.Pulse
     public class PeerIdCache
     {
         private readonly object sync = new ();
-        private readonly Dictionary<uint, string> peersByWallet = new ();
-        private readonly Dictionary<string, uint> walletsByPeerId = new ();
+        private readonly Dictionary<uint, Web3Address> peersByWallet = new ();
+        private readonly Dictionary<Web3Address, uint> walletsByPeerId = new ();
 
-        public void Set(string wallet, uint peerId)
+        public void Set(Web3Address wallet, uint peerId)
         {
             lock (sync)
             {
@@ -22,7 +23,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             lock (sync)
             {
-                if (peersByWallet.Remove(peerId, out string? wallet))
+                if (peersByWallet.Remove(peerId, out Web3Address wallet))
                     walletsByPeerId.Remove(wallet);
             }
         }
@@ -42,13 +43,13 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        public bool TryGetWallet(uint peerId, out string wallet)
+        public bool TryGetWallet(uint peerId, out Web3Address wallet)
         {
             lock (sync)
                 return peersByWallet.TryGetValue(peerId, out wallet);
         }
 
-        public bool TryGetPeerId(string wallet, out uint peerId)
+        public bool TryGetPeerId(Web3Address wallet, out uint peerId)
         {
             lock (sync)
                 return walletsByPeerId.TryGetValue(wallet, out peerId);

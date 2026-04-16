@@ -1,6 +1,7 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
+using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
 using UnityEngine;
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             TeleportPerformed teleport = message.Message.Teleported;
 
-            if (!peerIdCache.TryGetWallet(teleport.SubjectId, out string wallet))
+            if (!peerIdCache.TryGetWallet(teleport.SubjectId, out Web3Address wallet))
             {
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
                 return;

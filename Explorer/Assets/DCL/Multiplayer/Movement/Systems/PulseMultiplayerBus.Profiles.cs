@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Web3;
 using Decentraland.Pulse;
 
 namespace DCL.Multiplayer.Connections.Pulse
@@ -15,7 +16,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             PlayerProfileVersionsAnnounced announcement = message.Message.PlayerProfileVersionAnnounced;
 
-            if (!peerIdCache.TryGetWallet(announcement.SubjectId, out string userId))
+            if (!peerIdCache.TryGetWallet(announcement.SubjectId, out Web3Address userId))
             {
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Cannot process remote profile announcement, peer not found: {announcement.SubjectId}");
                 return;

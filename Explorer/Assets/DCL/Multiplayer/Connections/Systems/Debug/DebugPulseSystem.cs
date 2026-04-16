@@ -1,13 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Web3;
 using ECS.Abstract;
-using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Systems.Debug
 {
@@ -26,6 +25,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string>? pktsReceivedPerSec;
         private readonly ElementBinding<string>? resyncsLastMinute;
         private readonly ElementBinding<string>? emoteMismatchesLastMinute;
+        private readonly ElementBinding<string>? emoteIdDisplay;
         private readonly DebugWidgetVisibilityBinding visibilityBinding = new (true);
         private readonly bool enabled;
 
@@ -63,6 +63,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             pktsReceivedPerSec = new ElementBinding<string>("0 pkt/s");
             resyncsLastMinute = new ElementBinding<string>("0");
             emoteMismatchesLastMinute = new ElementBinding<string>("0");
+            emoteIdDisplay = new ElementBinding<string>(string.Empty);
 
             widget!
                .SetVisibilityBinding(visibilityBinding)
@@ -74,11 +75,9 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
                .AddCustomMarker("Pkts Received", pktsReceivedPerSec)
                .AddCustomMarker("Resyncs (last 60s)", resyncsLastMinute)
                .AddCustomMarker("Emote Mismatches (last 60s)", emoteMismatchesLastMinute)
-               .AddSingleButton("Connect", OnConnectClicked);
+               .AddStringFieldWithConfirmation(string.Empty, "Lookup Peer Emote", ShowPeerEmote)
+               .AddCustomMarker("Is Emoting?", emoteIdDisplay);
         }
-
-        private void OnConnectClicked() =>
-            service.ConnectAsync(CancellationToken.None).Forget();
 
         protected override void Update(float t)
         {
@@ -120,6 +119,9 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
                 elapsed = 0f;
             }
         }
+
+        private void ShowPeerEmote(string wallet) =>
+            emoteIdDisplay!.SetAndUpdate(multiplayerBus.IsPeerEmoting(new Web3Address(wallet)) ? "Emoting" : "Not emoting");
 
         private static string FormatBytes(float bytesPerSec)
         {
