@@ -32,7 +32,7 @@
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/atteneder/glTFast.git",
+      "version": "https://github.com/decentraland/unity-gltf.git#chore/gltfast-update",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -42,7 +42,7 @@
         "com.unity.burst": "1.8.24",
         "com.unity.collections": "1.2.4"
       },
-      "hash": "faa0bde05e4f0d9cc8bb7a3c85f6a292183952ea"
+      "hash": "14bdfb4a2119b965c049ef43ef5a8d5b7aed828d"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
