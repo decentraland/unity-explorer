@@ -63,5 +63,29 @@ namespace DCL.NotificationsBus
                 notificationReceivedSubscribers[notificationType] = thisEvent;
             }
         }
+
+        public void UnsubscribeFromNotificationTypeClick(NotificationType desiredType, NotificationClickedDelegate listener)
+        {
+            if (notificationClickedSubscribers.TryGetValue(desiredType, out NotificationClickedDelegate thisEvent))
+            {
+                thisEvent -= listener;
+                if (thisEvent == null)
+                    notificationClickedSubscribers.Remove(desiredType);
+                else
+                    notificationClickedSubscribers[desiredType] = thisEvent;
+            }
+        }
+
+        public void UnsubscribeFromNotificationTypeReceived(NotificationType desiredType, NotificationReceivedDelegate listener)
+        {
+            if (notificationReceivedSubscribers.TryGetValue(desiredType, out NotificationReceivedDelegate thisEvent))
+            {
+                thisEvent -= listener;
+                if (thisEvent == null)
+                    notificationReceivedSubscribers.Remove(desiredType);
+                else
+                    notificationReceivedSubscribers[desiredType] = thisEvent;
+            }
+        }
     }
 }

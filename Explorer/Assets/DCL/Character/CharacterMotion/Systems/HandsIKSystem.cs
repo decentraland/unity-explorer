@@ -6,6 +6,7 @@ using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterMotion.Components;
+using Utility.Animations;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -72,11 +73,15 @@ namespace DCL.CharacterMotion.Systems
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
 
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
+
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
                              && rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
-                             && emoteComponent.CurrentEmoteReference == null;
+                             && emoteComponent.CurrentEmoteReference == null
+                             && !isPlayingMaskedEmote;
 
             avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isEnabled ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 

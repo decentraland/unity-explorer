@@ -21,20 +21,27 @@ namespace DCL.SDKComponents.MediaStream
             this.analytics = analytics;
         }
 
-        public UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct)
+        public async UniTask<ResolvedMediaUrl> ResolveAsync(string url, ReportData reportData, CancellationToken ct)
         {
-            string host;
+            ResolvedMediaUrl result = await inner.ResolveAsync(url, reportData, ct);
 
-            try { host = new System.Uri(url).Host; }
-            catch { host = "unknown"; }
-
-            analytics.Track(AnalyticsEvents.Media.MEDIA_STREAM_OPENED, new JObject
+            // Only track successfully resolved streams — avoids inflating metrics with
+            // failed resolutions or duplicate re-resolutions on URL expiry.
+            if (result.IsReachable)
             {
-                ["source_type"] = host,
-                ["url"] = url,
-            });
+                string host;
 
-            return inner.ResolveAsync(url, reportData, ct);
+                try { host = new System.Uri(url).Host; }
+                catch { host = "unknown"; }
+
+                analytics.Track(AnalyticsEvents.Media.MEDIA_STREAM_OPENED, new JObject
+                {
+                    ["source_type"] = host,
+                    ["url"] = url,
+                });
+            }
+
+            return result;
         }
     }
 }

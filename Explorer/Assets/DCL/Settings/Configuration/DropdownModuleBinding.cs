@@ -70,7 +70,6 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
             IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
@@ -105,7 +104,6 @@ namespace DCL.Settings.Configuration
 
                 DropdownFeatures.CHAT_TRANSLATE_FEATURE => new ChatTranslationSettingsController(viewInstance,
                     chatSettingsAsset,
-                    isTranslationChatEnabled,
                     eventBus),
                 DropdownFeatures.MSAA_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, MSAA_LEVELS, qualitySettingsController.SetMsaa, x => x.Msaa),
                 DropdownFeatures.SHADOWS_QUALITY_FEATURE => CreateDropdownQualityController(viewInstance, qualitySettingsController, SHADOW_QUALITY_LEVELS, qualitySettingsController.SetShadowQuality, x => x.SceneShadowQuality),

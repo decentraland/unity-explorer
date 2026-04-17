@@ -63,7 +63,7 @@ namespace DCL.Chat.ChatServices
         private readonly IRoom chatRoom;
         private readonly IRoomHub roomHub;
 
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly CurrentChannelService currentChannelService;
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace DCL.Chat.ChatServices
 
         public PrivateConversationUserStateService(
             CurrentChannelService currentChannelService,
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ObjectProxy<IFriendsService> friendsService,
             ChatSettingsAsset settingsAsset,
@@ -169,7 +169,7 @@ namespace DCL.Chat.ChatServices
             // Simply notify that the ChatUserState should be updated
             // It will be retrieved via "GetChatUserStateAsync"
 
-            eventBus.Publish(new ChatEvents.CurrentChannelStateUpdatedEvent());
+            eventBus.RaiseCurrentChannelStateUpdatedEvent();
         }
 
         public async UniTask<UserState> GetChatUserStateAsync(string userId, CancellationToken ct)
@@ -336,10 +336,10 @@ namespace DCL.Chat.ChatServices
             // This service doesn't know about the current channel list
             // so it's the responsibility of the corresponding presenter to detect if the user is in the list
 
-            eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline));
+            eventBus.RaiseUserStatusUpdatedEvent(new ChatChannel.ChannelId(userId), ChatChannel.ChatChannelType.USER, userId, isOnline);
 
             if (currentChannelService.CurrentChannelId.Id == userId)
-                eventBus.Publish(new ChatEvents.CurrentChannelStateUpdatedEvent());
+                eventBus.RaiseCurrentChannelStateUpdatedEvent();
         }
 
         public void CopyOnlineParticipantsTo(HashSet<string> destination)

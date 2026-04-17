@@ -8,7 +8,6 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
-using Utility;
 
 namespace DCL.Chat.ChatServices
 {
@@ -19,7 +18,7 @@ namespace DCL.Chat.ChatServices
     public class NearbyUserStateService : ICurrentChannelUserStateService
     {
         private readonly IRoomHub roomHub;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCache;
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
@@ -34,7 +33,7 @@ namespace DCL.Chat.ChatServices
             }
         }
 
-        public NearbyUserStateService(IRoomHub roomHub, IEventBus eventBus,
+        public NearbyUserStateService(IRoomHub roomHub, ChatEventBus eventBus,
             ObjectProxy<IUserBlockingCache> userBlockingCache)
         {
             this.roomHub = roomHub;
@@ -162,8 +161,6 @@ namespace DCL.Chat.ChatServices
         /// <param name="connectionState"></param>
         private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
-            bool shouldNotify = false;
-
             lock (onlineParticipants)
             {
                 switch (connectionState)
@@ -171,26 +168,24 @@ namespace DCL.Chat.ChatServices
                     case LKConnectionState.ConnDisconnected:
                     case LKConnectionState.ConnConnected:
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
+                        eventBus.RaiseChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants);
                         CopyToSnapshotBuffer();
-                        shouldNotify = true;
+                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
                         break;
                 }
             }
-
-            if (shouldNotify)
-                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
         }
 
         private void SetOnline(string userId)
         {
             if (onlineParticipants.Add(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true));
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, true);
         }
 
         private void SetOffline(string userId)
         {
             if (onlineParticipants.Remove(userId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false));
+                eventBus.RaiseUserStatusUpdatedEvent(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, userId, false);
         }
 
         private void UnblockedSetOnline(string userId)
