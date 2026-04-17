@@ -37,17 +37,19 @@ namespace DCL.VoiceChat.UI
             if (disposed) return;
             disposed = true;
 
+            view.CloseButton.onClick.RemoveListener(OnClose);
+            view.TryItNowButton.onClick.RemoveListener(OnTryItNow);
             view.Hide();
             cts.SafeCancelAndDispose();
         }
 
         private async UniTaskVoid WaitAndShowAsync(ILoadingStatus loadingStatus, CancellationToken ct)
         {
-            await UniTask.WaitUntil(
+            bool wasCancelled = await UniTask.WaitUntil(
                 () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
-                cancellationToken: ct);
+                cancellationToken: ct).SuppressCancellationThrow();
 
-            if (ct.IsCancellationRequested)
+            if (wasCancelled)
                 return;
 
             view.Show();

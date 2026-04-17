@@ -24,8 +24,11 @@ namespace DCL.VoiceChat.UI
             await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
-        protected override void OnViewClose() =>
+        protected override void OnViewClose()
+        {
             closeViewTask?.TrySetResult();
+            viewInstance?.CloseAreaButton.onClick.RemoveListener(OnClose);
+        }
 
         private void OnClose() =>
             closeViewTask?.TrySetResult();

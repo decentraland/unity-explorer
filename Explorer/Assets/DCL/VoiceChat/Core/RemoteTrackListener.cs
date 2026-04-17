@@ -28,6 +28,7 @@ namespace DCL.VoiceChat
         private readonly PlaybackSourcesHub playbackSourcesHub;
 
         private bool isDisposed;
+        private bool isListening;
         internal bool isSuppressed { get; private set; }
 
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
@@ -53,6 +54,9 @@ namespace DCL.VoiceChat
 
         public async UniTaskVoid StartListeningAsync()
         {
+            if (isListening) return;
+            isListening = true;
+
             if (!PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToMainThread();
 
@@ -75,6 +79,8 @@ namespace DCL.VoiceChat
 
         public async UniTaskVoid StopListeningAsync()
         {
+            isListening = false;
+
             if (!PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToMainThread();
 
