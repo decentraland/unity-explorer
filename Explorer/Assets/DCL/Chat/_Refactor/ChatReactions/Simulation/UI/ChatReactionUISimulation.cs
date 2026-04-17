@@ -14,10 +14,8 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
     /// </summary>
     public sealed class ChatReactionUISimulation : IDisposable
     {
-        private const float LANE_JITTER_H = 12f;
-        private const float LANE_JITTER_V = 8f;
-        private const float RECT_JITTER_H = 8f;
-        private const float RECT_JITTER_V = 4f;
+        private const float SPAWN_JITTER_H = 8f;
+        private const float SPAWN_JITTER_V = 4f;
         private const float FALLBACK_LATERAL_RANGE = 20f;
 
         private readonly ChatReactionsConfig config;
@@ -98,8 +96,15 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         {
             if (!Enabled) return;
 
-            Vector2 basePx = ResolveDefaultSpawnPosition();
-            SpawnBurst(basePx, emojiIndex, count, LANE_JITTER_H, LANE_JITTER_V);
+            if (defaultSpawnRect != null)
+            {
+                TriggerUIReactionFromRect(defaultSpawnRect, emojiIndex, count);
+                return;
+            }
+
+            // Fallback: no registered rect (debug / pre-UI-init). Spread across the lane bottom.
+            Vector2 basePx = spawnResolver.GetSpawnPxBottomCenter();
+            SpawnBurst(basePx, emojiIndex, count);
         }
 
         public void TriggerUIReactionFromRect(RectTransform sourceRect, int emojiIndex, int count)
@@ -107,7 +112,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
             if (!Enabled) return;
 
             Vector2 basePx = spawnResolver.GetSpawnPxFromRectCenter(sourceRect, config.UILane.RectSpawnOffset);
-            SpawnBurst(basePx, emojiIndex, count, RECT_JITTER_H, RECT_JITTER_V);
+            SpawnBurst(basePx, emojiIndex, count);
         }
 
         public void BeginUIStream(RectTransform sourceRect) =>
@@ -163,7 +168,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
             Profiler.EndSample();
         }
 
-        private void SpawnBurst(Vector2 basePx, int emojiIndex, int count, float jitterH, float jitterV)
+        private void SpawnBurst(Vector2 basePx, int emojiIndex, int count)
         {
             var ui = config.UILane;
             int softCap = ui.MaxVisibleParticles;
@@ -179,7 +184,8 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
                 float lifetime = rng.NextFloat(ui.LifetimeRange.x, ui.LifetimeRange.y);
 
                 Vector2 velocity = ResolveSpawnVelocity(ui, out float phase);
-                Vector2 jitter = new Vector2(rng.NextFloat(-jitterH, jitterH), rng.NextFloat(-jitterV, jitterV));
+                Vector2 jitter = new Vector2(rng.NextFloat(-SPAWN_JITTER_H, SPAWN_JITTER_H),
+                                             rng.NextFloat(-SPAWN_JITTER_V, SPAWN_JITTER_V));
 
                 if (!uiStore.TryAdd(new ChatReactionsUiParticle
                 {
@@ -211,11 +217,6 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
             float speed = rng.NextFloat(ui.SpeedRange.x, ui.SpeedRange.y);
             return new Vector2(rng.NextFloat(-FALLBACK_LATERAL_RANGE, FALLBACK_LATERAL_RANGE), speed);
         }
-
-        private Vector2 ResolveDefaultSpawnPosition() =>
-            defaultSpawnRect != null
-                ? spawnResolver.GetSpawnPxFromRectCenter(defaultSpawnRect)
-                : spawnResolver.GetSpawnPxBottomCenter();
 
         public int GetRandomEmojiIndex() =>
             rng.Next(0, atlasTotalTiles);
