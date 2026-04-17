@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Utility.Multithreading;
 using UnityEngine;
 
 namespace SceneRuntime.Factory
@@ -86,7 +87,7 @@ namespace SceneRuntime.Factory
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());

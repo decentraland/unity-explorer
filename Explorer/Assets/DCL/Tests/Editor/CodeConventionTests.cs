@@ -24,6 +24,8 @@ namespace DCL.Tests
         private const string TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
         private const string IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG);
 
+        private const string IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG = nameof(IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG);
+
         private const string THREADING_CLASSES_API_LIST_PATH = "Assets/DCL/Tests/Editor/excludes_threading.txt";
 
         private static readonly string[] UNITASK_FORBIDDEN_CALLS = new []
@@ -373,6 +375,9 @@ namespace DCL.Tests
             for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i];
+
+                if (line.Contains(IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG))
+                    continue;
 
                 foreach (string pattern in UNITASK_FORBIDDEN_CALLS)
                 {

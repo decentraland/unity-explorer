@@ -33,7 +33,42 @@ namespace Utility.Multithreading
                 Func<UniTask> action,
                 bool configureAwait = true,
                 CancellationToken cancellationToken = default) =>
-            UniTask.RunOnThreadPool(action, configureAwait, cancellationToken);
+            UniTask.RunOnThreadPool(action, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
+#endif
+
+
+#if UNITY_WEBGL
+        public static UniTask<T> RunOnThreadPool<T>(
+                Func<T> func,
+                bool configureAwait = true,
+                CancellationToken cancellationToken = default)
+        {
+            T result = func();
+            return UniTask.FromResult<T>(result);
+        }
+#else
+        public static UniTask<T> RunOnThreadPool<T>(
+                Func<T> func,
+                bool configureAwait = true,
+                CancellationToken cancellationToken = default) =>
+            UniTask.RunOnThreadPool(func, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
+#endif
+
+#if UNITY_WEBGL
+        public static UniTask RunOnThreadPool(
+                Action action,
+                bool configureAwait = true,
+                CancellationToken cancellationToken = default)
+        {
+            action();
+            return UniTask.CompletedTask;
+        }
+#else
+        public static async UniTask RunOnThreadPool(
+                Action action,
+                bool configureAwait = true,
+                CancellationToken cancellationToken = default) =>
+            UniTask.RunOnThreadPool(action, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
 #endif
     }
 }
