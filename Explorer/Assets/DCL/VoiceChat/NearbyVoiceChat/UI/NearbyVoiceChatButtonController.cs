@@ -13,9 +13,7 @@ namespace DCL.VoiceChat.UI
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
         private readonly ReactivePropertyExtensions.DisposableSubscription<SuppressionReason?> suppressionSubscription;
 
-        public NearbyVoiceChatButtonController(
-            NearbyVoiceChatButtonView view,
-            NearbyVoiceChatStateModel stateModel)
+        public NearbyVoiceChatButtonController(NearbyVoiceChatButtonView view, NearbyVoiceChatStateModel stateModel)
         {
             this.view = view;
 

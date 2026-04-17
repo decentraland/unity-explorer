@@ -15,9 +15,7 @@ namespace DCL.VoiceChat.UI
         public override void Dispose()
         {
             base.Dispose();
-
-            if (!viewInstance) return;
-            viewInstance.CloseAreaButton.onClick.RemoveAllListeners();
+            viewInstance?.CloseAreaButton.onClick.RemoveAllListeners();
         }
 
         protected override void OnViewInstantiated()
@@ -32,14 +30,10 @@ namespace DCL.VoiceChat.UI
             await closeViewTask.Task.AttachExternalCancellation(ct).SuppressCancellationThrow();
         }
 
-        protected override void OnViewClose()
-        {
+        protected override void OnViewClose() =>
             closeViewTask?.TrySetCanceled();
-        }
 
-        private void OnClose()
-        {
+        private void OnClose() =>
             closeViewTask?.TrySetResult();
-        }
     }
 }

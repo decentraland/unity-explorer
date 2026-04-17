@@ -1,4 +1,5 @@
 using MVC;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,13 +32,19 @@ namespace DCL.VoiceChat.UI
         [Min(1f)][Tooltip("How fast color reacts to amplitude changes")]
         [SerializeField] private float colorSmoothing = 12f;
 
-        private System.Func<float>? amplitudeProvider;
+        private Func<float> amplitudeProvider;
         private bool isSpeakingState;
         private float smoothedIntensity;
 
-        public void InitializeAmplitude(System.Func<float> provider)
+        private void Awake()
+        {
+            enabled = false;
+        }
+
+        public void Initialize(Func<float> provider)
         {
             amplitudeProvider = provider;
+            enabled = true;
         }
 
         public void SetSpeaking(bool isSpeaking)
@@ -53,11 +60,12 @@ namespace DCL.VoiceChat.UI
 
         private void Update()
         {
-            if (!isSpeakingState || amplitudeProvider == null) return;
-
-            float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
-            smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
-            speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
+            if (isSpeakingState)
+            {
+                float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
+                smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
+                speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
+            }
         }
     }
 }

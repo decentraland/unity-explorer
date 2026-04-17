@@ -238,9 +238,7 @@ namespace DCL.VoiceChat
                         if (micPublisher.isPublished)
                             microphoneHandler.DisableMicrophone();
 
-                        if (islandRoom.Info.ConnectionState == LKConnectionState.ConnConnected)
-                            remoteListener.StartListeningAsync().Forget();
-
+                        Connect();
                         break;
 
                     case NearbyVoiceChatState.SPEAKING:

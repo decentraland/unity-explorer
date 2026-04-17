@@ -15,7 +15,7 @@ namespace DCL.VoiceChat.UI
         [SerializeField] private RectTransform barCenter = null!;
         [SerializeField] private RectTransform barRight = null!;
 
-        [Header("Heights")]
+        [Header("HEIGHTS")]
         [Min(0f)]
         [SerializeField] private float minHeight = 2f;
         [Min(0f)]
@@ -23,12 +23,12 @@ namespace DCL.VoiceChat.UI
         [Min(0f)]
         [SerializeField] private float maxHeight = 10f;
 
-        [Header("Wave")]
+        [Header("WAVE")]
         [Tooltip("Ping-pong cycle duration while speaking")]
         [Min(0.01f)]
         [SerializeField] private float waveDuration = 0.3f;
 
-        [Header("Attack / Decay")]
+        [Header("ATTACK / DECAY")]
         [Tooltip("Time to grow from dots to speaking position")]
         [Min(0.01f)]
         [SerializeField] private float attackDuration = 0.15f;
@@ -37,25 +37,30 @@ namespace DCL.VoiceChat.UI
         [Min(0.01f)]
         [SerializeField] private float decayDuration = 0.3f;
 
-        [Header("Voice Detection")]
+        [Header("VOICE DETECTION")]
         [Tooltip("Raw RMS amplitude above this value is treated as speaking")]
         [Min(0f)]
         [SerializeField] private float speakingThreshold = 0.001f;
 
-        private Func<float>? amplitudeProvider;
+        private Func<float> amplitudeProvider;
+
         private float waveProgress;
         private float speakingBlend; // 0 = dots, 1 = fully speaking
         private bool altState;
 
+        private void Awake()
+        {
+            enabled = false;
+        }
+
         public void Initialize(Func<float> amplitudeGetter)
         {
             amplitudeProvider = amplitudeGetter;
+            enabled = true;
         }
 
         private void Update()
         {
-            if (amplitudeProvider == null) return;
-
             bool isSpeaking = amplitudeProvider() > speakingThreshold;
 
             // Attack / Decay

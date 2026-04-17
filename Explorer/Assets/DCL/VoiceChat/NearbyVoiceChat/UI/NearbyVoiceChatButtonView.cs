@@ -19,15 +19,22 @@ namespace DCL.VoiceChat.UI
             public Sprite hover;
         }
 
+        [field: SerializeField] public Button CloseAreaButton { get; private set; } = null!;
+
+        [Space]
         [SerializeField] private Button button = null!;
         [SerializeField] private Image unselectedImage = null!;
         [SerializeField] private Image hoverStateImage = null!;
+
+        [Space]
         [SerializeField] private GameObject suppressedTooltip = null!;
         [field: SerializeField] public TMP_Text SuppressedText { get; private set; } = null!;
-        [field: SerializeField] public Button CloseAreaButton { get; private set; } = null!;
+
         [SerializeField] private ViewAnimationElementBase tooltipAnimation = null!;
         [SerializeField] private GameObject hoverTooltip = null!;
         [SerializeField] private GameObject greenDotImage = null!;
+
+        [Space]
         [SerializeField] private SoundWaveAnimator soundWaveAnimator = null!;
 
         [Space]
@@ -44,7 +51,9 @@ namespace DCL.VoiceChat.UI
 
         private void Awake()
         {
+            soundWaveAnimator.gameObject.SetActive(false);
             SetState(NearbyVoiceChatState.DISABLED);
+
             button.onClick.AddListener(HideHoverTooltip);
         }
 
@@ -74,7 +83,6 @@ namespace DCL.VoiceChat.UI
         public void InitializeSoundWave(Func<float> amplitudeProvider)
         {
             soundWaveAnimator.Initialize(amplitudeProvider);
-            soundWaveAnimator.gameObject.SetActive(false);
         }
 
         public void ShowDisabledTooltip()

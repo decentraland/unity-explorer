@@ -11,27 +11,25 @@ namespace DCL.VoiceChat.UI
     {
         private const string VOLUME_PARAM = "NearbyVoiceChat_Volume";
         private const float MIN_VOLUME_DB = -80f;
+
         private const string IDLE_TEXT = "Hold <color=#A09BA8>[T]</color> to speak momentarily";
         private const string SPEAKING_PUSH_TO_TALK_TEXT = "Release <color=#A09BA8>[T]</color> to stop speaking";
         private const string SPEAKING_BUTTON_TEXT = "Press <color=#A09BA8>[T]</color> to stop speaking";
 
         private readonly NearbyVoiceWidgetView view;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly AudioMixerGroup? nearbyMixerGroup;
+        private readonly AudioMixerGroup nearbyMixerGroup;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
 
         private bool pushToTalkSubscribed;
 
-        public NearbyVoiceWidgetController(
-            NearbyVoiceWidgetView view,
-            NearbyVoiceChatStateModel stateModel,
-            AudioMixerGroup? nearbyMixerGroup)
+        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup nearbyMixerGroup)
         {
             this.view = view;
             this.stateModel = stateModel;
             this.nearbyMixerGroup = nearbyMixerGroup;
 
-            view.InitializeAmplitude(() => stateModel.IsLocalSpeaking ? 1f : 0f);
+            view.Initialize(() => stateModel.IsLocalSpeaking ? 1f : 0f);
 
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             SyncViewWithState(stateModel.State.Value);
@@ -86,21 +84,19 @@ namespace DCL.VoiceChat.UI
 
         private void OnHearOthersToggled(bool isOn)
         {
-            if (isOn)
-                stateModel.Enable();
-            else
-                stateModel.Disable();
+            if (isOn) stateModel.Enable();
+            else stateModel.Disable();
         }
 
         private void OnSpeakButtonClicked()
         {
-            if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
-                stateModel.StopSpeaking();
-            else if (stateModel.State.Value == NearbyVoiceChatState.IDLE)
+            if (stateModel.State.Value == NearbyVoiceChatState.IDLE)
             {
                 stateModel.StartSpeaking();
                 view.HearText.text = SPEAKING_BUTTON_TEXT;
             }
+            else if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
+                stateModel.StopSpeaking();
         }
 
         private void SubscribePushToTalk()
@@ -134,31 +130,17 @@ namespace DCL.VoiceChat.UI
 
         private void OnVolumeChanged(float value)
         {
-            ApplySliderVolume(value);
+            float db = value > 0.0001f ? Mathf.Log10(value) * 20f : MIN_VOLUME_DB;
+            nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
         }
 
         private void SyncSliderWithMixer()
         {
-            if (nearbyMixerGroup != null &&
-                nearbyMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
+            if (nearbyMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
             {
-                float linear = db > MIN_VOLUME_DB
-                    ? Mathf.Pow(10f, db / 20f)
-                    : 0f;
-
+                float linear = db > MIN_VOLUME_DB ? Mathf.Pow(10f, db / 20f) : 0f;
                 view.VolumeSlider.SetValueWithoutNotify(linear);
             }
-        }
-
-        private void ApplySliderVolume(float sliderValue)
-        {
-            if (nearbyMixerGroup == null) return;
-
-            float db = sliderValue > 0.0001f
-                ? Mathf.Log10(sliderValue) * 20f
-                : MIN_VOLUME_DB;
-
-            nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
         }
     }
 }
