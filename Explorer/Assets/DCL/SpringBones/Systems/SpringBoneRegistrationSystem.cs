@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using GLTFast;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -206,10 +207,15 @@ namespace DCL.SpringBones
 
             ComputeInitialTailPositions(joints, tails);
 
+            // Chain always starts with a root joint (flushed on IsRoot in RegisterSprings),
+            // so the root authoring component lives on joints[0].
+            SpringBoneJointComponent rootComponent = joints[0].GetComponent<SpringBoneJointComponent>();
+
             return springBoneService.RegisterSpring(
                 joints.ToArray(),
                 configs.ToArray(),
-                tails.ToArray());
+                tails.ToArray(),
+                rootComponent);
         }
 
         static void ComputeInitialTailPositions(List<Transform> joints, List<float3> tails)

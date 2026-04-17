@@ -1,3 +1,4 @@
+using GLTFast;
 using System;
 using Unity.Collections;
 using Unity.Jobs;
@@ -16,6 +17,7 @@ namespace DCL.SpringBones
 
         int slotCapacity;
         Transform[] managedTransforms; // parallel to TAA, for main-thread access
+        SpringBoneJointComponent[] slotRootComponents; // per-slot root authoring component, for live param tweaks
         TransformAccessArray taa;
         NativeArray<SpringBoneTransformData> transforms;
         NativeArray<float3> prevTails;
@@ -43,6 +45,8 @@ namespace DCL.SpringBones
             managedTransforms = new Transform[totalJoints];
             for (int i = 0; i < totalJoints; i++) managedTransforms[i] = dummyTransform;
 
+            slotRootComponents = new SpringBoneJointComponent[slotCapacity];
+
             transforms = new NativeArray<SpringBoneTransformData>(totalJoints, Allocator.Persistent);
             prevTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
             currentTails = new NativeArray<float3>(totalJoints, Allocator.Persistent);
@@ -59,7 +63,7 @@ namespace DCL.SpringBones
             taa = new TransformAccessArray(taaTransforms);
         }
 
-        public int RegisterSpring(Transform[] jointTransforms, SpringBoneJointConfig[] configs, float3[] initialTailPositions)
+        public int RegisterSpring(Transform[] jointTransforms, SpringBoneJointConfig[] configs, float3[] initialTailPositions, SpringBoneJointComponent rootComponent)
         {
             int jointCount = jointTransforms.Length;
 
@@ -71,6 +75,7 @@ namespace DCL.SpringBones
             }
 
             slotJointCounts[slotIndex] = jointCount;
+            slotRootComponents[slotIndex] = rootComponent;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
 
             for (int j = 0; j < jointCount; j++)
@@ -94,6 +99,7 @@ namespace DCL.SpringBones
         public void UnregisterSpring(int slotIndex)
         {
             slotJointCounts[slotIndex] = 0;
+            slotRootComponents[slotIndex] = null;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
 
             for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
@@ -159,9 +165,44 @@ namespace DCL.SpringBones
             };
         }
 
+        // Pull mutable params (Stiffness/Drag/GravityDir/GravityPower) from the root authoring
+        // component into jointConfigs for every active slot. Lets designers tweak values at
+        // runtime via the Inspector and see changes applied on the next simulate tick.
+        void RefreshActiveJointConfigsFromComponents()
+        {
+            for (int slot = 0; slot < slotCapacity; slot++)
+            {
+                if (!slotActive[slot]) continue;
+
+                SpringBoneJointComponent root = slotRootComponents[slot];
+                if (root == null) continue;
+
+                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
+                int jointCount = slotJointCounts[slot];
+
+                float stiffness = root.Stiffness;
+                float drag = root.Drag;
+                float3 gravityDir = root.GravityDir;
+                float gravityPower = root.GravityPower;
+
+                for (int j = 0; j < jointCount; j++)
+                {
+                    int idx = baseIndex + j;
+                    SpringBoneJointConfig cfg = jointConfigs[idx];
+                    cfg.Stiffness = stiffness;
+                    cfg.Drag = drag;
+                    cfg.GravityDir = gravityDir;
+                    cfg.GravityPower = gravityPower;
+                    jointConfigs[idx] = cfg;
+                }
+            }
+        }
+
         public void Simulate(float deltaTime)
         {
             if (slotCapacity == 0) return;
+
+            RefreshActiveJointConfigsFromComponents();
 
             // 1. Pull transforms on main thread — only active slots
             for (int slot = 0; slot < slotCapacity; slot++)
@@ -281,6 +322,10 @@ namespace DCL.SpringBones
             for (int i = oldTotalJoints; i < newTotalJoints; i++)
                 newManagedTransforms[i] = dummyTransform;
             managedTransforms = newManagedTransforms;
+
+            var newSlotRootComponents = new SpringBoneJointComponent[newCapacity];
+            Array.Copy(slotRootComponents, newSlotRootComponents, slotRootComponents.Length);
+            slotRootComponents = newSlotRootComponents;
 
             // Rebuild TAA
             var taaTransforms = new Transform[newTotalJoints];
