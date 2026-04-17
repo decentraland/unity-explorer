@@ -52,8 +52,6 @@ namespace DCL.VoiceChat.UI
         private void Awake()
         {
             soundWaveAnimator.gameObject.SetActive(false);
-            SetState(NearbyVoiceChatState.DISABLED);
-
             button.onClick.AddListener(HideHoverTooltip);
         }
 
