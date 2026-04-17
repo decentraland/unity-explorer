@@ -20,17 +20,17 @@ namespace DCL.VoiceChat.UI
 
         private readonly NearbyVoiceWidgetView view;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly AudioMixerGroup nearbyMixerGroup;
+        private readonly AudioMixerGroup mixerGroup;
         private readonly VolumeBus volumeBus;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
 
         private bool pushToTalkSubscribed;
 
-        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup nearbyMixerGroup, VolumeBus volumeBus)
+        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup mixerGroup, VolumeBus volumeBus)
         {
             this.view = view;
             this.stateModel = stateModel;
-            this.nearbyMixerGroup = nearbyMixerGroup;
+            this.mixerGroup = mixerGroup;
             this.volumeBus = volumeBus;
 
             view.Initialize(() => stateModel.IsLocalSpeaking ? 1f : 0f);
@@ -138,7 +138,7 @@ namespace DCL.VoiceChat.UI
         private void OnVolumeChanged(float value)
         {
             float db = value > 0.0001f ? Mathf.Log10(value) * 20f : MIN_VOLUME_DB;
-            nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
+            mixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
 
             float percentage = value * 100f;
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, percentage, save: true);
@@ -153,7 +153,7 @@ namespace DCL.VoiceChat.UI
 
         private void SyncSliderWithMixer()
         {
-            if (nearbyMixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
+            if (mixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
             {
                 float linear = db > MIN_VOLUME_DB ? Mathf.Pow(10f, db / 20f) : 0f;
                 view.VolumeSlider.SetValueWithoutNotify(linear);
