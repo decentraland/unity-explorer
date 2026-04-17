@@ -71,6 +71,12 @@ QA_REQUIRED: YES when ANY of the following are true:
 - Touches UI, rendering, avatars, scenes, networking, or player-facing systems
 - Changes asset loading, authentication, or navigation flows
 
+--- NON-BLOCKING WARNINGS ---
+Emit these as warnings in the summary comment. They do NOT cause a FAIL on their own.
+
+- **Main Scene Modified** — If `Explorer/Assets/Scenes/Main.unity` or its `.meta` appears in the changed files:
+  > ⚠️ **Main scene modified** (`Explorer/Assets/Scenes/Main.unity`). This file is rarely changed intentionally — verify this wasn't pushed by mistake.
+
 IMPORTANT: At the very end of your output, emit exactly these four lines (order matters — downstream automation parses them):
 REVIEW_RESULT: PASS ✅  (or FAIL ❌)
 COMPLEXITY: SIMPLE  (or COMPLEX)
