@@ -23,8 +23,6 @@ namespace DCL.VoiceChat.UI
             view.InitializeSoundWave(() => stateModel.IsLocalSpeaking ? 1f : 0f);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
             suppressionSubscription = stateModel.ActiveSuppression.Subscribe(OnSuppressionReasonChanged);
-
-            OnSuppressionReasonChanged(stateModel.ActiveSuppression.Value);
         }
 
         private void OnStateChanged(NearbyVoiceChatState state)
