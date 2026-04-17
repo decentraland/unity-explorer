@@ -101,7 +101,7 @@ namespace DCL.VoiceChat.Nearby
 
         private bool TryResetToRemainedSuppression(ReactiveProperty<SuppressionReason?> active)
         {
-            HashSet<SuppressionReason>.Enumerator e = suppressionReasons.GetEnumerator();
+            using HashSet<SuppressionReason>.Enumerator e = suppressionReasons.GetEnumerator();
 
             if (e.MoveNext())
             {

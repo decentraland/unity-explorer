@@ -12,12 +12,6 @@ namespace DCL.VoiceChat.UI
 
         public NearbyVoicePanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-            viewInstance?.CloseAreaButton.onClick.RemoveAllListeners();
-        }
-
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
