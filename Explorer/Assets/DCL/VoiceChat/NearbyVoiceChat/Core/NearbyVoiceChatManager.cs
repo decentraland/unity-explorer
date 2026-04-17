@@ -114,9 +114,7 @@ namespace DCL.VoiceChat
             if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)) return;
 
             remoteListener.StartListeningAsync().Forget();
-
-            if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
-                PublishMicWithRetryAsync().Forget();
+            PublishMicWithRetryAsync(startMic: stateModel.State.Value == NearbyVoiceChatState.SPEAKING).Forget();
         }
 
         private void Disconnect()
@@ -172,17 +170,26 @@ namespace DCL.VoiceChat
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
-                SwitchAsync(selection).Forget();
+                SwitchAsync().Forget();
                 return;
             }
 
-            micPublisher.SwitchMicrophone(selection);
+            RepublishIfNeeded();
             return;
 
-            async UniTaskVoid SwitchAsync(MicrophoneSelection sel)
+            async UniTaskVoid SwitchAsync()
             {
                 await UniTask.SwitchToMainThread();
-                micPublisher.SwitchMicrophone(sel);
+                RepublishIfNeeded();
+            }
+
+            void RepublishIfNeeded()
+            {
+                if (!micPublisher.isPublished) return;
+
+                bool wasSpeaking = stateModel.State.Value == NearbyVoiceChatState.SPEAKING;
+                micPublisher.Unpublish();
+                PublishMicWithRetryAsync(startMic: wasSpeaking).Forget();
             }
         }
 
@@ -215,7 +222,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private async UniTask PublishMicWithRetryAsync()
+        private async UniTask PublishMicWithRetryAsync(bool startMic = false)
         {
             activationCts = activationCts.SafeRestart();
             var ct = activationCts.Token;
@@ -230,9 +237,11 @@ namespace DCL.VoiceChat
                 try
                 {
                     await micPublisher.PublishAsync(false, ct);
-                    micPublisher.StartMicrophone();
 
-                    ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Mic track published and enabled");
+                    if (startMic)
+                        micPublisher.StartMicrophone();
+
+                    ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, startMic ? "Mic track published and started" : "Mic track published (standby)");
                     return;
                 }
                 catch (OperationCanceledException) { return; }
@@ -279,18 +288,17 @@ namespace DCL.VoiceChat
                         break;
 
                     case NearbyVoiceChatState.IDLE:
-                        if (micPublisher.isPublished)
+                        if (micPublisher.isRecording)
                             micPublisher.StopMicrophone();
 
-                        Connect();
+                        Connect(); // ensures listener + track published; no-ops if already done
                         break;
 
                     case NearbyVoiceChatState.SPEAKING:
-                        if (micPublisher.isPublished) // already connected
+                        if (micPublisher.isPublished)
                             micPublisher.StartMicrophone();
                         else
-                            Connect();
-
+                            Connect(); // publishes + starts mic
                         break;
                 }
             }
