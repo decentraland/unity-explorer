@@ -47,14 +47,13 @@ namespace DCL.VoiceChat
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            NearbyVoiceChatStateModel stateModel,
-            VoiceChatMicrophoneHandler microphoneHandler)
+            NearbyVoiceChatStateModel stateModel)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
 
-            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, microphoneHandler, VoiceChatType.NEARBY);
+            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, null, VoiceChatType.NEARBY);
 
             var nearbyHub = new PlaybackSourcesHub(
                 parentNameSuffix: "Nearby",

@@ -38,7 +38,7 @@ namespace DCL.VoiceChat
 
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly VoiceChatMicrophoneHandler? microphoneHandler;
         private readonly VoiceChatType voiceChatType;
         private readonly string tag;
 
@@ -55,7 +55,7 @@ namespace DCL.VoiceChat
         public MicrophoneTrackPublisher(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
-            VoiceChatMicrophoneHandler microphoneHandler,
+            VoiceChatMicrophoneHandler? microphoneHandler,
             VoiceChatType voiceChatType)
         {
             this.voiceChatRoom = voiceChatRoom;
@@ -103,13 +103,14 @@ namespace DCL.VoiceChat
 
                 MicrophoneRtcAudioSource rtcAudioSource = await CreateMicrophoneSourceAsync(configuration, ct);
 
-                if (micAutoStart && microphoneHandler.IsMicrophoneEnabled.Value)
+                if (micAutoStart && microphoneHandler != null && microphoneHandler.IsMicrophoneEnabled.Value)
                     rtcAudioSource.Start();
 
                 ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(localParticipant.Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
-                microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
+
+                microphoneHandler?.Assign(microphoneTrack.Value.Source);
 
                 localParticipant.PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
 
@@ -171,7 +172,7 @@ namespace DCL.VoiceChat
 
         private void CleanupLocalTrack()
         {
-            microphoneHandler.ClearSource(voiceChatType);
+            microphoneHandler?.Assign(Weak<MicrophoneRtcAudioSource>.Null);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
         }

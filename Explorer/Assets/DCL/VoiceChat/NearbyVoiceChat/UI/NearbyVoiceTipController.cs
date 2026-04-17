@@ -14,6 +14,8 @@ namespace DCL.VoiceChat.UI
 
         private readonly Action? onTryItNow;
 
+        private bool disposed;
+
         public NearbyVoiceTipController(NearbyVoiceTipView view, Action? onTryItNow, ILoadingStatus loadingStatus)
         {
             this.view = view;
@@ -32,11 +34,11 @@ namespace DCL.VoiceChat.UI
 
         public void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
+
             view.Hide();
             cts.SafeCancelAndDispose();
-
-            view.CloseButton.onClick.RemoveListener(OnClose);
-            view.TryItNowButton.onClick.RemoveListener(OnTryItNow);
         }
 
         private async UniTaskVoid WaitAndShowAsync(ILoadingStatus loadingStatus, CancellationToken ct)
@@ -53,16 +55,16 @@ namespace DCL.VoiceChat.UI
             view.TryItNowButton.onClick.AddListener(OnTryItNow);
         }
 
-        private void OnClose()
-        {
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
-            Dispose();
-        }
-
         private void OnTryItNow()
         {
             onTryItNow?.Invoke();
             OnClose();
+        }
+
+        private void OnClose()
+        {
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
+            Dispose();
         }
     }
 }
