@@ -17,7 +17,6 @@ using DCL.VoiceChat.Nearby.Systems;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
 using System;
-using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
 using DCL.Utilities.Extensions;
@@ -25,6 +24,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
 using Utility;
+using Utility.Multithreading;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
 
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
-        private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
+        private readonly DCLConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;

@@ -8,7 +8,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
-using System.Collections.Concurrent;
+using Utility.Multithreading;
 using System.Threading;
 using Utility;
 
@@ -41,7 +41,7 @@ namespace DCL.VoiceChat.Nearby
         public NearbyVoiceChatManager(
             IRoom islandRoom,
             VoiceChatConfiguration configuration,
-            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
+            DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
             VoiceChatMicrophoneHandler microphoneHandler)

@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -40,7 +39,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private readonly string anonId;
         private volatile string? cachedUserId;
 
-        private readonly ConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
+        private readonly DCLConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
         private readonly CancellationTokenSource cancellationTokenSource;
 

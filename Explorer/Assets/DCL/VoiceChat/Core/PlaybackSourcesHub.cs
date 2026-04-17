@@ -6,8 +6,8 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -27,7 +27,7 @@ namespace DCL.VoiceChat
 
         private readonly Transform parent;
 
-        private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
+        private readonly DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams =>
             streams;
 
@@ -38,7 +38,7 @@ namespace DCL.VoiceChat
             Action<StreamKey, LivekitAudioSource>? onSourceConfigured = null,
             Action<StreamKey>? onSourceRemoved = null)
         {
-            this.streams = new ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
+            this.streams = new DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
             this.audioMixerGroup = audioMixerGroup;
             this.spatial = spatial;
             this.onSourceConfigured = onSourceConfigured;

@@ -11,10 +11,10 @@ using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -31,7 +31,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private const float FALLBACK_HEAD_HEIGHT = 1.75f;
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private readonly DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
 
         private readonly List<Entity> entitiesToCleanUp = new (4);
         private readonly List<(Entity entity, string key, LivekitAudioSource source)> entitiesToAdd = new (4);
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         internal NearbyAudioPositionSystem(World world,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources) : base(world)
+            DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources) : base(world)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.activeAudioSources = activeAudioSources;

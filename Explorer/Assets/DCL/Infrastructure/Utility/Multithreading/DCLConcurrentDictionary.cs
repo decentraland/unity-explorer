@@ -74,6 +74,16 @@ namespace Utility.Multithreading
             return Inner.TryRemove(key, out _);
 #endif
         }
+
+        public bool TryAdd(TKey key, TValue value)
+        {
+#if UNITY_WEBGL
+            return Inner.TryAdd(key, value);
+#else
+            return Inner.TryAdd(key, value);
+#endif
+        }
+
         public bool TryRemove(TKey key, out TValue value)
         {
 #if !UNITY_WEBGL

@@ -9,8 +9,8 @@ using ECS.TestSuite;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Tests
@@ -29,7 +29,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private const string PARTICIPANT_B = "wallet-bob";
 
         private IReadOnlyEntityParticipantTable entityParticipantTable;
-        private ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
 
         private readonly List<GameObject> gameObjects = new (8);
 
@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SetUp()
         {
             entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
-            activeAudioSources = new ConcurrentDictionary<string, LivekitAudioSource>();
+            activeAudioSources = new DCLConcurrentDictionary<string, LivekitAudioSource>();
 
             // Camera entity — AudioListener lives on the camera
             var cameraGo = CreateTrackedGameObject("TestCamera");

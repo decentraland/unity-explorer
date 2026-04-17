@@ -8,7 +8,7 @@ using ECS.TestSuite;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Concurrent;
+using Utility.Multithreading;
 using System.Collections.Generic;
 using Unity.PerformanceTesting;
 using UnityEngine;
@@ -23,14 +23,14 @@ namespace DCL.VoiceChat.Nearby
     public class NearbyAudioPositionSystemPerformanceTest : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
         private IReadOnlyEntityParticipantTable entityParticipantTable;
-        private ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
         private readonly List<GameObject> gameObjects = new (128);
 
         [SetUp]
         public void SetUp()
         {
             entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
-            activeAudioSources = new ConcurrentDictionary<string, LivekitAudioSource>();
+            activeAudioSources = new DCLConcurrentDictionary<string, LivekitAudioSource>();
 
             var cameraGo = CreateTrackedGameObject("PerfCamera");
             var camera = cameraGo.AddComponent<Camera>();
