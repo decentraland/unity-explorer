@@ -46,7 +46,7 @@ namespace DCL.Minimap
 
             restrictionsView.OnPointerEnterEvent += OnMouseEnter;
             restrictionsView.OnPointerExitEvent += OnMouseExit;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions, replayActive: true);
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()
