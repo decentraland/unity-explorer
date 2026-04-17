@@ -11,8 +11,7 @@ namespace DCL.VoiceChat.UI
 {
     public class NearbyVoiceWidgetController : IDisposable
     {
-        private const string VOLUME_PARAM = "NearbyVoiceChat_Volume";
-        private const string VOICE_CHAT_VOLUME_PARAM = "VoiceChat_Volume";
+        private const string VOLUME_PARAM = "VoiceChat_Volume";
         private const float MIN_VOLUME_DB = -80f;
 
         private const string IDLE_TEXT = "Hold <color=#A09BA8>[T]</color> to speak momentarily";
@@ -140,7 +139,6 @@ namespace DCL.VoiceChat.UI
         {
             float db = value > 0.0001f ? Mathf.Log10(value) * 20f : MIN_VOLUME_DB;
             nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
-            nearbyMixerGroup.audioMixer.SetFloat(VOICE_CHAT_VOLUME_PARAM, db);
 
             float percentage = value * 100f;
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, percentage, save: true);

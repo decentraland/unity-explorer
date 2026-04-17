@@ -10,7 +10,6 @@ namespace DCL.Settings.ModuleControllers
     public class VoiceChatVolumeSettingsController : SettingsFeatureController
     {
         private const string VOICE_CHAT_VOLUME_EXPOSED_PARAM = "VoiceChat_Volume";
-        private const string NEARBY_VOICE_CHAT_VOLUME_PARAM = "NearbyVoiceChat_Volume";
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
@@ -38,7 +37,6 @@ namespace DCL.Settings.ModuleControllers
         {
             float db = AudioUtils.PercentageVolumeToDecibel(volumePercentage);
             generalAudioMixer.SetFloat(VOICE_CHAT_VOLUME_EXPOSED_PARAM, db);
-            generalAudioMixer.SetFloat(NEARBY_VOICE_CHAT_VOLUME_PARAM, db);
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, volumePercentage, save: true);
             volumeBus.SetVoiceChatVolume(volumePercentage);
         }

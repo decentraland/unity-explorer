@@ -203,7 +203,7 @@ namespace DCL.PluginSystem.Global
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
                 pluginScope.Add(nearbyButtonController);
 
-                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.NearbyChatAudioMixerGroup, volumeBus);
+                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
 
                 nearbyTipController = new NearbyVoiceTipController(nearbyVoiceTipView, onTryItNow: () => nearbyStateModel.Enable(), loadingStatus);

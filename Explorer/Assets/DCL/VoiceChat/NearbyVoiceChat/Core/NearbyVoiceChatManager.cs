@@ -57,7 +57,7 @@ namespace DCL.VoiceChat
 
             var nearbyHub = new PlaybackSourcesHub(
                 parentNameSuffix: "Nearby",
-                configuration.NearbyChatAudioMixerGroup,
+                configuration.ChatAudioMixerGroup,
                 spatial: true,
                 onSourceConfigured: (key, lkSource) =>
                 {
