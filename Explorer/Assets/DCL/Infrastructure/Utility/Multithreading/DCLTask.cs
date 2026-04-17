@@ -1,4 +1,5 @@
 // DCLTask is designed as WebGL / Desktop friendly
+// [IgnoreAsyncNaming]
 using System;
 using System.Threading;
 using System.Collections.Generic;
