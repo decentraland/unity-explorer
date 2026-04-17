@@ -9,14 +9,14 @@ namespace DCL.VoiceChat.Nearby.Tests
     ///
     /// States:
     ///   DISABLED  — feature is off, no audio processing
-    ///   HEARING   — listening to nearby players, mic is muted
+    ///   IDLE   — listening to nearby players, mic is muted
     ///   SPEAKING  — listening + mic is publishing to nearby players
     ///   SUPPRESSED — temporarily paused because a higher-priority call (Community/Private) is active
     ///
     /// Typical lifecycle:
-    ///   DISABLED → Enable() → HEARING → StartSpeaking() → SPEAKING
+    ///   DISABLED → Enable() → IDLE → StartSpeaking() → SPEAKING
     ///   → Suppress() → SUPPRESSED → Resume() → SPEAKING
-    ///   → StopSpeaking() → HEARING → Disable() → DISABLED
+    ///   → StopSpeaking() → IDLE → Disable() → DISABLED
     /// </summary>
     public class NearbyVoiceChatStateModelShould
     {
@@ -72,7 +72,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StartSpeaking();
             stateChanges.Clear();
 
-            // Act — calling Enable while already speaking should not reset to HEARING
+            // Act — calling Enable while already speaking should not reset to IDLE
             model.Enable();
 
             // Assert
@@ -118,7 +118,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act — trying to speak while feature is off
             model.StartSpeaking();
 
-            // Assert — should stay DISABLED, speaking requires HEARING state first
+            // Assert — should stay DISABLED, speaking requires IDLE state first
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.DISABLED));
         }
 

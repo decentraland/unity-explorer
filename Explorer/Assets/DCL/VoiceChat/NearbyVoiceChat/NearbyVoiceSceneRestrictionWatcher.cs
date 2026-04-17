@@ -35,7 +35,7 @@ namespace DCL.VoiceChat
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
-            bool blocksVoice = scene != null && !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.NearbyVoiceChatEnabled;
+            bool blocksVoice = scene?.SceneData != null && !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.NearbyVoiceChatEnabled;
 
             if (blocksVoice != currentSceneBlocksVoice)
                 SetBlocked(blocksVoice);
