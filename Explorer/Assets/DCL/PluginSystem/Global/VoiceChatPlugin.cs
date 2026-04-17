@@ -188,8 +188,6 @@ namespace DCL.PluginSystem.Global
                 nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
                 pluginScope.Add(nearbyStateModel);
 
-                voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
-
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 

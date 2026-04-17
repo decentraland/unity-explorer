@@ -48,6 +48,7 @@ namespace DCL.VoiceChat
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
         internal bool isPublished => microphoneTrack.HasValue;
+        internal bool isRecording => CurrentMicrophone.Resource is { Has: true, Value: { IsRecording: true } };
 
         private bool isDisposed;
 
@@ -143,6 +144,29 @@ namespace DCL.VoiceChat
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Failed to unpublish: {ex.Message}"); }
             finally { CleanupLocalTrack(); }
+        }
+
+        internal void StartMicrophone()
+        {
+            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
+            if (source.Has) source.Value.Start();
+        }
+
+        internal void StopMicrophone()
+        {
+            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
+            if (source.Has) source.Value.Stop();
+        }
+
+        internal void SwitchMicrophone(MicrophoneSelection selection)
+        {
+            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
+            if (!source.Has) return;
+
+            RichTypes.Result result = source.Value.SwitchMicrophone(selection);
+
+            if (!result.Success)
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{tag} Cannot switch microphone: {result.ErrorMessage}");
         }
 
         private void CleanupLocalTrack()

@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.Utilities;
-using DCL.VoiceChat.Nearby;
 using LiveKit.Audio;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
@@ -23,14 +22,8 @@ namespace DCL.VoiceChat
         private bool hasIntentionToDisable;
 
         private Weak<MicrophoneRtcAudioSource> callSource = Weak<MicrophoneRtcAudioSource>.Null;
-        private Weak<MicrophoneRtcAudioSource> spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
-        private NearbyVoiceChatStateModel? nearbyStateModel;
-        private bool wasNearbyMicActiveBeforeFocusLoss;
 
         public IReadonlyReactiveProperty<bool> IsMicrophoneEnabled => isMicrophoneEnabledProperty;
-
-        private bool isCallActive => callSource.Resource.Has;
-        private bool isSpatialActive => !isCallActive && spatialSource.Resource.Has;
 
         public VoiceChatMicrophoneHandler(VoiceChatConfiguration voiceChatConfiguration, ICommunityCallOrchestrator orchestrator)
         {
@@ -40,7 +33,6 @@ namespace DCL.VoiceChat
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
-            Application.focusChanged += OnApplicationFocusChanged;
         }
 
         public void Dispose()
@@ -49,7 +41,6 @@ namespace DCL.VoiceChat
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnTalkHotkeyReleased;
             VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
-            Application.focusChanged -= OnApplicationFocusChanged;
         }
 
         /// <summary>
@@ -59,13 +50,10 @@ namespace DCL.VoiceChat
         /// </summary>
         private bool TryGetActiveMicrophoneSource(out MicrophoneRtcAudioSource? source)
         {
-            Option<MicrophoneRtcAudioSource> resource = GetActiveSourceResource();
+            Option<MicrophoneRtcAudioSource> resource = callSource.Resource;
             source = resource.Has ? resource.Value : null;
             return resource.Has;
         }
-
-        private Option<MicrophoneRtcAudioSource> GetActiveSourceResource() =>
-            callSource.Resource.Has ? callSource.Resource : spatialSource.Resource;
 
         private void OnTalkHotkeyPressed(InputAction.CallbackContext obj)
         {
@@ -90,55 +78,15 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnApplicationFocusChanged(bool hasFocus)
-        {
-            if (!isSpatialActive) return;
-
-            if (!hasFocus)
-            {
-                Option<MicrophoneRtcAudioSource> resource = spatialSource.Resource;
-
-                if (resource.Has && resource.Value.IsRecording)
-                {
-                    resource.Value.Stop();
-                    wasNearbyMicActiveBeforeFocusLoss = true;
-                    isMicrophoneEnabledProperty.Value = false;
-                    nearbyStateModel?.StopSpeaking();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Nearby mic paused — application lost focus");
-                }
-            }
-            else if (wasNearbyMicActiveBeforeFocusLoss)
-            {
-                wasNearbyMicActiveBeforeFocusLoss = false;
-                Option<MicrophoneRtcAudioSource> resource = spatialSource.Resource;
-
-                if (resource.Has)
-                {
-                    resource.Value.Start();
-                    isMicrophoneEnabledProperty.Value = true;
-                    nearbyStateModel?.StartSpeaking();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Nearby mic resumed — application regained focus");
-                }
-            }
-        }
-
         public void ToggleMicrophone()
         {
-            Option<MicrophoneRtcAudioSource> weakMicrophoneSource  = GetActiveSourceResource();
+            Option<MicrophoneRtcAudioSource> source = callSource.Resource;
 
-            if (weakMicrophoneSource.Has)
+            if (source.Has)
             {
-                MicrophoneRtcAudioSource source = weakMicrophoneSource .Value;
-                source.Toggle();
-                bool newState = source.IsRecording;
+                source.Value.Toggle();
+                bool newState = source.Value.IsRecording;
                 isMicrophoneEnabledProperty.Value = newState;
-
-                if (isSpatialActive)
-                {
-                    if (newState) nearbyStateModel?.StartSpeaking();
-                    else nearbyStateModel?.StopSpeaking();
-                }
-
                 NotifyMicrophoneStateChange(newState);
             }
         }
@@ -150,9 +98,6 @@ namespace DCL.VoiceChat
                 case VoiceChatType.COMMUNITY:
                 case VoiceChatType.PRIVATE:
                     callSource = newSource;
-                    break;
-                case VoiceChatType.NEARBY:
-                    spatialSource = newSource;
                     break;
             }
         }
@@ -166,32 +111,20 @@ namespace DCL.VoiceChat
                     if (callSource.Resource.Has) callSource.Resource.Value.Stop();
                     callSource = Weak<MicrophoneRtcAudioSource>.Null;
                     break;
-                case VoiceChatType.NEARBY:
-                    if (spatialSource.Resource.Has) spatialSource.Resource.Value.Stop();
-                    spatialSource = Weak<MicrophoneRtcAudioSource>.Null;
-                    break;
             }
         }
 
-        public void SetNearbyStateModel(NearbyVoiceChatStateModel? model)
+        private void EnableMicrophone()
         {
-            nearbyStateModel = model;
-        }
-
-        internal void EnableMicrophone()
-        {
-            Option<MicrophoneRtcAudioSource> resource = GetActiveSourceResource();
+            Option<MicrophoneRtcAudioSource> resource = callSource.Resource;
             if (resource.Has) resource.Value.Start();
             isMicrophoneEnabledProperty.Value = true;
-
-            if (isSpatialActive)
-                nearbyStateModel?.StartSpeaking();
 
             NotifyMicrophoneStateChange(true);
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
-        internal void DisableMicrophone()
+        private void DisableMicrophone()
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
@@ -210,12 +143,9 @@ namespace DCL.VoiceChat
 
             void DisableMicrophoneInternal()
             {
-                Option<MicrophoneRtcAudioSource> weakMicrophoneSource = GetActiveSourceResource();
-                if (weakMicrophoneSource .Has) weakMicrophoneSource .Value.Stop();
+                Option<MicrophoneRtcAudioSource> resource = callSource.Resource;
+                if (resource.Has) resource.Value.Stop();
                 isMicrophoneEnabledProperty.Value = false;
-
-                if (isSpatialActive)
-                    nearbyStateModel?.StopSpeaking();
 
                 NotifyMicrophoneStateChange(false);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
@@ -232,20 +162,14 @@ namespace DCL.VoiceChat
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
-            SwitchAllSources();
+            TrySwitchMicrophone(callSource, microphoneName);
             return;
 
             async UniTaskVoid OnMicrophoneChangedAsync()
             {
                 await UniTask.SwitchToMainThread();
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
-                SwitchAllSources();
-            }
-
-            void SwitchAllSources()
-            {
                 TrySwitchMicrophone(callSource, microphoneName);
-                TrySwitchMicrophone(spatialSource, microphoneName);
             }
         }
 
@@ -273,7 +197,7 @@ namespace DCL.VoiceChat
 
         private void NotifyMicrophoneStateChange(bool isEnabled)
         {
-            if (!isCallActive) return;
+            if (!callSource.Resource.Has) return;
 
             if (orchestrator != null &&
                 orchestrator.CommunityCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL &&
