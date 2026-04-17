@@ -55,15 +55,15 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
 
 ## 📚 Documentation
 
-For detailed information about the project, please visit our [Wiki](https://github.com/decentraland/unity-explorer/wiki).
+For detailed information about the project, see the [documentation index](docs/README.md).
 
 ### Architecture
 
-The Unity Explorer follows a component-based architecture designed for flexibility and scalability. Learn more in our [Architecture Overview](https://github.com/decentraland/unity-explorer/wiki/Architecture-Overview).
+The Unity Explorer follows a component-based architecture designed for flexibility and scalability. Learn more in our [Architecture Overview](docs/architecture-overview.md).
 
 ### Development Guides
 
-Find specific guidance on development topics in our [How To Guide](https://github.com/decentraland/unity-explorer/wiki/How-To).
+Find specific guidance on development topics in the [Development Guide](docs/development-guide.md).
 
 ## 🔧 Troubleshooting
 
@@ -85,7 +85,7 @@ See our [Whitepaper](https://decentraland.org/blog/announcements/decentralands-w
 
 ## 👥 Contributing
 
-Please follow our coding standards and guidelines outlined in our [How To Guide](https://github.com/decentraland/unity-explorer/wiki/How-To).
+Please follow our [Branch & PR Standards](docs/branch-and-pr-standards.md) and [Code Style Guidelines](docs/code-style-guidelines.md).
 
 ## 🤝 Community and Support
 
@@ -95,4 +95,4 @@ Please follow our coding standards and guidelines outlined in our [How To Guide]
 
 ## 📜 License
 
-This project is licensed under the [Apache 2.0 License](LICENSE.md) - see the LICENSE file for details.
+This project is licensed under the [Apache 2.0 License](LICENSE) - see the LICENSE file for details.
