@@ -10,11 +10,9 @@ namespace DCL.VoiceChat.UI
     public class NearbyVoiceTipController : IDisposable
     {
         private readonly NearbyVoiceTipView view;
-        private readonly CancellationTokenSource? cts;
-
         private readonly Action? onTryItNow;
-
-        private bool disposed;
+        private CancellationTokenSource? cts;
+        private bool subscribed;
 
         public NearbyVoiceTipController(NearbyVoiceTipView view, Action? onTryItNow, ILoadingStatus loadingStatus)
         {
@@ -34,39 +32,47 @@ namespace DCL.VoiceChat.UI
 
         public void Dispose()
         {
-            if (disposed) return;
-            disposed = true;
+            cts.SafeCancelAndDispose();
+
+            if (!subscribed)
+                return;
 
             view.CloseButton.onClick.RemoveListener(OnClose);
             view.TryItNowButton.onClick.RemoveListener(OnTryItNow);
-            view.Hide();
-            cts.SafeCancelAndDispose();
+            subscribed = false;
         }
 
         private async UniTaskVoid WaitAndShowAsync(ILoadingStatus loadingStatus, CancellationToken ct)
         {
-            bool wasCancelled = await UniTask.WaitUntil(
+            await UniTask.WaitUntil(
                 () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
-                cancellationToken: ct).SuppressCancellationThrow();
+                cancellationToken: ct);
 
-            if (wasCancelled)
+            if (ct.IsCancellationRequested)
                 return;
 
             view.Show();
             view.CloseButton.onClick.AddListener(OnClose);
             view.TryItNowButton.onClick.AddListener(OnTryItNow);
+            subscribed = true;
         }
 
-        private void OnTryItNow()
+        private void Dismiss()
         {
-            onTryItNow?.Invoke();
-            OnClose();
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
+            Dispose();
+            view.Hide();
         }
 
         private void OnClose()
         {
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
-            Dispose();
+            Dismiss();
+        }
+
+        private void OnTryItNow()
+        {
+            Dismiss();
+            onTryItNow?.Invoke();
         }
     }
 }
