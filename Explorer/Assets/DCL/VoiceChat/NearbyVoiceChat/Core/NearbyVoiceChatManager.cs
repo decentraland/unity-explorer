@@ -161,7 +161,14 @@ namespace DCL.VoiceChat
             else if (hasFocus && wasNearbyMicActiveBeforeFocusLoss)
             {
                 wasNearbyMicActiveBeforeFocusLoss = false;
-                stateModel.StartSpeaking(); // State change handler will start mic
+
+                if (stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED)
+                {
+                    ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Nearby mic NOT resumed — state is SUPPRESSED");
+                    return;
+                }
+
+                stateModel.StartSpeaking();
                 ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Nearby mic resumed — application regained focus");
             }
         }

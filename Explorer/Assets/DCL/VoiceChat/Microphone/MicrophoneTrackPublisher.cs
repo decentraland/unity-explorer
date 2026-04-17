@@ -96,10 +96,7 @@ namespace DCL.VoiceChat
                 LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
 
                 if (localParticipant == null)
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Cannot publish: local participant is not available");
-                    return;
-                }
+                    throw new InvalidOperationException($"{tag} Local participant is not available yet");
 
                 MicrophoneRtcAudioSource rtcAudioSource = await CreateMicrophoneSourceAsync(configuration, ct);
 

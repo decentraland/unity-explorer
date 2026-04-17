@@ -25,7 +25,7 @@ namespace DCL.VoiceChat.UI
         }
 
         protected override void OnViewClose() =>
-            closeViewTask?.TrySetCanceled();
+            closeViewTask?.TrySetResult();
 
         private void OnClose() =>
             closeViewTask?.TrySetResult();
