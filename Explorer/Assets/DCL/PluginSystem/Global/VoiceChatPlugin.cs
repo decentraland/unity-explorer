@@ -56,6 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly VolumeBus volumeBus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -92,7 +93,8 @@ namespace DCL.PluginSystem.Global
             ISceneRestrictionBusController sceneRestrictionBusController,
             NearbyVoiceChatButtonView nearbyVoiceChatButtonView,
             NearbyVoiceWidgetView nearbyVoiceWidgetView,
-            NearbyVoiceTipView nearbyVoiceTipView)
+            NearbyVoiceTipView nearbyVoiceTipView,
+            VolumeBus volumeBus)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -111,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
             this.nearbyVoiceTipView = nearbyVoiceTipView;
+            this.volumeBus = volumeBus;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -200,7 +203,7 @@ namespace DCL.PluginSystem.Global
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
                 pluginScope.Add(nearbyButtonController);
 
-                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.NearbyChatAudioMixerGroup);
+                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.NearbyChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
 
                 nearbyTipController = new NearbyVoiceTipController(nearbyVoiceTipView, onTryItNow: () => nearbyStateModel.Enable(), loadingStatus);

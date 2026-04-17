@@ -1128,7 +1128,8 @@ namespace Global.Dynamic
                         staticContainer.SceneRestrictionBusController,
                         mainUIView.SidebarView.NearbyVoiceChatButton,
                         mainUIView.SidebarView.NearbyVoiceWidget,
-                        mainUIView.SidebarView.NearbyVoiceTip)
+                        mainUIView.SidebarView.NearbyVoiceTip,
+                        bootstrapContainer.VolumeBus)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

@@ -1,3 +1,5 @@
+using DCL.Audio;
+using DCL.Prefs;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
 using System;
@@ -10,6 +12,7 @@ namespace DCL.VoiceChat.UI
     public class NearbyVoiceWidgetController : IDisposable
     {
         private const string VOLUME_PARAM = "NearbyVoiceChat_Volume";
+        private const string VOICE_CHAT_VOLUME_PARAM = "VoiceChat_Volume";
         private const float MIN_VOLUME_DB = -80f;
 
         private const string IDLE_TEXT = "Hold <color=#A09BA8>[T]</color> to speak momentarily";
@@ -19,15 +22,17 @@ namespace DCL.VoiceChat.UI
         private readonly NearbyVoiceWidgetView view;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly AudioMixerGroup nearbyMixerGroup;
+        private readonly VolumeBus volumeBus;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
 
         private bool pushToTalkSubscribed;
 
-        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup nearbyMixerGroup)
+        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup nearbyMixerGroup, VolumeBus volumeBus)
         {
             this.view = view;
             this.stateModel = stateModel;
             this.nearbyMixerGroup = nearbyMixerGroup;
+            this.volumeBus = volumeBus;
 
             view.Initialize(() => stateModel.IsLocalSpeaking ? 1f : 0f);
 
@@ -38,6 +43,8 @@ namespace DCL.VoiceChat.UI
             view.SpeakButton.onClick.AddListener(OnSpeakButtonClicked);
             view.VolumeSlider.onValueChanged.AddListener(OnVolumeChanged);
 
+            volumeBus.OnVoiceChatVolumeChanged += OnVoiceChatVolumeChangedExternally;
+
             SyncSliderWithMixer();
         }
 
@@ -47,6 +54,7 @@ namespace DCL.VoiceChat.UI
             view.HearOthersToggle.onValueChanged.RemoveListener(OnHearOthersToggled);
             view.SpeakButton.onClick.RemoveListener(OnSpeakButtonClicked);
             view.VolumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+            volumeBus.OnVoiceChatVolumeChanged -= OnVoiceChatVolumeChangedExternally;
             UnsubscribePushToTalk();
         }
 
@@ -132,6 +140,17 @@ namespace DCL.VoiceChat.UI
         {
             float db = value > 0.0001f ? Mathf.Log10(value) * 20f : MIN_VOLUME_DB;
             nearbyMixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
+            nearbyMixerGroup.audioMixer.SetFloat(VOICE_CHAT_VOLUME_PARAM, db);
+
+            float percentage = value * 100f;
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, percentage, save: true);
+            volumeBus.SetVoiceChatVolume(percentage);
+        }
+
+        private void OnVoiceChatVolumeChangedExternally(float volumePercentage)
+        {
+            float linear = volumePercentage / 100f;
+            view.VolumeSlider.SetValueWithoutNotify(linear);
         }
 
         private void SyncSliderWithMixer()
