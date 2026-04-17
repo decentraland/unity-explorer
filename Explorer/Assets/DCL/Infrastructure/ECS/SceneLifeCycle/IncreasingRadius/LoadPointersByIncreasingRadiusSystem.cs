@@ -168,6 +168,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                     TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))), processedScenePointers.Value);
                 }
+
+                //If an empty list for these pointers, mark them as processed anyway
+                //to prevent infinite re-requesting when there is no scene at those coordinates
+                if (definitions.Count == 0)
+                    for (var i = 0; i < requestedList.Count; i++)
+                        processedScenePointers.Value.Add(requestedList[i]);
             }
             else
             {
