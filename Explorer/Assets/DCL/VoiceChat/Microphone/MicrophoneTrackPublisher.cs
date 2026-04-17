@@ -172,6 +172,7 @@ namespace DCL.VoiceChat
 
         private void CleanupLocalTrack()
         {
+            StopMicrophone();
             microphoneHandler?.Assign(Weak<MicrophoneRtcAudioSource>.Null);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
