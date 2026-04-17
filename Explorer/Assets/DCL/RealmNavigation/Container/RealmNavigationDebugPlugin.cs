@@ -18,7 +18,10 @@ namespace DCL.RealmNavigation
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             if (widgetBuilder != null)
+            {
                 AbortSceneLoadingDebugSystem.InjectToWorld(ref builder, widgetBuilder);
+                RapidSceneReloadDebugSystem.InjectToWorld(ref builder, widgetBuilder);
+            }
         }
     }
 }
