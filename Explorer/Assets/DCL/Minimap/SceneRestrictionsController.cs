@@ -33,10 +33,6 @@ namespace DCL.Minimap
             this.restrictionsView = restrictionsView;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
 
-            restrictionsView.OnPointerEnterEvent += OnMouseEnter;
-            restrictionsView.OnPointerExitEvent += OnMouseExit;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
-
             foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
             {
                 restrictionsRegistry[restriction] = 0;
@@ -47,6 +43,10 @@ namespace DCL.Minimap
                 restrictionsObject.name = restriction.ToString();
                 restrictionsGameObjects[restriction] = restrictionsObject;
             }
+
+            restrictionsView.OnPointerEnterEvent += OnMouseEnter;
+            restrictionsView.OnPointerExitEvent += OnMouseExit;
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()

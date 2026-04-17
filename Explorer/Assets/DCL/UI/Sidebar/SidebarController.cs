@@ -59,6 +59,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
+        private readonly bool isNearbyVoiceChatEnabled;
 
         private readonly HttpEventsApiService eventsApiService;
         private readonly CancellationTokenSource profileWidgetCts = new ();
@@ -106,6 +107,7 @@ namespace DCL.UI.Sidebar
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
+            isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
             this.eventsApiService = eventsApiService;
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
@@ -141,7 +143,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
-                viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
+                if (isNearbyVoiceChatEnabled)
+                    viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
                 if (isCameraReelFeatureEnabled)
                     viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
@@ -176,6 +179,7 @@ namespace DCL.UI.Sidebar
             viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
             viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.NearbyVoiceChatButton.gameObject.SetActive(isNearbyVoiceChatEnabled);
 
             SubscribeToEvents();
 
@@ -217,7 +221,8 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.smartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
-            viewInstance.NearbyVoiceChatButton?.Button?.onClick.AddListener(OnNearbyVoiceButtonClicked);
+            if (isNearbyVoiceChatEnabled)
+                viewInstance.NearbyVoiceChatButton.Button.onClick.AddListener(OnNearbyVoiceButtonClicked);
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
