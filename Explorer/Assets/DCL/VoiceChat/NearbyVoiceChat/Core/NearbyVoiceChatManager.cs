@@ -238,7 +238,9 @@ namespace DCL.VoiceChat
                 {
                     await micPublisher.PublishAsync(false, ct);
 
-                    if (startMic)
+                    if (ct.IsCancellationRequested || disposed) return;
+
+                    if (startMic && stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
                         micPublisher.StartMicrophone();
 
                     ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, startMic ? "Mic track published and started" : "Mic track published (standby)");
