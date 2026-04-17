@@ -22,18 +22,15 @@ namespace DCL.Profiles.Helpers
         {
             URLAddress faceUrl = profile.FaceSnapshotUrl;
 
+            // Reuse an existing in-flight promise for the same user+URL if present; cancel any stale ones.
+            if (ReuseOrCancelInFlightPromisesForUser(world, profile, faceUrl))
+                return;
+
             if (!faceUrl.Value.IsValidUrl())
             {
-                // No valid URL: cancel any existing in-flight picture promise for this user since the new profile state invalidates it and set the fallback picture.
-                CancelInFlightPromisesForUser(world, profile.UserId, skipEntity: Entity.Null);
                 profile.ProfilePicture = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_PROFILE_PIC);
                 return;
             }
-
-            // If an in-flight promise with the same URL already exists for this user, redirect its ProfileTier to the new profile instance and reuse the in-flight work.
-            // Cancel any other stale promises with different URLs.
-            if (TryReuseInFlightPromise(world, profile, faceUrl))
-                return;
 
             var promise = Promise.Create(world,
                 new GetTextureIntention(userId: profile.UserId,
@@ -47,52 +44,51 @@ namespace DCL.Profiles.Helpers
             world.Create(profile, promise);
         }
 
-        private static bool TryReuseInFlightPromise(World world, ProfileTier newProfile, URLAddress desiredUrl)
+        /// <summary>
+        /// Single archetype pass over (ProfileTier, Promise) entities. Reuses the first in-flight
+        /// promise whose URL matches <paramref name="desiredUrl"/> by redirecting its ProfileTier
+        /// to <paramref name="newProfile"/>, and cancels any other stale promises for the same user.
+        /// </summary>
+        /// <returns>True if an existing promise was reused (the caller should skip creating a new one).</returns>
+        private static bool ReuseOrCancelInFlightPromisesForUser(World world, ProfileTier newProfile, URLAddress desiredUrl)
         {
-            string userId = newProfile.UserId;
-            Entity matchingEntity = Entity.Null;
+            Entity reuseEntity = Entity.Null;
+            List<Entity> toCancel = ListPool<Entity>.Get();
 
             world.Query(in PROFILE_PICTURE_PROMISE_QUERY, (Entity entity, ref ProfileTier profile, ref Promise promise) =>
             {
-                if (profile.UserId != userId) return;
-                if (matchingEntity != Entity.Null) return;
-                if (promise.LoadingIntention.CommonArguments.URL != desiredUrl) return;
+                if (profile.UserId != newProfile.UserId)
+                    return;
 
-                matchingEntity = entity;
+                if (desiredUrl.Value.IsValidUrl() &&
+                    reuseEntity == Entity.Null &&
+                    promise.LoadingIntention.CommonArguments.URL == desiredUrl)
+                    reuseEntity = entity;
+                else
+                    toCancel.Add(entity);
             });
 
-            if (matchingEntity == Entity.Null)
-            {
-                CancelInFlightPromisesForUser(world, userId, skipEntity: Entity.Null);
+            CancelPromises(world, toCancel);
+            ListPool<Entity>.Release(toCancel);
+
+            if (reuseEntity == Entity.Null)
                 return false;
-            }
 
-            // Redirect the existing promise's ProfileTier to the new profile instance so that when it completes, the result is written to the current profile, not the old one.
-            ref ProfileTier tier = ref world.Get<ProfileTier>(matchingEntity);
+            // Redirect the existing promise's ProfileTier to the new profile instance so its
+            // eventual completion writes to the current profile, not the old one.
+            ref ProfileTier tier = ref world.Get<ProfileTier>(reuseEntity);
             tier = newProfile;
-
-            // Cancel any other stale promises for this user (different URL or duplicates).
-            CancelInFlightPromisesForUser(world, userId, skipEntity: matchingEntity);
             return true;
         }
 
-        private static void CancelInFlightPromisesForUser(World world, string userId, Entity skipEntity)
+        private static void CancelPromises(World world, List<Entity> entities)
         {
-            List<Entity> toCancel = ListPool<Entity>.Get();
-
-            world.Query(in PROFILE_PICTURE_PROMISE_QUERY, (Entity entity, ref ProfileTier profile, ref Promise _) =>
-            {
-                if (profile.UserId != userId) return;
-                if (entity == skipEntity) return;
-
-                toCancel.Add(entity);
-            });
-
-            foreach (var entity in toCancel)
+            foreach (Entity entity in entities)
             {
                 ref Promise promise = ref world.Get<Promise>(entity);
 
-                // Consume first to handle late-completion race: if the download already finished, the loaded asset must be disposed of manually (we are discarding it).
+                // Consume first to handle late-completion race: if the download already finished,
+                // the loaded asset must be disposed of manually (we are discarding it).
                 // Otherwise, ForgetLoading cancels the in-flight request cleanly.
                 if (promise.TryConsume(world, out StreamableLoadingResult<TextureData> result))
                     result.Asset?.Dispose();
@@ -101,8 +97,6 @@ namespace DCL.Profiles.Helpers
 
                 world.Destroy(entity);
             }
-
-            ListPool<Entity>.Release(toCancel);
         }
     }
 }
