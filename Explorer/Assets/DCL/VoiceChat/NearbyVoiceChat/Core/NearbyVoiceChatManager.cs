@@ -130,9 +130,9 @@ namespace DCL.VoiceChat.Nearby
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
             if (status.IsInCall())
-                stateModel.Suppress();
+                stateModel.Suppress(SuppressionReason.CALL);
             else if (status.IsNotConnected())
-                stateModel.Resume();
+                stateModel.Resume(SuppressionReason.CALL);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)

@@ -48,12 +48,12 @@ namespace DCL.VoiceChat
             if (blocksVoice)
             {
                 restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.APPLIED));
-                stateModel.Suppress(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+                stateModel.Suppress(SuppressionReason.SCENE);
             }
             else
             {
                 restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.REMOVED));
-                stateModel.Resume(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
+                stateModel.Resume(SuppressionReason.SCENE);
             }
         }
     }

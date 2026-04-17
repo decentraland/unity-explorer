@@ -11,7 +11,7 @@ namespace DCL.VoiceChat.UI
 
         private readonly NearbyVoiceChatButtonView view;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
-        private readonly ReactivePropertyExtensions.DisposableSubscription<string?> suppressionSubscription;
+        private readonly ReactivePropertyExtensions.DisposableSubscription<SuppressionReason?> suppressionSubscription;
 
         public NearbyVoiceChatButtonController(
             NearbyVoiceChatButtonView view,
@@ -36,11 +36,11 @@ namespace DCL.VoiceChat.UI
                 view.HideDisabledTooltip();
         }
 
-        private void OnSuppressionReasonChanged(string? reason)
+        private void OnSuppressionReasonChanged(SuppressionReason? reason)
         {
             if (reason == null) return;
 
-            string text = reason == NearbyVoiceChatStateModel.SUPPRESSION_SCENE
+            string text = reason == SuppressionReason.SCENE
                 ? SCENE_SUPPRESSED_TEXT
                 : CALL_SUPPRESSED_TEXT;
 

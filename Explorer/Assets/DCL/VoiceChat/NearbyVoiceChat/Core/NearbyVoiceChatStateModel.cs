@@ -13,20 +13,22 @@ namespace DCL.VoiceChat.Nearby
         SUPPRESSED, // when you have another more priority voice chat - Private or Community
     }
 
+    public enum SuppressionReason
+    {
+        CALL,
+        SCENE,
+    }
+
     public class NearbyVoiceChatStateModel : IDisposable
     {
-        public const string SUPPRESSION_CALL = "call";
-        public const string SUPPRESSION_SCENE = "scene";
-
         private readonly ReactiveProperty<NearbyVoiceChatState> state;
-        private readonly ReactiveProperty<string?> activeSuppression = new (null);
-        private readonly HashSet<string> suppressionReasons = new ();
+        private readonly ReactiveProperty<SuppressionReason?> activeSuppression = new (null);
+        private readonly HashSet<SuppressionReason> suppressionReasons = new ();
 
         private NearbyVoiceChatState preBlockedState;
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
-
-        public IReadonlyReactiveProperty<string?> ActiveSuppression => activeSuppression;
+        public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
@@ -71,46 +73,44 @@ namespace DCL.VoiceChat.Nearby
         }
 
         // Suppression
-        public void Suppress() => Suppress(SUPPRESSION_CALL);
-
-        public void Suppress(string reason)
+        public void Suppress(SuppressionReason reason)
         {
             if (!suppressionReasons.Add(reason))
                 return;
 
             activeSuppression.Value = reason;
 
-            if (state.Value == NearbyVoiceChatState.SUPPRESSED)
-                return;
-
-            preBlockedState = state.Value;
-            SetState(NearbyVoiceChatState.SUPPRESSED);
+            if (state.Value != NearbyVoiceChatState.SUPPRESSED)
+            {
+                preBlockedState = state.Value;
+                SetState(NearbyVoiceChatState.SUPPRESSED);
+            }
         }
 
-        public void Resume() => Resume(SUPPRESSION_CALL);
-
-        public void Resume(string reason)
+        public void Resume(SuppressionReason reason)
         {
             if (!suppressionReasons.Remove(reason))
                 return;
 
-            if (suppressionReasons.Count > 0)
-            {
-                foreach (string remaining in suppressionReasons)
-                {
-                    activeSuppression.Value = remaining;
-                    break;
-                }
-
+            if (TryResetToRemainedSuppression(activeSuppression))
                 return;
+
+            if (state.Value == NearbyVoiceChatState.SUPPRESSED)
+                SetState(preBlockedState);
+        }
+
+        private bool TryResetToRemainedSuppression(ReactiveProperty<SuppressionReason?> active)
+        {
+            HashSet<SuppressionReason>.Enumerator e = suppressionReasons.GetEnumerator();
+
+            if (e.MoveNext())
+            {
+                active.Value = e.Current;
+                return true;
             }
 
-            activeSuppression.Value = null;
-
-            if (state.Value != NearbyVoiceChatState.SUPPRESSED)
-                return;
-
-            SetState(preBlockedState);
+            active.Value = null;
+            return false;
         }
 
         private void SetState(NearbyVoiceChatState newState)
