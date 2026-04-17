@@ -19,12 +19,15 @@ namespace DCL.SceneRestrictionBusController.SceneRestrictionBus
             sceneRestrictionReceivedDelegate?.Invoke(sceneRestriction);
         }
 
-        public void SubscribeToSceneRestriction(SceneRestrictionReceivedDelegate callback)
+        public void SubscribeToSceneRestriction(SceneRestrictionReceivedDelegate callback, bool replayActive = false)
         {
             sceneRestrictionReceivedDelegate += callback;
 
-            foreach (var restriction in activeRestrictions.Values)
-                callback(restriction);
+            if (replayActive)
+            {
+                foreach (var restriction in activeRestrictions.Values)
+                    callback(restriction);
+            }
         }
 
         public void UnsubscribeToSceneRestriction(SceneRestrictionReceivedDelegate callback) =>
