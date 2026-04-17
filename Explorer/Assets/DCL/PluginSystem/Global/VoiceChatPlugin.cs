@@ -50,9 +50,9 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
-        private readonly NearbyVoiceChatButtonView? nearbyVoiceChatButtonView;
-        private readonly NearbyVoiceWidgetView? nearbyVoiceWidgetView;
-        private readonly NearbyVoiceTipView? nearbyVoiceTipView;
+        private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
+        private readonly NearbyVoiceWidgetView nearbyVoiceWidgetView;
+        private readonly NearbyVoiceTipView nearbyVoiceTipView;
         private readonly ILoadingStatus loadingStatus;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
@@ -90,9 +90,9 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            NearbyVoiceChatButtonView? nearbyVoiceChatButtonView = null,
-            NearbyVoiceWidgetView? nearbyVoiceWidgetView = null,
-            NearbyVoiceTipView? nearbyVoiceTipView = null)
+            NearbyVoiceChatButtonView nearbyVoiceChatButtonView,
+            NearbyVoiceWidgetView nearbyVoiceWidgetView,
+            NearbyVoiceTipView nearbyVoiceTipView)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -190,8 +190,7 @@ namespace DCL.PluginSystem.Global
 
                 voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
 
-                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(
-                    scenesCache, sceneRestrictionBusController, nearbyStateModel);
+                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
@@ -200,29 +199,14 @@ namespace DCL.PluginSystem.Global
                     nearbyStateModel, voiceChatHandler);
                 pluginScope.Add(nearbyVoiceChatManager);
 
-                if (nearbyVoiceChatButtonView != null)
-                {
-                    nearbyButtonController = new NearbyVoiceChatButtonController(
-                        nearbyVoiceChatButtonView, nearbyStateModel);
-                    pluginScope.Add(nearbyButtonController);
-                }
+                nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
+                pluginScope.Add(nearbyButtonController);
 
-                if (nearbyVoiceWidgetView != null)
-                {
-                    nearbyWidgetController = new NearbyVoiceWidgetController(
-                        nearbyVoiceWidgetView, nearbyStateModel,
-                        voiceChatConfiguration.NearbyChatAudioMixerGroup);
-                    pluginScope.Add(nearbyWidgetController);
-                }
+                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.NearbyChatAudioMixerGroup);
+                pluginScope.Add(nearbyWidgetController);
 
-                if (nearbyVoiceTipView != null)
-                {
-                    nearbyTipController = new NearbyVoiceTipController(
-                        nearbyVoiceTipView,
-                        () => nearbyStateModel.Enable(),
-                        loadingStatus);
-                    pluginScope.Add(nearbyTipController);
-                }
+                nearbyTipController = new NearbyVoiceTipController(nearbyVoiceTipView, onTryItNow: () => nearbyStateModel.Enable(), loadingStatus);
+                pluginScope.Add(nearbyTipController);
             }
         }
 
