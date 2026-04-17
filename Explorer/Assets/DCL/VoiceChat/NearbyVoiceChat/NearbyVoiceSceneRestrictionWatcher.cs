@@ -30,20 +30,19 @@ namespace DCL.VoiceChat
             subscription.Dispose();
 
             if (currentSceneBlocksVoice)
-            {
-                currentSceneBlocksVoice = false;
-                restrictionBus.PushSceneRestriction(SceneRestriction.CreateNearbyVoiceChatBlocked(SceneRestrictionsAction.REMOVED));
-                stateModel.Resume(NearbyVoiceChatStateModel.SUPPRESSION_SCENE);
-            }
+                SetBlocked(false);
         }
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
             bool blocksVoice = scene != null && !scene.SceneData.SceneEntityDefinition.metadata.featureToggles.NearbyVoiceChatEnabled;
 
-            if (blocksVoice == currentSceneBlocksVoice)
-                return;
+            if (blocksVoice != currentSceneBlocksVoice)
+                SetBlocked(blocksVoice);
+        }
 
+        private void SetBlocked(bool blocksVoice)
+        {
             currentSceneBlocksVoice = blocksVoice;
 
             if (blocksVoice)
