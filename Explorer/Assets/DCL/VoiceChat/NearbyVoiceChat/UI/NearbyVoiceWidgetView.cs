@@ -36,15 +36,9 @@ namespace DCL.VoiceChat.UI
         private bool isSpeakingState;
         private float smoothedIntensity;
 
-        private void Awake()
-        {
-            enabled = false;
-        }
-
         public void Initialize(Func<float> provider)
         {
             amplitudeProvider = provider;
-            enabled = true;
         }
 
         public void SetSpeaking(bool isSpeaking)
@@ -56,16 +50,19 @@ namespace DCL.VoiceChat.UI
                 smoothedIntensity = 0f;
                 speakButtonImage.color = Color.white;
             }
+            else
+            {
+                speakButtonImage.color = speakingColor;
+            }
         }
 
         private void Update()
         {
-            if (isSpeakingState)
-            {
-                float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
-                smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
-                speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
-            }
+            if (!isSpeakingState || amplitudeProvider == null) return;
+
+            float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
+            smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
+            speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
         }
     }
 }

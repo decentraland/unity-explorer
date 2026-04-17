@@ -48,19 +48,15 @@ namespace DCL.VoiceChat.UI
         private float speakingBlend; // 0 = dots, 1 = fully speaking
         private bool altState;
 
-        private void Awake()
-        {
-            enabled = false;
-        }
-
         public void Initialize(Func<float> amplitudeGetter)
         {
             amplitudeProvider = amplitudeGetter;
-            enabled = true;
         }
 
         private void Update()
         {
+            if (amplitudeProvider == null) return;
+
             bool isSpeaking = amplitudeProvider() > speakingThreshold;
 
             // Attack / Decay
