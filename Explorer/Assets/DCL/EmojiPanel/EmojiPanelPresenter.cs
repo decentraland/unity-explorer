@@ -88,6 +88,21 @@ namespace DCL.Emoji
             PanelVisibilityChanged?.Invoke(isVisible);
         }
 
+        /// <summary>
+        /// Forces the search input to lose focus (firing onDeselect so any input-block tied to
+        /// focus is released) and clears any stale search query. Call before hiding the panel
+        /// from flows that do not route through SetPanelVisibility, since CanvasGroup alpha alone
+        /// does not cause TMP_InputField to fire onDeselect via the EventSystem.
+        /// </summary>
+        public void ResetSearchAndDefocus()
+        {
+            if (view.SearchPanelView.inputField.isFocused)
+                view.SearchPanelView.inputField.DeactivateInputField();
+
+            if (!string.IsNullOrEmpty(view.SearchPanelView.inputField.text))
+                view.SearchPanelView.inputField.text = string.Empty;
+        }
+
         private void ConfigureEmojiSectionSizes()
         {
             foreach (EmojiSectionView emojiSectionView in emojiSectionViews)

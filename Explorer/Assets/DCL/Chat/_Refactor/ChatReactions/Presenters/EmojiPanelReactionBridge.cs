@@ -2,6 +2,8 @@ using System;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Emoji;
+using DCL.Input;
+using DCL.Input.Component;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Presenters
@@ -16,8 +18,10 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly EmojiPanelPresenter emojiPanelPresenter;
         private readonly ReactionPanelPositioner panelPositioner;
         private readonly ChatReactionsAtlasConfig atlasConfig;
+        private readonly IInputBlock inputBlock;
 
         private bool isOpen;
+        private bool playerMovementBlocked;
 
         /// <summary>
         /// Fired when the user selects an emoji from the panel.
@@ -30,11 +34,13 @@ namespace DCL.Chat.ChatReactions.Presenters
         public EmojiPanelReactionBridge(
             EmojiPanelPresenter emojiPanelPresenter,
             ReactionPanelPositioner panelPositioner,
-            ChatReactionsAtlasConfig atlasConfig)
+            ChatReactionsAtlasConfig atlasConfig,
+            IInputBlock inputBlock)
         {
             this.emojiPanelPresenter = emojiPanelPresenter;
             this.panelPositioner = panelPositioner;
             this.atlasConfig = atlasConfig;
+            this.inputBlock = inputBlock;
         }
 
         /// <summary>
@@ -60,8 +66,15 @@ namespace DCL.Chat.ChatReactions.Presenters
             if (!isOpen) return;
 
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
+            emojiPanelPresenter.ResetSearchAndDefocus();
             emojiPanelPresenter.SetPanelVisibility(false);
             isOpen = false;
+
+            if (playerMovementBlocked)
+            {
+                inputBlock.Enable(InputMapComponent.Kind.PLAYER);
+                playerMovementBlocked = false;
+            }
         }
 
         /// <summary>
@@ -92,6 +105,12 @@ namespace DCL.Chat.ChatReactions.Presenters
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
             emojiPanelPresenter.SetPanelVisibility(true);
             isOpen = true;
+
+            if (!playerMovementBlocked)
+            {
+                inputBlock.Disable(InputMapComponent.Kind.PLAYER);
+                playerMovementBlocked = true;
+            }
         }
 
         private void OnEmojiSelected(string emojiUnicode)

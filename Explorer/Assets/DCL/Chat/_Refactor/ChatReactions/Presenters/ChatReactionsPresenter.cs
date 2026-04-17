@@ -5,6 +5,7 @@ using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
+using DCL.Input;
 using DCL.Prefs;
 using DCL.Settings.Settings;
 using UnityEngine;
@@ -57,7 +58,8 @@ namespace DCL.Chat.ChatReactions.Presenters
             EmojiPanelPresenter emojiPanelPresenter,
             ChatReactionsMessageConfig messageReactionsConfig,
             ChatSettingsAsset chatSettingsAsset,
-            IEventBus eventBus)
+            IEventBus eventBus,
+            IInputBlock inputBlock)
         {
             this.reactionService = reactionService;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -71,7 +73,7 @@ namespace DCL.Chat.ChatReactions.Presenters
                 messageReactionsConfig);
 
             emojiPanelBridge = new EmojiPanelReactionBridge(
-                emojiPanelPresenter, panelPositioner, atlasConfig);
+                emojiPanelPresenter, panelPositioner, atlasConfig, inputBlock);
 
             emojiPanelBridge.EmojiSelected += OnEmojiPanelSelected;
 

@@ -55,14 +55,14 @@ namespace DCL.Emoji
         {
             if (inputBlock == null || shortcutsBlocked) return;
             shortcutsBlocked = true;
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
         private void RestoreShortcuts(string _)
         {
             if (inputBlock == null || !shortcutsBlocked) return;
             shortcutsBlocked = false;
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)
