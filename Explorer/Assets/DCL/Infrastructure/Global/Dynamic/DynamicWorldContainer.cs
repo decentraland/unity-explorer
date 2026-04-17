@@ -1134,6 +1134,12 @@ namespace Global.Dynamic
                         debugBuilder,
                         staticContainer.LoadingStatus,
                         userBlockingCacheProxy,
+                        staticContainer.ScenesCache,
+                        staticContainer.SceneRestrictionBusController,
+                        mainUIView.SidebarView.NearbyVoiceChatButton,
+                        mainUIView.SidebarView.NearbyVoiceWidget,
+                        mainUIView.SidebarView.NearbyVoiceTip,
+                        bootstrapContainer.VolumeBus,
                         nearbyMuteService)
                 );
 

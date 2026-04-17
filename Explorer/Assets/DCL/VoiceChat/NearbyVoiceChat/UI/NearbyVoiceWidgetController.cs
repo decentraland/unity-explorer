@@ -1,0 +1,164 @@
+using DCL.Audio;
+using DCL.Prefs;
+using DCL.Settings.Utils;
+using DCL.Utilities;
+using DCL.VoiceChat.Nearby;
+using System;
+using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.InputSystem;
+
+namespace DCL.VoiceChat.UI
+{
+    public class NearbyVoiceWidgetController : IDisposable
+    {
+        private const string VOLUME_PARAM = "VoiceChat_Volume";
+        private const float MIN_VOLUME_DB = -80f;
+
+        private const string IDLE_TEXT = "Hold <color=#A09BA8>[T]</color> to speak momentarily";
+        private const string SPEAKING_PUSH_TO_TALK_TEXT = "Release <color=#A09BA8>[T]</color> to stop speaking";
+        private const string SPEAKING_BUTTON_TEXT = "Press <color=#A09BA8>[T]</color> to stop speaking";
+
+        private readonly NearbyVoiceWidgetView view;
+        private readonly NearbyVoiceChatStateModel stateModel;
+        private readonly AudioMixerGroup mixerGroup;
+        private readonly VolumeBus volumeBus;
+        private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
+
+        private bool pushToTalkSubscribed;
+
+        public NearbyVoiceWidgetController(NearbyVoiceWidgetView view, NearbyVoiceChatStateModel stateModel, AudioMixerGroup mixerGroup, VolumeBus volumeBus)
+        {
+            this.view = view;
+            this.stateModel = stateModel;
+            this.mixerGroup = mixerGroup;
+            this.volumeBus = volumeBus;
+
+            view.Initialize(() => stateModel.IsLocalSpeaking ? 1f : 0f);
+
+            stateSubscription = stateModel.State.Subscribe(OnStateChanged);
+            SyncViewWithState(stateModel.State.Value);
+
+            view.HearOthersToggle.onValueChanged.AddListener(OnHearOthersToggled);
+            view.SpeakButton.onClick.AddListener(OnSpeakButtonClicked);
+            view.VolumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+
+            volumeBus.OnVoiceChatVolumeChanged += OnVoiceChatVolumeChangedExternally;
+
+            SyncSliderWithMixer();
+        }
+
+        public void Dispose()
+        {
+            stateSubscription.Dispose();
+            view.HearOthersToggle.onValueChanged.RemoveListener(OnHearOthersToggled);
+            view.SpeakButton.onClick.RemoveListener(OnSpeakButtonClicked);
+            view.VolumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+            volumeBus.OnVoiceChatVolumeChanged -= OnVoiceChatVolumeChangedExternally;
+            UnsubscribePushToTalk();
+        }
+
+        private void OnStateChanged(NearbyVoiceChatState state)
+        {
+            SyncViewWithState(state);
+        }
+
+        private void SyncViewWithState(NearbyVoiceChatState state)
+        {
+            switch (state)
+            {
+                case NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED:
+                    UnsubscribePushToTalk();
+                    view.CloseAreaButton.onClick.Invoke();
+                    break;
+                case NearbyVoiceChatState.IDLE:
+                    SubscribePushToTalk(); break;
+            }
+
+            bool isSpeaking = state == NearbyVoiceChatState.SPEAKING;
+            bool isConnected = isSpeaking || state is NearbyVoiceChatState.IDLE;
+
+            view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
+            view.VolumeSliderContainer.SetActive(isConnected);
+            view.SpeakButtonContainer.SetActive(isConnected);
+            view.SpeakStateVisuals.SetActive(isConnected && !isSpeaking);
+            view.SpeakingStateVisuals.SetActive(isSpeaking);
+            view.SetSpeaking(isSpeaking);
+            view.HearText.gameObject.SetActive(isConnected);
+
+            if (!isSpeaking)
+                view.HearText.text = IDLE_TEXT;
+        }
+
+        private void OnHearOthersToggled(bool isOn)
+        {
+            if (isOn) stateModel.Enable();
+            else stateModel.Disable();
+        }
+
+        private void OnSpeakButtonClicked()
+        {
+            if (stateModel.State.Value == NearbyVoiceChatState.IDLE)
+            {
+                stateModel.StartSpeaking();
+                view.HearText.text = SPEAKING_BUTTON_TEXT;
+            }
+            else if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
+                stateModel.StopSpeaking();
+        }
+
+        private void SubscribePushToTalk()
+        {
+            if (pushToTalkSubscribed) return;
+            pushToTalkSubscribed = true;
+
+            DCLInput.Instance.VoiceChat.Talk!.performed += OnPushToTalkPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled += OnPushToTalkReleased;
+        }
+
+        private void UnsubscribePushToTalk()
+        {
+            if (!pushToTalkSubscribed) return;
+            pushToTalkSubscribed = false;
+
+            DCLInput.Instance.VoiceChat.Talk!.performed -= OnPushToTalkPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled -= OnPushToTalkReleased;
+        }
+
+        private void OnPushToTalkPressed(InputAction.CallbackContext ctx)
+        {
+            view.HearText.text = SPEAKING_PUSH_TO_TALK_TEXT;
+            stateModel.StartSpeaking();
+        }
+
+        private void OnPushToTalkReleased(InputAction.CallbackContext ctx)
+        {
+            stateModel.StopSpeaking();
+        }
+
+        private void OnVolumeChanged(float value)
+        {
+            float percentage = value * 100f;
+            float db = AudioUtils.PercentageVolumeToDecibel(percentage);
+            mixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
+
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, percentage, save: true);
+            volumeBus.SetVoiceChatVolume(percentage);
+        }
+
+        private void OnVoiceChatVolumeChangedExternally(float volumePercentage)
+        {
+            float linear = volumePercentage / 100f;
+            view.VolumeSlider.SetValueWithoutNotify(linear);
+        }
+
+        private void SyncSliderWithMixer()
+        {
+            if (mixerGroup.audioMixer.GetFloat(VOLUME_PARAM, out float db))
+            {
+                float linear = db > MIN_VOLUME_DB ? Mathf.Pow(10f, db / 20f) : 0f;
+                view.VolumeSlider.SetValueWithoutNotify(linear);
+            }
+        }
+    }
+}

@@ -4,6 +4,7 @@ using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
+using DCL.VoiceChat.UI;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -41,7 +42,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
         [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; } = null!;
 
-
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
         [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; } = null!;
@@ -72,6 +72,11 @@ namespace DCL.UI.Sidebar
         [field: Header("Chat")]
         [field: SerializeField] public HoverableAndSelectableButtonWithAnimator unreadMessagesButton { get; private set; } = null!;
         [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; } = null!;
+
+        [field: Header("Nearby Voice Chat")]
+        [field: SerializeField] public NearbyVoiceChatButtonView NearbyVoiceChatButton { get; private set; } = null!;
+        [field: SerializeField] public NearbyVoiceWidgetView NearbyVoiceWidget { get; private set; } = null!;
+        [field: SerializeField] public NearbyVoiceTipView NearbyVoiceTip { get; private set; } = null!;
 
         [field: Header("Marketplace Credits")]
         [field: SerializeField] public HoverableAndSelectableButtonWithAnimator marketplaceCreditsButton { get; private set; } = null!;
