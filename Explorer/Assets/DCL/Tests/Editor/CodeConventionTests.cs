@@ -40,7 +40,8 @@ namespace DCL.Tests
         }; // cause it's autogen
 
         private static readonly string[] WEB_SOCKETS_EXCLUDED_PATHS = {
-            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs"
+            "Assets/DCL/Infrastructure/Utility/Networking/DCLWebSocket.cs",
+            "Assets/DCL/Infrastructure/Utility/Networking/Abstract/DClWebSocketDefinitions.cs", // it defines only WebSocketsException wrap
         }; // cause it's autogen
 
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
