@@ -91,11 +91,14 @@ namespace DCL.Tests
             if (WEBGL_THREAD_SAFETY_EXCLUDED_PATHS.Contains(filePath))
                 return;
 
-            var patternList = new List<string>();
+            List<(Regex regex, string pattern)> patternList = new List<(Regex regex, string pattern)>();
             foreach (string forbiddenClass in THREADING_FORBIDDEN_CLASSES)
             {
-                var pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
-                patternList.Add(pattern);
+                string pattern = $@"\b{Regex.Escape(forbiddenClass)}\b";
+                RegexOptions options = RegexOptions.Compiled;
+
+                Regex regex = new Regex(pattern, options);
+                patternList.Add((regex, pattern));
             }
 
             ShouldNotUseThreadingApiDirectly(filePath, patternList);
@@ -386,14 +389,13 @@ namespace DCL.Tests
 
         // TODO test is slow, migrate to rg
         // To support WebGL compatability
-        private static void ShouldNotUseThreadingApiDirectly(string filePath, IReadOnlyList<string> patternList)
+        private static void ShouldNotUseThreadingApiDirectly(string filePath, IReadOnlyList<(Regex regex, string pattern)> patternList)
         {
 
-            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            using var reader = new StreamReader(fs);
+            using FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using StreamReader reader = new StreamReader(fs);
 
-            var violations = new List<string>();
-
+            List<string> violations = new List<string>();
 
             int i = 0;
             string? current;
@@ -412,9 +414,9 @@ namespace DCL.Tests
                 if (line.StartsWith("namespace"))
                     continue;
 
-                foreach (string pattern in patternList)
+                foreach ((Regex regex, string pattern) in patternList)
                 {
-                    if (Regex.IsMatch(line, pattern))
+                    if (regex.IsMatch(line))
                     {
                         violations.Add($"{filePath}:{i}: uses '{pattern}'");
                     }
