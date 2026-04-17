@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Prefs;
+using DCL.Settings.Utils;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
 using System;
@@ -137,10 +138,10 @@ namespace DCL.VoiceChat.UI
 
         private void OnVolumeChanged(float value)
         {
-            float db = value > 0.0001f ? Mathf.Log10(value) * 20f : MIN_VOLUME_DB;
+            float percentage = value * 100f;
+            float db = AudioUtils.PercentageVolumeToDecibel(percentage);
             mixerGroup.audioMixer.SetFloat(VOLUME_PARAM, db);
 
-            float percentage = value * 100f;
             DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, percentage, save: true);
             volumeBus.SetVoiceChatVolume(percentage);
         }
