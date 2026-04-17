@@ -47,7 +47,6 @@ namespace DCL.VoiceChat
 
             var list = new List<MicrophoneButton>
             {
-                view.OutgoingCallView.MicrophoneButton,
                 view.InCallView.MicrophoneButton,
             };
 

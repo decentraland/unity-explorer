@@ -1,6 +1,9 @@
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using System.Threading;
+using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -15,25 +18,19 @@ namespace DCL.SDKComponents.MediaStream
 
         internal Status status;
 
+        // TODO (Vit): add caching mechanism for resolved promises: <url, isReachable> (on some upper level)
         internal MediaAddress mediaAddress;
-        internal MediaAddress originalAddress;
         internal bool isReachable;
-        internal bool isLiveStream;
-        internal float resolvedUrlExpiresAt;
 
         public bool IsResolved => status == Status.Resolved;
 
         public bool IsConsumed => status == Status.Consumed;
 
-        public async UniTask UrlReachabilityResolveAsync(MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
-            IUrlResolverService urlResolverService)
+        public async UniTask UrlReachabilityResolveAsync(IWebRequestController webRequestController, MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct)
         {
             status = Status.Pending;
             isReachable = false;
-            isLiveStream = false;
-            resolvedUrlExpiresAt = 0f;
             this.mediaAddress = newMediaAddress;
-            this.originalAddress = newMediaAddress;
 
             if (mediaAddress.IsLivekitAddress(out _))
             {
@@ -44,29 +41,48 @@ namespace DCL.SDKComponents.MediaStream
 
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
+            isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5, true);
+            //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly
+            if (!isReachable)
+                isReachable = await IsGetReachableAsync(url, ct);
 
-            ResolvedMediaUrl resolved = await urlResolverService.ResolveAsync(url, reportData, ct);
-
-            isReachable = resolved.IsReachable;
-            isLiveStream = resolved.IsLiveStream;
-            resolvedUrlExpiresAt = resolved.ExpiresAtRealtimeSinceStartup;
-
-            if (resolved.DirectUrl != url)
-                this.mediaAddress = MediaAddress.FromUrlMediaAddress(new UrlMediaAddress(resolved.DirectUrl));
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
 
             status = Status.Resolved;
+        }
+
+        /*The following function is a temporary workardound for Issue #2485
+         *The streaming server was taking 3 minutes to fail with timeout in the IsHeadReachableAsync method, by adding a timeout it was getting stuck
+         *in the previous IsGetReachable async that was performing a get request, starting the stream and never ending
+         *There was no other way other then the new UnityWebRequest to start the request with the webrequestcontroller and interrupt it after a few bytes were received
+         * This will be soon replaced by the integration of HTTP2 library that will provide a clearer way to solve the problem
+         */
+        private async UniTask<bool> IsGetReachableAsync(string url, CancellationToken ct)
+        {
+            UnityWebRequest isGetReachableRequest = UnityWebRequest.Get(url);
+            isGetReachableRequest.SendWebRequest();
+
+            while (isGetReachableRequest.downloadedBytes == 0)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (!string.IsNullOrEmpty(isGetReachableRequest.error))
+                    return false;
+
+                await UniTask.Yield();
+            }
+
+            isGetReachableRequest.Abort();
+            return true;
         }
 
         public bool IsReachableConsume(MediaAddress address)
         {
             status = Status.Consumed;
 
-            // mediaAddress may be rewritten to a resolved direct URL (see UrlReachabilityResolveAsync),
-            // so compare against originalAddress which always holds the pre-resolution value
-            // that matches what the component stores in its MediaAddress field
-            if (originalAddress != address)
+            if (this.mediaAddress != address)
             {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{originalAddress}>");
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{address}>, but was <{this.mediaAddress}>");
                 return false;
             }
 

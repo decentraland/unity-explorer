@@ -230,11 +230,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string OPEN_COMMUNITY_BROWSERS = "open_community_browsers";
         }
 
-        public static class Media
-        {
-            public const string MEDIA_STREAM_OPENED = "media_stream_opened";
-        }
-
         public static class Events
         {
             public const string EVENTS_SECTION_OPENED = "events_section_opened";

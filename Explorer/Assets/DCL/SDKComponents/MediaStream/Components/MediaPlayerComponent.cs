@@ -31,8 +31,6 @@ namespace DCL.SDKComponents.MediaStream
         public bool HasFailed { get; private set; }
         public VideoState LastPropagatedVideoState;
         public float LastPropagatedVideoTime;
-        public float ResolvedUrlExpiresAt;
-        public bool IsLiveStream;
 
         /// <summary>
         ///     Tracks the last reported media state for audio events to avoid sending duplicate CRDT messages
