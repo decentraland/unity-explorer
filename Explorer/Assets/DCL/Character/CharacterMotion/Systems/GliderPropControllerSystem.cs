@@ -158,10 +158,14 @@ namespace DCL.CharacterMotion.Systems
         [All(typeof(DeleteEntityIntention))]
         private void CleanUpDestroyedAvatarsProp(ref GliderProp gliderProp)
         {
-            if (glidingSettings.EnablePropPooling)
+            // Guard: glidingSettings can be null if the system is invoked during world teardown
+            // after its owning container has already been partially disposed.
+            // Guard: propPool can be null in non-Editor builds when EnablePropPooling is false,
+            // or if CleanUp is called before Initialize completes.
+            if (glidingSettings != null && glidingSettings.EnablePropPooling && propPool != null)
             {
                 gliderProp.View.PrepareForNextActivation();
-                propPool!.Release(gliderProp.View);
+                propPool.Release(gliderProp.View);
             }
             else
             {

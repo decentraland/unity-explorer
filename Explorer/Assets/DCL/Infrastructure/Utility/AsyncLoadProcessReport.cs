@@ -82,6 +82,16 @@ namespace DCL.Utilities
 
         public void SetException(Exception e)
         {
+            // Some callers wrap an OperationCanceledException inside a generic Exception
+            // (e.g. by passing it as the innerException). Detect this and route through
+            // SetCancelled so that WaitUntilFinishedAsync returns a clean Cancelled result
+            // instead of surfacing a spurious error to Sentry.
+            if (e is OperationCanceledException || e.InnerException is OperationCanceledException)
+            {
+                SetCancelled();
+                return;
+            }
+
             exception = e;
 
             completionSource.TrySetException(e);

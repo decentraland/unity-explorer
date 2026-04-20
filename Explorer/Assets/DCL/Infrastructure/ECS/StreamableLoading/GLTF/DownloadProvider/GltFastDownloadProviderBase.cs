@@ -103,7 +103,10 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             if (promiseResult.Result is { Succeeded: false })
                 throw new Exception(GetTextureErrorMessage(promiseResult));
 
-            return new TextureDownloadResult(promiseResult.Result?.Asset!.EnsureTexture2D())
+            // promiseResult.Result?.Asset is TextureData? — the null-forgiving ! was suppressing
+            // a compile-time warning while hiding a runtime NullReferenceException when Asset is null.
+            // Use ?. so that a missing or failed result yields a null texture instead of crashing.
+            return new TextureDownloadResult(promiseResult.Result?.Asset?.EnsureTexture2D())
             {
                 Error = promiseResult.Result?.Exception?.Message,
                 Success = (bool)promiseResult.Result?.Succeeded,

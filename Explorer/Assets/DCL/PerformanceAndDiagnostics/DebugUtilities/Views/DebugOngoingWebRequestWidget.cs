@@ -66,6 +66,10 @@ namespace DCL.DebugUtilities.Views
 
         private void BindItem(VisualElement element, int index)
         {
+            // Guard against race conditions where the ListView fires bindItem before
+            // the DataSource value has been set, or during a mid-frame removal iteration.
+            if (dataSource == null || index >= dataSource.Requests.Count) return;
+
             Label method = element.Q<Label>("Method")!;
             Label url = element.Q<Label>("URL")!;
             Label duration = element.Q<Label>("Duration")!;
