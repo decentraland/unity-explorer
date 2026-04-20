@@ -113,6 +113,9 @@ namespace DCL.VoiceChat
             lkSource.AudioSource.EnsureNotNull().outputAudioMixerGroup = mixerGroup;
             lkSource.name = $"LivekitSource_{key.identity}";
             lkSource.transform.SetParent(parent);
+
+            // FIX: start spatial sources muted until NearbyAudioPositionSystem syncs position — prevents audio burst at world origin.
+            lkSource.AudioSource.mute = spatial;
             lkSource.Play();
 
             return lkSource;

@@ -213,7 +213,7 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, nearbyMuteService, blockingCacheProxy);
+                    nearbyStateModel, nearbyMuteService, blockingCacheProxy, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);

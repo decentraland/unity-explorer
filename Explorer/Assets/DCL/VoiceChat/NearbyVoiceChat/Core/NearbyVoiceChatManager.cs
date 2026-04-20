@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
@@ -40,6 +41,7 @@ namespace DCL.VoiceChat
         private readonly RemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
+        private readonly IDisposable loadingStageSubscription;
         private readonly IDisposable? nearbyStateSubscription;
 
         private CancellationTokenSource? activationCts;
@@ -54,7 +56,8 @@ namespace DCL.VoiceChat
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
             NearbyMuteService muteService,
-            ObjectProxy<IUserBlockingCache> blockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> blockingCacheProxy,
+            ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
@@ -99,6 +102,13 @@ namespace DCL.VoiceChat
 
             blockingCacheProxy.OnObjectSet += SubscribeToBlockingEvents;
 
+            // Suppress while world is still loading so we do not attempt to connect before the player spawns.
+            // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                stateModel.Suppress(SuppressionReason.LOADING);
+
+            loadingStageSubscription = loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
+
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
             Connect();
         }
@@ -110,6 +120,7 @@ namespace DCL.VoiceChat
 
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
+            loadingStageSubscription.Dispose();
             nearbyStateSubscription?.Dispose();
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
@@ -167,6 +178,14 @@ namespace DCL.VoiceChat
                 stateModel.Suppress(SuppressionReason.CALL);
             else if (status.IsNotConnected())
                 stateModel.Resume(SuppressionReason.CALL);
+        }
+
+        private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
+        {
+            if (stage == LoadingStatus.LoadingStage.Completed)
+                stateModel.Resume(SuppressionReason.LOADING);
+            else
+                stateModel.Suppress(SuppressionReason.LOADING);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)

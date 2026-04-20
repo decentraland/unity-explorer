@@ -18,6 +18,7 @@ namespace DCL.VoiceChat.Nearby
     {
         CALL,
         SCENE,
+        LOADING,
     }
 
     public class NearbyVoiceChatStateModel : IDisposable
