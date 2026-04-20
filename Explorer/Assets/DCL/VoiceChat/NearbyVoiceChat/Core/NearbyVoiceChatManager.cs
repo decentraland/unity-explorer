@@ -30,9 +30,14 @@ namespace DCL.VoiceChat
 
         private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
+
         private readonly NearbyVoiceChatStateModel stateModel;
+        private readonly NearbyMuteService muteService;
+
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
+
+        private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? nearbyStateSubscription;
@@ -47,11 +52,14 @@ namespace DCL.VoiceChat
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            NearbyVoiceChatStateModel stateModel)
+            NearbyVoiceChatStateModel stateModel,
+            NearbyMuteService muteService)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
+            this.muteService = muteService;
+            this.activeAudioSources = activeAudioSources;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -64,6 +72,8 @@ namespace DCL.VoiceChat
                     lkSource.AudioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
                     lkSource.ApplySpatialSettings(configuration);
                     activeAudioSources[key.identity] = lkSource;
+
+                    lkSource.AudioSource.mute = muteService.IsMuted(key.identity);
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
@@ -80,6 +90,8 @@ namespace DCL.VoiceChat
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
+            muteService.MuteStateChanged += OnMuteStateChanged;
+
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
             Connect();
         }
@@ -92,6 +104,8 @@ namespace DCL.VoiceChat
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
             nearbyStateSubscription?.Dispose();
+
+            muteService.MuteStateChanged -= OnMuteStateChanged;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -271,6 +285,12 @@ namespace DCL.VoiceChat
                     catch (OperationCanceledException) { return; }
                 }
             }
+        }
+
+        private void OnMuteStateChanged(string walletId, bool isMuted)
+        {
+            if (activeAudioSources.TryGetValue(walletId, out LivekitAudioSource? lkSource))
+                lkSource.AudioSource.mute = isMuted;
         }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)

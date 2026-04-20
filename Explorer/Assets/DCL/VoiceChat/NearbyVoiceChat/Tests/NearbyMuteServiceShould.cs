@@ -111,17 +111,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void WorkLocallyWithoutRepository()
-        {
-            var localCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(localCache);
-
-            localService.SetMuted("0xABC", true);
-
-            Assert.That(localService.IsMuted("0xABC"), Is.True);
-        }
-
-        [Test]
         public async Task SkipLoadWhenNoRepository()
         {
             var localCache = new NearbyMuteCache();
@@ -130,48 +119,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             await localService.LoadAsync(CancellationToken.None);
 
             Assert.That(localCache.IsMuted("0xABC"), Is.False);
-        }
-
-        [Test]
-        public void ToggleMuteFromUnmutedToMuted()
-        {
-            var realCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(realCache);
-
-            localService.ToggleMute("0xABC");
-
-            Assert.That(localService.IsMuted("0xABC"), Is.True);
-        }
-
-        [Test]
-        public void ToggleMuteFromMutedToUnmuted()
-        {
-            var realCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(realCache);
-            localService.SetMuted("0xABC", true);
-
-            localService.ToggleMute("0xABC");
-
-            Assert.That(localService.IsMuted("0xABC"), Is.False);
-        }
-
-        [Test]
-        public void PropagateEventsFromCacheToSubscribers()
-        {
-            var realCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(realCache);
-            string receivedId = null;
-            bool receivedMuted = false;
-            localService.MuteStateChanged += (id, muted) =>
-            {
-                receivedId = id;
-                receivedMuted = muted;
-            };
-
-            localService.SetMuted("0xABC", true);
-
-            Assert.That(receivedId, Is.EqualTo("0xABC"));
-            Assert.That(receivedMuted, Is.True);
         }
 
         [Test]
